@@ -260,7 +260,7 @@ namespace Leviathan{
 		//! Flag for determining if we need to update listener data
 		bool ListenerDataBuilt;
 
-		SCRIPTBUILDSTATE ScriptState;
+		SCRIPTBUILDSTATE ScriptState = SCRIPTBUILDSTATE_EMPTY;
 		CScriptBuilder* ScriptBuilder;
 
 
@@ -269,7 +269,7 @@ namespace Leviathan{
 
 
 		//! THe direct pointer to the module, this is stored to avoid searching
-		asIScriptModule* ASModule;
+		asIScriptModule* ASModule = nullptr;
 
 
 		std::vector<FunctionParameterInfo*> FuncParameterInfos;

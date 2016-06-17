@@ -4,14 +4,14 @@
 require 'fileutils'
 require 'colorize'
 require 'etc'
-require 'os'
+
+
+require_relative 'Helpers/CommonCode'
 
 # Setup code
 
 CMakeBuildType = "RelWithDebInfo"
 CompileThreads = Etc.nprocessors
-
-CurrentDir = `pwd`.strip!
 
 # If set to true will install CEGUI editor
 InstallCEED = false
@@ -25,53 +25,11 @@ GetBreakpad = true
 # Doesn't get the resources for samples into leviathan/bin if set to false
 FetchAssets = true
 
-
-# Platform detection, for library suffix
-if OS.linux?
-
-  BuildPlatform = "linux"
-  
-elsif OS.windows?
-  
-  BuildPlatform = "windows"
-  
-elsif OS.mac?
-  # Shouldn't be any file names that are different
-  BuildPlatform = "linux"
-else
-  abort "Unknown OS type"
-end
-
-# To get all possible colour values
-#puts String.colors
-
-# Error handling
-def onError(errordescription)
-
-  puts ("ERROR: " + errordescription).red
-  exit 1
-end
-
-# Coloured output
-def info(message)
-  puts message.to_s.colorize(:light_blue)
-end
-def success(message)
-  puts message.to_s.colorize(:light_green)
-end
-def warning(message)
-  puts message.to_s.colorize(:light_yellow)
-end
-
 # Check that the directory is correct
 info "Running in dir '#{CurrentDir}'"
 
 # Check for correct folder
-onError "pwd invalid output" if not File.directory?(CurrentDir) 
-
-DoxyFile = File.join(CurrentDir, "LeviathanDoxy.in")
-
-onError("Not ran from Leviathan base directory!") if not File.exist?(DoxyFile)
+verifyIsMainFolder
 
 puts "Using #{CompileThreads} threads to compile, configuration: #{CMakeBuildType}"
 
@@ -222,6 +180,7 @@ class Newton < BaseDep
     # Copy files to Leviathan folder
     libfolder = File.join(CurrentDir, "Newton", "lib")
     binfolder = File.join(CurrentDir, "Newton", "bin")
+    includefolder = File.join(CurrentDir, "Newton", "include")
     
     FileUtils.mkdir_p libfolder
     FileUtils.mkdir_p binfolder
@@ -640,6 +599,61 @@ class CEGUI < BaseDep
   end
 end
 
+class SFML < BaseDep
+  def initialize
+    super("SFML", "SFML")
+  end
+
+  def DoClone
+    system "git clone https://github.com/SFML/SFML.git"
+    $?.exitstatus == 0
+  end
+
+  def DoUpdate
+    system "git checkout master"
+    system "git pull origin master"
+    $?.exitstatus == 0
+  end
+
+  def DoSetup
+    FileUtils.mkdir_p "build"
+
+    Dir.chdir("build") do
+      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType}"
+    end
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoCompile
+
+    Dir.chdir("build") do
+      system "make -j #{CompileThreads}"
+    end
+    $?.exitstatus == 0
+  end
+  
+  def DoInstall
+
+    return true if not DoSudoInstalls
+    
+    Dir.chdir("build") do
+      system "sudo make install"
+    end
+    $?.exitstatus == 0
+  end
+
+  def LinuxPackages
+    if Linux == "Fedora"
+      return Array["xcb-util-image-devel", "systemd-devel", "libjpeg-devel", "libvorbis-devel",
+                   "flac-devel"]
+    else
+      onError "LinuxPackages not done for this linux system"
+    end
+  end
+end
+
+
 ##### Actual body ####
 
 # Assets svn
@@ -667,7 +681,7 @@ if FetchAssets
 end
 
 # All the objects
-depobjects = Array[Newton.new, AngelScript.new, CAudio.new, Ogre.new, CEGUI.new]
+depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
 
 if GetBreakpad
   # Add this last as this does some environment variable trickery
@@ -701,7 +715,8 @@ FileUtils.mkdir_p "build"
 
 Dir.chdir("build") do
 
-  system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCREATE_SDK=ON -DUSE_BREAKPAD=OFF"
+  system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCREATE_SDK=ON " +
+         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_BREAKPAD=OFF"
   
 end
 
@@ -710,7 +725,17 @@ if $?.exitstatus > 0
           "to install?"
 end
   
+# Create a symbolic link for build database
+builddblink = "compile_commands.json"
+File.delete(builddblink) if File.exist?(builddblink)
+FileUtils.ln_s File.join("build", "compile_commands.json"), builddblink
 
+if BuildPlatform == "linux"
+  
+  info "Indexing with cscope"
+  system "./RunCodeIndexing.sh"
+  
+end
 
 success "All done."
 info "To compile run 'make' in ./build"

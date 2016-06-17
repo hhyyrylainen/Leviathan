@@ -41,6 +41,7 @@ option(USE_BOOST "For using AngelScript, required for normal builds" ON)
 option(USE_OGRE "For using Ogre and direct dependencies, required for normal builds" ON)
 option(USE_NEWTON "For using Newton, required for normal builds" ON)
 option(USE_CAUDIO "For using cAudio, required for normal builds" ON)
+option(USE_SFML "For using SFML, required for normal builds" ON)
     
 option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
     
@@ -67,6 +68,7 @@ if(CREATE_UE4_PLUGIN)
   set(CREATE_STATIC ON)
   set(USE_BREAKPAD OFF)
   set(USE_CAUDIO OFF)
+  set(USE_SFML OFF)
   
   set(CMAKE_INSTALL_PREFIX "./UE4_Plugin")
   
@@ -100,7 +102,8 @@ option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 
 # Include glm directory on windows
 if(WIN32 AND USE_OGRE)
-  set(GLM_BASE_DIR "" CACHE FILEPATH "Path to the base directory of glm set to cegui-dependencies/src/glm-0.9.4.5")
+  set(GLM_BASE_DIR "" CACHE FILEPATH
+    "Path to the base directory of glm set to cegui-dependencies/src/glm-0.9.4.5")
 endif()
 
 if(EXISTS "${GLM_BASE_DIR}")
@@ -109,7 +112,8 @@ if(EXISTS "${GLM_BASE_DIR}")
 
 else()
   if(WIN32 AND USE_OGRE)
-    message(WARNING "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
+    message(WARNING
+      "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
   endif()
 endif()
 
@@ -125,7 +129,8 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
 else()
 
   if(NOT CREATE_UE4_PLUGIN)
-  message(WARNING "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
+    message(WARNING
+      "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
   endif()
   
   set(CAN_USE_LEAP OFF)
@@ -145,7 +150,8 @@ set(CMAKE_DEBUG_POSTFIX "D")
 
 # Linking and platform specific
 if(WIN32)
-  # we want to build with unicode setting, also add minimal rebuild, and exceptions from floating point operations, 
+  # we want to build with unicode setting, also add minimal rebuild,
+  # and exceptions from floating point operations, 
   # higher memory for compiling precompiled headers
   # Currently it seems that Zm250 should be enough but it might not be
   add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
@@ -166,8 +172,10 @@ else(WIN32)
 
   add_definitions(-fextended-identifiers)
 
+  # Has to be on one line or else ';'s will be included
   # C++14
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-reorder -Wno-unused-function -Wno-unknown-pragmas")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wno-pragma-once-outside-header")
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
   
   # We need X11 on linux for window class to work
   find_package(X11)
@@ -178,7 +186,8 @@ endif(WIN32)
 
 # When no configuration is set, enable RelWithDebInfo
 if(CMAKE_BUILD_TYPE STREQUAL "")
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Set the build type, usually Release or RelWithDebInfo" FORCE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+    "Set the build type, usually Release or RelWithDebInfo" FORCE)
 endif(CMAKE_BUILD_TYPE STREQUAL "")
 
 if(NOT WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -236,7 +245,8 @@ if(CAN_USE_OGRE)
     # Components that need linking (NB does not include header-only components like bind)
     set(OGRE_BOOST_COMPONENTS thread date_time)
 
-    find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone Overlay Paging RenderSystem_GL)
+    find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone
+      Overlay Paging RenderSystem_GL)
 
     # OIS is required for input
     find_package(OIS REQUIRED)
@@ -255,33 +265,41 @@ if(CAN_USE_OGRE)
       message(SEND_ERROR "Failed to locate CEGUI")
     endif()
 
-    set(ALL_CEGUI_LIBRARIES ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+    set(ALL_CEGUI_LIBRARIES ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES}
+      ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
       ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
     include_directories(${CEGUI_INCLUDE_DIR})
     
     # set some additional libraries
     set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}
-        ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
+      ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
+      ${OGRE_RenderSystem_GL_LIBRARIES})
 
 endif(CAN_USE_OGRE)
 
-if(USE_SFML)
-    set(CAN_USE_SFML ON)
-else()
-    set(CAN_USE_SFML OFF)
-endif(USE_SFML)
-
 # Find sfml
-if(CAN_USE_SFML)
-    find_package(SFML 2 COMPONENTS audio network system)
+if(USE_SFML)
+    find_package(SFML 2 COMPONENTS network system)
 
     if(NOT SFML_FOUND)
         message(SEND_ERROR "Failed to find SFML 2")
     endif()
-endif(CAN_USE_SFML)
+endif()
 
 include_directories(${SFML_INCLUDE_DIR})
+
+# Find cAudio
+if(USE_CAUDIO)
+
+  find_package(cAudio)
+  
+  if(NOT cAudio_FOUND)
+    message(SEND_ERROR "Failed to find cAudio")
+  endif()
+endif()
+
+include_directories(${cAudio_INCLUDE_DIRS})
 
 # Find Boost
 if(USE_BOOST)
@@ -354,6 +372,17 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
 # Tests can crash if this folder doesn't exist
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
+
+# Setup predefined macros
+
+DefinePreprocessorMacro(USE_ANGELSCRIPT LEVIATHAN_USING_ANGELSCRIPT)
+DefinePreprocessorMacro(USE_BOOST LEVIATHAN_USING_BOOST)
+DefinePreprocessorMacro(USE_OGRE LEVIATHAN_USING_OGRE)
+DefinePreprocessorMacro(USE_NEWTON LEVIATHAN_USING_NEWTON)
+DefinePreprocessorMacro(USE_SFML LEVIATHAN_USING_SFML)
+DefinePreprocessorMacro(USE_LEAP LEVIATHAN_USING_LEAP)
+
+DefinePreprocessorMacro(CREATE_UE4_PLUGIN LEVIATHAN_CREATE_UE4_PLUGIN)
 
 # Configure engine include file
 configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR}/Engine/Include.h")

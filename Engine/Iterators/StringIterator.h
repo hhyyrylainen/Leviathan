@@ -1019,7 +1019,7 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 		//! Set when we should delete DataIterator
-		bool HandlesDelete;
+		bool HandlesDelete = false;
 
     #ifdef ITERATOR_ALLOW_DEBUG
 		//! Controls debug output printing
@@ -1027,16 +1027,17 @@ namespace Leviathan{
     #endif
 		
 		//! Wraps the underlying string
-		StringDataIterator* DataIterator;
+		StringDataIterator* DataIterator = nullptr;
 
 		//! Currently active flags
 		//! Bit field of ITERATORFLAG_SET enum values
-		int CurrentFlags;
-
+		int CurrentFlags = 0;
+        
 		//! Stored for performance
-		int CurrentCharacter;
+		int CurrentCharacter = -1;
+        
 		//! Dirty flag for CurrentCharacter
-		bool CurrentStored;
+		bool CurrentStored = false;
 
 	protected:
 

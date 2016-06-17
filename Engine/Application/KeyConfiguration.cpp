@@ -37,7 +37,7 @@ DLLEXPORT bool Leviathan::KeyConfiguration::Init(
 	// Load the values from the file //
 	std::vector<shared_ptr<NamedVariableList>> tmpvalues;
 
-	if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues)){
+	if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues, Logger::Get())){
 		// Create keys from the values //
 
 		for(auto iter = tmpvalues.begin(); iter != tmpvalues.end(); ++iter){

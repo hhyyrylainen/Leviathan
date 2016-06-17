@@ -7,7 +7,7 @@
 #include "TimeIncludes.h"
 #include "Networking/NetworkClientInterface.h"
 
-#include "catch.hpp"
+#include "../catch/catch.hpp"
 
 using namespace Leviathan;
 
@@ -29,7 +29,7 @@ template<bool UseActualInit, NETWORKED_TYPE TestWithType>
 class PartialEngine : public Engine{
 public:
 
-    PartialEngine() : Log("Test/TestLog.txt"), Def(), App(), Engine(&App){
+    PartialEngine() : Engine(&App), Log("Test/TestLog.txt"){
 
         // Configure for test use //
         NoGui = true;

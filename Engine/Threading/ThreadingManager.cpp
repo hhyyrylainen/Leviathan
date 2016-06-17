@@ -22,9 +22,11 @@ void Leviathan::RegisterOgreOnThread(){
 #endif //LEVIATHAN_USING_OGRE
 
 // ------------------ ThreadingManager ------------------ //
-DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) :
-    AllowStartTasksFromQueue(true), StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
-    AllowConditionalWait(true), AllowRepeats(true)
+DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore
+    /*= DEFAULT_THREADS_PER_CORE*/) :
+    AllowStartTasksFromQueue(true), StopProcessing(false),
+    TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
+    AllowRepeats(true), AllowConditionalWait(true)
 {
 	WantedThreadCount = std::thread::hardware_concurrency()*basethreadspercore;
 
@@ -323,7 +325,8 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 #ifdef LEVIATHAN_USING_OGRE
         Ogre::Root::getSingleton().getRenderSystem()->preExtraThreadsStarted();
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
-			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(std::bind(RegisterOgreOnThread))));
+			(*iter)->SetTaskAndNotify(
+                std::make_shared<QueuedTask>(std::bind(RegisterOgreOnThread)));
 			// Wait for it to end //
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
@@ -331,7 +334,8 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 					TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(50));
 				}
 				catch(...){
-					Logger::Get()->Warning("ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
+					LOG_WARNING("ThreadingManager: MakeThreadsWorkWithOgre: "
+                        "linux fix wait interrupted");
 				}
 			}
 #endif
@@ -357,7 +361,7 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 }
 
 DLLEXPORT void Leviathan::ThreadingManager::NotifyQueuerThread(){
-	GUARD_LOCK();
+
 	TaskQueueNotify.notify_all();
 }
 

@@ -2,7 +2,7 @@
 // ------------------------------------ //
 #include "FileSystem.h"
 
-#ifdef USING_OGRE
+#ifdef LEVIATHAN_USING_OGRE
 #include "OgreResourceGroupManager.h"
 #endif
 #include "Common/StringOperations.h"
@@ -15,7 +15,7 @@
 #include <ostream>
 #include <fstream>
 
-#ifdef __GNUC__
+#ifdef __linux__
 #include <dirent.h>
 #include <sys/stat.h>
 #else
@@ -361,7 +361,7 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
     const string &dirpath, const string &pattern /*= "*.*"*/, bool recursive /*= true*/)
 {
 	dirent* ent;
-	class stat st;
+	struct stat st;
 
 	// Start searching //
 	DIR* dir = opendir(dirpath.c_str());
@@ -880,7 +880,7 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
 	indexed = true;
 }
 
-#ifdef USING_OGRE
+#ifdef LEVIATHAN_USING_OGRE
 DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// get the resource managing singleton //
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
@@ -980,7 +980,7 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 
 	manager.initialiseResourceGroup(groupname);
 }
-#endif // USING_OGRE
+#endif // LEVIATHAN_USING_OGRE
 // ------------------ FileDefinitionType ------------------ //
 Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const string &path) :
     RelativePath(path)

@@ -9,14 +9,17 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(int inresponseto, PACKET_TIMEOUT_STYLE timeout, int timeoutvalue)
-    : ResponseType(NETWORKRESPONSETYPE_NONE), ResponseID(inresponseto), TimeOutStyle(timeout),
-      TimeOutValue(timeoutvalue), ResponseData(NULL)
+DLLEXPORT NetworkResponse::NetworkResponse(int inresponseto,
+    PACKET_TIMEOUT_STYLE timeout, int timeoutvalue)
+    : ResponseID(inresponseto),
+    TimeOutValue(timeoutvalue), TimeOutStyle(timeout), ResponseType(NETWORKRESPONSETYPE_NONE)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedresponse) : TimeOutValue(-1){
+DLLEXPORT NetworkResponse::NetworkResponse(sf::Packet &receivedresponse) :
+    TimeOutValue(-1)
+{
 	// First thing is the response ID //
 	receivedresponse >> ResponseID;
 
@@ -31,110 +34,112 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 
 	// Process based on the type //
 	switch(ResponseType){
-        case NETWORKRESPONSETYPE_NONE: case NETWORKRESPONSETYPE_KEEPALIVE: case NETWORKRESPONSETYPE_CLOSECONNECTION:
-        case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED: case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED:
-        case NETWORKRESPONSETYPE_SERVERHEARTBEAT: case NETWORKRESPONSETYPE_STARTHEARTBEATS:
+    case NETWORKRESPONSETYPE_NONE: case NETWORKRESPONSETYPE_KEEPALIVE:
+    case NETWORKRESPONSETYPE_CLOSECONNECTION:
+    case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED:
+    case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED:
+    case NETWORKRESPONSETYPE_SERVERHEARTBEAT: case NETWORKRESPONSETYPE_STARTHEARTBEATS:
 		{
 			// There is no data in the packet //
 			ResponseData = NULL;
 			return;
 		}
-        case NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS:
+    case NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS:
 		{
 			ResponseData = new NetworkResponseDataForIdentificationString(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_INVALIDREQUEST:
+    case NETWORKRESPONSETYPE_INVALIDREQUEST:
 		{
 			ResponseData = new NetworkResponseDataForInvalidRequest(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_SERVERSTATUS:
+    case NETWORKRESPONSETYPE_SERVERSTATUS:
 		{
 			ResponseData = new NetworkResponseDataForServerStatus(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_SERVERALLOW:
+    case NETWORKRESPONSETYPE_SERVERALLOW:
 		{
 			ResponseData = new NetworkResponseDataForServerAllow(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_SERVERDISALLOW:
+    case NETWORKRESPONSETYPE_SERVERDISALLOW:
 		{
 			ResponseData = new NetworkResponseDataForServerDisallow(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_SYNCVALDATA:
+    case NETWORKRESPONSETYPE_SYNCVALDATA:
 		{
 			ResponseData = new NetworkResponseDataForSyncValData(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_SYNCDATAEND:
+    case NETWORKRESPONSETYPE_SYNCDATAEND:
 		{
 			ResponseData = new NetworkResponseDataForSyncDataEnd(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_CUSTOM:
+    case NETWORKRESPONSETYPE_CUSTOM:
 		{
 			ResponseData = new NetworkResponseDataForCustom(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_SYNCRESOURCEDATA:
+    case NETWORKRESPONSETYPE_SYNCRESOURCEDATA:
 		{
 			ResponseData = new NetworkResponseDataForSyncResourceData(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT:
+    case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT:
 		{
 			ResponseData = new NetworkResponseDataForCreateNetworkedInput(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
+    case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
 		{
 			ResponseData = new NetworkResponseDataForUpdateNetworkedInput(receivedresponse);
 		}
 		break;
-        case NETWORKRESPONSETYPE_INITIAL_ENTITY:
+    case NETWORKRESPONSETYPE_INITIAL_ENTITY:
         {
             ResponseData = new NetworkResponseDataForInitialEntity(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_ENTITY_CONSTRAINT:
+    case NETWORKRESPONSETYPE_ENTITY_CONSTRAINT:
         {
             ResponseData = new NetworkResponseDataForEntityConstraint(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_WORLD_FROZEN:
+    case NETWORKRESPONSETYPE_WORLD_FROZEN:
         {
             ResponseData = new NetworkResponseDataForWorldFrozen(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_ENTITY_UPDATE:
+    case NETWORKRESPONSETYPE_ENTITY_UPDATE:
         {
             ResponseData = new NetworkResponseDataForEntityUpdate(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_ENTITY_DESTRUCTION:
+    case NETWORKRESPONSETYPE_ENTITY_DESTRUCTION:
         {
             ResponseData = new NetworkResponseDataForEntityDestruction(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_AI_CACHE_UPDATED:
+    case NETWORKRESPONSETYPE_AI_CACHE_UPDATED:
         {
             ResponseData = new NetworkResponseDataForAICacheUpdated(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_AI_CACHE_REMOVED:
+    case NETWORKRESPONSETYPE_AI_CACHE_REMOVED:
         {
             ResponseData = new NetworkResponseDataForAICacheRemoved(receivedresponse);
         }
         break;
-        case NETWORKRESPONSETYPE_DISCONNECTINPUT:
+    case NETWORKRESPONSETYPE_DISCONNECTINPUT:
         {
             ResponseData = new NetworkResponseDataForDisconnectInput(receivedresponse);
         }
         break;
-        default:
+    default:
 		{
             Logger::Get()->Warning("NetworkResponse: unused type: "+
                 Convert::ToString(ResponseType));
@@ -144,11 +149,11 @@ DLLEXPORT Leviathan::NetworkResponse::NetworkResponse(sf::Packet &receivedrespon
 	}
 }
 
-DLLEXPORT Leviathan::NetworkResponse::~NetworkResponse(){
+DLLEXPORT NetworkResponse::~NetworkResponse(){
 	SAFE_DELETE(ResponseData);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkResponse::GenerateIdentificationStringResponse(
+DLLEXPORT void NetworkResponse::GenerateIdentificationStringResponse(
     NetworkResponseDataForIdentificationString* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS;
@@ -158,7 +163,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateIdentificationStringResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateInvalidRequestResponse(
+DLLEXPORT void NetworkResponse::GenerateInvalidRequestResponse(
     NetworkResponseDataForInvalidRequest* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_INVALIDREQUEST;
@@ -168,7 +173,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateInvalidRequestResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateServerStatusResponse(
+DLLEXPORT void NetworkResponse::GenerateServerStatusResponse(
     NetworkResponseDataForServerStatus* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_SERVERSTATUS;
@@ -178,7 +183,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateServerStatusResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateServerDisallowResponse(
+DLLEXPORT void NetworkResponse::GenerateServerDisallowResponse(
     NetworkResponseDataForServerDisallow* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_SERVERDISALLOW;
@@ -188,7 +193,9 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateServerDisallowResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateServerAllowResponse(NetworkResponseDataForServerAllow* newddata){
+DLLEXPORT void NetworkResponse::GenerateServerAllowResponse(
+    NetworkResponseDataForServerAllow* newddata)
+{
 	ResponseType = NETWORKRESPONSETYPE_SERVERALLOW;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
@@ -196,7 +203,9 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateServerAllowResponse(NetworkRe
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateValueSyncResponse(NetworkResponseDataForSyncValData* newddata){
+DLLEXPORT void NetworkResponse::GenerateValueSyncResponse(
+    NetworkResponseDataForSyncValData* newddata)
+{
 	ResponseType = NETWORKRESPONSETYPE_SYNCVALDATA;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
@@ -204,7 +213,9 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateValueSyncResponse(NetworkResp
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateValueSyncEndResponse(NetworkResponseDataForSyncDataEnd* newddata){
+DLLEXPORT void NetworkResponse::GenerateValueSyncEndResponse(
+    NetworkResponseDataForSyncDataEnd* newddata)
+{
 	ResponseType = NETWORKRESPONSETYPE_SYNCDATAEND;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
@@ -212,7 +223,9 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateValueSyncEndResponse(NetworkR
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateResourceSyncResponse(const char* dataptr, size_t datasize){
+DLLEXPORT void NetworkResponse::GenerateResourceSyncResponse(
+    const char* dataptr, size_t datasize)
+{
 	ResponseType = NETWORKRESPONSETYPE_SYNCRESOURCEDATA;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
@@ -220,7 +233,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateResourceSyncResponse(const ch
 	ResponseData = new NetworkResponseDataForSyncResourceData(string(dataptr, datasize));
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateCreateNetworkedInputResponse(
+DLLEXPORT void NetworkResponse::GenerateCreateNetworkedInputResponse(
     NetworkResponseDataForCreateNetworkedInput* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_CREATENETWORKEDINPUT;
@@ -230,7 +243,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateCreateNetworkedInputResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateUpdateNetworkedInputResponse(
+DLLEXPORT void NetworkResponse::GenerateUpdateNetworkedInputResponse(
     NetworkResponseDataForUpdateNetworkedInput* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT;
@@ -240,7 +253,7 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateUpdateNetworkedInputResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateInitialEntityResponse(
+DLLEXPORT void NetworkResponse::GenerateInitialEntityResponse(
     NetworkResponseDataForInitialEntity* newddata)
 {
 	ResponseType = NETWORKRESPONSETYPE_INITIAL_ENTITY;
@@ -250,8 +263,8 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateInitialEntityResponse(
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityConstraintResponse(NetworkResponseDataForEntityConstraint*
-    newddata)
+DLLEXPORT void NetworkResponse::GenerateEntityConstraintResponse(
+    NetworkResponseDataForEntityConstraint* newddata)
 {
     ResponseType = NETWORKRESPONSETYPE_ENTITY_CONSTRAINT;
 	// Destroy old data if any //
@@ -260,7 +273,9 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityConstraintResponse(Netw
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateWorldFrozenResponse(NetworkResponseDataForWorldFrozen* newddata){
+DLLEXPORT void NetworkResponse::GenerateWorldFrozenResponse(
+    NetworkResponseDataForWorldFrozen* newddata)
+{
 
     ResponseType = NETWORKRESPONSETYPE_WORLD_FROZEN;
     // Destroy old data if any //
@@ -269,7 +284,9 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateWorldFrozenResponse(NetworkRe
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityUpdateResponse(NetworkResponseDataForEntityUpdate* newddata){
+DLLEXPORT void NetworkResponse::GenerateEntityUpdateResponse(
+    NetworkResponseDataForEntityUpdate* newddata)
+{
 
     ResponseType = NETWORKRESPONSETYPE_ENTITY_UPDATE;
     // Destroy old data if any //
@@ -278,8 +295,8 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityUpdateResponse(NetworkR
 	ResponseData = newddata;    
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityDestructionResponse(NetworkResponseDataForEntityDestruction*
-    newddata)
+DLLEXPORT void NetworkResponse::GenerateEntityDestructionResponse(
+    NetworkResponseDataForEntityDestruction* newddata)
 {
     ResponseType = NETWORKRESPONSETYPE_ENTITY_DESTRUCTION;
     // Destroy old data if any //
@@ -288,8 +305,8 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateEntityDestructionResponse(Net
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheUpdatedResponse(NetworkResponseDataForAICacheUpdated*
-    newddata)
+DLLEXPORT void NetworkResponse::GenerateAICacheUpdatedResponse(
+    NetworkResponseDataForAICacheUpdated* newddata)
 {
     ResponseType = NETWORKRESPONSETYPE_AI_CACHE_UPDATED;
     // Destroy old data if any //
@@ -298,8 +315,8 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheUpdatedResponse(Networ
 	ResponseData = newddata;
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateAICacheRemovedResponse(NetworkResponseDataForAICacheRemoved*
-    newddata)
+DLLEXPORT void NetworkResponse::GenerateAICacheRemovedResponse(
+    NetworkResponseDataForAICacheRemoved* newddata)
 {
     ResponseType = NETWORKRESPONSETYPE_AI_CACHE_REMOVED;
     // Destroy old data if any //
@@ -318,49 +335,51 @@ DLLEXPORT void NetworkResponse::GenerateDisconnectInputResponse(
 	ResponseData = newddata;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkResponse::GenerateKeepAliveResponse(){
+DLLEXPORT void NetworkResponse::GenerateKeepAliveResponse(){
 	ResponseType = NETWORKRESPONSETYPE_KEEPALIVE;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateCloseConnectionResponse(){
+DLLEXPORT void NetworkResponse::GenerateCloseConnectionResponse(){
 	ResponseType = NETWORKRESPONSETYPE_CLOSECONNECTION;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateRemoteConsoleOpenedResponse(){
+DLLEXPORT void NetworkResponse::GenerateRemoteConsoleOpenedResponse(){
 	ResponseType = NETWORKRESPONSETYPE_REMOTECONSOLEOPENED;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateRemoteConsoleClosedResponse(){
+DLLEXPORT void NetworkResponse::GenerateRemoteConsoleClosedResponse(){
 	ResponseType = NETWORKRESPONSETYPE_REMOTECONSOLECLOSED;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateHeartbeatResponse(){
+DLLEXPORT void NetworkResponse::GenerateHeartbeatResponse(){
 	ResponseType = NETWORKRESPONSETYPE_SERVERHEARTBEAT;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateStartHeartbeatsResponse(){
+DLLEXPORT void NetworkResponse::GenerateStartHeartbeatsResponse(){
 	ResponseType = NETWORKRESPONSETYPE_STARTHEARTBEATS;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateEmptyResponse(){
+DLLEXPORT void NetworkResponse::GenerateEmptyResponse(){
 	ResponseType = NETWORKRESPONSETYPE_NONE;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkResponse::GenerateCustomResponse(GameSpecificPacketData* newdpacketdata){
+DLLEXPORT void NetworkResponse::GenerateCustomResponse(
+    GameSpecificPacketData* newdpacketdata)
+{
 	ResponseType = NETWORKRESPONSETYPE_CUSTOM;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
@@ -368,15 +387,18 @@ DLLEXPORT void Leviathan::NetworkResponse::GenerateCustomResponse(GameSpecificPa
 	ResponseData = new NetworkResponseDataForCustom(newdpacketdata);
 }
 
-DLLEXPORT void Leviathan::NetworkResponse::GenerateCustomResponse(BaseGameSpecificResponsePacket* newdpacketdata){
+DLLEXPORT void NetworkResponse::GenerateCustomResponse(
+    BaseGameSpecificResponsePacket* newdpacketdata)
+{
 	ResponseType = NETWORKRESPONSETYPE_CUSTOM;
 	// Destroy old data if any //
 	SAFE_DELETE(ResponseData);
 
-	ResponseData = new NetworkResponseDataForCustom(new GameSpecificPacketData(newdpacketdata));
+	ResponseData = new NetworkResponseDataForCustom(
+        new GameSpecificPacketData(newdpacketdata));
 }
 // ------------------------------------ //
-DLLEXPORT sf::Packet Leviathan::NetworkResponse::GeneratePacketForResponse() const{
+DLLEXPORT sf::Packet NetworkResponse::GeneratePacketForResponse() const{
 
 	sf::Packet generatedpacket;
 	// First thing is the header //
@@ -393,27 +415,27 @@ DLLEXPORT sf::Packet Leviathan::NetworkResponse::GeneratePacketForResponse() con
 	return generatedpacket;
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::NetworkResponse::GetTimeOutValue() const{
+DLLEXPORT int NetworkResponse::GetTimeOutValue() const{
 	return TimeOutValue;
 }
 
-DLLEXPORT PACKET_TIMEOUT_STYLE Leviathan::NetworkResponse::GetTimeOutType() const{
+DLLEXPORT PACKET_TIMEOUT_STYLE NetworkResponse::GetTimeOutType() const{
 	return TimeOutStyle;
 }
 
-DLLEXPORT int Leviathan::NetworkResponse::GetResponseID() const{
+DLLEXPORT int NetworkResponse::GetResponseID() const{
 	return ResponseID;
 }
 
-DLLEXPORT NETWORKRESPONSETYPE Leviathan::NetworkResponse::GetTypeOfResponse() const{
+DLLEXPORT NETWORKRESPONSETYPE NetworkResponse::GetTypeOfResponse() const{
 	return ResponseType;
 }
 
-DLLEXPORT NETWORKRESPONSETYPE Leviathan::NetworkResponse::GetType() const{
+DLLEXPORT NETWORKRESPONSETYPE NetworkResponse::GetType() const{
 	return ResponseType;
 }
 // ------------------------------------ //
-DLLEXPORT NetworkResponseDataForIdentificationString* Leviathan::NetworkResponse::
+DLLEXPORT NetworkResponseDataForIdentificationString* NetworkResponse::
 GetResponseDataForIdentificationString() const
 {
 	if(ResponseType == NETWORKRESPONSETYPE_IDENTIFICATIONSTRINGS && ResponseData)
@@ -421,31 +443,31 @@ GetResponseDataForIdentificationString() const
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForServerStatus* Leviathan::NetworkResponse::GetResponseDataForServerStatus() const{
+DLLEXPORT NetworkResponseDataForServerStatus* NetworkResponse::GetResponseDataForServerStatus() const{
 	if(ResponseType == NETWORKRESPONSETYPE_SERVERSTATUS && ResponseData)
 		return static_cast<NetworkResponseDataForServerStatus*>(ResponseData);
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForSyncValData* Leviathan::NetworkResponse::GetResponseDataForValueSyncResponse() const{
+DLLEXPORT NetworkResponseDataForSyncValData* NetworkResponse::GetResponseDataForValueSyncResponse() const{
 	if(ResponseType == NETWORKRESPONSETYPE_SYNCVALDATA && ResponseData)
 		return static_cast<NetworkResponseDataForSyncValData*>(ResponseData);
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForSyncDataEnd* Leviathan::NetworkResponse::GetResponseDataForValueSyncEndResponse() const{
+DLLEXPORT NetworkResponseDataForSyncDataEnd* NetworkResponse::GetResponseDataForValueSyncEndResponse() const{
 	if(ResponseType == NETWORKRESPONSETYPE_SYNCDATAEND && ResponseData)
 		return static_cast<NetworkResponseDataForSyncDataEnd*>(ResponseData);
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForCustom* Leviathan::NetworkResponse::GetResponseDataForGameSpecific() const{
+DLLEXPORT NetworkResponseDataForCustom* NetworkResponse::GetResponseDataForGameSpecific() const{
 	if(ResponseType == NETWORKRESPONSETYPE_CUSTOM && ResponseData)
 		return static_cast<NetworkResponseDataForCustom*>(ResponseData);
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForSyncResourceData* Leviathan::NetworkResponse::GetResponseDataForSyncResourceResponse()
+DLLEXPORT NetworkResponseDataForSyncResourceData* NetworkResponse::GetResponseDataForSyncResourceResponse()
     const
 {
 	if(ResponseType == NETWORKRESPONSETYPE_SYNCRESOURCEDATA && ResponseData)
@@ -453,13 +475,13 @@ DLLEXPORT NetworkResponseDataForSyncResourceData* Leviathan::NetworkResponse::Ge
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForServerAllow* Leviathan::NetworkResponse::GetResponseDataForServerAllowResponse() const{
+DLLEXPORT NetworkResponseDataForServerAllow* NetworkResponse::GetResponseDataForServerAllowResponse() const{
 	if(ResponseType == NETWORKRESPONSETYPE_SERVERALLOW && ResponseData)
 		return static_cast<NetworkResponseDataForServerAllow*>(ResponseData);
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForCreateNetworkedInput* Leviathan::NetworkResponse::
+DLLEXPORT NetworkResponseDataForCreateNetworkedInput* NetworkResponse::
 GetResponseDataForCreateNetworkedInputResponse() const
 {
 	if(ResponseType == NETWORKRESPONSETYPE_CREATENETWORKEDINPUT && ResponseData)
@@ -467,7 +489,7 @@ GetResponseDataForCreateNetworkedInputResponse() const
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* Leviathan::NetworkResponse::
+DLLEXPORT NetworkResponseDataForUpdateNetworkedInput* NetworkResponse::
 GetResponseDataForUpdateNetworkedInputResponse() const
 {
 	if(ResponseType == NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT && ResponseData)
@@ -475,7 +497,8 @@ GetResponseDataForUpdateNetworkedInputResponse() const
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForEntityDestruction* Leviathan::NetworkResponse::GetResponseDataForEntityDestruction()
+DLLEXPORT NetworkResponseDataForEntityDestruction*
+    NetworkResponse::GetResponseDataForEntityDestruction()
     const
 {
 	if(ResponseType == NETWORKRESPONSETYPE_ENTITY_DESTRUCTION && ResponseData)
@@ -483,21 +506,26 @@ DLLEXPORT NetworkResponseDataForEntityDestruction* Leviathan::NetworkResponse::G
 	return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForInitialEntity* Leviathan::NetworkResponse::GetResponseDataForInitialEntity() const{
+DLLEXPORT NetworkResponseDataForInitialEntity*
+    NetworkResponse::GetResponseDataForInitialEntity() const
+{
 
     if(ResponseType == NETWORKRESPONSETYPE_INITIAL_ENTITY && ResponseData)
         return static_cast<NetworkResponseDataForInitialEntity*>(ResponseData);
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForEntityUpdate* Leviathan::NetworkResponse::GetResponseDataForEntityUpdate() const{
+DLLEXPORT NetworkResponseDataForEntityUpdate*
+    NetworkResponse::GetResponseDataForEntityUpdate() const
+{
 
     if(ResponseType == NETWORKRESPONSETYPE_ENTITY_UPDATE && ResponseData)
         return static_cast<NetworkResponseDataForEntityUpdate*>(ResponseData);
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForEntityConstraint* Leviathan::NetworkResponse::GetResponseDataForEntityConstraint()
+DLLEXPORT NetworkResponseDataForEntityConstraint*
+    NetworkResponse::GetResponseDataForEntityConstraint()
     const
 {
     if(ResponseType == NETWORKRESPONSETYPE_ENTITY_CONSTRAINT && ResponseData)
@@ -505,21 +533,27 @@ DLLEXPORT NetworkResponseDataForEntityConstraint* Leviathan::NetworkResponse::Ge
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForWorldFrozen* Leviathan::NetworkResponse::GetResponseDataForWorldFrozen() const{
+DLLEXPORT NetworkResponseDataForWorldFrozen*
+    NetworkResponse::GetResponseDataForWorldFrozen() const
+{
     
     if(ResponseType == NETWORKRESPONSETYPE_WORLD_FROZEN && ResponseData)
         return static_cast<NetworkResponseDataForWorldFrozen*>(ResponseData);
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForAICacheUpdated* Leviathan::NetworkResponse::GetResponseDataForAICacheUpdated() const{
+DLLEXPORT NetworkResponseDataForAICacheUpdated*
+    NetworkResponse::GetResponseDataForAICacheUpdated() const
+{
 
     if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_UPDATED && ResponseData)
         return static_cast<NetworkResponseDataForAICacheUpdated*>(ResponseData);
     return NULL;
 }
 
-DLLEXPORT NetworkResponseDataForAICacheRemoved* Leviathan::NetworkResponse::GetResponseDataForAICacheRemoved() const{
+DLLEXPORT NetworkResponseDataForAICacheRemoved*
+    NetworkResponse::GetResponseDataForAICacheRemoved() const
+{
 
     if(ResponseType == NETWORKRESPONSETYPE_AI_CACHE_REMOVED && ResponseData)
         return static_cast<NetworkResponseDataForAICacheRemoved*>(ResponseData);
@@ -534,7 +568,8 @@ NetworkResponse::GetResponseDataForDisconnectInput() const
     return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
+DLLEXPORT
+    NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
     sf::Packet &frompacket)
 {
 	// Extract the data from the packet //
@@ -544,27 +579,31 @@ DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponse
         throw InvalidArgument("invalid packet format");
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
-    const std::string &userreadableidentification, const std::string &gamename, const std::string &gameversion,
-    const std::string &leviathanversion) :
-    UserReadableData(userreadableidentification), GameName(gamename), GameVersionString(gameversion),
+DLLEXPORT
+    NetworkResponseDataForIdentificationString::NetworkResponseDataForIdentificationString(
+    const std::string &userreadableidentification, const std::string &gamename,
+    const std::string &gameversion, const std::string &leviathanversion) :
+    UserReadableData(userreadableidentification), GameName(gamename),
+    GameVersionString(gameversion),
     LeviathanVersionString(leviathanversion)
 {
 
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForIdentificationString::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForIdentificationString::AddDataToPacket(sf::Packet &packet){
 	packet << UserReadableData << GameName << GameVersionString << LeviathanVersionString;
 }
 // ------------------ NetworkResponseDataForInvalidRequest ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(
+DLLEXPORT NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(
     NETWORKRESPONSE_INVALIDREASON reason, const std::string &additional /*= std::string()*/) :
     Invalidness(reason), AdditionalInfo(additional)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForInvalidRequest::NetworkResponseDataForInvalidRequest(
+    sf::Packet &frompacket)
+{
 	// Extract the data from the packet //
 	int tmpextract;
 	frompacket >> tmpextract;
@@ -577,15 +616,19 @@ DLLEXPORT Leviathan::NetworkResponseDataForInvalidRequest::NetworkResponseDataFo
         throw InvalidArgument("invalid packet format");
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForInvalidRequest::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForInvalidRequest::AddDataToPacket(sf::Packet &packet){
 	packet << static_cast<int>(Invalidness) << AdditionalInfo;
 }
 // ------------------ NetworkResponseDataForServerStatus ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(const std::string &servername,
-    bool isjoinable, NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin, int players, int maxplayers, int bots,
+DLLEXPORT NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(
+    const std::string &servername,
+    bool isjoinable, NETWORKRESPONSE_SERVERJOINRESTRICT whocanjoin, int players,
+    int maxplayers, int bots,
     NETWORKRESPONSE_SERVERSTATUS currentstatus, int serverflags) :
-    ServerNameString(servername), Joinable(isjoinable), JoinRestriction(whocanjoin), Players(players),
-    MaxPlayers(maxplayers), Bots(bots), ServerStatus(currentstatus), AdditionalFlags(serverflags)
+    ServerNameString(servername), Joinable(isjoinable), JoinRestriction(whocanjoin),
+    Players(players),
+    MaxPlayers(maxplayers), Bots(bots), ServerStatus(currentstatus),
+    AdditionalFlags(serverflags)
 {
 	// Check the length //
 	if(ServerNameString.length() > 100){
@@ -598,7 +641,9 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	}
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForServerStatus::NetworkResponseDataForServerStatus(
+    sf::Packet &frompacket)
+{
 	// Try to reverse the process //
 	int tmpextract;
 
@@ -609,7 +654,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
 	if(ServerNameString.size() > 100){
 
 		ServerNameString.resize(100);
-		Logger::Get()->Warning("NetworkResponseDataForServerStatus: packet had too long server name string");
+		Logger::Get()->Warning("NetworkResponseDataForServerStatus: packet had too "
+            "long server name string");
 	}
 
     JoinRestriction = static_cast<NETWORKRESPONSE_SERVERJOINRESTRICT>(tmpextract);    
@@ -619,12 +665,15 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerStatus::NetworkResponseDataForS
         throw InvalidArgument("invalid packet format");
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForServerStatus::AddDataToPacket(sf::Packet &packet){
-	packet << ServerNameString << Joinable << static_cast<int>(JoinRestriction) << Players << MaxPlayers << Bots <<
+DLLEXPORT void NetworkResponseDataForServerStatus::AddDataToPacket(sf::Packet &packet){
+	packet << ServerNameString << Joinable << static_cast<int>(JoinRestriction) <<
+        Players << MaxPlayers << Bots <<
         static_cast<int>(ServerStatus) << AdditionalFlags;
 }
 // ------------------ NetworkResponseDataForServerDisallow ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(
+    sf::Packet &frompacket)
+{
 	int tmpextract;
 
     frompacket >> tmpextract >> Message;
@@ -638,18 +687,20 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataFo
 	if(Message.size() > 100){
 
 		Message.resize(100);
-		Logger::Get()->Warning("NetworkResponseDataForServerDisallow: packet had too long message string");
+		Logger::Get()->Warning("NetworkResponseDataForServerDisallow: packet had too "
+            "long message string");
 	}
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(
-    NETWORKRESPONSE_INVALIDREASON reason, const std::string &message /*= "Default disallow"*/) :
-    Reason(reason), Message(message)
+DLLEXPORT NetworkResponseDataForServerDisallow::NetworkResponseDataForServerDisallow(
+    NETWORKRESPONSE_INVALIDREASON reason, const std::string &message
+    /*= "Default disallow"*/) :
+    Message(message), Reason(reason)
 {
 	// Check the length //
 	if(Message.length() > 100){
 
-		Logger::Get()->Warning("NetworkResponse: NetworkResponseDataForServerDisallow: message "
+		LOG_WARNING("NetworkResponse: NetworkResponseDataForServerDisallow: message "
             "is too long (is "+Convert::ToString(Message.length())+") : "+
             Message+" will be truncated:");
 		Message.resize(100);
@@ -657,11 +708,13 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerDisallow::NetworkResponseDataFo
 	}
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForServerDisallow::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForServerDisallow::AddDataToPacket(sf::Packet &packet){
 	packet << Reason << Message;
 }
 // ------------------ NetworkResponseDataForServerAllow ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(
+    sf::Packet &frompacket)
+{
 	int tmpextract;
 
     frompacket >> tmpextract >> Message;
@@ -675,11 +728,12 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForSe
 	if(Message.size() > 100){
 
 		Message.resize(100);
-		Logger::Get()->Warning("NetworkResponseDataForServerAllow: packet had too long message string");
+		Logger::Get()->Warning("NetworkResponseDataForServerAllow: packet had too "
+            "long message string");
 	}
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(
+DLLEXPORT NetworkResponseDataForServerAllow::NetworkResponseDataForServerAllow(
     NETWORKRESPONSE_SERVERACCEPTED_TYPE whataccepted, const std::string &message /*= ""*/) :
     ServerAcceptedWhat(whataccepted), Message(message)
 {
@@ -694,69 +748,77 @@ DLLEXPORT Leviathan::NetworkResponseDataForServerAllow::NetworkResponseDataForSe
 	}
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForServerAllow::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForServerAllow::AddDataToPacket(sf::Packet &packet){
 	packet << ServerAcceptedWhat << Message;
 }
 // ------------------ NetworkResponseDataForSyncValData ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSyncValData(NamedVariableList* newddata) :
+DLLEXPORT NetworkResponseDataForSyncValData::NetworkResponseDataForSyncValData(
+    NamedVariableList* newddata) :
     SyncValueData(newddata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForSyncValData::NetworkResponseDataForSyncValData(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForSyncValData::NetworkResponseDataForSyncValData(
+    sf::Packet &frompacket)
+{
 	// Create new value from the packet //
 	SyncValueData = std::shared_ptr<NamedVariableList>(new NamedVariableList(frompacket));
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForSyncValData::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForSyncValData::AddDataToPacket(sf::Packet &packet){
 	// Pass the data to the packet //
 	SyncValueData->AddDataToPacket(packet);
 }
 // ------------------ NetworkResponseDataForSyncDataEnd ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSyncDataEnd(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSyncDataEnd(
+    sf::Packet &frompacket)
+{
 	if(!(frompacket >> Succeeded)){
         
         throw InvalidArgument("invalid packet format");
 	}
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSyncDataEnd(bool succeeded) :
-    Succeeded(succeeded)
+DLLEXPORT NetworkResponseDataForSyncDataEnd::NetworkResponseDataForSyncDataEnd(
+    bool succeeded) : Succeeded(succeeded)
 {
 
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForSyncDataEnd::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForSyncDataEnd::AddDataToPacket(sf::Packet &packet){
 	packet << Succeeded;
 }
 // ------------------ NetworkResponseDataForGameSpecific ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(GameSpecificPacketData* newdpacketdata)
+DLLEXPORT NetworkResponseDataForCustom::NetworkResponseDataForCustom(
+    GameSpecificPacketData* newdpacketdata)
     : ActualPacketData(newdpacketdata)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(
+DLLEXPORT NetworkResponseDataForCustom::NetworkResponseDataForCustom(
     BaseGameSpecificResponsePacket* newddata) : 
 	ActualPacketData(new GameSpecificPacketData(newddata))
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForCustom::NetworkResponseDataForCustom(sf::Packet &frompacket){
-	ActualPacketData = GameSpecificPacketHandler::Get()->ReadGameSpecificPacketFromPacket(true, frompacket);
+DLLEXPORT NetworkResponseDataForCustom::NetworkResponseDataForCustom(sf::Packet &frompacket){
+	ActualPacketData =
+        GameSpecificPacketHandler::Get()->ReadGameSpecificPacketFromPacket(true, frompacket);
 	if(!ActualPacketData){
 
         throw InvalidArgument("invalid packet format for user defined response");
 	}
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForCustom::AddDataToPacket(sf::Packet &packet){
-	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(), packet);
+DLLEXPORT void NetworkResponseDataForCustom::AddDataToPacket(sf::Packet &packet){
+	GameSpecificPacketHandler::Get()->PassGameSpecificDataToPacket(ActualPacketData.get(),
+        packet);
 }
 // ------------------ NetworkResponseDataForCustom ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseDataForSyncResourceData(
+DLLEXPORT NetworkResponseDataForSyncResourceData::NetworkResponseDataForSyncResourceData(
     sf::Packet &frompacket)
 {
 	
@@ -766,19 +828,20 @@ DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseData
 	}
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForSyncResourceData::NetworkResponseDataForSyncResourceData(
+DLLEXPORT NetworkResponseDataForSyncResourceData::NetworkResponseDataForSyncResourceData(
     const string &containeddata) : 
 	OurCustomData(containeddata)
 {
 
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForSyncResourceData::AddDataToPacket(sf::Packet &packet)
+DLLEXPORT void NetworkResponseDataForSyncResourceData::AddDataToPacket(sf::Packet &packet)
 {
 	packet << OurCustomData;
 }
 // ------------------ NetworkResponseDataForCreateNetworkedInput ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForCreateNetworkedInput::NetworkResponseDataForCreateNetworkedInput(
+DLLEXPORT
+    NetworkResponseDataForCreateNetworkedInput::NetworkResponseDataForCreateNetworkedInput(
     sf::Packet &frompacket)
 {
 	// Load the packet from the packet //
@@ -789,7 +852,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForCreateNetworkedInput::NetworkResponse
 	DataForObject.append(tmpstr.c_str(), tmpstr.size());
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForCreateNetworkedInput::NetworkResponseDataForCreateNetworkedInput(
+DLLEXPORT
+    NetworkResponseDataForCreateNetworkedInput::NetworkResponseDataForCreateNetworkedInput(
     NetworkedInput &tosend)
 {
 	// Copy the data to our packet //
@@ -797,12 +861,14 @@ DLLEXPORT Leviathan::NetworkResponseDataForCreateNetworkedInput::NetworkResponse
 	tosend.AddFullDataToPacket(DataForObject);
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForCreateNetworkedInput::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForCreateNetworkedInput::AddDataToPacket(sf::Packet &packet){
 
-	packet << string(reinterpret_cast<const char*>(DataForObject.getData()), DataForObject.getDataSize());
+	packet << string(reinterpret_cast<const char*>(
+            DataForObject.getData()), DataForObject.getDataSize());
 }
 // ------------------ NetworkResponseDataForUpdateNetworkedInput ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
+DLLEXPORT
+    NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
     sf::Packet &frompacket)
 {
 	// First the ID //
@@ -819,7 +885,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponse
 	UpdateData.append(tmpstr.c_str(), tmpstr.size());
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
+DLLEXPORT
+    NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
     NetworkedInput &object)
 {
 	// Get the ID first //
@@ -829,7 +896,8 @@ DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponse
 	object.AddChangesToPacket(UpdateData);
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
+DLLEXPORT
+    NetworkResponseDataForUpdateNetworkedInput::NetworkResponseDataForUpdateNetworkedInput(
     const NetworkResponseDataForUpdateNetworkedInput &other) :
     InputID(other.InputID)
 {
@@ -837,11 +905,14 @@ DLLEXPORT Leviathan::NetworkResponseDataForUpdateNetworkedInput::NetworkResponse
     UpdateData.append(other.UpdateData.getData(), other.UpdateData.getDataSize());
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForUpdateNetworkedInput::AddDataToPacket(sf::Packet &packet){
-	packet << InputID << string(reinterpret_cast<const char*>(UpdateData.getData()), UpdateData.getDataSize());
+DLLEXPORT void NetworkResponseDataForUpdateNetworkedInput::AddDataToPacket(sf::Packet &packet){
+	packet << InputID << string(reinterpret_cast<const char*>(
+            UpdateData.getData()), UpdateData.getDataSize());
 }
 // ------------------ NetworkResponseDataForInitialEntity ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(
+    sf::Packet &frompacket)
+{
     // Do the reverse of AddDataToPacket... //
     uint32_t size;
     
@@ -868,14 +939,14 @@ DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataFor
     }
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(int worldid,
+DLLEXPORT NetworkResponseDataForInitialEntity::NetworkResponseDataForInitialEntity(int worldid,
     std::unique_ptr<sf::Packet> &entity1data) :
     WorldID(worldid), EntityData(1)
 {
     EntityData[0] = std::shared_ptr<sf::Packet>(entity1data.release());
 }
         
-DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForInitialEntity::AddDataToPacket(sf::Packet &packet){
     // First put our world id //
     packet << WorldID;
 
@@ -885,7 +956,8 @@ DLLEXPORT void Leviathan::NetworkResponseDataForInitialEntity::AddDataToPacket(s
 
     for(uint32_t i = 0; i < size; i++){
 
-        const std::string tmpstr(reinterpret_cast<const char*>(EntityData[i]->getData()), EntityData[i]->getDataSize());
+        const std::string tmpstr(reinterpret_cast<const char*>(
+                EntityData[i]->getData()), EntityData[i]->getDataSize());
         
         // Warn if it is quite large //
         if(tmpstr.size() >= 500){
@@ -910,8 +982,9 @@ DLLEXPORT std::shared_ptr<sf::Packet>  NetworkResponseDataForInitialEntity::GetD
 DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
     int worldid, int constraintid, int entity1, int entity2, bool create,
     ENTITY_CONSTRAINT_TYPE type, std::shared_ptr<sf::Packet> &data) :
-    WorldID(worldid), ConstraintID(constraintid), EntityID1(entity1), EntityID2(entity2),
-    Create(create), Type(type), ConstraintData(data)
+    Create(create), WorldID(worldid), ConstraintID(constraintid),
+    EntityID1(entity1), EntityID2(entity2),
+    Type(type), ConstraintData(data)
 {
 
 }
@@ -919,8 +992,8 @@ DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityCo
 DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityConstraint(
     int worldid, int constraintid, ObjectID entity1, ObjectID entity2, bool create,
     ENTITY_CONSTRAINT_TYPE type) :
-    WorldID(worldid), ConstraintID(constraintid), EntityID1(entity1), EntityID2(entity2),
-    Create(create), Type(type)
+    Create(create), WorldID(worldid), ConstraintID(constraintid),
+    EntityID1(entity1), EntityID2(entity2), Type(type)
 {
 
 }
@@ -950,7 +1023,7 @@ DLLEXPORT NetworkResponseDataForEntityConstraint::NetworkResponseDataForEntityCo
     }
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacket(
+DLLEXPORT void NetworkResponseDataForEntityConstraint::AddDataToPacket(
     sf::Packet &packet)
 {
 
@@ -978,14 +1051,16 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityConstraint::AddDataToPacke
 }
 
 // ------------------ NetworkResponseDataForWorldFrozen ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForWorldFrozen::NetworkResponseDataForWorldFrozen(int worldid, bool frozen,
-    int ontick) :
+DLLEXPORT NetworkResponseDataForWorldFrozen::NetworkResponseDataForWorldFrozen(
+    int worldid, bool frozen, int ontick) :
     WorldID(worldid), Frozen(frozen), TickNumber(ontick)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForWorldFrozen::NetworkResponseDataForWorldFrozen(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForWorldFrozen::NetworkResponseDataForWorldFrozen(
+    sf::Packet &frompacket)
+{
 
     frompacket >> WorldID >> Frozen >> TickNumber;
 
@@ -994,20 +1069,23 @@ DLLEXPORT Leviathan::NetworkResponseDataForWorldFrozen::NetworkResponseDataForWo
 
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForWorldFrozen::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForWorldFrozen::AddDataToPacket(sf::Packet &packet){
 
     packet << WorldID << Frozen << TickNumber;
 }
 // ------------------ NetworkResponseDataForEntityUpdate ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(
-    int worldid, int entityid, int ticknumber, int referencetick, std::shared_ptr<sf::Packet> data) :
-    WorldID(worldid), EntityID(entityid), UpdateData(data), TickNumber(ticknumber),
-    ReferenceTick(referencetick)
+DLLEXPORT NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(
+    int worldid, int entityid, int ticknumber, int referencetick,
+    std::shared_ptr<sf::Packet> data) :
+    WorldID(worldid), EntityID(entityid), TickNumber(ticknumber),
+    ReferenceTick(referencetick), UpdateData(data)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForEntityUpdate::NetworkResponseDataForEntityUpdate(
+    sf::Packet &frompacket)
+{
 
     frompacket >> WorldID >> EntityID >> TickNumber >> ReferenceTick;
     
@@ -1022,11 +1100,12 @@ DLLEXPORT Leviathan::NetworkResponseDataForEntityUpdate::NetworkResponseDataForE
     UpdateData->append(tmpstr.c_str(), tmpstr.size());
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForEntityUpdate::AddDataToPacket(sf::Packet &packet){
 
     packet << WorldID << EntityID << TickNumber << ReferenceTick;
 
-    const std::string tmpstr(reinterpret_cast<const char*>(UpdateData->getData()), UpdateData->getDataSize());
+    const std::string tmpstr(reinterpret_cast<const char*>(
+            UpdateData->getData()), UpdateData->getDataSize());
         
     // Warn if it is quite large //
     if(tmpstr.size() >= 500){
@@ -1037,13 +1116,13 @@ DLLEXPORT void Leviathan::NetworkResponseDataForEntityUpdate::AddDataToPacket(sf
     packet << tmpstr;
 }
 // ------------------ NetworkResponseDataForEntityDestruction ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForEntityDestruction::NetworkResponseDataForEntityDestruction(int worldid,
-    int entityid) : WorldID(worldid), EntityID(entityid)
+DLLEXPORT NetworkResponseDataForEntityDestruction::NetworkResponseDataForEntityDestruction(
+    int worldid, int entityid) : WorldID(worldid), EntityID(entityid)
 {
 
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForEntityDestruction::NetworkResponseDataForEntityDestruction(
+DLLEXPORT NetworkResponseDataForEntityDestruction::NetworkResponseDataForEntityDestruction(
     sf::Packet &frompacket)
 {
     frompacket >> WorldID >> EntityID;
@@ -1052,12 +1131,12 @@ DLLEXPORT Leviathan::NetworkResponseDataForEntityDestruction::NetworkResponseDat
         throw InvalidArgument("invalid packet format");
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForEntityDestruction::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForEntityDestruction::AddDataToPacket(sf::Packet &packet){
 
     packet << WorldID << EntityID;
 }
 // ------------------ NetworkResponseDataForAICacheUpdated ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(
+DLLEXPORT NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(
     std::shared_ptr<NamedVariableList> variable) :
     Variable(variable)
 {
@@ -1065,7 +1144,9 @@ DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataFo
         throw InvalidArgument("invalid packet format");
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForAICacheUpdated::NetworkResponseDataForAICacheUpdated(
+    sf::Packet &frompacket)
+{
 
     Variable = make_shared<NamedVariableList>(frompacket);
 
@@ -1073,18 +1154,20 @@ DLLEXPORT Leviathan::NetworkResponseDataForAICacheUpdated::NetworkResponseDataFo
         throw InvalidArgument("invalid packet format");
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForAICacheUpdated::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForAICacheUpdated::AddDataToPacket(sf::Packet &packet){
 
     Variable->AddDataToPacket(packet);
 }
 // ------------------ NetworkResponseDataForAICacheRemoved ------------------ //
-DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(const std::string &name) :
-    Name(name)
+DLLEXPORT NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(
+    const std::string &name) : Name(name)
 {
     
 }
 
-DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(sf::Packet &frompacket){
+DLLEXPORT NetworkResponseDataForAICacheRemoved::NetworkResponseDataForAICacheRemoved(
+    sf::Packet &frompacket)
+{
 
     if(!(frompacket >> Name)){
 
@@ -1092,25 +1175,28 @@ DLLEXPORT Leviathan::NetworkResponseDataForAICacheRemoved::NetworkResponseDataFo
     }
 }
 
-DLLEXPORT void Leviathan::NetworkResponseDataForAICacheRemoved::AddDataToPacket(sf::Packet &packet){
+DLLEXPORT void NetworkResponseDataForAICacheRemoved::AddDataToPacket(sf::Packet &packet){
 
     packet << Name;
     
     // Warn if it is quite large //
     if(Name.size() >= 800){
 
-        Logger::Get()->Warning("Sending a large AI cache remove, string is over 800 elements long");
+        Logger::Get()->Warning(
+            "Sending a large AI cache remove, string is over 800 elements long");
     }
 }
 // ------------------ NetworkResponseDataForDisconnectInput ------------------ //
-NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(int inputid,
-    int ownerid) :
-    OwnerID(ownerid), InputID(inputid)
+NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(
+    int inputid, int ownerid) :
+    InputID(inputid), OwnerID(ownerid)
 {
 
 }
 
-NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(sf::Packet &packet){
+NetworkResponseDataForDisconnectInput::NetworkResponseDataForDisconnectInput(
+    sf::Packet &packet)
+{
 
     packet << InputID << OwnerID;
 }

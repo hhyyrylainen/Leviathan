@@ -8,21 +8,22 @@
 #include "Threading/ThreadingManager.h"
 #include "NetworkServerInterface.h"
 #include "../Utility/Convert.h"
+#include "Exceptions.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFactory* objectcreater,
-    NetworkClientInterface* isclient) : 
-	LastInputSourceID(2500), IsOnTheServer(false), ClientInterface(isclient), ServerInterface(NULL),
-    _NetworkInputFactory(objectcreater)
+DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(
+    NetworkInputFactory* objectcreater, NetworkClientInterface* isclient) : 
+	IsOnTheServer(false), LastInputSourceID(2500),
+    _NetworkInputFactory(objectcreater), ClientInterface(isclient), ServerInterface(NULL)
 {
     Staticinstance = this;
 }
 
-DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(NetworkInputFactory* objectcreater,
-    NetworkServerInterface* isserver) : 
-	LastInputSourceID(2500), IsOnTheServer(true), ClientInterface(NULL), ServerInterface(isserver),
-    _NetworkInputFactory(objectcreater)
+DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(
+    NetworkInputFactory* objectcreater, NetworkServerInterface* isserver) : 
+	IsOnTheServer(true), LastInputSourceID(2500), 
+    _NetworkInputFactory(objectcreater), ClientInterface(NULL), ServerInterface(isserver)
 {
     Staticinstance = this;
 }
@@ -547,8 +548,8 @@ bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(Lock &guard,
 	return true;
 }
 // ------------------------------------ //
-std::unique_ptr<NetworkedInput> NetworkInputFactory::CreateNewInstanceForLocalStart(int inputid,
-    bool isclient)
+std::unique_ptr<NetworkedInput> NetworkInputFactory::CreateNewInstanceForLocalStart(
+    int inputid, bool isclient)
 {
     // This should not be called, the child class should hide this or not call this variant
     DEBUG_BREAK;

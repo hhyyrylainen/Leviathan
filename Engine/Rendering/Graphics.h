@@ -41,14 +41,14 @@ namespace Leviathan{
 
 		bool InitializeOgre(AppDef* appdef);
 		// ------------------------ //
-		bool Initialized;
+		bool Initialized = false;
 
-		AppDef* AppDefinition;
+		AppDef* AppDefinition = nullptr;
 
 		// OGRE //
         std::unique_ptr<Ogre::Root> ORoot;
-		Ogre::Log* OLog;
-		Rendering::FontManager* Fonts;
+		Ogre::Log* OLog = nullptr;
+		Rendering::FontManager* Fonts = nullptr;
 
 		// static //
 		static Graphics* Staticaccess;

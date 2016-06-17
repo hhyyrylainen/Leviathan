@@ -20,11 +20,12 @@
 #define NEWTON_DEFAULT_PHYSICS_FPS		150.f
 #define NEWTON_FPS_IN_MICROSECONDS		(1000000.0f/NEWTON_DEFAULT_PHYSICS_FPS)
 #define NEWTON_TIMESTEP					(NEWTON_FPS_IN_MICROSECONDS/1000000.0f)
-
+ 
 
 namespace Leviathan{
 
-    int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle, int bodyCount);
+    int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,
+        int bodyCount);
     
 	class PhysicalWorld{
         friend int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void*
@@ -53,8 +54,8 @@ namespace Leviathan{
 	protected:
 
         //! Total amount of microseconds required to be simulated
-		int64_t PassedTimeTotal;
-        int64_t LastSimulatedTime;
+		int64_t PassedTimeTotal = 0;
+        int64_t LastSimulatedTime = 0;
 
 		NewtonWorld* World;
 		GameWorld* OwningWorld;
@@ -64,7 +65,7 @@ namespace Leviathan{
 
         //! Used for resimulation
         //! \todo Potentially allow this to be a vector
-        NewtonBody* ResimulatedBody;
+        NewtonBody* ResimulatedBody = nullptr;
 	};
 
 }

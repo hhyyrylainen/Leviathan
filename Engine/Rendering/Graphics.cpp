@@ -22,10 +22,9 @@ using namespace std;
 // ------------------------------------ //
 #define OGRE_ALLOW_USEFULLOUTPUT
 
-DLLEXPORT Leviathan::Graphics::Graphics() : ORoot(nullptr), Fonts(NULL), AppDefinition(NULL)
+DLLEXPORT Leviathan::Graphics::Graphics()
 {
 	Staticaccess = this;
-	Initialized = false;
 }
 Graphics::~Graphics(){
 }
@@ -100,11 +99,12 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ORoot = std::unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 	// Still waiting for the GL3Plus render system to become usable... //
-	vector<Ogre::String> PluginNames = boost::assign::list_of("RenderSystem_GL"/*3Plus")*/)
+	vector<Ogre::String> PluginNames = { "RenderSystem_GL"/*3Plus")*/,
 #ifdef _WIN32
-		("RenderSystem_Direct3D11")
+		("RenderSystem_Direct3D11"),
 #endif
 		("Plugin_ParticleFX")
+            };
 		// This seems no longer be available //
 		/*("Plugin_CgProgramManager")*/
 		/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
@@ -147,8 +147,9 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// Create the regular expression it must match //
 	string rendersystemname;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(), "RenderSystemName",
-        rendersystemname, "OpenGL.*", true, "Graphics: Init: no selected render system,");
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(appdef->GetValues(),
+        "RenderSystemName", rendersystemname, "OpenGL.*",
+        Logger::Get(), "Graphics: Init: no selected render system,");
 
 	regex rendersystemnameregex(rendersystemname, regex_constants::ECMAScript |
         regex_constants::icase);
@@ -172,8 +173,9 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	if(!selectedrendersystem){
 		// Select the first one since none matched //
-		Logger::Get()->Warning("Graphics: Init: no render system matched regex, choosing default: "
-            +RSystemList[0]->getName());
+		Logger::Get()->Warning("Graphics: Init: no render system matched regex, "
+            "choosing default: " + RSystemList[0]->getName());
+        
 		selectedrendersystem = RSystemList[0];
 	}
 

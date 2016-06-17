@@ -4,7 +4,6 @@
 #include <exception>
 #include "ErrorReporter.h"
 
-
 namespace Leviathan{
 
     //! \brief Base class for all exceptions thrown by Leviathan

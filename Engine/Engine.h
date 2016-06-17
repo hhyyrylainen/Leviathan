@@ -38,7 +38,9 @@ namespace Leviathan{
 
 		//! \brief Checks if PreRelease is done and Release can be called
 		//! \pre PreRelease is called
-		DLLEXPORT bool HasPreReleaseBeenDone() const;
+		DLLEXPORT inline bool HasPreReleaseBeenDone() const{
+            return PreReleaseDone;
+        }
 
         //! \brief Calculates how long has elapsed since the last tick
         //! \return The time in milliseconds

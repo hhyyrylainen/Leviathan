@@ -6,47 +6,50 @@
 #include "ForwardDeclarations.h"
 #include "Entities/EntityCommon.h"
 
-//! Defines the networking mode
-//! In this mode the server sends snapshots of moving entities to all clients which then interpolate
-//! between states. Input will not be replicated on all clients. Clients locally simulate their own
-//! inputs. Server uses resimulation to simulate clients taking actions in the past.
+//! Defines the networking mode In this mode the server sends
+//! snapshots of moving entities to all clients which then interpolate
+//! between states. Input will not be replicated on all
+//! clients. Clients locally simulate their own inputs. Server uses
+//! resimulation to simulate clients taking actions in the past.
 #define NETWORK_USE_SNAPSHOTS
 
 #include <string>
 
 namespace Leviathan{
 
-    //! Number of milliseconds between engine and world ticks
-    static const int TICKSPEED = 50;
+//! Number of milliseconds between engine and world ticks
+static const int TICKSPEED = 50;
 
-    //! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
-    static const int INTERPOLATION_TIME  = 100;
+//! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
+static const int INTERPOLATION_TIME  = 100;
     
-    //! For checking vector normalization
-    static const float NORMALIZATION_TOLERANCE = 1e-6f;
+//! For checking vector normalization
+static const float NORMALIZATION_TOLERANCE = 1e-6f;
 
 #ifdef LEVIATHAN_VERSION
-    static const double VERSION = LEVIATHAN_VERSION;
-    static const std::string VERSIONS = LEVIATHAN_VERSION_ANSIS;
+static const double VERSION = LEVIATHAN_VERSION;
+static const std::string VERSIONS = LEVIATHAN_VERSION_ANSIS;
 
-    static const int VERSION_STABLE = LEVIATHAN_VERSION_STABLE;
-    static const int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
-    static const int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
-    static const int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
+static const int VERSION_STABLE = LEVIATHAN_VERSION_STABLE;
+static const int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
+static const int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
+static const int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
 #endif //LEVIATHAN_VERSION
 
+constexpr auto MICROSECONDS_IN_SECOND = 1000000;
+
 #ifndef PI
-    static const float PI = 3.14159265f;
+static const float PI = 3.14159265f;
 #endif //PI
-    static const float DEGREES_TO_RADIANS = PI/180.f;
-    static const float EPSILON = 0.00000001f;
+static const float DEGREES_TO_RADIANS = PI/180.f;
+static const float EPSILON = 0.00000001f;
 }
 
 // Logging macros //
-LOG_INFO(x) Logger::Get()->Info(x);
-LOG_WARNING(x) Logger::Get()->Warning(x);
-LOG_ERROR(x) Logger::Get()->Error(x);
-LOG_WRITE(x) Logger::Get()->Write(x);
+#define LOG_INFO(x) Logger::Get()->Info(x);
+#define LOG_WARNING(x) Logger::Get()->Warning(x);
+#define LOG_ERROR(x) Logger::Get()->Error(x);
+#define LOG_WRITE(x) Logger::Get()->Write(x);
 
 
 #ifdef _MSC_VER
@@ -74,10 +77,12 @@ LOG_WRITE(x) Logger::Get()->Write(x);
 #define SAFE_DELETE( x ) {if(x){delete (x);(x)=NULL;}}
 #define SAFE_DELETE_ARRAY( x ) {if(x){delete[] (x);(x)=NULL;}}
 
-#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter) if(*iter){ (*iter)->Release(); } \
+#define SAFE_RELEASE_VECTOR(x) {for(auto iter = x.begin(); iter != x.end(); ++iter) \
+    if(*iter){ (*iter)->Release(); } \
         x.clear();}
 
-#define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){if(x[vdind]){delete x[vdind];}}; \
+#define SAFE_DELETE_VECTOR(x) for(size_t vdind = 0; vdind < x.size(); ++vdind){ \
+ if(x[vdind]){delete x[vdind];}}; \
     x.clear();
 
 

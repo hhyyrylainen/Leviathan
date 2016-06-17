@@ -598,7 +598,7 @@ namespace Leviathan{
 		NETWORKRESPONSETYPE ResponseType;
 
 		// Holds the pointer to the struct that holds the response data //
-		BaseNetworkResponseData* ResponseData;
+		BaseNetworkResponseData* ResponseData = nullptr;
 	};
 
 }

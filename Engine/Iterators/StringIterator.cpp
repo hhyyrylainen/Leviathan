@@ -6,37 +6,43 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT StringIterator::StringIterator() :
-    CurrentFlags(0), HandlesDelete(false), DataIterator(NULL), CurrentStored(false)
+DLLEXPORT StringIterator::StringIterator()
 {
 
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator, bool TakesOwnership) : CurrentFlags(0), 
-	HandlesDelete(TakesOwnership), DataIterator(iterator), CurrentStored(false), CurrentCharacter(-1)
+DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator,
+    bool TakesOwnership) : 
+	HandlesDelete(TakesOwnership), DataIterator(iterator)
 {
 
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(const string &text) : CurrentFlags(0), HandlesDelete(true), 
-	DataIterator(new StringClassDataIterator<string>(text)), CurrentStored(false), CurrentCharacter(-1)
+DLLEXPORT Leviathan::StringIterator::StringIterator(const string &text) :
+    HandlesDelete(true), 
+	DataIterator(new StringClassDataIterator<string>(text))
 {
 
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring &text) : CurrentFlags(0), HandlesDelete(true), 
-	DataIterator(new StringClassDataIterator<wstring>(text)), CurrentStored(false), CurrentCharacter(-1)
+DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring &text) :
+    HandlesDelete(true), 
+	DataIterator(new StringClassDataIterator<wstring>(text))
 {
 
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring* text) : CurrentFlags(0), HandlesDelete(true), 
-	DataIterator(new StringClassPointerIterator<wstring>(text)), CurrentStored(false), CurrentCharacter(-1){
+DLLEXPORT Leviathan::StringIterator::StringIterator(const wstring* text) :
+    HandlesDelete(true), 
+	DataIterator(new StringClassPointerIterator<wstring>(text))
+{
 
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(const string* text) : CurrentFlags(0), HandlesDelete(true), 
-	DataIterator(new StringClassPointerIterator<string>(text)), CurrentStored(false), CurrentCharacter(-1){
+DLLEXPORT Leviathan::StringIterator::StringIterator(const string* text) :
+    HandlesDelete(true), 
+	DataIterator(new StringClassPointerIterator<string>(text))
+{
 
 }
 

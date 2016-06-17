@@ -6,6 +6,10 @@
 #include "Window.h"
 #include "Networking/NetworkHandler.h"
 
+#ifdef _WIN32
+#include "WindowsInclude.h"
+#endif // _WIN32
+
 namespace Leviathan{
 
 	struct WindowDataDetails{
@@ -126,22 +130,22 @@ namespace Leviathan{
 #endif
 		MasterServerInformation MasterServerInfo;
 
-		NetworkInterface* _NetworkInterface;
+		NetworkInterface* _NetworkInterface = nullptr;
 
 		// details used to create a window //
 		WindowDataDetails WDetails;
 
 		// Game variables //
-		GameConfiguration* _GameConfiguration;
-		KeyConfiguration* _KeyConfiguration;
+		GameConfiguration* _GameConfiguration = nullptr;
+		KeyConfiguration* _KeyConfiguration = nullptr;
 
 		std::string LogFile;
-		Logger* Mainlog;
+		Logger* Mainlog = nullptr;
 
 
 		//! Controls whether the destructor deletes Mainlog
 		//! \note Used to not delete loggers that weren't created by this instance
-		bool DeleteLog;
+		bool DeleteLog = false;
 
 		std::string LeviathanVersion;
 		std::string GameVersion;

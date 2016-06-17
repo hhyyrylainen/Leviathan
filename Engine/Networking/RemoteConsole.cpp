@@ -287,9 +287,10 @@ Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const std::st
 
 }
 // ------------------ RemoteConsoleSession ------------------ //
-Leviathan::RemoteConsoleSession::RemoteConsoleSession(const std::string &name, ConnectionInfo* connection, int token) :
-    ConnectionName(name), SessionToken(token), CorrespondingConnection(connection), TerminateSession(false),
-    IsOpened(true)
+Leviathan::RemoteConsoleSession::RemoteConsoleSession(const std::string &name,
+    ConnectionInfo* connection, int token) :
+    ConnectionName(name), SessionToken(token), CorrespondingConnection(connection),
+    IsOpened(true), TerminateSession(false)
 {
 
 }

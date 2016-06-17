@@ -23,7 +23,8 @@ namespace Leviathan{
 #define ACKKEEPALIVE			200
 
 
-//! \brief The amount of received packet ids to keep in memory, these ids are used to discard duplicate packets
+//! \brief The amount of received packet ids to keep in memory,
+//! these ids are used to discard duplicate packets
 #define KEEP_IDS_FOR_DISCARD	40
 
     //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
@@ -111,7 +112,7 @@ namespace Leviathan{
         //! the round-trip time
         //! \note This will only be set if this value is set to 1 before the packet is sent
         //! \note This value is only valid if the packet wasn't lost (failed requests have this unset)
-        std::atomic<int64_t> ConfirmReceiveTime;
+        std::atomic<int64_t> ConfirmReceiveTime { 0 };
 		int ExpectedResponseID;
 
 
@@ -123,8 +124,8 @@ namespace Leviathan{
         //! Locked when Callback is being changed or while it is executing
         Mutex CallbackMutex;
 
-        std::atomic_bool IsDone;
-        bool Succeeded;
+        std::atomic<bool> IsDone { false };
+        bool Succeeded = false;
         
 		// This is stored for resending the data //
         //! \todo Store as a pointer

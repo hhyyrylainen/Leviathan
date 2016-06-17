@@ -12,9 +12,9 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-ScriptModule::ScriptModule(asIScriptEngine* engine, const std::string &name, int id, const string &source) :
-    FuncParameterInfos(), ScriptBuilder(new CScriptBuilder()), Source(source), ID(id), Name(name),
-    ScriptState(SCRIPTBUILDSTATE_EMPTY), ASModule(NULL)
+ScriptModule::ScriptModule(asIScriptEngine* engine, const std::string &name, int id,
+    const string &source) :
+    Name(name), Source(source), ID(id), ScriptBuilder(new CScriptBuilder())
 {
 	{
 		Lock lock(ModuleBuildingMutex);
@@ -146,7 +146,7 @@ void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* par
 		// generic pointer type, store name and stuff //
 
 		// get name from engine //
-		asIObjectType* typedefinition = GetModule()->GetEngine()->GetObjectTypeById(typeofas);
+		asITypeInfo* typedefinition = GetModule()->GetEngine()->GetTypeInfoById(typeofas);
 
 		*paramdecl = typedefinition->GetName();
 
@@ -768,7 +768,7 @@ void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(const string &file){
 
 
 	// Add it as it isn't there yet //
-	AlreadyMonitoredFiles.push_back(move(make_unique<AutomonitoredFile>(file)));
+	AlreadyMonitoredFiles.push_back(make_unique<AutomonitoredFile>(file));
 }
 
 void Leviathan::ScriptModule::_FileChanged(const std::string &file,
@@ -861,8 +861,8 @@ Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, std:
 
 Leviathan::ValidListenerData::ValidListenerData(asIScriptFunction* funcptr, std::string* name,
     std::string* metadataend, std::string* generictypename) 
-	: FuncPtr(funcptr), ListenerName(name), GenericTypeName(generictypename),
-      RestOfMeta(metadataend)
+	: FuncPtr(funcptr), ListenerName(name), 
+      RestOfMeta(metadataend), GenericTypeName(generictypename)
 {
 	// increase references //
 	FuncPtr->AddRef();

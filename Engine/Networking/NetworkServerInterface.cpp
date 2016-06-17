@@ -13,12 +13,14 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(int maxplayers, const std::string &servername, 
-	NETWORKRESPONSE_SERVERJOINRESTRICT restricttype /*= NETWORKRESPONSE_SERVERJOINRESTRICT_NONE*/, int additionalflags
-    /*= 0*/) :
-    MaxPlayers(maxplayers), ServerName(servername), JoinRestrict(restricttype), ExtraServerFlags(additionalflags),
-    AllowJoin(false), ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING), _CommandHandler(new CommandHandler(this)),
-    PotentialInputHandler(NULL)
+DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(
+    int maxplayers, const std::string &servername, 
+	NETWORKRESPONSE_SERVERJOINRESTRICT restricttype
+    /*= NETWORKRESPONSE_SERVERJOINRESTRICT_NONE*/, int additionalflags /*= 0*/) :
+    MaxPlayers(maxplayers), ServerName(servername), JoinRestrict(restricttype),
+    ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING),
+    ExtraServerFlags(additionalflags),
+    _CommandHandler(new CommandHandler(this))
 {
 
 }

@@ -201,7 +201,7 @@ DLLEXPORT Physics::ApplyForceInfo::ApplyForceInfo(const ApplyForceInfo &other) :
     MultiplyByMass(other.MultiplyByMass), Callback(other.Callback)
 {
     if(other.OptionalName)
-        OptionalName = move(make_unique<string>(*other.OptionalName));
+        OptionalName = make_unique<string>(*other.OptionalName);
 }
 
 DLLEXPORT Physics::ApplyForceInfo::ApplyForceInfo(ApplyForceInfo &&other) :
@@ -215,7 +215,7 @@ DLLEXPORT Physics::ApplyForceInfo& Physics::ApplyForceInfo::operator =(
     const Physics::ApplyForceInfo &other){
 
     if(other.OptionalName)
-        OptionalName = move(make_unique<string>(*other.OptionalName));
+        OptionalName = make_unique<string>(*other.OptionalName);
 
     MultiplyByMass = other.MultiplyByMass;
     Callback = other.Callback;
@@ -224,9 +224,9 @@ DLLEXPORT Physics::ApplyForceInfo& Physics::ApplyForceInfo::operator =(
 }
 // ------------------------------------ //
 DLLEXPORT Physics::Physics(const Arguments &args) :
-    World(args.world), _Position(args.updatepos), UpdateSendable(args.updatesendable), Mass(0.f),
-    ApplyGravity(true), AppliedPhysicalMaterial(0), Collision(nullptr), Body(nullptr),
-    ThisEntity(args.id)
+    Collision(nullptr), Body(nullptr), World(args.world),
+    _Position(args.updatepos), ThisEntity(args.id),
+    UpdateSendable(args.updatesendable)
 {
 
 }
@@ -261,9 +261,9 @@ void Physics::PhysicsMovedEvent(const NewtonBody* const body,
 {
 
 	// first create Ogre 4x4 matrix from the matrix //
-	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6],
-        matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12], matrix[13],
-        matrix[14], matrix[15]);
+	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5],
+        matrix[6], matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12],
+        matrix[13], matrix[14], matrix[15]);
 
 	// needs to convert from d3d style matrix to OpenGL style matrix //
     // TODO: do this transpose in the mat constructor
@@ -331,13 +331,15 @@ void Physics::DestroyBodyCallback(const NewtonBody* body){
     // tmp->Collision = nullptr;
 }
 // ------------------------------------ //
-DLLEXPORT void Physics::GiveImpulse(const Float3 &deltaspeed, const Float3 &point /*= Float3(0)*/){
+DLLEXPORT void Physics::GiveImpulse(const Float3 &deltaspeed, const Float3 &point
+    /*= Float3(0)*/)
+{
     GUARD_LOCK();
 
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
     
-		NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X);
+    NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X);
 }
 
 DLLEXPORT void Physics::SetVelocity(Lock &guard, const Float3 &velocities){
@@ -629,13 +631,13 @@ DLLEXPORT void Physics::InterpolatePhysicalState(PhysicalDeltaState &first,
 // ------------------ Received ------------------ //
 Received::StoredState::StoredState(std::shared_ptr<ObjectDeltaStateData> safedata,
     void* data, SENDABLE_TYPE datatype) :
-    Tick(safedata->Tick), DeltaData(safedata), DirectData(data), OwnersType(datatype)
+    DeltaData(safedata), Tick(safedata->Tick), DirectData(data), OwnersType(datatype)
 {
 
 }
 // ------------------------------------ //
 DLLEXPORT Received::Received(SENDABLE_TYPE type) :
-    SendableHandleType(type), ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES)
+    ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES), SendableHandleType(type)
 {
 
 }
@@ -688,7 +690,6 @@ DLLEXPORT void Received::GetServerSentStates(Lock &guard, StoredState const** fi
 
 // ------------------ TrackController ------------------ //
 DLLEXPORT TrackController::TrackController(PositionMarkerOwner& nodes, Sendable* sendable) :
-    ForceTowardsPoint(0.3f), ReachedNode(0), NodeProgress(0.f), ChangeSpeed(0.f),
     _Sendable(sendable), Nodes(nodes)
 {
 
@@ -833,7 +834,7 @@ DLLEXPORT bool TrackController::Interpolate(ObjectDeltaStateData &first,
 // ------------------ Trail ------------------ //
 DLLEXPORT Trail::Trail(RenderNode* node, const std::string &materialname,
     const Properties &variables) :
-    TrailEntity(nullptr), _RenderNode(node), CurrentSettings(variables), Material(materialname)
+    _RenderNode(node), Material(materialname), CurrentSettings(variables)
 {
 
 }
@@ -979,9 +980,7 @@ DLLEXPORT Parent::Data Parent::LoadDataFromPacket(sf::Packet &packet){
     return data;
 }
 // ------------------ Parentable ------------------ //
-DLLEXPORT Parentable::Parentable() :
-    ApplyRotation(true), RelativeToParent(0), AttachedParent(nullptr)
-{
+DLLEXPORT Parentable::Parentable(){
 
 }
 
@@ -1120,8 +1119,9 @@ DLLEXPORT void PositionMarkerOwner::AddDataToPacket(Lock &guard, sf::Packet &pac
     }
 }
 // ------------------------------------ //
-DLLEXPORT PositionMarkerOwner::Data PositionMarkerOwner::LoadDataFromPacket(sf::Packet &packet){
-
+DLLEXPORT PositionMarkerOwner::Data PositionMarkerOwner::LoadDataFromPacket(
+    sf::Packet &packet)
+{
     Data data;
     
     int32_t size;
@@ -1141,7 +1141,7 @@ DLLEXPORT PositionMarkerOwner::Data PositionMarkerOwner::LoadDataFromPacket(sf::
 
         packet >> id >> pos >> rot;
         
-        data.EntityPositions.push_back(move(make_tuple(id, pos, rot)));
+        data.EntityPositions.push_back(std::make_tuple(id, pos, rot));
     }
 
     return data;

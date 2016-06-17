@@ -9,15 +9,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-ViewerCameraPos::ViewerCameraPos() : Orientation(0), Position(0), SendSoundPosition(false){
+ViewerCameraPos::ViewerCameraPos(){
 
-	// set all to zeros //
-	FrameTime = forward = backward = left = right = zup = zdown = xmoved = ymoved = 0;
-	m_SideWays = m_Forward = m_Vertical = 0;
-
-	// mouse //
-	MouseXSensitivity = 0.2f;
-	MouseYSensitivity = 0.15f;
 }
 
 Leviathan::ViewerCameraPos::~ViewerCameraPos(){
@@ -87,11 +80,15 @@ void ViewerCameraPos::SideWays(int dir){
 	
 	// actual movement calculations here //
 	if(right > left){
-		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X+90))*right)*DEFAULTMOVEMENTMODIFIER;
-		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X+90))*right)*DEFAULTMOVEMENTMODIFIER;
+		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X+90))*right)
+            *DEFAULTMOVEMENTMODIFIER;
+		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X+90))*right)
+            *DEFAULTMOVEMENTMODIFIER;
 	} else if(left > right){
-		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X-90))*left)*DEFAULTMOVEMENTMODIFIER;
-		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X-90))*left)*DEFAULTMOVEMENTMODIFIER;
+		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X-90))*left)
+            *DEFAULTMOVEMENTMODIFIER;
+		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X-90))*left)
+            *DEFAULTMOVEMENTMODIFIER;
 	}
 }
 void ViewerCameraPos::Forward(int dir){
@@ -109,13 +106,19 @@ void ViewerCameraPos::Forward(int dir){
 	}
 
 	if(forward > backward){
-		Position.X -= (float)(sin(Convert::DegreesToRadians(Orientation.X))*forward)*DEFAULTMOVEMENTMODIFIER;
-		Position.Z -= (float)(cos(Convert::DegreesToRadians(Orientation.X))*forward)*DEFAULTMOVEMENTMODIFIER;
-		Position.Y += (float)(sin(Convert::DegreesToRadians(Orientation.Y))*forward)*DEFAULTMOVEMENTMODIFIER;
+		Position.X -= (float)(sin(Convert::DegreesToRadians(Orientation.X))*forward)*
+            DEFAULTMOVEMENTMODIFIER;
+		Position.Z -= (float)(cos(Convert::DegreesToRadians(Orientation.X))*forward)*
+            DEFAULTMOVEMENTMODIFIER;
+		Position.Y += (float)(sin(Convert::DegreesToRadians(Orientation.Y))*forward)*
+            DEFAULTMOVEMENTMODIFIER;
 	} else if(backward > forward){
-		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X))*backward)*DEFAULTMOVEMENTMODIFIER;
-		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X))*backward)*DEFAULTMOVEMENTMODIFIER;
-		Position.Y -= (float)(sin(Convert::DegreesToRadians(Orientation.Y))*backward)*DEFAULTMOVEMENTMODIFIER;
+		Position.X += (float)(sin(Convert::DegreesToRadians(Orientation.X))*backward)*
+            DEFAULTMOVEMENTMODIFIER;
+		Position.Z += (float)(cos(Convert::DegreesToRadians(Orientation.X))*backward)*
+            DEFAULTMOVEMENTMODIFIER;
+		Position.Y -= (float)(sin(Convert::DegreesToRadians(Orientation.Y))*backward)*
+            DEFAULTMOVEMENTMODIFIER;
 	}
 }
 
@@ -137,15 +140,29 @@ void ViewerCameraPos::Vertical(int dir){
 	Position.Y -= zdown*DEFAULTMOVEMENTMODIFIER;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(OIS::KeyCode key, int modifiers, bool down){
+DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(OIS::KeyCode key, int modifiers,
+    bool down)
+{
 	// reset state only if the state is the same that the key would set //
 	switch(key){
-	case OIS::KC_A: if(!down && m_SideWays == -1) m_SideWays = 0; else if(down) m_SideWays = -1; return true;
-	case OIS::KC_D: if(!down && m_SideWays == 1) m_SideWays = 0; else if(down) m_SideWays = 1; return true;
-	case OIS::KC_W: if(!down && m_Forward == 1) m_Forward = 0; else if(down) m_Forward = 1; return true;
-	case OIS::KC_S: if(!down && m_Forward == -1) m_Forward = 0; else if(down) m_Forward = -1; return true;
-	case OIS::KC_SPACE: if(!down && m_Vertical == 1) m_Vertical = 0; else if(down) m_Vertical = 1; return true;
-	case OIS::KC_LCONTROL: if(!down && m_Vertical == -1) m_Vertical = 0; else if(down) m_Vertical = -1; return true;
+	case OIS::KC_A:
+        if(!down && m_SideWays == -1) m_SideWays = 0; else if(down) m_SideWays = -1;
+        return true;
+	case OIS::KC_D:
+        if(!down && m_SideWays == 1) m_SideWays = 0; else if(down) m_SideWays = 1;
+        return true;
+	case OIS::KC_W:
+        if(!down && m_Forward == 1) m_Forward = 0; else if(down) m_Forward = 1;
+        return true;
+	case OIS::KC_S:
+        if(!down && m_Forward == -1) m_Forward = 0; else if(down) m_Forward = -1;
+        return true;
+	case OIS::KC_SPACE:
+        if(!down && m_Vertical == 1) m_Vertical = 0; else if(down) m_Vertical = 1;
+        return true;
+	case OIS::KC_LCONTROL:
+        if(!down && m_Vertical == -1) m_Vertical = 0; else if(down) m_Vertical = -1;
+        return true;
         default:
             return false;
 	}
@@ -164,7 +181,9 @@ DLLEXPORT void Leviathan::ViewerCameraPos::BeginNewReceiveQueue(){
 	xmoved = ymoved = 0;
 }
 
-DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down){
+DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key,
+    int modifiers, bool down)
+{
 	// Return if key is going down (since we can't process it and we cannot release the key //
 	if(down)
 		return;
@@ -172,7 +191,9 @@ DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key,
 	ReceiveInput(key, modifiers, false);
 }
 // ------------------------------------ //
-void Leviathan::ViewerCameraPos::RollValueTowards(float &value, const float &changeamount, const bool &maxvalue, const float &limitvalue){
+void Leviathan::ViewerCameraPos::RollValueTowards(float &value, const float &changeamount,
+    const bool &maxvalue, const float &limitvalue)
+{
 	value += changeamount;
 	// limit check //
 	if(maxvalue ? value > limitvalue: value < limitvalue){
@@ -203,11 +224,6 @@ DLLEXPORT void Leviathan::ViewerCameraPos::BecomeSoundPerceiver(){
 DLLEXPORT void Leviathan::ViewerCameraPos::StopSoundPerceiving(){
 	SendSoundPosition = false;
 }
-
-DLLEXPORT bool Leviathan::ViewerCameraPos::SendCustomMessage(int entitycustommessagetype, void* dataptr){
-	return false;
-}
-
 
 
 

@@ -371,23 +371,23 @@ namespace Leviathan{
 
         
         
-		NewtonCollision* Collision;
-		NewtonBody* Body;
+		NewtonCollision* Collision = nullptr;
+		NewtonBody* Body = nullptr;
 
         //! The set physical material
         //! If none is set this defaults to -1
         //! The default material ID from GetDefaultPhysicalMaterialID might be applied
-        int AppliedPhysicalMaterial;
+        int AppliedPhysicalMaterial = -1;
 
-		bool ApplyGravity;
+		bool ApplyGravity = true;
 
         //! Non-newton access to mass
-        float Mass;
+        float Mass = 0.f;
 
 		std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
 
         //! Used to access gravity data
-        GameWorld* World;
+        GameWorld* World = nullptr;
 
         //! Physics object requires a position
         Position& _Position;
@@ -397,7 +397,7 @@ namespace Leviathan{
 
         // Optional access to other components that can be used for marking when physics object
         // moves
-        Sendable* UpdateSendable;
+        Sendable* UpdateSendable = nullptr;
     };
 
     class Parent : public Component{
@@ -445,13 +445,13 @@ namespace Leviathan{
         DLLEXPORT void OnParentInvalidate();
 
         //! \todo Make this work
-        Float3 RelativeToParent;
+        Float3 RelativeToParent = Float3(0, 0, 0);
 
         //! \todo Make this work
-        bool ApplyRotation;
+        bool ApplyRotation = true;
 
         //! Parent this is attached to, or NULL
-        Parent* AttachedParent;
+        Parent* AttachedParent = nullptr;
     };
 
 
@@ -568,11 +568,11 @@ namespace Leviathan{
 
         //! The trail entity which is attached at the root scene node and follows our RenderNode
         //! component around
-		Ogre::RibbonTrail* TrailEntity;
+		Ogre::RibbonTrail* TrailEntity = nullptr;
 
         //! For ease of use direct access to ogre node is required
         //! Not valid in non-gui mode
-        RenderNode* _RenderNode;
+        RenderNode* _RenderNode = nullptr;
 
         //! The used trail material
         std::string Material;
@@ -684,20 +684,20 @@ namespace Leviathan{
 
         
         //! Number of the node that has been reached
-        int ReachedNode;
+        int ReachedNode = 0;
 
         //! Percentage between ReachedNode and next node
         //! 1.f being next node reached and progress reset to 0
-        float NodeProgress;
+        float NodeProgress = 0.f;
 
         //! The speed at which the node progress changes
-        float ChangeSpeed;
+        float ChangeSpeed = 0.f;
 
         //! The amount of speed/force used to move the entities towards the track position
-        float ForceTowardsPoint;
+        float ForceTowardsPoint = 0.3f;
 
         //! Marks Sendable as updated when changed
-        Sendable* _Sendable;
+        Sendable* _Sendable = nullptr;
 
         //! Access to actual nodes
         PositionMarkerOwner& Nodes;

@@ -13,8 +13,7 @@ set(TestSources
   TestFiles/Floats.cpp
   TestFiles/Regex.cpp
   TestFiles/DeltaStates.cpp
-  TestFiles/PartialEngine.h
-  TestFiles/PartialEngine.cpp
+  TestFiles/PartialEngine.h TestFiles/PartialEngine.cpp
   TestFiles/Sendable.cpp
   TestFiles/NamedVars.cpp
   TestFiles/Components.cpp
@@ -38,7 +37,7 @@ endif()
 
 set(ExtraFiles "DummyLog.cpp" "DummyLog.h")
 
-include_directories(catch)
+include_directories("catch")
 
 set(CurrentProjectName LeviathanTest)
 

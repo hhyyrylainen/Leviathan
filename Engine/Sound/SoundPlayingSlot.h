@@ -1,9 +1,12 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
+#include "Define.h"
+
 #include "../Common/Types.h"
 #include <memory>
 #include <vector>
-#include <SFML/Audio.hpp>
 
 namespace Leviathan{
 
@@ -42,13 +45,9 @@ namespace Leviathan{
 	protected:
 		// information about last played sound //
 		std::string FileName;
-		int UnusedTimeMS;
-		bool Linked;
+		int UnusedTimeMS = 0;
+		bool Linked = false;
 
-		// SFML sound playing interface //
-		sf::Music* Music;
-		sf::SoundBuffer* SoundBuffer;
-		sf::Sound* Audio;
 
 	};
 

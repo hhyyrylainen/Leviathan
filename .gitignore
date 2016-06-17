@@ -20,6 +20,7 @@ SFML/
 /Breakpad/bin
 /Breakpad/include
 /Newton/bin
+/Newton/include
 Engine/Include.h
 *.sln
 *.7z
@@ -53,4 +54,5 @@ Leap/include
 Leap/util
 Leap/version.txt
 /SDK
-/compile-commands.json
+/compile_commands.json
+/cscope.files

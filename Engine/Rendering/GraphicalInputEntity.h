@@ -15,8 +15,10 @@ namespace Leviathan{
     class GEntityAutoClearResources;
     
 
-	//! \brief Represents a collection of objects that represents everything related to a single game's Windows window
-	//! \note Even though this class is marked thread safe only one instance maybe constructed at once
+	//! \brief Represents a collection of objects that represents
+	//! everything related to a single game's Windows window \note
+	//! Even though this class is marked thread safe only one instance
+	//! maybe constructed at once
 	class GraphicalInputEntity : public ThreadSafe{
 	public:
 		//! \warning You can only create one window at a time since this is not thread safe
@@ -40,10 +42,12 @@ namespace Leviathan{
 
 		DLLEXPORT void UnlinkAll();
 
-        //! \brief Creates a workspace that clears this window to a specified colour
-        //! \note A world cannot be attached to this object if this is used
+        //! \brief Creates a workspace that clears this window to a
+        //! specified colour \note A world cannot be attached to this
+        //! object if this is used
         //! \param skyboxmaterial The material to use for a skybox. Empty if not wanted.
-        //! \warning A sky box is required to have CEGUI not flicker while rendering on this window
+        //! \warning A sky box is required to have CEGUI not flicker while rendering
+        //! on this window
         DLLEXPORT void SetAutoClearing(const std::string &skyboxmaterial);
 
         //! \brief Destroyes the workspace that is clearing this window each frame
@@ -87,9 +91,11 @@ namespace Leviathan{
 		}
 
 
-		//! \brief Overwrites the default InputController with a custom one
-		//! \warning The controller will be deleted by this and there is no way to release it without deleting
-        //! after this call
+		//! \brief Overwrites the default InputController with a
+		//! custom one
+        //! \warning The controller will be deleted by this
+		//! and there is no way to release it without deleting after
+		//! this call
 		DLLEXPORT void SetCustomInputController(std::shared_ptr<InputController> controller);
 
 
@@ -99,11 +105,10 @@ namespace Leviathan{
 	protected:
 
 
-
-		Window* DisplayWindow;
+		Window* DisplayWindow = nullptr;
         std::shared_ptr<InputController> TertiaryReceiver;
-		Gui::GuiManager* WindowsGui;
-		CEGUI::OgreRenderer* CEGUIRenderer;
+		Gui::GuiManager* WindowsGui = nullptr;
+		CEGUI::OgreRenderer* CEGUIRenderer = nullptr;
 
 
         std::shared_ptr<GameWorld> LinkedWorld;
@@ -125,7 +130,7 @@ namespace Leviathan{
 		//! The number of this window (starts from 1)
 		int WindowNumber;
 
-		bool MouseCaptureState;
+		bool MouseCaptureState = false;
 		static GraphicalInputEntity* InputCapturer;
 
         //! True when auto clear ogre workspace has been created

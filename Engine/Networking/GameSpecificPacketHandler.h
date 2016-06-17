@@ -3,7 +3,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 #include "../Common/SFMLPackets.h"
-
+#include <memory>
 
 namespace Leviathan{
 

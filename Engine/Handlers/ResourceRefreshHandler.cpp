@@ -4,14 +4,14 @@
 #include "Common/StringOperations.h"
 #include "../TimeIncludes.h"
 #include "IDFactory.h"
-#ifdef __GNUC__
+#ifdef __linux__
 #include <sys/types.h>
 #include <sys/inotify.h>
 #endif
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-#ifdef __GNUC__
+#ifdef __linux__
 
 #define IN_EVENT_SIZE (sizeof(inotify_event))
 #define IN_READ_BUFFER_SIZE (124*(IN_EVENT_SIZE + 16))
@@ -24,7 +24,8 @@ DLLEXPORT Leviathan::ResourceRefreshHandler::ResourceRefreshHandler(){
 }
 
 DLLEXPORT Leviathan::ResourceRefreshHandler::~ResourceRefreshHandler(){
-	assert(!Inited && "ResourceRefreshHandler should have been released before destructor");
+	LEVIATHAN_ASSERT(!Inited,
+        "ResourceRefreshHandler should have been released before destructor");
 }
 
 DLLEXPORT ResourceRefreshHandler* Leviathan::ResourceRefreshHandler::Get(){
@@ -79,7 +80,9 @@ DLLEXPORT bool Leviathan::ResourceRefreshHandler::ListenForFileChanges(
 	return true;
 }
 
-DLLEXPORT void Leviathan::ResourceRefreshHandler::StopListeningForFileChanges(int idoflistener){
+DLLEXPORT void Leviathan::ResourceRefreshHandler::StopListeningForFileChanges(
+    int idoflistener)
+{
 
 	GUARD_LOCK();
 
@@ -111,7 +114,9 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::CheckFileStatus(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::ResourceRefreshHandler::MarkListenersAsNotUpdated(const std::vector<int> &ids){
+DLLEXPORT void Leviathan::ResourceRefreshHandler::MarkListenersAsNotUpdated(
+    const std::vector<int> &ids)
+{
 
 	GUARD_LOCK();
 
@@ -133,20 +138,12 @@ DLLEXPORT void Leviathan::ResourceRefreshHandler::MarkListenersAsNotUpdated(cons
 	}
 }
 // ------------------ ResourceFolderListener ------------------ //
-Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<const std::string*> &filestowatch, 
+Leviathan::ResourceFolderListener::ResourceFolderListener(
+    const std::vector<const std::string*> &filestowatch, 
 	std::function<void (const std::string &, ResourceFolderListener&)> notifyfunction) :
-    CallbackFunction(notifyfunction), 
-	ListenedFiles(filestowatch.size()), ShouldQuit(false), ID(IDFactory::GetID()), 
-	UpdatedFiles(filestowatch.size(), false)
-#ifdef _WIN32
-	, OurReadBuffer(NULL), OverlappedInfo(NULL)
-
-#else
-	, InotifyID(-1), InotifyWatches(-1), ReadBuffer(NULL)
-
-#endif //_WIN32
-
-
+    ListenedFiles(filestowatch.size()), 
+	UpdatedFiles(filestowatch.size(), false),
+    ID(IDFactory::GetID()), CallbackFunction(notifyfunction)
 {
 #ifdef _WIN32
 	// Avoid having to re-allocate the vector later //
@@ -158,11 +155,10 @@ Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<cons
 	
 	if(InotifyID < -1){
 		
-		Logger::Get()->Error("ResourceRefreshHandler: ResourceFolderListener: failed to create "
-            "inotify instance");
+		Logger::Get()->Error("ResourceRefreshHandler: ResourceFolderListener: "
+            "failed to create inotify instance");
 		return;
 	}
-	
 	
 #endif //_WIN32
 
@@ -176,14 +172,15 @@ Leviathan::ResourceFolderListener::ResourceFolderListener(const std::vector<cons
 			TargetFolder = StringOperations::GetPathString(*filestowatch[i]);
 		}
 
-		ListenedFiles[i] = move(make_unique<std::string>(
-                StringOperations::RemovePathString(*filestowatch[i])));
+		ListenedFiles[i] = make_unique<std::string>(
+                StringOperations::RemovePathString(*filestowatch[i]));
 	}
 
 }
 
 Leviathan::ResourceFolderListener::~ResourceFolderListener(){
-	assert(ShouldQuit && "ResourceFolderListener should have been stopped before destructor");
+	LEVIATHAN_ASSERT(ShouldQuit,
+        "ResourceFolderListener should have been stopped before destructor");
 }
 // ------------------------------------ //
 int Leviathan::ResourceFolderListener::GetID() const{
@@ -229,8 +226,9 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 
 	if(!readcompleteevent){
 
-		Logger::Get()->Error(L"ResourceFolderListener: StartListening: failed to create read notify handle, "
-            "CreateEvent failed, error: "+Convert::ToHexadecimalString(GetLastError()));
+		Logger::Get()->Error(L"ResourceFolderListener: StartListening: "
+            "failed to create read notify handle, CreateEvent failed, error: " +
+            Convert::ToHexadecimalString(GetLastError()));
 		return false;
 	} 
 
@@ -243,7 +241,8 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 
 
 	// Create the update notification read thing //
-	BOOL createresult = ReadDirectoryChangesW(TargetFolderHandle, OurReadBuffer, sizeof(FILE_NOTIFY_INFORMATION)*100, 
+	BOOL createresult = ReadDirectoryChangesW(TargetFolderHandle, OurReadBuffer,
+        sizeof(FILE_NOTIFY_INFORMATION)*100, 
 		// Only the top level directory is watched
 		FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, NULL, OverlappedInfo, NULL);
 
@@ -282,7 +281,8 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 	ShouldQuit = false;
 
 	// Finally start the thread //
-	ListenerThread = std::thread(std::bind(&ResourceFolderListener::_RunListeningThread, this));
+	ListenerThread = std::thread(std::bind(&ResourceFolderListener::_RunListeningThread,
+            this));
 
 	return true;
 }

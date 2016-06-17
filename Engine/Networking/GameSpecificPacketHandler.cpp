@@ -178,15 +178,16 @@ DLLEXPORT Leviathan::BaseGameSpecificResponsePacket::~BaseGameSpecificResponsePa
 
 }
 // ------------------ GameSpecificPacketData ------------------ //
-DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(BaseGameSpecificResponsePacket* newddata) :
-    IsRequest(false), ResponseBaseData(newddata), RequestBaseData(NULL),
+DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(
+    BaseGameSpecificResponsePacket* newddata) :
+    IsRequest(false), RequestBaseData(NULL), ResponseBaseData(newddata),
     TypeIDNumber(newddata->TypeIDNumber)
 {
 	
 }
 
 DLLEXPORT Leviathan::GameSpecificPacketData::GameSpecificPacketData(BaseGameSpecificRequestPacket* newddata) :
-    IsRequest(true), ResponseBaseData(NULL), RequestBaseData(newddata),
+    IsRequest(true), RequestBaseData(newddata), ResponseBaseData(NULL),
     TypeIDNumber(newddata->TypeIDNumber)
 {
 

@@ -5,16 +5,21 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "../Common/ThreadSafe.h"
+
+#ifdef _WIN32
 #include "WindowsInclude.h"
+#endif
 
 #include <string>
 #include <functional>
 #include <thread>
 #include <atomic>
 
-class ConsoleInput : public ThreadSafe{
-public:
+namespace Leviathan {
 
+class ConsoleInput : public ThreadSafe {
+public:
+    
     DLLEXPORT ~ConsoleInput();
     
     //! \brief Starts listening for input from std in
@@ -31,11 +36,11 @@ public:
     //! \param waitquit If true after this finishes the callback won't be called anymore
     //! If false callback can be called until the destructor runs, which will block until
     //! the read ends
-    DLLEXPORT void Shutdown(bool waitquit = false);
+    DLLEXPORT void Release(bool waitquit = false);
 
     //! \returns True if this process is controlled by an interactive console
     //! Can be used to quit linux servers if accidentally not started from a terminal
-    DLLEXPORT static bool IsAttachedToConsole() const;
+    DLLEXPORT static bool IsAttachedToConsole();
     
 protected:
 
@@ -60,10 +65,13 @@ private:
     //! Set to true in Init
     bool Initialized = false;
 
+    //! This is called when input is received
+    std::function<bool (const std::string&)> Callback;
+
     //! Thread for the input
     std::thread StdInThread;
     //! True when StdInThread is active and listening
-    std::atomic<bool> ReadingInput = false;
+    std::atomic<bool> ReadingInput { false };
 
 
     //! Will make sure only one reading instance exists
@@ -94,4 +102,5 @@ private:
     int ReadCancelPipe[2];
 
 #endif //_WIN32
+};
 }

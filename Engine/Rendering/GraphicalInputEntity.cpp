@@ -29,43 +29,40 @@ using namespace std;
 
 namespace Leviathan{
 
-    //! \brief Used to hold objects that are required for clearing a GraphicalInputEntity each frame
-    class GEntityAutoClearResources{
-    public:
+//! \brief Used to hold objects that are required for clearing a GraphicalInputEntity each frame
+class GEntityAutoClearResources{
+public:
 
-        GEntityAutoClearResources(Ogre::Root* destroyer) :
-            Root(destroyer), WorldSceneCamera(NULL), WorldsScene(NULL), WorldWorkspace(NULL)
-        {
+    GEntityAutoClearResources(Ogre::Root* destroyer) :
+        Root(destroyer)
+    {
 
-        }
+    }
         
-        ~GEntityAutoClearResources(){
+    ~GEntityAutoClearResources(){
 
-            Root->getCompositorManager2()->removeWorkspace(WorldWorkspace);
-            WorldWorkspace = NULL;
+        Root->getCompositorManager2()->removeWorkspace(WorldWorkspace);
+        WorldWorkspace = nullptr;
             
-            Root->destroySceneManager(WorldsScene);
-            WorldsScene = NULL;
-            WorldSceneCamera = NULL;
-        }
+        Root->destroySceneManager(WorldsScene);
+        WorldsScene = nullptr;
+        WorldSceneCamera = nullptr;
+    }
         
         
-        Ogre::Camera* WorldSceneCamera;
-		Ogre::SceneManager* WorldsScene;
-		Ogre::CompositorWorkspace* WorldWorkspace;
+    Ogre::Camera* WorldSceneCamera = nullptr;
+    Ogre::SceneManager* WorldsScene = nullptr;
+    Ogre::CompositorWorkspace* WorldWorkspace = nullptr;
 
-        Ogre::Root* Root;
-    };
+    Ogre::Root* Root;
+};
 
 }
 
-
-
 // ------------------------------------ //
-DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater, AppDef* windowproperties) :
-    MouseCaptureState(false), CEGUIRenderer(NULL)
+DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater,
+    AppDef* windowproperties)
 {
-
 	// create window //
 
 	const WindowDataDetails& WData = windowproperties->GetWindowDetails();
@@ -77,11 +74,10 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	Ogre::NameValuePairList WParams;
 
 	// variables //
-	int FSAA = 4;
-
+	int FSAA;
 	// get variables from engine configuration file //
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), "FSAA", FSAA,
-        4, true, "Graphics: Init:");
+	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), "FSAA",
+        FSAA, 4, Logger::Get(), "Graphics: Init:");
 
 	Ogre::String fsaastr = Convert::ToString(FSAA);
 

@@ -3,19 +3,19 @@
 
 #include "FileSystem.h"
 #include "OGRE/OgreWindowEventUtilities.h"
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
+
+#include <iostream>
+
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() :
-    Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false),
-    QuitSometime(false)
+    _Engine(new Engine(this))
 {
 	Curapp = this;
 }
 
 DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
-	Curapp = NULL;
+	Curapp = nullptr;
 }
 
 DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::GetApp(){
@@ -78,7 +78,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	Quit = true;
 
 	if(_Engine){
-		// The prelease does some stuff which is necessary and that requires tick to be called... //
+		// The prelease does some which requires a tick //
 		_Engine->PreRelease();
 		_Engine->Tick();
 		_Engine->Release(true);
@@ -135,11 +135,11 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 			continue;
 		}
 
-
 		Render();
 
-
 		// We could potentially wait here //
+        //! TODO: make this wait happen only if tick wasn't actually and no frame was
+        //! rendered
 		try{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		} catch(...){

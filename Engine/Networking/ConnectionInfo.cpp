@@ -21,8 +21,9 @@ using namespace std;
 
 // ------------------------------------ //
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const string &hostname) : 
-    LastReceivedPacketIDs(KEEP_IDS_FOR_DISCARD), RestrictType(CONNECTION_RESTRICTION_NONE),
-    LastReceivedPacketTime(0), LastSentPacketTime(0),
+    RestrictType(CONNECTION_RESTRICTION_NONE),
+    LastSentPacketTime(0), LastReceivedPacketTime(0),
+    LastReceivedPacketIDs(KEEP_IDS_FOR_DISCARD),
     HostName(hostname), AddressGot(false)
 {
 	// We need to split the port number from the address //
@@ -37,7 +38,8 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const string &hostname) :
 
 	if(!result){
 		// Probably should get the default port number //
-		Logger::Get()->Warning("ConnectionInfo: no port defined, using default, hostname: "+hostname);
+		Logger::Get()->Warning("ConnectionInfo: no port defined, using default, "
+            "hostname: "+hostname);
 		TargetPortNumber = 80;
 		return;
 	}
@@ -47,8 +49,9 @@ DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const string &hostname) :
 
 DLLEXPORT Leviathan::ConnectionInfo::ConnectionInfo(const sf::IpAddress &targetaddress,
     unsigned short port) :
-    LastReceivedPacketIDs(KEEP_IDS_FOR_DISCARD), RestrictType(CONNECTION_RESTRICTION_NONE),
-    LastReceivedPacketTime(0), LastSentPacketTime(0),
+    RestrictType(CONNECTION_RESTRICTION_NONE),
+    LastSentPacketTime(0), LastReceivedPacketTime(0),
+    LastReceivedPacketIDs(KEEP_IDS_FOR_DISCARD),
     TargetPortNumber(port), TargetHost(targetaddress), AddressGot(true)
 {
 
@@ -1025,11 +1028,12 @@ bool Leviathan::ConnectionInfo::_IsAlreadyReceived(int packetid){
 Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponseid,
     std::shared_ptr<NetworkRequest> request, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout,
     int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
-    PacketNumber(packetid), ExpectedResponseID(expectedresponseid), OriginalRequest(request),
-    IsDone(false), MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue),
-    AlmostCompleteData(packetsdata), AttempNumber(attempnumber),
-    RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0), IsArequest(true),
-    Succeeded(false)
+    PacketNumber(packetid), 
+    MaxTries(maxtries), 
+    AttempNumber(attempnumber),
+    PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue),
+    RequestStartTime(Time::GetTimeMs64()), ExpectedResponseID(expectedresponseid),
+    AlmostCompleteData(packetsdata), IsArequest(true),  OriginalRequest(request)
 {
 
 }
@@ -1037,11 +1041,12 @@ Leviathan::SentNetworkThing::SentNetworkThing(int packetid, int expectedresponse
 Leviathan::SentNetworkThing::SentNetworkThing(int packetid,
     std::shared_ptr<NetworkResponse> response, int maxtries, PACKET_TIMEOUT_STYLE howtotimeout,
     int timeoutvalue, const sf::Packet &packetsdata, int attempnumber /*= 1*/) :
-    PacketNumber(packetid), ExpectedResponseID(-1), SentResponse(response),
-    MaxTries(maxtries), PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue),
-    AlmostCompleteData(packetsdata), AttempNumber(attempnumber),
-    RequestStartTime(Time::GetTimeMs64()), ConfirmReceiveTime(0),
-	IsArequest(false), IsDone(false), Succeeded(false)
+    PacketNumber(packetid), 
+    MaxTries(maxtries), 
+    AttempNumber(attempnumber),
+    PacketTimeoutStyle(howtotimeout), TimeOutMS(timeoutvalue), 
+    RequestStartTime(Time::GetTimeMs64()), ExpectedResponseID(-1), 
+	AlmostCompleteData(packetsdata), IsArequest(false), SentResponse(response)
 {
 
 }

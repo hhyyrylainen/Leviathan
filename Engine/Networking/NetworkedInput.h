@@ -151,7 +151,7 @@ namespace Leviathan{
         bool IsLocal;
 
 		//! A pointer to the owning handler instance
-		NetworkedInputHandler* OwningHandler;
+		NetworkedInputHandler* OwningHandler = nullptr;
 
 
 		//! The current state of the object

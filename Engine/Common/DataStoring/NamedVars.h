@@ -33,9 +33,9 @@ namespace Leviathan{
         DLLEXPORT NamedVariableList(const std::string &name);
 		DLLEXPORT NamedVariableList(const std::string &name, VariableBlock* value1);
 		DLLEXPORT NamedVariableList(const std::string &name, const VariableBlock &val);
-    #ifdef USING_ANGELSCRIPT
+    #ifdef LEVIATHAN_USING_ANGELSCRIPT
         DLLEXPORT NamedVariableList(ScriptSafeVariableBlock* const data);
-    #endif // USING_ANGELSCRIPT
+    #endif // LEVIATHAN_USING_ANGELSCRIPT
 
     #ifdef SFML_PACKETS
 		//! \brief For receiving NamedVariableLists through the network
@@ -262,7 +262,7 @@ namespace Leviathan{
         //! \param lineprefix Appended before each new line
         DLLEXPORT std::string Serialize(const std::string &lineprefix = "");
 
-    #ifdef USING_ANGELSCRIPT
+    #ifdef LEVIATHAN_USING_ANGELSCRIPT
         // Script accessible functions //
         REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
 
@@ -273,7 +273,7 @@ namespace Leviathan{
         //! For use from scripts
         bool AddScriptCompatibleValue(ScriptSafeVariableBlock* value);
 
-    #endif // USING_ANGELSCRIPT 
+    #endif // LEVIATHAN_USING_ANGELSCRIPT 
         
 		// ------------------------------------ //
 		DLLEXPORT int GetVariableType(const std::string &name) const;

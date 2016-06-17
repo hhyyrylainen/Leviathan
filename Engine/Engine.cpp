@@ -6,6 +6,7 @@
 #include "Application/Application.h"
 #include "Common/DataStoring/DataStore.h"
 #include "Common/StringOperations.h"
+#include "Common/Types.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Serializers/SendableEntitySerializer.h"
 #include "Events/EventHandler.h"
@@ -30,17 +31,16 @@
 #include "Utility/Random.h"
 #include "TimeIncludes.h"
 #include "FileSystem.h"
-#include <chrono>
-#include <future>
-#include <thread>
 #include "GUI/GuiManager.h"
 #include "Iterators/StringIterator.h"
 #include "Application/ConsoleInput.h"
 
+#include <chrono>
+#include <future>
+
 #ifdef LEVIATHAN_USES_LEAP
 #include "Leap/LeapManager.h"
 #endif
-
 
 using namespace Leviathan;
 using namespace std;
@@ -166,7 +166,7 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 		return false;
 	}
 
-	if(!MainFileHandler->Init()){
+	if(!MainFileHandler->Init(Logger::Get())){
 
 		Logger::Get()->Error("Engine: Init: failed to init FileSystem");
 		return false;
@@ -311,7 +311,7 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 	} else {
 
 		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), "MaxFPS",
-            FrameLimit, 120, true, "Graphics: Init:");
+            FrameLimit, 120, Logger::Get(), "Graphics: Init:");
 
 		Graph = new Graphics();
 
@@ -486,42 +486,6 @@ void Engine::PostLoad(){
 	}
 
     // Check if we are attached to a terminal //
-    
-    if(connectedtoterminal && !NoSTDInput){
-        // Start receiving input //
-        CinThread = std::thread(std::bind<void>([]() -> void
-            {
-                // First get input //
-                string inputcommand;
-
-                while(true){
-
-                    getline(cin, inputcommand);
-
-                    // Pass to various things //
-                    Engine* engine = Engine::Get();
-				
-                    // Stop if Engine is no more //
-                    if(!engine){
-
-                        break;
-                    }
-
-                    if(inputcommand.empty())
-                        continue;
-
-                }
-
-            }));
-    } else {
-
-        if(NoGui){
-
-            // Quit as we aren't ran from a terminal //
-            Logger::Get()->Info("TODO: allow starting non-gui apps without attached console");
-            LeviathanApplication::GetApp()->MarkAsClosing();
-        }
-    }
 
     ClearTimers();
     
@@ -533,7 +497,7 @@ void Engine::Release(bool forced){
 	GUARD_LOCK();
 
 	if(!forced)
-		assert(PreReleaseDone && "PreReleaseDone must be done before actual release!");
+		LEVIATHAN_ASSERT(PreReleaseDone, "PreReleaseDone must be done before actual release!");
 
 	// Destroy worlds //
     {
@@ -763,6 +727,16 @@ DLLEXPORT void Engine::PreFirstTick(){
     
 	Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
 }
+
+DLLEXPORT void Engine::SimulatePhysics(){
+    Lock lock(GameWorldsLock);
+
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+
+        (*iter)->SimulatePhysics();
+    }
+}
 // ------------------------------------ //
 void Engine::RenderFrame(){
 	// We want to totally ignore this if we are in text mode //
@@ -774,8 +748,8 @@ void Engine::RenderFrame(){
 
 	// limit check //
 	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
+        
 		// fps would go too high //
-
 		return;
 	}
 
@@ -843,10 +817,11 @@ DLLEXPORT void Engine::PreRelease(){
 	PreReleaseCompleted = true;
 
 	// Stop command handling first //
-    // Apparently killing doesn't really work on linux in any reasonable way, so just let it run
-#if 0
-    Logger::Get()->Info("Successfully stopped command handling");
-#endif
+    if(_ConsoleInput){
+
+        _ConsoleInput->Release(false);
+        Logger::Get()->Info("Successfully stopped command handling");
+    }
 
     if(_AINetworkCache)
         _AINetworkCache->Release();
@@ -898,13 +873,9 @@ DLLEXPORT void Engine::PreRelease(){
 
 	Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
 }
-
-DLLEXPORT bool Engine::HasPreReleaseBeenDone() const{
-	return PreReleaseDone;
-}
 // ------------------------------------ //
 DLLEXPORT void Engine::SaveScreenShot(){
-	assert(!NoGui && "really shouldn't try to screenshot in text-only mode");
+	LEVIATHAN_ASSERT(!NoGui, "really shouldn't try to screenshot in text-only mode");
 	GUARD_LOCK();
 
 	const string fileprefix = MainFileHandler->GetDataFolder()+"Screenshots/Captured_frame_";
@@ -1024,6 +995,7 @@ DLLEXPORT void Engine::DestroyWorld(shared_ptr<GameWorld> &world){
     // Should be fine destroying worlds that aren't on the list... //
     world.reset();
 }
+// ------------------------------------ //
 DLLEXPORT void Engine::ClearTimers(){
     Lock lock(GameWorldsLock);
 
@@ -1031,16 +1003,6 @@ DLLEXPORT void Engine::ClearTimers(){
     for(auto iter = GameWorlds.begin(); iter != end; ++iter){
 
         (*iter)->ClearTimers();
-    }
-}
-
-DLLEXPORT void Engine::SimulatePhysics(){
-    Lock lock(GameWorldsLock);
-
-    auto end = GameWorlds.end();
-    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
-
-        (*iter)->SimulatePhysics();
     }
 }
 // ------------------------------------ //

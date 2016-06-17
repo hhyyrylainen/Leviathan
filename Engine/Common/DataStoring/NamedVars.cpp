@@ -31,13 +31,13 @@ DLLEXPORT NamedVariableList::NamedVariableList(const string &name, const Variabl
 	Datas[0] = new VariableBlock(val);
 }
 
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 DLLEXPORT NamedVariableList::NamedVariableList(ScriptSafeVariableBlock* const data) :
     Datas(1), Name(data->GetName()) {
     // Copy value //
     Datas[0] = new VariableBlock(*data);
 }
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 
 DLLEXPORT NamedVariableList::NamedVariableList(const string &name, vector<VariableBlock*> values_willclear)
     : Datas(values_willclear.size()), Name(name)
@@ -634,7 +634,7 @@ DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
 		try{
 			shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], predefined));
 
-            if (!var || !*var) {
+            if (!var || !var->IsValid()) {
                 // Invalid value //
                 continue;
             }
@@ -648,15 +648,16 @@ DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
 
             // This should remove null characters from the string //
             
-			Logger::Get()->Info("NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "
-                +Convert::ToString(Lines[i])+"\nEND");
+			Logger::Get()->Info("NamedVar: ProcessDataDump: contains invalid line, "
+                "line (with only ASCII characters): " + Convert::ToString(Lines[i]) + "\nEND");
             
 			continue;
 		}
 
     #else
 
-            shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], errorreport, predefined));
+            shared_ptr<NamedVariableList> var(new NamedVariableList(*
+                    Lines[i], errorreport, predefined));
 
             if (!var || !var->IsValid()) {
                 // Invalid value //
@@ -817,7 +818,7 @@ DLLEXPORT NamedVars::NamedVars(sf::Packet &packet){
 
         shared_ptr<NamedVariableList> newvalue(new NamedVariableList(packet));
 
-        if(!newvalue || !*newvalue)
+        if(!newvalue || !newvalue->IsValid())
             continue;
 
 		Variables.push_back(newvalue);
@@ -1165,7 +1166,7 @@ DLLEXPORT size_t NamedVars::Find(Lock &guard, const string &name) const{
 	return SIZE_MAX;
 }
 // ------------------ Script compatible functions ------------------ //
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 ScriptSafeVariableBlock* NamedVars::GetScriptCompatibleValue(const string &name){
 	// Use a try block to not throw exceptions to the script engine //
 	try{
@@ -1197,7 +1198,7 @@ bool NamedVars::AddScriptCompatibleValue(ScriptSafeVariableBlock* value){
 
     return true;
 }
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 
 DLLEXPORT size_t NamedVars::GetVariableCount() const{
 	return Variables.size();

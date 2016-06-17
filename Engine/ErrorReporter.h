@@ -1,4 +1,4 @@
-// (c) Henri Hyyryl‰inen 2015-2016
+// (c) Henri Hyyryl√§inen 2015-2016
 #pragma once
 #include "Include.h"
 #include <string>

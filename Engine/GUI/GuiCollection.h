@@ -4,7 +4,7 @@
 // ------------------------------------ //
 #include "../Input/Key.h"
 #include "../Script/ScriptScript.h"
-#include "../ObjectFiles/ObjectFileObject.h"
+#include "../ObjectFiles/ObjectFile.h"
 #include "../Common/ReferenceCounted.h"
 
 namespace Leviathan{ namespace Gui{

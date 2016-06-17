@@ -461,26 +461,26 @@ namespace Leviathan{
         void _ApplyConstraintPackets(Lock &guard);
 
 		// ------------------------------------ //
-		Ogre::Camera* WorldSceneCamera;
-		Ogre::SceneManager* WorldsScene;
+		Ogre::Camera* WorldSceneCamera = nullptr;
+		Ogre::SceneManager* WorldsScene = nullptr;
 
-		Ogre::CompositorWorkspace* WorldWorkspace;
+		Ogre::CompositorWorkspace* WorldWorkspace = nullptr;
 
 		//! The world is now always linked to a window
-		GraphicalInputEntity* LinkedToWindow;
+		GraphicalInputEntity* LinkedToWindow = nullptr;
 
-		Ogre::Light* Sunlight;
-		Ogre::SceneNode* SunLightNode;
+		Ogre::Light* Sunlight = nullptr;
+		Ogre::SceneNode* SunLightNode = nullptr;
 
 		// physics //
         std::shared_ptr<PhysicalWorld> _PhysicalWorld;
 
 		//! The world can be frozen to stop physics
-		bool WorldFrozen;
-		bool GraphicalMode;
+		bool WorldFrozen = false;
+		bool GraphicalMode = false;
 
 		//! Marks all objects to be released
-		bool ClearAllObjects;
+		bool ClearAllObjects = false;
 
 		//! Holds the players who are receiving this worlds updates and their corresponding
         //! location entities (if any)
@@ -501,11 +501,11 @@ namespace Leviathan{
 
         //! Bool flag telling whether this is a master world (on a server) or
         //! a mirroring world (client)
-        bool IsOnServer;
+        bool IsOnServer = false;
 
         //! The current tick number
         //! This should be the same on all clients as closely as possible
-        int TickNumber;
+        int TickNumber = 0;
 
         //! A funky name for this world, if any
         std::string DecoratedName;

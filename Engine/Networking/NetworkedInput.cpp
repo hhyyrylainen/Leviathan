@@ -12,8 +12,8 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkedInput::NetworkedInput(int ownerid, int networkid) :
-    OwnerID(ownerid), InputID(networkid), OwningHandler(NULL),
-    CurrentState(NETWOKREDINPUT_STATE_READY), IsLocal(true)
+    OwnerID(ownerid), InputID(networkid), 
+    IsLocal(true), CurrentState(NETWOKREDINPUT_STATE_READY)
 {
 
 }

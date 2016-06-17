@@ -4,6 +4,7 @@
 
 #include "FileSystem.h"
 #include "Common/DataStoring/DataBlock.h"
+#include "../Common/DataStoring/DataStore.h"
 #include "Common/StringOperations.h"
 #include "Iterators/StringIterator.h"
 #include "utf8/core.h"
@@ -15,11 +16,11 @@
 #include "Exceptions.h"
 #endif // ALLOW_INTERNAL_EXCEPTIONS
 
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 #include "../Script/ScriptModule.h"
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptScript.h"
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -32,7 +33,8 @@ Leviathan::ObjectFileProcessor::~ObjectFileProcessor(){}
                 new IntBlock(x)))}
 
 
-map<std::string, std::shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor::RegisteredValues = {
+map<std::string, std::shared_ptr<VariableBlock>>
+    Leviathan::ObjectFileProcessor::RegisteredValues = {
     ADDDATANAMEINTDEFINITION(DATAINDEX_TICKTIME),
     ADDDATANAMEINTDEFINITION(DATAINDEX_TICKCOUNT),
     ADDDATANAMEINTDEFINITION(DATAINDEX_FRAMETIME),

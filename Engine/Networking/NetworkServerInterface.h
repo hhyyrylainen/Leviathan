@@ -261,7 +261,7 @@ namespace Leviathan{
 		std::string ServerName;
 
 		//! Controls whether players can join
-		bool AllowJoin;
+		bool AllowJoin = false;
 
         //! Lock this when changing the player list
         Mutex PlayerListLocked;

@@ -56,7 +56,7 @@ else()
     "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
     "Common/ThreadSafe.h" 
-    "Common/Types.h" "Common/Types.cpp" "Common/TypesOgreCompat.h"
+    "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
     )
   
@@ -229,7 +229,8 @@ else()
 endif()
 
 
-set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES})
+set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES}
+  ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES} ${cAudio_LIBRARIES})
 
 if(NOT WIN32)
 # Link with X11 and threads

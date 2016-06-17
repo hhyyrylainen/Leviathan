@@ -8,9 +8,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
-    LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
+    OwningWorld(owner)
 {
-
 	// create newton world //
 	World = NewtonCreate();
 
@@ -62,6 +61,9 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 	PassedTimeTotal += curtime-LastSimulatedTime;
 	LastSimulatedTime = curtime;
 
+    // Cap passed time, if over one second //
+    if(PassedTimeTotal > MICROSECONDS_IN_SECOND)
+        PassedTimeTotal = MICROSECONDS_IN_SECOND;
     
     Lock lock(WorldUpdateLock);
 
@@ -78,9 +80,10 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 
         if(runs == maxruns){
 
-            Logger::Get()->Warning("PhysicalWorld: bailing from update after "+
-                Convert::ToString(runs)+" with time left: "+Convert::ToString(PassedTimeTotal));
-            return;
+            Logger::Get()->Warning("PhysicalWorld: bailing from update after " +
+                Convert::ToString(runs) + " with time left: " +
+                Convert::ToString(PassedTimeTotal));
+            break;
         }
 	}
 }

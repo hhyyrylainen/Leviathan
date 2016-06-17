@@ -19,8 +19,9 @@ namespace Leviathan{
 		DLLEXPORT static std::unique_ptr<ObjectFile> ProcessObjectFile(const std::string &file, 
             LErrorReporter* reporterror);
 
-        static DLLEXPORT std::unique_ptr<ObjectFile> ProcessObjectFileFromString(std::string filecontents, 
-            const std::string &filenameforerrors, LErrorReporter* reporterror);
+        static DLLEXPORT std::unique_ptr<ObjectFile> ProcessObjectFileFromString(
+            std::string filecontents,  const std::string &filenameforerrors,
+            LErrorReporter* reporterror);
 
 
 		//! \brief Writes an ObjectFile's data structure to a file

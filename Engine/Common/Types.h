@@ -4,12 +4,19 @@
 // ------------------------------------ //
 #include <cmath>
 
+#ifdef LEVIATHAN_USING_OGRE
+#include "OGRE/OgreQuaternion.h"
+#include "OGRE/OgreColourValue.h"
+#include "OGRE/OgreVector3.h"
+#include "OGRE/OgreVector4.h"
+#endif // LEVIATHAN_USING_OGRE
+
 namespace Leviathan{
 
 
 struct PotentiallySetIndex {
 
-    PotentiallySetIndex(size_t index) : Index(index), ValueSet(true) {
+    PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {
     }
     PotentiallySetIndex() = default;
 
@@ -607,10 +614,18 @@ struct StartEndIndex {
 			return Float3(0.f, 0.f, 1.f);
 		}
 		// ----------------- casts ------------------- //
-		// waiting for Microsoft's compilers to add support for "explicit" here //
-		//DLLEXPORT inline operator D3DXVECTOR3(){
-		//	return D3DXVECTOR3(X, Y, Z);
-		//}
+    #ifdef LEVIATHAN_USING_OGRE
+		DLLEXPORT Float3(const Ogre::Vector3 &vec){
+			// copy values //
+			X = vec.x;
+			Y = vec.y;
+			Z = vec.z;
+		}
+
+		DLLEXPORT inline operator Ogre::Vector3() const{
+			return Ogre::Vector3(X, Y, Z);
+		}
+    #endif // LEVIATHAN_USING_OGRE
 		// ------------------------------------ //
 
 
@@ -846,6 +861,30 @@ struct StartEndIndex {
 			return Float4(0.f, 0.f, 0.f, 1.f);
 		}
 
+    #ifdef LEVIATHAN_USING_OGRE
+        DLLEXPORT Float4(const Ogre::Quaternion &quat){
+			// copy values //
+			X = quat.x;
+			Y = quat.y;
+			Z = quat.z;
+			W = quat.w;
+		}
+
+		DLLEXPORT inline operator Ogre::Quaternion() const{
+
+			return Ogre::Quaternion(W, X, Y, Z);
+		}
+
+		DLLEXPORT inline operator Ogre::ColourValue() const{
+
+			return Ogre::ColourValue(X, Y, Z, W);
+		}
+		DLLEXPORT inline operator Ogre::Vector4() const{
+
+			return Ogre::Vector4(X, Y, Z, W);
+		}
+    #endif // LEVIATHAN_USING_OGRE
+
         // ----------------- Quaternions ------------------- //
 		DLLEXPORT static inline Float4 CreateQuaternionFromAngles(const Float3 &angles){
 			// multiplied by 0.5 to get double the value //
@@ -956,4 +995,5 @@ struct StartEndIndex {
     DLLEXPORT std::ostream& operator <<(std::ostream &stream,
         const Leviathan::PotentiallySetIndex &value);
 }
+
 

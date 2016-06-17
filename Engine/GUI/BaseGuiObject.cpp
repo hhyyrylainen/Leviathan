@@ -1,12 +1,10 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_GUI_BASEOBJECT
 #include "BaseGuiObject.h"
-#endif
+
 #include "Iterators/StringIterator.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Script/ScriptModule.h"
-#include <boost/assign/list_of.hpp>
 #include "GUI/GuiManager.h"
 #include "Common/StringOperations.h"
 #include "Script/ScriptRunningSetup.h"
@@ -15,12 +13,11 @@
 #include "../Handlers/IDFactory.h"
 using namespace Leviathan;
 using namespace Gui;
-using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner, const std::string &name,
-    int fakeid, std::shared_ptr<ScriptScript> script /*= NULL*/) :
-    EventableScriptObject(script), OwningInstance(owner), FileID(fakeid), Name(name),
-    ID(IDFactory::GetID()), TargetElement(NULL)
+DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner,
+    const std::string &name, int fakeid, std::shared_ptr<ScriptScript> script /*= NULL*/) :
+    EventableScriptObject(script), 
+    ID(IDFactory::GetID()), FileID(fakeid), Name(name), OwningInstance(owner)
 {
 	
 }
@@ -61,7 +58,7 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::ReleaseData(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT string Leviathan::Gui::BaseGuiObject::GetName(){
+DLLEXPORT std::string Leviathan::Gui::BaseGuiObject::GetName(){
 
 	return Name;
 }
@@ -71,7 +68,7 @@ DLLEXPORT CEGUI::Window* Leviathan::Gui::BaseGuiObject::GetTargetWindow() const{
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
-    GuiManager* owner, vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
+    GuiManager* owner, std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
 {
 	// parse fake id from prefixes //
 	int fakeid = 0;
@@ -93,9 +90,10 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerl
 		}
 	}
 
-	unique_ptr<BaseGuiObject> tmpptr(new BaseGuiObject(owner, dataforthis.GetName(), fakeid, dataforthis.GetScript()));
+    auto tmpptr = std::make_unique<BaseGuiObject>(owner, dataforthis.GetName(), fakeid,
+        dataforthis.GetScript());
 
-	shared_ptr<NamedVariableList> listenon;
+    std::shared_ptr<NamedVariableList> listenon;
 
 	// Get listeners //
 	auto paramlist = dataforthis.GetListWithName("params");
@@ -129,7 +127,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerl
 		Logger::Get()->Error("BaseGuiObject: couldn't find a CEGUI window with name: "+
             tmpptr->Name+":");
         
-		Logger::Get()->Write("\t> "+string(e.what()));
+		Logger::Get()->Write("\t> " + std::string(e.what()));
 	}
 
 	if(foundobject){
@@ -161,7 +159,7 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 		return;
 	ScriptModule* mod = Scripting->GetModule();
 
-	std::vector<shared_ptr<ValidListenerData>> containedlisteners;
+	std::vector<std::shared_ptr<ValidListenerData>> containedlisteners;
 
 	mod->GetListOfListeners(containedlisteners);
 
@@ -171,9 +169,10 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 
 	for(size_t i = 0; i < containedlisteners.size(); i++){
 		// Generics cannot be CEGUI events //
-		if(containedlisteners[i]->GenericTypeName && containedlisteners[i]->GenericTypeName->size() > 0){
+		if(containedlisteners[i]->GenericTypeName &&
+            containedlisteners[i]->GenericTypeName->size() > 0)
+        {
 			// custom event listener //
-
 			RegisterForEvent(*containedlisteners[i]->GenericTypeName);
 
 			continue;
@@ -215,10 +214,10 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 		// check does the script contain right listeners //
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
-                new NamedVariableBlock(
-                    new VoidPtrBlock(this), "GuiObject")) (new NamedVariableBlock(
-                            new VoidPtrBlock(*pEvent), "Event"));
+            std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
+                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GuiObject"),
+                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(*pEvent), "Event") };
+            
 			// we are returning ourselves so increase refcount
 			AddRef();
 			(*pEvent)->AddRef();
@@ -227,16 +226,18 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 
 			// Run the script //
-			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+            std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
                 Scripting.get(), &sargs);
 		}
 	} else {
 		// generic event is passed //
 		if(mod->DoesListenersContainSpecificListener("", (*event2)->GetTypePtr())){
 			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
-                new NamedVariableBlock(new VoidPtrBlock(this), "GuiObject")) (
-                    new NamedVariableBlock(new VoidPtrBlock(*event2), "GenericEvent"));
+            std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
+                std::make_shared<NamedVariableBlock>(
+                    new VoidPtrBlock(this), "GuiObject"), 
+                std::make_shared<NamedVariableBlock>(
+                    new VoidPtrBlock(*event2), "GenericEvent") };
 			// we are returning ourselves so increase refcount
 			AddRef();
 			(*event2)->AddRef();
@@ -246,30 +247,30 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
                     (*event2)->GetTypePtr())).SetArguments(Args);
 
 			// Run the script //
-			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+            std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
                 Scripting.get(), &sargs);
 		}
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::GetParametersForInit(){
+DLLEXPORT std::unique_ptr<ScriptRunningSetup> Gui::BaseGuiObject::GetParametersForInit(){
 	return _GetArgsForAutoFunc();
 }
 
-DLLEXPORT std::unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::GetParametersForRelease(){
+DLLEXPORT std::unique_ptr<ScriptRunningSetup> Gui::BaseGuiObject::GetParametersForRelease(){
 	return _GetArgsForAutoFunc();
 }
 
-unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::_GetArgsForAutoFunc(){
+std::unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::_GetArgsForAutoFunc(){
 	// Setup the parameters //
-	vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new NamedVariableBlock(
-            new VoidPtrBlock(this), "GuiObject"))
-        (new NamedVariableBlock(new VoidPtrBlock((Event*)nullptr), "Event"));
+    std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
+        std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GuiObject"),
+        std::make_shared<NamedVariableBlock>(new VoidPtrBlock((Event*)nullptr), "Event") };
 
 	// we are returning ourselves so increase refcount
 	AddRef();
 
-	unique_ptr<ScriptRunningSetup> sargs(new ScriptRunningSetup);
+    std::unique_ptr<ScriptRunningSetup> sargs(new ScriptRunningSetup);
 	sargs->SetArguments(Args);
 
 	return sargs;
@@ -291,10 +292,11 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(Lock &locked){
 
 
 	// Fill the map //
-	CEGUIEventNames.insert(make_pair(LISTENERNAME_ONCLICK, &CEGUI::PushButton::EventClicked));
-	CEGUIEventNames.insert(make_pair(LISTENERNAME_ONCLOSECLICKED,
+	CEGUIEventNames.insert(
+        std::make_pair(LISTENERNAME_ONCLICK, &CEGUI::PushButton::EventClicked));
+	CEGUIEventNames.insert(std::make_pair(LISTENERNAME_ONCLOSECLICKED,
             &CEGUI::FrameWindow::EventCloseClicked));
-    CEGUIEventNames.insert(make_pair(LISTENERNAME_LISTSELECTIONACCEPTED,
+    CEGUIEventNames.insert(std::make_pair(LISTENERNAME_LISTSELECTIONACCEPTED,
             &CEGUI::Combobox::EventListSelectionAccepted));
 	
 
@@ -302,8 +304,8 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(Lock &locked){
 
 Mutex Leviathan::Gui::BaseGuiObject::CEGUIEventMutex;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(Lock &guard, CEGUI::Window* target /*= NULL*/,
-    size_t level /*= 0*/) const
+DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(Lock &guard,
+    CEGUI::Window* target /*= NULL*/, size_t level /*= 0*/) const
 {
 
 	VerifyLock(guard);
@@ -324,7 +326,7 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(Lock &guard,
 		Logger::Get()->DirectWriteBuffer("    ");
 	}
 
-	Logger::Get()->Write("    > "+string(actualtarget->getName().c_str()));
+	Logger::Get()->Write("    > " + std::string(actualtarget->getName().c_str()));
     
 	// Recurse to child windows //
 	for(size_t i = 0; i < actualtarget->getChildCount(); i++){
@@ -391,12 +393,14 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const std::string &listenern
 
 	
 	if(iter->second == &CEGUI::PushButton::EventClicked){
-		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(
+		createdconnection = TargetElement->subscribeEvent(*iter->second,
+            CEGUI::Event::Subscriber(
                 &BaseGuiObject::EventOnClick, this));
 
 	} else if(iter->second == &CEGUI::FrameWindow::EventCloseClicked){
 
-		createdconnection = TargetElement->subscribeEvent(*iter->second, CEGUI::Event::Subscriber(
+		createdconnection = TargetElement->subscribeEvent(*iter->second,
+            CEGUI::Event::Subscriber(
                 &BaseGuiObject::EventOnCloseClicked, this));
 
 	} else if(iter->second == &CEGUI::Combobox::EventListSelectionAccepted){
@@ -406,26 +410,26 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const std::string &listenern
         
     } else {
 
-		// Generic listeners aren't supported since we would have no way of knowing which script listener
-        // would have to be called
-		Logger::Get()->Error("BaseGuiObject: _HookCEGUIEvent: event is missing a specific clause, name: "+
-            listenername);
+		// Generic listeners aren't supported since we would have no way of knowing which
+        // script listener would have to be called
+		Logger::Get()->Error("BaseGuiObject: _HookCEGUIEvent: event is missing a specific "
+            "clause, name: " + listenername);
         
 		Logger::Get()->Save();
-		assert(0 && "Unsupported CEGUI listener type is being called");
+		LEVIATHAN_ASSERT(0, "Unsupported CEGUI listener type is being called");
 		return true;
 	}
 
 	CEGUIRegisteredEvents.push_back(createdconnection);
-
 	return true;
 }
 
 void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
 	GUARD_LOCK();
 	// Loop an disconnect them all //
-	for(auto iter = CEGUIRegisteredEvents.begin(); iter != CEGUIRegisteredEvents.end(); ++iter){
-
+	for(auto iter = CEGUIRegisteredEvents.begin(); iter != CEGUIRegisteredEvents.end();
+        ++iter)
+    {
 		(*iter)->disconnect();
 	}
 
@@ -433,20 +437,21 @@ void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
 }
 // ------------------------------------ //
 bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const std::string &name,
-    std::function<void(vector<shared_ptr<NamedVariableBlock>>&)> extraparam /*= NULL*/)
+    std::function<void (std::vector<std::shared_ptr<NamedVariableBlock>>&)> extraparam
+    /*= NULL*/)
 {
 	// There should be one as it is registered //
 	ScriptModule* mod = Scripting->GetModule();
 
 	if(!mod){
-        Logger::Get()->Error("BaseGuiObject: CallCEGUIListener: the script module is no longer "
-            "valid");
+        Logger::Get()->Error("BaseGuiObject: CallCEGUIListener: the script module is "
+            "no longer valid");
 		return false;
     }
 
 	// Setup the parameters //
-	vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
-        new NamedVariableBlock(new VoidPtrBlock(this), "GuiObject"));
+    std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
+        std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GuiObject") };
 
 	// We are returning ourselves so increase refcount
 	AddRef();
@@ -460,7 +465,8 @@ bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const std::string &name,
 
 
 	// Run the script //
-	shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(Scripting.get(), &sargs);
+    std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+        Scripting.get(), &sargs);
 
 	if(!result || !result->IsConversionAllowedNonPtr<bool>()){
 
@@ -477,15 +483,13 @@ bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &a
 	// This should be safe //
 	auto res = static_cast<const CEGUI::WindowEventArgs&>(args);
 
-	assert(res.window == TargetElement &&
+	LEVIATHAN_ASSERT(res.window == TargetElement,
         "BaseGuiObject received destruction notification for unsubscribed window");
-
-
 
 	// This might be required to not leak memory //
 	_UnsubscribeAllEvents();
 
-	TargetElement = NULL;
+	TargetElement = nullptr;
 
 	return false;
 }
@@ -510,8 +514,8 @@ bool Leviathan::Gui::BaseGuiObject::EventOnListSelectionAccepted(const CEGUI::Ev
 
     if(!targetwind){
 
-        Logger::Get()->Error("BaseGuiObject: CEGUI listener for ListSelectionAccepted didn't get "
-            "a Combobox as argument");
+        Logger::Get()->Error("BaseGuiObject: CEGUI listener for ListSelectionAccepted "
+            "didn't get a Combobox as argument");
         return false;
     }
 
@@ -525,12 +529,13 @@ bool Leviathan::Gui::BaseGuiObject::EventOnListSelectionAccepted(const CEGUI::Ev
     std::string selectedtext(item->getText().c_str());
     
     return _CallCEGUIListener(LISTENERNAME_LISTSELECTIONACCEPTED, std::bind<void>([](
-                const string &selecttext, vector<shared_ptr<NamedVariableBlock>> &paramlist)
+                const std::string &selecttext,
+                std::vector<std::shared_ptr<NamedVariableBlock>> &paramlist)
             -> void
         {
 
-            paramlist.push_back(make_shared<NamedVariableBlock>(new StringBlock(selecttext),
-                    "Text"));
+            paramlist.push_back(std::make_shared<NamedVariableBlock>(
+                    new StringBlock(selecttext), "Text"));
 
         }, selectedtext, std::placeholders::_1));
 }

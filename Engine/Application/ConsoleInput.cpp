@@ -22,10 +22,10 @@ ConsoleInput::~ConsoleInput(){
     StdInUse = false;
 }
 
-std::atomic<bool> ConsoleInput::StdInUse = false;
+std::atomic<bool> ConsoleInput::StdInUse { false };
 // ------------------------------------ //
 bool ConsoleInput::Init(std::function<bool (const std::string&)> callback,
-    bool canopenconsole = true)
+    bool canopenconsole /*= true*/)
 {
     Callback = callback;
     
@@ -76,13 +76,16 @@ bool ConsoleInput::Init(std::function<bool (const std::string&)> callback,
     return true;
 }
 // ------------------------------------ //
-void ConsoleInput::Shutdown(bool waitquit = false){
+void ConsoleInput::Release(bool waitquit /*= false*/){
 
     if (ReadingInput) {
 
         StopWaiting();
 
         ReadingInput = false;
+
+        if(waitquit && StdInThread.joinable())
+            StdInThread.join();
     }
 #ifdef _WIN32
 
@@ -91,7 +94,7 @@ void ConsoleInput::Shutdown(bool waitquit = false){
 #endif // _WIN32
 }
 // ------------------------------------ //
-bool ConsoleInput::IsAttachedToConsole() const{
+bool ConsoleInput::IsAttachedToConsole(){
 #ifdef _WIN32
 
     return GetConsoleWindow() != nullptr;
@@ -119,7 +122,8 @@ void ConsoleInput::CreateConsoleWindow() {
     constexpr int MAX_CONSOLE_LINES = 500;
 
     // Method from http://www.halcyon.com/~ast/dload/guicon.htm
-    // Better method from http://stackoverflow.com/questions/311955/redirecting-cout-to-a-console-in-windows
+    // Better method from
+    // http://stackoverflow.com/questions/311955/redirecting-cout-to-a-console-in-windows
 
     // Allocate a console for this app
     if (!AllocConsole()) {
@@ -150,11 +154,13 @@ void ConsoleInput::CreateConsoleWindow() {
     if (freopen_s(&ResultStream, "CONOUT$", "w", stderr) != 0)
         UE_LOG(FabLog, Error, TEXT("FabConsole: freopen failed"));
 
-    //Clear the error state for each of the C++ standard stream objects. We need to do this, as
-    //attempts to access the standard streams before they refer to a valid target will cause the
-    //iostream objects to enter an error state. In versions of Visual Studio after 2005, this seems
-    //to always occur during startup regardless of whether anything has been read from or written to
-    //the console or not.
+    // Clear the error state for each of the C++ standard stream
+    // objects. We need to do this, as attempts to access the standard
+    // streams before they refer to a valid target will cause the
+    // iostream objects to enter an error state. In versions of Visual
+    // Studio after 2005, this seems to always occur during startup
+    // regardless of whether anything has been read from or written to
+    // the console or not.
     std::wcout.clear();
     std::cout.clear();
     std::wcerr.clear();

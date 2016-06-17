@@ -1,25 +1,26 @@
 #pragma once
 // ------------------------------------ //
 #include "Include.h"
-
 #include "ErrorReporter.h"
 
 namespace Leviathan{
 
-    //! \brief Logger public interface
+    //! \brief Logger class for all text output
 	class Logger : public LErrorReporter{
 	public:
         
 		DLLEXPORT Logger(const std::string &file);
-		DLLEXPORT ~Logger();
+		DLLEXPORT virtual ~Logger();
 
-        DLLEXPORT void Write(const std::string &data);
+        // Logging functions
+        DLLEXPORT void Write(const std::string &data) override;
+        DLLEXPORT void Info(const std::string &data) override;
+        DLLEXPORT void Error(const std::string &data) override;
+        DLLEXPORT void Warning(const std::string &data) override;
+        DLLEXPORT void WriteLine(const std::string &Text) override;
+        DLLEXPORT void Fatal(const std::string &Text) override;
 
-
-        DLLEXPORT void Info(const std::string &data);
-        DLLEXPORT void Error(const std::string &data);
-        DLLEXPORT void Warning(const std::string &data);
-
+        
         DLLEXPORT static void SendDebugMessage(const std::string &str);
 
 		//! \brief Script wrapper
@@ -34,10 +35,6 @@ namespace Leviathan{
 
 		DLLEXPORT static Logger* Get();
         
-
-        DLLEXPORT void WriteLine(const std::string &Text) override;
-        DLLEXPORT void Fatal(const std::string &Text) override;
-
     private:
 
         //! Call only after locking

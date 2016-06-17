@@ -114,10 +114,10 @@ namespace Leviathan{
 		DLLEXPORT static std::string GetFontFolder();
 		DLLEXPORT static std::string GetSoundFolder();
 
-    #ifdef USING_OGRE
+    #ifdef LEVIATHAN_USING_OGRE
 		DLLEXPORT static void RegisterOGREResourceGroups();
 		DLLEXPORT static void RegisterOGREResourceLocation(const std::string &location);
-    #endif // USING_OGRE
+    #endif // LEVIATHAN_USING_OGRE
 
 		DLLEXPORT static bool DoesExtensionMatch(FileDefinitionType* file,
             const std::vector<int> &Ids);

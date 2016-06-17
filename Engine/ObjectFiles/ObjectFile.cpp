@@ -7,11 +7,11 @@
 #if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
 #include "Exceptions.h"
 #endif
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 #include "../Script/ScriptExecutor.h"
 #include "../Script/ScriptModule.h"
 #include "../Script/ScriptScript.h"
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 
 using namespace Leviathan;
 using namespace std;

@@ -11,7 +11,7 @@ namespace Leviathan{
 
 #define GAMECONFIGURATION_GET_VARIABLEACCESS(x) 	NamedVars* x = NULL; Lock varlockaccess;\
     {GameConfiguration* configvar = GameConfiguration::Get();           \
-    if(configvar != NULL){ varlockaccess = std::move(Lock(configvar->ObjectsLock)); \
+    if(configvar != NULL){ varlockaccess = Lock(configvar->ObjectsLock); \
         x = configvar->AccessVariables(varlockaccess);}}
 
 	class GameConfiguration : public ThreadSafe{
@@ -49,9 +49,9 @@ namespace Leviathan{
 		std::string GameConfigFile;
 
 		// This stores all the values and is passed around from this object to reduce bloat //
-		NamedVars* GameVars;
+		NamedVars* GameVars = nullptr;
 		// Controls when to save changes //
-		bool Modified;
+		bool Modified = false;
 
 		static GameConfiguration* staticaccess;
 	};

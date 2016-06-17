@@ -3,7 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Script/ScriptScript.h"
-#include "ObjectFiles/ObjectFileObject.h"
+#include "../ObjectFiles/ObjectFile.h"
 #include "Common/ReferenceCounted.h"
 #include "Events/Event.h"
 #include "GuiCollection.h"
@@ -123,7 +123,7 @@ namespace Leviathan{ namespace Gui{
             GuiManager* OwningInstance;
 
             //! The element that this script wrapper targets
-            CEGUI::Window* TargetElement;
+            CEGUI::Window* TargetElement = nullptr;
 
 
             //! List of registered CEGUI events. This is used for unsubscribing

@@ -75,7 +75,8 @@ DataStore* Leviathan::DataStore::Get(){
 void Leviathan::DataStore::Load(){
 	// load //
 	vector<shared_ptr<NamedVariableList>> tempvec;
-	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+"Persist.txt", tempvec);
+	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+"Persist.txt", tempvec,
+        Logger::Get());
 
 	Values.SetVec(tempvec);
 

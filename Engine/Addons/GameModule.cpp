@@ -23,7 +23,7 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 	}
 
 	// Load the file //
-	auto ofile = ObjectFileProcessor::ProcessObjectFile(file);
+	auto ofile = ObjectFileProcessor::ProcessObjectFile(file, Logger::Get());
 
 	if(!ofile){
 
@@ -39,7 +39,7 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 
 	// Get various data from the header //
 	ObjectFileProcessor::LoadValueFromNamedVars<std::string>(ofile->GetVariables(), "Version",
-        Name, "-1", true, "GameModule:");
+        Name, "-1", Logger::Get(), "GameModule:");
 
 	auto gmobject = ofile->GetObjectFromIndex(0);
 
@@ -214,7 +214,8 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 	}
 }
 // ------------------ Being an actual module ------------------ //
-DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(const string &entrypoint,
+DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(
+    const string &entrypoint,
     std::vector<shared_ptr<NamedVariableBlock>> &otherparams, bool &existed,
     bool fulldeclaration /*= false*/)
 {

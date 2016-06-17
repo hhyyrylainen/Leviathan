@@ -10,19 +10,23 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type, int timeout /*= 1000*/,
-    PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
-    ResponseID(IDFactory::GetID()), TypeOfRequest(type), TimeOutValue(timeout), TimeOutStyle(style), RequestData(NULL)
+DLLEXPORT Leviathan::NetworkRequest::NetworkRequest(NETWORKREQUESTTYPE type,
+    int timeout /*= 1000*/, PACKET_TIMEOUT_STYLE style /*= PACKET_TIMEOUT_STYLE_TIMEDMS*/) :
+    ResponseID(IDFactory::GetID()), TimeOutValue(timeout),
+    TimeOutStyle(style), TypeOfRequest(type), RequestData(NULL)
 {
 	// We need to make sure the type is correct for this kind of packet //
 #ifdef _DEBUG
 	switch(TypeOfRequest){
 		// With these cases not having extra data is valid //
         case NETWORKREQUESTTYPE_IDENTIFICATION: case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
-        case NETWORKREQUESTTYPE_SERVERSTATUS: case NETWORKREQUESTTYPE_GETALLSYNCVALUES: case NETWORKREQUESTTYPE_ECHO:
+        case NETWORKREQUESTTYPE_SERVERSTATUS: case NETWORKREQUESTTYPE_GETALLSYNCVALUES:
+    case NETWORKREQUESTTYPE_ECHO:
 		return;
 	default:
-		assert(0 && "trying to create a request which requires extra data without providing any extra data!");
+		LEVIATHAN_ASSERT(0,
+            "trying to create a request which requires extra data without providing "
+            "any extra data!");
 	}
 
 #endif // _DEBUG

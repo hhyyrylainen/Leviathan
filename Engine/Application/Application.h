@@ -83,13 +83,13 @@ namespace Leviathan{
 		DLLEXPORT virtual void _InternalInit();
 		// ------------------------------------ //
 
-		bool Quit;
-		bool ShouldQuit;
+		bool Quit = false;
+		bool ShouldQuit = false;
 		//! This can be quickly set anywhere to quit sometime in the future 
-		bool QuitSometime;
+		bool QuitSometime = false;
 
 		Engine* _Engine;
-		AppDef* ApplicationConfiguration;
+		AppDef* ApplicationConfiguration = nullptr;
         
 		// static part //
 		static LeviathanApplication* Curapp;

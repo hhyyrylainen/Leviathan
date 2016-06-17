@@ -787,7 +787,7 @@ namespace Leviathan{
 		std::string Name;
 	};
 
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
     //! \brief Reference counted version for scripts
     //!
     //! Also stores the AngelScript ID of the type
@@ -828,7 +828,7 @@ namespace Leviathan{
 
 		int ASTypeID;
 	};
-#endif //USING_ANGELSCRIPT
+#endif //LEVIATHAN_USING_ANGELSCRIPT
 
     // Stream operators //
     DLLEXPORT std::ostream& operator <<(std::ostream &stream,

@@ -14,8 +14,7 @@ using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SyncedVariables::SyncedVariables(NetworkHandler* owner, bool amiaserver,
     NetworkInterface* handlinginterface) :
-	IsHost(amiaserver), CorrespondingInterface(handlinginterface), Owner(owner), SyncDone(false),
-    ExpectedThingCount(0), ActualGotThingCount(0)
+    CorrespondingInterface(handlinginterface), Owner(owner), IsHost(amiaserver)
 {
 	Staticaccess = this;
 }
@@ -526,7 +525,7 @@ void Leviathan::SyncedVariables::_UpdateReceiveCount(const std::string &nameofth
 	}
 
 	// Add it //
-	ValueNamesUpdated.push_back(move(unique_ptr<std::string>(new std::string(nameofthing))));
+	ValueNamesUpdated.push_back(unique_ptr<std::string>(new std::string(nameofthing)));
 
 	// Increment count and notify //
 	++ActualGotThingCount;
@@ -549,9 +548,9 @@ void Leviathan::SyncedVariables::_OnNotifierDisconnected(Lock &guard,
 	RemoveConnectionWithAnother(static_cast<ConnectionInfo*>(parenttoremove), guard, true);
 }
 // ------------------ SyncedValue ------------------ //
-DLLEXPORT Leviathan::SyncedValue::SyncedValue(NamedVariableList* newddata, bool passtoclients /*= true*/,
-    bool allowevents /*= true*/) : 
-	Owner(NULL), PassToClients(passtoclients), AllowSendEvents(allowevents), HeldVariables(newddata)
+DLLEXPORT Leviathan::SyncedValue::SyncedValue(NamedVariableList* newddata,
+    bool passtoclients /*= true*/, bool allowevents /*= true*/) : 
+	PassToClients(passtoclients), AllowSendEvents(allowevents), HeldVariables(newddata)
 {
 
 }

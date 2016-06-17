@@ -63,7 +63,7 @@ void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &
     // this is useful when the origin is at the bottom of the model and you don't take
     // this into account in newton primitive (using Convex hull should not require this)
     if(ObjectFileProcessor::LoadValueFromNamedVars<string>(proplist->GetVariables(),
-            "Offset", offsettype, "", true, "Prop: Init: CreatePhysicsModel"))
+            "Offset", offsettype, "", Logger::Get(), "Prop: Init: CreatePhysicsModel"))
     {
 
         if(offsettype == "None"){
@@ -121,7 +121,7 @@ void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &
             string sizesourcename;
 
             if(!ObjectFileProcessor::LoadValueFromNamedVars<string>(
-                    proplist->GetVariables(), "Size", sizesourcename, "", true,
+                    proplist->GetVariables(), "Size", sizesourcename, "", Logger::Get(),
                     "Prop: Init: CreatePhysicsModel:"))
             {
                 // Process based on the source name //
@@ -203,7 +203,7 @@ void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &
         // Get mass //
         physics.Mass = 0;
         ObjectFileProcessor::LoadValueFromNamedVars<float>(proplist->GetVariables(),
-            "Mass", physics.Mass, 0.f, true, "Prop: Init: CreatePhysicsModel:");
+            "Mass", physics.Mass, 0.f, Logger::Get(), "Prop: Init: CreatePhysicsModel:");
 
         // First calculate inertia and center of mass points //
         Float3 inertia;
@@ -244,7 +244,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
         StringOperations::RemoveExtensionString(modelfile, true), "levmd", true);
 
 	// Parse the file //
-	auto file = ObjectFileProcessor::ProcessObjectFile(path);
+	auto file = ObjectFileProcessor::ProcessObjectFile(path, Logger::Get());
 
 	if(!file){
 
@@ -257,7 +257,7 @@ DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
     string ogrefile;
 
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
-        ogrefile, "", true, "Prop: Init: no model file");
+        ogrefile, "", Logger::Get(), "Prop: Init: no model file");
 
 
     // Setup the model //
@@ -305,7 +305,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
 	std::string path = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, name, "levmd", false);
 
 	// Parse the file //
-	auto file = ObjectFileProcessor::ProcessObjectFile(path);
+	auto file = ObjectFileProcessor::ProcessObjectFile(path, Logger::Get());
 
 	if(!file){
 
@@ -318,7 +318,7 @@ DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lo
     string ogrefile;
 
 	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
-        ogrefile, "", true, "Prop: Init: no model file");
+        ogrefile, "", Logger::Get(), "Prop: Init: no model file");
     
 
 	// Setup the model //

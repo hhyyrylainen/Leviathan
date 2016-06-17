@@ -6,7 +6,7 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::ScriptScript::ScriptScript(const int &MID, weak_ptr<ScriptModule> wptr) :
-    ModuleID(MID), ScriptsModule(wptr)
+    ScriptsModule(wptr), ModuleID(MID)
 {
 
 }

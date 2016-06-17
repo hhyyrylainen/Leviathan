@@ -33,7 +33,8 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
     SECTION("minimal syntax string") {
 
         // Try to parse a minimal syntax file //
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(BasicTestStr, "basic in memory test", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(BasicTestStr,
+            "basic in memory test", &reporter);
 
         REQUIRE(ofile != nullptr);
 
@@ -59,7 +60,8 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
         REQUIRE(value);
 
         int firstValue;
-        CHECK(ObjectFileProcessor::LoadValueFromNamedVars(list->GetVariables(), "firstValue", firstValue, 0));
+        CHECK(ObjectFileProcessor::LoadValueFromNamedVars(list->GetVariables(),
+                "firstValue", firstValue, 0));
 
         CHECK(firstValue == 1);
     }
@@ -70,7 +72,8 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
             "\n"
             "}\n";
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(ObjToParse, "ObjToParse", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(ObjToParse,
+            "ObjToParse", &reporter);
 
         REQUIRE(ofile != nullptr);
         REQUIRE(ofile->GetTotalObjectCount() == 1);
@@ -80,6 +83,7 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
 #ifndef LEVIATHAN_UE_PLUGIN
 TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 
+    DummyReporter reporter;
     ScriptExecutor exec;
     PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
     
@@ -87,7 +91,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 	string minfile = "Data/Scripts/tests/SimpleTest.levof";
 
 	// Try to parse it //
-	auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile);
+	auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile, &reporter);
 
     REQUIRE(ofile != nullptr);
 
@@ -99,7 +103,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
     string TestFile = "Data/Scripts/tests/TestObjectFile.levof";
 	
 	// Make sure the loading is correct //
-	auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile);
+	auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile, &reporter);
 
     REQUIRE(rofile != nullptr);
 
@@ -113,7 +117,8 @@ TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
 
     SECTION("Header var") {
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12", "missing ; parse test", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12",
+            "missing ; parse test", &reporter);
 
         REQUIRE(ofile != nullptr);
 
@@ -143,7 +148,8 @@ TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
             "    }\n"
             "}";
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "parse test", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "parse test",
+            &reporter);
 
         REQUIRE(ofile != nullptr);
 
@@ -154,15 +160,20 @@ TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
 
         REQUIRE(variables.GetValueDirect("is_default"));
         CHECK(variables.GetValueDirect("is_default")->GetCommonType() == DATABLOCK_TYPE_BOOL);
-        CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>() == true);
+        CHECK(variables.GetValueDirect("is_default")->GetValue().
+            ConvertAndReturnVariable<bool>() == true);
 
         REQUIRE(variables.GetValueDirect("chat_prefix"));
-        CHECK(variables.GetValueDirect("chat_prefix")->GetCommonType() == DATABLOCK_TYPE_STRING);
-        CHECK(variables.GetValueDirect("chat_prefix")->GetValue().ConvertAndReturnVariable<std::string>() == "[NEW] ");
+        CHECK(variables.GetValueDirect("chat_prefix")->GetCommonType() ==
+            DATABLOCK_TYPE_STRING);
+        CHECK(variables.GetValueDirect("chat_prefix")->GetValue().
+            ConvertAndReturnVariable<std::string>() == "[NEW] ");
 
         REQUIRE(variables.GetValueDirect("auto_promote"));
-        CHECK(variables.GetValueDirect("auto_promote")->GetCommonType() == DATABLOCK_TYPE_STRING);
-        CHECK(variables.GetValueDirect("auto_promote")->GetValue().ConvertAndReturnVariable<std::string>() == "1hr");
+        CHECK(variables.GetValueDirect("auto_promote")->GetCommonType() ==
+            DATABLOCK_TYPE_STRING);
+        CHECK(variables.GetValueDirect("auto_promote")->GetValue().
+            ConvertAndReturnVariable<std::string>() == "1hr");
     }
 }
 
@@ -181,7 +192,8 @@ TEST_CASE("Object file saving", "[objectfile]") {
 
         CHECK(serialized.size() > 0);
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized,
+            "serialized", &reporter);
 
         REQUIRE(ofile);
         REQUIRE(ofile->GetTotalObjectCount() == 1);
@@ -200,16 +212,18 @@ TEST_CASE("Object file saving", "[objectfile]") {
 
         auto list1 = std::make_unique<ObjectFileListProper>("Just a list");
 
-        list1->AddVariable(std::make_shared<NamedVariableList>("boring variable", new VariableBlock(true)));
-        list1->AddVariable(std::make_shared<NamedVariableList>("another var", new VariableBlock(4)));
+        list1->AddVariable(std::make_shared<NamedVariableList>("boring variable",
+                new VariableBlock(true)));
+        list1->AddVariable(std::make_shared<NamedVariableList>("another var",
+                new VariableBlock(4)));
 
-        obj1->AddVariableList(std::move(std::unique_ptr<ObjectFileList>(list1.release())));
+        obj1->AddVariableList(std::unique_ptr<ObjectFileList>(list1.release()));
 
         auto text1 = std::make_unique<ObjectFileTextBlockProper>("Just a list");
         text1->AddTextLine("This is the place for a cool");
         text1->AddTextLine("story that spans multiple lines");
 
-        obj1->AddTextBlock(std::move(std::unique_ptr<ObjectFileTextBlock>(text1.release())));
+        obj1->AddTextBlock(std::unique_ptr<ObjectFileTextBlock>(text1.release()));
 
         CHECK(prefixes.size() == 0);
 
@@ -221,15 +235,18 @@ TEST_CASE("Object file saving", "[objectfile]") {
         obj.AddObject(obj1);
         obj.AddObject(obj2);
 
-        obj.AddNamedVariable(std::make_shared<NamedVariableList>("TestVar", new VariableBlock(17.5)));
-        obj.AddNamedVariable(std::make_shared<NamedVariableList>("Var2", new VariableBlock(std::string("things"))));
+        obj.AddNamedVariable(std::make_shared<NamedVariableList>("TestVar",
+                new VariableBlock(17.5)));
+        obj.AddNamedVariable(std::make_shared<NamedVariableList>("Var2",
+                new VariableBlock(std::string("things"))));
 
         std::string serialized;
         REQUIRE(ObjectFileProcessor::SerializeObjectFile(obj, serialized));
 
         CHECK(serialized.size() > 0);
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized",
+            &reporter);
 
         REQUIRE(ofile);
         REQUIRE(ofile->GetTotalObjectCount() == 2);
@@ -238,7 +255,8 @@ TEST_CASE("Object file saving", "[objectfile]") {
         REQUIRE(ofile->GetObject(0)->GetPrefixesCount() == 1);
         CHECK(ofile->GetObject(0)->GetPrefix(0) == "prefix1");
         REQUIRE(ofile->GetObject(0)->GetListWithName("Just a list"));
-        CHECK(ofile->GetObject(0)->GetListWithName("Just a list")->GetVariables().GetValueDirect("another var"));
+        CHECK(ofile->GetObject(0)->GetListWithName("Just a list")->GetVariables().
+            GetValueDirect("another var"));
 
         CHECK(ofile->GetObject(1)->GetName() == "A fine object");
         CHECK(ofile->GetObject(1)->GetTypeName() == "Gui");
@@ -274,7 +292,8 @@ TEST_CASE("Object file saving", "[objectfile]") {
 
         CHECK(serialized.size() > 0);
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized,
+            "serialized", &reporter);
 
         REQUIRE(ofile);
         REQUIRE(ofile->GetTotalObjectCount() == 1);
@@ -309,7 +328,8 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
         "}";
 
     DummyReporter reporter;
-    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "permissions_test1", &reporter);
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+        "permissions_test1", &reporter);
 
     REQUIRE(ofile != nullptr);
 
@@ -320,18 +340,22 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
     const auto& variables = ofile->GetObject(0)->GetListWithName("values")->GetVariables();
 
     REQUIRE(variables.GetValueDirect("is_default"));
-    CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>() == true);
+    CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>()
+        == true);
 
     REQUIRE(variables.GetValueDirect("chat_prefix"));
-    CHECK(variables.GetValueDirect("chat_prefix")->GetValue().ConvertAndReturnVariable<std::string>() == "[NEW] ");
+    CHECK(variables.GetValueDirect("chat_prefix")->GetValue().
+        ConvertAndReturnVariable<std::string>() == "[NEW] ");
 
 
     const auto& nodes = ofile->GetObject(0)->GetListWithName("nodes")->GetVariables();
 
     REQUIRE(nodes.GetValueDirect("core.home"));
-    CHECK(nodes.GetValueDirect("core.home")->GetValue().ConvertAndReturnVariable<bool>() == true);
+    CHECK(nodes.GetValueDirect("core.home")->GetValue().ConvertAndReturnVariable<bool>()
+        == true);
 
     REQUIRE(nodes.GetValueDirect("core.kill"));
-    CHECK(nodes.GetValueDirect("core.kill")->GetValue().ConvertAndReturnVariable<std::string>() == "default");
+    CHECK(nodes.GetValueDirect("core.kill")->GetValue().ConvertAndReturnVariable<std::string>()
+        == "default");
 
 }

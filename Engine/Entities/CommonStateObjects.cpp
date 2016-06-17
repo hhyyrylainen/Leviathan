@@ -15,7 +15,8 @@ DLLEXPORT ObjectDeltaStateData::~ObjectDeltaStateData(){
 // ------------------ PhysicalDeltaState ------------------ //
 DLLEXPORT Leviathan::PhysicalDeltaState::PhysicalDeltaState(int tick, const Float3 &position,
     const Float4 &rotation, const Float3 &velocity, const Float3 &torque) :
-    ObjectDeltaStateData(tick), Position(position), Velocity(velocity), Torque(torque), Rotation(rotation),
+    ObjectDeltaStateData(tick),
+    Position(position), Rotation(rotation), Velocity(velocity), Torque(torque),
     ValidFields(PPDELTA_ALL_UPDATED)
 {
 
@@ -571,7 +572,7 @@ DLLEXPORT bool PositionDeltaState::FillMissingData(ObjectDeltaStateData &otherst
 DLLEXPORT TrackControllerState::TrackControllerState(int tick, int reached,
     float speed, float progress) :
     ObjectDeltaStateData(tick), ReachedNode(reached), ChangeSpeed(speed),
-    NodeProgress(progress), AddedNodes(0), ValidFields(TRACKSTATE_UPDATED_ALL)
+    NodeProgress(progress), ValidFields(TRACKSTATE_UPDATED_ALL), AddedNodes(0)
 {
 
 }

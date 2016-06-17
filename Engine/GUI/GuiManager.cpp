@@ -660,10 +660,7 @@ using namespace Gui;
 using namespace std;
 // ------------------ GuiManager ------------------ //
 Leviathan::Gui::GuiManager::GuiManager() :
-    ID(IDFactory::GetID()), Visible(true), GuiMouseUseUpdated(true),
-    GuiDisallowMouseCapture(true), LastTimePulseTime(Time::GetThreadSafeSteadyTimePoint()),
-    MainGuiManager(false), ThisWindow(NULL), GuiContext(NULL), FileChangeID(0),
-    _GuiClipboardHandler(NULL), ContextInput(NULL), DisableGuiMouseCapture(false)
+    ID(IDFactory::GetID())
 {
 	
 }
@@ -672,7 +669,9 @@ Leviathan::Gui::GuiManager::~GuiManager(){
 	
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* window, bool ismain){
+bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* window,
+    bool ismain)
+{
 	GUARD_LOCK();
 
 	ThisWindow = window;
@@ -688,9 +687,10 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
         } catch(const Exception &e){
 
             // Clipboard isn't usable... //
-            Logger::Get()->Warning("GuiManager: failed to create a ClipboardHandler: cannot copy or paste text, "
-                "exception:");
+            Logger::Get()->Warning("GuiManager: failed to create a ClipboardHandler: "
+                "cannot copy or paste text, exception:");
             e.PrintToLog();
+            
             _GuiClipboardHandler = NULL;
         }
     }
@@ -717,13 +717,12 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
 
 		// Only one clipboard is needed //
 		if(_GuiClipboardHandler && _GuiClipboardHandler->WorksOnPlatform())
-			CEGUI::System::getSingleton().getClipboard()->setNativeProvider(_GuiClipboardHandler);
+			CEGUI::System::getSingleton().getClipboard()->setNativeProvider(
+                _GuiClipboardHandler);
 	}
-
 
 	// Store the initial time //
 	LastTimePulseTime = Time::GetThreadSafeSteadyTimePoint();
-
 
 	return true;
 }
@@ -816,7 +815,8 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const string &name
 		}
 	}
 	// Complain //
-	Logger::Get()->Warning("GuiManager: SetCollectionState: couldn't find a collection with name: "+name);
+	Logger::Get()->Warning("GuiManager: SetCollectionState: couldn't find a collection "
+        "with name: " + name);
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const string &name,
@@ -839,6 +839,29 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const s
 // ------------------------------------ //
 void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 	GUARD_LOCK();
+
+    if(ReloadQueued){
+
+        ReloadQueued = false;
+
+        // Reload //
+        LOG_INFO("GuiManager: reloading file: " + MainGUIFile);
+        
+        // Store the current state //
+        auto currentstate = GetGuiStates(guard);
+
+        UnLoadGUIFile(guard);
+
+        // Now load it //
+        if(!LoadGUIFile(guard, MainGUIFile, true)){
+
+            Logger::Get()->Error("GuiManager: file changed: couldn't load updated file: "+
+                MainGUIFile);
+        }
+
+        // Apply back the old states //
+        ApplyGuiStates(guard, currentstate.get());
+    }
 
 	// check if we want mouse //
 	if(GuiMouseUseUpdated){
@@ -992,7 +1015,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(Lock &guard, const string
     }
     
 	// Parse the file //
-	auto data = ObjectFileProcessor::ProcessObjectFile(file);
+	auto data = ObjectFileProcessor::ProcessObjectFile(file, Logger::Get());
 
 	if(!data){
 		return false;
@@ -1005,13 +1028,15 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(Lock &guard, const string
 	string relativepath;
     
 	// Get path //
-	ObjectFileProcessor::LoadValueFromNamedVars<string>(varlist, "GUIBaseFile", relativepath, "", true,
-		"GuiManager: LoadGUIFile: no base file defined (in "+file+") : ");
+	ObjectFileProcessor::LoadValueFromNamedVars<string>(
+        varlist, "GUIBaseFile", relativepath, "", Logger::Get(),
+        "GuiManager: LoadGUIFile: no base file defined (in "+file+") : ");
 
     // This can be used to verify that CEGUI events are properly hooked //
     bool requireevent;
 
-    ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist, "RequireCEGUIHooked", requireevent, false, false, "");
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        varlist, "RequireCEGUIHooked", requireevent, false);
 
 	if(!relativepath.size()){
 
@@ -1290,24 +1315,13 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const st
 	return NULL;
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiManager::_FileChanged(const string &file, ResourceFolderListener &caller){
+void Leviathan::Gui::GuiManager::_FileChanged(const string &file,
+    ResourceFolderListener &caller)
+{
 	// Any updated file will cause whole reload //
 	GUARD_LOCK();
 
-	// Store the current state //
-	auto currentstate = GetGuiStates(guard);
-
-	UnLoadGUIFile(guard);
-
-	// Now load it //
-	if(!LoadGUIFile(guard, MainGUIFile, true)){
-
-		Logger::Get()->Error("GuiManager: file changed: couldn't load updated file: "+
-            MainGUIFile);
-	}
-
-	// Apply back the old states //
-	ApplyGuiStates(guard, currentstate.get());
+    ReloadQueued = true;
 
 	// Mark everything as non-updated //
 	caller.MarkAllAsNotUpdated();

@@ -3,7 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "PhysicalWorld.h"
-#include "ObjectFiles/ObjectFileObject.h"
+#include "../ObjectFiles/ObjectFile.h"
 
 
 // Returning 0 (as opposed to 1) disables the collision between the objects //
@@ -123,7 +123,8 @@ namespace Leviathan{
 		std::string Name;
 		int EngineID;
 
-		// this material can be loaded into multiple worlds at once, so we need to quickly fetch right id value //
+		// this material can be loaded into multiple worlds at once, so we need to quickly
+        // fetch right id value
 		std::map<NewtonWorld*, int> NewtonWorldAndID;
 
 		// values that are sent to newton //

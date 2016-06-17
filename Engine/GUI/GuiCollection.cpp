@@ -11,18 +11,20 @@ using namespace Leviathan;
 using namespace Gui;
 using namespace std;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name, GuiManager* manager, int id,
-    const std::string &toggle, std::vector<unique_ptr<std::string>> &inanimations,
+Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name,
+    GuiManager* manager, int id, const std::string &toggle,
+    std::vector<unique_ptr<std::string>> &inanimations,
     std::vector<unique_ptr<std::string>> &outanimations, bool strict /*= false*/, 
 	bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/,
     const std::string &autotarget /*= ""*/, 
-
 	bool applyanimstochildren) : 
 	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui),
-    OwningManager(manager), AllowEnable(allowenable), 
-	AutoTarget(autotarget), ApplyAnimationsToChildren(applyanimstochildren),
+    AllowEnable(allowenable), 
+	AutoTarget(autotarget), 
     AutoAnimationOnEnable(move(inanimations)), 
-	AutoAnimationOnDisable(move(outanimations))
+	AutoAnimationOnDisable(move(outanimations)),
+    ApplyAnimationsToChildren(applyanimstochildren),
+    OwningManager(manager)
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
 }
@@ -146,14 +148,14 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(Lock &guilock, GuiManager* gu
 
 		// get values //
 		if(!ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(),
-                "ToggleOn", Toggle, "", false)){
+                "ToggleOn", Toggle, "")){
 			// Extra name check //
 			ObjectFileProcessor::LoadValueFromNamedVars<std::string>(varlist->GetVariables(),
-                "Toggle", Toggle, "", false);
+                "Toggle", Toggle, "");
 		}
 
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), "Enabled",
-            Enabled, false, true,
+            Enabled, false, Logger::Get(),
 			"GuiCollection: LoadCollection:");
 
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(), "KeepsGUIOn",
@@ -165,10 +167,10 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(Lock &guilock, GuiManager* gu
             "AutoTarget", autotarget, "");
 		
 
-		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(),
-            "AutoAnimationIn", autoinanimation, 2);
-		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(varlist->GetVariables(),
-            "AutoAnimationOut", autooutanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(
+            varlist->GetVariables(), "AutoAnimationIn", autoinanimation, 2);
+		ObjectFileProcessor::LoadVectorOfTypeUPtrFromNamedVars<std::string>(
+            varlist->GetVariables(), "AutoAnimationOut", autooutanimation, 2);
 
 		ObjectFileProcessor::LoadValueFromNamedVars<bool>(varlist->GetVariables(),
             "AutoAnimateChildren", recursiveanims, false);
@@ -195,9 +197,11 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiCollection::_PlayAnimations(Lock &lock, const std::vector<unique_ptr<std::string>> &anims){
-
-	assert(anims.size() % 2 == 0 && "_PlayAnimations has invalid vector, size non dividable by 2");
+void Leviathan::Gui::GuiCollection::_PlayAnimations(Lock &lock,
+    const std::vector<unique_ptr<std::string>> &anims)
+{
+	LEVIATHAN_ASSERT(anims.size() % 2,
+        "_PlayAnimations has invalid vector, size non divisable by 2");
 
 	// Loop the animations and start them //
 	for(size_t i = 0; i < anims.size(); i += 2){

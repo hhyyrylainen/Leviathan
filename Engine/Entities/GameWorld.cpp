@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_GAMEWORLD
 #include "GameWorld.h"
-#endif
+
 #include "Rendering/GraphicalInputEntity.h"
 #include "Newton/NewtonManager.h"
 #include "OgreRoot.h"
@@ -34,7 +33,10 @@ class Leviathan::PlayerConnectionPreparer{
 public:
 
     //! Used to keep track of what's happening regards to the ping
-    enum PING_STATE {PING_STATE_STARTED, PING_STATE_FAILED, PING_STATE_NONE, PING_STATE_COMPLETED,
+    enum PING_STATE {PING_STATE_STARTED,
+                     PING_STATE_FAILED,
+                     PING_STATE_NONE,
+                     PING_STATE_COMPLETED,
                      PING_STATE_FINAL_STEP};
     
     PlayerConnectionPreparer(ConnectedPlayer* ply, GameWorld* world,
@@ -92,18 +94,21 @@ public:
         // For maximum accuray we are also going to adjust the receiver's engine tick //
         int enginemscorrect = timeintick - (sendtime*(float)TICKSPEED);
 
-        Logger::Get()->Info("GameWorld: adjusting client to "+Convert::ToString(targettick)+" ticks and engine "
-            "clock by "+Convert::ToString(enginemscorrect)+" ms");
+        Logger::Get()->Info("GameWorld: adjusting client to "+
+            Convert::ToString(targettick)+" ticks and engine clock by " +
+            Convert::ToString(enginemscorrect)+" ms");
         
-        std::shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
-                World->GetID(), targettick, enginemscorrect, true));
+        std::shared_ptr<NetworkRequest> clocksync = std::make_shared<NetworkRequest>(
+            new RequestWorldClockSyncData(World->GetID(), targettick, enginemscorrect, true));
 
         auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
         sentthing->SetAsTimed();
 
         // Start waiting for it //
-        auto waitthing = make_shared<ConditionalTask>(std::bind<void>([](PlayerConnectionPreparer* plyprepare,
-                    std::shared_ptr<SentNetworkThing> sentthing, int msping, int enginems) -> void
+        auto waitthing = std::make_shared<ConditionalTask>(std::bind<void>([](
+                    PlayerConnectionPreparer* plyprepare,
+                    std::shared_ptr<SentNetworkThing> sentthing, int msping, int enginems)
+                -> void
             {
                 bool succeeded = sentthing->GetStatus();
 
@@ -128,8 +133,9 @@ public:
                 // Here we calculate how much our initial estimate of the time taken is off by
                 float correctingamount = elapsedtime-msping;
 
-                Logger::Get()->Info("GameWorld: adjust clock expected to take "+Convert::ToString(msping)+
-                    " and it took "+Convert::ToString(elapsedtime)+" correcting by "+
+                Logger::Get()->Info("GameWorld: adjust clock expected to take " +
+                    Convert::ToString(msping) + " and it took " +
+                    Convert::ToString(elapsedtime)+" correcting by "+
                     Convert::ToString(correctingamount));
 
                 correctingamount /= (float)TICKSPEED;
@@ -146,14 +152,16 @@ public:
                     if(plyprepare->GameWorldCompromised)
                         return;
                     
-                    Logger::Get()->Info("GameWorld: clock sync: sending a follow up correction of: "+Convert::ToString(
-                            wholecorrect)+" ticks and "+Convert::ToString(enginemscorrect)+" ms");
+                    Logger::Get()->Info("GameWorld: clock sync: sending a follow up "
+                        "correction of: " + Convert::ToString(wholecorrect) + " ticks and " +
+                        Convert::ToString(enginemscorrect)+" ms");
 
-                    std::shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(new RequestWorldClockSyncData(
-                            plyprepare->World->GetID(), wholecorrect, enginemscorrect, false), 500);
+                    std::shared_ptr<NetworkRequest> clocksync = make_shared<NetworkRequest>(
+                        new RequestWorldClockSyncData(plyprepare->World->GetID(),
+                            wholecorrect, enginemscorrect, false), 500);
 
-                    auto sentthing = plyprepare->Connection->SendPacketToConnection(clocksync, 20);
-                    
+                    auto sentthing = plyprepare->Connection->SendPacketToConnection(
+                        clocksync, 20);
                 }
 
                 // Pinging is now done //
@@ -166,7 +174,8 @@ public:
                 plyprepare->OurQueued.clear();
 
 
-                }, this, sentthing, msping, timeintick), std::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
+                }, this, sentthing, msping, timeintick),
+            std::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
                     -> bool
                 {
                     return sentthing->IsFinalized();
@@ -213,9 +222,7 @@ public:
 
 // ------------------ GameWorld ------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() :
-    WorldSceneCamera(NULL), WorldsScene(NULL), Sunlight(NULL), SunLightNode(NULL), WorldFrozen(false),
-    GraphicalMode(false), LinkedToWindow(NULL), WorldWorkspace(NULL), ClearAllObjects(false),
-    ID(IDFactory::GetID()), TickNumber(0)
+    ID(IDFactory::GetID())
 {
     IsOnServer = NetworkHandler::Get()->GetNetworkType() == NETWORKED_TYPE_SERVER;
 }

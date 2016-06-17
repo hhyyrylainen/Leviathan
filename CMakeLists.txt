@@ -85,8 +85,6 @@ if(USE_BREAKPAD)
     message(SEND_ERROR "Breakpad include dir is missing")
   endif()
 
-  include_directories("${CMAKE_SOURCE_DIR}/Breakpad/include")
-  
 endif()
 
 # Whether to use Javascript or php search in doxygen
@@ -99,17 +97,6 @@ option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 if(WIN32 AND USE_OGRE)
   set(GLM_BASE_DIR "" CACHE FILEPATH
     "Path to the base directory of glm set to cegui-dependencies/src/glm-0.9.4.5")
-endif()
-
-if(EXISTS "${GLM_BASE_DIR}")
-
-  include_directories("${GLM_BASE_DIR}")
-
-else()
-  if(WIN32 AND USE_OGRE)
-    message(WARNING
-      "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
-  endif()
 endif()
 
 # Check is leap motion used
@@ -142,6 +129,21 @@ endif()
 # For making libs with right names
 set(CMAKE_DEBUG_POSTFIX "D")
 
+# Output Paths #
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+
+# First for the generic no-config case (e.g. with mingw)
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+# Second, for multi-config builds (e.g. msvc)
+foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
+    string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
+    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
+    set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
+    set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
+endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 
 # Linking and platform specific
 if(WIN32)
@@ -273,8 +275,6 @@ if(CAN_USE_OGRE)
       ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
       ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
 
-    include_directories(${CEGUI_INCLUDE_DIR})
-    
     # set some additional libraries
     set(ADDITIONAL_OGRE ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES}
       ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
@@ -291,8 +291,6 @@ if(USE_SFML)
     endif()
 endif()
 
-include_directories(${SFML_INCLUDE_DIR})
-
 # Find cAudio
 if(USE_CAUDIO)
 
@@ -302,8 +300,6 @@ if(USE_CAUDIO)
     message(SEND_ERROR "Failed to find cAudio")
   endif()
 endif()
-
-include_directories(${cAudio_INCLUDE_DIRS})
 
 # Find Boost
 if(USE_BOOST)
@@ -352,14 +348,13 @@ if(USE_ANGELSCRIPT)
     set(LINK_LIBS_ENGINE_DEBUG debug angelscriptd)
 endif()
 
-
 if(USING_LEAP)
   set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} optimized Leap)
   set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} debug Leapd)
 endif()
 
 # Breakpad libraries
-if(${USE_BREAKPAD})
+if(USE_BREAKPAD)
   if(UNIX)
     set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized breakpad_client)
     set(LINK_LIBS_TOENGINE_DEBUG ${LINK_LIBS_TOENGINE_DEBUG} debug breakpad_client)
@@ -421,6 +416,9 @@ message(STATUS "Copying files...")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols/Dumps")
 
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
+
 file(COPY "${PROJECT_SOURCE_DIR}/MoveSymbolFile.sh"
   "${PROJECT_SOURCE_DIR}/MoveSymbolFile.bat" 
   "${PROJECT_SOURCE_DIR}/CreateSymbolsForTarget.sh"
@@ -437,21 +435,31 @@ elseif(WIN32)
 endif()
 
 # copy data from bin directory
+# This will be all the binaries that need to be copied to bin/lib and installed to bin/lib
+set(ALL_DYNAMIC_LIBRARIES)
+
 
 # The bin-folder files
-if(WIN32)
-    file(GLOB RootFolderFiles "bin/*.ini" "bin/*.txt"
-        "bin/*.conf")
-else(WIN32)
-    file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
-endif(WIN32)
+file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
 
-# Move files
 file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+install(FILES ${RootFolderFiles} DESTINATION bin)
+
 
 # copy data directory
 file(GLOB DataMoveFiles "bin/Data/*")
 file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
+
+# The script files folder
+install(DIRECTORY "Scripts" DESTINATION bin/Data)
+install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
+# we need to specifically install the directories
+install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
+install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
 
 # Copy data from the scripts folder to the bin folder
 file(GLOB ScriptsMoveFiles "Scripts/*")
@@ -460,153 +468,94 @@ file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Script
 # Copy the crucial Ogre scripts
 file(GLOB CoreOgreScriptsMoveFiles "CoreOgreScripts/*")
 file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
+install(FILES ${CoreOgreScriptsMoveFiles} DESTINATION "bin/CoreOgreScripts")
 
 # Boost files
 # If we are not using static linking we need to copy everything
 if(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
     
-	set(BOOST_MOVE_FILES_RELEASE ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE})
-	set(BOOST_MOVE_FILES_DEBUG ${Boost_DATE_TIME_LIBRARY_DEBUG} ${Boost_CHRONO_LIBRARY_DEBUG}
-	  ${Boost_THREAD_LIBRARY_DEBUG} ${Boost_SYSTEM_LIBRARY_DEBUG})
-      
-    if(COPY_DEBUG_LIBS)
-      set(BOOST_MOVE_FILES ${BOOST_MOVE_FILES_DEBUG} ${BOOST_MOVE_FILES_RELEASE})
-    else()
-      set(BOOST_MOVE_FILES ${BOOST_MOVE_FILES_RELEASE})
-    endif()
+  list(APPEND ALL_DYNAMIC_LIBRARIES
+    ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
+	${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE})
 
-    # Setup to target the actually wanted files
-	# if(WIN32)
-	#     set(TmpDoStuff)
-    
-    # 	foreach(libname ${BOOST_MOVE_FILES_RELEASE})
-    #     	# Replace the library extension with the platform extension
-    #     	get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
-    #     	get_filename_component(LIBS_PATH ${libname} PATH)
-    #        	set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
-    # 	endforeach()
-    
-    # 	set(BOOST_MOVE_FILES_RELEASE ${TmpDoStuff})
-
-	# 	set(TmpDoStuff)
-	# 	foreach(libname ${BOOST_MOVE_FILES_DEBUG})
-	# 		# Replace the library extension with the platform extension
-	# 		get_filename_component(LIBS_BASE_NAME ${libname} NAME_WE)
-	# 		get_filename_component(LIBS_PATH ${libname} PATH)
-	# 		set(TmpDoStuff ${TmpDoStuff} ${LIBS_PATH}/${LIBS_BASE_NAME}.dll)
-	# 	endforeach()
-
-	#     set(BOOST_MOVE_FILES_DEBUG ${TmpDoStuff})
-    # endif(WIN32)
-else()
-  set(BOOST_MOVE_FILES)
-endif(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
+  if(COPY_DEBUG_LIBS)
+    list(APPEND ALL_DYNAMIC_LIBRARIES ${Boost_DATE_TIME_LIBRARY_DEBUG}
+      ${Boost_CHRONO_LIBRARY_DEBUG} ${Boost_THREAD_LIBRARY_DEBUG}
+      ${Boost_SYSTEM_LIBRARY_DEBUG})
+  endif()
+endif()
 
 if(WIN32)
 
-    # leap
-    if(USING_LEAP)
-        if(COPY_DEBUG_LIBS)
-          file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll" "Leap/lib/x86/Leapd.dll")
-        else()
-          file(GLOB LeapMoveFiles "Leap/lib/x86/Leap.dll")
-        endif()
+  if(USING_LEAP)
+    if(COPY_DEBUG_LIBS)
+      list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll" "Leap/lib/x64/Leapd.dll")
+    else()
+      list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll")
     endif()
+  endif()
     
-    # newton
-    if(USE_NEWTON)
-        if(COPY_DEBUG_LIBS)
-            file(GLOB NewtonMoveFiles "Newton/bin/Release/*" "Newton/bin/Debug/*")
-        else()
-            file(GLOB NewtonMoveFiles "Newton/bin/Release/*")
-        endif()
-    endif()
-    
-    # All files should be copied here
-    file(GLOB RawFilesToMove "bin/ThirdParty/*.dll")
+  if(USE_NEWTON)
+    list(APPEND ALL_DYNAMIC_LIBRARIES
+      "Newton/bin/Newton.dll" "Newton/bin/Newton_d.dll")
+  endif()
+else()
 
-else(WIN32)
-
-    # linux variants of the copy functions
-    if(USING_LEAP)
-      file(GLOB LeapMoveFiles "Leap/lib/x64/libLeap.so")
-    endif()
-    
-    # newton
-    if(USE_NEWTON)
-        file(GLOB NewtonMoveFiles "Newton/lib/libNewton.so")
-    endif()
-    
-    if(USE_OGRE)
-        set(CEGUIMoveFiles ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES} ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
-            ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES})
-
-        set(RawFilesToMove ${CEGUIMoveFiles} ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
-          ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES} ${OGRE_Plugin_CgProgramManager_LIBRARIES} 
-          ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES} ${OGRE_RenderSystem_GL_LIBRARIES})
-        
-        MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
-    endif()
-      
+  # linux variants of the copy functions
+  if(USING_LEAP)
+    list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/libLeap.so")
+  endif()
+  
+  # newton
+  if(USE_NEWTON)
+    list(APPEND ALL_DYNAMIC_LIBRARIES "Newton/bin/libNewton.so")
+  endif()
+  
 endif(WIN32)
 
-# Remove debug libs on windows
-if(WIN32 AND NOT COPY_DEBUG_LIBS)
+if(USE_OGRE)
+
+  set(RawFilesToMove ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES}
+    ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
+    ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES}
+    ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
+    ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES}
+    ${OGRE_Plugin_CgProgramManager_LIBRARIES} 
+    ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
+    ${OGRE_RenderSystem_GL_LIBRARIES} ${OGRE_RenderSystem_GL3_LIBRARIES}
+    ${SFML_LIBRARIES} ${OIS_LIBRARIES})
   
-  RemoveLibsWithDebugSuffix(RawFilesToMove)
+  MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
+  list(APPEND ALL_DYNAMIC_LIBRARIES ${RawFilesToMove})
+endif()
 
 
-endif(WIN32 AND NOT COPY_DEBUG_LIBS)
 
-# Remove boost files from the list as they are added later if desired
-set(PassedItems)
+# Remove debug libs on windows
+if(NOT COPY_DEBUG_LIBS AND WIN32)
+  
+  RemoveLibsWithDebugSuffix(ALL_DYNAMIC_LIBRARIES)
 
-foreach(curlib ${RawFilesToMove})
-    string(REGEX MATCH ".*boost.*" item ${curlib})
-
-    if(NOT item)
-      
-      set(PassedItems ${PassedItems} ${curlib})
-
-    endif()
-endforeach()
-
-set(RawFilesToMove ${PassedItems})
+endif()
 
 if(UNIX)
   # Go through all the libraries and add all name variants to the moved files
-  GlobAllVariants(RawFilesToMove FinalMoveInstallFiles)
-else()
-  set(FinalMoveInstallFiles ${RawFilesToMove})
+  GlobAllVariants(ALL_DYNAMIC_LIBRARIES SanitizedList)
+  set(ALL_DYNAMIC_LIBRARIES ${SanitizedList})
 endif()
 
-message(STATUS "Moving the bulk...")
 
-file(COPY ${FinalMoveInstallFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
+install(FILES ${ALL_DYNAMIC_LIBRARIES} DESTINATION "bin/lib")
 
-message(STATUS "Done copying")
+if(WIN32)
 
-# And now add the SFML files and others that cause cmake warnings for some reason
-if(USE_SFML)
-    set(SFMLMoveFiles ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${BOOST_MOVE_FILES})
+    # ogre tools
+    file(GLOB OgreTools "${OGRE_BASEDIR}/bin/Release/*.exe")
+    install(FILES ${OgreTools} DESTINATION tools)
+    
+endif(WIN32)
 
-    MakeUniqueAndSanitizeLibraryList(SFMLMoveFiles)
-
-    # Remove debug libs on windows
-    if(WIN32 AND NOT COPY_DEBUG_LIBS)
-
-      RemoveLibsWithDebugSuffix(SFMLMoveFiles)
-
-    endif(WIN32 AND NOT COPY_DEBUG_LIBS)
-
-    set(SFMLFinalMoveFiles)
-
-    GlobAllVariants(SFMLMoveFiles SFMLFinalMoveFiles)
-
-    ## All files that need to be installed are here
-    set(FinalMoveInstallFiles ${FinalMoveInstallFiles} ${SFMLFinalMoveFiles})
-endif(USE_SFML)
 
 # working directory setting
 if(WIN32)
@@ -619,31 +568,38 @@ else(WIN32)
 
     set(CMAKE_RPATH "$ORIGIN/:$ORIGIN/lib")
     set(CMAKE_INSTALL_RPATH "$ORIGIN/:$ORIGIN/lib")
-    set(CMAKE_BUILD_RPATH "$ORIGIN/:$ORIGIN/lib")
+    #set(CMAKE_BUILD_RPATH "$ORIGIN/:$ORIGIN/lib")
 
     set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
 
 endif(WIN32)
 
-# Output Paths #
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-
-# First for the generic no-config case (e.g. with mingw)
-set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-# Second, for multi-config builds (e.g. msvc)
-foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
-    string( TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG )
-    set( CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
-    set( CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
-    set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${PROJECT_BINARY_DIR}/bin )
-endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
-
 
 # additional include directories
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
+
+if(USE_CAUDIO)
+  include_directories(${cAudio_INCLUDE_DIRS})
+endif()
+
+include_directories(${SFML_INCLUDE_DIR})
+
+
+if(EXISTS "${GLM_BASE_DIR}")
+
+  include_directories("${GLM_BASE_DIR}")
+
+else()
+  if(WIN32 AND USE_OGRE)
+    message(WARNING
+      "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
+  endif()
+endif()
+
+
+if(USE_BREAKPAD)
+  include_directories("${CMAKE_SOURCE_DIR}/Breakpad/include")
+endif()
 
 if(USE_ANGELSCRIPT)
     include_directories("${PROJECT_SOURCE_DIR}/AngelScript/include")
@@ -655,7 +611,7 @@ if(USE_NEWTON)
 endif()
 
 if(CAN_USE_OGRE)
-    include_directories(${OIS_INCLUDE_DIRS}	${OGRE_INCLUDE_DIRS})
+    include_directories(${OIS_INCLUDE_DIRS}	${CEGUI_INCLUDE_DIRS} ${OGRE_INCLUDE_DIRS})
 endif()
 
 if(USING_LEAP)
@@ -663,11 +619,10 @@ if(USING_LEAP)
     include_directories("${PROJECT_SOURCE_DIR}/Leap")
 endif()
 
-if(${USE_BREAKPAD})
+if(USE_BREAKPAD)
   include_directories("${BREAKPAD_DIR}/src")
 endif()
 
-# libraries paths
 if(USE_ANGELSCRIPT)
     link_directories("${PROJECT_SOURCE_DIR}/AngelScript/lib")
 endif()
@@ -675,20 +630,6 @@ endif()
 if(USE_NEWTON)
     link_directories("${PROJECT_SOURCE_DIR}/Newton/lib/")
     link_directories("${PROJECT_SOURCE_DIR}/Newton/bin/")
-endif()
-
-if(${USE_BREAKPAD})
-  if(UNIX)
-
-    link_directories("${BREAKPAD_DIR}/src/client/linux")
-    
-  elseif(WIN32)
-  
-    link_directories("${BREAKPAD_DIR}/src/client/windows/Release/lib")
-    
-  else()
-
-  endif()
 endif()
 
 if(USE_LEAP)
@@ -715,45 +656,15 @@ add_subdirectory(Engine)
 add_subdirectory(LeviathanTest)
 
 if(NOT CREATE_UE4_PLUGIN)
-# example pong master server
-add_subdirectory(PongMasterServer)
+  # example pong master server
+  add_subdirectory(PongMasterServer)
 
-# example pong server
-add_subdirectory(PongServer)
+  # example pong server
+  add_subdirectory(PongServer)
 
-# pong example game
-add_subdirectory(Pong)
+  # pong example game
+  add_subdirectory(Pong)
 endif()
-
-# install support
-
-# data folders
-file(GLOB DataMoveFiles "bin/Data/*.*")
-install(FILES ${DataMoveFiles} DESTINATION bin/Data)
-
-
-# The script files folder
-install(DIRECTORY "Scripts" DESTINATION bin/Data)
-install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
-install(FILES ${RootFolderFiles} DESTINATION bin)
-# we need to specifically install the directories
-install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
-
-if(WIN32)
-
-    # ogre tools
-    file(GLOB OgreTools "${OGRE_BASEDIR}/bin/Release/*.exe")
-    file(GLOB SampleBrowserFile "${OGRE_BASEDIR}/bin/Release/SampleBrowser.exe")
-    install(FILES ${OgreTools} DESTINATION tools)
-    
-endif(WIN32)
-
-install(FILES ${FinalMoveInstallFiles} DESTINATION bin)
 
 # Strip symbols
 if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
@@ -768,6 +679,35 @@ if(${USE_BREAKPAD})
   add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 else()
     add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
+endif()
+
+# .desktop files
+if(UNIX)
+  
+  add_custom_target(Test_desktopfile "./CreateLinuxIcon.rb"
+    "${CMAKE_BINARY_DIR}/bin/LeviathanTest" "--name" "LeviathanTesting application" "-t"
+    DEPENDS LeviathanTest WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/" VERBATIM)
+
+  add_custom_target(Pong_desktopfile "./CreateLinuxIcon.rb"
+    "${CMAKE_BINARY_DIR}/bin/Pong" "${CMAKE_SOURCE_DIR}/Pong/ICON1.ico"
+    "--name" "Pong client application" "--prefix" "Pong"
+    DEPENDS Pong WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/" VERBATIM)
+
+  add_custom_target(PongServer_desktopfile "./CreateLinuxIcon.rb"
+    "${CMAKE_BINARY_DIR}/bin/PongServer" "${CMAKE_SOURCE_DIR}/PongServer/ICON1.ico"
+    "--name" "Pong server application" "--prefix" "PongServer"
+    DEPENDS PongServer WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/" VERBATIM)
+
+    add_custom_target(PongMasterServer_desktopfile "./CreateLinuxIcon.rb"
+    "${CMAKE_BINARY_DIR}/bin/PongMasterServer" "${CMAKE_SOURCE_DIR}/PongMasterServer/ICON1.ico"
+    "--name" "Pong masterserver application" "--prefix" "PongMaster"
+    DEPENDS PongMasterServer WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/" VERBATIM)
+  
+  add_custom_target(All_desktopfile ALL DEPENDS Test_desktopfile Pong_desktopfile
+    PongServer_desktopfile PongMasterServer_desktopfile)
+
+  install(FILES "${CMAKE_BINARY_DIR}/bin/LeviathanTest.desktop" DESTINATION bin)
+  
 endif()
 
 

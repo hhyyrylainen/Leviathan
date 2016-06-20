@@ -545,6 +545,12 @@ if(UNIX)
 endif()
 
 
+if(WIN32)
+  # To be able to debug move all the dlls to the bin folder 
+  file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+else()
+  file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
+endif()
 file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
 install(FILES ${ALL_DYNAMIC_LIBRARIES} DESTINATION "bin/lib")
 

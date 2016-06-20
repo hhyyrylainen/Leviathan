@@ -21,16 +21,29 @@ InstallCEED = false
 DoSudoInstalls = true
 
 # If false won't get breakpad
-GetBreakpad = false
+GetBreakpad = true
 
 # Doesn't get the resources for samples into leviathan/bin if set to false
-FetchAssets = false
+FetchAssets = true
 
 # If true dependencies won't be updated from remote repositories
 SkipPullUpdates = false
 
 # If true will only setup / update dependencies and skip Leviathan
-OnlyDependencies = true
+OnlyDependencies = false
+
+# If true skips all dependencies and only tries to configure Leviathan
+OnlyLeviathan = false
+
+# If true will create folder OgreBuild with an extra cmake file that includes the dependencies
+# and then the Ogre files
+WindowsOgreExtraCMake = true
+
+# If true new version of depot tools and breakpad won't be fetched on install
+NoBreakpadUpdateOnWindows = false
+
+# On windows visual studio will be automatically opened if required
+AutoOpenVS = true
 
 # Visual studio version on windows, required for forced 64 bit builds
 VSVersion = "Visual Studio 14 2015 Win64"
@@ -273,7 +286,7 @@ class OpenAL < BaseDep
       if BuildPlatform == "windows" and not File.exist? "C:/Program Files/OpenAL/include/OpenAL"
         # cAudio needs OpenAL folder in include folder, which doesn't exist. 
         # So we create it here
-        runWindowsAdmin("mklink /D \"C:/Program Files/OpenAL/include/OpenAL\" " + 
+        askToRunAdmin("mklink /D \"C:/Program Files/OpenAL/include/OpenAL\" " + 
           "\"C:/Program Files/OpenAL/include/AL\"")
       end
     end
@@ -496,6 +509,14 @@ class Breakpad < BaseDep
   end
 
   def DoUpdate
+  
+    if BuildPlatform == "windows" and NoBreakpadUpdateOnWindows
+      info "Windows: skipping Breakpad update"
+      if not File.exist?("src")
+        @CreatedNewFolder = true
+      end
+      return true
+    end
 
     # Update depot tools
     Dir.chdir(@DepotFolder) do
@@ -528,23 +549,11 @@ class Breakpad < BaseDep
   end
 
   def DoSetup
-
-    # Setup depot tools
-    if BuildPlatform == "windows"
-      abort "Verify breakpad installation on windows: " +
-            "https://chromium.googlesource.com/breakpad/breakpad/"
-
-      Dir.chdir(@DepotFolder) do
-        system "gclient.exe"
-      end
-      onError "Initial gclient dependency install run on windows failed" if $?.exitstatus > 0
-    end
-
+    
     if not @CreatedNewFolder
       return true
     end
     
-
     # Bring the depot tools to path
     pathedit = PathModifier.new(@DepotFolder)
 
@@ -561,8 +570,12 @@ class Breakpad < BaseDep
       Dir.chdir("src") do
 
         # Configure script
-        system "./configure"
-
+        if BuildPlatform == "windows"
+          system "src/tools/gyp/gyp.bat src/client/windows/breakpad_client.gyp –no-circular-check"
+        else
+          system "./configure"
+        end
+        
         if $?.exitstatus > 0
           pathedit.Restore
           onError "configure breakpad failed" 
@@ -581,15 +594,24 @@ class Breakpad < BaseDep
 
     # Build breakpad
     Dir.chdir(File.join(@Folder, "src")) do
-
-      system "make -j #{CompileThreads}"
       
-      if $?.exitstatus > 0
-        pathedit.Restore
-        onError "breakpad build failed" 
+      if BuildPlatform == "linux"
+        system "make -j #{CompileThreads}"
+      
+        if $?.exitstatus > 0
+          pathedit.Restore
+          onError "breakpad build failed" 
+        end
+      else
+        
+        info "Please open the solution at and compile breakpad client in Release and x64. " +
+          "Remember to disable treat warnings as errors first: "+
+          "#{CurrentDir}/../breakpad/src/src/client/windows/breakpad_client.sln"
+        
+        system "start #{CurrentDir}/../breakpad/src/src/client/windows/breakpad_client.sln" if AutoOpenVS
+        system "pause"
       end
     end
-
     
     pathedit.Restore
     true
@@ -603,72 +625,41 @@ class Breakpad < BaseDep
 
     breakpadincludelink = File.join(CurrentDir, "Breakpad", "include")
     
-    # Need to delete old file before creating a new symlink
-    File.delete(breakpadincludelink) if File.exist?(breakpadincludelink)
-    FileUtils.ln_s File.join(@Folder, "src/src"), breakpadincludelink
-    
     if BuildPlatform == "windows"
 
-      abort "TODO: Breakpad install"
+      askToRunAdmin "mklink /D \"#{breakpadincludelink}\" \"#{File.join(@Folder, "src/src")}\""
+      
+      FileUtils.copy_entry File.join(@Folder, "src/src/client/windows/Release/lib"),
+                   File.join(CurrentDir, "Breakpad", "lib")
+                   
+                   
+                   
+      # Might be worth it to have windows symbols dumbed on windows, if the linux dumber can't deal with pdbs
+      #FileUtils.cp File.join(@Folder, "src/src/tools/linux/dump_syms", "dump_syms"),
+      #             File.join(CurrentDir, "Breakpad", "bin")
+                   
+    else
+    
+      # Need to delete old file before creating a new symlink
+      File.delete(breakpadincludelink) if File.exist?(breakpadincludelink)
+      FileUtils.ln_s File.join(@Folder, "src/src"), breakpadincludelink
+    
+      FileUtils.cp File.join(@Folder, "src/src/client/linux", "libbreakpad_client.a"),
+                   File.join(CurrentDir, "Breakpad", "lib")
+
+      FileUtils.cp File.join(@Folder, "src/src/tools/linux/dump_syms", "dump_syms"),
+                   File.join(CurrentDir, "Breakpad", "bin")
+
+      FileUtils.cp File.join(@Folder, "src/src/processor", "minidump_stackwalk"),
+                   File.join(CurrentDir, "Breakpad", "bin")
     end
-
-    FileUtils.cp File.join(@Folder, "src/src/client/linux", "libbreakpad_client.a"),
-                 File.join(CurrentDir, "Breakpad", "lib")
-
-    FileUtils.cp File.join(@Folder, "src/src/tools/linux/dump_syms", "dump_syms"),
-                 File.join(CurrentDir, "Breakpad", "bin")
-
-    FileUtils.cp File.join(@Folder, "src/src/processor", "minidump_stackwalk"),
-                 File.join(CurrentDir, "Breakpad", "bin")
-    
-    true
-  end
-end
-
-class OIS < BaseDep
-  def initialize
-    super("OIS", "OIS")
-    
-    onError "OIS should be from the package manager on linux" if BuildPlatform != "windows"
-  end
-
-  def DoClone
-    system "git clone https://github.com/wgois/OIS.git"
-    $?.exitstatus == 0
-  end
-
-  def DoUpdate
-    system "git checkout master"
-    system "git pull origin master"
-    $?.exitstatus == 0
-  end
-
-  def DoSetup
-    return File.exist? "Win32/OIS_vs2010.sln"
-  end
-  
-  def DoCompile
-    
-    warning "Please Make sure that You have converted the OIS solution 'OIS/Win32/OIS_vs2010.sln' " +
-      "to your current visual studio version"
-    
-    system "#{bringVSToPath} && MSBuild.exe Win32/OIS_vs2010.sln /maxcpucount:#{CompileThreads} " +
-      "/p:Configuration=Release /target:OIS /p:Platform=x64"
-    
-    $?.exitstatus == 0
-  end
-  
-  def DoInstall
-
-    ENV["OIS_HOME"] = "#{CurrentDir}/../OIS/"
-
     true
   end
 end
 
 class Ogre < BaseDep
   def initialize
-    if BuildPlatform == "windows"
+    if BuildPlatform == "windows" and WindowsOgreExtraCMake
       super("Ogre", "OgreBuild")
     else
       super("Ogre", "ogre")
@@ -677,9 +668,13 @@ class Ogre < BaseDep
 
   def RequiresClone
     if BuildPlatform == "windows"
-      FileUtils.mkdir_p "OgreBuild"
-      return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")) or 
-        not File.exist?(File.join(@Folder, "ogre")))
+      if WindowsOgreExtraCMake
+        FileUtils.mkdir_p "OgreBuild"
+        return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")) or 
+          not File.exist?(File.join(@Folder, "ogre")))
+      else
+        return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")))
+      end
     else
       return (not File.exist? @Folder)
     end
@@ -687,14 +682,26 @@ class Ogre < BaseDep
   
   def DoClone
     if BuildPlatform == "windows"
-    
-      Dir.chdir(@Folder) do
+      
+      if WindowsOgreExtraCMake
+        Dir.chdir(@Folder) do
+          system "hg clone https://bitbucket.org/sinbad/ogre"
+          if $?.exitstatus > 0
+            return false
+          end
+      
+          system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
+        end
+      else
         system "hg clone https://bitbucket.org/sinbad/ogre"
         if $?.exitstatus > 0
           return false
         end
-      
-        system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
+        
+        Dir.chdir(@Folder) do
+
+          system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
+        end
       end
       return $?.exitstatus == 0
     else
@@ -709,18 +716,22 @@ class Ogre < BaseDep
         Dir.chdir("Dependencies") do
           system "hg pull"
           system "hg update"
+          
+          if $?.exitstatus > 0
+            return false
+          end
         end
         
-        Dir.chdir("ogre") do
-          system "hg pull"
-          system "hg update v2-0"
+        if WindowsOgreExtraCMake
+          Dir.chdir("ogre") do
+            system "hg pull"
+            system "hg update v2-0"
+          end
+          if $?.exitstatus > 0
+            return false
+          end
+          return true
         end
-        
-        if $?.exitstatus > 0
-          return false
-        end
-        
-        return true
     end
   
     system "hg pull"
@@ -734,7 +745,7 @@ class Ogre < BaseDep
     
     Dir.chdir("build") do
     
-        if BuildPlatform == "windows"
+        if BuildPlatform == "windows" and WindowsOgreExtraCMake
           ogreWinCmake = %{
           
             cmake_minimum_required(VERSION 2.8.11)
@@ -749,7 +760,9 @@ class Ogre < BaseDep
            File.open("../CMakeLists.txt", 'w') { |file| file.write(ogreWinCmake) }
         end
 
-      runCMakeConfigure "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON -DOGRE_BUILD_COMPONENT_OVERLAY=OFF " +
+      runCMakeConfigure "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON " +
+             "-DOGRE_BUILD_RENDERSYSTEM_D3D9=OFF -DOGRE_BUILD_RENDERSYSTEM_D3D11=OFF "+
+             "-DOGRE_BUILD_COMPONENT_OVERLAY=OFF " +
              "-DOGRE_BUILD_COMPONENT_PAGING=OFF -DOGRE_BUILD_COMPONENT_PROPERTY=OFF " +
              "-DOGRE_BUILD_COMPONENT_TERRAIN=OFF -DOGRE_BUILD_COMPONENT_VOLUME=OFF "+
              "-DOGRE_BUILD_PLUGIN_BSP=OFF -DOGRE_BUILD_PLUGIN_CG=OFF " +
@@ -774,14 +787,65 @@ class Ogre < BaseDep
     
       if BuildPlatform == "windows"
 
-        runInstall
-        ENV["OGRE_HOME"] = "C:/Program Files/Ogre"
+        system "#{bringVSToPath} && MSBuild.exe INSTALL.vcxproj /p:Configuration=RelWithDebInfo"
+        ENV["OGRE_HOME"] = "#{@Folder}/build/ogre/sdk"
         
       else
         runInstall
       end
     end
 
+    $?.exitstatus == 0
+  end
+end
+
+# Windows only CEGUI dependencies
+class CEGUIDependencies < BaseDep
+  def initialize
+    super("CEGUI Dependencies", "cegui-dependencies")
+  end
+
+  def DoClone
+
+    system "hg clone https://bitbucket.org/cegui/cegui-dependencies"
+    $?.exitstatus == 0
+  end
+
+  def DoUpdate
+    system "hg pull"
+    system "hg update default"
+    $?.exitstatus == 0
+  end
+
+  def DoSetup
+
+    FileUtils.mkdir_p "build"
+
+    if InstallCEED
+      python = "ON"
+    else
+      python = "OFF"
+    end
+
+    Dir.chdir("build") do
+      runCMakeConfigure "-DCEGUI_BUILD_PYTHON_MODULES=#{python} "
+    end
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoCompile
+
+    Dir.chdir("build") do
+      runCompiler CompileThreads 
+    end
+    $?.exitstatus == 0
+  end
+  
+  def DoInstall
+
+    FileUtils.copy_entry File.join(@Folder, "build", "dependencies"),
+                 File.join(CurrentDir, "../cegui", "dependencies")
     $?.exitstatus == 0
   end
 end
@@ -926,8 +990,8 @@ end
 
 # All the objects
 if BuildPlatform == "windows"
-  #depobjects = Array[Newton.new, AngelScript.new, OpenAL.New, CAudio.new, SFML.new, OIS.new, Ogre.new, CEGUI.new]
-  depobjects = Array[OIS.new]
+  depobjects = Array[Newton.new, AngelScript.new, OpenAL.new, CAudio.new, SFML.new, Ogre.new, 
+    CEGUIDependencies.new, CEGUI.new]
 else
   depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
 end
@@ -938,7 +1002,7 @@ if GetBreakpad
 end
 
 
-if not SkipPullUpdates
+if not SkipPullUpdates and not OnlyLeviathan
   info "Retrieving dependencies"
 
   depobjects.each do |x|
@@ -950,21 +1014,34 @@ if not SkipPullUpdates
   success "Successfully retrieved all dependencies. Beginning compile"
 end
 
-info "Configuring dependencies"
+if not OnlyLeviathan
 
-depobjects.each do |x|
+  info "Configuring dependencies"
 
-  x.Setup
-  x.Compile
-  x.Install
+  depobjects.each do |x|
+
+    x.Setup
+    x.Compile
+    x.Install
   
+  end
+
+  if OnlyDependencies
+    success "All done. Skipping Configuring Leviathan"
+    exit 0
+  end
+  info "Dependencies done, configuring Leviathan"
+
 end
 
-if OnlyDependencies
-  success "All done. Skipping Configuring Leviathan"
-  exit 0
+if BuildPlatform == "windows"
+  # Make sure Ogre home is set
+  if WindowsOgreExtraCMake
+    ENV["OGRE_HOME"] = "#{CurrentDir}/../OgreBuild/build/ogre/sdk"
+  else
+    ENV["OGRE_HOME"] = "#{CurrentDir}/../ogre/build/sdk"
+  end
 end
-info "Dependencies done, configuring Leviathan"
 
 FileUtils.mkdir_p "build"
 
@@ -980,21 +1057,25 @@ if $?.exitstatus > 0
           "to install?"
 end
   
-# Create a symbolic link for build database
-builddblink = "compile_commands.json"
-File.delete(builddblink) if File.exist?(builddblink)
-FileUtils.ln_s File.join("build", "compile_commands.json"), builddblink
 
 if BuildPlatform == "linux"
+  # Create a symbolic link for build database
+  builddblink = "compile_commands.json"
+  File.delete(builddblink) if File.exist?(builddblink)
+  FileUtils.ln_s File.join("build", "compile_commands.json"), builddblink
   
   info "Indexing with cscope"
   system "./RunCodeIndexing.sh"
   
+  success "All done."
+  info "To compile run 'make' in ./build"
+  
+else
+  
+  success "All done."
+  info "Open build/Leviathan.sln and start coding"
+  
 end
 
-success "All done."
-info "To compile run 'make' in ./build"
 exit 0
-
-
 

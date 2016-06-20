@@ -1,6 +1,7 @@
 #!/bin/ruby
 # Setup script for Leviathan
 # Downloads the assets and dependencies and then builds and installs them
+# TODO: remove awk usage
 require 'fileutils'
 require 'colorize'
 require 'etc'
@@ -20,10 +21,20 @@ InstallCEED = false
 DoSudoInstalls = true
 
 # If false won't get breakpad
-GetBreakpad = true
+GetBreakpad = false
 
 # Doesn't get the resources for samples into leviathan/bin if set to false
-FetchAssets = true
+FetchAssets = false
+
+# If true dependencies won't be updated from remote repositories
+SkipPullUpdates = false
+
+# If true will only setup / update dependencies and skip Leviathan
+OnlyDependencies = true
+
+# Visual studio version on windows, required for forced 64 bit builds
+VSVersion = "Visual Studio 14 2015 Win64"
+VSToolsEnv = "VS140COMNTOOLS"
 
 # Check that the directory is correct
 info "Running in dir '#{CurrentDir}'"
@@ -124,7 +135,7 @@ class BaseDep
     info "Compiling #{@Name}"
     Dir.chdir(@Folder) do
       if not self.DoCompile
-        onError "#{@Name} Failed to Compile. Are you using a broken versio? or has the setup process"+
+        onError "#{@Name} Failed to Compile. Are you using a broken version? or has the setup process"+
                 " changed between versions"
       end
     end
@@ -159,21 +170,35 @@ class Newton < BaseDep
   end
 
   def DoSetup
-    FileUtils.mkdir_p "build"
+  
+    if BuildPlatform == "windows"
+      
+      return File.exist? "packages/projects/visualStudio_2015_dll/build.sln"
+    else
+      FileUtils.mkdir_p "build"
 
-    Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DNEWTON_DEMOS_SANDBOX=OFF"
-    end
+      Dir.chdir("build") do
     
-    $?.exitstatus == 0
+        runCMakeConfigure "-DNEWTON_DEMOS_SANDBOX=OFF"
+        return $?.exitstatus == 0
+      end
+    end      
   end
   
   def DoCompile
-
-    Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+    if BuildPlatform == "windows"
+      cmdStr = "#{bringVSToPath} && MSBuild.exe \"packages/projects/visualStudio_2015_dll/build.sln\" " +
+        "/maxcpucount:#{CompileThreads} /p:Configuration=release /p:Platform=\"x64\""
+      system cmdStr
+      return $?.exitstatus == 0
+    else
+      Dir.chdir("build") do
+        
+        runCompiler CompileThreads
+      
+      end
+      return $?.exitstatus == 0
     end
-    $?.exitstatus == 0
   end
   
   def DoInstall
@@ -193,9 +218,66 @@ class Newton < BaseDep
       FileUtils.cp File.join(@Folder, "build/lib", "libNewton.so"), binfolder
       
     else
-      abort "TODO: windows copy"
+      
+      basePath = "coreLibrary_300/projects/windows/project_vs2015_dll/x64/newton/release"
+    
+      FileUtils.cp File.join(@Folder, basePath, "newton.dll"), binfolder
+      FileUtils.cp File.join(@Folder, basePath, "newton.lib"), libfolder
     end
     true
+  end
+end
+
+class OpenAL < BaseDep
+  def initialize
+    super("OpenAL Soft", "openal-soft")
+  end
+
+  def DoClone
+    onError "Use OpenAL from package manager on linux" if BuildPlatform != "windows"
+    system "git clone https://github.com/kcat/openal-soft.git"
+    $?.exitstatus == 0
+  end
+
+  def DoUpdate
+    system "git checkout master"
+    system "git pull origin master"
+    $?.exitstatus == 0
+  end
+
+  def DoSetup
+    FileUtils.mkdir_p "build"
+
+    Dir.chdir("build") do
+      
+      runCMakeConfigure "-DALSOFT_UTILS=OFF -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF"
+    end
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoCompile
+
+    Dir.chdir("build") do
+      runCompiler CompileThreads
+    end
+    $?.exitstatus == 0
+  end
+  
+  def DoInstall
+    return true if not DoSudoInstalls
+    
+    Dir.chdir("build") do
+      runInstall
+      
+      if BuildPlatform == "windows" and not File.exist? "C:/Program Files/OpenAL/include/OpenAL"
+        # cAudio needs OpenAL folder in include folder, which doesn't exist. 
+        # So we create it here
+        runWindowsAdmin("mklink /D \"C:/Program Files/OpenAL/include/OpenAL\" " + 
+          "\"C:/Program Files/OpenAL/include/AL\"")
+      end
+    end
+    $?.exitstatus == 0
   end
 end
 
@@ -219,7 +301,15 @@ class CAudio < BaseDep
     FileUtils.mkdir_p "build"
 
     Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCAUDIO_BUILD_SAMPLES=OFF"
+      
+      if BuildPlatform == "windows"
+        # The bundled ones aren't compatible with our compiler setup 
+        # -DCAUDIO_DEPENDENCIES_DIR=../Dependencies64
+        runCMakeConfigure "-DCAUDIO_BUILD_SAMPLES=OFF -DCAUDIO_DEPENDENCIES_DIR=\"C:/Program Files/OpenAL\" " +
+          "-DCMAKE_INSTALL_PREFIX=./Install"
+      else
+        runCMakeConfigure "-DCAUDIO_BUILD_SAMPLES=OFF"
+      end
     end
     
     $?.exitstatus == 0
@@ -228,7 +318,7 @@ class CAudio < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads
     end
     $?.exitstatus == 0
   end
@@ -238,7 +328,28 @@ class CAudio < BaseDep
     return true if not DoSudoInstalls
     
     Dir.chdir("build") do
-      system "sudo make install"
+      if BuildPlatform == "windows"
+      
+        system "#{bringVSToPath} && MSBuild.exe INSTALL.vcxproj /p:Configuration=RelWithDebInfo"
+        
+        # And then to copy the libs
+        
+        FileUtils.mkdir_p File.join(CurrentDir, "cAudio")
+        FileUtils.mkdir_p File.join(CurrentDir, "cAudio", "lib")
+        FileUtils.mkdir_p File.join(CurrentDir, "cAudio", "bin")
+        
+        FileUtils.cp File.join(@Folder, "build/bin/RelWithDebInfo", "cAudio.dll"),
+                 File.join(CurrentDir, "cAudio", "bin")
+
+        FileUtils.cp File.join(@Folder, "build/lib/RelWithDebInfo", "cAudio.lib"),
+                 File.join(CurrentDir, "cAudio", "lib")
+        
+        FileUtils.copy_entry File.join(@Folder, "build/Install/", "include"),
+                 File.join(CurrentDir, "cAudio", "include")
+        
+      else
+        runInstall
+      end
     end
     $?.exitstatus == 0
   end
@@ -277,7 +388,12 @@ class AngelScript < BaseDep
   end
 
   def DoSetup
-    true
+    if BuildPlatform == "linux"
+    
+      return File.exist? "sdk/angelscript/projects/msvc2015/angelscript.sln"
+    else
+      return true
+    end
   end
   
   def DoCompile
@@ -290,7 +406,17 @@ class AngelScript < BaseDep
       end
       $?.exitstatus == 0
     else
-      abort "TODO: windows AngelScript compile"
+      
+      info "Verifying that angelscript solution has Runtime Library = MultiThreadedDLL"
+      verifyVSProjectRuntimeLibrary "sdk/angelscript/projects/msvc2015/angelscript.vcxproj", 
+        %r{Release\|x64}, "MultiThreadedDLL"  
+        
+      success "AngelScript solution is correctly configured. Compiling"
+      
+      cmdStr = "#{bringVSToPath} && MSBuild.exe \"sdk/angelscript/projects/msvc2015/angelscript.sln\" " +
+        "/maxcpucount:#{CompileThreads} /p:Configuration=Release /p:Platform=\"x64\""
+      system cmdStr
+      return $?.exitstatus == 0
     end
   end
   
@@ -332,7 +458,7 @@ class AngelScript < BaseDep
       FileUtils.cp File.join(@Folder, "sdk/angelscript/lib", "libangelscript.a"), libfolder
       
     else
-      FileUtils.cp File.join(@Folder, "sdk/angelscript/lib", "angelscript.lib"), libfolder
+      FileUtils.cp File.join(@Folder, "sdk/angelscript/lib", "angelscript64.lib"), libfolder
     end
     true
   end
@@ -382,12 +508,18 @@ class Breakpad < BaseDep
     end
 
     if not @CreatedNewFolder
-      Dir.chdir(@Folder) do
-        # The first source subdir is the git repository
-        Dir.chdir("src") do
-          system "git checkout master"
-          system "git pull origin master"
-          system "gclient sync"
+    
+      if not File.exist?("src")
+        # This is set to true if we created an empty folder but we didn't get to the pull stage
+        @CreatedNewFolder = true
+      else
+        Dir.chdir(@Folder) do
+          # The first source subdir is the git repository
+          Dir.chdir("src") do
+            system "git checkout master"
+            system "git pull origin master"
+            system "gclient sync"
+          end
         end
       end
     end
@@ -493,18 +625,104 @@ class Breakpad < BaseDep
   end
 end
 
-class Ogre < BaseDep
+class OIS < BaseDep
   def initialize
-    super("Ogre", "ogre")
+    super("OIS", "OIS")
+    
+    onError "OIS should be from the package manager on linux" if BuildPlatform != "windows"
   end
 
   def DoClone
-
-    system "hg clone https://bitbucket.org/sinbad/ogre"
+    system "git clone https://github.com/wgois/OIS.git"
     $?.exitstatus == 0
   end
 
   def DoUpdate
+    system "git checkout master"
+    system "git pull origin master"
+    $?.exitstatus == 0
+  end
+
+  def DoSetup
+    return File.exist? "Win32/OIS_vs2010.sln"
+  end
+  
+  def DoCompile
+    
+    warning "Please Make sure that You have converted the OIS solution 'OIS/Win32/OIS_vs2010.sln' " +
+      "to your current visual studio version"
+    
+    system "#{bringVSToPath} && MSBuild.exe Win32/OIS_vs2010.sln /maxcpucount:#{CompileThreads} " +
+      "/p:Configuration=Release /target:OIS /p:Platform=x64"
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoInstall
+
+    ENV["OIS_HOME"] = "#{CurrentDir}/../OIS/"
+
+    true
+  end
+end
+
+class Ogre < BaseDep
+  def initialize
+    if BuildPlatform == "windows"
+      super("Ogre", "OgreBuild")
+    else
+      super("Ogre", "ogre")
+    end
+  end
+
+  def RequiresClone
+    if BuildPlatform == "windows"
+      FileUtils.mkdir_p "OgreBuild"
+      return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")) or 
+        not File.exist?(File.join(@Folder, "ogre")))
+    else
+      return (not File.exist? @Folder)
+    end
+  end
+  
+  def DoClone
+    if BuildPlatform == "windows"
+    
+      Dir.chdir(@Folder) do
+        system "hg clone https://bitbucket.org/sinbad/ogre"
+        if $?.exitstatus > 0
+          return false
+        end
+      
+        system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
+      end
+      return $?.exitstatus == 0
+    else
+      system "hg clone https://bitbucket.org/sinbad/ogre"
+      return $?.exitstatus == 0
+    end
+  end
+
+  def DoUpdate
+  
+    if BuildPlatform == "windows"
+        Dir.chdir("Dependencies") do
+          system "hg pull"
+          system "hg update"
+        end
+        
+        Dir.chdir("ogre") do
+          system "hg pull"
+          system "hg update v2-0"
+        end
+        
+        if $?.exitstatus > 0
+          return false
+        end
+        
+        return true
+    end
+  
     system "hg pull"
     system "hg update v2-0"
     $?.exitstatus == 0
@@ -513,10 +731,25 @@ class Ogre < BaseDep
   def DoSetup
 
     FileUtils.mkdir_p "build"
-
+    
     Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} " +
-             "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON -DOGRE_BUILD_COMPONENT_OVERLAY=OFF " +
+    
+        if BuildPlatform == "windows"
+          ogreWinCmake = %{
+          
+            cmake_minimum_required(VERSION 2.8.11)
+
+            # Dependencies first
+            add_subdirectory("Dependencies")
+
+            # actual ogre
+            add_subdirectory("ogre")
+          }
+          
+           File.open("../CMakeLists.txt", 'w') { |file| file.write(ogreWinCmake) }
+        end
+
+      runCMakeConfigure "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON -DOGRE_BUILD_COMPONENT_OVERLAY=OFF " +
              "-DOGRE_BUILD_COMPONENT_PAGING=OFF -DOGRE_BUILD_COMPONENT_PROPERTY=OFF " +
              "-DOGRE_BUILD_COMPONENT_TERRAIN=OFF -DOGRE_BUILD_COMPONENT_VOLUME=OFF "+
              "-DOGRE_BUILD_PLUGIN_BSP=OFF -DOGRE_BUILD_PLUGIN_CG=OFF " +
@@ -529,7 +762,7 @@ class Ogre < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads
     end
     $?.exitstatus == 0
   end
@@ -537,10 +770,18 @@ class Ogre < BaseDep
   def DoInstall
 
     return true if not DoSudoInstalls
-    
     Dir.chdir("build") do
-      system "sudo make install"
+    
+      if BuildPlatform == "windows"
+
+        runInstall
+        ENV["OGRE_HOME"] = "C:/Program Files/Ogre"
+        
+      else
+        runInstall
+      end
     end
+
     $?.exitstatus == 0
   end
 end
@@ -575,7 +816,7 @@ class CEGUI < BaseDep
 
     Dir.chdir("build") do
       # Use UTF-8 strings with CEGUI (string class 1)
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCEGUI_STRING_CLASS=1 " +
+      runCMakeConfigure "-DCEGUI_STRING_CLASS=1 " +
              "-DCEGUI_BUILD_APPLICATION_TEMPLATES=OFF -DCEGUI_BUILD_PYTHON_MODULES=#{python} " +
              "-DCEGUI_SAMPLES_ENABLED=ON"
     end
@@ -586,7 +827,7 @@ class CEGUI < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads 
     end
     $?.exitstatus == 0
   end
@@ -596,7 +837,7 @@ class CEGUI < BaseDep
     return true if not DoSudoInstalls
     
     Dir.chdir("build") do
-      system "sudo make install"
+      runInstall
     end
     $?.exitstatus == 0
   end
@@ -622,7 +863,7 @@ class SFML < BaseDep
     FileUtils.mkdir_p "build"
 
     Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType}"
+      runCMakeConfigure ""
     end
     
     $?.exitstatus == 0
@@ -631,7 +872,7 @@ class SFML < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads
     end
     $?.exitstatus == 0
   end
@@ -641,7 +882,7 @@ class SFML < BaseDep
     return true if not DoSudoInstalls
     
     Dir.chdir("build") do
-      system "sudo make install"
+      runInstall
     end
     $?.exitstatus == 0
   end
@@ -660,7 +901,7 @@ end
 ##### Actual body ####
 
 # Assets svn
-if FetchAssets
+if FetchAssets and not SkipPullUpdates
   info "Checking out assets svn"
 
   Dir.chdir("bin") do
@@ -684,7 +925,12 @@ if FetchAssets
 end
 
 # All the objects
-depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
+if BuildPlatform == "windows"
+  #depobjects = Array[Newton.new, AngelScript.new, OpenAL.New, CAudio.new, SFML.new, OIS.new, Ogre.new, CEGUI.new]
+  depobjects = Array[OIS.new]
+else
+  depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
+end
 
 if GetBreakpad
   # Add this last as this does some environment variable trickery
@@ -692,15 +938,17 @@ if GetBreakpad
 end
 
 
-info "Retrieving dependencies"
+if not SkipPullUpdates
+  info "Retrieving dependencies"
 
-depobjects.each do |x|
+  depobjects.each do |x|
 
-  x.Retrieve
+    x.Retrieve
   
-end
+  end
 
-success "Successfully retrieved all dependencies. Beginning compile"
+  success "Successfully retrieved all dependencies. Beginning compile"
+end
 
 info "Configuring dependencies"
 
@@ -712,6 +960,10 @@ depobjects.each do |x|
   
 end
 
+if OnlyDependencies
+  success "All done. Skipping Configuring Leviathan"
+  exit 0
+end
 info "Dependencies done, configuring Leviathan"
 
 FileUtils.mkdir_p "build"

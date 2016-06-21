@@ -310,11 +310,13 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
     ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo)
 {
 	// Get the number of parameters expected //
-	int parameterc = paraminfo->ParameterTypeIDS.size();
+	auto parameterc = paraminfo->ParameterTypeIDS.size();
 
 	// Start passing the parameters provided by the application //
-	for(int i = 0; i < parameterc; i++){
-		if(i >= (int)parameters->Parameters.size()) // no more parameters //
+	for(size_t i = 0; i < parameterc; ++i){
+
+        // no more parameters //
+		if(i >= parameters->Parameters.size())
 			break;
 
 		// Try to pass the parameter //
@@ -640,7 +642,7 @@ void Leviathan::ScriptExecutor::PrintAdditionalExcept(asIScriptContext *ctx){
     
 	// Loop the stack starting from the frame below the current function
     // (actually might be nice to print the top frame too)
-	for(size_t n = 0; n < ctx->GetCallstackSize(); n++){
+	for(asUINT n = 0; n < ctx->GetCallstackSize(); n++){
         
 		// Get the function object //
 		const asIScriptFunction* function = ctx->GetFunction(n);

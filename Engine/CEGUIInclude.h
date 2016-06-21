@@ -1,7 +1,7 @@
 #pragma once
 //! \file Supresses warnings caused by including CEGUI
 
-#include <glm/detail/setup.hpp>
+#include <glm/glm.hpp>
 #if (GLM_VERSION_MAJOR == 0) && (GLM_VERSION_MINOR == 9) && (GLM_VERSION_PATCH == 5)
 #define GLM_FORCE_RADIANS
 #endif

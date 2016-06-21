@@ -8,6 +8,10 @@
 #include "../TimeIncludes.h"
 #include <vector>
 
+#ifdef _WIN32
+#include "WindowsInclude.h"
+#endif
+
 namespace Leviathan{
 
 //! \brief A file listener instance which listens for file changes in a folder
@@ -78,7 +82,7 @@ protected:
     std::vector<HANDLE> SignalingHandles;
 
 
-    FILE_NOTIFY_INFORMATION* OurReadBuffer nullptr;
+    FILE_NOTIFY_INFORMATION* OurReadBuffer = nullptr;
 
     HANDLE TargetFolderHandle;
 

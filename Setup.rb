@@ -8,6 +8,7 @@ require 'etc'
 
 
 require_relative 'Helpers/CommonCode'
+require_relative 'Helpers/DepGlobber'
 
 # Setup code
 
@@ -33,11 +34,7 @@ SkipPullUpdates = false
 OnlyDependencies = false
 
 # If true skips all dependencies and only tries to configure Leviathan
-OnlyLeviathan = false
-
-# If true will create folder OgreBuild with an extra cmake file that includes the dependencies
-# and then the Ogre files
-WindowsOgreExtraCMake = true
+OnlyLeviathan = true
 
 # If true new version of depot tools and breakpad won't be fetched on install
 NoBreakpadUpdateOnWindows = false
@@ -56,6 +53,13 @@ info "Running in dir '#{CurrentDir}'"
 verifyIsMainFolder
 
 puts "Using #{CompileThreads} threads to compile, configuration: #{CMakeBuildType}"
+
+if BuildPlatform == "windows"
+  puts "Sorry but this doesn't actually work entirely. Here's a list of manual fixes:"
+  puts "copy everything from Ogre RelWithDebInfo folders to Release folders for CEGUI to find Ogre"
+  puts "Manually compile CEGUI debs as Debug and Release"
+  
+end
 
 # Path helper
 # For breakpad depot tools
@@ -244,10 +248,10 @@ end
 class OpenAL < BaseDep
   def initialize
     super("OpenAL Soft", "openal-soft")
+    onError "Use OpenAL from package manager on linux" if BuildPlatform != "windows"
   end
 
   def DoClone
-    onError "Use OpenAL from package manager on linux" if BuildPlatform != "windows"
     system "git clone https://github.com/kcat/openal-soft.git"
     $?.exitstatus == 0
   end
@@ -278,7 +282,7 @@ class OpenAL < BaseDep
   end
   
   def DoInstall
-    return true if not DoSudoInstalls
+    return false if not DoSudoInstalls
     
     Dir.chdir("build") do
       runInstall
@@ -337,8 +341,6 @@ class CAudio < BaseDep
   end
   
   def DoInstall
-
-    return true if not DoSudoInstalls
     
     Dir.chdir("build") do
       if BuildPlatform == "windows"
@@ -361,6 +363,7 @@ class CAudio < BaseDep
                  File.join(CurrentDir, "cAudio", "include")
         
       else
+        return true if not DoSudoInstalls
         runInstall
       end
     end
@@ -659,22 +662,12 @@ end
 
 class Ogre < BaseDep
   def initialize
-    if BuildPlatform == "windows" and WindowsOgreExtraCMake
-      super("Ogre", "OgreBuild")
-    else
-      super("Ogre", "ogre")
-    end
+    super("Ogre", "ogre")
   end
 
   def RequiresClone
     if BuildPlatform == "windows"
-      if WindowsOgreExtraCMake
-        FileUtils.mkdir_p "OgreBuild"
-        return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")) or 
-          not File.exist?(File.join(@Folder, "ogre")))
-      else
-        return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")))
-      end
+      return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")))
     else
       return (not File.exist? @Folder)
     end
@@ -682,26 +675,15 @@ class Ogre < BaseDep
   
   def DoClone
     if BuildPlatform == "windows"
-      
-      if WindowsOgreExtraCMake
-        Dir.chdir(@Folder) do
-          system "hg clone https://bitbucket.org/sinbad/ogre"
-          if $?.exitstatus > 0
-            return false
-          end
-      
-          system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
-        end
-      else
-        system "hg clone https://bitbucket.org/sinbad/ogre"
-        if $?.exitstatus > 0
-          return false
-        end
-        
-        Dir.chdir(@Folder) do
 
-          system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
-        end
+      system "hg clone https://bitbucket.org/sinbad/ogre"
+      if $?.exitstatus > 0
+        return false
+      end
+        
+      Dir.chdir(@Folder) do
+
+        system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
       end
       return $?.exitstatus == 0
     else
@@ -721,17 +703,6 @@ class Ogre < BaseDep
             return false
           end
         end
-        
-        if WindowsOgreExtraCMake
-          Dir.chdir("ogre") do
-            system "hg pull"
-            system "hg update v2-0"
-          end
-          if $?.exitstatus > 0
-            return false
-          end
-          return true
-        end
     end
   
     system "hg pull"
@@ -740,25 +711,37 @@ class Ogre < BaseDep
   end
 
   def DoSetup
+    
+    # Dependencies compile
+    additionalCMake = ""
+    
+    if BuildPlatform == "windows"
+      Dir.chdir("Dependencies") do
+        
+        system "cmake . -DOGREDEPS_BUILD_SDL2=OFF" 
+        
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Debug"
+        onError "Failed to compile Ogre dependencies " if $?.exitstatus > 0
+        
+        runCompiler CompileThreads
+        onError "Failed to compile Ogre dependencies " if $?.exitstatus > 0
 
+        info "Please open the solution SDL2 in Release and x64: "+
+          "#{@Folder}/Dependencies/src/SDL2/VisualC/SDL_VS2013.sln"
+        
+        system "start #{@Folder}/Dependencies/src/SDL2/VisualC/SDL_VS2013.sln" if AutoOpenVS
+        system "pause"
+        
+        additionalCMake = "-DSDL2MAIN_LIBRARY=..\SDL2\VisualC\Win32\Debug\SDL2main.lib " +
+          "-DSD2_INCLUDE_DIR=..\SDL2\include"
+          "-DSDL2_LIBRARY_TEMP=..\SDL2\VisualC\Win32\Debug\SDL2.lib"
+        
+      end
+    end
+  
     FileUtils.mkdir_p "build"
     
     Dir.chdir("build") do
-    
-        if BuildPlatform == "windows" and WindowsOgreExtraCMake
-          ogreWinCmake = %{
-          
-            cmake_minimum_required(VERSION 2.8.11)
-
-            # Dependencies first
-            add_subdirectory("Dependencies")
-
-            # actual ogre
-            add_subdirectory("ogre")
-          }
-          
-           File.open("../CMakeLists.txt", 'w') { |file| file.write(ogreWinCmake) }
-        end
 
       runCMakeConfigure "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON " +
              "-DOGRE_BUILD_RENDERSYSTEM_D3D9=OFF -DOGRE_BUILD_RENDERSYSTEM_D3D11=OFF "+
@@ -766,23 +749,28 @@ class Ogre < BaseDep
              "-DOGRE_BUILD_COMPONENT_PAGING=OFF -DOGRE_BUILD_COMPONENT_PROPERTY=OFF " +
              "-DOGRE_BUILD_COMPONENT_TERRAIN=OFF -DOGRE_BUILD_COMPONENT_VOLUME=OFF "+
              "-DOGRE_BUILD_PLUGIN_BSP=OFF -DOGRE_BUILD_PLUGIN_CG=OFF " +
-             "-DOGRE_BUILD_PLUGIN_OCTREE=OFF -DOGRE_BUILD_PLUGIN_PCZ=OFF -DOGRE_BUILD_SAMPLES=OFF"
+             "-DOGRE_BUILD_PLUGIN_OCTREE=OFF -DOGRE_BUILD_PLUGIN_PCZ=OFF -DOGRE_BUILD_SAMPLES=OFF " + 
+             additionalCMake
     end
     
     $?.exitstatus == 0
   end
   
   def DoCompile
-
     Dir.chdir("build") do
-      runCompiler CompileThreads
+      if BuildPlatform == "windows"
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Release"
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=RelWithDebInfo"
+      else
+        runCompiler CompileThreads
+      end
     end
+    
     $?.exitstatus == 0
   end
   
   def DoInstall
 
-    return true if not DoSudoInstalls
     Dir.chdir("build") do
     
       if BuildPlatform == "windows"
@@ -791,6 +779,7 @@ class Ogre < BaseDep
         ENV["OGRE_HOME"] = "#{@Folder}/build/ogre/sdk"
         
       else
+        return true if not DoSudoInstalls
         runInstall
       end
     end
@@ -837,7 +826,8 @@ class CEGUIDependencies < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      runCompiler CompileThreads 
+      system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Debug"
+      system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=RelWithDebInfo"
     end
     $?.exitstatus == 0
   end
@@ -882,7 +872,8 @@ class CEGUI < BaseDep
       # Use UTF-8 strings with CEGUI (string class 1)
       runCMakeConfigure "-DCEGUI_STRING_CLASS=1 " +
              "-DCEGUI_BUILD_APPLICATION_TEMPLATES=OFF -DCEGUI_BUILD_PYTHON_MODULES=#{python} " +
-             "-DCEGUI_SAMPLES_ENABLED=ON"
+             "-DCEGUI_SAMPLES_ENABLED=OFF -DCEGUI_BUILD_RENDERER_DIRECT3D11=OFF -DCEGUI_BUILD_RENDERER_OGRE=ON " +
+             "-DCEGUI_BUILD_RENDERER_OPENGL=OFF -DCEGUI_BUILD_RENDERER_OPENGL3=OFF"
     end
     
     $?.exitstatus == 0
@@ -898,7 +889,7 @@ class CEGUI < BaseDep
   
   def DoInstall
 
-    return true if not DoSudoInstalls
+    return true if not DoSudoInstalls or BuildPlatform == "windows"
     
     Dir.chdir("build") do
       runInstall
@@ -943,7 +934,7 @@ class SFML < BaseDep
   
   def DoInstall
 
-    return true if not DoSudoInstalls
+    return true if not DoSudoInstalls or BuildPlatform == "windows"
     
     Dir.chdir("build") do
       runInstall
@@ -1034,22 +1025,51 @@ if not OnlyLeviathan
 
 end
 
+def runGlobberAndCopy(glob, targetFolder)
+    onError "globbing for library failed #{glob.LibName}" if not glob.run
+    
+    FileUtils.cp_r glob.getResult, targetFolder
+end
+
+def copyStuff(ext, targetFolder)
+
+    runGlobberAndCopy(Globber.new("cAudio#{ext}", "#{CurrentDir}/../cAudio/build"), targetFolder)
+    
+end
+
 if BuildPlatform == "windows"
   # Make sure Ogre home is set
-  if WindowsOgreExtraCMake
-    ENV["OGRE_HOME"] = "#{CurrentDir}/../OgreBuild/build/ogre/sdk"
-  else
-    ENV["OGRE_HOME"] = "#{CurrentDir}/../ogre/build/sdk"
+  ENV["OGRE_HOME"] = "#{CurrentDir}/../ogre/build/sdk"
+  ENV["OIS_HOME"] = "#{CurrentDir}/../ogre/build/sdk"
+  
+  info "Moving all the libraries to leviathan/Windows/ThirdParty"
+  FileUtils.mkdir_p "Windows/ThirdParty"
+  FileUtils.mkdir_p "Windows/ThirdParty/lib"
+  FileUtils.mkdir_p "Windows/ThirdParty/bin"
+  FileUtils.mkdir_p "Windows/ThirdParty/include"
+  
+  Dir.chdir("Windows/ThirdParty/include") do
+    FileUtils.copy_entry "#{CurrentDir}/../cAudio/build/Install/include/cAudio", "cAudio"
+    FileUtils.copy_entry "#{CurrentDir}/../cegui-dependencies/src/glm-0.9.4.5/glm", "glm"
+    FileUtils.copy_entry "#{CurrentDir}/../cegui/cegui/include/CEGUI", "CEGUI"
+    FileUtils.cp_r(Dir.glob("#{CurrentDir}/../cegui/build/cegui/include/CEGUI/*"), "CEGUI")
+    FileUtils.cp_r(Dir.glob("#{CurrentDir}/../ogre/build/sdk/include/*"), "./")
+    FileUtils.copy_entry "#{CurrentDir}/../SFML/include/SFML", "SFML"
   end
+  
+  copyStuff ".lib", "Windows/ThirdParty/lib"
+  copyStuff ".dll", "Windows/ThirdParty/bin"
+  
+  runGlobberAndCopy(Globber.new(["sfml-network.lib", "sfml-system.lib"], "#{CurrentDir}/../SFML/build"), 
+    "Windows/ThirdParty/lib")
+  runGlobberAndCopy(Globber.new(["sfml-network-2.dll", "sfml-system-2.dll"], "#{CurrentDir}/../SFML/build"), 
+    "Windows/ThirdParty/bin")
 end
 
 FileUtils.mkdir_p "build"
 
 Dir.chdir("build") do
-
-  system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCREATE_SDK=ON " +
-         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_BREAKPAD=OFF"
-  
+  runCMakeConfigure "-DCREATE_SDK=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_BREAKPAD=OFF"
 end
 
 if $?.exitstatus > 0

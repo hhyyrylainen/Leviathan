@@ -1,4 +1,5 @@
 # Common ruby functions for all the ruby scripts
+require 'fileutils'
 require 'colorize'
 require 'os'
 # Used by: verifyVSProjectRuntimeLibrary

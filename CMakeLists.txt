@@ -45,7 +45,6 @@ option(USE_SFML "For using SFML, required for normal builds" ON)
     
 option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
     
-option(COPY_DEBUG_LIBS "When set copies debug libraries" OFF)
 # \todo this option to copy right libs
 option(CREATE_SDK "For creating SDKs for developers" ON)
 
@@ -93,11 +92,6 @@ option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 # Strip symbols from install
 option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 
-# Include glm directory on windows
-if(WIN32 AND USE_OGRE)
-  set(GLM_BASE_DIR "" CACHE FILEPATH
-    "Path to the base directory of glm set to cegui-dependencies/src/glm-0.9.4.5")
-endif()
 
 # Check is leap motion used
 option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
@@ -111,7 +105,7 @@ if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
 else()
 
   if(NOT CREATE_UE4_PLUGIN)
-    message(WARNING
+    message(STATUS
       "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
   endif()
   
@@ -205,21 +199,8 @@ endif()
 
 
 # locating the Ogre folder
-if(WIN32)
-    if(NOT USE_OGRE OR NOT EXISTS "$ENV{OGRE_HOME}/")
-        set(CAN_USE_OGRE OFF)
-    else()
-        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "$ENV{OGRE_HOME}/CMake/")
-        set(OGRE_BASEDIR "$ENV{OGRE_HOME}/")
-        set(CAN_USE_OGRE ON)
-    endif()
-endif(WIN32)
-
 if(UNIX)
-    if(NOT USE_OGRE)
-        set(CAN_USE_OGRE OFF)
-    else()
-        set(CAN_USE_OGRE ON)
+    if(USE_OGRE)
         if(EXISTS "/usr/local/lib/OGRE/cmake")
 
             set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/usr/local/lib/OGRE/cmake/")
@@ -238,7 +219,7 @@ endif(UNIX)
 # Find required libraries
 
 # Ogre is required
-if(CAN_USE_OGRE)
+if(USE_OGRE AND UNIX)
     
     if(NOT USE_BOOST)
         message(SEND_ERROR "USE_BOOST required for Ogre")
@@ -280,25 +261,26 @@ if(CAN_USE_OGRE)
       ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
       ${OGRE_RenderSystem_GL_LIBRARIES})
 
-endif(CAN_USE_OGRE)
+    # Find sfml
+    if(USE_SFML)
+        find_package(SFML 2 COMPONENTS network system)
 
-# Find sfml
-if(USE_SFML)
-    find_package(SFML 2 COMPONENTS network system)
-
-    if(NOT SFML_FOUND)
-        message(SEND_ERROR "Failed to find SFML 2")
+        if(NOT SFML_FOUND)
+            message(SEND_ERROR "Failed to find SFML 2")
+        endif()
     endif()
-endif()
 
-# Find cAudio
-if(USE_CAUDIO)
+    # Find cAudio
+    if(USE_CAUDIO)
 
-  find_package(cAudio)
-  
-  if(NOT cAudio_FOUND)
-    message(SEND_ERROR "Failed to find cAudio")
-  endif()
+      find_package(cAudio)
+      
+      if(NOT cAudio_FOUND)
+        message(SEND_ERROR "Failed to find cAudio")
+      endif()
+    endif()
+      
+      
 endif()
 
 # Find Boost
@@ -307,7 +289,6 @@ if(USE_BOOST)
     set(Boost_USE_STATIC_LIBS FALSE)
 
     set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
-
 
     # Other than these that are required are header-only libraries
     set(LEVIATHAN_BOOST_COMPONENTS chrono system filesystem)
@@ -335,6 +316,24 @@ if(USE_BOOST)
     # All libs are linked by cmake
     add_definitions(-DBOOST_ALL_NO_LIB)
 endif(USE_BOOST)
+
+#
+# Worlds dirtiest hacks for windows
+#
+# This is because it is such a pain
+if(WIN32)
+
+    set(OGRE_LIBRARIES OgreMain.lib RenderSystem_GL.lib RenderSystem_GL3Plus.lib Plugin_ParticleFX.lib
+        OIS.lib CEGUIBase-9999.lib CEGUICommonDialogs-9999.lib CEGUICoreWindowRendererSet.lib 
+        CEGUIExpatParser.lib CEGUIOgreRenderer-9999.lib CEGUISILLYImageCodec.lib
+    )
+    
+    include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include")
+    include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/cAudio")
+    include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/OIS")
+    include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/OGRE")
+    link_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/lib")
+endif()
 
 # Library linking
 # And Debug libraries for windows
@@ -478,27 +477,22 @@ if(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
     ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
 	${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE})
 
-  if(COPY_DEBUG_LIBS)
-    list(APPEND ALL_DYNAMIC_LIBRARIES ${Boost_DATE_TIME_LIBRARY_DEBUG}
-      ${Boost_CHRONO_LIBRARY_DEBUG} ${Boost_THREAD_LIBRARY_DEBUG}
-      ${Boost_SYSTEM_LIBRARY_DEBUG})
-  endif()
 endif()
 
 if(WIN32)
 
   if(USING_LEAP)
-    if(COPY_DEBUG_LIBS)
-      list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll" "Leap/lib/x64/Leapd.dll")
-    else()
-      list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll")
-    endif()
+    list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll")
   endif()
     
   if(USE_NEWTON)
     list(APPEND ALL_DYNAMIC_LIBRARIES
-      "Newton/bin/Newton.dll" "Newton/bin/Newton_d.dll")
+      "Newton/bin/Newton.dll" "Newton/bin/Newton.dll")
   endif()
+  
+  file(GLOB THIRD_PARTY_DLLS "{CMAKE_SOURCE_DIR}/Windows/ThirdPart/bin/*")
+  list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
+  
 else()
 
   # linux variants of the copy functions
@@ -513,7 +507,7 @@ else()
   
 endif(WIN32)
 
-if(USE_OGRE)
+if(USE_OGRE AND NOT WIN32)
 
   set(RawFilesToMove ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES}
     ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
@@ -529,14 +523,6 @@ if(USE_OGRE)
   list(APPEND ALL_DYNAMIC_LIBRARIES ${RawFilesToMove})
 endif()
 
-
-
-# Remove debug libs on windows
-if(NOT COPY_DEBUG_LIBS AND WIN32)
-  
-  RemoveLibsWithDebugSuffix(ALL_DYNAMIC_LIBRARIES)
-
-endif()
 
 if(UNIX)
   # Go through all the libraries and add all name variants to the moved files
@@ -566,10 +552,6 @@ endif(WIN32)
 # working directory setting
 if(WIN32)
     
-    if(NOT CREATE_UE4_PLUGIN)
-        include(CreateLaunchers)
-    endif()
-
 else(WIN32)
 
     set(CMAKE_RPATH "$ORIGIN/:$ORIGIN/lib")
@@ -584,27 +566,22 @@ endif(WIN32)
 # additional include directories
 include_directories("${PROJECT_SOURCE_DIR}/Engine/")
 
-if(USE_CAUDIO)
-  include_directories(${cAudio_INCLUDE_DIRS})
-endif()
+if(NOT WIN32)
 
-include_directories(${SFML_INCLUDE_DIR})
+    if(USE_CAUDIO)
+      include_directories(${cAudio_INCLUDE_DIRS})
+    endif()
 
+    include_directories(${SFML_INCLUDE_DIR})
 
-if(EXISTS "${GLM_BASE_DIR}")
-
-  include_directories("${GLM_BASE_DIR}")
-
-else()
-  if(WIN32 AND USE_OGRE)
-    message(WARNING
-      "GLM_BASE_DIR is not set, probably won't compile correctly depending on CEGUI version") 
-  endif()
-endif()
+    if(USE_BREAKPAD)
+      include_directories("${CMAKE_SOURCE_DIR}/Breakpad/include")
+    endif()
 
 
-if(USE_BREAKPAD)
-  include_directories("${CMAKE_SOURCE_DIR}/Breakpad/include")
+    if(USE_OGRE)
+        include_directories(${OIS_INCLUDE_DIRS}	${CEGUI_INCLUDE_DIRS} ${OGRE_INCLUDE_DIRS})
+    endif()
 endif()
 
 if(USE_ANGELSCRIPT)
@@ -616,17 +593,9 @@ if(USE_NEWTON)
     include_directories("${PROJECT_SOURCE_DIR}/Newton/include")
 endif()
 
-if(CAN_USE_OGRE)
-    include_directories(${OIS_INCLUDE_DIRS}	${CEGUI_INCLUDE_DIRS} ${OGRE_INCLUDE_DIRS})
-endif()
-
 if(USING_LEAP)
     include_directories("${PROJECT_SOURCE_DIR}/Leap/include")
     include_directories("${PROJECT_SOURCE_DIR}/Leap")
-endif()
-
-if(USE_BREAKPAD)
-  include_directories("${BREAKPAD_DIR}/src")
 endif()
 
 if(USE_ANGELSCRIPT)
@@ -684,7 +653,7 @@ endif()
 if(${USE_BREAKPAD})
   add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 else()
-    add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
+  add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 endif()
 
 # .desktop files

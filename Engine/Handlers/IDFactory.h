@@ -35,7 +35,7 @@ namespace Leviathan{
         std::atomic_int SystemID;
         std::atomic_int GlobalID;
 
-		static IDFactory* Instance;
+		DLLEXPORT static IDFactory* Instance;
 	};
 
 }

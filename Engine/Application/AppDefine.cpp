@@ -12,7 +12,7 @@ using namespace std;
 DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) :
     ConfigurationValues(new NamedVars()), 
 #ifdef _WIN32
-	HInstance(NULL),
+	HInstance(NULL)
 #else
 	HInstance(0)
 #endif //_WIN32

@@ -765,7 +765,7 @@ void Engine::RenderFrame(){
             new IntegerEventData(SinceLastFrame)));
 
     // Run rendering systems //
-    int timeintick = Time::GetTimeMs64() - LastTickTime;
+    int64_t timeintick = Time::GetTimeMs64() - LastTickTime;
     int moreticks = 0;
 
     while(timeintick > TICKSPEED){
@@ -779,7 +779,7 @@ void Engine::RenderFrame(){
         
         for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
 
-            (*iter)->RunFrameRenderSystems(TickCount + moreticks, timeintick);
+            (*iter)->RunFrameRenderSystems(TickCount + moreticks, static_cast<int>(timeintick));
         }
     }
     
@@ -1014,7 +1014,8 @@ void Engine::_NotifyThreadsRegisterOgre(){
 	_ThreadingManager->MakeThreadsWorkWithOgre();
 }
 // ------------------------------------ //
-DLLEXPORT int Engine::GetTimeSinceLastTick() const{
+DLLEXPORT int64_t Leviathan::Engine::GetTimeSinceLastTick() const
+{
 
     return Time::GetTimeMs64()-LastTickTime;
 }
@@ -1047,12 +1048,12 @@ void Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
     }
 
     // Check how far off we are from the target //
-    int intolasttick = curtime-templasttick;
+    int64_t intolasttick = curtime - templasttick;
 
-    int changeamount = amount-intolasttick;
+    int changeamount = amount - static_cast<int>(intolasttick);
 
-    Logger::Get()->Info("Engine: changing tick counter by "+Convert::ToString(changeamount));
-        
+    Logger::Get()->Info("Engine: changing tick counter by " + Convert::ToString(changeamount));
+
     LastTickTime += changeamount;
 }
 

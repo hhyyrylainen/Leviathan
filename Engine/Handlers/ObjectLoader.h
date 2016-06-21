@@ -91,7 +91,7 @@ namespace Leviathan{
 
         //! \see LoadTrackControllerToWorld
         DLLEXPORT static bool LoadNetworkTrackController(GameWorld* world, Lock &worldlock,
-            ObjectID id, int reachednode, float nodeprogress, float changespeed, float applyforce,
+            ObjectID id, size_t reachednode, float nodeprogress, float changespeed, float applyforce,
             const Parent::Data &childrendata, const PositionMarkerOwner::Data &positions);
 
 

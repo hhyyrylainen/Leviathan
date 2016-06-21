@@ -7,64 +7,18 @@
 
 namespace Leviathan{
 
-	//! \brief Helper class that provides string constants in multiple types
-	template<class StringWanted, typename ElementType>
-	class StringConstants{
-	public:
+    constexpr int32_t DOT_CHARACTER = '.';
+    constexpr int32_t UNIVERSAL_PATHSEPARATOR = '/';
+    constexpr int32_t WINDOWS_PATHSEPARATOR = '\\';
+    constexpr int32_t SPACE_CHARACTER = ' ';
 
-		// Public variables //
-		static const ElementType DotCharacter;
-		static const ElementType UniversalPathSeparator;
-		static const ElementType WindowsPathSeparator;
-		static const ElementType SpaceCharacter;
+    constexpr int32_t FIRST_NUMBER = '0';
+    constexpr int32_t LAST_NUMBER = '9';
+    constexpr int32_t DASH_CHARACTER = '-';
+    constexpr int32_t PLUS_SYMBOL = '+';
 
-		static const ElementType FirstNumber;
-		static const ElementType LastNumber;
-		static const ElementType Dash;
-		static const ElementType PlusSymbol;
-
-		static const StringWanted WindowsLineSeparator;
-		static const StringWanted UniversalLineSeparator;
-
-        static const ElementType Space;
-
-	private:
-		StringConstants();
-		~StringConstants();
-	};
-
-	// Define most common StringConstants types //
-	typedef StringConstants<std::wstring, wchar_t> WstringConstants;
-	typedef StringConstants<std::string, char> NarrowStringConstants;
-
-	// ------------------ StringConstants definitions for new types that comply with char
-    // ------------------ 
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::DotCharacter = (ElementType)(int)'.';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::UniversalPathSeparator = (ElementType)(int)'/';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::WindowsPathSeparator = (ElementType)(int)'\\';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::SpaceCharacter = (ElementType)(int)' ';
-	
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::FirstNumber = (ElementType)(int)'0';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::LastNumber = (ElementType)(int)'9';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::Dash = (ElementType)(int)'-';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::PlusSymbol = (ElementType)(int)'+';
-
-    template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::Space = (ElementType)(int)' ';
+    constexpr auto WINDOWS_LINESEPARATOR = "\r\n";
+    constexpr auto UNIVERSAL_LINE_SEPARATOR = "\n";
 
 	//! \brief Singleton class that has string processing functions
 	//!
@@ -85,6 +39,22 @@ namespace Leviathan{
 			return false;
 		}
 
+        // Helper functions //
+
+        template<class StringTypeN>
+        DLLEXPORT static void MakeString(StringTypeN &str, const char* characters, size_t count) {
+
+            str = StringTypeN(characters, count);
+        }
+
+        template<>
+        DLLEXPORT static void MakeString(std::wstring &str, const char* characters, size_t count) {
+            str.resize(sizeof(characters));
+
+            for (size_t i = 0; i < sizeof(characters); ++i)
+                str[i] = (wchar_t)characters[i];
+        }
+
 		// ------------------ Path related operations ------------------ //
 		template<class StringTypeN, typename CharType>
 		DLLEXPORT static const StringTypeN RemoveExtension(const StringTypeN &filepath, bool delpath = true){
@@ -92,7 +62,7 @@ namespace Leviathan{
 			size_t startcopy = 0;
 			size_t endcopy;
 
-			size_t lastdot = filepath.find_last_of(StringConstants<StringTypeN, CharType>::DotCharacter);
+			size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
 			if(lastdot == StringTypeN::npos){
 				// no dot //
@@ -107,9 +77,8 @@ namespace Leviathan{
 				size_t lastpath = 0;
 
 				for(size_t i = 0; i < filepath.size(); i++){
-					if(filepath[i] == StringConstants<StringTypeN,
-                        CharType>::UniversalPathSeparator || filepath[i] ==
-                        StringConstants<StringTypeN, CharType>::WindowsPathSeparator)
+					if(filepath[i] == UNIVERSAL_PATHSEPARATOR || filepath[i] ==
+                        WINDOWS_PATHSEPARATOR)
 					{
 						// Currently last found path //
 						lastpath = i;
@@ -135,8 +104,7 @@ namespace Leviathan{
 			size_t startcopy = 0;
 			size_t endcopy = filepath.size()-1;
 
-			size_t lastdot = filepath.find_last_of(StringConstants<StringTypeN,
-                CharType>::DotCharacter);
+			size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
 			if(lastdot == StringTypeN::npos){
 				// no dot //
@@ -160,8 +128,7 @@ namespace Leviathan{
 			size_t startcopy = 0;
 			size_t endcopy = filepath.size()-1;
 
-			size_t lastdot = filepath.find_last_of(StringConstants<StringTypeN,
-                CharType>::DotCharacter);
+			size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
 			if(lastdot != StringTypeN::npos){
 				// dot found //
@@ -189,8 +156,8 @@ namespace Leviathan{
 			size_t lastpath = 0;
 
 			for(size_t i = 0; i < filepath.size(); i++){
-				if(filepath[i] == StringConstants<StringTypeN, CharType>::UniversalPathSeparator
-                    || filepath[i] == StringConstants<StringTypeN, CharType>::WindowsPathSeparator)
+				if(filepath[i] == UNIVERSAL_PATHSEPARATOR
+                    || filepath[i] == WINDOWS_PATHSEPARATOR)
 				{
 					// Currently last found path //
 					lastpath = i;
@@ -222,8 +189,8 @@ namespace Leviathan{
             bool found = false;
 
 			for(size_t i = 0; i < filepath.size(); i++){
-				if(filepath[i] == StringConstants<StringTypeN, CharType>::UniversalPathSeparator || filepath[i] == 
-					StringConstants<StringTypeN, CharType>::WindowsPathSeparator)
+				if(filepath[i] == UNIVERSAL_PATHSEPARATOR || filepath[i] == 
+					WINDOWS_PATHSEPARATOR)
 				{
 					// Currently last found path //
 					lastpath = i;
@@ -257,21 +224,25 @@ namespace Leviathan{
 
 			StringTypeN results;
 
+            // This is the line ending sequence //
+            StringTypeN separator;
+            MakeString(separator, WINDOWS_LINESEPARATOR,
+                sizeof(WINDOWS_LINESEPARATOR));
+
 			// Try to find path strings and replace them //
 			size_t copystart = 0;
 			size_t copyend = 0;
 
 			for(size_t i = 0; i < input.size(); i++){
-				if(input[i] == StringConstants<StringTypeN, CharType>::UniversalLineSeparator[0]
-                    && i > 0 && input[i-1] != StringConstants<StringTypeN,
-                    CharType>::WindowsLineSeparator[0])
+				if(input[i] == UNIVERSAL_LINE_SEPARATOR[0]
+                    && i > 0 && input[i-1] != WINDOWS_LINESEPARATOR[0])
 				{
 					// Found a line separator //
 					// Copy the current thing //
 					if(copyend >= copystart && copystart-copyend > 1)
 						results += input.substr(copystart, copyend-copystart+1);
 
-					results += StringConstants<StringTypeN, CharType>::WindowsLineSeparator;
+					results += separator;
 
 					copystart = i+1 < input.size() ? i+1: i;
 					copyend = copystart;
@@ -298,21 +269,26 @@ namespace Leviathan{
 
 			StringTypeN results;
 
+            // This is the line ending sequence //
+            StringTypeN separator;
+            MakeString(separator, UNIVERSAL_LINE_SEPARATOR, 
+                sizeof(UNIVERSAL_LINE_SEPARATOR));
+
 			// Try to find path strings and replace them //
 			size_t copystart = 0;
 			size_t copyend = 0;
 
 			for(size_t i = 0; i < input.size(); i++){
-				if(input[i] == StringConstants<StringTypeN, CharType>::WindowsLineSeparator[0] &&
-                    i+1 < input.size() && input[i+1] == StringConstants<StringTypeN,
-                    CharType>::WindowsLineSeparator[1])
+				if(input[i] == WINDOWS_LINESEPARATOR[0] &&
+                    i+1 < input.size() && input[i+1] == WINDOWS_LINESEPARATOR[1])
 				{
 					// Found a line separator //
 					// Copy the current thing //
 					if(copyend >= copystart && copystart-copyend > 1)
 						results += input.substr(copystart, copyend-copystart+1);
 
-					results += StringConstants<StringTypeN, CharType>::UniversalLineSeparator;
+
+                    results += separator;
 
 					copystart = i+2 < input.size() ? i+2: i;
 					copyend = copystart;
@@ -531,7 +507,7 @@ namespace Leviathan{
 			int words = 0;
 
 			for(size_t i = 0; i < data.length(); i++){
-				if(data[i] == StringConstants<StringTypeN, CharType>::SpaceCharacter){
+				if(data[i] == SPACE_CHARACTER){
 					spaces++;
 					continue;
 				}
@@ -718,11 +694,11 @@ namespace Leviathan{
 		template<class StringTypeN, typename CharType>
 		DLLEXPORT static bool IsStringNumeric(const StringTypeN &data){
 			for(size_t i = 0; i < data.size(); i++){
-				if((data[i] < StringConstants<StringTypeN, CharType>::FirstNumber ||
-                        data[i] > StringConstants<StringTypeN, CharType>::LastNumber) &&
-					data[i] != StringConstants<StringTypeN, CharType>::Dash &&
-                    data[i] != StringConstants<StringTypeN, CharType>::DotCharacter &&
-					data[i] != StringConstants<StringTypeN, CharType>::PlusSymbol)
+				if((data[i] < FIRST_NUMBER ||
+                        data[i] > LAST_NUMBER) &&
+					data[i] != DASH_CHARACTER &&
+                    data[i] != DOT_CHARACTER &&
+					data[i] != PLUS_SYMBOL)
 				{
 					return false;
 				}
@@ -929,7 +905,6 @@ namespace Leviathan{
 		StringOperations();
 		~StringOperations();
 	};
-
 
 
 }

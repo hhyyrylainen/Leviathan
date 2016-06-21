@@ -328,6 +328,9 @@ if(WIN32)
         CEGUIExpatParser.lib CEGUIOgreRenderer-9999.lib CEGUISILLYImageCodec.lib
     )
     
+    set(SFML_LIBRARIES sfml-network.lib sfml-system.lib)
+    set(cAudio_LIBRARIES cAudio.lib)
+    
     include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include")
     include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/cAudio")
     include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/OIS")
@@ -337,28 +340,36 @@ endif()
 
 # Library linking
 # And Debug libraries for windows
-if(USE_OGRE)
-    set(LINK_LIBS_TOENGINE_RELEASE optimized Newton ${OGRE_LIBRARIES})
-    set(LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
+if(USE_NEWTON)
+    list(APPEND LINK_LIBS_TOENGINE_RELEASE optimized Newton)
+    list(APPEND LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
+    
+    list(APPEND LINK_LIBS_ENGINE_RELEASE optimized Newton)
+    list(APPEND LINK_LIBS_ENGINE_DEBUG debug Newton_d)
 endif()
 
 if(USE_ANGELSCRIPT)
-    set(LINK_LIBS_ENGINE_RELEASE optimized angelscript optimized Newton)
-    set(LINK_LIBS_ENGINE_DEBUG debug angelscriptd)
+
+    if(WIN32)
+        list(APPEND LINK_LIBS_ENGINE_RELEASE optimized angelscript64)
+        list(APPEND LINK_LIBS_ENGINE_DEBUG debug angelscript64d)
+    else()
+        list(APPEND LINK_LIBS_ENGINE_RELEASE optimized angelscript)
+    endif()
 endif()
 
 if(USING_LEAP)
-  set(LINK_LIBS_ENGINE_RELEASE ${LINK_LIBS_ENGINE_RELEASE} optimized Leap)
-  set(LINK_LIBS_ENGINE_DEBUG ${LINK_LIBS_ENGINE_DEBUG} debug Leapd)
+  list(APPEND LINK_LIBS_ENGINE_RELEASE optimized Leap)
+  list(APPEND LINK_LIBS_ENGINE_DEBUG debug Leapd)
 endif()
 
 # Breakpad libraries
 if(USE_BREAKPAD)
   if(UNIX)
-    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized breakpad_client)
-    set(LINK_LIBS_TOENGINE_DEBUG ${LINK_LIBS_TOENGINE_DEBUG} debug breakpad_client)
+    list(APPEND LINK_LIBS_TOENGINE_RELEASE optimized breakpad_client)
+    list(APPEND LINK_LIBS_TOENGINE_DEBUG debug breakpad_client)
   elseif(WIN32)
-    set(LINK_LIBS_TOENGINE_RELEASE ${LINK_LIBS_TOENGINE_RELEASE} optimized exception_handler
+    list(APPEND LINK_LIBS_TOENGINE_RELEASE optimized exception_handler
       optimized common optimized crash_generation_client)
   else()
   

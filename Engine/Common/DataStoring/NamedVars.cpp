@@ -207,7 +207,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
         try {
             tmpcreated = std::make_unique<VariableBlock>(*valuestr, predefined);
         }
-        catch (const InvalidArgument &e) {
+        catch (const InvalidArgument) {
 
             // Rethrow the exception //
             SAFE_DELETE_VECTOR(resultvalues);
@@ -260,7 +260,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string &va
                 throw InvalidArgument("NamedVariableList could not parse top level bracket "
                     "expression");
             }
-        } catch(const InvalidArgument &e){
+        } catch(const InvalidArgument){
 
             throw;
         }
@@ -302,7 +302,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string &va
 	try{
         tmpcreated = std::make_unique<VariableBlock>(variablestr, predefined);
 	}
-	catch (const InvalidArgument &e){
+	catch (const InvalidArgument){
 
 		// Rethrow the exception //
         SAFE_DELETE_VECTOR(Datas);
@@ -632,7 +632,7 @@ DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
 		// create a named var //
     #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
 		try{
-			shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], predefined));
+			auto var = std::make_shared<NamedVariableList>(*Lines[i], Logger::Get(), predefined);
 
             if (!var || !var->IsValid()) {
                 // Invalid value //
@@ -1163,7 +1163,7 @@ DLLEXPORT size_t NamedVars::Find(Lock &guard, const string &name) const{
 			return i;
 	}
     
-	return SIZE_MAX;
+	return std::numeric_limits<size_t>::max();
 }
 // ------------------ Script compatible functions ------------------ //
 #ifdef LEVIATHAN_USING_ANGELSCRIPT

@@ -89,20 +89,20 @@ public:
 
 		if(!OpenClipboard(HWNDSource->GetHandle()))	{
 
-			Logger::Get()->Error("GuiClipboardHandler: failed to open the clipboard", GetLastError());
+			Logger::Get()->Error("GuiClipboardHandler: failed to open the clipboard");
 			return;
 		}
 
 		// Clear the clipboard //
 		if(!EmptyClipboard()){
 
-			Logger::Get()->Error("GuiClipboardHandler: failed to empty the clipboard", GetLastError());
+			Logger::Get()->Error("GuiClipboardHandler: failed to empty the clipboard");
 			return;
 		}
 
 		// Convert the line endings //
-		string convertedstring = StringOperations::ChangeLineEndsToWindowsString(
-            string(reinterpret_cast<char*>(buffer), size));
+		std::string convertedstring = StringOperations::ChangeLineEndsToWindowsString(
+            std::string(reinterpret_cast<char*>(buffer), size));
 		
 
 		// Allocate global data for the text //
@@ -115,7 +115,7 @@ public:
 		// Set the text data //
 		if(::SetClipboardData(CF_TEXT, globaldata) == NULL){
 
-			Logger::Get()->Error("GuiClipboardHandler: failed to set the clipboard contents", GetLastError());
+			Logger::Get()->Error("GuiClipboardHandler: failed to set the clipboard contents");
 			CloseClipboard();
 			GlobalFree(globaldata);
 			return;
@@ -140,7 +140,7 @@ public:
 			// Lock the data for reading //
 			char* sourcebuff = reinterpret_cast<char*>(GlobalLock(datahandle));
 			
-			string fromclipdata = sourcebuff;
+			std::string fromclipdata = sourcebuff;
 
 			// Unlock the global memory and clipboard //
 			GlobalUnlock(datahandle);

@@ -2,7 +2,6 @@
 #include "ConsoleInput.h"
 
 #include <stdio.h>
-#include <unistd.h>
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -116,6 +115,8 @@ bool ConsoleInput::OnReceivedInput(const std::string &str){
 
 #include <processenv.h>
 #include <winbase.h>
+#include <iostream>
+
 
 void ConsoleInput::CreateConsoleWindow() {
 
@@ -128,7 +129,7 @@ void ConsoleInput::CreateConsoleWindow() {
     // Allocate a console for this app
     if (!AllocConsole()) {
 
-        Logger::Get()->Error("ConsoleInput: AllocConsole failed"));
+        LOG_ERROR("ConsoleInput: AllocConsole failed");
         return;
     }
 
@@ -148,11 +149,11 @@ void ConsoleInput::CreateConsoleWindow() {
     FILE* ResultStream;
 
     if(freopen_s(&ResultStream, "CONIN$", "r", stdin) != 0)
-        UE_LOG(FabLog, Error, TEXT("FabConsole: freopen failed"));
+        LOG_ERROR("ConsoleInput: freopen failed");
     if (freopen_s(&ResultStream, "CONOUT$", "w", stdout) != 0)
-        UE_LOG(FabLog, Error, TEXT("FabConsole: freopen failed"));
+        LOG_ERROR("ConsoleInput: freopen failed");
     if (freopen_s(&ResultStream, "CONOUT$", "w", stderr) != 0)
-        UE_LOG(FabLog, Error, TEXT("FabConsole: freopen failed"));
+        LOG_ERROR("ConsoleInput: freopen failed");
 
     // Clear the error state for each of the C++ standard stream
     // objects. We need to do this, as attempts to access the standard
@@ -175,7 +176,7 @@ void ConsoleInput::DestroyConsoleWindow() {
 
     if (CreatedNewConsole) {
 
-        // Un-redirect output from the console //
+        // unredirect output from the console //
         FILE* ResultStream;
         freopen_s(&ResultStream, "nul", "r", stdin);
         freopen_s(&ResultStream, "nul", "w", stdout);
@@ -184,7 +185,7 @@ void ConsoleInput::DestroyConsoleWindow() {
         CreatedNewConsole = false;
         while (!FreeConsole()) {
 
-            Logger::Get()->Error("ConsoleInput: Closing Windows console window failed, retrying"));
+            Logger::Get()->Error("ConsoleInput: Closing Windows console window failed, retrying");
         }
     }
 }
@@ -202,7 +203,7 @@ void ConsoleInput::WaitForInput() {
             if (GetLastError() == ERROR_OPERATION_ABORTED)
                 break;
 
-            Logger::Get()->Warning("ConsoleInput: Stdin read failed, stopping input thread"));
+            Logger::Get()->Warning("ConsoleInput: Stdin read failed, stopping input thread");
             break;
         }
 

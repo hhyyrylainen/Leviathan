@@ -151,7 +151,7 @@ void Leviathan::RepeatingDelayedTask::_PostFunctionRun(){
 }
 // ------------------ RepeatCountedTask ------------------ //
 DLLEXPORT Leviathan::RepeatCountedTask::RepeatCountedTask(std::function<void ()> functorun,
-    int repeatcount) :
+    size_t repeatcount) :
     QueuedTask(functorun), MaxRepeats(repeatcount), RepeatedCount(0)
 {
 
@@ -171,12 +171,13 @@ DLLEXPORT void Leviathan::RepeatCountedTask::StopRepeating(){
 	MaxRepeats = 0;
 }
 
-DLLEXPORT int Leviathan::RepeatCountedTask::GetRepeatCount() const{
+DLLEXPORT size_t Leviathan::RepeatCountedTask::GetRepeatCount() const
+{
 	return RepeatedCount;
 }
 
 DLLEXPORT bool Leviathan::RepeatCountedTask::IsThisLastRepeat() const{
-	return RepeatedCount+1 >= MaxRepeats;
+	return RepeatedCount + 1 >= MaxRepeats;
 }
 // ------------------ RepeatCountedDelayedTask ------------------ //
 DLLEXPORT Leviathan::RepeatCountedDelayedTask::RepeatCountedDelayedTask(

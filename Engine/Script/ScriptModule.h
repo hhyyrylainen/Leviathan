@@ -83,7 +83,7 @@ namespace Leviathan{
 	struct ScriptSourceFileData{
 
         //! \param line The line to start from. First line in a file is 1
-		ScriptSourceFileData(const std::string &file, int line, const std::string &code);
+		DLLEXPORT ScriptSourceFileData(const std::string &file, int line, const std::string &code);
 
 
         std::string SourceFile;

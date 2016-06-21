@@ -129,7 +129,10 @@ void Leviathan::DataStore::SetPersistance(unsigned int index, bool toset){
 	Persistencestates[index] = toset;
 }
 void DataStore::SetPersistance(const std::string &name, bool toset){
-	int index = Values.Find(name);
+	auto index = Values.Find(name);
+
+    if (!Values.IsIndexValid(index))
+        throw Exception("SetPersitance called for non-existent value");
 
 	Persistencestates[index] = toset;
 }
@@ -138,7 +141,10 @@ int DataStore::GetPersistance(unsigned int index) const{
 	return Persistencestates[index];
 }
 int DataStore::GetPersistance(const std::string &name) const{
-	int index = Values.Find(name);
+	auto index = Values.Find(name);
+
+    if (!Values.IsIndexValid(index))
+        throw Exception("GetPersistance called for non-existent value");
 
 	return Persistencestates[index];
 }
@@ -209,7 +215,7 @@ DLLEXPORT void Leviathan::DataStore::AddVar(shared_ptr<NamedVariableList> values
 	}
 }
 
-DLLEXPORT void Leviathan::DataStore::Remove(unsigned int index){
+DLLEXPORT void Leviathan::DataStore::Remove(size_t index){
 
 	// remove from store //
 	Values.Remove(index);

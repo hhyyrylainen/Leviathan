@@ -1034,7 +1034,15 @@ end
 def copyStuff(ext, targetFolder)
 
     runGlobberAndCopy(Globber.new("cAudio#{ext}", "#{CurrentDir}/../cAudio/build"), targetFolder)
+    runGlobberAndCopy(Globber.new(["OgreMain#{ext}", 
+        "Plugin_ParticleFX#{ext}", "RenderSystem_GL#{ext}", "RenderSystem_GL3Plus#{ext}"], 
+        "#{CurrentDir}/../ogre/build/sdk"), targetFolder)
+    runGlobberAndCopy(Globber.new(["CEGUIBase-9999#{ext}", 
+        "CEGUICommonDialogs-9999#{ext}", "CEGUIOgreRenderer-9999#{ext}", "CEGUICoreWindowRendererSet#{ext}",
+        "CEGUIExpatParser#{ext}", "CEGUISILLYImageCodec#{ext}"], 
+        "#{CurrentDir}/../cegui/build"), targetFolder)
     
+    runGlobberAndCopy(Globber.new("OIS#{ext}", "#{CurrentDir}/../ogre/build"), targetFolder)
 end
 
 if BuildPlatform == "windows"

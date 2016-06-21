@@ -98,7 +98,7 @@ namespace Leviathan{
         //! \brief Returns the number of ObjectIDs this world keeps track of
         //! \note There may actually be more objects as it is possible to create components
         //! for ids that are not created
-        DLLEXPORT int GetObjectCount() const;
+        DLLEXPORT size_t GetObjectCount() const;
 
 
         //! \brief Used to keep track of passed ticks and trigger timed triggers
@@ -569,10 +569,10 @@ namespace Leviathan{
         RenderNodeHiderSystem _RenderNodeHiderSystem;
 	};
 
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> type& \
-    GameWorld::GetComponent<type>(ObjectID id);\
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) \
+    template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id);\
                                                                         \
-    template<> bool GameWorld::RemoveComponent<type>(ObjectID id);
+    template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id);
     
 
     ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);

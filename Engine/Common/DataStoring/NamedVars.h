@@ -211,6 +211,12 @@ namespace Leviathan{
 
 		DLLEXPORT size_t GetValueCount(const std::string &name) const;
 
+        //! \returns True if index is valid
+        DLLEXPORT inline bool IsIndexValid(size_t index) const {
+
+            return index < Variables.size();
+        }
+
 		DLLEXPORT VariableBlock& GetValueNonConst(const std::string &name);
         
 		DLLEXPORT const VariableBlock* GetValue(const std::string &name) const;
@@ -344,9 +350,9 @@ namespace Leviathan{
 		template<class T>
 		DLLEXPORT bool ShouldAddValueIfNotFoundOrWrongType(const std::string &name){
 
-			int index = Find(name);
+			size_t index = Find(name);
 
-			if(index < 0){
+			if(index >= Variables.size()){
 				// Add //
 				return true;
 			}

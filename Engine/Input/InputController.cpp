@@ -100,8 +100,7 @@ DLLEXPORT Leviathan::InputReceiver::InputReceiver() : ConnectedTo(NULL){
 
 Leviathan::InputReceiver::~InputReceiver(){
 	// tell owner that we no longer exist //
-    if(ConnectedTo)
-        throw Exception("InputReceiver not _UnConnectParent called");
+    LEVIATHAN_ASSERT(!ConnectedTo, "InputReceiver not _UnConnectParent called");
 }
 // ------------------------------------ //
 DLLEXPORT void InputReceiver::_UnConnectParent(Lock &ownerlock){

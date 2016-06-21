@@ -651,7 +651,7 @@ namespace Leviathan{
 
             PositionMarkerOwner& Nodes;
             Sendable* _Sendable;
-            int ReachedNode;
+            size_t ReachedNode;
             float NodeProgress;
             float ChangeSpeed;
             float ForceTowardsPoint;
@@ -684,7 +684,7 @@ namespace Leviathan{
 
         
         //! Number of the node that has been reached
-        int ReachedNode = 0;
+        size_t ReachedNode = 0;
 
         //! Percentage between ReachedNode and next node
         //! 1.f being next node reached and progress reset to 0

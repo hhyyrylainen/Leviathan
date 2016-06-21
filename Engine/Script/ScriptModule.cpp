@@ -873,7 +873,7 @@ Leviathan::ValidListenerData::~ValidListenerData(){
 	FuncPtr->Release();
 }
 // ------------------ ScriptSourceFileData ------------------ //
-Leviathan::ScriptSourceFileData::ScriptSourceFileData(const string &file, int line,
+DLLEXPORT ScriptSourceFileData::ScriptSourceFileData(const string &file, int line,
     const string &code) :
     SourceFile(file), StartLine(line), 
 	SourceCode(new string(code))

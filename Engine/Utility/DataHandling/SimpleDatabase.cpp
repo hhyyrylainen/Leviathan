@@ -92,7 +92,7 @@ DLLEXPORT void Leviathan::SimpleDatabase::GetRow(std::vector<std::string> &row,
 
 }
 
-DLLEXPORT int Leviathan::SimpleDatabase::GetNumRows(const std::string &table){
+DLLEXPORT size_t Leviathan::SimpleDatabase::GetNumRows(const std::string &table){
 	GUARD_LOCK();
 	// If we are missing the database we shouldn't add it //
 	SimpleDatabaseObject::iterator iter = Database.find(table);

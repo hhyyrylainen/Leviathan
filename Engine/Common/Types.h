@@ -16,16 +16,16 @@ namespace Leviathan{
 
 struct PotentiallySetIndex {
 
-    PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {
+    inline PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {
     }
-    PotentiallySetIndex() = default;
+    inline PotentiallySetIndex() = default;
 
-    operator bool() const {
+    inline operator bool() const {
 
         return ValueSet;
     }
 
-    operator size_t() const {
+    inline operator size_t() const {
     #ifdef _DEBUG
         LEVIATHAN_ASSERT(ValueSet, "PotentiallySetIndex size_t() called when ValueSet is false");
     #endif // _DEBUG
@@ -48,14 +48,14 @@ struct PotentiallySetIndex {
         return *this;
     }
 
-    PotentiallySetIndex& operator=(const size_t &value) {
+    inline PotentiallySetIndex& operator=(const size_t &value) {
 
         ValueSet = true;
         Index = value;
         return *this;
     }
 
-    bool IsSet() const {
+    inline bool IsSet() const {
 
         return ValueSet;
     }
@@ -68,15 +68,33 @@ struct StartEndIndex {
 
     using Index = PotentiallySetIndex;
 
-    StartEndIndex(size_t start, size_t end) : Start(start), End(end) {
+    inline StartEndIndex(size_t start, size_t end) : Start(start), End(end) {
 
     }
 
-    StartEndIndex(size_t start) : Start(start) {
+    inline StartEndIndex(size_t start) : Start(start) {
 
     }
 
-    StartEndIndex() = default;
+    inline StartEndIndex() = default;
+
+    //! Reset the Start and End to unset
+    inline void Reset() {
+
+        Start = Index();
+        End = Index();
+    }
+
+    //! Calculates the length of the indexes between start and end
+    //! \returns The length or if either is unset 0 Or if Start > End
+    inline size_t Length() const {
+        
+        if (!Start || !End || static_cast<size_t>(Start) > static_cast<size_t>(End))
+            return 0;
+
+        return 1 + (static_cast<size_t>(End) - static_cast<size_t>(Start));
+    }
+
 
     Index Start;
     Index End;

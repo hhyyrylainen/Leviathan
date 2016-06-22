@@ -24,7 +24,7 @@ DLLEXPORT Leviathan::ResourceRefreshHandler::ResourceRefreshHandler(){
 }
 
 DLLEXPORT Leviathan::ResourceRefreshHandler::~ResourceRefreshHandler(){
-	LEVIATHAN_ASSERT(!Inited,
+	LEVIATHAN_ASSERT(Staticaccess != this,
         "ResourceRefreshHandler should have been released before destructor");
 }
 

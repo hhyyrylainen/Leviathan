@@ -146,7 +146,7 @@ namespace Leviathan{
 		//! \brief Casts a ray from point along a vector and returns the first physical
         //! object it hits
 		//! \warning You need to call Release on the returned object once done
-		DLLEXPORT FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from,
+		FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from,
             const Float3 &to)
         {
 			GUARD_LOCK();
@@ -161,7 +161,7 @@ namespace Leviathan{
         //! \brief Creates a new empty entity and returns its id
         DLLEXPORT ObjectID CreateEntity(Lock &guard);
 
-        DLLEXPORT inline ObjectID CreateEntity(){
+        inline ObjectID CreateEntity(){
 
             GUARD_LOCK();
             return CreateEntity(guard);
@@ -181,7 +181,7 @@ namespace Leviathan{
         //! \todo Allow to set the world to queue objects and send them in big bunches to players
         DLLEXPORT void NotifyEntityCreate(Lock &guard, ObjectID id);
 
-        DLLEXPORT inline void NotifyEntityCreate(ObjectID id){
+        inline void NotifyEntityCreate(ObjectID id){
 
             GUARD_LOCK();
             NotifyEntityCreate(guard, id);
@@ -192,7 +192,7 @@ namespace Leviathan{
         //! \exception NotFound when the specified entity doesn't have a component of the wanted
         //! type
         template<class ComponentType>
-        DLLEXPORT ComponentType& GetComponent(ObjectID id){
+        ComponentType& GetComponent(ObjectID id){
             
             static_assert(std::is_same<ComponentType, std::false_type>::value,
                 "Trying to use a component type that is missing a template specialization");
@@ -201,7 +201,7 @@ namespace Leviathan{
         //! \brief Destroys a component belonging to an entity
         //! \return True when destroyed, false if the entity didn't have a component of this type
         template<class ComponentType>
-        DLLEXPORT bool RemoveComponent(ObjectID id){
+        bool RemoveComponent(ObjectID id){
 
             static_assert(std::is_same<ComponentType, std::false_type>::value,
                 "Trying to use a component type that is missing a template specialization");
@@ -211,7 +211,7 @@ namespace Leviathan{
         //! \brief Creates a new component for entity
         //! \exception Exception if the component failed to init or it already exists
         template<typename... Args>
-        DLLEXPORT Position& CreatePosition(ObjectID id, Args&&... args){
+        Position& CreatePosition(ObjectID id, Args&&... args){
 
             return *ComponentPosition.ConstructNew(id, args...);
         }
@@ -219,126 +219,126 @@ namespace Leviathan{
         //! \brief Creates a new component for entity
         //! \exception Exception if the component failed to init or it already exists
         template<typename... Args>
-        DLLEXPORT RenderNode& CreateRenderNode(ObjectID id, Args&&... args){
+        RenderNode& CreateRenderNode(ObjectID id, Args&&... args){
 
             return *ComponentRenderNode.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Sendable& CreateSendable(ObjectID id, Args&&... args){
+        Sendable& CreateSendable(ObjectID id, Args&&... args){
 
             return *ComponentSendable.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Model& CreateModel(ObjectID id, Args&&... args){
+        Model& CreateModel(ObjectID id, Args&&... args){
 
             return *ComponentModel.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Physics& CreatePhysics(ObjectID id, Args&&... args){
+        Physics& CreatePhysics(ObjectID id, Args&&... args){
 
             const Physics::Arguments createdargs = {args...};
             return *ComponentPhysics.ConstructNew(id, createdargs);
         }
 
         template<typename... Args>
-        DLLEXPORT Constraintable& CreateConstraintable(ObjectID id, Args&&... args){
+        Constraintable& CreateConstraintable(ObjectID id, Args&&... args){
 
             return *ComponentConstraintable.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT BoxGeometry& CreateBoxGeometry(ObjectID id, Args&&... args){
+        BoxGeometry& CreateBoxGeometry(ObjectID id, Args&&... args){
 
             return *ComponentBoxGeometry.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT ManualObject& CreateManualObject(ObjectID id, Args&&... args){
+        ManualObject& CreateManualObject(ObjectID id, Args&&... args){
 
             return *ComponentManualObject.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT PositionMarkerOwner& CreatePositionMarkerOwner(ObjectID id, Args&&... args){
+        PositionMarkerOwner& CreatePositionMarkerOwner(ObjectID id, Args&&... args){
 
             return *ComponentPositionMarkerOwner.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Parent& CreateParent(ObjectID id, Args&&... args){
+        Parent& CreateParent(ObjectID id, Args&&... args){
 
             return *ComponentParent.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT Parentable& CreateParentable(ObjectID id, Args&&... args){
+        Parentable& CreateParentable(ObjectID id, Args&&... args){
 
             return *ComponentParentable.ConstructNew(id, args...);
         }        
 
         template<typename... Args>
-        DLLEXPORT Trail& CreateTrail(ObjectID id, Args&&... args){
+        Trail& CreateTrail(ObjectID id, Args&&... args){
 
             return *ComponentTrail.ConstructNew(id, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT TrackController& CreateTrackController(ObjectID id, Args&&... args){
+        TrackController& CreateTrackController(ObjectID id, Args&&... args){
 
             const TrackController::Arguments params = { args... };
             return *ComponentTrackController.ConstructNew(id, params);
         }
 
         template<typename... Args>
-        DLLEXPORT Received& CreateReceived(ObjectID id, Args&&... args){
+        Received& CreateReceived(ObjectID id, Args&&... args){
 
             return *ComponentReceived.ConstructNew(id, args...);
         }
 
         // Systems //
         template<typename... Args>
-        DLLEXPORT void RunRenderingPositionSystem(Args&&... args){
+        void RunRenderingPositionSystem(Args&&... args){
 
             NodeRenderingPosition.RunSystem(_RenderingPositionSystem, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT void RunSendableSystem(Args&&... args){
+        void RunSendableSystem(Args&&... args){
 
             NodeSendableNode.RunSystem(_SendableSystem, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT void RunInterpolationSystem(Args&&... args){
+        void RunInterpolationSystem(Args&&... args){
 
             NodeReceivedPosition.RunSystem(_ReceivedPositionSystem, args...);
         }
 
         template<typename... Args>
-        DLLEXPORT void RunRenderNodeHiderSystem(Args&&... args){
+        void RunRenderNodeHiderSystem(Args&&... args){
 
             NodeRenderNodeHiderNode.RunSystem(_RenderNodeHiderSystem, args...);
         }
 
 		// Ogre get functions //
-		DLLEXPORT inline Ogre::SceneManager* GetScene(){
+		inline Ogre::SceneManager* GetScene(){
 			return WorldsScene;
 		}
         
 		// physics functions //
 		DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
-		DLLEXPORT inline PhysicalWorld* GetPhysicalWorld(){
+		inline PhysicalWorld* GetPhysicalWorld(){
 			return _PhysicalWorld.get();
 		}
 
         //! \brief Resets physical timers
         DLLEXPORT void ClearTimers(Lock &guard);
 
-        DLLEXPORT inline void ClearTimers(){
+        inline void ClearTimers(){
             
             GUARD_LOCK();
             ClearTimers(guard);
@@ -347,7 +347,7 @@ namespace Leviathan{
         //! \brief Simulates physics
         DLLEXPORT void SimulatePhysics(Lock &guard);
 
-        DLLEXPORT inline void SimulatePhysics(){
+        inline void SimulatePhysics(){
 
             GUARD_LOCK();
             SimulatePhysics(guard);
@@ -356,7 +356,7 @@ namespace Leviathan{
         //! \todo Synchronize this over the network
 		DLLEXPORT void SetWorldPhysicsFrozenState(Lock &guard, bool frozen);
 
-        DLLEXPORT inline void SetWorldPhysicsFrozenState(bool frozen){
+        inline void SetWorldPhysicsFrozenState(bool frozen){
 
             GUARD_LOCK();
             SetWorldPhysicsFrozenState(guard, frozen);

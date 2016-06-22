@@ -323,7 +323,7 @@ namespace Leviathan{
         //! \brief Fills a packet with all the data that it would get filled with in SendPacket
         //!
         //! Used mainly for local testing purposes where it's difficult to use sockets
-        std::shared_ptr<SentNetworkThing> CreateFullSendablePacket(
+        DLLEXPORT std::shared_ptr<SentNetworkThing> CreateFullSendablePacket(
             std::shared_ptr<NetworkResponse> data, sf::Packet &packettofill,
             bool skipwaitingrequests = false);
 

@@ -48,7 +48,7 @@ namespace Leviathan{
 
 		// function to shorten value loading in many places //
 		template<class T>
-		DLLEXPORT static bool LoadValueFromNamedVars(NamedVars* block, const std::string &varname,
+		static bool LoadValueFromNamedVars(NamedVars* block, const std::string &varname,
             T &receiver, const T &defaultvalue, LErrorReporter* ReportError = nullptr,
             const std::string &errorprefix = "")
 		{
@@ -80,7 +80,7 @@ namespace Leviathan{
 
 
 		template<class RType, class SingleType, int VarCount>
-		DLLEXPORT static void LoadMultiPartValueFromNamedVars(NamedVars* block,
+		static void LoadMultiPartValueFromNamedVars(NamedVars* block,
             const std::string &varname, RType &receiver, const RType &defaultvalue,
             LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
@@ -106,7 +106,7 @@ namespace Leviathan{
 		}
 
 		template<class RType, class SingleType, int VarCount>
-		DLLEXPORT static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block,
+		static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block,
             int &valuestartindex, RType &receiver, const RType &defaultvalue,
             LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{

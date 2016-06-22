@@ -1072,6 +1072,19 @@ if BuildPlatform == "windows"
     "Windows/ThirdParty/lib")
   runGlobberAndCopy(Globber.new(["sfml-network-2.dll", "sfml-system-2.dll"], "#{CurrentDir}/../SFML/build"), 
     "Windows/ThirdParty/bin")
+    
+    
+  runGlobberAndCopy(Globber.new(["pcre.dll", "freetype.dll"], "#{CurrentDir}/../cegui"), 
+    "Windows/ThirdParty/bin")
+    
+  # TODO: configure this
+  runGlobberAndCopy(Globber.new(["boost_chrono-vc140-mt-1_60.dll", 
+    "boost_system-vc140-mt-1_60.dll", "boost_filesystem-vc140-mt-1_60.dll"], "#{CurrentDir}/../boost/stage"), 
+    "Windows/ThirdParty/bin")
+  # And debug versions
+  runGlobberAndCopy(Globber.new(["boost_chrono-vc140-mt-gd-1_60.dll", 
+    "boost_system-vc140-mt-gd-1_60.dll", "boost_filesystem-vc140-mt-gd-1_60.dll"], "#{CurrentDir}/../boost/stage"), 
+    "Windows/ThirdParty/bin")
 end
 
 FileUtils.mkdir_p "build"

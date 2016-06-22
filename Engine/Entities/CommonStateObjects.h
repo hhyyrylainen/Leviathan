@@ -101,7 +101,7 @@ namespace Leviathan{
         //! BasePhysicsObject
         //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static std::unique_ptr<PhysicalDeltaState> CaptureState(
+        static std::unique_ptr<PhysicalDeltaState> CaptureState(
             CType &object, int tick)
         {
 

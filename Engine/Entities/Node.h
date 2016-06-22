@@ -22,7 +22,7 @@ namespace Leviathan{
 
         //! \brief Runs the system that accepts nodes of the held type
         template<class SystemType, typename... Args>
-        DLLEXPORT void RunSystem(const SystemType &system, Args&&... args){
+        void RunSystem(const SystemType &system, Args&&... args){
 
             GUARD_LOCK();
 

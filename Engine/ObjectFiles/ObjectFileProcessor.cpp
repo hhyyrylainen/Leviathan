@@ -56,11 +56,11 @@ map<std::string, std::shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor:
 void Leviathan::ObjectFileProcessor::Initialize(){
 #if defined(_DEBUG) && !defined(NO_DEFAULT_DATAINDEX)
 	// Just out of curiosity check this //
-	auto iter = RegisteredValues.find(L"DATAINDEX_TICKTIME");
+	auto iter = RegisteredValues.find("DATAINDEX_TICKTIME");
 
 	if(iter == RegisteredValues.end()){
 
-		reporterror->Error("ObjectFileProcessor: RegisteredValues are messed up, "
+		LOG_ERROR("ObjectFileProcessor: RegisteredValues are messed up, "
             "DATAINDEX_TICKTIME is not defined, check the macros!");
         
 		return;

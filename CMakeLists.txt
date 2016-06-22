@@ -336,16 +336,18 @@ if(WIN32)
     include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/OIS")
     include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include/OGRE")
     link_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/lib")
+    
+
 endif()
 
 # Library linking
 # And Debug libraries for windows
 if(USE_NEWTON)
     list(APPEND LINK_LIBS_TOENGINE_RELEASE optimized Newton)
-    list(APPEND LINK_LIBS_TOENGINE_DEBUG debug Newton_d)
+    list(APPEND LINK_LIBS_TOENGINE_DEBUG debug Newton)
     
     list(APPEND LINK_LIBS_ENGINE_RELEASE optimized Newton)
-    list(APPEND LINK_LIBS_ENGINE_DEBUG debug Newton_d)
+    list(APPEND LINK_LIBS_ENGINE_DEBUG debug Newton)
 endif()
 
 if(USE_ANGELSCRIPT)
@@ -353,6 +355,7 @@ if(USE_ANGELSCRIPT)
     if(WIN32)
         list(APPEND LINK_LIBS_ENGINE_RELEASE optimized angelscript64)
         list(APPEND LINK_LIBS_ENGINE_DEBUG debug angelscript64d)
+        
     else()
         list(APPEND LINK_LIBS_ENGINE_RELEASE optimized angelscript)
     endif()
@@ -360,14 +363,13 @@ endif()
 
 if(USING_LEAP)
   list(APPEND LINK_LIBS_ENGINE_RELEASE optimized Leap)
-  list(APPEND LINK_LIBS_ENGINE_DEBUG debug Leapd)
+  #list(APPEND LINK_LIBS_ENGINE_DEBUG debug Leapd)
 endif()
 
 # Breakpad libraries
 if(USE_BREAKPAD)
   if(UNIX)
     list(APPEND LINK_LIBS_TOENGINE_RELEASE optimized breakpad_client)
-    list(APPEND LINK_LIBS_TOENGINE_DEBUG debug breakpad_client)
   elseif(WIN32)
     list(APPEND LINK_LIBS_TOENGINE_RELEASE optimized exception_handler
       optimized common optimized crash_generation_client)
@@ -482,7 +484,7 @@ install(FILES ${CoreOgreScriptsMoveFiles} DESTINATION "bin/CoreOgreScripts")
 
 # Boost files
 # If we are not using static linking we need to copy everything
-if(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE)
+if(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE AND NOT WIN32)
     
   list(APPEND ALL_DYNAMIC_LIBRARIES
     ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
@@ -501,7 +503,7 @@ if(WIN32)
       "Newton/bin/Newton.dll" "Newton/bin/Newton.dll")
   endif()
   
-  file(GLOB THIRD_PARTY_DLLS "{CMAKE_SOURCE_DIR}/Windows/ThirdPart/bin/*")
+  file(GLOB THIRD_PARTY_DLLS "${CMAKE_SOURCE_DIR}/Windows/ThirdParty/bin/*")
   list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
   
 else()

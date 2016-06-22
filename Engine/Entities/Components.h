@@ -173,7 +173,7 @@ namespace Leviathan{
         //! \todo Possibly add move constructors
         class StoredState{
         public:
-            StoredState(std::shared_ptr<ObjectDeltaStateData> safedata, void* data,
+            DLLEXPORT StoredState(std::shared_ptr<ObjectDeltaStateData> safedata, void* data,
                 SENDABLE_TYPE datatype);
         
             std::shared_ptr<ObjectDeltaStateData> DeltaData;
@@ -471,7 +471,7 @@ namespace Leviathan{
         //! \note If you do not want to allow constraints where child is NULL you have to
         //! check if child is NULL before calling this function
         template<class ConstraintClass, typename... Args>
-        DLLEXPORT std::shared_ptr<ConstraintClass> CreateConstraintWith(Constraintable &other,
+        std::shared_ptr<ConstraintClass> CreateConstraintWith(Constraintable &other,
             Args&&... args)
         {
             auto tmpconstraint = std::make_shared<ConstraintClass>(World, *this, other, args...);
@@ -507,7 +507,7 @@ namespace Leviathan{
     public:
 
         struct ElementProperties{
-            DLLEXPORT ElementProperties(const Float4 &initialcolour,
+            ElementProperties(const Float4 &initialcolour,
                 const Float4 &colourchange, const float &initialsize, const float &sizechange) : 
                 InitialColour(initialcolour), ColourChange(colourchange), InitialSize(initialsize),
                 SizeChange(sizechange)
@@ -515,7 +515,7 @@ namespace Leviathan{
 
             }
         
-            DLLEXPORT ElementProperties(const Float4 &initialcolour,
+            ElementProperties(const Float4 &initialcolour,
                 const float &initialsize) : 
                 InitialColour(initialcolour), ColourChange(0), InitialSize(initialsize),
                 SizeChange(0)
@@ -523,7 +523,7 @@ namespace Leviathan{
 
             }
 
-            DLLEXPORT ElementProperties() :
+            ElementProperties() :
                 InitialColour(1), ColourChange(0), InitialSize(1), SizeChange(0)
             {
 
@@ -537,7 +537,7 @@ namespace Leviathan{
 
         struct Properties{
         public:
-            DLLEXPORT Properties(size_t maxelements, float lenght, float maxdistance,
+            Properties(size_t maxelements, float lenght, float maxdistance,
                 bool castshadows = false) :
                 TrailLenght(lenght), MaxDistance(maxdistance),
                 MaxChainElements(maxelements), CastShadows(castshadows), Elements(1)
@@ -603,7 +603,7 @@ namespace Leviathan{
         //! \todo Allow not deleting entities on release
         DLLEXPORT void Add(Lock &guard, ObjectID entity, Position& pos);
 
-        DLLEXPORT inline void Add(ObjectID entity, Position& pos){
+        inline void Add(ObjectID entity, Position& pos){
 
             GUARD_LOCK();
             Add(guard, entity, pos);
@@ -611,7 +611,7 @@ namespace Leviathan{
 
         DLLEXPORT void AddDataToPacket(Lock &guard, sf::Packet &packet) const;
 
-        DLLEXPORT inline void AddDataToPacket(sf::Packet &packet) const{
+        inline void AddDataToPacket(sf::Packet &packet) const{
 
             GUARD_LOCK();
             AddDataToPacket(guard, packet);

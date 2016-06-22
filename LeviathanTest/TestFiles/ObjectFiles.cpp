@@ -28,7 +28,7 @@ constexpr auto BasicTestStr = "FirstVariable = 42;\n"
 TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
 
     DummyReporter reporter;
-    Logger log("Test/TestLog.txt");
+    Logger log("Test/ExtraTest.txt");
 
     SECTION("minimal syntax string") {
 

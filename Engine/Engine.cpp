@@ -1020,7 +1020,7 @@ DLLEXPORT int64_t Leviathan::Engine::GetTimeSinceLastTick() const
     return Time::GetTimeMs64()-LastTickTime;
 }
 
-DLLEXPORT int Engine::GetCurrentTick() const{
+DLLEXPORT int Engine::GetCurrentTick() const {
 
     return TickCount;
 }
@@ -1076,6 +1076,11 @@ void Engine::_AdjustTickNumber(int tickamount, bool absolute){
     Logger::Get()->Info("Engine: tick set to "+Convert::ToString(TickCount));
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::Engine::DumpMemoryLeaks() {
+
+    LOG_INFO("TODO: memory leak detection, or remove this function");
+}
+
 int TestCrash(int writenum){
 
     int* target = nullptr;

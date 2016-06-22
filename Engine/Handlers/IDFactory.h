@@ -14,12 +14,12 @@ namespace Leviathan{
 		DLLEXPORT ~IDFactory();
 
 
-		DLLEXPORT static inline int GetID(){
+		static inline int GetID(){
 
 			return Instance->ProduceID();
 		}
         
-		DLLEXPORT static inline int GetSystemID(){
+		static inline int GetSystemID(){
 
 			return Instance->ProduceSystemID();
 		}

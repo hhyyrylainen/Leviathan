@@ -19,11 +19,11 @@ template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPool : public ThreadSafe{
 public:
 
-    DLLEXPORT ObjectPool() : Elements(sizeof(ElementType), 100, 200){
+    ObjectPool() : Elements(sizeof(ElementType), 100, 200){
 
     }
 
-    DLLEXPORT ~ObjectPool() {
+    ~ObjectPool() {
 
         if (!AutoCleanupObjects)
             return;
@@ -34,7 +34,7 @@ public:
     //! \brief Constructs a new component of the held type for entity
     //! \exception Exception when component has not been created
     template<typename... Args>
-    DLLEXPORT ElementType* ConstructNew(Lock &guard, KeyType forentity, Args&&... args){
+    ElementType* ConstructNew(Lock &guard, KeyType forentity, Args&&... args){
 
         if(Find(guard, forentity))
             throw Exception("Entity with ID already has object in pool of this type");
@@ -65,28 +65,28 @@ public:
     }
 
     template<typename... Args>
-    DLLEXPORT inline ElementType* ConstructNew(KeyType forentity, Args&&... args){
+    inline ElementType* ConstructNew(KeyType forentity, Args&&... args){
 
         GUARD_LOCK();
         return ConstructNew(guard, forentity, args...);
     }
 
     //! \brief Returns true if there are objects in Removed
-    DLLEXPORT bool HasElementsInRemoved() const{
+    bool HasElementsInRemoved() const{
 
         GUARD_LOCK();
         return !Removed.empty();
     }
 
     //! \brief Returns true if there are objects in Added
-    DLLEXPORT bool HasElementsInAdded() const{
+    bool HasElementsInAdded() const{
 
         GUARD_LOCK();
         return !Added.empty();
     }
 
     //! \brief Returns true if there are objects in Queued
-    DLLEXPORT bool HasElementsInQueued() const{
+    bool HasElementsInQueued() const{
 
         GUARD_LOCK();
         return !Queued.empty();
@@ -95,7 +95,7 @@ public:
     //! \brief Calls Release with the specified arguments on elements that are queued
     //! for destruction
     template<typename... Args>
-    DLLEXPORT void ReleaseQueued(Args&&... args){
+    void ReleaseQueued(Args&&... args){
 
         GUARD_LOCK();
 
@@ -118,7 +118,7 @@ public:
 
     //! \brief Removes elements that are queued for destruction
     //! without calling release 
-    DLLEXPORT void ClearQueued(){
+    void ClearQueued(){
 
         GUARD_LOCK();
 
@@ -139,7 +139,7 @@ public:
     //! \brief Returns a reference to the vector of removed elements
     //! \note This object needs to be locked and kept locked while using the result
     //! of this call
-    DLLEXPORT const auto& GetRemoved(Lock &locked) const{
+    const auto& GetRemoved(Lock &locked) const{
 
         return Removed;
     }
@@ -149,20 +149,20 @@ public:
     //! \brief Returns a reference to the vector of added elements
     //! \note This object needs to be locked and kept locked while using the result
     //! of this call
-    DLLEXPORT auto& GetAdded(Lock &locked){
+    auto& GetAdded(Lock &locked){
 
         return Added;
     }
 
     //! \brief Clears the added list
-    DLLEXPORT void ClearAdded(){
+    void ClearAdded(){
 
         GUARD_LOCK();
         Added.clear();
     }
 
     //! \brief Clears the removed list
-    DLLEXPORT void ClearRemoved(){
+    void ClearRemoved(){
 
         GUARD_LOCK();
         Removed.clear();
@@ -172,7 +172,7 @@ public:
     //! \param addtoremoved If true will add the elements to the Removed index
     //! for (possibly) using them to remove attached resources
     template<typename Any>
-    DLLEXPORT void RemoveBasedOnKeyTupleList(
+    void RemoveBasedOnKeyTupleList(
         const std::vector<std::tuple<Any, KeyType>> &values, bool addtoremoved = false)
     {
 
@@ -202,7 +202,7 @@ public:
     //! Used to remove entries that have been deleted before clearing the added ones
     //! \todo Check if this gives better performance than noticing missing elements
     //! during node construction
-    DLLEXPORT void RemoveFromAdded(Lock &guard, KeyType id){
+    void RemoveFromAdded(Lock &guard, KeyType id){
 
         for(auto iter = Added.begin(); iter != Added.end(); ++iter){
 
@@ -215,7 +215,7 @@ public:
     }
 
     //! \return The found component or NULL
-    DLLEXPORT ElementType* Find(Lock &guard, KeyType id) const{
+    ElementType* Find(Lock &guard, KeyType id) const{
 
         auto iter = Index.find(id);
 
@@ -225,14 +225,14 @@ public:
         return iter->second;
     }
 
-    DLLEXPORT inline ElementType* Find(KeyType id) const{
+    inline ElementType* Find(KeyType id) const{
 
         GUARD_LOCK();
         return Find(guard, id);
     }
 
     //! \brief Destroys a component based on id
-    DLLEXPORT void Destroy(Lock &guard, KeyType id){
+    void Destroy(Lock &guard, KeyType id){
 
         auto object = Find(guard, id);
 
@@ -248,7 +248,7 @@ public:
         RemoveFromAdded(guard, id);
     }
 
-    DLLEXPORT inline void Destroy(KeyType id){
+    inline void Destroy(KeyType id){
 
         GUARD_LOCK();
         Destroy(guard, id);
@@ -257,7 +257,7 @@ public:
     //! \brief Queues destruction of an element
     //! \exception InvalidArgument when key is not found (is already deleted)
     //! \note This has to be used for objects that require calling Release
-    DLLEXPORT void QueueDestroy(Lock &guard, KeyType id){
+    void QueueDestroy(Lock &guard, KeyType id){
 
         auto end = Index.end();
         for(auto iter = Index.begin(); iter != end; ++iter){
@@ -275,7 +275,7 @@ public:
         throw InvalidArgument("ID is not in index");
     }
 
-    DLLEXPORT inline void QueueDestroy(KeyType id){
+    inline void QueueDestroy(KeyType id){
 
         GUARD_LOCK();
         QueueDestroy(guard, id);
@@ -288,7 +288,7 @@ public:
     //! component and the last one is a lock to this ComponentHolder,
     //! the return value specifies
     //! if the component should be destroyed (true being yes and false being no)
-    DLLEXPORT void Call(std::function<bool (ElementType&, KeyType, Lock&)> function){
+    void Call(std::function<bool (ElementType&, KeyType, Lock&)> function){
 
         GUARD_LOCK();
 
@@ -309,7 +309,7 @@ public:
 
     //! \brief Clears the index and replaces the pool with a new one
     //! \warning All objects after this call are invalid
-    DLLEXPORT void Clear(){
+    void Clear(){
 
         GUARD_LOCK();
             
@@ -328,7 +328,7 @@ public:
 protected:
     //! \brief Removes an component from the index but doesn't destruct it
     //! \note The component will only be deallocated once this object is destructed
-    DLLEXPORT bool RemoveFromIndex(Lock &guard, KeyType id){
+    bool RemoveFromIndex(Lock &guard, KeyType id){
 
         auto end = Index.end();
         for(auto iter = Index.begin(); iter != end; ++iter){

@@ -6,7 +6,7 @@
 namespace Leviathan{
 
 #define STRINGTOSOMETHINGTEMPLATEALTERNATIVE(StringyType, strstreamt, funcname, totype) \
-    DLLEXPORT static inline totype funcname(const StringyType &str){ totype tempval; \
+    static inline totype funcname(const StringyType &str){ totype tempval; \
         strstreamt stream; stream.str(str.c_str()); stream >> tempval; return tempval;}
 	
 	//! \brief Holds common conversion functions
@@ -24,7 +24,7 @@ namespace Leviathan{
 		DLLEXPORT static bool IsStringBool(const std::string &val, bool* receiver);
 
 		template<class T>
-		DLLEXPORT static inline T WstringTo(const std::wstring &str){
+		static inline T WstringTo(const std::wstring &str){
 			T tempval(0);
             std::wstringstream stream;
 			stream.str(str.c_str());
@@ -33,7 +33,7 @@ namespace Leviathan{
 		}
         
 		template<class T>
-		DLLEXPORT static inline T StringTo(const std::string &str){
+		static inline T StringTo(const std::string &str){
 			T tempval(0);
             std::stringstream stream;
 			stream.str(str.c_str());
@@ -49,7 +49,7 @@ namespace Leviathan{
 		// template functions //
 
 		template<typename T>
-		DLLEXPORT static std::wstring ToWstring(const T& val){
+		static std::wstring ToWstring(const T& val){
 			std::wstringstream stream;
 			if(!(stream << val)){
 				return L"";
@@ -57,7 +57,7 @@ namespace Leviathan{
 			return stream.str();
 		}
 		template<typename T>
-		DLLEXPORT static std::string ToString(const T& val){
+		static std::string ToString(const T& val){
 			std::stringstream stream;
 			if(!(stream << val)){
 				return "";
@@ -66,7 +66,7 @@ namespace Leviathan{
 		}
 
 		template<class T>
-		DLLEXPORT static std::wstring ToHexadecimalWstring(const T& val){
+		static std::wstring ToHexadecimalWstring(const T& val){
 			std::wstringstream stream;
 			if(!(stream << std::hex << val)){
 				return L"";
@@ -75,7 +75,7 @@ namespace Leviathan{
 		}
 
         template<class T>
-		DLLEXPORT static std::string ToHexadecimalString(const T& val){
+		static std::string ToHexadecimalString(const T& val){
 			std::stringstream stream;
 			if(!(stream << std::hex << val)){
 				return "";

@@ -44,7 +44,7 @@ namespace Leviathan{
 
         //! \brief Calculates how long has elapsed since the last tick
         //! \return The time in milliseconds
-        DLLEXPORT int GetTimeSinceLastTick() const;
+        DLLEXPORT int64_t GetTimeSinceLastTick() const;
 
         //! \brief Returns the number of tick that was last simulated
         DLLEXPORT int GetCurrentTick() const;

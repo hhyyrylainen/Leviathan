@@ -128,7 +128,7 @@ namespace Leviathan{
 	class DataBlockAll{
 	public:
 		// virtual destructor for deleting through base pointers //
-		DLLEXPORT inline virtual ~DataBlockAll(){
+		inline virtual ~DataBlockAll(){
 
 
 		}
@@ -138,7 +138,7 @@ namespace Leviathan{
 
 
 		// comparison operator //
-		DLLEXPORT inline bool operator ==(const DataBlockAll &other){
+		inline bool operator ==(const DataBlockAll &other){
 
 			// just compare types here //
 			return Type == other.Type;
@@ -163,17 +163,17 @@ namespace Leviathan{
 	public:
         //! \brief Creates an uninitialized block of type non
         //! \warning Calling this will create an invalid block that cannot be casted or used
-		DLLEXPORT explicit DataBlock(const _U &forceempty) : Value(NULL){
+		explicit DataBlock(const _U &forceempty) : Value(NULL){
 
 			Type = DATABLOCK_TYPE_UNINITIALIZED;
 		}
         
-		DLLEXPORT DataBlock(const DBlockT &val) : Value(new DBlockT(val)){
+		DataBlock(const DBlockT &val) : Value(new DBlockT(val)){
 
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
-		DLLEXPORT DataBlock(DBlockT* val) : Value(val){
+		DataBlock(DBlockT* val) : Value(val){
 
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
@@ -186,7 +186,7 @@ namespace Leviathan{
 		DLLEXPORT void AddDataToPacket(sf::Packet &packet);
     #endif //SFML_PACKETS
 
-		DLLEXPORT DataBlock(const DataBlock &otherdeepcopy) : Value(NULL){
+		DataBlock(const DataBlock &otherdeepcopy) : Value(NULL){
 			// allocate new pointer from the other instance //
 			Value = new DBlockT(*otherdeepcopy.Value);
 
@@ -195,12 +195,12 @@ namespace Leviathan{
 		}
 
 
-		DLLEXPORT virtual ~DataBlock(){
+		virtual ~DataBlock(){
 			// erase memory //
 			SAFE_DELETE(Value);
 		}
 		// deep copy operator //
-		DLLEXPORT DataBlock& operator =(const DataBlock& arg){
+		DataBlock& operator =(const DataBlock& arg){
 			// release existing value (if any) //
 			SAFE_DELETE(Value);
 
@@ -217,14 +217,14 @@ namespace Leviathan{
 		}
 
 		// function used in deep copy //
-		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const{
+		virtual DataBlockAll* AllocateNewFromThis() const{
 
 			return static_cast<DataBlockAll*>((new DataBlock<DBlockT>(const_cast<const DataBlock<DBlockT>&>(*this))));
 		}
 
 		// shallow copy operator //
 		// copies just the pointer over (fast for copies that don't need both copies //
-		DLLEXPORT static inline DataBlock* CopyConstructor(DataBlock* arg){
+		static inline DataBlock* CopyConstructor(DataBlock* arg){
 
             std::unique_ptr<DataBlock> block(new DataBlock());
 
@@ -239,7 +239,7 @@ namespace Leviathan{
 		}
 
 		// comparison operator //
-		DLLEXPORT inline bool operator ==(const DataBlock<DBlockT> &other){
+		inline bool operator ==(const DataBlock<DBlockT> &other){
 
 			// compare values with default operator //
 			return *Value == *other.Value;
@@ -248,26 +248,26 @@ namespace Leviathan{
 
 		// value getting operators //
 		template<class ConvertT>
-		DLLEXPORT operator ConvertT() const{
+		operator ConvertT() const{
 
 			return DataBlockConversionResolver<DBlockT, ConvertT>::DoConversionNonPtr(this);
 		}
 		// explicit so that this doesn't get called all the time with invalid values and such //
 		template<class ConvertT>
-		DLLEXPORT /*explicit*/ operator ConvertT*(){
+		/*explicit*/ operator ConvertT*(){
 
 			return DataBlockConversionResolver<DBlockT, ConvertT>::DoConversionPtr(this);
 		}
 
 		// conversion checkers //
 		template<class ConvertT>
-		DLLEXPORT bool IsConversionAllowedNonPtr() const{
+		bool IsConversionAllowedNonPtr() const{
 			// check it //
 			return DataBlockConversionResolver<DBlockT, ConvertT>::IsConversionAllowedNonPtr(this);
 		}
 
 		template<class ConvertT>
-		DLLEXPORT bool IsConversionAllowedPtr() const{
+		bool IsConversionAllowedPtr() const{
 			// check it //
 			return DataBlockConversionResolver<DBlockT, ConvertT>::IsConversionAllowedPtr(this);
 		}
@@ -282,32 +282,32 @@ namespace Leviathan{
 	template<class DBlockT>
 	class DataBlock<DBlockT*> : public DataBlockAll{
 	public:
-		DLLEXPORT DataBlock() : Value(NULL){
+		DataBlock() : Value(NULL){
 
 			Type = DATABLOCK_TYPE_ERROR;
 		}
-		DLLEXPORT DataBlock(const DBlockT* val) : Value(val){
+		DataBlock(const DBlockT* val) : Value(val){
 
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
-		DLLEXPORT DataBlock(DBlockT* val) : Value(val){
+		DataBlock(DBlockT* val) : Value(val){
 
 			// use templates to get type //
 			Type = DataBlockNameResolver<DBlockT>::TVal;
 		}
 		// not actually working on ptr types //
-		DLLEXPORT DataBlock(const DataBlock &otherdeepcopy) : Value(otherdeepcopy.Value){
+		DataBlock(const DataBlock &otherdeepcopy) : Value(otherdeepcopy.Value){
 
 			// copy type //
 			Type = otherdeepcopy.Type;
 		}
 
-		DLLEXPORT virtual ~DataBlock(){
+		virtual ~DataBlock(){
 		}
 
 		// deep copy operator //
-		DLLEXPORT DataBlock& operator =(const DataBlock& arg){
+		DataBlock& operator =(const DataBlock& arg){
 			// copy type //
 			Type = arg.Type;
 			Value = arg.Value;
@@ -316,14 +316,14 @@ namespace Leviathan{
 		}
 
 		// function used in deep copy //
-		DLLEXPORT virtual DataBlockAll* AllocateNewFromThis() const{
+		virtual DataBlockAll* AllocateNewFromThis() const{
 
 			return static_cast<DataBlockAll*>((new DataBlock<DBlockT*>(const_cast<const DataBlock<DBlockT*>&>(*this))));
 		}
 
 		// shallow copy operator //
 		// copies just the pointer over (fast for copies that don't need both copies //
-		DLLEXPORT static inline DataBlock* CopyConstructor(DataBlock* arg){
+		static inline DataBlock* CopyConstructor(DataBlock* arg){
 
             std::unique_ptr<DataBlock> block(new DataBlock());
 
@@ -338,7 +338,7 @@ namespace Leviathan{
 		}
 
 		// comparison operator //
-		DLLEXPORT inline bool operator ==(const DataBlock<DBlockT> &other){
+		inline bool operator ==(const DataBlock<DBlockT> &other){
 
 			// compare values with default operator //
 			return Value == other.Value;
@@ -346,26 +346,26 @@ namespace Leviathan{
 
 		// value getting operators //
 		template<class ConvertT>
-		DLLEXPORT operator ConvertT() const{
-			assert(true && "datablock pointer cannot be made into value");
+		operator ConvertT() const{
+			LEVIATHAN_ASSERT(false, "data block pointer cannot be made into value");
 			return ConvertT();
 		}
 		// explicit so that this doesn't get called all the time with invalid values and such //
 		template<class ConvertT>
-		DLLEXPORT /*explicit*/ operator ConvertT*(){
+		explicit operator ConvertT*(){
 
 			return DataBlockConversionResolver<DBlockT*, ConvertT>::DoConversionPtr(this);
 		}
 
 		// conversion checkers //
 		template<class ConvertT>
-		DLLEXPORT bool IsConversionAllowedNonPtr() const{
+		bool IsConversionAllowedNonPtr() const{
 			// check it //
 			return false;
 		}
 
 		template<class ConvertT>
-		DLLEXPORT bool IsConversionAllowedPtr() const{
+		bool IsConversionAllowedPtr() const{
 			// check it //
 			return DataBlockConversionResolver<DBlockT*, ConvertT>::IsConversionAllowedPtr(this);
 		}
@@ -420,36 +420,36 @@ namespace Leviathan{
 	public:
 
 		//! \brief Default empty constructor, block has no value of any kind
-		DLLEXPORT VariableBlock() : BlockData(NULL){
+		VariableBlock() : BlockData(NULL){
 
 		}
 
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
-		DLLEXPORT VariableBlock(DataBlock<DBRType>* block){
+		VariableBlock(DataBlock<DBRType>* block){
 
 			BlockData = static_cast<DataBlockAll*>(block);
 		}
 		// constructors that accept basic types //
-		DLLEXPORT VariableBlock(const int &var){
+		VariableBlock(const int &var){
 			BlockData = static_cast<DataBlockAll*>(new IntBlock(var));
 		}
-		DLLEXPORT VariableBlock(const bool &var){
+		VariableBlock(const bool &var){
 			BlockData = static_cast<DataBlockAll*>(new BoolBlock(var));
 		}
-		DLLEXPORT VariableBlock(const std::string &var){
+		VariableBlock(const std::string &var){
 			BlockData = static_cast<DataBlockAll*>(new StringBlock(var));
 		}
-		DLLEXPORT VariableBlock(const std::wstring &var){
+		VariableBlock(const std::wstring &var){
 			BlockData = static_cast<DataBlockAll*>(new WstringBlock(var));
 		}
-		DLLEXPORT VariableBlock(const double &var){
+		VariableBlock(const double &var){
 			BlockData = static_cast<DataBlockAll*>(new DoubleBlock(var));
 		}
-		DLLEXPORT VariableBlock(const float &var){
+		VariableBlock(const float &var){
 			BlockData = static_cast<DataBlockAll*>(new FloatBlock(var));
 		}
-		DLLEXPORT VariableBlock(const char &var){
+		VariableBlock(const char &var){
 			BlockData = static_cast<DataBlockAll*>(new CharBlock(var));
 		}
 
@@ -465,7 +465,7 @@ namespace Leviathan{
     #endif //SFML_PACKETS
 
 		// deep copy constructor //
-		DLLEXPORT VariableBlock(const VariableBlock &arg){
+		VariableBlock(const VariableBlock &arg){
 			// copy data //
 			BlockData = arg.BlockData->AllocateNewFromThis();
 		}
@@ -475,30 +475,30 @@ namespace Leviathan{
             std::shared_ptr<VariableBlock>>* predefined);
 
 		// non template constructor //
-		DLLEXPORT VariableBlock(DataBlockAll* block){
+		VariableBlock(DataBlockAll* block){
 
 			BlockData = block;
 		}
 		// destructor that releases data //
-		DLLEXPORT virtual ~VariableBlock(){
+		virtual ~VariableBlock(){
 
 			SAFE_DELETE(BlockData);
 		}
 
 		// getting function //
-		DLLEXPORT inline DataBlockAll* GetBlock(){
+		inline DataBlockAll* GetBlock(){
 
 			return BlockData;
 		}
 
-		DLLEXPORT inline const DataBlockAll* GetBlockConst() const{
+		inline const DataBlockAll* GetBlockConst() const{
 
 			return static_cast<const DataBlockAll*>(BlockData);
 		}
 
 		// operators //
         // Checks is this valid //
-        DLLEXPORT bool IsValid() const {
+        bool IsValid() const {
 
             if (!BlockData)
                 return false;
@@ -508,7 +508,7 @@ namespace Leviathan{
 
 		// copy operators //
 		// shallow copy (when both instances aren't wanted //
-		DLLEXPORT VariableBlock& operator =(VariableBlock* arg){
+		VariableBlock& operator =(VariableBlock* arg){
 			// release existing value (if any) //
 			if(BlockData){
 				SAFE_DELETE(BlockData);
@@ -525,7 +525,7 @@ namespace Leviathan{
 		}
         
 		template<class DBlockTP>
-		DLLEXPORT VariableBlock& operator =(DataBlock<DBlockTP>* arg){
+		VariableBlock& operator =(DataBlock<DBlockTP>* arg){
 			// release existing value (if any) //
 			if(BlockData){
 				SAFE_DELETE(BlockData);
@@ -539,7 +539,7 @@ namespace Leviathan{
 		}
 
 		// deep copy //
-		DLLEXPORT VariableBlock& operator =(const VariableBlock &arg){
+		VariableBlock& operator =(const VariableBlock &arg){
 			// release existing value (if any) //
 			if(BlockData){
 				SAFE_DELETE(BlockData);
@@ -553,7 +553,7 @@ namespace Leviathan{
 		}
 
 		//! \brief comparison operator
-		DLLEXPORT inline bool operator ==(const VariableBlock &other) const{
+		inline bool operator ==(const VariableBlock &other) const{
 			// returns false if either block is NULL //
 			if(BlockData == NULL || other.BlockData == NULL)
 				return false;
@@ -589,7 +589,7 @@ namespace Leviathan{
 		}
 
 		//! \brief Opposite of the comparison operator
-		DLLEXPORT FORCE_INLINE bool operator !=(const VariableBlock &other) const{
+		inline bool operator !=(const VariableBlock &other) const{
 
 			return !(*this == other);
 		}
@@ -597,7 +597,7 @@ namespace Leviathan{
 
 		// templated operators //
 		template<class ConvertT>
-		DLLEXPORT inline operator ConvertT() const{
+		inline operator ConvertT() const{
 			// cast DataBlock to derived type //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return *TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData);
@@ -619,7 +619,7 @@ namespace Leviathan{
 			return ConvertT();
 		}
 		template<class ConvertT>
-		DLLEXPORT inline operator ConvertT*(){
+		inline operator ConvertT*(){
 			// check does types match //
 			if(DataBlockNameResolver<ConvertT>::TVal == BlockData->Type){
 
@@ -650,7 +650,7 @@ namespace Leviathan{
 
 		// conversion checkers //
 		template<class ConvertT>
-		DLLEXPORT inline bool IsConversionAllowedNonPtr() const{
+		inline bool IsConversionAllowedNonPtr() const{
 			// return if null //
 			if(this == NULL)
 				return false;
@@ -685,7 +685,7 @@ namespace Leviathan{
 		}
 
 		template<class ConvertT>
-		DLLEXPORT inline bool IsConversionAllowedPtr() const{
+		inline bool IsConversionAllowedPtr() const{
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->
@@ -718,7 +718,7 @@ namespace Leviathan{
 
 		// templated assignment conversion operator //
 		template<class ConvertT>
-		DLLEXPORT inline bool ConvertAndAssingToVariable(ConvertT &var) const{
+		inline bool ConvertAndAssingToVariable(ConvertT &var) const{
 			// return if not allowed conversion //
 			if(!IsConversionAllowedNonPtr<ConvertT>()){
 				//Logger::Get()->Warning(L"VariableBlock: conversion not allowed");
@@ -733,7 +733,7 @@ namespace Leviathan{
 
         //! \todo Throw an exception if unallowed
 		template<class ConvertT>
-		DLLEXPORT inline ConvertT ConvertAndReturnVariable() const{
+		inline ConvertT ConvertAndReturnVariable() const{
 			// return if not allowed conversion //
 			if(!IsConversionAllowedNonPtr<ConvertT>()){
 				//Logger::Get()->Warning(L"VariableBlock: conversion not allowed");
@@ -756,28 +756,28 @@ namespace Leviathan{
 	public:
 		// constructors that accept any type of DataBlock //
 		template<class DBRType>
-		DLLEXPORT NamedVariableBlock(DataBlock<DBRType>* block, const std::string &name):
+		NamedVariableBlock(DataBlock<DBRType>* block, const std::string &name):
             VariableBlock(block), Name(name)
         {
 
 		}
 		// non template constructor //
-		DLLEXPORT NamedVariableBlock(DataBlockAll* block, const std::string &name) :
+		NamedVariableBlock(DataBlockAll* block, const std::string &name) :
             VariableBlock(block), Name(name)
         {
 
 		}
 
-		DLLEXPORT inline std::string GetName() const{
+		inline std::string GetName() const{
 			return Name;
 		}
 
-		DLLEXPORT inline bool CompareName(const std::string &str) const{
+		inline bool CompareName(const std::string &str) const{
 
 			return Name == str;
 		}
 
-		DLLEXPORT inline std::string& GetNameChangeable(){
+		inline std::string& GetNameChangeable(){
 
 			return Name;
 		}
@@ -797,7 +797,7 @@ namespace Leviathan{
 	public:
 
 		template<class BlockBaseType>
-		DLLEXPORT ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block,
+		ScriptSafeVariableBlock(DataBlock<BlockBaseType>* block,
             const std::string &name) :
             NamedVariableBlock(block, name)
         {
@@ -811,7 +811,7 @@ namespace Leviathan{
 		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptSafeVariableBlock);
 
 
-		DLLEXPORT bool IsValidType(){
+		bool IsValidType(){
 			return ASTypeID > 0 ? true: false;
 		}
 

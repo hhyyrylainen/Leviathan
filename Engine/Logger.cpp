@@ -35,10 +35,10 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
 #ifdef _WIN32
     struct tm curtime;
     localtime_s(&curtime, &t);
-    formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    formatedtime << std::put_time(&curtime, "%H:%M:%S %A %d.%m.%Y (%Z)");
 #else
     struct tm* curtime = localtime(&t);
-    formatedtime << std::put_time(curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    formatedtime << std::put_time(curtime, "%H:%M:%S %A %d.%m.%Y (%Z)");
 #endif //_WIN32
 
     string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
@@ -51,6 +51,7 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
     if (!writer.is_open()) {
 
     #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
+        DEBUG_BREAK;
         throw Exception("Cannot open log file");
     #else
         LEVIATHAN_ASSERT(0, "Cannot open log file");

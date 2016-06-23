@@ -20,7 +20,7 @@ namespace Leviathan{
 
         //! \copydoc System::ProcessNode
         //! \pre All systems that can mark Position as updated have been executed
-        DLLEXPORT void ProcessNode(RenderingPosition &node, ObjectID nodesobject,
+        void ProcessNode(RenderingPosition &node, ObjectID nodesobject,
             NodeHolder<RenderingPosition> &pool, Lock &poollock) const override
         {
             // We need to have a guarantee that no other system that marks or unmarks positions
@@ -38,7 +38,7 @@ namespace Leviathan{
         //! already existing component holders
         //! \note It is more efficient to directly create nodes as entities are created
         template<class FirstType, class SecondType>
-        DLLEXPORT void CreateNodes(NodeHolder<RenderingPosition> &nodes,
+        void CreateNodes(NodeHolder<RenderingPosition> &nodes,
             const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
             const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
             const ComponentHolder<SecondType> &secondholder, Lock &secondlock)
@@ -91,7 +91,7 @@ namespace Leviathan{
     public:
         //! \copydoc System::ProcessNode
         //! \pre All systems that can mark Position as updated have been executed
-        DLLEXPORT void ProcessNode(RenderNodeHiderNode &node, ObjectID nodesobject,
+        void ProcessNode(RenderNodeHiderNode &node, ObjectID nodesobject,
             NodeHolder<RenderNodeHiderNode> &pool, Lock &poollock) const override
         {
             if(!node._RenderNode.Marked)
@@ -105,7 +105,7 @@ namespace Leviathan{
         //! \brief Creates nodes if matching ids are found in all data vectors or
         //! already existing component holders
         //! \note It is more efficient to directly create nodes as entities are created
-        DLLEXPORT void CreateNodes(NodeHolder<RenderNodeHiderNode> &nodes,
+        void CreateNodes(NodeHolder<RenderNodeHiderNode> &nodes,
             const std::vector<std::tuple<RenderNode*, ObjectID>> &firstdata)
         {
             GUARD_LOCK_OTHER((&nodes));
@@ -149,7 +149,7 @@ namespace Leviathan{
         //! \brief Creates nodes if matching ids are found in all data vectors or
         //! already existing component holders
         //! \note It is more efficient to directly create nodes as entities are created
-        DLLEXPORT void CreateNodes(NodeHolder<SendableNode> &nodes,
+        void CreateNodes(NodeHolder<SendableNode> &nodes,
             const std::vector<std::tuple<Sendable*, ObjectID>> &data)
         {
 
@@ -191,7 +191,7 @@ namespace Leviathan{
         //! already existing component holders
         //! \note It is more efficient to directly create nodes as entities are created
         template<class FirstType, class SecondType, class ThirdType>
-        DLLEXPORT void CreateNodes(NodeHolder<TrackControllerNode> &nodes,
+        void CreateNodes(NodeHolder<TrackControllerNode> &nodes,
             const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
             const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
             const ComponentHolder<SecondType> &secondholder, Lock &secondlock,
@@ -267,7 +267,7 @@ namespace Leviathan{
         
         //! \copydoc System::ProcessNode
         //! \pre All systems that can mark Position as updated have been executed
-        DLLEXPORT void ProcessNode(ReceivedPosition &node, ObjectID nodesobject,
+        void ProcessNode(ReceivedPosition &node, ObjectID nodesobject,
             NodeHolder<ReceivedPosition> &pool, Lock &poollock, int tick, float progress) const
         {
             // Unmarked nodes should have invalid interpolation status
@@ -314,7 +314,7 @@ namespace Leviathan{
         //! already existing component holders
         //! \note It is more efficient to directly create nodes as entities are created
         template<class FirstType, class SecondType>
-        DLLEXPORT void CreateNodes(NodeHolder<ReceivedPosition> &nodes,
+        void CreateNodes(NodeHolder<ReceivedPosition> &nodes,
             const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
             const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
             const ComponentHolder<SecondType> &secondholder, Lock &secondlock)

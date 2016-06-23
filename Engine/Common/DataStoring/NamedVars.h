@@ -71,7 +71,7 @@ namespace Leviathan{
 		DLLEXPORT ~NamedVariableList();
 
         //! \brief Returns true if this is valid
-        DLLEXPORT bool IsValid() const {
+        inline bool IsValid() const {
 
             return Name.length() > 0;
         }
@@ -95,7 +95,7 @@ namespace Leviathan{
 
 		DLLEXPORT int GetCommonType() const;
 		template<class DBT>
-		DLLEXPORT inline bool CanAllBeCastedToType() const{
+		inline bool CanAllBeCastedToType() const{
 			if(Datas.size() == 0)
 				return false;
 
@@ -109,7 +109,7 @@ namespace Leviathan{
 			return true;
 		}
 		template<class DBT>
-		DLLEXPORT inline bool CanAllBeCastedToType(const int &startindex, const int &endindex) const{
+		inline bool CanAllBeCastedToType(const int &startindex, const int &endindex) const{
 			if(Datas.size() == 0)
 				return false;
 			// check would it go over //
@@ -211,6 +211,12 @@ namespace Leviathan{
 
 		DLLEXPORT size_t GetValueCount(const std::string &name) const;
 
+        //! \returns True if index is valid
+        DLLEXPORT inline bool IsIndexValid(size_t index) const {
+
+            return index < Variables.size();
+        }
+
 		DLLEXPORT VariableBlock& GetValueNonConst(const std::string &name);
         
 		DLLEXPORT const VariableBlock* GetValue(const std::string &name) const;
@@ -235,7 +241,7 @@ namespace Leviathan{
         DLLEXPORT NamedVariableList* GetValueDirectRaw(size_t index) const;
 
 		template<class T>
-		DLLEXPORT bool GetValueAndConvertTo(const std::string &name, T &receiver) const{
+		bool GetValueAndConvertTo(const std::string &name, T &receiver) const{
 			// use try block to catch all exceptions (not found and conversion fail //
 			try{
 				const VariableBlock* tmpblock = this->GetValue(name);
@@ -280,7 +286,7 @@ namespace Leviathan{
         
 		DLLEXPORT int GetVariableType(Lock &guard, size_t index) const;
 
-        DLLEXPORT inline int GetVariableType(size_t index) const{
+        inline int GetVariableType(size_t index) const{
 
             GUARD_LOCK();
             return GetVariableType(guard, index);
@@ -290,7 +296,7 @@ namespace Leviathan{
         
 		DLLEXPORT int GetVariableTypeOfAll(Lock &guard, size_t index) const;
 
-        DLLEXPORT inline int GetVariableTypeOfAll(size_t index) const{
+        inline int GetVariableTypeOfAll(size_t index) const{
 
             GUARD_LOCK();
             return GetVariableTypeOfAll(guard, index);
@@ -301,7 +307,7 @@ namespace Leviathan{
 
 		DLLEXPORT void SetName(Lock &guard, size_t index, const std::string &name);
 
-        DLLEXPORT inline void SetName(size_t index, const std::string &name){
+        inline void SetName(size_t index, const std::string &name){
 
             GUARD_LOCK();
             SetName(guard, index, name);
@@ -327,14 +333,14 @@ namespace Leviathan{
 		//! \brief Returns the size of the internal variable vector
 		DLLEXPORT size_t GetVariableCount() const;
 
-        DLLEXPORT operator bool() const {
+        inline operator bool() const {
 
             return !StateIsInvalid;
         }
 
 		// ------------------------------------ //
 
-		DLLEXPORT inline size_t Find(const std::string &name) const{
+		inline size_t Find(const std::string &name) const{
 			GUARD_LOCK();
 			return Find(guard, name);
 		}
@@ -342,11 +348,11 @@ namespace Leviathan{
 		DLLEXPORT size_t Find(Lock &guard, const std::string &name) const;
 		// ------------------------------------ //
 		template<class T>
-		DLLEXPORT bool ShouldAddValueIfNotFoundOrWrongType(const std::string &name){
+		bool ShouldAddValueIfNotFoundOrWrongType(const std::string &name){
 
-			int index = Find(name);
+			size_t index = Find(name);
 
-			if(index < 0){
+			if(index >= Variables.size()){
 				// Add //
 				return true;
 			}

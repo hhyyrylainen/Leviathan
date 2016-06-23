@@ -80,26 +80,26 @@ public:
         }
 
         // Check how long until we tick again //
-        int timeintick = Engine::Get()->GetTimeSinceLastTick();
+        int64_t timeintick = Engine::Get()->GetTimeSinceLastTick();
 
         // Take the ping into account //
         float sendtime = (msping) / (float)TICKSPEED;
 
-        int wholeticks = floor(sendtime);
+        int wholeticks = static_cast<int>(floor(sendtime));
 
         targettick -= wholeticks;
 
         sendtime -= wholeticks;
 
-        // For maximum accuray we are also going to adjust the receiver's engine tick //
-        int enginemscorrect = timeintick - (sendtime*(float)TICKSPEED);
+        // For maximum accuracy we are also going to adjust the receiver's engine tick //
+        auto enginemscorrect = timeintick - static_cast<int64_t>(sendtime*(float)TICKSPEED);
 
         Logger::Get()->Info("GameWorld: adjusting client to "+
             Convert::ToString(targettick)+" ticks and engine clock by " +
             Convert::ToString(enginemscorrect)+" ms");
         
         std::shared_ptr<NetworkRequest> clocksync = std::make_shared<NetworkRequest>(
-            new RequestWorldClockSyncData(World->GetID(), targettick, enginemscorrect, true));
+            new RequestWorldClockSyncData(World->GetID(), targettick, static_cast<int>(enginemscorrect), true));
 
         auto sentthing = Connection->SendPacketToConnection(clocksync, 1);
         sentthing->SetAsTimed();
@@ -107,7 +107,7 @@ public:
         // Start waiting for it //
         auto waitthing = std::make_shared<ConditionalTask>(std::bind<void>([](
                     PlayerConnectionPreparer* plyprepare,
-                    std::shared_ptr<SentNetworkThing> sentthing, int msping, int enginems)
+                    std::shared_ptr<SentNetworkThing> sentthing, int msping)
                 -> void
             {
                 bool succeeded = sentthing->GetStatus();
@@ -131,7 +131,7 @@ public:
                 int64_t elapsedtime = sentthing->ConfirmReceiveTime-sentthing->RequestStartTime;
                 
                 // Here we calculate how much our initial estimate of the time taken is off by
-                float correctingamount = elapsedtime-msping;
+                float correctingamount = static_cast<float>(elapsedtime - msping);
 
                 Logger::Get()->Info("GameWorld: adjust clock expected to take " +
                     Convert::ToString(msping) + " and it took " +
@@ -140,11 +140,11 @@ public:
 
                 correctingamount /= (float)TICKSPEED;
 
-                int wholecorrect = floor(correctingamount);
+                int wholecorrect = static_cast<int>(floor(correctingamount));
 
                 correctingamount -= wholecorrect;
 
-                int enginemscorrect = correctingamount*TICKSPEED;
+                int enginemscorrect = static_cast<int>(correctingamount * TICKSPEED);
 
                 // Send correction if not 0 //
                 if(wholecorrect != 0 || enginemscorrect != 0){
@@ -174,7 +174,7 @@ public:
                 plyprepare->OurQueued.clear();
 
 
-                }, this, sentthing, msping, timeintick),
+                }, this, sentthing, msping),
             std::bind<bool>([](shared_ptr<SentNetworkThing> sentthing)
                     -> bool
                 {
@@ -444,7 +444,8 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposit
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT int GameWorld::GetObjectCount() const{
+DLLEXPORT size_t Leviathan::GameWorld::GetObjectCount() const
+{
 
     return Objects.size();
 }
@@ -969,10 +970,10 @@ DLLEXPORT void Leviathan::GameWorld::DestroyObject(ObjectID id){
 	}
 }
 
-DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(int EntityID){
+DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(ObjectID id) {
 
 	Lock lock(DeleteMutex);
-	DelayedDeleteIDS.push_back(EntityID);
+	DelayedDeleteIDS.push_back(id);
 }
 
 void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
@@ -1678,8 +1679,8 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
 
 
 #undef ADDCOMPONENTFUNCTIONSTOGAMEWORLD
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) template<> type& \
-    GameWorld::GetComponent<type>(ObjectID id){                         \
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) \
+    template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id){ \
                                                                         \
         auto component = holder.Find(id);                               \
         if(!component)                                                  \
@@ -1688,7 +1689,7 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
         return *component;                                              \
     }                                                                   \
                                                                         \
-    template<> bool GameWorld::RemoveComponent<type>(ObjectID id){ \
+    template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id){ \
         try{                                                            \
             holder.destroyfunc(id);                                     \
             return true;                                                \

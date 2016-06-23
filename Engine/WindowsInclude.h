@@ -24,6 +24,7 @@
 // Some undefines //
 #undef GetNextSibling
 #undef GetFirstChild
+#undef GetObject
 
 #undef min
 #undef max

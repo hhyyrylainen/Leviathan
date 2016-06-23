@@ -9,6 +9,35 @@
 using namespace Leviathan;
 using namespace std;
 
+TEST_CASE("StringOperations::MakeString", "[string]") {
+
+    REQUIRE(sizeof(WINDOWS_LINE_SEPARATOR) - 1 == 2);
+    REQUIRE(sizeof(UNIVERSAL_LINE_SEPARATOR) - 1 == 1);
+
+    REQUIRE(WINDOWS_LINE_SEPARATOR[0] == '\r');
+    REQUIRE(WINDOWS_LINE_SEPARATOR[1] == '\n');
+    REQUIRE(WINDOWS_LINE_SEPARATOR[2] == '\0');
+
+    SECTION("Win separator wstring") {
+
+        std::wstring separator;
+        StringOperations::MakeString(separator, WINDOWS_LINE_SEPARATOR,
+            sizeof(WINDOWS_LINE_SEPARATOR));
+
+        CHECK(separator == L"\r\n");
+    }
+
+    SECTION("Win separator string") {
+
+        std::string separator;
+        StringOperations::MakeString(separator, WINDOWS_LINE_SEPARATOR,
+            sizeof(WINDOWS_LINE_SEPARATOR));
+
+        CHECK(separator == "\r\n");
+    }
+
+}
+
 // First test duplicated for wstring and string others are string only as wstring versions
 // *should* also work if they pass
 TEST_CASE("Wstring cutting", "[string]"){
@@ -132,6 +161,12 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
             string("this")));
 
 	// Line end changing //
+    wstring simplestr = L"Two\nlines";
+
+    const wstring convresult = StringOperations::ChangeLineEndsToWindowsWstring(simplestr);
+
+    CHECK(convresult == L"Two\r\nlines");
+
 	wstring pathtestoriginal = L"My text is quite nice\nand has\n multiple\r\n lines\n"
         L"that are separated\n";
 

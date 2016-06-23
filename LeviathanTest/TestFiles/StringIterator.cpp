@@ -10,7 +10,7 @@ using namespace std;
 TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
     // For outputting debug info //
-    Logger log("Test/TestLog.txt");
+    Logger log("Test/ExtraTest.txt");
 
 	StringIterator itr((string*)NULL);
 

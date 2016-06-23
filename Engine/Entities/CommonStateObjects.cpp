@@ -569,9 +569,9 @@ DLLEXPORT bool PositionDeltaState::FillMissingData(ObjectDeltaStateData &otherst
     return allsucceeded;
 }
 // ------------------ TrackControllerState ------------------ //
-DLLEXPORT TrackControllerState::TrackControllerState(int tick, int reached,
+DLLEXPORT TrackControllerState::TrackControllerState(int tick, size_t reached,
     float speed, float progress) :
-    ObjectDeltaStateData(tick), ReachedNode(reached), ChangeSpeed(speed),
+    ObjectDeltaStateData(tick), ReachedNode(static_cast<int32_t>(reached)), ChangeSpeed(speed),
     NodeProgress(progress), ValidFields(TRACKSTATE_UPDATED_ALL), AddedNodes(0)
 {
 

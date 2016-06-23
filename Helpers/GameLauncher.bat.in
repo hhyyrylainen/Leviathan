@@ -1,0 +1,9 @@
+@echo off
+set scriptpath=%~dp0
+
+set finalpath="%scriptpath%bin\lib\"
+set gamexe="%scriptpath%bin\@APP_EXECUTABLE@"
+SET PATH=%finalpath%;%PATH%
+
+start "" /D "%scriptpath%bin\" "%gamexe%" %*
+exit

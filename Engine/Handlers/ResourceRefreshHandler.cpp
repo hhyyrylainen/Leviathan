@@ -24,7 +24,7 @@ DLLEXPORT Leviathan::ResourceRefreshHandler::ResourceRefreshHandler(){
 }
 
 DLLEXPORT Leviathan::ResourceRefreshHandler::~ResourceRefreshHandler(){
-	LEVIATHAN_ASSERT(!Inited,
+	LEVIATHAN_ASSERT(Staticaccess != this,
         "ResourceRefreshHandler should have been released before destructor");
 }
 
@@ -204,7 +204,7 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 	SignalingHandles.push_back(ourstopper);
 
 	// Now the folder listener //
-	TargetFolderHandle = CreateFile(TargetFolder.c_str(), FILE_READ_DATA | FILE_TRAVERSE |
+	TargetFolderHandle = CreateFileA(TargetFolder.c_str(), FILE_READ_DATA | FILE_TRAVERSE |
         FILE_READ_EA, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
 
@@ -226,7 +226,7 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 
 	if(!readcompleteevent){
 
-		Logger::Get()->Error(L"ResourceFolderListener: StartListening: "
+		Logger::Get()->Error("ResourceFolderListener: StartListening: "
             "failed to create read notify handle, CreateEvent failed, error: " +
             Convert::ToHexadecimalString(GetLastError()));
 		return false;
@@ -249,7 +249,7 @@ bool Leviathan::ResourceFolderListener::StartListening(){
 	if(!createresult){
 
 		CloseHandle(TargetFolderHandle);
-		Logger::Get()->Error(L"ResourceFolderListener: StartListening: failed to start reading "
+		Logger::Get()->Error("ResourceFolderListener: StartListening: failed to start reading "
             "directory changes, error: "+Convert::ToHexadecimalString(GetLastError()));
 		return false;
 	}
@@ -344,7 +344,7 @@ void Leviathan::ResourceFolderListener::_RunListeningThread(){
 #ifdef _WIN32
 		
 		// Wait for the handles //
-		DWORD waitstatus = WaitForMultipleObjects(SignalingHandles.size(), &SignalingHandles[0],
+		DWORD waitstatus = WaitForMultipleObjects(static_cast<DWORD>(SignalingHandles.size()), &SignalingHandles[0],
             FALSE, INFINITE);
 
 		// Check what happened //

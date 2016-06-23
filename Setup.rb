@@ -1,12 +1,14 @@
 #!/bin/ruby
 # Setup script for Leviathan
 # Downloads the assets and dependencies and then builds and installs them
+# TODO: remove awk usage
 require 'fileutils'
 require 'colorize'
 require 'etc'
 
 
 require_relative 'Helpers/CommonCode'
+require_relative 'Helpers/DepGlobber'
 
 # Setup code
 
@@ -25,6 +27,25 @@ GetBreakpad = true
 # Doesn't get the resources for samples into leviathan/bin if set to false
 FetchAssets = true
 
+# If true dependencies won't be updated from remote repositories
+SkipPullUpdates = false
+
+# If true will only setup / update dependencies and skip Leviathan
+OnlyDependencies = false
+
+# If true skips all dependencies and only tries to configure Leviathan
+OnlyLeviathan = true
+
+# If true new version of depot tools and breakpad won't be fetched on install
+NoBreakpadUpdateOnWindows = false
+
+# On windows visual studio will be automatically opened if required
+AutoOpenVS = true
+
+# Visual studio version on windows, required for forced 64 bit builds
+VSVersion = "Visual Studio 14 2015 Win64"
+VSToolsEnv = "VS140COMNTOOLS"
+
 # Check that the directory is correct
 info "Running in dir '#{CurrentDir}'"
 
@@ -32,6 +53,13 @@ info "Running in dir '#{CurrentDir}'"
 verifyIsMainFolder
 
 puts "Using #{CompileThreads} threads to compile, configuration: #{CMakeBuildType}"
+
+if BuildPlatform == "windows"
+  puts "Sorry but this doesn't actually work entirely. Here's a list of manual fixes:"
+  puts "copy everything from Ogre RelWithDebInfo folders to Release folders for CEGUI to find Ogre"
+  puts "Manually compile CEGUI debs as Debug and Release"
+  
+end
 
 # Path helper
 # For breakpad depot tools
@@ -124,7 +152,7 @@ class BaseDep
     info "Compiling #{@Name}"
     Dir.chdir(@Folder) do
       if not self.DoCompile
-        onError "#{@Name} Failed to Compile. Are you using a broken versio? or has the setup process"+
+        onError "#{@Name} Failed to Compile. Are you using a broken version? or has the setup process"+
                 " changed between versions"
       end
     end
@@ -159,21 +187,35 @@ class Newton < BaseDep
   end
 
   def DoSetup
-    FileUtils.mkdir_p "build"
+  
+    if BuildPlatform == "windows"
+      
+      return File.exist? "packages/projects/visualStudio_2015_dll/build.sln"
+    else
+      FileUtils.mkdir_p "build"
 
-    Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DNEWTON_DEMOS_SANDBOX=OFF"
-    end
+      Dir.chdir("build") do
     
-    $?.exitstatus == 0
+        runCMakeConfigure "-DNEWTON_DEMOS_SANDBOX=OFF"
+        return $?.exitstatus == 0
+      end
+    end      
   end
   
   def DoCompile
-
-    Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+    if BuildPlatform == "windows"
+      cmdStr = "#{bringVSToPath} && MSBuild.exe \"packages/projects/visualStudio_2015_dll/build.sln\" " +
+        "/maxcpucount:#{CompileThreads} /p:Configuration=release /p:Platform=\"x64\""
+      system cmdStr
+      return $?.exitstatus == 0
+    else
+      Dir.chdir("build") do
+        
+        runCompiler CompileThreads
+      
+      end
+      return $?.exitstatus == 0
     end
-    $?.exitstatus == 0
   end
   
   def DoInstall
@@ -193,9 +235,66 @@ class Newton < BaseDep
       FileUtils.cp File.join(@Folder, "build/lib", "libNewton.so"), binfolder
       
     else
-      abort "TODO: windows copy"
+      
+      basePath = "coreLibrary_300/projects/windows/project_vs2015_dll/x64/newton/release"
+    
+      FileUtils.cp File.join(@Folder, basePath, "newton.dll"), binfolder
+      FileUtils.cp File.join(@Folder, basePath, "newton.lib"), libfolder
     end
     true
+  end
+end
+
+class OpenAL < BaseDep
+  def initialize
+    super("OpenAL Soft", "openal-soft")
+    onError "Use OpenAL from package manager on linux" if BuildPlatform != "windows"
+  end
+
+  def DoClone
+    system "git clone https://github.com/kcat/openal-soft.git"
+    $?.exitstatus == 0
+  end
+
+  def DoUpdate
+    system "git checkout master"
+    system "git pull origin master"
+    $?.exitstatus == 0
+  end
+
+  def DoSetup
+    FileUtils.mkdir_p "build"
+
+    Dir.chdir("build") do
+      
+      runCMakeConfigure "-DALSOFT_UTILS=OFF -DALSOFT_EXAMPLES=OFF -DALSOFT_TESTS=OFF"
+    end
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoCompile
+
+    Dir.chdir("build") do
+      runCompiler CompileThreads
+    end
+    $?.exitstatus == 0
+  end
+  
+  def DoInstall
+    return false if not DoSudoInstalls
+    
+    Dir.chdir("build") do
+      runInstall
+      
+      if BuildPlatform == "windows" and not File.exist? "C:/Program Files/OpenAL/include/OpenAL"
+        # cAudio needs OpenAL folder in include folder, which doesn't exist. 
+        # So we create it here
+        askToRunAdmin("mklink /D \"C:/Program Files/OpenAL/include/OpenAL\" " + 
+          "\"C:/Program Files/OpenAL/include/AL\"")
+      end
+    end
+    $?.exitstatus == 0
   end
 end
 
@@ -219,7 +318,15 @@ class CAudio < BaseDep
     FileUtils.mkdir_p "build"
 
     Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCAUDIO_BUILD_SAMPLES=OFF"
+      
+      if BuildPlatform == "windows"
+        # The bundled ones aren't compatible with our compiler setup 
+        # -DCAUDIO_DEPENDENCIES_DIR=../Dependencies64
+        runCMakeConfigure "-DCAUDIO_BUILD_SAMPLES=OFF -DCAUDIO_DEPENDENCIES_DIR=\"C:/Program Files/OpenAL\" " +
+          "-DCMAKE_INSTALL_PREFIX=./Install"
+      else
+        runCMakeConfigure "-DCAUDIO_BUILD_SAMPLES=OFF"
+      end
     end
     
     $?.exitstatus == 0
@@ -228,17 +335,37 @@ class CAudio < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads
     end
     $?.exitstatus == 0
   end
   
   def DoInstall
-
-    return true if not DoSudoInstalls
     
     Dir.chdir("build") do
-      system "sudo make install"
+      if BuildPlatform == "windows"
+      
+        system "#{bringVSToPath} && MSBuild.exe INSTALL.vcxproj /p:Configuration=RelWithDebInfo"
+        
+        # And then to copy the libs
+        
+        FileUtils.mkdir_p File.join(CurrentDir, "cAudio")
+        FileUtils.mkdir_p File.join(CurrentDir, "cAudio", "lib")
+        FileUtils.mkdir_p File.join(CurrentDir, "cAudio", "bin")
+        
+        FileUtils.cp File.join(@Folder, "build/bin/RelWithDebInfo", "cAudio.dll"),
+                 File.join(CurrentDir, "cAudio", "bin")
+
+        FileUtils.cp File.join(@Folder, "build/lib/RelWithDebInfo", "cAudio.lib"),
+                 File.join(CurrentDir, "cAudio", "lib")
+        
+        FileUtils.copy_entry File.join(@Folder, "build/Install/", "include"),
+                 File.join(CurrentDir, "cAudio", "include")
+        
+      else
+        return true if not DoSudoInstalls
+        runInstall
+      end
     end
     $?.exitstatus == 0
   end
@@ -277,7 +404,12 @@ class AngelScript < BaseDep
   end
 
   def DoSetup
-    true
+    if BuildPlatform == "linux"
+    
+      return File.exist? "sdk/angelscript/projects/msvc2015/angelscript.sln"
+    else
+      return true
+    end
   end
   
   def DoCompile
@@ -290,7 +422,17 @@ class AngelScript < BaseDep
       end
       $?.exitstatus == 0
     else
-      abort "TODO: windows AngelScript compile"
+      
+      info "Verifying that angelscript solution has Runtime Library = MultiThreadedDLL"
+      verifyVSProjectRuntimeLibrary "sdk/angelscript/projects/msvc2015/angelscript.vcxproj", 
+        %r{Release\|x64}, "MultiThreadedDLL"  
+        
+      success "AngelScript solution is correctly configured. Compiling"
+      
+      cmdStr = "#{bringVSToPath} && MSBuild.exe \"sdk/angelscript/projects/msvc2015/angelscript.sln\" " +
+        "/maxcpucount:#{CompileThreads} /p:Configuration=Release /p:Platform=\"x64\""
+      system cmdStr
+      return $?.exitstatus == 0
     end
   end
   
@@ -332,7 +474,7 @@ class AngelScript < BaseDep
       FileUtils.cp File.join(@Folder, "sdk/angelscript/lib", "libangelscript.a"), libfolder
       
     else
-      FileUtils.cp File.join(@Folder, "sdk/angelscript/lib", "angelscript.lib"), libfolder
+      FileUtils.cp File.join(@Folder, "sdk/angelscript/lib", "angelscript64.lib"), libfolder
     end
     true
   end
@@ -370,6 +512,14 @@ class Breakpad < BaseDep
   end
 
   def DoUpdate
+  
+    if BuildPlatform == "windows" and NoBreakpadUpdateOnWindows
+      info "Windows: skipping Breakpad update"
+      if not File.exist?("src")
+        @CreatedNewFolder = true
+      end
+      return true
+    end
 
     # Update depot tools
     Dir.chdir(@DepotFolder) do
@@ -382,12 +532,18 @@ class Breakpad < BaseDep
     end
 
     if not @CreatedNewFolder
-      Dir.chdir(@Folder) do
-        # The first source subdir is the git repository
-        Dir.chdir("src") do
-          system "git checkout master"
-          system "git pull origin master"
-          system "gclient sync"
+    
+      if not File.exist?("src")
+        # This is set to true if we created an empty folder but we didn't get to the pull stage
+        @CreatedNewFolder = true
+      else
+        Dir.chdir(@Folder) do
+          # The first source subdir is the git repository
+          Dir.chdir("src") do
+            system "git checkout master"
+            system "git pull origin master"
+            system "gclient sync"
+          end
         end
       end
     end
@@ -396,23 +552,11 @@ class Breakpad < BaseDep
   end
 
   def DoSetup
-
-    # Setup depot tools
-    if BuildPlatform == "windows"
-      abort "Verify breakpad installation on windows: " +
-            "https://chromium.googlesource.com/breakpad/breakpad/"
-
-      Dir.chdir(@DepotFolder) do
-        system "gclient.exe"
-      end
-      onError "Initial gclient dependency install run on windows failed" if $?.exitstatus > 0
-    end
-
+    
     if not @CreatedNewFolder
       return true
     end
     
-
     # Bring the depot tools to path
     pathedit = PathModifier.new(@DepotFolder)
 
@@ -429,8 +573,12 @@ class Breakpad < BaseDep
       Dir.chdir("src") do
 
         # Configure script
-        system "./configure"
-
+        if BuildPlatform == "windows"
+          system "src/tools/gyp/gyp.bat src/client/windows/breakpad_client.gyp –no-circular-check"
+        else
+          system "./configure"
+        end
+        
         if $?.exitstatus > 0
           pathedit.Restore
           onError "configure breakpad failed" 
@@ -449,15 +597,24 @@ class Breakpad < BaseDep
 
     # Build breakpad
     Dir.chdir(File.join(@Folder, "src")) do
-
-      system "make -j #{CompileThreads}"
       
-      if $?.exitstatus > 0
-        pathedit.Restore
-        onError "breakpad build failed" 
+      if BuildPlatform == "linux"
+        system "make -j #{CompileThreads}"
+      
+        if $?.exitstatus > 0
+          pathedit.Restore
+          onError "breakpad build failed" 
+        end
+      else
+        
+        info "Please open the solution at and compile breakpad client in Release and x64. " +
+          "Remember to disable treat warnings as errors first: "+
+          "#{CurrentDir}/../breakpad/src/src/client/windows/breakpad_client.sln"
+        
+        system "start #{CurrentDir}/../breakpad/src/src/client/windows/breakpad_client.sln" if AutoOpenVS
+        system "pause"
       end
     end
-
     
     pathedit.Restore
     true
@@ -471,24 +628,34 @@ class Breakpad < BaseDep
 
     breakpadincludelink = File.join(CurrentDir, "Breakpad", "include")
     
-    # Need to delete old file before creating a new symlink
-    File.delete(breakpadincludelink) if File.exist?(breakpadincludelink)
-    FileUtils.ln_s File.join(@Folder, "src/src"), breakpadincludelink
-    
     if BuildPlatform == "windows"
 
-      abort "TODO: Breakpad install"
-    end
-
-    FileUtils.cp File.join(@Folder, "src/src/client/linux", "libbreakpad_client.a"),
-                 File.join(CurrentDir, "Breakpad", "lib")
-
-    FileUtils.cp File.join(@Folder, "src/src/tools/linux/dump_syms", "dump_syms"),
-                 File.join(CurrentDir, "Breakpad", "bin")
-
-    FileUtils.cp File.join(@Folder, "src/src/processor", "minidump_stackwalk"),
-                 File.join(CurrentDir, "Breakpad", "bin")
+      askToRunAdmin "mklink /D \"#{breakpadincludelink}\" \"#{File.join(@Folder, "src/src")}\""
+      
+      FileUtils.copy_entry File.join(@Folder, "src/src/client/windows/Release/lib"),
+                   File.join(CurrentDir, "Breakpad", "lib")
+                   
+                   
+                   
+      # Might be worth it to have windows symbols dumbed on windows, if the linux dumber can't deal with pdbs
+      #FileUtils.cp File.join(@Folder, "src/src/tools/linux/dump_syms", "dump_syms"),
+      #             File.join(CurrentDir, "Breakpad", "bin")
+                   
+    else
     
+      # Need to delete old file before creating a new symlink
+      File.delete(breakpadincludelink) if File.exist?(breakpadincludelink)
+      FileUtils.ln_s File.join(@Folder, "src/src"), breakpadincludelink
+    
+      FileUtils.cp File.join(@Folder, "src/src/client/linux", "libbreakpad_client.a"),
+                   File.join(CurrentDir, "Breakpad", "lib")
+
+      FileUtils.cp File.join(@Folder, "src/src/tools/linux/dump_syms", "dump_syms"),
+                   File.join(CurrentDir, "Breakpad", "bin")
+
+      FileUtils.cp File.join(@Folder, "src/src/processor", "minidump_stackwalk"),
+                   File.join(CurrentDir, "Breakpad", "bin")
+    end
     true
   end
 end
@@ -498,15 +665,144 @@ class Ogre < BaseDep
     super("Ogre", "ogre")
   end
 
+  def RequiresClone
+    if BuildPlatform == "windows"
+      return (not File.exist?(@Folder) or not File.exist?(File.join(@Folder, "Dependencies")))
+    else
+      return (not File.exist? @Folder)
+    end
+  end
+  
+  def DoClone
+    if BuildPlatform == "windows"
+
+      system "hg clone https://bitbucket.org/sinbad/ogre"
+      if $?.exitstatus > 0
+        return false
+      end
+        
+      Dir.chdir(@Folder) do
+
+        system "hg clone https://bitbucket.org/cabalistic/ogredeps Dependencies"
+      end
+      return $?.exitstatus == 0
+    else
+      system "hg clone https://bitbucket.org/sinbad/ogre"
+      return $?.exitstatus == 0
+    end
+  end
+
+  def DoUpdate
+  
+    if BuildPlatform == "windows"
+        Dir.chdir("Dependencies") do
+          system "hg pull"
+          system "hg update"
+          
+          if $?.exitstatus > 0
+            return false
+          end
+        end
+    end
+  
+    system "hg pull"
+    system "hg update v2-0"
+    $?.exitstatus == 0
+  end
+
+  def DoSetup
+    
+    # Dependencies compile
+    additionalCMake = ""
+    
+    if BuildPlatform == "windows"
+      Dir.chdir("Dependencies") do
+        
+        system "cmake . -DOGREDEPS_BUILD_SDL2=OFF" 
+        
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Debug"
+        onError "Failed to compile Ogre dependencies " if $?.exitstatus > 0
+        
+        runCompiler CompileThreads
+        onError "Failed to compile Ogre dependencies " if $?.exitstatus > 0
+
+        info "Please open the solution SDL2 in Release and x64: "+
+          "#{@Folder}/Dependencies/src/SDL2/VisualC/SDL_VS2013.sln"
+        
+        system "start #{@Folder}/Dependencies/src/SDL2/VisualC/SDL_VS2013.sln" if AutoOpenVS
+        system "pause"
+        
+        additionalCMake = "-DSDL2MAIN_LIBRARY=..\SDL2\VisualC\Win32\Debug\SDL2main.lib " +
+          "-DSD2_INCLUDE_DIR=..\SDL2\include"
+          "-DSDL2_LIBRARY_TEMP=..\SDL2\VisualC\Win32\Debug\SDL2.lib"
+        
+      end
+    end
+  
+    FileUtils.mkdir_p "build"
+    
+    Dir.chdir("build") do
+
+      runCMakeConfigure "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON " +
+             "-DOGRE_BUILD_RENDERSYSTEM_D3D9=OFF -DOGRE_BUILD_RENDERSYSTEM_D3D11=OFF "+
+             "-DOGRE_BUILD_COMPONENT_OVERLAY=OFF " +
+             "-DOGRE_BUILD_COMPONENT_PAGING=OFF -DOGRE_BUILD_COMPONENT_PROPERTY=OFF " +
+             "-DOGRE_BUILD_COMPONENT_TERRAIN=OFF -DOGRE_BUILD_COMPONENT_VOLUME=OFF "+
+             "-DOGRE_BUILD_PLUGIN_BSP=OFF -DOGRE_BUILD_PLUGIN_CG=OFF " +
+             "-DOGRE_BUILD_PLUGIN_OCTREE=OFF -DOGRE_BUILD_PLUGIN_PCZ=OFF -DOGRE_BUILD_SAMPLES=OFF " + 
+             additionalCMake
+    end
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoCompile
+    Dir.chdir("build") do
+      if BuildPlatform == "windows"
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Release"
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=RelWithDebInfo"
+      else
+        runCompiler CompileThreads
+      end
+    end
+    
+    $?.exitstatus == 0
+  end
+  
+  def DoInstall
+
+    Dir.chdir("build") do
+    
+      if BuildPlatform == "windows"
+
+        system "#{bringVSToPath} && MSBuild.exe INSTALL.vcxproj /p:Configuration=RelWithDebInfo"
+        ENV["OGRE_HOME"] = "#{@Folder}/build/ogre/sdk"
+        
+      else
+        return true if not DoSudoInstalls
+        runInstall
+      end
+    end
+
+    $?.exitstatus == 0
+  end
+end
+
+# Windows only CEGUI dependencies
+class CEGUIDependencies < BaseDep
+  def initialize
+    super("CEGUI Dependencies", "cegui-dependencies")
+  end
+
   def DoClone
 
-    system "hg clone https://bitbucket.org/sinbad/ogre"
+    system "hg clone https://bitbucket.org/cegui/cegui-dependencies"
     $?.exitstatus == 0
   end
 
   def DoUpdate
     system "hg pull"
-    system "hg update v2-0"
+    system "hg update default"
     $?.exitstatus == 0
   end
 
@@ -514,13 +810,14 @@ class Ogre < BaseDep
 
     FileUtils.mkdir_p "build"
 
+    if InstallCEED
+      python = "ON"
+    else
+      python = "OFF"
+    end
+
     Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} " +
-             "-DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON -DOGRE_BUILD_COMPONENT_OVERLAY=OFF " +
-             "-DOGRE_BUILD_COMPONENT_PAGING=OFF -DOGRE_BUILD_COMPONENT_PROPERTY=OFF " +
-             "-DOGRE_BUILD_COMPONENT_TERRAIN=OFF -DOGRE_BUILD_COMPONENT_VOLUME=OFF "+
-             "-DOGRE_BUILD_PLUGIN_BSP=OFF -DOGRE_BUILD_PLUGIN_CG=OFF " +
-             "-DOGRE_BUILD_PLUGIN_OCTREE=OFF -DOGRE_BUILD_PLUGIN_PCZ=OFF -DOGRE_BUILD_SAMPLES=OFF"
+      runCMakeConfigure "-DCEGUI_BUILD_PYTHON_MODULES=#{python} "
     end
     
     $?.exitstatus == 0
@@ -529,18 +826,16 @@ class Ogre < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Debug"
+      system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=RelWithDebInfo"
     end
     $?.exitstatus == 0
   end
   
   def DoInstall
 
-    return true if not DoSudoInstalls
-    
-    Dir.chdir("build") do
-      system "sudo make install"
-    end
+    FileUtils.copy_entry File.join(@Folder, "build", "dependencies"),
+                 File.join(CurrentDir, "../cegui", "dependencies")
     $?.exitstatus == 0
   end
 end
@@ -575,9 +870,10 @@ class CEGUI < BaseDep
 
     Dir.chdir("build") do
       # Use UTF-8 strings with CEGUI (string class 1)
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCEGUI_STRING_CLASS=1 " +
+      runCMakeConfigure "-DCEGUI_STRING_CLASS=1 " +
              "-DCEGUI_BUILD_APPLICATION_TEMPLATES=OFF -DCEGUI_BUILD_PYTHON_MODULES=#{python} " +
-             "-DCEGUI_SAMPLES_ENABLED=ON"
+             "-DCEGUI_SAMPLES_ENABLED=OFF -DCEGUI_BUILD_RENDERER_DIRECT3D11=OFF -DCEGUI_BUILD_RENDERER_OGRE=ON " +
+             "-DCEGUI_BUILD_RENDERER_OPENGL=OFF -DCEGUI_BUILD_RENDERER_OPENGL3=OFF"
     end
     
     $?.exitstatus == 0
@@ -586,17 +882,17 @@ class CEGUI < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads 
     end
     $?.exitstatus == 0
   end
   
   def DoInstall
 
-    return true if not DoSudoInstalls
+    return true if not DoSudoInstalls or BuildPlatform == "windows"
     
     Dir.chdir("build") do
-      system "sudo make install"
+      runInstall
     end
     $?.exitstatus == 0
   end
@@ -622,7 +918,7 @@ class SFML < BaseDep
     FileUtils.mkdir_p "build"
 
     Dir.chdir("build") do
-      system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType}"
+      runCMakeConfigure ""
     end
     
     $?.exitstatus == 0
@@ -631,17 +927,17 @@ class SFML < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
-      system "make -j #{CompileThreads}"
+      runCompiler CompileThreads
     end
     $?.exitstatus == 0
   end
   
   def DoInstall
 
-    return true if not DoSudoInstalls
+    return true if not DoSudoInstalls or BuildPlatform == "windows"
     
     Dir.chdir("build") do
-      system "sudo make install"
+      runInstall
     end
     $?.exitstatus == 0
   end
@@ -660,7 +956,7 @@ end
 ##### Actual body ####
 
 # Assets svn
-if FetchAssets
+if FetchAssets and not SkipPullUpdates
   info "Checking out assets svn"
 
   Dir.chdir("bin") do
@@ -684,7 +980,12 @@ if FetchAssets
 end
 
 # All the objects
-depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
+if BuildPlatform == "windows"
+  depobjects = Array[Newton.new, AngelScript.new, OpenAL.new, CAudio.new, SFML.new, Ogre.new, 
+    CEGUIDependencies.new, CEGUI.new]
+else
+  depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
+end
 
 if GetBreakpad
   # Add this last as this does some environment variable trickery
@@ -692,35 +993,104 @@ if GetBreakpad
 end
 
 
-info "Retrieving dependencies"
+if not SkipPullUpdates and not OnlyLeviathan
+  info "Retrieving dependencies"
 
-depobjects.each do |x|
+  depobjects.each do |x|
 
-  x.Retrieve
+    x.Retrieve
   
+  end
+
+  success "Successfully retrieved all dependencies. Beginning compile"
 end
 
-success "Successfully retrieved all dependencies. Beginning compile"
+if not OnlyLeviathan
 
-info "Configuring dependencies"
+  info "Configuring dependencies"
 
-depobjects.each do |x|
+  depobjects.each do |x|
 
-  x.Setup
-  x.Compile
-  x.Install
+    x.Setup
+    x.Compile
+    x.Install
   
+  end
+
+  if OnlyDependencies
+    success "All done. Skipping Configuring Leviathan"
+    exit 0
+  end
+  info "Dependencies done, configuring Leviathan"
+
 end
 
-info "Dependencies done, configuring Leviathan"
+def runGlobberAndCopy(glob, targetFolder)
+    onError "globbing for library failed #{glob.LibName}" if not glob.run
+    
+    FileUtils.cp_r glob.getResult, targetFolder
+end
+
+def copyStuff(ext, targetFolder)
+
+    runGlobberAndCopy(Globber.new("cAudio#{ext}", "#{CurrentDir}/../cAudio/build"), targetFolder)
+    runGlobberAndCopy(Globber.new(["OgreMain#{ext}", 
+        "Plugin_ParticleFX#{ext}", "RenderSystem_GL#{ext}", "RenderSystem_GL3Plus#{ext}"], 
+        "#{CurrentDir}/../ogre/build/sdk"), targetFolder)
+    runGlobberAndCopy(Globber.new(["CEGUIBase-9999#{ext}", 
+        "CEGUICommonDialogs-9999#{ext}", "CEGUIOgreRenderer-9999#{ext}", "CEGUICoreWindowRendererSet#{ext}",
+        "CEGUIExpatParser#{ext}", "CEGUISILLYImageCodec#{ext}"], 
+        "#{CurrentDir}/../cegui/build"), targetFolder)
+    
+    runGlobberAndCopy(Globber.new("OIS#{ext}", "#{CurrentDir}/../ogre/build"), targetFolder)
+end
+
+if BuildPlatform == "windows"
+  # Make sure Ogre home is set
+  ENV["OGRE_HOME"] = "#{CurrentDir}/../ogre/build/sdk"
+  ENV["OIS_HOME"] = "#{CurrentDir}/../ogre/build/sdk"
+  
+  info "Moving all the libraries to leviathan/Windows/ThirdParty"
+  FileUtils.mkdir_p "Windows/ThirdParty"
+  FileUtils.mkdir_p "Windows/ThirdParty/lib"
+  FileUtils.mkdir_p "Windows/ThirdParty/bin"
+  FileUtils.mkdir_p "Windows/ThirdParty/include"
+  
+  Dir.chdir("Windows/ThirdParty/include") do
+    FileUtils.copy_entry "#{CurrentDir}/../cAudio/build/Install/include/cAudio", "cAudio"
+    FileUtils.copy_entry "#{CurrentDir}/../cegui-dependencies/src/glm-0.9.4.5/glm", "glm"
+    FileUtils.copy_entry "#{CurrentDir}/../cegui/cegui/include/CEGUI", "CEGUI"
+    FileUtils.cp_r(Dir.glob("#{CurrentDir}/../cegui/build/cegui/include/CEGUI/*"), "CEGUI")
+    FileUtils.cp_r(Dir.glob("#{CurrentDir}/../ogre/build/sdk/include/*"), "./")
+    FileUtils.copy_entry "#{CurrentDir}/../SFML/include/SFML", "SFML"
+  end
+  
+  copyStuff ".lib", "Windows/ThirdParty/lib"
+  copyStuff ".dll", "Windows/ThirdParty/bin"
+  
+  runGlobberAndCopy(Globber.new(["sfml-network.lib", "sfml-system.lib"], "#{CurrentDir}/../SFML/build"), 
+    "Windows/ThirdParty/lib")
+  runGlobberAndCopy(Globber.new(["sfml-network-2.dll", "sfml-system-2.dll"], "#{CurrentDir}/../SFML/build"), 
+    "Windows/ThirdParty/bin")
+    
+    
+  runGlobberAndCopy(Globber.new(["pcre.dll", "freetype.dll"], "#{CurrentDir}/../cegui"), 
+    "Windows/ThirdParty/bin")
+    
+  # TODO: configure this
+  runGlobberAndCopy(Globber.new(["boost_chrono-vc140-mt-1_60.dll", 
+    "boost_system-vc140-mt-1_60.dll", "boost_filesystem-vc140-mt-1_60.dll"], "#{CurrentDir}/../boost/stage"), 
+    "Windows/ThirdParty/bin")
+  # And debug versions
+  runGlobberAndCopy(Globber.new(["boost_chrono-vc140-mt-gd-1_60.dll", 
+    "boost_system-vc140-mt-gd-1_60.dll", "boost_filesystem-vc140-mt-gd-1_60.dll"], "#{CurrentDir}/../boost/stage"), 
+    "Windows/ThirdParty/bin")
+end
 
 FileUtils.mkdir_p "build"
 
 Dir.chdir("build") do
-
-  system "cmake .. -DCMAKE_BUILD_TYPE=#{CMakeBuildType} -DCREATE_SDK=ON " +
-         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_BREAKPAD=OFF"
-  
+  runCMakeConfigure "-DCREATE_SDK=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_BREAKPAD=OFF"
 end
 
 if $?.exitstatus > 0
@@ -728,21 +1098,25 @@ if $?.exitstatus > 0
           "to install?"
 end
   
-# Create a symbolic link for build database
-builddblink = "compile_commands.json"
-File.delete(builddblink) if File.exist?(builddblink)
-FileUtils.ln_s File.join("build", "compile_commands.json"), builddblink
 
 if BuildPlatform == "linux"
+  # Create a symbolic link for build database
+  builddblink = "compile_commands.json"
+  File.delete(builddblink) if File.exist?(builddblink)
+  FileUtils.ln_s File.join("build", "compile_commands.json"), builddblink
   
   info "Indexing with cscope"
   system "./RunCodeIndexing.sh"
   
+  success "All done."
+  info "To compile run 'make' in ./build"
+  
+else
+  
+  success "All done."
+  info "Open build/Leviathan.sln and start coding"
+  
 end
 
-success "All done."
-info "To compile run 'make' in ./build"
 exit 0
-
-
 

@@ -101,7 +101,7 @@ namespace Leviathan{
         //! BasePhysicsObject
         //! \param tick The world tick to place in the resulting state
         template<class CType>
-        DLLEXPORT static std::unique_ptr<PhysicalDeltaState> CaptureState(
+        static std::unique_ptr<PhysicalDeltaState> CaptureState(
             CType &object, int tick)
         {
 
@@ -179,7 +179,7 @@ namespace Leviathan{
     class TrackControllerState : public ObjectDeltaStateData{
     public:
 
-        DLLEXPORT TrackControllerState(int tick, int reached, float speed, float progress);
+        DLLEXPORT TrackControllerState(int tick, size_t reached, float speed, float progress);
         DLLEXPORT TrackControllerState(int tick, sf::Packet &packet);
             
         DLLEXPORT virtual void CreateUpdatePacket(ObjectDeltaStateData* olderstate,

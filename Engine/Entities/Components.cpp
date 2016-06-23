@@ -712,26 +712,26 @@ DLLEXPORT void TrackController::Update(float timestep){
 
     if(NodeProgress < 0.f){
 
-        int wholeunder = floor(NodeProgress);
+        int wholeunder = static_cast<int>(floor(NodeProgress));
 
         float singlenodepart = NodeProgress + wholeunder;
 
         ReachedNode -= wholeunder;
 
-        if(ReachedNode < 0)
+        if(ReachedNode > Nodes.Markers.size())
             ReachedNode = 0;
 
         NodeProgress = 1.f-singlenodepart;
         
     } else if(NodeProgress >= 1.f){
 
-        int wholeover = floor(NodeProgress);
+        int wholeover = static_cast<int>(floor(NodeProgress));
 
         float singlenodepart = NodeProgress - wholeover;
 
         ReachedNode += wholeover;
 
-        if(ReachedNode >= static_cast<int>(Nodes.Markers.size()))
+        if(ReachedNode >= Nodes.Markers.size())
             ReachedNode = Nodes.Markers.size()-1;
 
         NodeProgress = singlenodepart;
@@ -743,11 +743,8 @@ void TrackController::_SanityCheckNodeProgress(Lock &guard){
     // Should work for NaN checks
     if(NodeProgress != NodeProgress)
         NodeProgress = 0.f; 
-    
-    if(ReachedNode < 0)
-        ReachedNode = 0;
 
-    if(ReachedNode >= static_cast<int>(Nodes.Markers.size()))
+    if(ReachedNode >= Nodes.Markers.size())
         ReachedNode = Nodes.Markers.size()-1;
 }
 // ------------------------------------ //
@@ -803,14 +800,14 @@ DLLEXPORT bool TrackController::Interpolate(ObjectDeltaStateData &first,
     if(to.ValidFields & TRACKSTATE_UPDATED_NODE && from.ReachedNode != to.ReachedNode){
 
         // Node has changed //
-        const float fromtotalvalue = from.ReachedNode+from.NodeProgress;
+        const float fromtotalvalue = from.ReachedNode + from.NodeProgress;
 
         const float tototalvalue = to.ReachedNode +
             (to.ValidFields & TRACKSTATE_UPDATED_PROGRESS ? to.NodeProgress : 0);
 
         const float mixed = fromtotalvalue*(1.f-progress) + tototalvalue*progress;
 
-        ReachedNode = floor(mixed);
+        ReachedNode = static_cast<size_t>(floor(mixed));
         NodeProgress = mixed-ReachedNode;
         
     } else {
@@ -1007,7 +1004,7 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets(){
         return;
 
     // Looped in reverse to hopefully remove only last elements //
-    for(int i = SentPackets.size()-1; i >= 0; ){
+    for(int i = static_cast<int>(SentPackets.size() - 1); i >= 0; ){
 
         const auto& tuple = SentPackets[i];
 
@@ -1108,7 +1105,7 @@ DLLEXPORT void PositionMarkerOwner::Add(Lock &guard, ObjectID entity, Position& 
 // ------------------------------------ //
 DLLEXPORT void PositionMarkerOwner::AddDataToPacket(Lock &guard, sf::Packet &packet) const{
 
-    int32_t size = Markers.size();
+    int32_t size = static_cast<int32_t>(Markers.size());
 
     packet << size;
     

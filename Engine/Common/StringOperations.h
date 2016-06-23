@@ -7,64 +7,18 @@
 
 namespace Leviathan{
 
-	//! \brief Helper class that provides string constants in multiple types
-	template<class StringWanted, typename ElementType>
-	class StringConstants{
-	public:
+    constexpr int32_t DOT_CHARACTER = '.';
+    constexpr int32_t UNIVERSAL_PATHSEPARATOR = '/';
+    constexpr int32_t WINDOWS_PATHSEPARATOR = '\\';
+    constexpr int32_t SPACE_CHARACTER = ' ';
 
-		// Public variables //
-		static const ElementType DotCharacter;
-		static const ElementType UniversalPathSeparator;
-		static const ElementType WindowsPathSeparator;
-		static const ElementType SpaceCharacter;
+    constexpr int32_t FIRST_NUMBER = '0';
+    constexpr int32_t LAST_NUMBER = '9';
+    constexpr int32_t DASH_CHARACTER = '-';
+    constexpr int32_t PLUS_SYMBOL = '+';
 
-		static const ElementType FirstNumber;
-		static const ElementType LastNumber;
-		static const ElementType Dash;
-		static const ElementType PlusSymbol;
-
-		static const StringWanted WindowsLineSeparator;
-		static const StringWanted UniversalLineSeparator;
-
-        static const ElementType Space;
-
-	private:
-		StringConstants();
-		~StringConstants();
-	};
-
-	// Define most common StringConstants types //
-	typedef StringConstants<std::wstring, wchar_t> WstringConstants;
-	typedef StringConstants<std::string, char> NarrowStringConstants;
-
-	// ------------------ StringConstants definitions for new types that comply with char
-    // ------------------ 
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::DotCharacter = (ElementType)(int)'.';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::UniversalPathSeparator = (ElementType)(int)'/';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::WindowsPathSeparator = (ElementType)(int)'\\';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::SpaceCharacter = (ElementType)(int)' ';
-	
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::FirstNumber = (ElementType)(int)'0';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::LastNumber = (ElementType)(int)'9';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::Dash = (ElementType)(int)'-';
-    
-	template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::PlusSymbol = (ElementType)(int)'+';
-
-    template<class StringWanted, typename ElementType> const ElementType
-    StringConstants<StringWanted, ElementType>::Space = (ElementType)(int)' ';
+    constexpr char WINDOWS_LINE_SEPARATOR[] = "\r\n";
+    constexpr char UNIVERSAL_LINE_SEPARATOR[] = "\n";
 
 	//! \brief Singleton class that has string processing functions
 	//!
@@ -75,7 +29,7 @@ namespace Leviathan{
 	class StringOperations{
 	public:
 		template<typename CharType>
-		DLLEXPORT static bool IsCharacterWhitespace(CharType character){
+		static bool IsCharacterWhitespace(CharType character){
 			if((int)character <= 32)
 				return true;
 
@@ -85,14 +39,33 @@ namespace Leviathan{
 			return false;
 		}
 
+        // Helper functions //
+
+        template<class StringTypeN>
+        static void MakeString(StringTypeN &str, const char* characters, size_t count) {
+
+            // Skip the null terminator //
+            str = StringTypeN(characters, count - 1);
+        }
+
+        template<>
+        static void MakeString(std::wstring &str, const char* characters, size_t count) {
+            // Skip copying null terminator
+            const size_t copysize = count - 1;
+            str.resize(copysize);
+
+            for (size_t i = 0; i < copysize; ++i)
+                str[i] = (wchar_t)characters[i];
+        }
+
 		// ------------------ Path related operations ------------------ //
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN RemoveExtension(const StringTypeN &filepath, bool delpath = true){
+		static const StringTypeN RemoveExtension(const StringTypeN &filepath, bool delpath = true){
 
 			size_t startcopy = 0;
 			size_t endcopy;
 
-			size_t lastdot = filepath.find_last_of(StringConstants<StringTypeN, CharType>::DotCharacter);
+			size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
 			if(lastdot == StringTypeN::npos){
 				// no dot //
@@ -107,9 +80,8 @@ namespace Leviathan{
 				size_t lastpath = 0;
 
 				for(size_t i = 0; i < filepath.size(); i++){
-					if(filepath[i] == StringConstants<StringTypeN,
-                        CharType>::UniversalPathSeparator || filepath[i] ==
-                        StringConstants<StringTypeN, CharType>::WindowsPathSeparator)
+					if(filepath[i] == UNIVERSAL_PATHSEPARATOR || filepath[i] ==
+                        WINDOWS_PATHSEPARATOR)
 					{
 						// Currently last found path //
 						lastpath = i;
@@ -131,12 +103,11 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN GetExtension(const StringTypeN &filepath){
+		static const StringTypeN GetExtension(const StringTypeN &filepath){
 			size_t startcopy = 0;
 			size_t endcopy = filepath.size()-1;
 
-			size_t lastdot = filepath.find_last_of(StringConstants<StringTypeN,
-                CharType>::DotCharacter);
+			size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
 			if(lastdot == StringTypeN::npos){
 				// no dot //
@@ -154,14 +125,13 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN ChangeExtension(const StringTypeN& filepath,
+		static const StringTypeN ChangeExtension(const StringTypeN& filepath,
             const StringTypeN &newext)
         {
 			size_t startcopy = 0;
 			size_t endcopy = filepath.size()-1;
 
-			size_t lastdot = filepath.find_last_of(StringConstants<StringTypeN,
-                CharType>::DotCharacter);
+			size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
 			if(lastdot != StringTypeN::npos){
 				// dot found //
@@ -181,7 +151,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN RemovePath(const StringTypeN &filepath){
+		static const StringTypeN RemovePath(const StringTypeN &filepath){
 			size_t startcopy = 0;
 			size_t endcopy = filepath.size()-1;
 
@@ -189,8 +159,8 @@ namespace Leviathan{
 			size_t lastpath = 0;
 
 			for(size_t i = 0; i < filepath.size(); i++){
-				if(filepath[i] == StringConstants<StringTypeN, CharType>::UniversalPathSeparator
-                    || filepath[i] == StringConstants<StringTypeN, CharType>::WindowsPathSeparator)
+				if(filepath[i] == UNIVERSAL_PATHSEPARATOR
+                    || filepath[i] == WINDOWS_PATHSEPARATOR)
 				{
 					// Currently last found path //
 					lastpath = i;
@@ -213,7 +183,7 @@ namespace Leviathan{
 
 		//! \brief Returns the path part of a path+filename
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN GetPath(const StringTypeN &filepath){
+		static const StringTypeN GetPath(const StringTypeN &filepath){
 			size_t startcopy = 0;
 			size_t endcopy = filepath.size()-1;
 
@@ -222,8 +192,8 @@ namespace Leviathan{
             bool found = false;
 
 			for(size_t i = 0; i < filepath.size(); i++){
-				if(filepath[i] == StringConstants<StringTypeN, CharType>::UniversalPathSeparator || filepath[i] == 
-					StringConstants<StringTypeN, CharType>::WindowsPathSeparator)
+				if(filepath[i] == UNIVERSAL_PATHSEPARATOR || filepath[i] == 
+					WINDOWS_PATHSEPARATOR)
 				{
 					// Currently last found path //
 					lastpath = i;
@@ -253,66 +223,75 @@ namespace Leviathan{
 
 		//! \brief Changes all line separators to Windows line separators
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN ChangeLineEndsToWindows(const StringTypeN &input){
+		static const StringTypeN ChangeLineEndsToWindows(const StringTypeN &input){
 
 			StringTypeN results;
+            
+            // This is the line ending sequence //
+            StringTypeN separator;
+            MakeString(separator, WINDOWS_LINE_SEPARATOR,
+                sizeof(WINDOWS_LINE_SEPARATOR));
 
 			// Try to find path strings and replace them //
-			size_t copystart = 0;
-			size_t copyend = 0;
-
+			StartEndIndex copyparts;
+            
 			for(size_t i = 0; i < input.size(); i++){
-				if(input[i] == StringConstants<StringTypeN, CharType>::UniversalLineSeparator[0]
-                    && i > 0 && input[i-1] != StringConstants<StringTypeN,
-                    CharType>::WindowsLineSeparator[0])
+				if(input[i] == UNIVERSAL_LINE_SEPARATOR[0]
+                    // Previous character wasn't the first character of a windows line separator.
+                    // If it was this is already the correct line separator and should be ignored
+                    && (i == 0 || input[i - 1] != WINDOWS_LINE_SEPARATOR[0]))
 				{
 					// Found a line separator //
 					// Copy the current thing //
-					if(copyend >= copystart && copystart-copyend > 1)
-						results += input.substr(copystart, copyend-copystart+1);
+					if(copyparts.Start && copyparts.End)
+						results += input.substr(copyparts.Start, copyparts.Length());
 
-					results += StringConstants<StringTypeN, CharType>::WindowsLineSeparator;
+                    copyparts.Reset();
 
-					copystart = i+1 < input.size() ? i+1: i;
-					copyend = copystart;
-
-					i += 1;
+					results += separator;
 
 					continue;
 				}
 				
+                if (!copyparts.Start)
+                    copyparts.Start = i;
+
 				// Change the end copy //
-				copyend = i;
+                copyparts.End = i;
 			}
 
-			if(copyend >= copystart && copystart-copyend > 1)
-				results += input.substr(copystart, copyend-copystart+1);
-
+            if (copyparts.End && copyparts.Start)
+                results += input.substr(copyparts.Start, copyparts.Length());
 
 			return results;
 		}
 
 		//! \brief Changes all line separators to universal line separators
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN &input){
+		static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN &input){
 
 			StringTypeN results;
+
+            // This is the line ending sequence //
+            StringTypeN separator;
+            MakeString(separator, UNIVERSAL_LINE_SEPARATOR, 
+                sizeof(UNIVERSAL_LINE_SEPARATOR));
 
 			// Try to find path strings and replace them //
 			size_t copystart = 0;
 			size_t copyend = 0;
 
 			for(size_t i = 0; i < input.size(); i++){
-				if(input[i] == StringConstants<StringTypeN, CharType>::WindowsLineSeparator[0] &&
-                    i+1 < input.size() && input[i+1] == StringConstants<StringTypeN,
-                    CharType>::WindowsLineSeparator[1])
+				if(input[i] == WINDOWS_LINE_SEPARATOR[0] &&
+                    i+1 < input.size() && input[i+1] == WINDOWS_LINE_SEPARATOR[1])
 				{
 					// Found a line separator //
 					// Copy the current thing //
 					if(copyend >= copystart && copystart-copyend > 1)
 						results += input.substr(copystart, copyend-copystart+1);
 
-					results += StringConstants<StringTypeN, CharType>::UniversalLineSeparator;
+
+                    results += separator;
 
 					copystart = i+2 < input.size() ? i+2: i;
 					copyend = copystart;
@@ -336,7 +315,7 @@ namespace Leviathan{
 
 		// ------------------ General string operations ------------------ //
 		template<class StringTypeN>
-		DLLEXPORT static bool CutString(const StringTypeN &strtocut, const StringTypeN &separator,
+		static bool CutString(const StringTypeN &strtocut, const StringTypeN &separator,
             std::vector<StringTypeN>& vec)
         {
 			// scan the input and gather positions for string copying //
@@ -414,7 +393,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static int CountOccuranceInString(const StringTypeN &data,
+		static int CountOccuranceInString(const StringTypeN &data,
             const StringTypeN &lookfor)
         {
 
@@ -454,7 +433,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static StringTypeN Replace(const StringTypeN &data,
+		static StringTypeN Replace(const StringTypeN &data,
             const StringTypeN &toreplace, const StringTypeN &replacer)
         {
 			// We construct an output string from the wanted bits //
@@ -523,7 +502,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
+		static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
 
 			size_t firstpos = 0;
 			// Find the copy start position //
@@ -531,7 +510,7 @@ namespace Leviathan{
 			int words = 0;
 
 			for(size_t i = 0; i < data.length(); i++){
-				if(data[i] == StringConstants<StringTypeN, CharType>::SpaceCharacter){
+				if(data[i] == SPACE_CHARACTER){
 					spaces++;
 					continue;
 				}
@@ -556,7 +535,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static StringTypeN StitchTogether(const std::vector<StringTypeN*> &data,
+		static StringTypeN StitchTogether(const std::vector<StringTypeN*> &data,
             const StringTypeN &separator)
         {
 			StringTypeN ret;
@@ -586,7 +565,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static StringTypeN StitchTogether(
+		static StringTypeN StitchTogether(
             const std::vector<std::shared_ptr<StringTypeN>> &data, const StringTypeN &separator)
         {
 			StringTypeN ret;
@@ -615,7 +594,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static void RemovePreceedingTrailingSpaces(StringTypeN &str){
+		static void RemovePreceedingTrailingSpaces(StringTypeN &str){
 			StartEndIndex CutPositions;
 
 			// search the right part of the string //
@@ -675,7 +654,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static bool CompareInsensitive(const StringTypeN &data,
+		static bool CompareInsensitive(const StringTypeN &data,
             const StringTypeN &second)
         {
 			if(data.size() != second.size())
@@ -708,7 +687,7 @@ namespace Leviathan{
 		}
 
 		template<class StringTypeN>
-		DLLEXPORT static bool StringStartsWith(const StringTypeN &data,
+		static bool StringStartsWith(const StringTypeN &data,
             const StringTypeN &tomatch)
         {
 			size_t foundstop = data.find(tomatch);
@@ -716,13 +695,13 @@ namespace Leviathan{
 		}
         
 		template<class StringTypeN, typename CharType>
-		DLLEXPORT static bool IsStringNumeric(const StringTypeN &data){
+		static bool IsStringNumeric(const StringTypeN &data){
 			for(size_t i = 0; i < data.size(); i++){
-				if((data[i] < StringConstants<StringTypeN, CharType>::FirstNumber ||
-                        data[i] > StringConstants<StringTypeN, CharType>::LastNumber) &&
-					data[i] != StringConstants<StringTypeN, CharType>::Dash &&
-                    data[i] != StringConstants<StringTypeN, CharType>::DotCharacter &&
-					data[i] != StringConstants<StringTypeN, CharType>::PlusSymbol)
+				if((data[i] < FIRST_NUMBER ||
+                        data[i] > LAST_NUMBER) &&
+					data[i] != DASH_CHARACTER &&
+                    data[i] != DOT_CHARACTER &&
+					data[i] != PLUS_SYMBOL)
 				{
 					return false;
 				}
@@ -732,7 +711,7 @@ namespace Leviathan{
 
         //! \todo Make this work with any unicode characters
         template<class StringTypeN>
-        DLLEXPORT static StringTypeN ToUpperCase(const StringTypeN &data){
+        static StringTypeN ToUpperCase(const StringTypeN &data){
 
             StringTypeN result;
             result.reserve(data.size());
@@ -756,7 +735,7 @@ namespace Leviathan{
         }
 
         template<class StringTypeN>
-        DLLEXPORT static StringTypeN Indent(size_t numspaces) {
+        static StringTypeN Indent(size_t numspaces) {
 
             if (!numspaces)
                 return StringTypeN();
@@ -766,7 +745,7 @@ namespace Leviathan{
 
         //! \brief Appends spaces number of spaces to each line in str and returns the result
         template<class StringTypeN>
-        DLLEXPORT static StringTypeN IndentLines(const StringTypeN &str, size_t spaces) {
+        static StringTypeN IndentLines(const StringTypeN &str, size_t spaces) {
 
             const auto indentstr = Indent<StringTypeN>(spaces);
 
@@ -813,7 +792,7 @@ namespace Leviathan{
         }
 
         //! \returns True if a character is a line terminating character
-        DLLEXPORT static bool IsLineTerminator(int32_t codepoint) {
+        static bool IsLineTerminator(int32_t codepoint) {
 
             if (codepoint == '\r' || codepoint == '\n' ||
                 // Unicode newlines //
@@ -827,7 +806,7 @@ namespace Leviathan{
         }
 
         //! \returns True if two characters are a line terminating sequence
-        DLLEXPORT static bool IsLineTerminator(int32_t codepoint1, int32_t codepoint2) {
+        static bool IsLineTerminator(int32_t codepoint1, int32_t codepoint2) {
 
             if (codepoint1 == '\r' && codepoint2 == '\n')
             {
@@ -838,90 +817,90 @@ namespace Leviathan{
         }
 
 		// ------------------ Named non-template versions ------------------ //
-		DLLEXPORT FORCE_INLINE static const std::wstring GetExtensionWstring(
+		FORCE_INLINE static const std::wstring GetExtensionWstring(
             const std::wstring &filepath)
         {
 			return GetExtension<std::wstring, wchar_t>(filepath);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string GetExtensionString(
+		FORCE_INLINE static const std::string GetExtensionString(
             const std::string &filepath)
         {
 			return GetExtension<std::string, char>(filepath);
 		}
 
-		DLLEXPORT FORCE_INLINE static const std::wstring GetPathWstring(
+		FORCE_INLINE static const std::wstring GetPathWstring(
             const std::wstring &filepath)
         {
 			return GetPath<std::wstring, wchar_t>(filepath);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string GetPathString(const std::string &filepath){
+		FORCE_INLINE static const std::string GetPathString(const std::string &filepath){
             
 			return GetPath<std::string, char>(filepath);
 		}
 
-		DLLEXPORT FORCE_INLINE static const std::wstring RemoveExtensionWstring(
+		FORCE_INLINE static const std::wstring RemoveExtensionWstring(
             const std::wstring &filepath, bool delpath = true)
         {
 			return RemoveExtension<std::wstring, wchar_t>(filepath, delpath);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string RemoveExtensionString(
+		FORCE_INLINE static const std::string RemoveExtensionString(
             const std::string &filepath, bool delpath = true)
         {
 			return RemoveExtension<std::string, char>(filepath, delpath);
 		}
 
-		DLLEXPORT FORCE_INLINE static const std::wstring ChangeExtensionWstring(
+		FORCE_INLINE static const std::wstring ChangeExtensionWstring(
             const std::wstring &filepath, const std::wstring &newext)
         {
 			return ChangeExtension<std::wstring, wchar_t>(filepath, newext);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string ChangeExtensionString(
+		FORCE_INLINE static const std::string ChangeExtensionString(
             const std::string &filepath, const std::string &newext)
         {
 			return ChangeExtension<std::string, char>(filepath, newext);
 		}
 
-		DLLEXPORT FORCE_INLINE static const std::wstring RemovePathWstring(
+		FORCE_INLINE static const std::wstring RemovePathWstring(
             const std::wstring &filepath)
         {
 			return RemovePath<std::wstring, wchar_t>(filepath);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string RemovePathString(
+		FORCE_INLINE static const std::string RemovePathString(
             const std::string &filepath)
         {
 			return RemovePath<std::string, char>(filepath);
 		}
 
-		DLLEXPORT FORCE_INLINE static const std::wstring ChangeLineEndsToUniversalWstring(
+		FORCE_INLINE static const std::wstring ChangeLineEndsToUniversalWstring(
             const std::wstring &input)
         {
 				return ChangeLineEndsToUniversal<std::wstring, wchar_t>(input);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string ChangeLineEndsToUniversalString(
+		FORCE_INLINE static const std::string ChangeLineEndsToUniversalString(
             const std::string &input)
         {
 			return ChangeLineEndsToUniversal<std::string, char>(input);
 		}
 
-		DLLEXPORT FORCE_INLINE static const std::wstring ChangeLineEndsToWindowsWstring(
+		FORCE_INLINE static const std::wstring ChangeLineEndsToWindowsWstring(
             const std::wstring &input)
         {
 			return ChangeLineEndsToWindows<std::wstring, wchar_t>(input);
 		}
         
-		DLLEXPORT FORCE_INLINE static const std::string ChangeLineEndsToWindowsString(
+		FORCE_INLINE static const std::string ChangeLineEndsToWindowsString(
             const std::string &input)
         {
 			return ChangeLineEndsToWindows<std::string, char>(input);
 		}
 
-        DLLEXPORT FORCE_INLINE static std::string IndentLinesString(const std::string &str, size_t spaces) {
+        FORCE_INLINE static std::string IndentLinesString(const std::string &str, size_t spaces) {
             return IndentLines<std::string>(str, spaces);
         }
 
@@ -929,7 +908,6 @@ namespace Leviathan{
 		StringOperations();
 		~StringOperations();
 	};
-
 
 
 }

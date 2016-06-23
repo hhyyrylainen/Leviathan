@@ -523,7 +523,7 @@ if(USE_OGRE)
     ${OGRE_Plugin_CgProgramManager_LIBRARIES} 
     ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
     ${OGRE_RenderSystem_GL_LIBRARIES} ${OGRE_RenderSystem_GL3_LIBRARIES}
-    ${SFML_LIBRARIES} ${OIS_LIBRARIES})
+    ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${cAudio_LIBRARIES})
   
   MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
   list(APPEND ALL_DYNAMIC_LIBRARIES ${RawFilesToMove})

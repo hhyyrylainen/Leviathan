@@ -95,6 +95,24 @@ else()
     "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
     )
 
+  set(GroupNetworking
+    "Networking/Connection.cpp" "Networking/Connection.h"
+    "Networking/GameSpecificPacketHandler.cpp" "Networking/GameSpecificPacketHandler.h"
+    "Networking/MasterServer.cpp" "Networking/MasterServer.h"
+    "Networking/NetworkCache.cpp" "Networking/NetworkCache.h"
+    "Networking/NetworkClientInterface.cpp" "Networking/NetworkClientInterface.h"
+    "Networking/NetworkHandler.cpp" "Networking/NetworkHandler.h"
+    "Networking/NetworkInterface.cpp" "Networking/NetworkInterface.h"
+    "Networking/NetworkRequest.cpp" "Networking/NetworkRequest.h"
+    "Networking/NetworkResponse.cpp" "Networking/NetworkResponse.h"
+    "Networking/NetworkServerInterface.cpp" "Networking/NetworkServerInterface.h"
+    "Networking/NetworkedInput.cpp" "Networking/NetworkedInput.h"
+    "Networking/NetworkedInputHandler.cpp" "Networking/NetworkedInputHandler.h"
+    "Networking/RemoteConsole.cpp" "Networking/RemoteConsole.h"
+    "Networking/SyncedResource.cpp" "Networking/SyncedResource.h"
+    "Networking/SyncedVariables.cpp" "Networking/SyncedVariables.h"
+    )
+  
   
   file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
   file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
@@ -116,7 +134,7 @@ else()
   file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
   file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
 
-  file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
+
   file(GLOB GroupStatistics "Statistics/*.cpp" "Statistics/*.h")
 
   file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")

@@ -22,19 +22,13 @@ void FakeKeepAlive(ConnectionInfo &from, ConnectionInfo &to){
     to.HandlePacket(packet);
 }
 
-TEST_CASE("ConnectionInfo opening and basic acks", "networking"){
+TEST_CASE("Ack field filling", "networking"){
 
     // We cannot test any client or server specific code, so hopefully using master disables those
     PartialEngine<false, NETWORKED_TYPE_MASTER> engine;
 
-    ConnectionInfo client(sf::IpAddress::LocalHost, 256);
-    ConnectionInfo server(sf::IpAddress::LocalHost, 255);
+    ConnectionInfo conn(sf::IpAddress::LocalHost, 256);
 
-    REQUIRE(client.Init());
-    REQUIRE(server.Init());
 
-    // Lets fake some packets //
-    FakeKeepAlive(client, server);
-    
     
 }

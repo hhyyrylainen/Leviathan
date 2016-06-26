@@ -414,7 +414,7 @@ if(DOXYGEN_FOUND)
   
   configure_file("${PROJECT_SOURCE_DIR}/LeviathanDoxy.in"
     "${PROJECT_BINARY_DIR}/LeviathanDoxy" @ONLY)
-    add_custom_target(doc
+  add_custom_target(doc
     ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/LeviathanDoxy
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating API documentation with Doxygen" VERBATIM

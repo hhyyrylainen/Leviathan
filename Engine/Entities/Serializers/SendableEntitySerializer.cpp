@@ -88,7 +88,8 @@ DLLEXPORT bool SendableEntitySerializer::CreatePacketForConnection(GameWorld* wo
                 auto& parent = world->GetComponent<Parent>(id);
                 auto& positions = world->GetComponent<PositionMarkerOwner>(id);
 
-                packet << track.ReachedNode << track.NodeProgress << track.ChangeSpeed <<
+                packet << static_cast<int32_t>(track.ReachedNode) <<
+                    track.NodeProgress << track.ChangeSpeed <<
                     track.ForceTowardsPoint;
 
                 parent.AddDataToPacket(packet);

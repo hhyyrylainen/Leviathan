@@ -1478,8 +1478,6 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(shared_ptr<Network
     
     GUARD_LOCK();
 
-    cout << "Update: " << data->TickNumber << "\n";
-
     EntityUpdatePackets.push_back(message);
 }
 

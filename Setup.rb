@@ -1,4 +1,5 @@
 #!/bin/ruby
+# coding: utf-8
 # Setup script for Leviathan
 # Downloads the assets and dependencies and then builds and installs them
 # TODO: remove awk usage
@@ -34,7 +35,7 @@ SkipPullUpdates = false
 OnlyDependencies = false
 
 # If true skips all dependencies and only tries to configure Leviathan
-OnlyLeviathan = true
+OnlyLeviathan = false
 
 # If true new version of depot tools and breakpad won't be fetched on install
 NoBreakpadUpdateOnWindows = false

@@ -95,8 +95,14 @@
 // Json-cpp //
 #define JSON_DLL_BUILD
 #else
+
+#ifdef _WIN32
 #define DLLEXPORT __declspec( dllimport )
-//#define DLLEXPORT
+#else
+#define DLLEXPORT 
+#endif
+
+
 #define JSON_DLL
 #endif // ENGINE_EXPORTS
 #endif

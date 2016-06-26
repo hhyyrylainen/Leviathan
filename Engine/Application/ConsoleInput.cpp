@@ -4,6 +4,12 @@
 #include <stdio.h>
 using namespace Leviathan;
 // ------------------------------------ //
+#ifdef __unix__
+
+#include <unistd.h>
+
+#endif
+
 
 ConsoleInput::~ConsoleInput(){
 

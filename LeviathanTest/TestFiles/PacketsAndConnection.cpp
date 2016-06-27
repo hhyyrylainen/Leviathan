@@ -1,4 +1,4 @@
-#include "Networking/ConnectionInfo.h"
+#include "Networking/Connection.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkRequest.h"
 
@@ -9,25 +9,39 @@
 using namespace std;
 using namespace Leviathan;
 
-void FakeKeepAlive(ConnectionInfo &from, ConnectionInfo &to){
-
-    sf::Packet packet;
-
-    auto data = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
-
-    data->GenerateKeepAliveResponse();
-
-    from.CreateFullSendablePacket(data, packet);
+class TestClientInterface : public NetworkClientInterface {
+public:
     
-    to.HandlePacket(packet);
+    
+};
+
+class TestServerInterface : public NetworkServerInterface {
+public:
+    
+
+};
+
+TEST_CASE("Connect to localhost socket", "networking"){
+
+    PartialEngine<false, NETWORKED_TYPE_MASTER> engine;
+
+
+    TestClientInterface ClientInterface;
+    NetworkHandler Client;
+    
+    TestServerInterface ServerInterface;
+    NetworkHandler Server;
+
 }
+
 
 TEST_CASE("Ack field filling", "networking"){
 
-    // We cannot test any client or server specific code, so hopefully using master disables those
+    // We cannot test any client or server specific code,
+    // so hopefully using master disables those
     PartialEngine<false, NETWORKED_TYPE_MASTER> engine;
 
-    ConnectionInfo conn(sf::IpAddress::LocalHost, 256);
+    Connection conn(sf::IpAddress::LocalHost, 256);
 
 
     

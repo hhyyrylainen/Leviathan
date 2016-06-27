@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_NETWORKINTERFACE
 #include "NetworkInterface.h"
-#endif
+
 #include "Exceptions.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
@@ -14,16 +13,18 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkInterface::NetworkInterface() : OurNetworkType(NETWORKED_TYPE_BASE_ERROR){
+DLLEXPORT NetworkInterface::NetworkInterface(NETWORKED_TYPE type) :
+    OurNetworkType(type)
+{
 
 }
 
-DLLEXPORT Leviathan::NetworkInterface::~NetworkInterface(){
+DLLEXPORT NetworkInterface::~NetworkInterface(){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<NetworkRequest> request, ConnectionInfo*
-    connection) 
+DLLEXPORT void NetworkInterface::HandleRequestPacket(
+    shared_ptr<NetworkRequest> request, Connection &connection) 
 {
 	// We can only try the default handle function //
 	if(!_HandleDefaultRequest(request, connection)){
@@ -33,14 +34,14 @@ DLLEXPORT void Leviathan::NetworkInterface::HandleRequestPacket(shared_ptr<Netwo
 	}
 }
 
-DLLEXPORT bool Leviathan::NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response,
-    std::shared_ptr<NetworkRequest> originalrequest, ConnectionInfo* connection)
+DLLEXPORT bool NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response,
+    std::shared_ptr<NetworkRequest> originalrequest, Connection &connection)
 {
 	return true;
 }
 // ------------------------------------ //
-bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connectiontosendresult)
+bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
+    Connection &connectiontosendresult)
 {
 	// Switch based on type //
 
@@ -102,8 +103,8 @@ bool Leviathan::NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkReques
 	return false;
 }
 // ------------------------------------ //
-bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, ConnectionInfo*
-    connection, bool &dontmarkasreceived)
+bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, Connection
+    &connection, bool &dontmarkasreceived)
 {
 
 	// See if it is a sync packet //
@@ -130,8 +131,9 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
         case NETWORKRESPONSETYPE_CLOSECONNECTION:
 		{
 			// This connection should be closed //
-			Logger::Get()->Info("NetworkInterface: dropping connection due to receiving a connection close packet ("+
-				connection->GenerateFormatedAddressString()+")");
+			Logger::Get()->Info("NetworkInterface: dropping connection due to "
+                "receiving a connection close packet (" +
+                connection->GenerateFormatedAddressString() + ")");
 
 			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
 			return true;
@@ -158,16 +160,21 @@ bool Leviathan::NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkR
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkInterface::CanConnectionTerminate(ConnectionInfo* connection){
+DLLEXPORT bool NetworkInterface::CanConnectionTerminate(Connection &connection){
 	// By default allow connections to close //
 	return true;
 }
 // ------------------------------------ //
-void Leviathan::NetworkInterface::_SetNetworkType(NETWORKED_TYPE ntype){
-	OurNetworkType = ntype;
-}
-
-DLLEXPORT void Leviathan::NetworkInterface::TickIt(){
+DLLEXPORT void NetworkInterface::TickIt(){
 	return;
 }
+// ------------------------------------ //
+DLLEXPORT void NetworkInterface::VerifyType(NETWORKED_TYPE type) const{
 
+    LEVIATHAN_ASSERT(type == OurNetworkType, "NetworkInterface::VerifyType doesn't match");
+}
+// ------------------------------------ //
+DLLEXPORT void NetworkInterface::SetOwner(NetworkHandler* owner){
+
+    Owner = owner;
+}

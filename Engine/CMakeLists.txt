@@ -111,6 +111,8 @@ else()
     "Networking/RemoteConsole.cpp" "Networking/RemoteConsole.h"
     "Networking/SyncedResource.cpp" "Networking/SyncedResource.h"
     "Networking/SyncedVariables.cpp" "Networking/SyncedVariables.h"
+    "Networking/ConnectedPlayer.cpp" "Networking/ConnectedPlayer.h"
+    "Networking/CommonNetwork.h"
     )
   
   

@@ -15,7 +15,7 @@
 #include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
-#include "Networking/AINetworkCache.h"
+#include "Networking/NetworkCache.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/NetworkedInputHandler.h"
 #include "Networking/RemoteConsole.h"
@@ -317,13 +317,6 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 
 	}
 
-    _AINetworkCache = new AINetworkCache(ntype != NETWORKED_TYPE_CLIENT);
-    if(!_AINetworkCache || !_AINetworkCache->Init()){
-
-        Logger::Get()->Error("Engine: Init: failed to create AINetworkCache");
-        return false;
-    }
-    
 	// We need to wait for all current tasks to finish //
 	_ThreadingManager->WaitForAllTasksToFinish();
 

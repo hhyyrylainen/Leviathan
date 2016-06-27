@@ -22,48 +22,46 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype,
     NetworkInterface* packethandler) 
 	: AppType(ntype), CloseMasterServerConnection(false), UpdaterThreadStop(false)
 {
-	instance = this;
-	interfaceinstance = packethandler;
+    // This will assert if we were passed the wrong type
+    packethandler->VerifyType(AppType);
+    packethandler->SetOwner(this);
+    
+    if(AppType == NETWORKED_TYPE::Client){
 
-	// Set our type to the NetworkInteface //
-    if(interfaceinstance)
-        interfaceinstance->_SetNetworkType(AppType);
+        ClientInterface = dynamic_cast<NetworkClientInterface*>(packethandler);
+        
+    } else if(AppType == NETWORKED_TYPE::Server){
 
+        ServerInterface = dynamic_cast<NetworkServerInterface*>(packethandler);
+    }
+    
 	// Create the variable syncer //
-	VariableSyncer = new SyncedVariables(this, AppType == NETWORKED_TYPE_SERVER,
-        interfaceinstance);
+	VariableSyncer = std::make_unique<SyncedVariables>(this, AppType, packethandler);
+
+    _NetworkCache = std::make_unique<NetworkCache>(AppType);
+    
+    if(!_NetworkCache || !_NetworkCache->Init()){
+
+        LOG_ERROR("NetworkHandler: failed to create NetworkCache");
+        LEVIATHAN_ASSERT(0, "NetworkHandler: failed to create NetworkCache");
+    }
 
 	// Create the custom packet handler //
-	_GameSpecificPacketHandler = new GameSpecificPacketHandler(interfaceinstance);
+	_GameSpecificPacketHandler = std::make_unique<GameSpecificPacketHandler>(
+        interfaceinstance);
 }
 
-DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
-	instance = NULL;
-
-	SAFE_DELETE(VariableSyncer);
-	SAFE_DELETE(_GameSpecificPacketHandler);
+DLLEXPORT NetworkHandler::~NetworkHandler(){
+    
 }
-
-DLLEXPORT NetworkHandler* Leviathan::NetworkHandler::Get(){
-	return instance;
-}
-
-DLLEXPORT NetworkInterface* Leviathan::NetworkHandler::GetInterface(){
-	return interfaceinstance;
-}
-
-NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
-NetworkInterface* Leviathan::NetworkHandler::interfaceinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
 
-    GUARD_LOCK();
-
 	MasterServerMustPassIdentification = info.MasterServerIdentificationString;
 
-	if(AppType != NETWORKED_TYPE_MASTER){
+	if(AppType != NETWORKED_TYPE::Master){
 		// Query master server //
-		QueryMasterServer(guard, info);
+		QueryMasterServer(info);
 
 	} else {
 		// We are our own master! //
@@ -82,11 +80,11 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 		PortNumber = (unsigned short)tmpport;
 	}
 
-	if(AppType == NETWORKED_TYPE_CLIENT){
+	if(AppType == NETWORKED_TYPE::Client){
 		// We can use any port we get //
 		PortNumber = sf::Socket::AnyPort;
 
-	} else if(AppType == NETWORKED_TYPE_SERVER){
+	} else if(AppType == NETWORKED_TYPE::Server){
 		// We need to use a specific port //
 		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
@@ -104,7 +102,7 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 	// We want to receive responses //
 	if(_Socket.bind(PortNumber) != sf::Socket::Done){
 
-		Logger::Get()->Error("NetworkHandler: Init: failed to bind to a port "+
+		Logger::Get()->Error("NetworkHandler: Init: failed to bind to port "+
             Convert::ToString(PortNumber));
 		return false;
 	}
@@ -141,29 +139,19 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
             MasterServerConnection->Release();
         }
 
-        {
-            {
-                Lock lock(AutoOpenedConnectionsMutex);
-        
-                // Close all connections //
-                for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
+        // Close all connections //
+        for(auto& connection : OpenConnections){
 
-                    AutoOpenedConnections[i]->Release();
-                }
-
-                AutoOpenedConnections.clear();
-            }
-
-            MasterServerConnectionThread.join();
-            MasterServerConnection.reset();
+            connection->Release();
         }
+
+        OpenConnections.clear();
+
+        MasterServerConnectionThread.join();
+        MasterServerConnection.reset();
     
         // This might have been left on by accident
         StopOwnUpdaterThread(guard);
-
-        // Set the static instance to nothing //
-        instance = NULL;
-
     }
     
     _ReleaseSocket();
@@ -227,10 +215,10 @@ void Leviathan::NetworkHandler::_SaveMasterServerList(){
 		}
 	}
 
-	NamedVars headervars(new NamedVariableList("MasterServers", vals));
+	NamedVars headervars;
+    headervars.Add(std::make_shared<NamedVariableList>("MasterServers", vals));
 
 	ObjectFile file(headervars);
-
 
 	ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile,
         Logger::Get());
@@ -263,8 +251,8 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 	MasterServers.reserve(maxval);
 
 	for(size_t i = 0; i < maxval; i++){
-		MasterServers.push_back(unique_ptr<string>(new string(
-                    foundvar->GetValueDirect(i)->ConvertAndReturnVariable<string>())));
+		MasterServers.push_back(unique_ptr<string>(new std::string(
+                    foundvar->GetValueDirect(i)->ConvertAndReturnVariable<std::string>())));
 	}
 
 	return true;
@@ -287,68 +275,44 @@ DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
-    // Remove closed connections //
-    RemoveClosedConnections();
-
     // Update remote console sessions if they exist //
     auto rconsole = RemoteConsole::Get();
     if(rconsole)
         rconsole->UpdateStatus();
-        
 
-    {
-        Lock lock(ConnectionsToUpdateMutex);
-        
+    GUARD_LOCK();
+    
+    {   
+        // Remove closed connections //
+        RemoveClosedConnections(guard);
+
         // Time-out requests //
-        for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
+        for(auto& connection : OpenConnections){
 
-            auto connection = ConnectionsToUpdate[i];
-
-            GUARD_LOCK_OTHER(connection);
-
-            connection->UpdateListening(guard);
+            connection->UpdateListening();
         }
     }
-
+    
 	// Interface might want to do something //
-	interfaceinstance->TickIt();
+	GetInterface()->TickIt();
 }
 // ------------------------------------ //
-void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
-
-    Lock lock(ConnectionsToUpdateMutex);
-	ConnectionsToUpdate.push_back(tomanage);
-}
-
-void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
-
-    Lock lock(ConnectionsToUpdateMutex);
-    
-	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
-		if((*iter) == unregisterme){
-
-			ConnectionsToUpdate.erase(iter);
-			return;
-		}
-	}
-}
-
 Lock Leviathan::NetworkHandler::LockSocketForUse(){
     
 	return Lock((SocketMutex));
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
+DLLEXPORT void NetworkHandler::CloseConnection(Connection &to){
 
     Lock lock(ConnectionsToTerminateMutex);
 
     // Return if it is already queued //
 	for(auto& connection : ConnectionsToTerminate){
-		if(connection == to)
+		if(connection == &to)
 			return;
 	}
 
-	ConnectionsToTerminate.push_back(to);
+	ConnectionsToTerminate.push_back(&to);
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
@@ -361,29 +325,28 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 	// Go through the removed connection list and remove them //
 	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
 
-        auto connection = ConnectionsToTerminate[i];
+        auto unsafe = ConnectionsToTerminate[i];
 
         ConnectionsToTerminate.erase(ConnectionsToTerminate.begin()+i);
 
         terminatelock.unlock();
-        
-		// Send a close packet //
-		connection->SendCloseConnectionPacket();
-
-		// Close it //
-        // The connection will automatically remove itself from the vector //
-		connection->Release();
 
         {
-            Lock openedlock(AutoOpenedConnectionsMutex);
-        
-            // But if we have opened it we need to delete our pointer //
-            auto end = AutoOpenedConnections.end();
-            for(auto iter = AutoOpenedConnections.begin(); iter != end; ++iter){
-            
-                if((*iter).get() == connection){
-                
-                    AutoOpenedConnections.erase(iter);
+            GUARD_LOCK();
+
+            for(size_t a = 0; a < OpenConnections.size(); ++a){
+
+                if(OpenConnections[a] == unsafe){
+
+                    auto& connection = OpenConnections[a];
+
+                    // Send a close packet //
+                    connection->SendCloseConnectionPacket();
+
+                    // Close it //
+                    connection->Release();
+
+                    connection.reset();
                     break;
                 }
             }
@@ -393,13 +356,19 @@ DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT unsigned short Leviathan::NetworkHandler::GetOurPort(){
-	auto lock = LockSocketForUse();
-	return _Socket.getLocalPort();
-}
+DLLEXPORT std::shared_ptr<Connection> NetworkHandler::GetConnection(Connection* directptr)
+    const
+{
 
-DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType() const{
-	return AppType;
+    GUARD_LOCK();
+
+    for(auto& connection : OpenConnections){
+
+        if(connection.get() == directptr)
+            return connection;
+    }
+
+    return nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(
@@ -420,19 +389,6 @@ DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnect
 	AutoOpenedConnections.push_back(tmpconnection);
 
 	return tmpconnection;
-}
-
-DLLEXPORT std::shared_ptr<ConnectionInfo> NetworkHandler::GetSafePointerToConnection(
-    ConnectionInfo* unsafeptr)
-{
-    Lock autolock(AutoOpenedConnectionsMutex);
-    
-	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
-		if(iter->get() == unsafeptr)
-			return *iter;
-	}
-
-	return NULL;
 }
 
 DLLEXPORT std::shared_ptr<ConnectionInfo> NetworkHandler::GetOrCreatePointerToConnection(

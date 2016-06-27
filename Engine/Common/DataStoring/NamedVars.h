@@ -202,6 +202,10 @@ namespace Leviathan{
 
 		DLLEXPORT ~NamedVars();
 		// ------------------------------------ //
+
+        //! \brief Adds a value
+        //! \returns True if created new, false if updated an existing value
+        DLLEXPORT bool Add(std::shared_ptr<NamedVariableList> value);
 		DLLEXPORT bool SetValue(const std::string &name, const VariableBlock &value1);
 		DLLEXPORT bool SetValue(const std::string &name, VariableBlock* value1);
 		DLLEXPORT bool SetValue(const std::string &name, const

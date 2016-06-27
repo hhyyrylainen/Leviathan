@@ -1,9 +1,8 @@
-#include "Include.h"
 // ------------------------------------ //
 #include "NetworkServerInterface.h"
 
 #include "NetworkRequest.h"
-#include "ConnectionInfo.h"
+#include "Connection.h"
 #include "Gameplay/CommandHandler.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
@@ -15,10 +14,8 @@ using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(
     int maxplayers, const std::string &servername, 
-	NETWORKRESPONSE_SERVERJOINRESTRICT restricttype
-    /*= NETWORKRESPONSE_SERVERJOINRESTRICT_NONE*/, int additionalflags /*= 0*/) :
+	SERVER_JOIN_RESTRICT restricttype, int additionalflags /*= 0*/) :
     MaxPlayers(maxplayers), ServerName(servername), JoinRestrict(restricttype),
-    ServerStatus(NETWORKRESPONSE_SERVERSTATUS_STARTING),
     ExtraServerFlags(additionalflags),
     _CommandHandler(new CommandHandler(this))
 {
@@ -32,7 +29,6 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 	// Release the memory //
 	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
 
-		delete (*iter);
 		// Can't report errors at this point, but maybe we should //
         cout << "Warning! server quitting while playerlist has data in it" << endl;
         
@@ -64,7 +60,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(ConnectionInfo* connection){
+DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(Connection* connection){
 	GUARD_LOCK();
 	// Search through the connections //
     Lock plylock(PlayerListLocked);
@@ -80,7 +76,7 @@ DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnec
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::RespondToServerStatusRequest(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connectiontouse)
+    Connection* connectiontouse)
 {
 	// Gather info for a response //
 	shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
@@ -113,7 +109,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SetServerAllowPlayers(bool all
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connectiontosendresult)
+    Connection* connectiontosendresult)
 {
 	// Try to handle input packet if we have the proper handler //
 	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(request, connectiontosendresult)){
@@ -180,7 +176,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(shared_pt
 }
 
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shared_ptr<NetworkResponse> message,
-    ConnectionInfo* connection, bool &dontmarkasreceived)
+    Connection* connection, bool &dontmarkasreceived)
 {
 	// Try to handle input packet if we have the proper handler //
 	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
@@ -216,7 +212,7 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(shar
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connection)
+    Connection* connection)
 {
 	GUARD_LOCK();
 
@@ -347,12 +343,12 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::PlayerPotentiallyKicked(Connec
 }
 
 DLLEXPORT bool Leviathan::NetworkServerInterface::AllowPlayerConnectVeto(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connection, std::string &message)
+    Connection* connection, std::string &message)
 {
 	return true;
 }
 
-DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(ConnectionInfo* connection,
+DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(Connection* connection,
     std::shared_ptr<NetworkRequest> joinrequest)
 {
 
@@ -372,7 +368,7 @@ void Leviathan::NetworkServerInterface::_OnReportCloseConnection(ConnectedPlayer
     _OnPlayerDisconnect(guard, plyptr);
 }
 
-void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(ConnectedPlayer* plyptr, ConnectionInfo* connection,
+void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(ConnectedPlayer* plyptr, Connection* connection,
     Lock &guard)
 {
 	VerifyLock(guard);
@@ -453,7 +449,7 @@ DLLEXPORT NetworkedInputHandler* Leviathan::NetworkServerInterface::GetNetworked
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(shared_ptr<NetworkResponse> response,
-    ConnectionInfo* skipme, int resendcount /*= 4*/)
+    Connection* skipme, int resendcount /*= 4*/)
 {
 	GUARD_LOCK();
 
@@ -463,7 +459,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(shared_p
 	auto end = ServerPlayers.end();
 	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
 
-		ConnectionInfo* curconnection = (*iter)->GetConnection();
+		Connection* curconnection = (*iter)->GetConnection();
 
 		if(curconnection != skipme){
 
@@ -504,184 +500,3 @@ DLLEXPORT void Leviathan::NetworkServerInterface::VerifyWorldIsSyncedWithPlayers
 }
 // ------------------------------------ //
 
-int Leviathan::NetworkServerInterface::CurrentPlayerID = 1000;
-// ------------------ ConnectedPlayer ------------------ //
-Leviathan::ConnectedPlayer::ConnectedPlayer(ConnectionInfo* unsafeconnection, NetworkServerInterface* owninginstance,
-    int plyid) : 
-	CorrespondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true), UsingHeartbeats(false),
-    IsControlLost(false), SecondsWithoutConnection(0.f), ID(plyid)
-{
-	// Register us //
-	this->ConnectToNotifier(unsafeconnection);
-}
-
-DLLEXPORT Leviathan::ConnectedPlayer::~ConnectedPlayer(){
-	GUARD_LOCK();
-	_OnReleaseParentCommanders(guard);
-}
-// ------------------------------------ //
-void Leviathan::ConnectedPlayer::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierAll* parenttoremove, Lock &parentlock)
-{
-
-    GUARD_LOCK_OTHER_NAME(Owner, guard2);
-    Owner->_OnPlayerConnectionCloseResources(guard2, this);
-
-    // Set as closing //
-    ConnectionStatus = false;
-
-    CorrespondingConnection = NULL;
-
-	Logger::Get()->Info("ConnectedPlayer: connection marked as closed");
-}
-
-DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(ConnectionInfo* checkconnection){
-	GUARD_LOCK();
-
-	return CorrespondingConnection->GenerateFormatedAddressString() ==
-        checkconnection->GenerateFormatedAddressString();
-}
-
-DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYoursPtrCompare(ConnectionInfo* checkconnection){
-	return CorrespondingConnection == checkconnection;
-}
-
-DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionClosed() const{
-	return !ConnectionStatus;
-}
-
-DLLEXPORT void Leviathan::ConnectedPlayer::OnKicked(const std::string &reason){
-	{
-		// Send a close connection packet //
-		GUARD_LOCK();
-
-		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
-
-		if(connection){
-
-			// \todo Add the reason here
-			connection->SendCloseConnectionPacket();
-		}
-
-
-		// No longer connected //
-		ConnectionStatus = false;
-	}
-
-	// Broadcast a kick message on the server here //
-
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::ConnectedPlayer::StartHeartbeats(){
-	GUARD_LOCK();
-
-	// Send a start packet //
-	auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
-
-	if(!connection){
-
-		ConnectionStatus = false;
-		return;
-	}
-
-	// Create the packet and THEN send it //
-	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
-	response->GenerateStartHeartbeatsResponse();
-
-	connection->SendPacketToConnection(response, 7);
-
-	// Reset our variables //
-	UsingHeartbeats = true;
-
-	LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
-	LastSentHeartbeat = LastReceivedHeartbeat;
-	SecondsWithoutConnection = 0.f;
-}
-
-DLLEXPORT void Leviathan::ConnectedPlayer::HeartbeatReceived(){
-	// Reset all timers //
-	GUARD_LOCK();
-
-	LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
-
-	// Re-acquire controls, if lost in the first place //
-	if(IsControlLost){
-
-		
-		IsControlLost = false;
-	}
-
-}
-
-DLLEXPORT void Leviathan::ConnectedPlayer::UpdateHeartbeats(){
-	// Skip if not used //
-	if(!UsingHeartbeats)
-		return;
-
-	GUARD_LOCK();
-
-	// Check do we need to send one //
-	auto timenow = Time::GetThreadSafeSteadyTimePoint();
-
-	if(timenow >= LastSentHeartbeat+MillisecondDuration(SERVER_HEARTBEATS_MILLISECOND)){
-
-		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
-
-		if(!connection){
-
-			ConnectionStatus = false;
-			return;
-		}
-
-		// Send one //
-		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 30));
-		response->GenerateHeartbeatResponse();
-
-		connection->SendPacketToConnection(response, 1);
-
-		LastSentHeartbeat = timenow;
-	}
-
-	// Update the time without a response //
-	SecondsWithoutConnection = SecondDuration(timenow-LastReceivedHeartbeat).count();
-
-	// Do something if the time is too high //
-	if(SecondsWithoutConnection >= 2.f){
-
-
-		IsControlLost = true;
-	}
-}
-// ------------------------------------ //
-DLLEXPORT const string& Leviathan::ConnectedPlayer::GetUniqueName(){
-	return UniqueName;
-}
-
-DLLEXPORT const string& Leviathan::ConnectedPlayer::GetNickname(){
-	return DisplayName;
-}
-
-DLLEXPORT COMMANDSENDER_PERMISSIONMODE Leviathan::ConnectedPlayer::GetPermissionMode(){
-	return COMMANDSENDER_PERMISSIONMODE_NORMAL;
-}
-
-DLLEXPORT bool Leviathan::ConnectedPlayer::_OnSendPrivateMessage(const string &message){
-	
-	Logger::Get()->Write("Probably should implement a ChatManager");
-	return false;
-}
-
-DLLEXPORT ConnectionInfo* Leviathan::ConnectedPlayer::GetConnection(){
-	return CorrespondingConnection;
-}
-
-DLLEXPORT int Leviathan::ConnectedPlayer::GetID() const{
-	return ID;
-}
-// ------------------------------------ //
-DLLEXPORT ObjectID Leviathan::ConnectedPlayer::GetPositionInWorld(GameWorld* world, Lock &guard)
-    const
-{
-	// Not found for that world //
-	return 0;
-}

@@ -18,10 +18,15 @@
 namespace Leviathan{
 
 //! Number of milliseconds between engine and world ticks
-static const int TICKSPEED = 50;
+static const auto TICKSPEED = 50;
 
 //! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
-static const int INTERPOLATION_TIME  = 100;
+static const auto INTERPOLATION_TIME = 100;
+
+//! Defines the interval between heartbeats
+//! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
+static const auto HEARTBEATS_MILLISECOND = 180;
+
     
 //! For checking vector normalization
 static const float NORMALIZATION_TOLERANCE = 1e-6f;

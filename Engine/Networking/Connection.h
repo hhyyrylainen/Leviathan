@@ -254,6 +254,13 @@ public:
     DLLEXPORT bool Init(NetworkHandler* owninghandler);
     DLLEXPORT void Release();
 
+    //! \brief Returns true if this connection is valid for sending
+    inline bool IsOpen() const{
+        return State == CONNECTION_STATE::Connected ||
+            State == CONNECTION_STATE::Secured ||
+            State == CONNECTION_STATE::Authenticated;
+    }
+    
     //! \brief Adds special restriction on the connection
     DLLEXPORT void SetRestrictionMode(CONNECTION_RESTRICTION type);
 

@@ -6,6 +6,7 @@
 // ------------------------------------ //
 #include "Common/SFMLPackets.h"
 #include "CommonNetwork.h"
+#include "Entities/Objects/Constraints.h"
 #include "Exceptions.h"
 
 #include "GameSpecificPacketHandler.h"

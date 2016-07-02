@@ -131,6 +131,16 @@ public:
 
         return nullptr;
     }
+
+    //! \brief Destroys the network cache permanently
+    //!
+    //! Called by the engine when quitting the game
+    DLLEXPORT void ShutdownCache();
+
+    //! \brief Destroys the networked input handler and all input objects
+    //!
+    //! Called by the engine when quitting the game
+    DLLEXPORT void ReleaseInputHandler();
     
     //! \brief Marks a connection as closing
     //!

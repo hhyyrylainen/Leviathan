@@ -1,7 +1,7 @@
 // ------------------------------------ //
 #include "RemoteConsole.h"
 
-#include "ConnectionInfo.h"
+#include "Connection.h"
 #include "Application/Application.h"
 #include "../TimeIncludes.h"
 #include "NetworkRequest.h"
@@ -78,7 +78,7 @@ DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, c
                 onlylocalhost, timeout)));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* connection,
+DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(Connection* connection,
     std::shared_ptr<NetworkRequest> request)
 {
 	// Get data from the packet //
@@ -151,7 +151,7 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(ConnectionInfo* co
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(ConnectionInfo* connectiontouse,
+DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(Connection* connectiontouse,
     const std::string &connectionname, int token)
 {
 	GUARD_LOCK();
@@ -191,7 +191,7 @@ void Leviathan::RemoteConsole::_OnNotifierDisconnected(Lock &guard,
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connection)
+    Connection* connection)
 {
 	// First check if it should be handled by CanOpenNewConnection which handless all open connection packets //
 	if(request->GetType() == NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE || request->GetType() ==
@@ -220,7 +220,7 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(shared
 }
 
 DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleResponse(shared_ptr<NetworkResponse> response,
-    ConnectionInfo* connection, std::shared_ptr<NetworkRequest> potentialrequest)
+    Connection* connection, std::shared_ptr<NetworkRequest> potentialrequest)
 {
 	// We can detect close messages //
 	switch(response->GetTypeOfResponse()){
@@ -242,7 +242,7 @@ DLLEXPORT void Leviathan::RemoteConsole::SetCloseIfNoRemoteConsole(bool state){
 }
 
 DLLEXPORT RemoteConsoleSession* Leviathan::RemoteConsole::GetRemoteConsoleSessionForConnection(
-    ConnectionInfo* connection, Lock &guard)
+    Connection* connection, Lock &guard)
 {
 	VerifyLock(guard);
 	// Loop over and compare pointers //
@@ -261,7 +261,7 @@ DLLEXPORT size_t Leviathan::RemoteConsole::GetActiveConnectionCount(){
 	return RemoteConsoleConnections.size();
 }
 
-DLLEXPORT ConnectionInfo* Leviathan::RemoteConsole::GetUnsafeConnectionForRemoteConsoleSession(const std::string &name){
+DLLEXPORT Connection* Leviathan::RemoteConsole::GetUnsafeConnectionForRemoteConsoleSession(const std::string &name){
 	GUARD_LOCK();
 	// Loop over and compare names //
 	for(size_t i = 0; i < RemoteConsoleConnections.size(); i++){
@@ -288,7 +288,7 @@ Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const std::st
 }
 // ------------------ RemoteConsoleSession ------------------ //
 Leviathan::RemoteConsoleSession::RemoteConsoleSession(const std::string &name,
-    ConnectionInfo* connection, int token) :
+    Connection* connection, int token) :
     ConnectionName(name), SessionToken(token), CorrespondingConnection(connection),
     IsOpened(true), TerminateSession(false)
 {
@@ -313,7 +313,7 @@ Leviathan::RemoteConsoleSession::~RemoteConsoleSession(){
 
 }
 // ------------------------------------ //
-DLLEXPORT ConnectionInfo* Leviathan::RemoteConsoleSession::GetConnection(){
+DLLEXPORT Connection* Leviathan::RemoteConsoleSession::GetConnection(){
 	return CorrespondingConnection;
 }
 

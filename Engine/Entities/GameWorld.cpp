@@ -443,6 +443,11 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposit
 
     return true;
 }
+
+DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection &connection) const{
+
+    DEBUG_BREAK;
+}
 // ------------------------------------ //
 DLLEXPORT size_t Leviathan::GameWorld::GetObjectCount() const
 {

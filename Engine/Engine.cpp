@@ -85,7 +85,7 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 	// Store parameters //
 	Define = definition;
 
-    IsClient = ntype == NETWORKED_TYPE_CLIENT;
+    IsClient = ntype == NETWORKED_TYPE::Client;
 
 	// Create all the things //
     
@@ -261,7 +261,7 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 
     // Create the default serializer //
     _EntitySerializer = std::make_unique<EntitySerializer>();
-    if(!_EntitySerializerManager){
+    if(!_EntitySerializer){
 
         Logger::Get()->Error("Engine: Init: failed to instantiate entity serializer");
         return false;
@@ -475,7 +475,7 @@ void Engine::Release(bool forced){
 
     }
 
-    SAFE_DELETE(_AINetworkCache);
+    _NetworkHandler->ShutdownCache();
 	
 	// Wait for tasks to finish //
 	if(!forced)
@@ -518,8 +518,7 @@ void Engine::Release(bool forced){
 	SAFE_RELEASEDEL(Graph);
 	SAFE_DELETE(RenderTimer);
 
-    SAFE_RELEASEDEL(_EntitySerializerManager);
-    SAFE_RELEASEDEL(_ConstraintSerializerManager);
+    _EntitySerializer.reset();
 
 	SAFE_RELEASEDEL(Sound);
 	SAFE_DELETE(Mainstore);
@@ -787,17 +786,8 @@ DLLEXPORT void Engine::PreRelease(){
         Logger::Get()->Info("Successfully stopped command handling");
     }
 
-    if(_AINetworkCache)
-        _AINetworkCache->Release();
-
     // Automatically destroy input sources //
-    NetworkedInputHandler* nhandler = NetworkedInputHandler::Get();
-
-    if(nhandler){
-
-        nhandler->Release();
-    }
-
+    _NetworkHandler->ReleaseInputHandler();
 
 	// Then kill the network //
     {
@@ -1130,7 +1120,7 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
 
 			if(*commandpart == "CloseIfNone"){
 				// Set the command //
-				RemoteConsole::Get()->SetCloseIfNoRemoteConsole(true);
+				_RemoteConsole->SetCloseIfNoRemoteConsole(true);
 				Logger::Get()->Info("Engine will close when no active/waiting remote console "
                     "sessions");
 
@@ -1144,8 +1134,8 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
 
 				if(numberpart->size() == 0){
 
-					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: no token "
-                        "number provided");
+					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
+                        "no token number provided");
 					continue;
 				}
 				// Convert to a real number. Maybe we could see if the token is
@@ -1154,25 +1144,25 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
 
 				if(token == 0){
 					// Invalid number? //
-					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: couldn't "
-                        "parse token number, "+*numberpart);
+					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
+                        "couldn't parse token number, " + *numberpart);
 					continue;
 				}
 
 				// Create a connection (or potentially use an existing one) //
-				shared_ptr<ConnectionInfo> tmpconnection =
-                    NetworkHandler::Get()->GetOrCreatePointerToConnection(*topart);
+				shared_ptr<Connection> tmpconnection =
+                    _NetworkHandler->OpenConnectionTo(*topart);
 
 				// Tell remote console to open a command to it //
 				if(tmpconnection){
 
-					RemoteConsole::Get()->OfferConnectionTo(tmpconnection.get(), "AutoOpen",
+					_RemoteConsole->OfferConnectionTo(tmpconnection, "AutoOpen",
                         token);
 
 				} else {
 					// Something funky happened... //
-					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: couldn't "
-                        "open connection to "+*topart+", couldn't resolve address");
+					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
+                        "couldn't open connection to "+*topart+", couldn't resolve address");
 				}
 
 			} else {

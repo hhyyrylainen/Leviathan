@@ -328,6 +328,14 @@ public:
         Added.clear();
     }
 
+    //! \brief Returns a direct access to Index
+    //! \note Do not change the returned index it is intended only for looping.
+    //! Okay, you may change it but you have to be extremely careful
+    inline std::unordered_map<KeyType, ElementType*>& GetIndex(){
+
+        return Index;
+    }
+
 protected:
     //! \brief Removes an component from the index but doesn't destruct it
     //! \note The component will only be deallocated once this object is destructed

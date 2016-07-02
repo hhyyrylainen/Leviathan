@@ -44,9 +44,10 @@ protected:
     template <class T, void(T::*F)(UsedNode &node, ObjectID nodesobject)>
         void RunAllNodes(T &instance)
     {
-        for(auto iter = Nodes.Index.begin(); iter != Nodes.Index.end(); ++iter){
+        auto& index = Nodes.GetIndex();
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
 
-            instance.F(*iter->second, iter->first);
+            (instance.*F)(*iter->second, iter->first);
         }
     }
     

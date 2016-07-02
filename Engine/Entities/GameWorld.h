@@ -1,3 +1,5 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
@@ -220,112 +222,18 @@ public:
         return *ComponentPosition.ConstructNew(id, args...);
     }
 
-    //! \brief Creates a new component for entity
-    //! \exception Exception if the component failed to init or it already exists
-    template<typename... Args>
-        RenderNode& CreateRenderNode(ObjectID id, Args&&... args){
+#define QUICK_CREATE_COMPONENT(type) template<typename... Args> type&   \
+ Create ## type (ObjectID id, Args&&... args){                          \
+ return *Component ## type .ConstructNew(id, args...); }
 
-        return *ComponentRenderNode.ConstructNew(id, args...);
-    }
+    QUICK_CREATE_COMPONENT(RenderNode);
+    QUICK_CREATE_COMPONENT(Sendable);
+    QUICK_CREATE_COMPONENT(Received);
 
-    template<typename... Args>
-        Sendable& CreateSendable(ObjectID id, Args&&... args){
-
-        return *ComponentSendable.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        Model& CreateModel(ObjectID id, Args&&... args){
-
-        return *ComponentModel.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        Physics& CreatePhysics(ObjectID id, Args&&... args){
-
-        const Physics::Arguments createdargs = {args...};
-        return *ComponentPhysics.ConstructNew(id, createdargs);
-    }
-
-    template<typename... Args>
-        Constraintable& CreateConstraintable(ObjectID id, Args&&... args){
-
-        return *ComponentConstraintable.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        BoxGeometry& CreateBoxGeometry(ObjectID id, Args&&... args){
-
-        return *ComponentBoxGeometry.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        ManualObject& CreateManualObject(ObjectID id, Args&&... args){
-
-        return *ComponentManualObject.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        PositionMarkerOwner& CreatePositionMarkerOwner(ObjectID id, Args&&... args){
-
-        return *ComponentPositionMarkerOwner.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        Parent& CreateParent(ObjectID id, Args&&... args){
-
-        return *ComponentParent.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        Parentable& CreateParentable(ObjectID id, Args&&... args){
-
-        return *ComponentParentable.ConstructNew(id, args...);
-    }        
-
-    template<typename... Args>
-        Trail& CreateTrail(ObjectID id, Args&&... args){
-
-        return *ComponentTrail.ConstructNew(id, args...);
-    }
-
-    template<typename... Args>
-        TrackController& CreateTrackController(ObjectID id, Args&&... args){
-
-        const TrackController::Arguments params = { args... };
-        return *ComponentTrackController.ConstructNew(id, params);
-    }
-
-    template<typename... Args>
-        Received& CreateReceived(ObjectID id, Args&&... args){
-
-        return *ComponentReceived.ConstructNew(id, args...);
-    }
-
-    // Systems //
-    template<typename... Args>
-        void RunRenderingPositionSystem(Args&&... args){
-
-        NodeRenderingPosition.RunSystem(_RenderingPositionSystem, args...);
-    }
-
-    template<typename... Args>
-        void RunSendableSystem(Args&&... args){
-
-        NodeSendableNode.RunSystem(_SendableSystem, args...);
-    }
-
-    template<typename... Args>
-        void RunInterpolationSystem(Args&&... args){
-
-        NodeReceivedPosition.RunSystem(_ReceivedPositionSystem, args...);
-    }
-
-    template<typename... Args>
-        void RunRenderNodeHiderSystem(Args&&... args){
-
-        NodeRenderNodeHiderNode.RunSystem(_RenderNodeHiderSystem, args...);
-    }
+    QUICK_CREATE_COMPONENT(Model);
+    QUICK_CREATE_COMPONENT(Physics);
+    QUICK_CREATE_COMPONENT(BoxGeometry);
+    QUICK_CREATE_COMPONENT(ManualObject);
 
     // Ogre get functions //
     inline Ogre::SceneManager* GetScene(){
@@ -390,6 +298,10 @@ public:
     DLLEXPORT bool ShouldPlayerReceiveObject(Position &atposition,
         Connection &connection);
 
+    //! \brief Returns true if a player with the given connection is receiving updates for
+    //! this world
+    DLLEXPORT bool IsConnectionInWorld(Connection &connection) const;
+
     //! \brief Sends an object to a connection and sets everything up
     //! \post The connection will receive updates from the object
     //! \return True when a packet was sent false otherwise
@@ -426,16 +338,6 @@ public:
     DLLEXPORT void ApplyQueuedPackets(Lock &guard);
 
 private:
-
-    //! Used to connect new players
-    //! \todo Properly handle deleted and created objects
-    //! (Potentially make objects vector have "empty" spaces in the middle)
-    DLLEXPORT virtual void _OnNotifiableConnected(Lock &guard,
-        BaseNotifiableAll* parentadded, Lock &parentlock) override;
-
-    //! Used to disconnect players that are going to be unloaded
-    DLLEXPORT virtual void _OnNotifiableDisconnected(Lock &guard,
-        BaseNotifiableAll* parenttoremove, Lock &parentlock) override;
 
     //! \brief Updates a players position info in this world
     void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer* ply, Lock &plylock);
@@ -536,37 +438,24 @@ private:
 
     //! Waiting constraint packets
     std::vector<std::shared_ptr<NetworkResponse>> ConstraintPackets;
-        
+    
 
-    // Systems, nodes and components //
-    // Note: all of these should be cleared in ClearObjects
+    // Components //
     ComponentHolder<Position> ComponentPosition;
     ComponentHolder<RenderNode> ComponentRenderNode;
     ComponentHolder<Sendable> ComponentSendable;
     ComponentHolder<Model> ComponentModel;
     ComponentHolder<Physics> ComponentPhysics;
-    ComponentHolder<Constraintable> ComponentConstraintable;
     ComponentHolder<BoxGeometry> ComponentBoxGeometry;
     ComponentHolder<ManualObject> ComponentManualObject;
-    ComponentHolder<PositionMarkerOwner> ComponentPositionMarkerOwner;
-    ComponentHolder<Parent> ComponentParent;
-    ComponentHolder<Trail> ComponentTrail;
-    ComponentHolder<TrackController> ComponentTrackController;
     ComponentHolder<Received> ComponentReceived;
-    ComponentHolder<Parentable> ComponentParentable;
 
-    // Systems and nodes //
+    
 
-    NodeHolder<ReceivedPosition> NodeReceivedPosition;
-    ReceivedPositionSystem _ReceivedPositionSystem;
-        
-    NodeHolder<RenderingPosition> NodeRenderingPosition;
+    // Systems //
+    ReceivedSystem _ReceivedSystem;
     RenderingPositionSystem _RenderingPositionSystem;
-
-    NodeHolder<SendableNode> NodeSendableNode;
     SendableSystem _SendableSystem;
-
-    NodeHolder<RenderNodeHiderNode> NodeRenderNodeHiderNode;
     RenderNodeHiderSystem _RenderNodeHiderSystem;
 };
 
@@ -582,14 +471,7 @@ ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics, QueueDestroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry, Destroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(TrackController, ComponentTrackController, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parent, ComponentParent, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parentable, ComponentParentable, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwner,
-    QueueDestroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Constraintable, ComponentConstraintable, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Trail, ComponentTrail, QueueDestroy);
 ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject, QueueDestroy);
     
 }

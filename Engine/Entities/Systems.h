@@ -140,43 +140,7 @@ protected:
 class ReceivedSystem : public SingleSystem<Received>{
 public:
 
-    void Run(std::unordered_map<ObjectID, Received*> &Index, GameWorld &world) override{
-
-        const float progress = world.GetTickProgress();
-        const auto tick = world.GetTickNumber();
-        
-        for(auto iter = Index.begin(); iter != Index.end(); ++iter){
-
-            auto& node = *iter->second;
-
-            // Unmarked nodes should have invalid interpolation status
-            if(!node.Marked)
-                return;
-            
-            if(!node.LocallyControlled){
-
-                // Interpolate received states //
-                float adjustedprogress = progress;
-                const Received::StoredState* first;
-                const Received::StoredState* second;
-
-                try{
-                    node.GetServerSentStates(&first, &second, tick, adjustedprogress);
-                } catch(const InvalidState&){
-
-                    // If not found unmark to avoid running unneeded //
-                    node.Marked = false;
-                    continue;
-                }
-                
-                first->Interpolate(second, adjustedprogress);
-                
-            } else {
-
-                // Send updates to the server //
-                
-            }
-        }
-    }
+    DLLEXPORT void Run(std::unordered_map<ObjectID, Received*> &Index, GameWorld &world)
+        override;
 };
 }

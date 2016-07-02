@@ -36,7 +36,7 @@ thingsToGenerate = [
 
   ["ConnectInput",
    [
-     { type: "sf::Packet", name: "DataForObject" }
+     { type: "sf::Packet", name: "DataForObject", move: true }
    ]],
 
   ["WorldClockSync",

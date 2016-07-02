@@ -5,7 +5,8 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
-#include "Networking/NetworkInterface.h"
+#include "Networking/CommonNetwork.h"
+
 #include <inttypes.h>
 #include <mutex>
 #include <thread>
@@ -100,30 +101,26 @@ namespace Leviathan{
         
 		DLLEXPORT void SaveScreenShot();
 
-		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
-		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
-		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
-		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
-		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
-		DLLEXPORT AppDef* GetDefinition(){ return Define;};
-		DLLEXPORT NewtonManager* GetNewtonManager(){ return _NewtonManager; };
-		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
-		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
-		DLLEXPORT NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
-		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
-		DLLEXPORT ResourceRefreshHandler* GetResourceRefreshHandler(){
+		inline Graphics* GetGraphics(){ return Graph; };
+		inline EventHandler* GetEventHandler(){ return MainEvents; };
+		inline RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
+		inline ScriptConsole* GetScriptConsole(){ return MainConsole;};
+		inline FileSystem* GetFileSystem(){ return MainFileHandler; };
+		inline AppDef* GetDefinition(){ return Define;};
+		inline NewtonManager* GetNewtonManager(){ return _NewtonManager; };
+		inline LeviathanApplication* GetOwningApplication(){ return Owner; };
+		inline PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
+		inline NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
+		inline ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
+		inline ResourceRefreshHandler* GetResourceRefreshHandler(){
             return _ResourceRefreshHandler; };
-        DLLEXPORT EntitySerializerManager* GetEntitySerializerManager(){
-            return _EntitySerializerManager; };
-        DLLEXPORT ConstraintSerializerManager* GetConstraintSerializerManager(){
-            return _ConstraintSerializerManager; };
-        DLLEXPORT AINetworkCache* GetAINetworkCache(){ return _AINetworkCache; };
-
+        inline EntitySerializer* GetEntitySerializer(){ return _EntitySerializer.get(); };
+        
 #ifdef LEVIATHAN_USES_LEAP
-		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData; };
+		inline LeapManager* GetLeapManager(){ return LeapData; };
 #endif
 
-		DLLEXPORT bool GetNoGui(){ return NoGui; };
+		inline bool GetNoGui(){ return NoGui; };
 
 		// Static access //
 		DLLEXPORT static Engine* GetEngine();
@@ -175,12 +172,9 @@ namespace Leviathan{
 		ThreadingManager* _ThreadingManager = nullptr;
 		RemoteConsole* _RemoteConsole = nullptr;
 		ResourceRefreshHandler* _ResourceRefreshHandler = nullptr;
-        EntitySerializerManager* _EntitySerializerManager = nullptr;
-        ConstraintSerializerManager* _ConstraintSerializerManager = nullptr;
-        AINetworkCache* _AINetworkCache = nullptr;
-
         
         std::unique_ptr<ConsoleInput> _ConsoleInput;
+        std::unique_ptr<EntitySerializer> _EntitySerializer;
 
 #ifdef LEVIATHAN_USES_LEAP
 		LeapManager* LeapData = nullptr;

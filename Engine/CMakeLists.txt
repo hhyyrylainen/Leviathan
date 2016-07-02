@@ -82,7 +82,6 @@ else()
     "Entities/Components.cpp" "Entities/Components.h"
     "Entities/Component.h" "Entities/EntityCommon.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
-    "Entities/Node.h" "Entities/Nodes.cpp" "Entities/Nodes.h"
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
     )
   
@@ -95,6 +94,19 @@ else()
     "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
     )
 
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+    )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+    )
+
+  
   set(GroupNetworking
     "Networking/Connection.cpp" "Networking/Connection.h"
     "Networking/GameSpecificPacketHandler.cpp" "Networking/GameSpecificPacketHandler.h"
@@ -113,6 +125,8 @@ else()
     "Networking/SyncedVariables.cpp" "Networking/SyncedVariables.h"
     "Networking/ConnectedPlayer.cpp" "Networking/ConnectedPlayer.h"
     "Networking/CommonNetwork.h"
+    "Generated/RequestImpl.h" "Networking/GenerateRequest.rb"
+    "Generated/ResponseImpl.h" "Networking/GenerateResponse.rb"
     )
   
   

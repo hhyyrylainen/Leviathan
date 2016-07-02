@@ -1,5 +1,8 @@
 // Leviathan Game Engine
 // Copyright (c) 2012-2016 Henri Hyyryläinen
+#pragma once
+
+#include <stdint.h>
 
 //! \file Common types for networking
 
@@ -13,6 +16,17 @@ enum class NETWORKED_TYPE {
     Master, 
     //! Only set when the derived class forgot to set it
     Error
+ };
+
+enum class PACKET_TIMEOUT_STYLE : uint8_t {
+        
+    //! Loss is detected by measuring time taken to complete
+    //! Use for non-realtime packets like connection attempts etc.
+    Timed,
+        
+    //! This style marks packets lost after a specific number of packets sent AFTER
+    //! this packet are confirmed to have been received by the other side
+    PacketsAfterReceived
  };
 
 
@@ -50,7 +64,7 @@ enum class CONNECTION_ENCRYPTION {
  };
 
 //! Allows servers to control who can join
-enum class SERVER_JOIN_RESTRICT {
+enum class SERVER_JOIN_RESTRICT : uint8_t{
 
     //! Everyone can join the server 
     None,
@@ -65,7 +79,7 @@ enum class SERVER_JOIN_RESTRICT {
  };
 
 //! Allows servers to tell clients what they are doing
-enum class SERVER_STATUS {
+enum class SERVER_STATUS : uint8_t{
 
     Starting,
     Running,
@@ -73,5 +87,42 @@ enum class SERVER_STATUS {
     Restart
  };
 
+//! Defines in what way a request was invalid can also define why a server disallowed a request
+enum class NETWORK_RESPONSE_INVALIDREASON : uint8_t{
+
+    //! Returned when the connection is anonymous
+    //! (the other client hasn't requested verified connection)
+    Unauthenticated,
+    
+    //! Returned when we don't implement the wanted action
+    //! for example if we are asked our server status and we aren't a server
+    Unsupported,
+    
+    //! Server has maximum number of players
+    ServerFull,
+    
+    //! Server is not accepting players
+    ServerNotAcceptingPlayers,
+    
+    //! The client isn't properly authenticated for that action or the server
+    //! received mismatching security / id numbers
+    NotAuthorized,
+
+    //! The client has already connected to the server, and must disconnect before trying again
+    ServerAlreadyConnectedToYou,
+
+    //! The server has used a custom rule to disallow this
+    ServerCustom
+ };
+	
+//! Defines what request the server accepted and any potential data
+enum class SERVER_ACCEPTED_TYPE : uint8_t{
+
+    //! Server has accepted your join request
+    ConnectAccepted,
+    
+    //! Server has accepted the request and will handle it soon
+    RequestQueued
+ };
 
 }

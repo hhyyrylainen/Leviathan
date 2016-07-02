@@ -23,24 +23,15 @@ using namespace std;
 // ------------------ NetworkClientInterface ------------------ //
 DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface()
 {
-	Staticaccess = this;
 }
 
 DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
 
 	PotentialInputHandler.reset();
-
-	Staticaccess = NULL;
 }
-
-DLLEXPORT NetworkClientInterface* Leviathan::NetworkClientInterface::Get(){
-	return Staticaccess;
-}
-
-NetworkClientInterface* Leviathan::NetworkClientInterface::Staticaccess = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
-    shared_ptr<ConnectionInfo> connectiontouse)
+    shared_ptr<Connection> connectiontouse)
 {
 	GUARD_LOCK();
 
@@ -55,8 +46,6 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
 
 	// Store the connection //
 	ServerConnection = connectiontouse;
-
-	ConnectToNotifier(guard, ServerConnection.get());
 
 	ConnectTriesCount = 0;
 
@@ -89,7 +78,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &gua
 	SyncedVariables::Get()->RemoveConnectionWithAnother(ServerConnection.get());
 
 	// Close connection //
-	NetworkHandler::Get()->SafelyCloseConnectionTo(ServerConnection.get());
+    Owner->CloseConnection(*ServerConnection);
 	ServerConnection.reset();
 
 	ConnectedToServer = false;
@@ -99,7 +88,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &gua
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(
-    shared_ptr<NetworkRequest> request, ConnectionInfo* connectiontosendresult)
+    shared_ptr<NetworkRequest> request, Connection &connectiontosendresult)
 {
 	// Try to handle input packet if we have the proper handler //
 	if(PotentialInputHandler &&
@@ -157,7 +146,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(
 }
 
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(
-    shared_ptr<NetworkResponse> message, ConnectionInfo* connection, bool &dontmarkasreceived)
+    shared_ptr<NetworkResponse> message, Connection &connection, bool &dontmarkasreceived)
 {
 	// Try to handle input packet if we have the proper handler //
 	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
@@ -372,6 +361,16 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(
 DLLEXPORT void Leviathan::NetworkClientInterface::UpdateClientStatus(){
 	GUARD_LOCK();
 
+    if(!ServerConnection || !ConnectedToServer)
+        return;
+
+    // Check did The connection close //
+    if(!Owner->IsConnectionValid(*ServerConnection)){
+
+        DisconnectFromServer(guard, "Connection Interrupted", true);
+        return;
+    }
+
     if(KeepAliveQueued){
 
         // Send a keep alive //
@@ -435,33 +434,6 @@ checksentrequestsbeginlabel:
 	if(PotentialInputHandler)
 		PotentialInputHandler->UpdateInputStatus();
 
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnNotifierDisconnected(Lock &guard,
-    BaseNotifierAll* parenttoremove, Lock &parentlock)
-{
-
-	// Get the close reason from it //
-	std::string closereason;
-
-	if(closereason.empty())
-		closereason = "Other side requested close";
-
-	// Disconnect if got to the connected state //
-	if(ServerConnection){
-		// Send disconnect message to server //
-		_OnNewConnectionStatusMessage("Disconnected from " +
-            ServerConnection->GenerateFormatedAddressString()+
-            ", reason: "+closereason);
-
-		// Call the disconnect callback //
-		_OnDisconnectFromServer(closereason, false);
-
-		ConnectedToServer = false;
-
-		// Let go of the connection //
-		ServerConnection.reset();
-	}
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_SendConnectRequest(Lock &guard){
@@ -814,7 +786,7 @@ DLLEXPORT NetworkedInputHandler* Leviathan::NetworkClientInterface::GetNetworked
 	return PotentialInputHandler.get();
 }
 
-DLLEXPORT std::shared_ptr<ConnectionInfo>
+DLLEXPORT std::shared_ptr<Connection>
     Leviathan::NetworkClientInterface::GetServerConnection()
 {
 	return ServerConnection;
@@ -826,31 +798,6 @@ DLLEXPORT void NetworkClientInterface::MarkForNotifyReceivedStates(){
     KeepAliveQueued = true;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnDisconnectFromServer(
-    const std::string &reasonstring, bool donebyus)
-{
-
-}
-
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnStartConnectToServer(){
-
-}
-
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnFailedToConnectToServer(
-    const std::string &reason)
-{
-
-}
-
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnSuccessfullyConnectedToServer(){
-
-}
-
-DLLEXPORT void Leviathan::NetworkClientInterface::_OnNewConnectionStatusMessage(
-    const std::string &message)
-{
-
-}
 
 
 

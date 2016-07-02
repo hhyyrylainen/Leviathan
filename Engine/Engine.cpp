@@ -8,10 +8,8 @@
 #include "Common/StringOperations.h"
 #include "Common/Types.h"
 #include "Entities/GameWorld.h"
-#include "Entities/Serializers/SendableEntitySerializer.h"
+#include "Entities/Serializers/EntitySerializer.h"
 #include "Events/EventHandler.h"
-#include "Handlers/ConstraintSerializerManager.h"
-#include "Handlers/EntitySerializerManager.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
@@ -28,6 +26,7 @@
 #include "Sound/SoundDevice.h"
 #include "Statistics/RenderingStatistics.h"
 #include "Threading/ThreadingManager.h"
+#include "Threading/QueuedTask.h"
 #include "Utility/Random.h"
 #include "TimeIncludes.h"
 #include "FileSystem.h"
@@ -35,12 +34,12 @@
 #include "Iterators/StringIterator.h"
 #include "Application/ConsoleInput.h"
 
-#include <chrono>
-#include <future>
-
 #ifdef LEVIATHAN_USES_LEAP
 #include "Leap/LeapManager.h"
 #endif
+
+#include <chrono>
+#include <future>
 
 using namespace Leviathan;
 using namespace std;
@@ -260,40 +259,13 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
             returnvalue.set_value(true);
         }, std::ref(NewtonManagerResult), this)));
 
-    std::promise<bool> SerializerManagerResult;
+    // Create the default serializer //
+    _EntitySerializer = std::make_unique<EntitySerializer>();
+    if(!_EntitySerializerManager){
 
-    _ThreadingManager->QueueTask(new QueuedTask(std::bind<void>([](std::promise<bool> &returnvalue,
-                    Engine* engine) -> void
-        {
-
-            engine->_EntitySerializerManager = new EntitySerializerManager();
-            if(!engine->_EntitySerializerManager){
-
-                returnvalue.set_value(false);
-                return;
-            }
-
-            // Create the default serializer //
-            std::unique_ptr<BaseEntitySerializer> tmpptr(new SendableEntitySerializer());
-            if(!tmpptr){
-
-                returnvalue.set_value(false);
-                return;
-            }
-
-            engine->_EntitySerializerManager->AddSerializer(tmpptr.release());
-
-            engine->_ConstraintSerializerManager = new ConstraintSerializerManager();
-            if(!engine->_ConstraintSerializerManager->Init()){
-
-                returnvalue.set_value(false);
-                return;
-            }
-            
-            returnvalue.set_value(true);
-
-        }, std::ref(SerializerManagerResult), this)));
-
+        Logger::Get()->Error("Engine: Init: failed to instantiate entity serializer");
+        return false;
+    }
     
 	// Check if we don't want a window //
 	if(NoGui){
@@ -321,8 +293,7 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
 	_ThreadingManager->WaitForAllTasksToFinish();
 
 	// Check return values //
-	if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get() ||
-        !SerializerManagerResult.get_future().get())
+	if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get())
 	{
 
 		Logger::Get()->Error("Engine: Init: one or more queued tasks failed");

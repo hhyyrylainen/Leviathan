@@ -18,36 +18,41 @@
 namespace Leviathan{
 
 //! Number of milliseconds between engine and world ticks
-static const auto TICKSPEED = 50;
+constexpr auto TICKSPEED = 50;
 
 //! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
-static const auto INTERPOLATION_TIME = 100;
+constexpr auto INTERPOLATION_TIME = 100;
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND
-static const auto HEARTBEATS_MILLISECOND = 180;
+constexpr auto HEARTBEATS_MILLISECOND = 180;
 
-    
+constexpr auto DEFAULT_MAXCONNECT_TRIES = 5;
+
+constexpr auto MAX_SERVERCOMMAND_LENGTH	= 550;
+
+constexpr auto BASESENDABLE_STORED_RECEIVED_STATES = 6;
+
 //! For checking vector normalization
-static const float NORMALIZATION_TOLERANCE = 1e-6f;
+constexpr float NORMALIZATION_TOLERANCE = 1e-6f;
 
 #ifdef LEVIATHAN_VERSION
-static const double VERSION = LEVIATHAN_VERSION;
+constexpr double VERSION = LEVIATHAN_VERSION;
 static const std::string VERSIONS = LEVIATHAN_VERSION_ANSIS;
 
-static const int VERSION_STABLE = LEVIATHAN_VERSION_STABLE;
-static const int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
-static const int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
-static const int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
+constexpr int VERSION_STABLE = LEVIATHAN_VERSION_STABLE;
+constexpr int VERSION_MAJOR = LEVIATHAN_VERSION_MAJOR;
+constexpr int VERSION_MINOR = LEVIATHAN_VERSION_MINOR;
+constexpr int VERSION_PATCH = LEVIATHAN_VERSION_PATCH;
 #endif //LEVIATHAN_VERSION
 
 constexpr auto MICROSECONDS_IN_SECOND = 1000000;
 
 #ifndef PI
-static const float PI = 3.14159265f;
+constexpr float PI = 3.14159265f;
 #endif //PI
-static const float DEGREES_TO_RADIANS = PI/180.f;
-static const float EPSILON = 0.00000001f;
+constexpr float DEGREES_TO_RADIANS = PI/180.f;
+constexpr float EPSILON = 0.00000001f;
 }
 
 // Logging macros //

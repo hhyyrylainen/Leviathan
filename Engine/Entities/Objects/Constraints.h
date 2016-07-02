@@ -9,23 +9,23 @@
 namespace Leviathan{
 
     //! Holds built-in types of constraints, used to identify types over the network
-    enum ENTITY_CONSTRAINT_TYPE : int32_t
+    enum class ENTITY_CONSTRAINT_TYPE : uint16_t
     {
         //! Type is SliderConstraint
-        ENTITY_CONSTRAINT_TYPE_SLIDER = 1,
+        Slider = 1,
             
             
         //! This type is used to connect entities to various controllers
         //! like TrackEntityController
-        ENTITY_CONSTRAINT_TYPE_CONTROLLERCONSTRAINT,
+        ControllerConstraint,
 
         
          
         //! Constraint has been destructed, used to not allow
         //! destruction multiple times
-        ENTITY_CONSTRAINT_TYPE_DESTRUCTED,
-            
-        ENTITY_CONSTRAINT_TYPE_CUSTOM = 1000
+        Destructed,
+        
+        Custom = 1000
     };
 
     //! \brief Base class for constraint data types, used to serialize constraint states to

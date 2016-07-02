@@ -3,6 +3,9 @@
 #include "Include.h"
 
 #include "ThreadSafe.h"
+
+#include "Exceptions.h"
+
 #include <unordered_map>
 #include <functional>
 #include <tuple>

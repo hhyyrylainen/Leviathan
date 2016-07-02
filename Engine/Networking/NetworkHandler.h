@@ -4,12 +4,15 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "Common/ThreadSafe.h"
 #include "NetworkInterface.h"
 #include "NetworkServerInterface.h"
 #include "NetworkClientInterface.h"
+#include "CommonNetwork.h"
 
 #include "Connection.h"
+
+
+#include "Common/ThreadSafe.h"
 
 #include "SFML/Network/UdpSocket.hpp"
 
@@ -22,17 +25,6 @@ namespace Leviathan{
 void RunGetResponseFromMaster(NetworkHandler* instance,
     std::shared_ptr<std::promise<std::string>> resultvar);
 	
-enum class PACKET_TIMEOUT_STYLE : uint8_t {
-        
-    //! Loss is detected by measuring time taken to complete
-    //! Use for non-realtime packets like connection attempts etc.
-    Timed,
-        
-    //! This style marks packets lost after a specific number of packets sent AFTER
-    //! this packet are confirmed to have been received by the other side
-    PacketsAfterReceived
- };
-
 // Used to pass master server info to the application //
 struct MasterServerInformation{
     MasterServerInformation(bool iammaster, const std::string &identificationstr) :
@@ -132,9 +124,9 @@ public:
     //! \brief Returns interface object. Type depends on AppType
     inline NetworkInterface* GetInterface(){
         
-        if(AppType == NETWORKED_TYPE_CLIENT)
+        if(AppType == NETWORKED_TYPE::Client)
             return ClientInterface;
-        if(AppType == NETWORKED_TYPE_SERVER)
+        if(AppType == NETWORKED_TYPE::Server)
             return ServerInterface;
 
         return nullptr;

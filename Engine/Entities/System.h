@@ -1,34 +1,68 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
-// ------------------------------------ //
-#include "../Common/ThreadSafe.h"
+
+#include "EntityCommon.h"
+
+#include "Common/ObjectPool.h"
 #include "Exceptions.h"
+
 
 namespace Leviathan{
 
-    using ObjectID = int;
+template<class NodeType>
+    class NodeHolder : public ObjectPool<NodeType, ObjectID>{
+public:
 
-    template<class NodeType> class NodeHolder;
+};
     
-    //! \brief Base for all entity component related systems
-    template<class UsedNode>
+//! \brief Base for all entity component related systems
+//!
+//! For ones that use nodes. Not for ones that directly use a single component type
+template<class UsedNode>
 	class System{
-	public:
+public:
 
-        //! \brief Called for each node of the matching type when this system is ran
-        //! \param node The node that needs to be processed
-        //! \param ObjectID The ID of the entity that owns the components in node
-        //! \param pool The object containing all nodes of this type, can be used to find other
-        //! nodes of the same type
-        //! \param poollock The lock for the object pool that owns the node, pass when finding
-        //! more elements of the same type
-        DLLEXPORT virtual void ProcessNode(UsedNode &node, ObjectID nodesobject,
-            NodeHolder<UsedNode> &pool, Lock &poollock) const
-        {
-            throw Exception("Base System ProcessNode called");
+    using HolderType = NodeHolder<UsedNode>;
+
+    //! \brief Runs this system on its nodes
+    //!
+    //! \note The nodes need to be updated before calling this, otherwise some entities
+    //! might not be picked up
+    virtual void Run(GameWorld &world) = 0;
+
+protected:
+
+    //template <typename T, typename R, typename ...Args>
+    //    R proxycall(T & obj, R (T::*mf)(Args...), Args &&... args)
+    
+    //! \brief Helper for Run
+    //!
+    //! Goes through all nodes and calls func on them
+    template <class T, void(T::*F)(UsedNode &node, ObjectID nodesobject)>
+        void RunAllNodes(T &instance)
+    {
+        for(auto iter = Nodes.Index.begin(); iter != Nodes.Index.end(); ++iter){
+
+            instance.F(*iter->second, iter->first);
         }
-	};
+    }
+    
+public:
+    
+    HolderType Nodes;
+};
+
+//! \brief Base class for systems that use a single component directly
+template<class UsedComponent>
+class SingleSystem{
+public:
+    virtual void Run(std::unordered_map<ObjectID, UsedComponent*> &Index,
+        GameWorld &world) = 0;
+};
+
 }
 
 

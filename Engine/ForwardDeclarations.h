@@ -64,7 +64,8 @@ class Constraintable;
 class Parentable;
 class Parent;
 
-class SendableEntitySerializer;
+
+class EntitySerializer;
 
 class Physics;
 
@@ -77,8 +78,6 @@ class NetworkCache;
 
 // Constraints //
 class BaseConstraint;
-enum ENTITY_CONSTRAINT_TYPE : int32_t;
-    
     
 
 // DeltaStates //
@@ -103,8 +102,6 @@ class ObjectFileTemplateDefinition;
 
 class ObjectFileList;
 
-class BaseEntitySerializer;
-class EntitySerializerManager;
 
 // Network Response //
 class NetworkResponseDataForInitialEntity;
@@ -125,9 +122,7 @@ class ConditionalDelayedTask;
 class RepeatingDelayedTask;
 class RepeatCountedDelayedTask;
 
-class ConstraintSerializerManager;
-    
-class AINetworkCache;
+class NetworkCache;
 
 class NetworkedInput;
 class NetworkedInputHandler;

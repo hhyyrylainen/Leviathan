@@ -4,8 +4,9 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
+#include "NetworkInterface.h"
 #include "NetworkResponse.h"
-#include "CommonNetwork.h"
+
 
 #include "ConnectedPlayer.h"
 
@@ -21,7 +22,7 @@ namespace Leviathan{
 //! More specific version of NetworkInterface and should be included additionally in
 //! server network interface classes.
 //! \see NetworkInterface
-class NetworkServerInterface : public virtual ThreadSafe{
+class NetworkServerInterface : public NetworkInterface{
     friend ConnectedPlayer;
 public:
     //! \brief Initializes some values to defaults and requires others to be provided

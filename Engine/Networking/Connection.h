@@ -6,7 +6,6 @@
 // ------------------------------------ //
 #include "../Common/SFMLPackets.h"
 #include "../Common/ThreadSafe.h"
-#include "NetworkHandler.h"
 #include "CommonNetwork.h"
 
 #include "SFML/Network/Socket.hpp"
@@ -20,6 +19,8 @@
 #include <map>
 #include <vector>
 #include <memory>
+
+//#define PACKET_USE_LOCK_WITH_CALLBACK
 
 namespace Leviathan{
 
@@ -85,18 +86,15 @@ public:
     using CallbackType = std::function<void(bool, SentNetworkThing&)>;
 
     //! This is the signature for request packets
-    DLLEXPORT SentNetworkThing(int packetid, int expectedresponseid,
-        std::shared_ptr<NetworkRequest> request, int maxtries,
-        PACKET_TIMEOUT_STYLE howtotimeout,
-        int timeoutvalue, sf::Packet&& packetsdata, int attempnumber = 1);
+    DLLEXPORT SentNetworkThing(uint32_t packetid, std::shared_ptr<NetworkRequest> request,
+        RECEIVE_GUARANTEE guarantee, PACKET_TIMEOUT_STYLE timeout, sf::Packet&& packetsdata);
         
     //! Empty destructor to link this in
     DLLEXPORT ~SentNetworkThing();
-        
+    
     // This is the signature for response packets //
-    DLLEXPORT SentNetworkThing(int packetid, std::shared_ptr<NetworkResponse> response,
-        int maxtries, PACKET_TIMEOUT_STYLE howtotimeout, int timeoutvalue,
-        sf::Packet&& packetsdata, int attempnumber = 1);
+    DLLEXPORT SentNetworkThing(uint32_t packetid, std::shared_ptr<NetworkResponse> response,
+        RECEIVE_GUARANTEE guarantee, PACKET_TIMEOUT_STYLE timeout, sf::Packet&& packetsdata);
 
     //! \brief Returns true once the packet has been received by the target or lost
     //! too many times
@@ -127,7 +125,7 @@ public:
     DLLEXPORT void SetCallback(std::shared_ptr<CallbackType> func = nullptr);
 
     //! Local packet id
-    int PacketNumber;
+    uint32_t PacketNumber;
 
     //! If not RECEIVE_GUARANTEE::None this packet will be resent if considered lost
     RECEIVE_GUARANTEE Resend = RECEIVE_GUARANTEE::None;
@@ -142,6 +140,9 @@ public:
     PACKET_TIMEOUT_STYLE PacketTimeoutStyle = PACKET_TIMEOUT_STYLE::PacketsAfterReceived;
 
     //! Callback function called when succeeded or failed
+    //! May only be called by the receiving thread when removing this
+    //! from the queue. May not be changed after settings to make sure
+    //! that no race conditions exist
     std::shared_ptr<std::function<void(bool, SentNetworkThing&)>> Callback;
 
     //! The time this request was started
@@ -155,13 +156,6 @@ public:
     //! \note This value is only valid if the packet wasn't lost
     //! (failed requests have this unset)
     std::atomic<int64_t> ConfirmReceiveTime { 0 };
-
-    //! If this is a request this is the ID for an expected response
-    uint32_t ExpectedResponseID = 0;
-
-    //! Locked when Callback is being changed or while it is executing
-    //! also locked when waiting for Notifier
-    Mutex LockForUse;
 
     //! Set to true once this object is no longer used
     std::atomic<bool> IsDone { false };
@@ -279,25 +273,29 @@ public:
     //! Send a request packet to this connection
     //! \returns nullptr If this connection is closed
     DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
-        std::shared_ptr<NetworkRequest> request, RECEIVE_GUARANTEE guarantee);
+        std::shared_ptr<NetworkRequest> request, RECEIVE_GUARANTEE guarantee,
+        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived);
 
     inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
-        std::shared_ptr<NetworkRequest> request, RECEIVE_GUARANTEE guarantee)
+        std::shared_ptr<NetworkRequest> request, RECEIVE_GUARANTEE guarantee,
+        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived)
     {
         GUARD_LOCK();
-        return SendPacketToConnection(guard, request, guarantee);
+        return SendPacketToConnection(guard, request, guarantee, timeout);
     }
-        
+    
     //! Sends a reponse packet to this connection
     //! \returns nullptr If this connection is closed
     DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
-        std::shared_ptr<NetworkResponse> response, RECEIVE_GUARANTEE guarantee);
+        std::shared_ptr<NetworkResponse> response, RECEIVE_GUARANTEE guarantee,
+        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived);
 
     inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
-        std::shared_ptr<NetworkResponse> response, RECEIVE_GUARANTEE guarantee)
+        std::shared_ptr<NetworkResponse> response, RECEIVE_GUARANTEE guarantee,
+        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived)
     {
         GUARD_LOCK();
-        return SendPacketToConnection(guard, response, guarantee);
+        return SendPacketToConnection(guard, response, guarantee, timeout);
     }
  
 

@@ -2,64 +2,58 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "Common/BaseNotifiable.h"
-#include "../TimeIncludes.h"
+#include "TimeIncludes.h"
+#include "NetworkInterface.h"
+
 #include <memory>
-
-#define DEFAULT_MAXCONNECT_TRIES		5
-
-
-//! Defines the interval between heartbeats
-//! Should be the same as SERVER_HEARTBEATS_MILLISECOND
-#define CLIENT_HEARTBEATS_MILLISECOND			180
-
+#include <vector>
 
 namespace Leviathan{
-
 
 
 //! \brief Class that encapsulates common networking functionality required by
 //! client programs
 //!
-//! More specific version of NetworkInterface and should be included additionally in client network
-//! interface classes.
+//! More specific version of NetworkInterface and should be included
+//! additionally in client network interface classes.
 //! \see NetworkInterface
-class NetworkClientInterface : public BaseNotifiableAll{
+class NetworkClientInterface : public NetworkInterface{
 public:
     DLLEXPORT NetworkClientInterface();
     DLLEXPORT virtual ~NetworkClientInterface();
 
-
     //! \brief Connects the client to a server
-    //! \return Returns true when successfully started the join process, false if already connected
-    //! (DisconnectFromServer should be called)
+    //! \return Returns true when successfully started the join process,
+    //! false if already connected (and DisconnectFromServer should be called)
     //! \param connectiontouse The connection object should be retrieved by calling
     //! NetworkHandler::GetOrCreatePointerToConnection
-    DLLEXPORT bool JoinServer(std::shared_ptr<ConnectionInfo> connectiontouse);
+    DLLEXPORT bool JoinServer(std::shared_ptr<Connection> connectiontouse);
 
     //! \brief Disconnects the client from the server or does nothing
     //! \todo Add a check to not close the connection if it is used by RemoteConsole
-    DLLEXPORT FORCE_INLINE void DisconnectFromServer(const std::string &reason, bool connectiontimedout = false){
+    DLLEXPORT FORCE_INLINE void DisconnectFromServer(const std::string &reason,
+        bool connectiontimedout = false)
+    {
         GUARD_LOCK();
         DisconnectFromServer(guard, reason, connectiontimedout);
     }
 
     //! \brief Actual implementation of DisconnectFromServer
-    DLLEXPORT void DisconnectFromServer(Lock &guard, const std::string &reason, bool connectiontimedout = false);
+    DLLEXPORT void DisconnectFromServer(Lock &guard, const std::string &reason,
+        bool connectiontimedout = false);
 
 
     //! \brief Called directly by SyncedVariables to update the status string
-    DLLEXPORT void OnUpdateFullSynchronizationState(size_t variablesgot, size_t expectedvariables);
+    DLLEXPORT void OnUpdateFullSynchronizationState(size_t variablesgot,
+        size_t expectedvariables);
 
 
     //! \brief Sends a command string to the server
     //!
-    //! It should always be assumed that this function works. If it doesn't it is guaranteed that the
-    //! client kicks itself because 
-    //! the connection is lost.
+    //! It should always be assumed that this function works.
+    //! If it doesn't it is guaranteed that the client kicks itself
+    //! because the connection is lost.
     //! \exception ExceptionInvalidState if not connected to a server
-    //! \param messagestr The UTF8 encoded string containing the command. This specifically uses utf8 to
-    //! save space when sending long chat messages
     //! The maximum length is MAX_SERVERCOMMAND_LENGTH should be around 550 characters.
     //! \exception ExceptionInvalidArgument when the message string is too long
     DLLEXPORT void SendCommandStringToServer(const std::string &messagestr);
@@ -80,7 +74,8 @@ public:
 
     //! \brief Enables the use of a NetworkedInputHandler
     //! \param handler The object that implements the networked input interface
-    //! \warning The deletion of the old handler isn't thread safe so be careful when switching handlers
+    //! \warning The deletion of the old handler isn't thread safe so be careful
+    //! when switching handlers
     DLLEXPORT virtual bool RegisterNetworkedInput(
         std::shared_ptr<NetworkedInputHandler> handler);
 
@@ -88,14 +83,10 @@ public:
     DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
     //! \brief Returns the active server connection or NULL
-    DLLEXPORT virtual std::shared_ptr<ConnectionInfo> GetServerConnection();
+    DLLEXPORT virtual std::shared_ptr<Connection> GetServerConnection();
 
     //! \brief Marks a keep alive to be sent on next tick
     DLLEXPORT void MarkForNotifyReceivedStates();
-
-    //! \brief Returns the static instance or NULL
-    //! \note This will always be NULL on non-client applications
-    DLLEXPORT static NetworkClientInterface* Get();
 
 protected:
 
@@ -103,13 +94,14 @@ protected:
     //!
     //! Handles default packets that are meant to be processed by a client
     DLLEXPORT bool _HandleClientRequest(std::shared_ptr<NetworkRequest> request,
-        ConnectionInfo* connectiontosendresult);
+        Connection &connectiontosendresult);
 
-    //! \brief Utility function for subclasses to call for default handling of non-request responses
+    //! \brief Utility function for subclasses to call for default handling of
+    //! non-request responses
     //!
     //! Handles default types of response packages and returns true if processed.
     DLLEXPORT bool _HandleClientResponseOnly(std::shared_ptr<NetworkResponse> message,
-        ConnectionInfo* connection, bool &dontmarkasreceived);
+        Connection &connection, bool &dontmarkasreceived);
 
     //! \brief Updates status of the client to server connections
     //!  
@@ -118,17 +110,13 @@ protected:
 
     // Callbacks for child classes to implement //
     DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring,
-        bool donebyus);
-    DLLEXPORT virtual void _OnStartConnectToServer();
-    DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason);
-    DLLEXPORT virtual void _OnSuccessfullyConnectedToServer();
+        bool donebyus){}
+    DLLEXPORT virtual void _OnStartConnectToServer(){}
+    DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason){}
+    DLLEXPORT virtual void _OnSuccessfullyConnectedToServer(){}
+    
     //! \brief Called when this class generates a new update message
-    DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string &message);
-
-
-    //! \brief Callback used to know when our connection is closed
-    DLLEXPORT void _OnNotifierDisconnected(Lock &guard,
-        BaseNotifierAll* parenttoremove, Lock &parentlock) override;
+    DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string &message){}
 
     //! \brief Called when the server has confirmed the join and we are a player on the server
     //!
@@ -174,7 +162,7 @@ protected:
     //! This vector holds the made requests to allow using the response to do stuff
     std::vector<std::shared_ptr<SentNetworkThing>> OurSentRequests;
 
-    std::shared_ptr<ConnectionInfo> ServerConnection;
+    std::shared_ptr<Connection> ServerConnection;
 
     bool ConnectedToServer = false;
 
@@ -204,11 +192,6 @@ protected:
 
     //! Our player id, this is required for some requests
     int OurPlayerID = -1;
-
-
-    //! Static access for utility classes
-    static NetworkClientInterface* Staticaccess;
-
 };
 
 }

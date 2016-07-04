@@ -1,3 +1,6 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
+#pragma once
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
@@ -41,8 +44,10 @@ namespace Leviathan{
 		DLLEXPORT GameSpecificPacketData(BaseGameSpecificRequestPacket* newddata);
 		DLLEXPORT ~GameSpecificPacketData();
 
-		//! Marks whether this contains BaseGameSpecificRequestPacket or BaseGameSpecificResponsePacket
+		//! Marks whether this contains BaseGameSpecificRequestPacket or
+        //! BaseGameSpecificResponsePacket
 		bool IsRequest;
+        
 		//! Base object pointer if this is a request
 		BaseGameSpecificRequestPacket* RequestBaseData;
 
@@ -50,7 +55,8 @@ namespace Leviathan{
 		BaseGameSpecificResponsePacket* ResponseBaseData;
 
 		//! Contains the type of the packet
-		//! \note This is a copy of BaseGameSpecificResponsePacket::TypeIDNumber or BaseGameSpecificRequestPacket::TypeIDNumber
+		//! \note This is a copy of BaseGameSpecificResponsePacket::TypeIDNumber
+        //! or BaseGameSpecificRequestPacket::TypeIDNumber
 		//! \see BaseGameSpecificFactory::TypeIDNumber
 		int TypeIDNumber;
 	};

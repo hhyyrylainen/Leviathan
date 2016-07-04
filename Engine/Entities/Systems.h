@@ -17,9 +17,9 @@
 namespace Leviathan{
 
 //! \brief Moves nodes of entities that have their positions changed
-class RenderingPositionSystem : public System<std::tuple<RenderNode, Position>>{
+class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>>{
     
-    void ProcessNode(std::tuple<RenderNode, Position> &node, ObjectID id)
+    void ProcessNode(std::tuple<RenderNode&, Position&> &node, ObjectID id)
     {
         auto& pos = std::get<1>(node);
         if(!pos.Marked)
@@ -37,15 +37,21 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode, Position>>{
         RunAllNodes<RenderingPositionSystem, &RenderingPositionSystem::ProcessNode>(*this);
     }
 
+    void Clear(){
+
+        Nodes.Clear();
+    }
+
     //! \brief Creates nodes if matching ids are found in all data vectors or
     //! already existing component holders
+    //!
+    //! This should be 
     //! \note It is more efficient to directly create nodes as entities are created
     template<class FirstType, class SecondType>
         void CreateNodes(const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
             const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
             const ComponentHolder<SecondType> &secondholder, Lock &secondlock)
     {
-
         GUARD_LOCK_OTHER(Nodes);
 
         for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
@@ -78,14 +84,17 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode, Position>>{
                 Nodes.ConstructNew(guard, std::get<1>(*iter), *other, *std::get<0>(*iter));
             } catch(const Exception &e){
 
-                Logger::Get()->Error("CreateNodes: failed to create render position node "
+                Logger::Get()->Error("CreateNodes: failed to create node "
                     "for object "+Convert::ToString(std::get<1>(*iter))+", exception: ");
                 e.PrintToLog();
-                    
                 continue;
             }
         }
     }
+
+ private:
+
+    ObjectPool<std::tuple<RenderNode&, Position&>, ObjectID> Nodes;
 };
 
 //! \brief Sets visibility objects with Ogre nodes that have changed RenderNode::Hidden

@@ -6,6 +6,8 @@
 // ------------------------------------ //
 #include <type_traits>
 
+#include "Networking/CommonNetwork.h"
+
 #include "Systems.h"
 #include "Components.h"
 
@@ -27,10 +29,6 @@ namespace Leviathan{
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
-    
-
-//! Holds internal data for initial player syncing
-class PlayerConnectionPreparer;
     
 // Holds the returned object that was hit during ray casting //
 class RayCastHitEntity : public ReferenceCounted{
@@ -74,9 +72,8 @@ struct RayCastData{
 //! \brief Represents a world that contains entities
 //! \note Only ConnectedPlayer object may be linked with the world through Notifier
 class GameWorld : public ThreadSafe{
-    friend PlayerConnectionPreparer;
 public:
-    DLLEXPORT GameWorld();
+    DLLEXPORT GameWorld(NETWORKED_TYPE type);
     DLLEXPORT ~GameWorld();
 
 
@@ -112,9 +109,6 @@ public:
 
     //! \brief Returns the current tick
     DLLEXPORT int GetTickNumber() const;
-
-    //! \brief Handles deleted entities
-    DLLEXPORT void HandleDeleted(Lock &guard);
 
     //! \brief Destroyes nodes that no longer have their required components available
     DLLEXPORT void RemoveInvalidNodes(Lock &guard);
@@ -161,7 +155,6 @@ public:
     //! \brief Actual implementation of CastRayGetFirsHit
     DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to,
         Lock &guard);
-
 
     //! \brief Creates a new empty entity and returns its id
     DLLEXPORT ObjectID CreateEntity(Lock &guard);
@@ -239,7 +232,7 @@ public:
     inline Ogre::SceneManager* GetScene(){
         return WorldsScene;
     }
-        
+    
     // physics functions //
     DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
@@ -247,15 +240,6 @@ public:
         return _PhysicalWorld.get();
     }
 
-    //! \brief Resets physical timers
-    DLLEXPORT void ClearTimers(Lock &guard);
-
-    inline void ClearTimers(){
-            
-        GUARD_LOCK();
-        ClearTimers(guard);
-    }
-        
     //! \brief Simulates physics
     DLLEXPORT void SimulatePhysics(Lock &guard);
 
@@ -273,12 +257,6 @@ public:
         GUARD_LOCK();
         SetWorldPhysicsFrozenState(guard, frozen);
     }
-
-    //! \brief Call when a new constraint is created, will broadcast on the server
-    DLLEXPORT void NotifyNewConstraint(std::shared_ptr<BaseConstraint> constraint);
-
-    //! \brief Removes a constraint and notifies possible clients that it was destroyed
-    DLLEXPORT void ConstraintDestroyed(BaseConstraint* constraint);
 
     // Ray callbacks //
     static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
@@ -302,6 +280,13 @@ public:
     //! this world
     DLLEXPORT bool IsConnectionInWorld(Connection &connection) const;
 
+    //! \brief Verifies that player is receiving this world
+    DLLEXPORT void SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply);
+
+    //! \brief Sends a packet to all connected players
+    DLLEXPORT void SendToAllPlayers(NetworkResponse&& response,
+        RECEIVE_GUARANTEE guarantee) const;
+
     //! \brief Sends an object to a connection and sets everything up
     //! \post The connection will receive updates from the object
     //! \return True when a packet was sent false otherwise
@@ -321,10 +306,6 @@ public:
     DLLEXPORT void HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message,
         NetworkResponseDataForEntityUpdate* data);
 
-    //! \brief Creates a network constraint at the next suitable time
-    DLLEXPORT void HandleConstraintPacket(std::shared_ptr<NetworkResponse> message,
-        NetworkResponseDataForEntityConstraint* data);
-
     //! \brief Handles a world clock synchronizing packet
     //! \note This should only be allowed to be called on a client that has connected
     //! to a server
@@ -340,7 +321,7 @@ public:
 private:
 
     //! \brief Updates a players position info in this world
-    void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer* ply, Lock &plylock);
+    void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer &ply);
 
     void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
     void _HandleDelayedDelete(Lock &guard);
@@ -360,8 +341,6 @@ private:
     void _ApplyInitialEntityPackets(Lock &guard);
 
     void _ApplyEntityUpdatePackets(Lock &guard);
-
-    void _ApplyConstraintPackets(Lock &guard);
 
     // ------------------------------------ //
     Ogre::Camera* WorldSceneCamera = nullptr;
@@ -388,13 +367,7 @@ private:
     //! Holds the players who are receiving this worlds updates and their corresponding
     //! location entities (if any)
     //! \todo Change this to an object that holds more than the player pointer
-    std::vector<ConnectedPlayer*> ReceivingPlayers;
-
-    //! This is not empty when some players are receiving their initial world state
-    //! These objects need to be marked as invalid before quitting
-    //! These can also be used to check whether all players have received
-    //! the world
-    std::vector<std::shared_ptr<PlayerConnectionPreparer>> InitiallySyncingPlayers;
+    std::vector<std::shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
     // objects //
     std::vector<ObjectID> Objects;
@@ -419,8 +392,8 @@ private:
     //! This vector is used for delayed deletion
     std::vector<ObjectID> DelayedDeleteIDS;
 
-    // Has IDs of deleted objects is used to destroy nodes
-    std::vector<ObjectID> NodesToInvalidate;
+    //! If true any pointers to this world are invalid
+    std::shared_ptr<bool> WorldDestroyed = std::make_shared<bool>(false);
 
     //! Mutex for ConstraintList
     Mutex ConstraintListMutex;
@@ -436,9 +409,6 @@ private:
     //! Waiting update packets
     std::vector<std::shared_ptr<NetworkResponse>> EntityUpdatePackets;
 
-    //! Waiting constraint packets
-    std::vector<std::shared_ptr<NetworkResponse>> ConstraintPackets;
-    
 
     // Components //
     ComponentHolder<Position> ComponentPosition;

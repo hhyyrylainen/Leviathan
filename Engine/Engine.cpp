@@ -911,7 +911,7 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* o
     std::shared_ptr<ViewerCameraPos> worldscamera)
 {
     
-	auto tmp = make_shared<GameWorld>();
+	auto tmp = make_shared<GameWorld>(_NetworkHandler->GetNetworkType());
     
 	tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
     

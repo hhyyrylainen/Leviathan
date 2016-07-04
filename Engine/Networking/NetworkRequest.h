@@ -21,9 +21,9 @@ namespace Leviathan{
         
 		Serverstatus,
         
-		OpenRemoteConsoleTo,
+		RemoteConsoleOpen,
         
-		AccessRemoteConsole,
+		RemoteConsoleAccess,
         
 		CloseRemoteConsole,
 
@@ -37,7 +37,7 @@ namespace Leviathan{
         
 		//! Used to request the server to run a command, used for chat and other things
         //! \todo Implement 	if(Command.length() > MAX_SERVERCOMMAND_LENGTH)
-		RequestExecution,
+		RequestCommandExecution,
         
 		//! Sent when a player requests the server to connect a NetworkedInput
 		ConnectInput,

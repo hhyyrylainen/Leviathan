@@ -54,18 +54,15 @@ public:
 class RenderNode : public Component{
 public:
 
-    inline RenderNode() : Component(COMPONENT_TYPE::RenderNode){}
-
-    //! \brief Initializes without any Node
-    DLLEXPORT bool Init();
+    inline RenderNode() : Component(COMPONENT_TYPE::RenderNode){ Marked = false; }
 
     //! \brief Gracefully releases while world is still valid
     DLLEXPORT void Release(Ogre::SceneManager* worldsscene);
         
-    Ogre::SceneNode* Node;
+    Ogre::SceneNode* Node = nullptr;
 
     //! Sets objects attached to the node to be hidden or visible
-    bool Hidden;
+    bool Hidden = false;
 };
 
 //! \brief Entity is sendable to clients
@@ -79,7 +76,8 @@ public:
     class ActiveConnection{
     public:
 
-        ActiveConnection(std::shared_ptr<Connection> connection);
+        inline ActiveConnection(std::shared_ptr<Connection> connection) :
+            CorrespondingConnection(connection), LastConfirmedTickNumber(-1) {}
 
         //! \brief Checks has any packet been successfully received and updates
         //! last confirmed
@@ -102,6 +100,7 @@ public:
         int LastConfirmedTickNumber;
 
         //! Holds packets sent to this connection that haven't failed or been received yet
+        //! \todo Move this into GameWorld to keep a single list of connected players
         std::vector<std::tuple<int, std::shared_ptr<ObjectDeltaStateData>,
                         std::shared_ptr<SentNetworkThing>>> SentPackets;
     };
@@ -110,8 +109,7 @@ public:
         
     DLLEXPORT Sendable();
 
-    DLLEXPORT void AddConnectionToReceivers(Lock &guard,
-        std::shared_ptr<Connection> connection);
+    DLLEXPORT void AddConnectionToReceivers(std::shared_ptr<Connection> connection);
 
     //! Clients we have already sent a state to
     std::vector<std::shared_ptr<ActiveConnection>> UpdateReceivers;
@@ -126,9 +124,13 @@ public:
     //! \todo Possibly add move constructors
     class StoredState{
     public:
-        DLLEXPORT StoredState(std::shared_ptr<ObjectDeltaStateData> safedata, void* data);
+        inline StoredState(std::shared_ptr<ObjectDeltaStateData> safedata, int tick,
+            void* data) :
+            DeltaData(safedata), Tick(tick), DirectData(data){}
         
         std::shared_ptr<ObjectDeltaStateData> DeltaData;
+
+        //! Tick number, should be retrieved from DeltaData
         int Tick;
 
         //! This avoids using dynamic_cast
@@ -136,7 +138,8 @@ public:
     };
 public:
 
-    DLLEXPORT Received();
+    inline Received() : Component(COMPONENT_TYPE::Received),
+                        ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES){}
 
     DLLEXPORT void GetServerSentStates(StoredState const** first,
         StoredState const** second, int tick, float &progress) const;
@@ -152,8 +155,10 @@ public:
 //! \brief Entity has a box for geometry/model, possibly also physics
 class BoxGeometry : public Component{
 public:
-    DLLEXPORT BoxGeometry(const Float3 &size, const std::string &material);
-        
+    inline BoxGeometry(const Float3 &size, const std::string &material) :
+        Component(COMPONENT_TYPE::BoxGeometry),
+        Sizes(size), Material(material){}
+    
     //! Size along the axises
     Float3 Sizes;
 
@@ -161,13 +166,14 @@ public:
     std::string Material;
 
     //! Entity created from a box mesh
-    Ogre::Entity* GraphicalObject;
+    Ogre::Entity* GraphicalObject = nullptr;
 };
 
 //! \brief Entity has a model
 class Model : public Component{
 public:
-    DLLEXPORT Model(const std::string &file);
+    inline  Model(const std::string &file) : Component(COMPONENT_TYPE::Model),
+                                             ModelFile(file){}
 
     //! \brief Destroys GraphicalObject
     DLLEXPORT void Release(Ogre::SceneManager* scene);
@@ -175,7 +181,7 @@ public:
     std::string ModelFile;
 
     //! The entity that has this model's mesh loaded
-    Ogre::Entity* GraphicalObject;
+    Ogre::Entity* GraphicalObject = nullptr;
 };
 
 
@@ -190,15 +196,32 @@ public:
     public:
         //! \note Pass NULL for name if not used, avoid passing empty strings
         //! \param name The name to assign. This will be deleted by a std::unique_ptr
-        DLLEXPORT ApplyForceInfo(bool addmass,
-            std::function<Float3(ApplyForceInfo* instance, Physics &object,
-                Lock &objectlock)> getforce,
-            std::unique_ptr<std::string> name = nullptr);
+        ApplyForceInfo(bool addmass,
+            std::function<Float3(ApplyForceInfo* instance, Physics &object)> getforce,
+            std::unique_ptr<std::string> name = nullptr) :
+            OptionalName(move(name)), MultiplyByMass(addmass), Callback(getforce){}
         
-        DLLEXPORT ApplyForceInfo(const ApplyForceInfo &other);
-        DLLEXPORT ApplyForceInfo(ApplyForceInfo &&other);
+        ApplyForceInfo(const ApplyForceInfo &other) :
+            MultiplyByMass(other.MultiplyByMass), Callback(other.Callback)
+        {
+            if(other.OptionalName)
+                OptionalName = std::make_unique<std::string>(*other.OptionalName);
+        }
+        
+        ApplyForceInfo(ApplyForceInfo &&other) :
+            OptionalName(move(other.OptionalName)),
+            MultiplyByMass(std::move(other.MultiplyByMass)), Callback(move(other.Callback)){}
 
-        DLLEXPORT ApplyForceInfo& operator =(const ApplyForceInfo &other);
+        ApplyForceInfo& operator =(const ApplyForceInfo &other){
+
+            if(other.OptionalName)
+                OptionalName = std::make_unique<std::string>(*other.OptionalName);
+
+            MultiplyByMass = other.MultiplyByMass;
+            Callback = other.Callback;
+
+            return *this;
+        }
 
         //! Set a name when you don't want other non-named forces to override this
         std::unique_ptr<std::string> OptionalName;
@@ -209,8 +232,7 @@ public:
         
         //! The callback which returns the force
         //! \todo Allow deleting this force from the callback
-        std::function<Float3(ApplyForceInfo* instance, Physics &object,
-            Lock &objectlock)> Callback;
+        std::function<Float3(ApplyForceInfo* instance, Physics &object)> Callback;
     };
 
     struct BasePhysicsData{
@@ -229,7 +251,10 @@ public:
         
 public:
         
-    DLLEXPORT Physics(const Arguments &args);
+    inline Physics(const Arguments &args) : Component(COMPONENT_TYPE::Physics),
+        World(args.world),
+        _Position(args.updatepos), ThisEntity(args.id),
+        UpdateSendable(args.updatesendable){}
 
     DLLEXPORT void Release();
         
@@ -251,7 +276,10 @@ public:
     //! \brief Gets the absolute velocity
     DLLEXPORT Float3 GetVelocity() const;
 
-    DLLEXPORT NewtonBody* GetBody() const;
+    inline NewtonBody* GetBody() const{
+
+        return Body;
+    }
 
     //! \brief Sets the torque of the body
     //! \see GetBodyTorque
@@ -334,11 +362,11 @@ public:
 class ManualObject : public Component{
 public:
 
-    DLLEXPORT ManualObject();
+    inline ManualObject() : Component(COMPONENT_TYPE::ManualObject){}
 
     DLLEXPORT void Release(Ogre::SceneManager* scene);
 
-    Ogre::ManualObject* Object;
+    Ogre::ManualObject* Object = nullptr;
 
     //! When not empty the ManualObject has been created into an actual mesh
     //! that needs to be destroyed on release

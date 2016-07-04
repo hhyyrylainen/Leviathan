@@ -35,9 +35,6 @@ public:
 
 protected:
 
-    //template <typename T, typename R, typename ...Args>
-    //    R proxycall(T & obj, R (T::*mf)(Args...), Args &&... args)
-    
     //! \brief Helper for Run
     //!
     //! Goes through all nodes and calls func on them

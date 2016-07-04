@@ -8,6 +8,8 @@
 #include "Common/SFMLPackets.h"
 #include "EntityCommon.h"
 
+#include <limits>
+
 namespace Leviathan{
 
 //! Must contain all valid Component types
@@ -22,6 +24,14 @@ enum class COMPONENT_TYPE : uint16_t{
 
     Received,
 
+    Physics,
+
+    BoxGeometry,
+
+    Model,
+
+    ManualObject,
+
     //! All values above this are application specific types
     Custom = 10000
 };
@@ -31,7 +41,7 @@ enum class COMPONENT_TYPE : uint16_t{
 class Component{
 public:
 
-    DLLEXPORT Component(COMPONENT_TYPE type) : Marked(true), Type(type){};
+    inline Component(COMPONENT_TYPE type) : Marked(true), Type(type){};
 
     //! Set to true when this component has changed
     //! Can be used by other systems to react to changing components
@@ -62,10 +72,10 @@ public:
     //! \todo Replace with a bitfield in ComponentState that automatically is configured
     //! to be large enough
     template<typename T>
-    struct PotentiallyUpdatedValue {
+        struct PotentiallyUpdatedValue {
         
         inline PotentiallyUpdatedValue(){}
-        inline PotentiallyUpdatedValue(const T &value) : Value(value), Updated(true){}
+        inline PotentiallyUpdatedValue(const T &value) : Value(value), Updated(1){}
 
         //! \returns True if Updated
         inline operator bool(){
@@ -79,15 +89,52 @@ public:
             Value = value;
             return *this;
         }
-        
-        bool Updated = false;
+
+        //! \brief Returns true if BitNum bit is set in Updated
+        inline bool IsBitSet(uint8_t BitNum = 0) const
+        {
+            return Updated & (1 << BitNum);
+        }
+
+        //! \brief Sets BitNum bit in Updated
+        inline void SetBit(uint8_t BitNum = 0) const
+        {
+            Updated |= (1 << BitNum);
+        }
+
+        //! \brief Returns true if up and including BitNum is set in Updated
+        //! \todo Verify that tail call optimization kicks in and this is inlined
+        inline bool BitsSetUntil(uint8_t BitNum) const
+        {
+            if(BitNum == 0){
+                
+                return IsBitSet(0);
+                
+            } else {
+
+                return IsBitSet(0) && BitsSetUntil(BitNum - 1);
+            }
+        }
+
+        inline void SetAllBitsInUpdated(){
+
+            Updated = std::numeric_limits<uint8_t>::max();
+        }
+
+        //! Marks whether it is updated or not
+        //! For basic usage 0 means not updated 1 means it is updated
+        //! \detail More specific usage can use the individual bytes to check
+        //! whether subcomponents are updated (Like Float3 individual values)
+        uint8_t Updated = 0;
         T Value;
     };
+
+
 
 public:
 
     template<typename T>
-    using Member = PotentiallyUpdatedValue<T>;
+        using Member = PotentiallyUpdatedValue<T>;
     
     inline ComponentState(int32_t tick, COMPONENT_TYPE componenttype) :
         Tick(tick), ComponentType(componenttype){}

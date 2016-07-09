@@ -927,7 +927,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const std::string &fil
     auto ourmod = ourobj->GetModule();
 
 
-    ourmod->AddScriptSegment(file, ourstartline, *scriptdata);
+    ourmod->AddScriptSegment(file, static_cast<int>(ourstartline), *scriptdata);
     ourmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
     // Add to the object //

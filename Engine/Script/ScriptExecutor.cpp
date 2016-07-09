@@ -310,10 +310,10 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
     ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo)
 {
 	// Get the number of parameters expected //
-	auto parameterc = paraminfo->ParameterTypeIDS.size();
+	auto parameterc = static_cast<asUINT>(paraminfo->ParameterTypeIDS.size());
 
 	// Start passing the parameters provided by the application //
-	for(size_t i = 0; i < parameterc; ++i){
+	for(asUINT i = 0; i < parameterc; ++i){
 
         // no more parameters //
 		if(i >= parameters->Parameters.size())

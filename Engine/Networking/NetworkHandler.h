@@ -77,9 +77,6 @@ public:
     //! \note  Call as often as possible to receive responses
     DLLEXPORT virtual void UpdateAllConnections();
 
-    //! \brief Called by Engine to stop own connection update thread
-    DLLEXPORT void StopOwnUpdaterThread(Lock &guard);
-
     DLLEXPORT virtual void RemoveClosedConnections();
 
     DLLEXPORT std::shared_ptr<std::promise<std::string>> QueryMasterServer(
@@ -107,6 +104,9 @@ public:
     DLLEXPORT std::shared_ptr<Connection> OpenConnectionTo(
         const sf::IpAddress &targetaddress, unsigned short port);
 
+    //! If this is a server returns all the clients
+    DLLEXPORT std::vector<std::shared_ptr<Connection>>& GetClientConnections();
+
     //! Returns the port to which our socket has been bind
     inline uint16_t GetOurPort() const{
         
@@ -130,6 +130,21 @@ public:
             return ServerInterface;
 
         return nullptr;
+    }
+
+    inline NetworkClientInterface* GetClientInterface() {
+
+        return ClientInterface;
+    }
+
+    inline NetworkCache* GetCache() {
+
+        return _NetworkCache.get();
+    }
+
+    inline SyncedVariables* GetSyncedVariables() {
+
+        return VariableSyncer.get();
     }
 
     //! \brief Destroys the network cache permanently
@@ -162,12 +177,12 @@ protected:
     
     // Closes the socket //
     void _ReleaseSocket();
+
+    //! \brief Returns false if the socket has been closed
+    bool _RunUpdateOnce();
     
     //! \brief Constantly listens for packets in a blocked state
     void _RunListenerThread();
-    
-    //! \brief Does temporary connection updating
-    void _RunTemporaryUpdaterThread();
     
     void _SaveMasterServerList();
     bool _LoadMasterServerList();
@@ -192,6 +207,9 @@ protected:
     sf::UdpSocket _Socket;
     //! Used to control the locking of the socket
     Mutex SocketMutex;
+
+    //! If true uses a blocking socket and async handling
+    bool BlockingMode = false;
 
     //! Our local port number
     uint16_t PortNumber;
@@ -220,12 +238,6 @@ protected:
 
     //! Thread that constantly blocks on the socket and waits for packets
     std::thread ListenerThread;
-
-    //! Temporary thread for getting responses while the game is starting
-    std::thread TemporaryUpdateThread;
-    bool UpdaterThreadStop;
-
-    std::condition_variable_any NotifyTemporaryUpdater;
 
     std::string MasterServerMustPassIdentification;
 };

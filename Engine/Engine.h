@@ -50,7 +50,6 @@ namespace Leviathan{
         //! \brief Returns the number of tick that was last simulated
         DLLEXPORT int GetCurrentTick() const;
 
-		//! \brief Causes VLD to dump current memory leaks
 		DLLEXPORT static void DumpMemoryLeaks();
 
 		DLLEXPORT void Tick();
@@ -115,6 +114,9 @@ namespace Leviathan{
 		inline ResourceRefreshHandler* GetResourceRefreshHandler(){
             return _ResourceRefreshHandler; };
         inline EntitySerializer* GetEntitySerializer(){ return _EntitySerializer.get(); };
+        inline RemoteConsole* GetRemoteConsole() {
+            return _RemoteConsole;
+        }
         
 #ifdef LEVIATHAN_USES_LEAP
 		inline LeapManager* GetLeapManager(){ return LeapData; };

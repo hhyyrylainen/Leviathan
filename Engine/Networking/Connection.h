@@ -8,6 +8,8 @@
 #include "../Common/ThreadSafe.h"
 #include "CommonNetwork.h"
 
+#include "NetworkResponse.h"
+
 #include "SFML/Network/Socket.hpp"
 #include "SFML/Network/UdpSocket.hpp"
 #include "SFML/Network/IpAddress.hpp"
@@ -26,7 +28,6 @@ namespace Leviathan{
 
 constexpr auto DEFAULT_ACKCOUNT = 32;
 constexpr auto KEEPALIVE_TIME = 120000;
-constexpr auto KEEPALIVE_RESPOND = 30000;
 constexpr auto ACKKEEPALIVE = 200;
 //! \brief The amount of received packet ids to keep in memory,
 //! these ids are used to discard duplicate packets
@@ -69,12 +70,12 @@ enum class CONNECTION_STATE {
     //! join a GameWorld
     Authenticated,
 
-    //! Cannot receive anything. Caused by not receiveing packets or an explicit close
+    //! Cannot receive anything. Caused by not receiving packets or an explicit close
     //! Will send a single close connection packet when moving to this state
     //! Invalidates Player object and forces a logout
     Closed,
 
-    //! When doing a NAT punhcthrough, will move to Initial after this
+    //! When doing a NAT punch through, will move to Initial after this
     //! In this state 10 punch through packets will be sent separated by 100 ms
     Punchthrough
 };
@@ -85,16 +86,11 @@ public:
 
     using CallbackType = std::function<void(bool, SentNetworkThing&)>;
 
-    //! This is the signature for request packets
-    DLLEXPORT SentNetworkThing(uint32_t packetid, std::shared_ptr<NetworkRequest> request,
-        RECEIVE_GUARANTEE guarantee, PACKET_TIMEOUT_STYLE timeout, sf::Packet&& packetsdata);
+    DLLEXPORT SentNetworkThing(uint32_t packetid, RECEIVE_GUARANTEE guarantee, 
+        sf::Packet&& packetsdata, bool isrequest);
         
     //! Empty destructor to link this in
-    DLLEXPORT ~SentNetworkThing();
-    
-    // This is the signature for response packets //
-    DLLEXPORT SentNetworkThing(uint32_t packetid, std::shared_ptr<NetworkResponse> response,
-        RECEIVE_GUARANTEE guarantee, PACKET_TIMEOUT_STYLE timeout, sf::Packet&& packetsdata);
+    ~SentNetworkThing() { }
 
     //! \brief Returns true once the packet has been received by the target or lost
     //! too many times
@@ -103,8 +99,12 @@ public:
         return IsDone.load(std::memory_order_consume);
     }
 
+    //! \brief Called by Connection once this is done
+    DLLEXPORT void OnFinalized(bool succeeded);
+
     //! \brief Gets the status once IsFinalized returns true blocks otherwise
     //! \return True when the packet has been successfully received, false if lost
+    //! \todo Make sure this cannot deadlock
     DLLEXPORT bool GetStatus();
         
     //! \brief Sets the status of the wait object notifying all waiters that this has
@@ -124,6 +124,10 @@ public:
     //! \bug This can corrupt the arguments passed to this function, not recommended for use
     DLLEXPORT void SetCallback(std::shared_ptr<CallbackType> func = nullptr);
 
+
+    DLLEXPORT void SetCallbackFunc(CallbackType func);
+
+
     //! Local packet id
     uint32_t PacketNumber;
 
@@ -132,12 +136,7 @@ public:
 
     //! Used to detect when a critical packet is lost or if this packet has a specific
     //! number of resends
-    uint8_t AttempNumber = 0;
-
-    //! Controls how this packet is detected as lost
-    //! For gameplay packets this should be PACKET_TIMEOUT_STYLE::PacketsAfterReceived
-    //! and for requests and thing like chat PACKET_TIMEOUT_STYLE::Timed
-    PACKET_TIMEOUT_STYLE PacketTimeoutStyle = PACKET_TIMEOUT_STYLE::PacketsAfterReceived;
+    uint8_t AttempNumber = 1;
 
     //! Callback function called when succeeded or failed
     //! May only be called by the receiving thread when removing this
@@ -146,6 +145,7 @@ public:
     std::shared_ptr<std::function<void(bool, SentNetworkThing&)>> Callback;
 
     //! The time this request was started
+    //! \todo Merge this into ConfirmReceiveTime
     int64_t RequestStartTime;
 
     //! \brief The time when this packed got marked as received
@@ -159,21 +159,20 @@ public:
 
     //! Set to true once this object is no longer used
     std::atomic<bool> IsDone { false };
+    //! \todo Merge into IsDone
     bool Succeeded = false;
-        
-    // This is stored for resending the data //
+
+    //! This is stored for resending the data
+    //! If not a guaranteed packet this will be empty
     sf::Packet AlmostCompleteData;
 
-    // If set the following variables will be used //
-    bool IsArequest;
+    //! If true when receiving a response with a matching id GotResponse will be filled
+    bool IsRequest;
     std::shared_ptr<NetworkResponse> GotResponse;
-    std::shared_ptr<NetworkRequest> OriginalRequest;
-    // Else (if not a request) no response is expected (other than a receive confirmation) //
-    std::shared_ptr<NetworkResponse> SentResponse;
-};
 
-static_assert(sizeof(char) == 1, "Char must be one byte in size");
-static_assert(sizeof(int) == 4, "Int must be four bytes in size");
+    //! This is not used by Connection, can be used by client code to store requests
+    std::shared_ptr<NetworkRequest> UserCodeRequestStore;
+};
 
 //! \brief For keeping track of received remote packets.
 //!
@@ -212,7 +211,7 @@ public:
         // We can use division to find out which vector element is wanted //
         size_t vecelement = ackindex/8;
 
-        return (Acks[vecelement] & (1 << (ackindex-vecelement))) != 0;
+        return (Acks[vecelement] & (1 << (ackindex-vecelement))) == 1;
     }
 
     // Data //
@@ -223,7 +222,6 @@ public:
 //! \brief Holds sent ack packets in order to mark the acks as properly sent
 struct SentAcks{
 
-    //! \param insidepacket The packet in which the data was sent in
     SentAcks(uint32_t localpacketid, std::shared_ptr<NetworkAckField> acks) :
         InsidePacket(localpacketid), AcksInThePacket(acks)
     {}
@@ -251,6 +249,7 @@ public:
     //! Creates the address object
     //! \warning This function will lock the NetworkHandler object
     //! and thus it needs to be still valid
+    //! \todo Make this async resolve the address
     DLLEXPORT bool Init(NetworkHandler* owninghandler);
     DLLEXPORT void Release();
 
@@ -259,6 +258,12 @@ public:
         return State == CONNECTION_STATE::Connected ||
             State == CONNECTION_STATE::Secured ||
             State == CONNECTION_STATE::Authenticated;
+    }
+
+    //! \brief Returns true if this socket is valid for sending
+    inline bool IsValidForSend() const {
+
+        return State != CONNECTION_STATE::Closed;
     }
     
     //! \brief Adds special restriction on the connection
@@ -275,48 +280,47 @@ public:
     DLLEXPORT bool IsTargetHostLocalhost();
 
     //! \brief Ticks this connection, times out sent packets
-    DLLEXPORT void UpdateListening(Lock &guard);
+    DLLEXPORT void UpdateListening();
         
     //! Send a request packet to this connection
     //! \returns nullptr If this connection is closed
     DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
-        std::shared_ptr<NetworkRequest> request, RECEIVE_GUARANTEE guarantee,
-        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived);
+        NetworkRequest &request, RECEIVE_GUARANTEE guarantee);
 
     inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
-        std::shared_ptr<NetworkRequest> request, RECEIVE_GUARANTEE guarantee,
-        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived)
+        NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
     {
         GUARD_LOCK();
-        return SendPacketToConnection(guard, request, guarantee, timeout);
+        return SendPacketToConnection(guard, request, guarantee);
     }
     
-    //! Sends a reponse packet to this connection
+    //! Sends a response packet to this connection
     //! \returns nullptr If this connection is closed
     DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
-        std::shared_ptr<NetworkResponse> response, RECEIVE_GUARANTEE guarantee,
-        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived);
+        NetworkResponse &response, RECEIVE_GUARANTEE guarantee);
 
     inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
-        std::shared_ptr<NetworkResponse> response, RECEIVE_GUARANTEE guarantee,
-        PACKET_TIMEOUT_STYLE timeout = PACKET_TIMEOUT_STYLE::PacketsAfterReceived)
+        NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
     {
         GUARD_LOCK();
-        return SendPacketToConnection(guard, response, guarantee, timeout);
+        return SendPacketToConnection(guard, response, guarantee);
     }
- 
+
 
     //! \brief Blocks current thread until packet is successfully sent or lost
     //! \returns True if it was successfully sent, false if lost
-    DLLEXPORT bool BlockUntilFinished(std::shared_ptr<NetworkResponse> packet);
+    DLLEXPORT bool BlockUntilFinished(std::shared_ptr<SentNetworkThing> packet);
         
-    //! \brief Sends a keepalive packet if enough time has passed
-    DLLEXPORT void CheckKeepAliveSend();
+    //! \brief Sends a keep alive packet if enough time has passed
     DLLEXPORT void SendKeepAlivePacket(Lock &guard);
     DLLEXPORT FORCE_INLINE void SendKeepAlivePacket(){
         GUARD_LOCK();
         SendKeepAlivePacket(guard);
     }
+
+    //! Adds required data for a response packet that has no data
+    DLLEXPORT void AddDataForResponseWithoutData(sf::Packet &packet, 
+        NETWORK_RESPONSE_TYPE type);
 
     //! \brief Sends a packet that tells the other side to disconnect
     //! \todo Add a message parameter for the reason
@@ -352,12 +356,9 @@ public:
     //! Used to mark our packets as sent
     DLLEXPORT void HandleRemoteAck(Lock &guard, uint32_t localidconfirmedassent);
 
-    //! \brief Fills a packet with all the data that it would get filled with in SendPacket
-    //!
-    //! Used mainly for local testing purposes where it's difficult to use sockets
-    DLLEXPORT std::shared_ptr<SentNetworkThing> CreateFullSendablePacket(
-        std::shared_ptr<NetworkResponse> data, sf::Packet &packettofill,
-        bool skipwaitingrequests = false);
+    inline std::string GetRawAddress() const {
+        return RawAddress;
+    }
 
 protected:
 
@@ -365,26 +366,39 @@ protected:
     //! \brief Sets acks in a packet as properly sent in this
     //!
     //! Acks that were false in the packet are untouched
-    DLLEXPORT void SetPacketsReceivedIfNotSet(NetworkAckField &acks);
+    DLLEXPORT void SetPacketsReceivedIfNotSet(Lock &guard, NetworkAckField &acks);
 
     //! \brief Removes acks that were successful in the packet from target
     //!
-    //! Will also remove NetworkAckFields from the vector holding waiting ack groups
     //! \note Should be called after the packet containing these acks is marked as
-    //! successfull
-    DLLEXPORT void RemoveSucceededAcks(NetworkAckField &acks);
+    //! successful
+    DLLEXPORT void RemoveSucceededAcks(Lock &guard, NetworkAckField &acks);
+
+    //! \brief Sends actualpackettosend to our Owner's socket
+    DLLEXPORT void _SendPacketToSocket(sf::Packet actualpackettosend);
+
+
+    //! Marks acks depending on packet to be lost
+    DLLEXPORT void _FailPacketAcks(uint32_t packetid);
+
+    //! \brief Returns true if we have already received packet with id
+    //! \note Will also store the packet number for future look ups
+    bool _IsAlreadyReceived(uint32_t packetid);
+
+    //! \brief Closes the connection and reports an error
+    DLLEXPORT void _OnRestrictFail(uint16_t type);
     
 private:
 
     //! \brief Prepares a new header for the thing but keeps the original local id and
     //! sends the packet again
-    void _ResendRequest(Lock &guard, std::shared_ptr<SentNetworkThing> toresend);
+    void _Resend(Lock &guard, SentNetworkThing &toresend);
 
     //! \brief Creates a standard header and ack field for outgoing packet
     //! \param tofill An empty packet where the packet header can be added
     //! \param dontsendacks If true first ack will be set to -1 and count to 0
     void _PreparePacketHeaderForPacket(Lock &guard, uint32_t localpacketid,
-        sf::Packet &tofill, bool isrequest, bool dontsendacks = false);
+        sf::Packet &tofill, bool dontsendacks = false);
 
     //! \brief Returns a request matching the response's reference ID or NULL
     std::shared_ptr<SentNetworkThing> _GetPossibleRequestForResponse(Lock &guard,
@@ -400,16 +414,19 @@ private:
 
     //! The main state of connection
     CONNECTION_STATE State = CONNECTION_STATE::NothingReceived;
+
+    //! Packets are handled by this object
+    NetworkHandler* Owner = nullptr;
     
     //! Used to send acks for received remote packets
     ReceivedPacketField ReceivedRemotePackets;
 
     //! Holds the ID of the last sent packet
-    //! Incremented everytime a packet is sent to keep local
+    //! Incremented every time a packet is sent to keep local
     //! packet ids different
     //! \note The world will break once this wraps around and reaches 0
     //! \todo Fix that
-    uint32_t LastUsedLocalID = 0;
+    uint32_t LastUsedLocalID = 1;
 
     //! Holds the id of last local sent packet that we have received an ack for
     uint32_t LastConfirmedSent = 0;
@@ -419,7 +436,7 @@ private:
     //! This is mainly used to accept only remote console feature on clients
     CONNECTION_RESTRICTION RestrictType = CONNECTION_RESTRICTION::None;
 
-    //! Flipped everytime a packet is sent to toggle sending acks from the front or the back
+    //! Flipped every time a packet is sent to toggle sending acks from the front or the back
     //! In normal operation doesn't matter but in exceptional circumstances
     //! allows more acks to be sent by sending 2 group of acks for each round while
     //! waiting for confirmation of ack receive
@@ -429,8 +446,8 @@ private:
     //! \todo Implement this
     uint8_t ExtraAckCount = 0;
     
-    int64_t LastSentPacketTime;
-    int64_t LastReceivedPacketTime;
+    int64_t LastSentPacketTime = 0;
+    int64_t LastReceivedPacketTime = 0;
 
     //! Sent packets that haven't been confirmed as arrived
     //! \todo Split this into two, requests and responses
@@ -446,7 +463,10 @@ private:
     //! The remote port
     unsigned short TargetPortNumber;
 
-    //! If the target remote was specified with an url this stores it for
+    //! Non-translated address string
+    std::string RawAddress;
+
+    //! If the target remote was specified with an URL this stores it for
     //! later reconstruction
     std::string HostName;
 
@@ -455,7 +475,7 @@ private:
 
     //! True when TargetHost has been retrieved from HostName or TargetHost is
     //! made valid some other way
-    bool AddressGot;
+    bool AddressGot = false;
 };
 
 }

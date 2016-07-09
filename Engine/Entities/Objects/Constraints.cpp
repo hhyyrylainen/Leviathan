@@ -50,37 +50,8 @@ DLLEXPORT void BaseConstraint::Release(){
 }
 
 DLLEXPORT void BaseConstraint::Destroy(Constraintable* skipthis /*= nullptr*/){
-    {
-        GUARD_LOCK();
-
-        if(Type == ENTITY_CONSTRAINT_TYPE_DESTRUCTED)
-            return;
-
-        if(&FirstObject != skipthis)
-            FirstObject.RemoveConstraint(this);
-
-        if(&SecondObject != skipthis)
-            SecondObject.RemoveConstraint(this);
     
-
-        Type = ENTITY_CONSTRAINT_TYPE_DESTRUCTED;
-
-        if(!OwningWorld)
-            return;
-
-        if(Joint && OwningWorld){
-        
-            NewtonDestroyJoint(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(), Joint);
-        }
-
-        Joint = NULL;
-    }
-
-    // This call should get rid of the last reference
-    // We have been unlocked before calling delete
-    OwningWorld->ConstraintDestroyed(this);
-
-    // We should be deleted now
+    DEBUG_BREAK;
 }
 // ------------------------------------ //
 DLLEXPORT int BaseConstraint::GetID() const{
@@ -108,14 +79,14 @@ DLLEXPORT Constraintable& BaseConstraint::GetSecondEntity() const{
 // ------------------ SliderConstraint ------------------ //
 DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world,
     Constraintable &first, Constraintable &second) : 
-	BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second), Axis(0)
+	BaseConstraint(ENTITY_CONSTRAINT_TYPE::Slider, world, first, second), Axis(0)
 {
 
 }
 
 DLLEXPORT SliderConstraint::SliderConstraint(GameWorld* world, Constraintable &first,
     Constraintable &second, int id) :
-    BaseConstraint(ENTITY_CONSTRAINT_TYPE_SLIDER, world, first, second, id), Axis(0)
+    BaseConstraint(ENTITY_CONSTRAINT_TYPE::Slider, world, first, second, id), Axis(0)
 {
 
 }
@@ -150,12 +121,12 @@ bool SliderConstraint::_CreateActualJoint(){
     // TODO: check if we could add a GetPhysicsBody function to BaseConstraintable
     try{
         
-        auto& first = OwningWorld->GetComponent<Physics>(FirstObject.PartOfEntity);
-        auto& second = OwningWorld->GetComponent<Physics>(SecondObject.PartOfEntity);
+        DEBUG_BREAK;
+        //auto& first = OwningWorld->GetComponent<Physics>(FirstObject.PartOfEntity);
+        //auto& second = OwningWorld->GetComponent<Physics>(SecondObject.PartOfEntity);
 
-        
-        Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(),
-            &pos.X, &Axis.X, first.Body, second.Body);
+        //Joint = NewtonConstraintCreateSlider(OwningWorld->GetPhysicalWorld()->GetNewtonWorld(),
+        //    &pos.X, &Axis.X, first.Body, second.Body);
 
         return Joint != NULL;
     

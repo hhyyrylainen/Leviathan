@@ -137,10 +137,14 @@ private:
     void _SendConnectRequest(Lock &guard);
 
     //! \brief Handles succeeded requests, removes clutter from other places
-    void _ProcessCompletedRequest(std::shared_ptr<SentNetworkThing> tmpsendthing, Lock &guard);
+    void _ProcessCompletedRequest(Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing,
+        std::shared_ptr<NetworkResponse> response);
 
     //! \brief Handles failed requests, removes clutter from other places
-    void _ProcessFailedRequest(std::shared_ptr<SentNetworkThing> tmpsendthing, Lock &guard);
+    //! Only requests that aren't always sent as RECEIVE_GUARANTEE::Critical are handled here.
+    //! That's because those will immediately drop the connection if they fail.
+    void _ProcessFailedRequest(Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing, 
+        std::shared_ptr<NetworkResponse> response);
 
     //! \brief Internally called when server has accepted us
     //! \todo Call variable syncing from here

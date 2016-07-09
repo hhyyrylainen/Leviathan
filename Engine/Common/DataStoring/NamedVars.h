@@ -129,7 +129,9 @@ namespace Leviathan{
 		DLLEXPORT int GetVariableType() const;
 		DLLEXPORT int GetVariableType(const int &nindex) const;
 
-		DLLEXPORT std::string& GetName();
+        inline std::string GetName() const {
+            return Name;
+        }
 		DLLEXPORT void GetName(std::string &name) const;
 
 		DLLEXPORT void SetName(const std::string &name);

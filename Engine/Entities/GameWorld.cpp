@@ -26,6 +26,7 @@
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorManager2.h"
 
+#include "Exceptions.h"
 
 using namespace Leviathan;
 using namespace std;
@@ -298,7 +299,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
 
             LEVIATHAN_ASSERT(task, "wrong type passed to our task");
 
-            int num = task->GetRepeatCount();
+            size_t num = task->GetRepeatCount();
 
             if(*WorldInvalid){
 
@@ -312,7 +313,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
             GUARD_LOCK_OTHER(world);
 
             // Stop if out of bounds //
-            if(num < 0 || num >= static_cast<int>(world->Objects.size())){
+            if(num >= world->Objects.size()){
 
                 goto taskstopprocessingobjectsforinitialsynclabel;
             }
@@ -445,11 +446,11 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
     auto& addedrendernode = ComponentRenderNode.GetAdded(rendernodelock);
     auto& addedreceived = ComponentReceived.GetAdded(receivedlock);
 
-    _RenderingPositionSystem.CreateNodes(addedposition, addedrendernode,
-        ComponentRenderNode, rendernodelock);
-    // And the other way around
-    _RenderingPositionSystem.CreateNodes(addedrendernode, addedposition, 
-        ComponentPosition, positionlock);
+    _RenderingPositionSystem.CreateNodes(
+        addedrendernode, addedposition,
+        ComponentRenderNode, rendernodelock,
+        ComponentPosition, positionlock
+        );
 
     // Clear added //
     ComponentPosition.ClearAdded();
@@ -491,6 +492,16 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
     
     return TickNumber;
+}
+
+DLLEXPORT float Leviathan::GameWorld::GetTickProgress() const {
+
+    float progress = Engine::Get()->GetTimeSinceLastTick() / (float)TICKSPEED;
+
+    if (progress < 0.f)
+        return 0.f;
+
+    return progress < 1.f ? progress : 1.f;
 }
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){
@@ -684,12 +695,9 @@ void GameWorld::_DoDestroy(Lock &guard, ObjectID id){
     RemoveComponent<Sendable>(id);
     RemoveComponent<Model>(id);
     RemoveComponent<Physics>(id);
-    RemoveComponent<Constraintable>(id);
     RemoveComponent<BoxGeometry>(id);
     RemoveComponent<ManualObject>(id);
-    RemoveComponent<Parent>(id);
     RemoveComponent<Received>(id);
-    RemoveComponent<Parentable>(id);
 }
 
 void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID id){
@@ -803,8 +811,16 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
 
     sf::Packet packet;
     
-    if(!Engine::Get()->GetEntitySerializer()->CreatePacketForConnection())
+    try {
+        if (!Engine::Get()->GetEntitySerializer()->CreatePacketForConnection(this, guard, id,
+            GetComponent<Sendable>(id), packet, *connection))
+        {
+            return false;
+        }
+    }
+    catch (const NotFound&) {
         return false;
+    }
 
     // Then gather all sorts of other stuff to make an response //
     ResponseEntityCreation response(-1, id, std::move(packet));
@@ -814,7 +830,7 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleEntityInitialPacket(
-    shared_ptr<NetworkResponse> message, NetworkResponseDataForInitialEntity* data)
+    shared_ptr<NetworkResponse> message, ResponseEntityCreation* data)
 {
     if(!data)
         return;
@@ -835,8 +851,8 @@ void GameWorld::_ApplyInitialEntityPackets(Lock &guard){
         
         ObjectID id = 0;
         
-        serializer->CreateEntityFromInitialMessage(this, guard, id,
-            *(*iter).get());
+        serializer->DeserializeWholeEntityFromPacket(this, guard, id,
+            static_cast<ResponseEntityCreation*>(response.get())->InitialEntity);
 
         if(id < 1){
 
@@ -848,10 +864,9 @@ void GameWorld::_ApplyInitialEntityPackets(Lock &guard){
 }
 
 DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(
-    shared_ptr<NetworkResponse> message,
-    NetworkResponseDataForEntityUpdate* data)
+    std::shared_ptr<NetworkResponse> message)
 {
-    if(!data)
+    if(message->GetType() == NETWORK_RESPONSE_TYPE::EntityUpdate)
         return;
     
     GUARD_LOCK();
@@ -863,10 +878,10 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
 
     auto serializer = Engine::Get()->GetEntitySerializer();
     
-    for(auto&& response : EntityUpdatePackets){
+    for(auto& response : EntityUpdatePackets){
 
         // Data cannot be NULL here //
-        NetworkResponseDataForEntityUpdate* data = response->GetResponseDataForEntityUpdate();
+        ResponseEntityUpdate* data = static_cast<ResponseEntityUpdate*>(response.get());
 
         bool found = false;
         
@@ -878,12 +893,12 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
                 found = true;
 
                 // Apply the update //
-                if(!serializer->ApplyUpdateMessage(this, guard, data->EntityID,
-                        *data->UpdateData, data->TickNumber, data->ReferenceTick))
+                if(!serializer->ApplyUpdateFromPacket(this, guard, data->EntityID,
+                        data->TickNumber, data->ReferenceTick, data->UpdateData))
                 {
-
                     Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): "
-                        "applying update to entity "+Convert::ToString(data->EntityID)+" failed");
+                        "applying update to entity " + 
+                        Convert::ToString(data->EntityID) + " failed");
                 }
             
                 break;
@@ -909,13 +924,13 @@ DLLEXPORT void GameWorld::ApplyQueuedPackets(Lock &guard){
         _ApplyEntityUpdatePackets(guard);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSyncData* data){
+DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data){
 
     GUARD_LOCK_NAME(lockit);
 
-    Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: "+
-        Convert::ToString(data->Absolute)+", tick: "+Convert::ToString(data->Ticks)+
-        ", enginems: "+Convert::ToString(data->EngineMSTweak));
+    Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: " +
+        Convert::ToString(data->Absolute)+", tick: " + Convert::ToString(data->Ticks) +
+        ", engine ms: "+Convert::ToString(data->EngineMSTweak));
     
     // Change our TickNumber to match //
     lockit.unlock();
@@ -928,9 +943,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
     lockit.lock();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(
-    NetworkResponseDataForWorldFrozen* data)
-{
+DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data){
 
     GUARD_LOCK();
 
@@ -967,6 +980,51 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(
         // Snap objects back //
         Logger::Get()->Info("TODO: world freeze snap things back a bit");
     }
+}
+
+DLLEXPORT void Leviathan::GameWorld::_OnComponentDestroyed(ObjectID id, COMPONENT_TYPE type) {
+
+    if (type > COMPONENT_TYPE::Custom) {
+
+        // Handle custom components //
+        _OnCustomComponentDestroyed(id, type);
+        return;
+    }
+
+    switch (type)
+    {
+    case Leviathan::COMPONENT_TYPE::Position:
+        break;
+    case Leviathan::COMPONENT_TYPE::RenderNode:
+        break;
+    case Leviathan::COMPONENT_TYPE::Sendable:
+        break;
+    case Leviathan::COMPONENT_TYPE::Received:
+        break;
+    case Leviathan::COMPONENT_TYPE::Physics:
+        break;
+    case Leviathan::COMPONENT_TYPE::BoxGeometry:
+        break;
+    case Leviathan::COMPONENT_TYPE::Model:
+        break;
+    case Leviathan::COMPONENT_TYPE::ManualObject:
+        break;
+    case Leviathan::COMPONENT_TYPE::Custom:
+    {
+        // This is not allowed
+        DEBUG_BREAK;
+    }
+    break;
+    default:
+        DEBUG_BREAK;
+        break;
+    }
+}
+
+DLLEXPORT void Leviathan::GameWorld::_OnCustomComponentDestroyed(ObjectID id, 
+    COMPONENT_TYPE type) 
+{
+    DEBUG_BREAK;
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(const NewtonBody* ptr /*= NULL*/,
@@ -1011,10 +1069,21 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
 	// We want to release all hit data //
 	SAFE_RELEASE_VECTOR(HitEntities);
 }
+// ------------------ Destroy functions ------------------ //
+template<> DLLEXPORT bool GameWorld::RemoveComponent<Position>(ObjectID id) {
+    try {
+        ComponentPosition.Destroy(id, false);
+        _OnComponentDestroyed(id, Component::GetTypeFromClass<Position>());
+        return true;
+    }
+    catch (...) {
 
+        return false;
+    }
+}
 
 #undef ADDCOMPONENTFUNCTIONSTOGAMEWORLD
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc) \
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder) \
     template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id){ \
                                                                         \
         auto component = holder.Find(id);                               \
@@ -1022,31 +1091,14 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
             throw NotFound("Component for entity with id was not found"); \
                                                                         \
         return *component;                                              \
-    }                                                                   \
-                                                                        \
-    template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id){ \
-        try{                                                            \
-            holder.destroyfunc(id);                                     \
-            return true;                                                \
-                                                                        \
-        } catch(...){                                                   \
-                                                                        \
-            return false;                                               \
-        }                                                               \
-    }
+    }                                                                   
+    
 
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(TrackController, ComponentTrackController, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parent, ComponentParent, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Parentable, ComponentParentable, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(PositionMarkerOwner, ComponentPositionMarkerOwner,
-    QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Constraintable, ComponentConstraintable, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Trail, ComponentTrail, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject, QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject);

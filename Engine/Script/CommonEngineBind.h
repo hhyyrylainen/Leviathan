@@ -9,7 +9,7 @@
 #include "../Entities/Components.h"
 #include "../Entities/GameWorld.h"
 #include "add_on/autowrapper/aswrappedcall.h"
-#include "Networking/AINetworkCache.h"
+#include "Networking/NetworkCache.h"
 
 #include "Interface/ScriptEventListener.h"
 #include "Interface/ScriptLock.h"
@@ -672,20 +672,21 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
     
-	if(engine->RegisterGlobalFunction("AINetworkCache& GetAINetworkCache()", asFUNCTION(AINetworkCache::Get),
-            asCALL_CDECL) < 0)
-    {
-		ANGELSCRIPT_REGISTERFAIL;
-	}
+    // TODO: register get function for interface
+	//if(engine->RegisterGlobalFunction("AINetworkCache& GetAINetworkCache()", asFUNCTION(AINetworkCache::Get),
+ //           asCALL_CDECL) < 0)
+ //   {
+	//	ANGELSCRIPT_REGISTERFAIL;
+	//}
 
 	if(engine->RegisterObjectMethod("AINetworkCache", "ScriptSafeVariableBlock@ GetVariable(const string &in name)",
-            asMETHOD(AINetworkCache, GetVariableWrapper), asCALL_THISCALL) < 0)
+            asMETHOD(NetworkCache, GetVariableWrapper), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 	if(engine->RegisterObjectMethod("AINetworkCache", "void SetVariable(ScriptSafeVariableBlock@ variable)",
-            asMETHOD(AINetworkCache, SetVariableWrapper), asCALL_THISCALL) < 0)
+            asMETHOD(NetworkCache, SetVariableWrapper), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}    
@@ -729,35 +730,35 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
     }
 
     if(engine->RegisterObjectProperty("Position", "Float3 _Position",
-            asOFFSET(Position, _Position)) < 0)
+            asOFFSET(Position, Members._Position)) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectProperty("Position", "Float4 _Orientation",
-            asOFFSET(Position, _Orientation)) < 0)
+            asOFFSET(Position, Members._Orientation)) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     // TrackController
-    if(engine->RegisterObjectType("TrackController", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
+ //   if(engine->RegisterObjectType("TrackController", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+	//	ANGELSCRIPT_REGISTERFAIL;
+	//}
 
-    if(engine->RegisterObjectProperty("TrackController", "bool Marked",
-            asOFFSET(TrackController, Marked)) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-    
-    if(engine->RegisterObjectMethod("TrackController",
-            "bool GetNodePosition(int index, Float3 &out pos, Float4 &out rot) const",
-            asMETHODPR(TrackController, GetNodePosition, (int, Float3&, Float4&) const, bool),
-            asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+ //   if(engine->RegisterObjectProperty("TrackController", "bool Marked",
+ //           asOFFSET(TrackController, Marked)) < 0)
+ //   {
+ //       ANGELSCRIPT_REGISTERFAIL;
+ //   }
+ //   
+ //   if(engine->RegisterObjectMethod("TrackController",
+ //           "bool GetNodePosition(int index, Float3 &out pos, Float4 &out rot) const",
+ //           asMETHODPR(TrackController, GetNodePosition, (int, Float3&, Float4&) const, bool),
+ //           asCALL_THISCALL) < 0)
+ //   {
+ //       ANGELSCRIPT_REGISTERFAIL;
+ //   }
 
 
     // GameWorld
@@ -770,14 +771,6 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 
     if(engine->RegisterObjectMethod("GameWorld", "Position@ GetComponentPosition(ObjectID id)",
             asMETHODPR(GameWorld, GetComponent<Position>, (ObjectID), Position&),
-            asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("GameWorld",
-            "TrackController@ GetComponentTrackController(ObjectID id)",
-            asMETHODPR(GameWorld, GetComponent<TrackController>, (ObjectID), TrackController&),
             asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;

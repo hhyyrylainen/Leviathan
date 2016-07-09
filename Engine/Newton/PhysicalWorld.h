@@ -38,6 +38,9 @@ namespace Leviathan{
         //! \brief Calculates and simulates away all accumulated time
         DLLEXPORT void SimulateWorld(int maxruns = -1);
 
+        //! \brief Advances the simulation the specified amount of time
+        DLLEXPORT void SimulateWorldFixed(uint32_t mspassed, uint32_t stepcount = 1);
+
         //! \brief Clears passed time
 		DLLEXPORT void ClearTimers();
 

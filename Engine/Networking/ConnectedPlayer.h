@@ -42,23 +42,29 @@ public:
     //! \brief Call this at any appropriate time to update heartbeat statistics
     DLLEXPORT void UpdateHeartbeats();
 
-    DLLEXPORT std::shared_ptr<Connection> GetConnection();
+    inline std::shared_ptr<Connection> GetConnection() {
+        return CorrespondingConnection;
+    }
 
     //! \brief Gets the unique identifier of the player, valid for this session
-    DLLEXPORT int GetID() const;
+    inline int GetID() const {
+        return ID;
+    }
 
     //! \brief Returns the object that contains this players position in a certain world or NULL
     //! \note THe lock should be valid while using the returned pointer
     DLLEXPORT ObjectID GetPositionInWorld(GameWorld* world, Lock &guard) const;
 
 
-    DLLEXPORT virtual const std::string& GetUniqueName();
+    virtual const std::string& GetUniqueName() {
+        return UniqueName;
+    }
 
-    DLLEXPORT virtual const std::string& GetNickname();
+    virtual const std::string& GetNickname() {
+        return DisplayName;
+    }
 
     DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode();
-
-		
 
 protected:
 

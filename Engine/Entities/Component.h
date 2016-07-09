@@ -53,13 +53,25 @@ public:
     
     Component(const Component&) = delete;
     Component& operator =(const Component&) = delete;
+
+    template<class ActualType>
+    static inline COMPONENT_TYPE GetTypeFromClass() {
+
+        static_assert(std::is_same<ActualType, std::false_type>::value,
+            "Trying to use a ActualType type that is missing GetTypeFromClass specialization");
+        return COMPONENT_TYPE::Custom;
+    }
 };
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<Position>() {
+    return COMPONENT_TYPE::Position;
+}
 
 //! \brief Base class for all component data
 //!
 //! Used to force all components to define a serializer for its data
 struct ComponentData {
-
     
     
 };
@@ -93,7 +105,7 @@ public:
         //! \brief Returns true if BitNum bit is set in Updated
         inline bool IsBitSet(uint8_t BitNum = 0) const
         {
-            return Updated & (1 << BitNum);
+            return (Updated & (1 << BitNum)) == 1;
         }
 
         //! \brief Sets BitNum bit in Updated

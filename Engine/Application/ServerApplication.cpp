@@ -19,8 +19,9 @@ DLLEXPORT bool Leviathan::ServerApplication::Initialize(AppDef* configuration){
 	ApplicationConfiguration = configuration;
 
 	// init engine //
-	if(!_Engine->Init(ApplicationConfiguration, NETWORKED_TYPE_SERVER))
+	if(!_Engine->Init(ApplicationConfiguration, NETWORKED_TYPE::Server))
 		return false;
+
 	_InternalInit();
 	return true;
 }

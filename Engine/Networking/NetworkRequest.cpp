@@ -10,8 +10,9 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Packet &packet){
-    
+DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Packet &packet,
+    uint32_t packetid)
+{
 	// Get the heading data //
 	uint16_t tmpval;
 	packet >> tmpval;
@@ -24,11 +25,11 @@ DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Pac
 	// Try to create the additional data if required for this type //
 	switch(requesttype){
     case NETWORK_REQUEST_TYPE::Echo:
-        return std::make_shared<RequestEcho>(requesttype, packet);
+        return std::make_shared<RequestEcho>(requesttype, packetid, packet);
     default:
 		{
             Logger::Get()->Warning("NetworkRequest: unused type: "+
-                Convert::ToString(requesttype));
+                Convert::ToString(static_cast<int>(requesttype)));
             throw InvalidArgument("packet has invalid request type");
 		}
 		break;

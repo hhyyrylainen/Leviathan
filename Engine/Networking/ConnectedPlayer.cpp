@@ -1,15 +1,15 @@
 // ------------------------------------ //
 #include "ConnectedPlayer.h"
 
+#include "Connection.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 ConnectedPlayer::ConnectedPlayer(Connection* unsafeconnection, NetworkServerInterface* owninginstance,
     int plyid) : 
-	CorrespondingConnection(unsafeconnection), Owner(owninginstance), ConnectionStatus(true), UsingHeartbeats(false),
+	CorrespondingConnection(unsafeconnection), Owner(owninginstance), UsingHeartbeats(false),
     IsControlLost(false), SecondsWithoutConnection(0.f), ID(plyid)
 {
-	// Register us //
-	this->ConnectToNotifier(unsafeconnection);
 }
 
 DLLEXPORT ConnectedPlayer::~ConnectedPlayer(){
@@ -17,37 +17,25 @@ DLLEXPORT ConnectedPlayer::~ConnectedPlayer(){
 	_OnReleaseParentCommanders(guard);
 }
 // ------------------------------------ //
-DLLEXPORT bool ConnectedPlayer::IsConnectionYours(Connection* checkconnection){
-	GUARD_LOCK();
+DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(Connection* checkconnection) {
 
-	return CorrespondingConnection->GenerateFormatedAddressString() ==
-        checkconnection->GenerateFormatedAddressString();
+    return CorrespondingConnection.get() == checkconnection;
 }
-
-DLLEXPORT bool ConnectedPlayer::IsConnectionYoursPtrCompare(Connection* checkconnection){
-	return CorrespondingConnection == checkconnection;
-}
-
+// ------------------------------------ //
 DLLEXPORT bool ConnectedPlayer::IsConnectionClosed() const{
-	return !ConnectionStatus;
+	return CorrespondingConnection ? !CorrespondingConnection->IsOpen() : true;
 }
-
+// ------------------------------------ //
 DLLEXPORT void ConnectedPlayer::OnKicked(const std::string &reason){
 	{
 		// Send a close connection packet //
 		GUARD_LOCK();
 
-		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
-
-		if(connection){
+		if(CorrespondingConnection){
 
 			// \todo Add the reason here
-			connection->SendCloseConnectionPacket();
+            CorrespondingConnection->SendCloseConnectionPacket();
 		}
-
-
-		// No longer connected //
-		ConnectionStatus = false;
 	}
 
 	// Broadcast a kick message on the server here //
@@ -58,19 +46,9 @@ DLLEXPORT void ConnectedPlayer::StartHeartbeats(){
 	GUARD_LOCK();
 
 	// Send a start packet //
-	auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
 
-	if(!connection){
-
-		ConnectionStatus = false;
-		return;
-	}
-
-	// Create the packet and THEN send it //
-	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
-	response->GenerateStartHeartbeatsResponse();
-
-	connection->SendPacketToConnection(response, 7);
+    DEBUG_BREAK;
+    //ResponseStartHeartbeats;
 
 	// Reset our variables //
 	UsingHeartbeats = true;
@@ -105,21 +83,11 @@ DLLEXPORT void ConnectedPlayer::UpdateHeartbeats(){
 	// Check do we need to send one //
 	auto timenow = Time::GetThreadSafeSteadyTimePoint();
 
-	if(timenow >= LastSentHeartbeat+MillisecondDuration(SERVER_HEARTBEATS_MILLISECOND)){
-
-		auto connection = NetworkHandler::Get()->GetSafePointerToConnection(CorrespondingConnection);
-
-		if(!connection){
-
-			ConnectionStatus = false;
-			return;
-		}
+	if(timenow >= LastSentHeartbeat+MillisecondDuration(HEARTBEATS_MILLISECOND)){
 
 		// Send one //
-		shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 30));
-		response->GenerateHeartbeatResponse();
-
-		connection->SendPacketToConnection(response, 1);
+        //ResponseHeartbeat
+        //CorrespondingConnection
 
 		LastSentHeartbeat = timenow;
 	}
@@ -135,30 +103,14 @@ DLLEXPORT void ConnectedPlayer::UpdateHeartbeats(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT const string& ConnectedPlayer::GetUniqueName(){
-	return UniqueName;
-}
-
-DLLEXPORT const string& ConnectedPlayer::GetNickname(){
-	return DisplayName;
-}
-
 DLLEXPORT COMMANDSENDER_PERMISSIONMODE ConnectedPlayer::GetPermissionMode(){
 	return COMMANDSENDER_PERMISSIONMODE_NORMAL;
 }
 
-DLLEXPORT bool ConnectedPlayer::_OnSendPrivateMessage(const string &message){
+DLLEXPORT bool ConnectedPlayer::_OnSendPrivateMessage(const std::string &message){
 	
 	Logger::Get()->Write("Probably should implement a ChatManager");
 	return false;
-}
-
-DLLEXPORT Connection* ConnectedPlayer::GetConnection(){
-	return CorrespondingConnection;
-}
-
-DLLEXPORT int ConnectedPlayer::GetID() const{
-	return ID;
 }
 // ------------------------------------ //
 DLLEXPORT ObjectID ConnectedPlayer::GetPositionInWorld(GameWorld* world, Lock &guard)
@@ -167,4 +119,5 @@ DLLEXPORT ObjectID ConnectedPlayer::GetPositionInWorld(GameWorld* world, Lock &g
 	// Not found for that world //
 	return 0;
 }
+
 

@@ -671,15 +671,6 @@ void Engine::Tick(){
 }
 
 DLLEXPORT void Engine::PreFirstTick(){
-
-    // Stop this handling as it is no longer required //
-    {
-        std::unique_lock<std::mutex> lock(NetworkHandlerLock);
-
-        GUARD_LOCK_OTHER(_NetworkHandler);
-        if(_NetworkHandler)
-            _NetworkHandler->StopOwnUpdaterThread(guard);
-    }
     
     GUARD_LOCK();
 
@@ -953,10 +944,8 @@ DLLEXPORT void Engine::DestroyWorld(shared_ptr<GameWorld> &world){
 DLLEXPORT void Engine::ClearTimers(){
     Lock lock(GameWorldsLock);
 
-    auto end = GameWorlds.end();
-    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+    for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
 
-        (*iter)->ClearTimers();
     }
 }
 // ------------------------------------ //

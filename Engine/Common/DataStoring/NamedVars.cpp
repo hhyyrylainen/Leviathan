@@ -452,10 +452,6 @@ DLLEXPORT VariableBlock& NamedVariableList::GetValue(size_t nindex){
 	return *Datas[nindex];
 }
 
-string& NamedVariableList::GetName(){
-	return Name;
-}
-
 DLLEXPORT void NamedVariableList::GetName(string &name) const{
 	// return name in a reference //
 	name = Name;

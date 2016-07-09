@@ -110,8 +110,8 @@ public:
     //! \brief Returns the current tick
     DLLEXPORT int GetTickNumber() const;
 
-    //! \brief Destroyes nodes that no longer have their required components available
-    DLLEXPORT void RemoveInvalidNodes(Lock &guard);
+    //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
+    DLLEXPORT float GetTickProgress() const;
 
     //! \brief Handles added entities and components
     DLLEXPORT void HandleAdded(Lock &guard);
@@ -296,27 +296,32 @@ public:
     //! \brief Creates a new entity from initial entity response
     //! \note This should only be called on the client
     DLLEXPORT void HandleEntityInitialPacket(std::shared_ptr<NetworkResponse> message,
-        NetworkResponseDataForInitialEntity* data);
+        ResponseEntityCreation* data);
 
     //! \brief Applies an update packet
     //!
     //! If the entity is not found the packet is discarded
     //! \todo Cache the update data for 1 second and apply it if a matching entity is
     //! created during that time
-    DLLEXPORT void HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message,
-        NetworkResponseDataForEntityUpdate* data);
+    DLLEXPORT void HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message);
 
     //! \brief Handles a world clock synchronizing packet
     //! \note This should only be allowed to be called on a client that has connected
     //! to a server
-    DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSyncData* data);
+    DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSync* data);
 
     //! \brief Handles a world freeze/unfreeze packet
     //! \note Should only be called on a client
-    DLLEXPORT void HandleWorldFrozenPacket(NetworkResponseDataForWorldFrozen* data);
+    DLLEXPORT void HandleWorldFrozenPacket(ResponseWorldFrozen* data);
 
     //! \brief Applies packets that have been received after the last call to this
     DLLEXPORT void ApplyQueuedPackets(Lock &guard);
+
+    //! \brief Called when a component is destroyed, used to destroy nodes
+    DLLEXPORT void _OnComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
+
+    //! \brief Use this to register destruction events for child classes
+    DLLEXPORT virtual void _OnCustomComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
 
 private:
 
@@ -429,20 +434,20 @@ private:
     RenderNodeHiderSystem _RenderNodeHiderSystem;
 };
 
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder, destroyfunc)     \
+#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder)     \
 template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id);  \
                                                                         \
  template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id);
     
 
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel, QueueDestroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived, Destroy);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject, QueueDestroy);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived);
+ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject);
     
 }
 

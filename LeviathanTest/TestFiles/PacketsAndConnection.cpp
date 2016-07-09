@@ -23,7 +23,7 @@ public:
 
 TEST_CASE("Connect to localhost socket", "networking"){
 
-    PartialEngine<false, NETWORKED_TYPE_MASTER> engine;
+    PartialEngine<false, NETWORKED_TYPE::Master> engine;
 
 
     TestClientInterface ClientInterface;

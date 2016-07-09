@@ -9,6 +9,11 @@ abort "no target file provided" if ARGV.count < 1
 generator = Generator.new ARGV[0]
 
 thingsToGenerate = [
+  ["Identification",
+   [
+     { type: "std::string", name: "DDOSBlock", default: "\"#{"v" * 65}\"" }
+   ]],
+
   ["RemoteConsoleOpen",
    [
      { type: "int32_t", name: "SessionToken" }
@@ -52,8 +57,10 @@ thingsToGenerate = [
 thingsToGenerate.each do |type|
 
   created = ResponseClass.new("Request#{type[0]}")
-
+  
   created.base("NetworkRequest")
+  created.addDeserializeArg("uint32_t idforresponse")
+  created.deserializeBase("idforresponse") 
   created.baseConstructor("NETWORK_REQUEST_TYPE::#{type[0]}")
   
   # Parameters

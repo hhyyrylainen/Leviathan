@@ -4,12 +4,13 @@
 #include "Exceptions.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
-#include "ConnectionInfo.h"
+#include "Connection.h"
 #include "RemoteConsole.h"
 #include "Application/AppDefine.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
 #include "../Utility/Convert.h"
+#include "Engine.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -34,64 +35,69 @@ DLLEXPORT void NetworkInterface::HandleRequestPacket(
 	}
 }
 
-DLLEXPORT bool NetworkInterface::PreHandleResponse(shared_ptr<NetworkResponse> response,
-    std::shared_ptr<NetworkRequest> originalrequest, Connection &connection)
+DLLEXPORT bool NetworkInterface::PreHandleResponse(std::shared_ptr<NetworkResponse> response,
+    SentNetworkThing* originalrequest, Connection &connection)
 {
 	return true;
 }
 // ------------------------------------ //
 bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
-    Connection &connectiontosendresult)
+    Connection &connection)
 {
 	// Switch based on type //
 
 	// See if it is a sync packet //
-	if(SyncedVariables::Get()->HandleSyncRequests(request, connectiontosendresult))
+	if(Owner->GetSyncedVariables()->HandleSyncRequests(request, &connection))
 		return true;
 
 	switch(request->GetType()){
-        case NETWORKREQUESTTYPE_IDENTIFICATION:
+    case NETWORK_REQUEST_TYPE::Identification:
 		{
-			// Let's send our identification string //
-			shared_ptr<NetworkResponse> tmpresponse(new NetworkResponse(request->GetExpectedResponseID(),
-                    PACKET_TIMEOUT_STYLE_TIMEDMS, 500));
+            // Avoid allowing DDOS amplification
+            const uint32_t maxlength = static_cast<RequestIdentification*>(request.get())->
+                DDOSBlock.size();
 
 			// Fetch the data from the configuration object //
 			string userreadable, gamename, gameversion;
 
 			AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, gameversion);
 
-			// Set the right data //
-			tmpresponse->GenerateIdentificationStringResponse(new NetworkResponseDataForIdentificationString(
-                    userreadable, gamename, gameversion, LEVIATHAN_VERSION_ANSIS));
-			connectiontosendresult->SendPacketToConnection(tmpresponse, 3);
+            ResponseIdentification response(0, 
+                    userreadable, gamename, gameversion, LEVIATHAN_VERSION_ANSIS);
+
+
+            NetworkResponse::LimitResponseSize(response, maxlength);
+
+			connection.SendPacketToConnection(response, 
+                RECEIVE_GUARANTEE::ResendOnce);
 
 			return true;
 		}
-        case NETWORKREQUESTTYPE_ECHO:
+    case NETWORK_REQUEST_TYPE::Echo:
         {
             // Send an empty response back //
-            std::shared_ptr<NetworkResponse> response(new NetworkResponse(request->GetExpectedResponseID(),
-                    PACKET_TIMEOUT_STYLE_TIMEDMS, 1000));
+            ResponseNone response(NETWORK_RESPONSE_TYPE::None);
 
-            response->GenerateEmptyResponse();
-            
-            connectiontosendresult->SendPacketToConnection(response, 1);
+            connection.SendPacketToConnection(response,
+                RECEIVE_GUARANTEE::None);
             
             return true;
         }
-        case NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE: case NETWORKREQUESTTYPE_OPENREMOTECONSOLETO:
-        case NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE:
+    case NETWORK_REQUEST_TYPE::RemoteConsoleAccess: 
+    case NETWORK_REQUEST_TYPE::CloseRemoteConsole:
 		{
-			RemoteConsole::Get()->HandleRemoteConsoleRequestPacket(request, connectiontosendresult);
+            Engine::Get()->GetRemoteConsole()->HandleRemoteConsoleRequestPacket(request, 
+                connection);
 
 			return true;
 		}
-        case NETWORKREQUESTTYPE_CONNECTINPUT:
+    case NETWORK_REQUEST_TYPE::ConnectInput:
         {
-            auto handler = NetworkedInputHandler::Get();
-            if(handler)
-                handler->HandleInputPacket(request, connectiontosendresult);
+            DEBUG_BREAK;
+            //if (!Owner->GetInputHandler())
+            //    return false;
+
+            //Owner->GetInputHandler()->HandleInputPacket(request, connection);
 
             return true;
         }
@@ -108,47 +114,44 @@ bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> me
 {
 
 	// See if it is a sync packet //
-	if(SyncedVariables::Get()->HandleResponseOnlySync(message, connection))
+	if(Owner->GetSyncedVariables()->HandleResponseOnlySync(message, &connection))
 		return true;
 
 	// Switch on type //
-	switch(message->GetTypeOfResponse()){
-        case NETWORKRESPONSETYPE_NONE:
+	switch(message->GetType()){
+    case NETWORK_RESPONSE_TYPE::Keepalive:
+    case NETWORK_RESPONSE_TYPE::None:
         {
             // Empty packets without a matching request are just ignored, but marked as received
             return true;
         }
-        case NETWORKRESPONSETYPE_KEEPALIVE:
-		{
-			// Requires no handling //
-			// Also this should not be reported as received //
-			dontmarkasreceived = true;
-
-			// Actually might want to respond with a keepalive packet //
-			connection->CheckKeepAliveSend();
-			return true;
-		}
-        case NETWORKRESPONSETYPE_CLOSECONNECTION:
+    case NETWORK_RESPONSE_TYPE::CloseConnection:
 		{
 			// This connection should be closed //
 			Logger::Get()->Info("NetworkInterface: dropping connection due to "
                 "receiving a connection close packet (" +
-                connection->GenerateFormatedAddressString() + ")");
+                connection.GenerateFormatedAddressString() + ")");
 
-			NetworkHandler::Get()->SafelyCloseConnectionTo(connection);
+            Owner->CloseConnection(connection);
 			return true;
 		}
-        case NETWORKRESPONSETYPE_REMOTECONSOLEOPENED: case NETWORKRESPONSETYPE_REMOTECONSOLECLOSED:
+    case NETWORK_RESPONSE_TYPE::RemoteConsoleOpened: 
+    case NETWORK_RESPONSE_TYPE::RemoteConsoleClosed:
 		{
 			// Pass to remote console //
-			RemoteConsole::Get()->HandleRemoteConsoleResponse(message, connection, NULL);
+            Engine::Get()->GetRemoteConsole()->HandleRemoteConsoleResponse(message, 
+                connection, NULL);
 			return true;
 		}
-        case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT: case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
+    case NETWORK_RESPONSE_TYPE::CreateNetworkedInput: 
+    case NETWORK_RESPONSE_TYPE::UpdateNetworkedInput:
         {
-            auto handler = NetworkedInputHandler::Get();
-            if(handler)
-                handler->HandleInputPacket(message, connection);
+            DEBUG_BREAK;
+
+            //if (!Owner->GetInputHandler())
+            //    return false;
+
+            //Owner->GetInputHandler()->HandleInputPacket(request, connection);
             
             return true;
         }

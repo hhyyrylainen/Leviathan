@@ -14,49 +14,49 @@
 
 namespace Leviathan{
 
-	enum NETWORK_REQUEST_TYPE {
-		//! This is sent first, expected result is like
-        //! "PongServer running version 0.5.1.0, status: 0/20"
-		Identification,
+enum class NETWORK_REQUEST_TYPE : uint16_t{
+	//! This is sent first, expected result is like
+    //! "PongServer running version 0.5.1.0, status: 0/20"
+	Identification,
         
-		Serverstatus,
+	Serverstatus,
         
-		RemoteConsoleOpen,
+	RemoteConsoleOpen,
         
-		RemoteConsoleAccess,
+	RemoteConsoleAccess,
         
-		CloseRemoteConsole,
+	CloseRemoteConsole,
 
-        //! Client wants to join a server
-        //! MasterServerToken The ID given by the master server
-		JoinServer,
+    //! Client wants to join a server
+    //! MasterServerToken The ID given by the master server
+	JoinServer,
         
-		GetSingleSyncValue,
+	GetSingleSyncValue,
         
-		GetAllSyncValues,
+	GetAllSyncValues,
         
-		//! Used to request the server to run a command, used for chat and other things
-        //! \todo Implement 	if(Command.length() > MAX_SERVERCOMMAND_LENGTH)
-		RequestCommandExecution,
+	//! Used to request the server to run a command, used for chat and other things
+    //! \todo Implement 	if(Command.length() > MAX_SERVERCOMMAND_LENGTH)
+	RequestCommandExecution,
         
-		//! Sent when a player requests the server to connect a NetworkedInput
-		ConnectInput,
+	//! Sent when a player requests the server to connect a NetworkedInput
+	ConnectInput,
         
-        //! Sent by servers to ping (time the time a client takes to respond) clients
-        Echo,
+    //! Sent by servers to ping (time the time a client takes to respond) clients
+    Echo,
         
-        //! Contains timing data to sync world clocks on a client
-        //! Ticks The amount of ticks to set or change by
-        //! Absolute Whether the tick count should be set to be the current or
-        //! just added to the current tick
-        //!
-        //! EngineMSTweak The engine tick tweaking, this should only be
-        //! applied by a single GameWorld
-        WorldClockSync,
+    //! Contains timing data to sync world clocks on a client
+    //! Ticks The amount of ticks to set or change by
+    //! Absolute Whether the tick count should be set to be the current or
+    //! just added to the current tick
+    //!
+    //! EngineMSTweak The engine tick tweaking, this should only be
+    //! applied by a single GameWorld
+    WorldClockSync,
 
-		//! Used for game specific requests
-		Custom
-	};
+	//! Used for game specific requests
+	Custom
+};
 
 //! Base class for all request objects
 //! \note Even though it cannot be required by the base class, sub classes should
@@ -64,8 +64,8 @@ namespace Leviathan{
 class NetworkRequest{
 public:
 
-    NetworkRequest(NETWORK_REQUEST_TYPE type) :
-        Type(type)
+    NetworkRequest(NETWORK_REQUEST_TYPE type, uint32_t idforresponse = 0) :
+        Type(type), IDForResponse(idforresponse)
     {
         
     }
@@ -74,7 +74,7 @@ public:
 
     inline void AddDataToPacket(sf::Packet &packet){
 
-        packet << static_cast<uint16_t>(Type);
+        packet << true << static_cast<uint16_t>(Type);
 
         _SerializeCustom(packet);
     }
@@ -83,7 +83,12 @@ public:
         return Type;
     }
 
-    DLLEXPORT static std::shared_ptr<NetworkRequest> LoadFromPacket(sf::Packet &packet);
+    inline uint32_t GetIDForResponse() const {
+        return IDForResponse;
+    }
+
+    DLLEXPORT static std::shared_ptr<NetworkRequest> LoadFromPacket(sf::Packet &packet, 
+        uint32_t packetid);
 
 protected:
 
@@ -91,6 +96,8 @@ protected:
     DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) = 0;
 
     const NETWORK_REQUEST_TYPE Type;
+
+    const uint32_t IDForResponse = 0;
 };
 
 class RequestCustom : public NetworkRequest{
@@ -138,8 +145,8 @@ public:
     void _SerializeCustom(sf::Packet &packet) override{
     }
 
-    RequestEcho(NETWORK_REQUEST_TYPE actualtype,sf::Packet &packet) :
-        NetworkRequest(actualtype)
+    RequestEcho(NETWORK_REQUEST_TYPE actualtype, uint32_t idforresponse, sf::Packet &packet) :
+        NetworkRequest(actualtype, idforresponse)
     {
     }
 };

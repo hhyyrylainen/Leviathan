@@ -48,48 +48,16 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
     //! This should be 
     //! \note It is more efficient to directly create nodes as entities are created
     template<class FirstType, class SecondType>
-        void CreateNodes(const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
+        void CreateNodes(
+            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
             const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
+            const ComponentHolder<FirstType> &firstholder, Lock &firstlock,
             const ComponentHolder<SecondType> &secondholder, Lock &secondlock)
     {
-        GUARD_LOCK_OTHER(Nodes);
-
-        for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
-
-            SecondType* other = nullptr;
-                
-            for(auto iter2 = seconddata.begin(); iter2 != seconddata.end(); ++iter2){
-
-                if(std::get<1>(*iter2) == std::get<1>(*iter)){
-
-                    other = std::get<0>(*iter2);
-                    break;
-                }
-            }
-
-            if(!other){
-
-                // Full search //
-                other = secondholder.Find(secondlock, std::get<1>(*iter));
-            }
-
-            if(!other)
-                continue;
-
-            // Create node if it doesn't exist already //
-            if(Nodes.Find(guard, std::get<1>(*iter)))
-                continue;
-
-            try{
-                Nodes.ConstructNew(guard, std::get<1>(*iter), *other, *std::get<0>(*iter));
-            } catch(const Exception &e){
-
-                Logger::Get()->Error("CreateNodes: failed to create node "
-                    "for object "+Convert::ToString(std::get<1>(*iter))+", exception: ");
-                e.PrintToLog();
-                continue;
-            }
-        }
+        static_assert(std::is_same<FirstType, RenderNode>::value, 
+            "CreateNodes FirstType is incorrect");
+        TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, firstlock, secondholder, 
+            secondlock);
     }
 
  private:

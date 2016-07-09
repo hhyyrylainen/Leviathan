@@ -19,14 +19,18 @@ enum class NETWORKED_TYPE {
  };
 
 enum class PACKET_TIMEOUT_STYLE : uint8_t {
+
+    //! Loss is detected by packets received after and if a second has passed
+    //! This makes all other styles deprecated
+    Unified
         
-    //! Loss is detected by measuring time taken to complete
-    //! Use for non-realtime packets like connection attempts etc.
-    Timed,
-        
-    //! This style marks packets lost after a specific number of packets sent AFTER
-    //! this packet are confirmed to have been received by the other side
-    PacketsAfterReceived
+    ////! Loss is detected by measuring time taken to complete
+    ////! Use for non-realtime packets like connection attempts etc.
+    //Timed,
+    //    
+    ////! This style marks packets lost after a specific number of packets sent AFTER
+    ////! this packet are confirmed to have been received by the other side
+    //PacketsAfterReceived
  };
 
 

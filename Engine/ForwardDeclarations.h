@@ -59,7 +59,6 @@ class GuiManager;
 // Entities //
 class Sendable;
 class Position;
-class ObjectDeltaStateData;
 class Constraintable;
 class Parentable;
 class Parent;
@@ -81,10 +80,7 @@ class BaseConstraint;
     
 
 // DeltaStates //
-class PositionDeltaState;
-class PhysicalDeltaState;
-class ObjectDeltaStateData;
-class TrackControllerState;
+
     
 
 // Exceptions //
@@ -104,14 +100,14 @@ class ObjectFileList;
 
 
 // Network Response //
-class NetworkResponseDataForInitialEntity;
-class NetworkResponseDataForEntityConstraint;
-class NetworkResponseDataForWorldFrozen;
-class NetworkResponseDataForEntityUpdate;
-class NetworkResponseDataForAICacheUpdated;
+class ResponseCacheUpdated;
+class ResponseEntityCreation;
+class ResponseWorldFrozen;
+class ResponseCacheRemoved;
+class ResponseIdentification;
 
 // Network Request //
-class RequestWorldClockSyncData;
+class RequestWorldClockSync;
 
 // Threading //
 class ThreadingManager;

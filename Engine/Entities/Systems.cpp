@@ -14,8 +14,8 @@ DLLEXPORT void HandleNode(ObjectID id, Sendable &obj, GameWorld &world){
 
     const auto ticknumber = world.GetTickNumber();
     
-    // Create current state here as one or more conections should require it //
-    shared_ptr<ComponetState> curstate;
+    // Create current state here as one or more connections should require it //
+    std::shared_ptr<ComponentState> curstate;
 
     DEBUG_BREAK;
     
@@ -34,7 +34,7 @@ DLLEXPORT void HandleNode(ObjectID id, Sendable &obj, GameWorld &world){
         
         // Find the receiver from the world //
         // And fail if not found or the connection is not open
-        if(!world.IsConnectionInWorld(connection) || !connection.IsOpen()){
+        if(!world.IsConnectionInWorld(*connection) || !connection->IsOpen()){
 
             // Connection no longer updated for world //
             iter = obj.UpdateReceivers.erase(iter);
@@ -115,8 +115,9 @@ DLLEXPORT void ReceivedSystem::Run(std::unordered_map<ObjectID, Received*> &Inde
                 node.Marked = false;
                 continue;
             }
-                
-            first->Interpolate(second, adjustedprogress);
+               
+            DEBUG_BREAK;
+            //first->Interpolate(second, adjustedprogress);
                 
         } else {
 

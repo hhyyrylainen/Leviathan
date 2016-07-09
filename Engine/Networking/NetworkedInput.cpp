@@ -6,7 +6,7 @@
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
 #include "Threading/ThreadingManager.h"
-#include "ConnectionInfo.h"
+#include "Connection.h"
 #include "NetworkClientInterface.h"
 using namespace Leviathan;
 using namespace std;

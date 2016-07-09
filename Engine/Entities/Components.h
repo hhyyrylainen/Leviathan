@@ -84,15 +84,18 @@ public:
         DLLEXPORT void CheckReceivedPackets();
 
         //! \brief Adds a package to be checked for finalization in CheckReceivedPackages
-        DLLEXPORT void AddSentPacket(int tick, std::shared_ptr<ObjectDeltaStateData> state,
-            std::shared_ptr<SentNetworkThing> packet);
+        inline void AddSentPacket(int tick, std::shared_ptr<ComponentState> state,
+            std::shared_ptr<SentNetworkThing> packet) 
+        {
+            SentPackets.push_back(std::make_tuple(tick, state, packet));
+        }
             
         std::shared_ptr<Connection> CorrespondingConnection;
 
         //! Data used to build a delta update packet
         //! \note This is set to be the last known successfully sent state to
         //! avoid having to resend intermediate steps
-        std::shared_ptr<ObjectDeltaStateData> LastConfirmedData;
+        std::shared_ptr<ComponentState> LastConfirmedData;
 
         //! The tick number of the confirmed state
         //! If a state is confirmed as received that has number higher than this
@@ -101,15 +104,18 @@ public:
 
         //! Holds packets sent to this connection that haven't failed or been received yet
         //! \todo Move this into GameWorld to keep a single list of connected players
-        std::vector<std::tuple<int, std::shared_ptr<ObjectDeltaStateData>,
+        std::vector<std::tuple<int, std::shared_ptr<ComponentState>,
                         std::shared_ptr<SentNetworkThing>>> SentPackets;
     };
         
 public:
-        
-    DLLEXPORT Sendable();
+     
+    inline Sendable() : Component(COMPONENT_TYPE::Sendable){ }
 
-    DLLEXPORT void AddConnectionToReceivers(std::shared_ptr<Connection> connection);
+    inline void AddConnectionToReceivers(std::shared_ptr<Connection> connection) {
+
+        UpdateReceivers.push_back(std::make_shared<ActiveConnection>(connection));
+    }
 
     //! Clients we have already sent a state to
     std::vector<std::shared_ptr<ActiveConnection>> UpdateReceivers;
@@ -124,11 +130,11 @@ public:
     //! \todo Possibly add move constructors
     class StoredState{
     public:
-        inline StoredState(std::shared_ptr<ObjectDeltaStateData> safedata, int tick,
+        inline StoredState(std::shared_ptr<ComponentState> safedata, int tick,
             void* data) :
             DeltaData(safedata), Tick(tick), DirectData(data){}
         
-        std::shared_ptr<ObjectDeltaStateData> DeltaData;
+        std::shared_ptr<ComponentState> DeltaData;
 
         //! Tick number, should be retrieved from DeltaData
         int Tick;
@@ -144,7 +150,7 @@ public:
     DLLEXPORT void GetServerSentStates(StoredState const** first,
         StoredState const** second, int tick, float &progress) const;
 
-    //! Clientside buffer of past states
+    //! Client side buffer of past states
     boost::circular_buffer<StoredState> ClientStateBuffer;
 
     //! If true this uses local control and will send updates to the server

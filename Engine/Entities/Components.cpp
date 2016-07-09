@@ -387,17 +387,6 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets(){
         SentPackets.shrink_to_fit();
     }
 }
-
-DLLEXPORT void Sendable::ActiveConnection::AddSentPacket(int tick,
-    std::shared_ptr<ObjectDeltaStateData> state, std::shared_ptr<SentNetworkThing> packet)
-{
-    SentPackets.push_back(make_tuple(tick, state, packet));
-}
-
-DLLEXPORT void Sendable::AddConnectionToReceivers(std::shared_ptr<Connection> connection){
-
-    UpdateReceivers.push_back(std::make_shared<ActiveConnection>(connection));
-}
 // ------------------------------------ //
 DLLEXPORT void Model::Release(Ogre::SceneManager* scene){
 

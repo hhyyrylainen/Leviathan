@@ -1,15 +1,10 @@
 // ------------------------------------ //
 #include "EntitySerializer.h"
 
+#include "Utility/Convert.h"
+#include "Entities/GameWorld.h"
+
 using namespace Leviathan;
-// ------------------------------------ //
-DLLEXPORT EntitySerializer::EntitySerializer() : Type(type){
-
-}
-
-DLLEXPORT EntitySerializer:: ~EntitySerializer(){
-
-}
 // ------------------------------------ //
 DLLEXPORT bool EntitySerializer::CreatePacketForConnection(GameWorld* world,
     Lock &worldlock, ObjectID id, Sendable &sendable, sf::Packet &packet,
@@ -34,7 +29,7 @@ DLLEXPORT bool EntitySerializer::DeserializeWholeEntityFromPacket(GameWorld* wor
 }
 // ------------------------------------ //
 DLLEXPORT bool EntitySerializer::VerifyAndFillReceivedState(Received* received,
-    int ticknumber, int referencetick, std::shared_ptr<ObjectDeltaStateData> receivedstate)
+    int ticknumber, int referencetick, std::shared_ptr<ComponentState> receivedstate)
 {
     if(!receivedstate){
 
@@ -50,7 +45,7 @@ DLLEXPORT bool EntitySerializer::VerifyAndFillReceivedState(Received* received,
 
         bool newer = false;
         bool filled = false;
-            
+
         for(auto& obj : received->ClientStateBuffer){
 
             // Fill data from the reference tick to make this update packet as complete as
@@ -58,7 +53,8 @@ DLLEXPORT bool EntitySerializer::VerifyAndFillReceivedState(Received* received,
             if(obj.Tick == referencetick){
 
                 // Add missing values //
-                receivedstate->FillMissingData(*obj.DeltaData);
+                DEBUG_BREAK;
+                //receivedstate->FillMissingData(*obj.DeltaData);
                 
                 filled = true;
                 

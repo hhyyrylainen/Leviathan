@@ -4,40 +4,30 @@
 #include "Networking/NetworkHandler.h"
 #include "Networking/NetworkResponse.h"
 #include "Threading/ThreadingManager.h"
-#include "Networking/ConnectionInfo.h"
-#include "boost/bind.hpp"
+#include "Networking/Connection.h"
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
-DLLEXPORT NetworkCache::NetworkCache(bool serverside) : IsServer(serverside){
+DLLEXPORT NetworkCache::NetworkCache(NETWORKED_TYPE serverside) : 
+    IsServer(serverside == NETWORKED_TYPE::Server)
+{
 
-    Staticinstance = this;
 }
 
 DLLEXPORT NetworkCache::~NetworkCache(){
 
-    Staticinstance = NULL;
-}
-
-NetworkCache* NetworkCache::Staticinstance = NULL;
-
-DLLEXPORT NetworkCache* NetworkCache::Get(){
-
-    return Staticinstance;
 }
 // ------------------------------------ //
-DLLEXPORT bool NetworkCache::Init(){
+DLLEXPORT bool Leviathan::NetworkCache::Init(NetworkHandler* owner) {
 
-    GUARD_LOCK();
-    
-    return true;
+    Owner = owner;
+
+    LEVIATHAN_ASSERT(Owner, "NetworkCache no owner");
+    return Owner != nullptr;
 }
 
-DLLEXPORT void NetworkCache::Release(){
+DLLEXPORT void NetworkCache::Release() {
 
     GUARD_LOCK();
-
-    ReceivingConnections.clear();
 
     CurrentVariables.clear();
 }
@@ -68,9 +58,9 @@ DLLEXPORT bool NetworkCache::UpdateVariable(const NamedVariableList &updatedvalu
     }
 
     // Add it //
-    CurrentVariables.push_back(make_shared<NamedVariableList>(updatedvalue));
+    CurrentVariables.push_back(std::make_shared<NamedVariableList>(updatedvalue));
     
-    _OnVariableUpdated(CurrentVariables.back(), guard);
+    _OnVariableUpdated(guard, updatedvalue);
 
     return true;
 }
@@ -93,18 +83,14 @@ DLLEXPORT bool NetworkCache::RemoveVariable(const std::string &name){
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT bool NetworkCache::HandleUpdatePacket(NetworkResponseDataForAICacheUpdated* data){
+DLLEXPORT bool NetworkCache::HandleUpdatePacket(ResponseCacheUpdated* data){
 
     GUARD_LOCK();
 
-    if(!data->Variable)
-        return false;
-
     // Remove old variable (if any) //
-    auto end = CurrentVariables.end();
-    for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
+    for(auto iter = CurrentVariables.begin(); iter != CurrentVariables.end(); ++iter){
 
-        if(data->Variable->CompareName((*iter)->GetName())){
+        if(data->Variable.CompareName((*iter)->GetName())){
 
             CurrentVariables.erase(iter);
             break;
@@ -112,17 +98,23 @@ DLLEXPORT bool NetworkCache::HandleUpdatePacket(NetworkResponseDataForAICacheUpd
     }
 
     // Add it //
-    CurrentVariables.push_back(data->Variable);
+    CurrentVariables.push_back(std::make_shared<NamedVariableList>(data->Variable));
 
     return true;
 }
+
+DLLEXPORT bool Leviathan::NetworkCache::HandleUpdatePacket(ResponseCacheRemoved* data) {
+
+    DEBUG_BREAK;
+    return true;
+}
+
 // ------------------------------------ //
 DLLEXPORT NamedVariableList* NetworkCache::GetVariable(const std::string &name) const{
 
     GUARD_LOCK();
 
-    auto end = CurrentVariables.end();
-    for(auto iter = CurrentVariables.begin(); iter != end; ++iter){
+    for(auto iter = CurrentVariables.begin(); iter != CurrentVariables.end(); ++iter){
 
         if((*iter)->GetName() == name){
 
@@ -133,152 +125,75 @@ DLLEXPORT NamedVariableList* NetworkCache::GetVariable(const std::string &name) 
     return nullptr;
 }
 // ------------------------------------ //
-DLLEXPORT bool NetworkCache::RegisterNewConnection(ConnectionInfo* connection){
+DLLEXPORT void Leviathan::NetworkCache::_OnNewConnection(
+    std::shared_ptr<Connection> connection) 
+{
+    if (!IsServer)
+        return;
 
-    GUARD_LOCK();
+    if (!connection->IsOpen())
+        return;
 
-    if(!IsServer)
-        return false;
+    // TODO: make sure this doesn't use a deleted object
+    ThreadingManager::Get()->QueueTask(new QueuedTask(std::bind<void>([](NetworkCache* cache,
+        std::shared_ptr<Connection> connection)
+        -> void
+    {
 
-    auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(connection);
+        size_t vars = 0;
 
-    if(!safeptr)
-        return false;
-    
-    
-    ReceivingConnections.push_back(connection);
-
-    
-    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](NetworkCache* cache,
-                    std::shared_ptr<ConnectionInfo> connection)
-                -> void
         {
+            GUARD_LOCK_OTHER(cache);
+            vars = cache->CurrentVariables.size();
+        }
 
-            size_t vars = 0;
+        for (size_t index = 0; index < vars; index++) {
+
+            std::shared_ptr<NamedVariableList> target;
 
             {
                 GUARD_LOCK_OTHER(cache);
-                vars = cache->CurrentVariables.size();
+                if (index >= cache->CurrentVariables.size())
+                    return;
+
+                target = cache->CurrentVariables[index];
             }
 
-            for(size_t index = 0; index < vars; index++){
+            if (!target)
+                continue;
 
-                std::shared_ptr<NamedVariableList> target;
+            ResponseCacheUpdated update(0, *target);
 
-                {
-                    GUARD_LOCK_OTHER(cache);
-                    if(index >= cache->CurrentVariables.size())
-                        return;
-
-                    target = cache->CurrentVariables[index];
-                }
-
-                if(!target)
-                    continue;
-                
-                auto response = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
-
-                response->GenerateAICacheUpdatedResponse(new NetworkResponseDataForAICacheUpdated(
-                        target));
-
-                connection->SendPacketToConnection(response, 20);
-            }
-            
-        }, this, safeptr)));
-
-    return true;
-}
-
-DLLEXPORT bool NetworkCache::RemoveConnection(ConnectionInfo* connection){
-
-    GUARD_LOCK();
-
-    auto end = ReceivingConnections.end();
-    for(auto iter = ReceivingConnections.begin(); iter != end; ++iter){
-
-        if((*iter) == connection){
-
-            ReceivingConnections.erase(iter);
-            return true;
+            connection->SendPacketToConnection(update, RECEIVE_GUARANTEE::Critical);
         }
+
+    }, this, connection)));
+}
+// ------------------------------------ //
+void Leviathan::NetworkCache::_OnVariableUpdated(Lock &guard, 
+    const NamedVariableList &variable) 
+{
+    auto& connections = Owner->GetClientConnections();
+
+    for (auto& connection : connections) {
+
+        ResponseCacheUpdated update(0, variable);
+
+        connection->SendPacketToConnection(update, RECEIVE_GUARANTEE::Critical);
     }
-
-    return false;
 }
 // ------------------------------------ //
-void NetworkCache::_OnVariableUpdated(shared_ptr<NamedVariableList> variable, Lock &guard){
-
-    if(ReceivingConnections.empty())
-        return;
-    
-    ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](NetworkCache* cache,
-                    std::shared_ptr<NamedVariableList> variable)
-                -> void
-        {
-
-            ConnectionInfo* target = NULL;
-
-            auto response = make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5);
-
-            response->GenerateAICacheUpdatedResponse(new
-                NetworkResponseDataForAICacheUpdated(variable));
-            
-
-            while(true){
-                
-                bool changedtarget = false;
-
-                // Update target //
-                {
-                    // Loop until the last one is found and then change to the next //
-                    bool found = target ? false: true;
-                    
-                    GUARD_LOCK_OTHER(cache);
-                    
-                    for(size_t i = 0; i < cache->ReceivingConnections.size(); i++){
-
-                        if(found){
-
-                            target = cache->ReceivingConnections[i];
-                            changedtarget = true;
-                            break;
-                        }
-
-                        if(cache->ReceivingConnections[i] == target)
-                            found = true;
-                    }
-                }
-                
-                if(!changedtarget)
-                    return;
-
-                // Send to the target //
-                if(!target)
-                    return;
-
-                auto safe = NetworkHandler::Get()->GetSafePointerToConnection(target);
-
-                if(safe)
-                    safe->SendPacketToConnection(response, 20);
-            }
-
-            
-
-
-        }, this, variable)));
-}
-// ------------------------------------ //
-DLLEXPORT ScriptSafeVariableBlock* NetworkCache::GetVariableWrapper(const string &name){
+DLLEXPORT ScriptSafeVariableBlock* NetworkCache::GetVariableWrapper(const std::string &name){
 
     auto variable = GetVariable(name);
 
     if(!variable)
-        return NULL;
+        return nullptr;
 
     auto value = variable->GetValueDirect();
 
     if(!value)
-        return NULL;
+        return nullptr;
 
     return new ScriptSafeVariableBlock(value, variable->GetName());
 }

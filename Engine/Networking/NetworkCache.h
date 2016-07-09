@@ -7,10 +7,11 @@
 #include "Common/ThreadSafe.h"
 #include "Common/DataStoring/NamedVars.h"
 
+#include "CommonNetwork.h"
 
 namespace Leviathan{
 
-//! \brief Centralized variables that AI can use on clients to replicate server behaviour
+//! \brief Centralized variables that AI can use on clients to replicate server behavior
 //!
 //! Can be used for example to set the position an npc is walking towards
 //! to allow clients interpolate
@@ -20,8 +21,7 @@ namespace Leviathan{
 class NetworkCache : public ThreadSafe{
 public:
 
-    //! \param serverside Set to true when this is a NETWORKED_TYPE_SERVER
-    DLLEXPORT NetworkCache(bool serverside);
+    DLLEXPORT NetworkCache(NETWORKED_TYPE serverside);
     DLLEXPORT ~NetworkCache();
 
     //! \brief Call after creating this object
@@ -58,15 +58,24 @@ public:
 
     //! \brief Handles an update packet
     //!
-    //! \note Works both on  the client and the server but shoulnd't be called on the server
+    //! \note Works both on  the client and the server but shouldn't be called on the server
     //! unless you really know what you are doing.
-    DLLEXPORT bool HandleUpdatePacket(NetworkResponseDataForAICacheUpdated* data);
+    DLLEXPORT bool HandleUpdatePacket(ResponseCacheUpdated* data);
+
+    //! \brief Handles an update packet
+    //!
+    //! \note Works both on  the client and the server but shouldn't be called on the server
+    //! unless you really know what you are doing.
+    DLLEXPORT bool HandleUpdatePacket(ResponseCacheRemoved* data);
+
+    //! \brief Sends all variables to a new connection
+    DLLEXPORT void _OnNewConnection(std::shared_ptr<Connection> connection);
 
 protected:
 
     //! \brief Called when a variable needs to be updated on the clients
-    void _OnVariableUpdated(std::shared_ptr<NamedVariableList> variable, Lock &guard);
-        
+    void _OnVariableUpdated(Lock &guard, const NamedVariableList &variable);
+
     // ------------------------------------ //
     
     //! True on the server

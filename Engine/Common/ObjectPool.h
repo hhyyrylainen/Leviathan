@@ -107,7 +107,7 @@ public:
             auto object = std::get<0>(*iter);
             const auto id = std::get<1>(*iter);
 
-            object->Release(args...);
+            object->Release(std::forward<Args>(args));
 
             object->~ElementType();
             Elements.free(object);
@@ -118,6 +118,25 @@ public:
         Queued.clear();
     }
 
+    //! \brief Calls Release on an object and then removes it from the pool
+    template<typename... Args>
+    void Release(KeyType entity, Args&&... args) {
+
+        GUARD_LOCK();
+
+        auto* object = Find(guard, entity);
+
+        if (!object)
+            throw NotFound("entity not in pool");
+
+        object->Release(std::forward<Args>(args...));
+
+        object->~ElementType();
+        Elements.free(object);
+
+        RemoveFromIndex(guard, id);
+        RemoveFromAdded(guard, id);
+    }
 
     //! \brief Removes elements that are queued for destruction
     //! without calling release 
@@ -235,7 +254,7 @@ public:
     }
 
     //! \brief Destroys a component based on id
-    void Destroy(Lock &guard, KeyType id){
+    void Destroy(Lock &guard, KeyType id, bool addtoremoved = true){
 
         auto object = Find(guard, id);
 
@@ -245,16 +264,17 @@ public:
         object->~ElementType();
         Elements.free(object);
 
-        Removed.push_back(std::make_tuple(object, id));
+        if(addtoremoved)
+            Removed.push_back(std::make_tuple(object, id));
             
         RemoveFromIndex(guard, id);
         RemoveFromAdded(guard, id);
     }
 
-    inline void Destroy(KeyType id){
+    inline void Destroy(KeyType id, bool addtoremoved = true){
 
         GUARD_LOCK();
-        Destroy(guard, id);
+        Destroy(guard, id, addtoremoved);
     }
 
     //! \brief Queues destruction of an element

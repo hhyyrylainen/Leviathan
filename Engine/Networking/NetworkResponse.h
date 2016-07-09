@@ -5,6 +5,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/SFMLPackets.h"
+#include "Common/DataStoring/NamedVars.h"
 #include "CommonNetwork.h"
 #include "Entities/Objects/Constraints.h"
 #include "Exceptions.h"
@@ -120,7 +121,7 @@ enum class NETWORK_RESPONSE_TYPE : uint16_t {
 //! Base class for all request objects
 //! \note Even though it cannot be required by the base class, sub classes should
 //! implement a constructor taking in an sf::Packet object
-//! \todo Reimplement limiting string lengths in messages
+//! \todo Re-implement limiting string lengths in messages
 class NetworkResponse{
 public:
 
@@ -134,7 +135,7 @@ public:
 
     inline void AddDataToPacket(sf::Packet &packet){
 
-        packet << ResponseID << static_cast<uint16_t>(Type);
+        packet << false << static_cast<uint16_t>(Type) << ResponseID;
 
         _SerializeCustom(packet);
     }
@@ -144,7 +145,16 @@ public:
         return Type;
     }
 
+    inline auto GetResponseID() const {
+        return ResponseID;
+    }
+
     DLLEXPORT static std::shared_ptr<NetworkResponse> LoadFromPacket(sf::Packet &packet);
+
+    //! \brief Limits size of response to avoid the application being used 
+    //! for DDoS amplification
+    DLLEXPORT static void LimitResponseSize(ResponseIdentification &response, 
+        uint32_t maxsize);
 
 protected:
 
@@ -153,7 +163,7 @@ protected:
 
     const NETWORK_RESPONSE_TYPE Type;
 
-    const uint32_t ResponseID;
+    const uint32_t ResponseID = 0;
 };
 
 //! \brief Used for BaseGameSpecificResponsePacket storing

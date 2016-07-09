@@ -6,7 +6,7 @@
 #include "Gameplay/CommandHandler.h"
 #include "SyncedVariables.h"
 #include "NetworkedInputHandler.h"
-#include "Networking/AINetworkCache.h"
+#include "Networking/NetworkCache.h"
 #include "Entities/GameWorld.h"
 #include "../TimeIncludes.h"
 using namespace Leviathan;
@@ -15,6 +15,7 @@ using namespace std;
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(
     int maxplayers, const std::string &servername, 
 	SERVER_JOIN_RESTRICT restricttype, int additionalflags /*= 0*/) :
+    NetworkInterface(NETWORKED_TYPE::Server),
     MaxPlayers(maxplayers), ServerName(servername), JoinRestrict(restricttype),
     ExtraServerFlags(additionalflags),
     _CommandHandler(new CommandHandler(this))
@@ -30,7 +31,7 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
 
 		// Can't report errors at this point, but maybe we should //
-        cout << "Warning! server quitting while playerlist has data in it" << endl;
+        cout << "Warning! server quitting while player list has data in it" << endl;
         
 		iter = ServerPlayers.erase(iter);
 	}
@@ -45,7 +46,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 	GUARD_LOCK();
 
 	// Prevent new players //
-	ServerStatus = NETWORKRESPONSE_SERVERSTATUS_SHUTDOWN;
+	ServerStatus = SERVER_STATUS::Shutdown;
 	AllowJoin = false;
 
     Lock uniqueplylock(PlayerListLocked);
@@ -60,7 +61,10 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT ConnectedPlayer* Leviathan::NetworkServerInterface::GetPlayerForConnection(Connection* connection){
+DLLEXPORT std::shared_ptr<ConnectedPlayer> 
+Leviathan::NetworkServerInterface::GetPlayerForConnection(
+    const std::shared_ptr<Connection> &connection)
+{
 	GUARD_LOCK();
 	// Search through the connections //
     Lock plylock(PlayerListLocked);

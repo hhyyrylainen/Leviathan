@@ -63,12 +63,12 @@ protected:
 //! By default this doesn't synchronize anything. You will have to manually add variables
 //! \todo Events
 //! \todo Add function to be able to check if sync completed successfully
-class SyncedVariables : public BaseNotifierAll, public BaseNotifiableAll{
+class SyncedVariables : public BaseNotifierAll{
     friend SyncedValue;
     friend SyncedResource;
 public:
     //! \brief Construct an instance that must be owned by a NetworkHandler
-    DLLEXPORT SyncedVariables(NetworkHandler* owner, bool amiaserver,
+    DLLEXPORT SyncedVariables(NetworkHandler* owner, NETWORKED_TYPE type,
         NetworkInterface* handlinginterface);
     //! \brief The destructor doesn't force other instances to remove their variables
     DLLEXPORT ~SyncedVariables();
@@ -88,19 +88,19 @@ public:
 
     //! \brief Handles all requests aimed at the synchronized variables
     DLLEXPORT bool HandleSyncRequests(std::shared_ptr<NetworkRequest> request,
-        ConnectionInfo* connection);
+        Connection* connection);
 
     //! \brief Handles a response only packet, if it is a sync packet
     //! \note This will most likely only receive variable updated notifications
     DLLEXPORT bool HandleResponseOnlySync(std::shared_ptr<NetworkResponse> response,
-        ConnectionInfo* connection);
+        Connection* connection);
 
 
     //! \brief Adds another instance to sync with
-    //! \note The ConnectionInfo parameter should be locked during this call
-    DLLEXPORT void AddAnotherToSyncWith(ConnectionInfo* unsafeptr);
+    //! \note The Connection parameter should be locked during this call
+    DLLEXPORT void AddAnotherToSyncWith(Connection* unsafeptr);
 
-    DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(ConnectionInfo* ptr,
+    DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(Connection* ptr,
         bool alreadyunhooking = false)
     {
         GUARD_LOCK();
@@ -111,13 +111,8 @@ public:
     //! \brief Stops updating with a single other
     //! \param alreadyunhooking Used internally don't set to true unless you
     //! know what you are doing
-    DLLEXPORT void RemoveConnectionWithAnother(ConnectionInfo* ptr, Lock &guard,
+    DLLEXPORT void RemoveConnectionWithAnother(Connection* ptr, Lock &guard,
         bool alreadyunhooking = false);
-
-
-    //! \brief Provided for NetworkServerInterface and NetworkClientInterface to
-    //! access AddAnotherToSyncWith and other functions
-    DLLEXPORT static SyncedVariables* Get();
 
     //! \brief Call before requesting full value sync
     //! \note Without calling this IsSyncDone won't work
@@ -156,12 +151,12 @@ protected:
         
     void _NotifyUpdatedValue(Lock &guard, SyncedResource* valtosync, int useid = -1);
 
-    std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr,
+    std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(Connection* unsafeptr,
         const SyncedValue* const valtosync);
-    std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(ConnectionInfo* unsafeptr,
+    std::shared_ptr<SentNetworkThing> _SendValueToSingleReceiver(Connection* unsafeptr,
         SyncedResource* valtosync);
 
-    void _UpdateFromNetworkReceive(NetworkResponseDataForSyncValData* datatouse, Lock &guard);
+    void _UpdateFromNetworkReceive(ResponseSyncValData* datatouse, Lock &guard);
 
     //! \brief SyncedResource calls this when it is updated
     void _IWasUpdated(SyncedResource* me);
@@ -172,18 +167,13 @@ protected:
     //! \brief Updates the number of synced values received during SyncDone
     void _UpdateReceiveCount(const std::string &nameofthing);
 
-
-    //! \brief Used to remove connections that are no longer active
-    void _OnNotifierDisconnected(Lock &guard, BaseNotifierAll* parenttoremove,
-        Lock &parentlock) override;
-
     // ------------------------------------ //
 
     //! Interface used to ask for permission to do many things
     //! (like add new client when they request it)
     NetworkInterface* CorrespondingInterface;
 
-    //! NetworkHandler that owns this and is used to verify ConnectionInfo
+    //! NetworkHandler that owns this and is used to verify Connection
     //! unsafe pointers when they actually need to be used
     NetworkHandler* Owner;
 
@@ -209,15 +199,6 @@ protected:
 
     //! Contains the values that are to be synced
     std::vector<std::shared_ptr<SyncedValue>> ToSyncValues;
-
-    //! Keeps tract of other instances that are allowed to request from us
-    //!
-    //! New ones are added with the AddAnotherToSyncWith function or after querying the interface automatically
-    //! \note Variables of custom type and objects held by others are BaseNotifierAll in vectors
-    std::vector<ConnectionInfo*> ConnectedToOthers;
-
-
-    static SyncedVariables* Staticaccess;
 };
 
 }

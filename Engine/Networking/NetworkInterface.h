@@ -38,7 +38,7 @@ public:
     //! When returning false the connection will pretend that the response never arrived
     //! and possibly resends the request
     DLLEXPORT virtual bool PreHandleResponse(std::shared_ptr<NetworkResponse> response,
-        std::shared_ptr<NetworkRequest> originalrequest, Connection &connection);
+        SentNetworkThing* originalrequest, Connection &connection);
 
         
     //! \brief Called by ConnectionInfo when it receives a response

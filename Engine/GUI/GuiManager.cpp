@@ -993,7 +993,7 @@ int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
 	GUARD_LOCK();
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id)
-			return i;
+			return static_cast<int>(i);
 	}
 	return -1;
 }

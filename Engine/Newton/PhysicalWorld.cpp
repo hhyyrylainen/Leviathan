@@ -75,7 +75,7 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
                     OwningWorld)));
 
 		NewtonUpdate(World, NEWTON_TIMESTEP);
-		PassedTimeTotal -= NEWTON_FPS_IN_MICROSECONDS;
+		PassedTimeTotal -= static_cast<int64_t>(NEWTON_FPS_IN_MICROSECONDS);
         runs++;
 
         if(runs == maxruns){
@@ -86,6 +86,22 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
             break;
         }
 	}
+}
+
+DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorldFixed(uint32_t mspassed, 
+    uint32_t stepcount /*= 1*/) 
+{
+    DEBUG_BREAK;
+    float timestep = (mspassed / 1000.f) / stepcount;
+
+    for (uint32_t i = 0; i < stepcount; ++i) {
+
+        EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
+            new PhysicsStartEventData(timestep,
+                OwningWorld)));
+
+        NewtonUpdate(World, timestep);
+    }
 }
 // ------------------------------------ //
 int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,

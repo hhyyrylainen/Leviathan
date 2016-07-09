@@ -16,8 +16,10 @@ class EntitySerializer{
 public:
 
     //! \brief Creates a serializer which is guaranteed to be able to serialize the type
-    DLLEXPORT EntitySerializer();
-    DLLEXPORT virtual ~EntitySerializer();
+    inline EntitySerializer() {
+    }
+
+    virtual ~EntitySerializer(){ }
 
     //! \brief Serializes an entity entirely into a packet
     //! \note This will also link the entity to the connection so that it will
@@ -58,7 +60,7 @@ public:
 protected:
 
     DLLEXPORT bool VerifyAndFillReceivedState(Received* received, int ticknumber,
-        int referencetick, std::shared_ptr<ObjectDeltaStateData> receivedstate);
+        int referencetick, std::shared_ptr<ComponentState> receivedstate);
         
     // Disallow copy and assign //
     EntitySerializer(const EntitySerializer &other) = delete;

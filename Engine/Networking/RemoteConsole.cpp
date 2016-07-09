@@ -9,19 +9,13 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::RemoteConsole::RemoteConsole() : CloseIfNoRemoteConsole(false), CanClose(false){
-	staticinstance = this;
+DLLEXPORT Leviathan::RemoteConsole::RemoteConsole() : CloseIfNoRemoteConsole(false), 
+    CanClose(false)
+{
 }
 
 DLLEXPORT Leviathan::RemoteConsole::~RemoteConsole(){
-	staticinstance = NULL;
 }
-
-DLLEXPORT RemoteConsole* Leviathan::RemoteConsole::Get(){
-	return staticinstance;
-}
-
-RemoteConsole* Leviathan::RemoteConsole::staticinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 	GUARD_LOCK();

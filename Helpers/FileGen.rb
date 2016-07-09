@@ -152,6 +152,13 @@ class OutputClass
 end
 
 class SFMLSerializeClass < OutputClass
+  
+  def initialize(name)
+    
+    super name
+    @deserializeArgs = []
+    @deserializeBase = ""
+  end
 
   def genMethods
     "\n" +
@@ -176,17 +183,35 @@ class SFMLSerializeClass < OutputClass
       ";\n}\n"
   end
 
+  def addDeserializeArg(arg)
+    
+    @deserializeArgs.push arg
+    
+  end
+  
+  def deserializeBase(arg)
+    @deserializeBase = arg
+  end
+  
   def genSFMLConstructor
+    
+    tmpargs = @cargs + @deserializeArgs
+    tmpbaseconstructor = @baseConstructor 
+    
+    if not @deserializeBase.empty?
+      tmpbaseconstructor += ", " + @deserializeBase
+    end
+  
     "#{@name}(" +
-      if not @cargs.empty?
-        @cargs.join(", ") + ", "
+      if not tmpargs.empty?
+        tmpargs.join(", ") + ", "
       else
         ""
       end +
       "sf::Packet &packet) " +
       # Base constructor
-      if not @baseConstructor.empty?
-        ": #{@baseClass}(#{@baseConstructor}) {\n"
+      if not tmpbaseconstructor.empty?
+        ": #{@baseClass}(#{tmpbaseconstructor}) {\n"
       else
         "{\n"
       end +

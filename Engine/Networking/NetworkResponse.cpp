@@ -33,9 +33,22 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
     default:
 		{
             Logger::Get()->Warning("NetworkResponse: unused type: "+
-                Convert::ToString(responsetype));
+                Convert::ToString(static_cast<int>(responsetype)));
             throw InvalidArgument("packet has invalid response type");
 		}
 		break;
 	}
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkResponse::LimitResponseSize(ResponseIdentification &response,
+    uint32_t maxsize) 
+{
+    if (response.GameName.length() + response.GameVersionString.length() +
+        response.LeviathanVersionString.length() + response.UserReadableData.length() >
+        maxsize)
+    {
+        // Need to trim something //
+        DEBUG_BREAK;
+        response.UserReadableData = "";
+    }
 }

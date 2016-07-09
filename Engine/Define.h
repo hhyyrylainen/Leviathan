@@ -33,6 +33,12 @@ constexpr auto MAX_SERVERCOMMAND_LENGTH	= 550;
 
 constexpr auto BASESENDABLE_STORED_RECEIVED_STATES = 6;
 
+constexpr auto PACKET_LOST_AFTER_MILLISECONDS = 1000;
+
+constexpr auto PACKET_LOST_AFTER_RECEIVED_NEWER = 4;
+
+constexpr auto CRITICAL_PACKET_MAX_TRIES = 8;
+
 //! For checking vector normalization
 constexpr float NORMALIZATION_TOLERANCE = 1e-6f;
 

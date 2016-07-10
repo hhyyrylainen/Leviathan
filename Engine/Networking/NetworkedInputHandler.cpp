@@ -4,7 +4,7 @@
 #include "NetworkedInput.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
-#include "ConnectionInfo.h"
+#include "Connection.h"
 #include "Threading/ThreadingManager.h"
 #include "NetworkServerInterface.h"
 #include "../Utility/Convert.h"
@@ -15,29 +15,19 @@ using namespace std;
 DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(
     NetworkInputFactory* objectcreater, NetworkClientInterface* isclient) : 
 	IsOnTheServer(false), LastInputSourceID(2500),
-    _NetworkInputFactory(objectcreater), ClientInterface(isclient), ServerInterface(NULL)
+    _NetworkInputFactory(objectcreater), ClientInterface(isclient)
 {
-    Staticinstance = this;
 }
 
 DLLEXPORT Leviathan::NetworkedInputHandler::NetworkedInputHandler(
     NetworkInputFactory* objectcreater, NetworkServerInterface* isserver) : 
 	IsOnTheServer(true), LastInputSourceID(2500), 
-    _NetworkInputFactory(objectcreater), ClientInterface(NULL), ServerInterface(isserver)
+    _NetworkInputFactory(objectcreater), ServerInterface(isserver)
 {
-    Staticinstance = this;
 }
 
 DLLEXPORT Leviathan::NetworkedInputHandler::~NetworkedInputHandler(){
     
-    Staticinstance = NULL;
-}
-
-NetworkedInputHandler* Leviathan::NetworkedInputHandler::Staticinstance = NULL;
-
-DLLEXPORT NetworkedInputHandler* Leviathan::NetworkedInputHandler::Get(){
-    
-    return Staticinstance;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
@@ -70,11 +60,12 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::Release(){
 	_NetworkInputFactory = NULL;    
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkRequest> request,
-    ConnectionInfo* connection)
+DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(
+    shared_ptr<NetworkRequest> request,
+    Connection &connection)
 {
 	switch(request->GetType()){
-        case NETWORKREQUESTTYPE_CONNECTINPUT:
+    case NETWORK_REQUEST_TYPE::ConnectInput:
 		{
             GUARD_LOCK();
 
@@ -93,11 +84,12 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 	}
 }
 
-DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<NetworkResponse> response,
-    ConnectionInfo* connection)
+DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(
+    shared_ptr<NetworkResponse> response,
+    Connection &connection)
 {
 	switch(response->GetType()){
-        case NETWORKRESPONSETYPE_CREATENETWORKEDINPUT:
+    case NETWORK_RESPONSE_TYPE::CreateNetworkedInput:
 		{
             GUARD_LOCK();
 
@@ -115,7 +107,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
             
 			return true;
 		}
-        case NETWORKRESPONSETYPE_DISCONNECTINPUT:
+    case NETWORK_RESPONSE_TYPE::DisconnectInput:
         {
             GUARD_LOCK();
 
@@ -128,7 +120,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
             return true;
         }
 
-        case NETWORKRESPONSETYPE_UPDATENETWORKEDINPUT:
+    case NETWORK_RESPONSE_TYPE::UpdateNetworkedInput:
 		{
             GUARD_LOCK();
             
@@ -140,7 +132,7 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 				return true;
 			}
 
-#ifdef NETWORK_USE_SNAPSHOTS
+#ifndef NETWORK_USE_SNAPSHOTS
 			// Everybody receives these, but only the server has to distribute these around //
             if(IsOnTheServer){
 
@@ -169,24 +161,23 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::HandleInputPacket(shared_ptr<Ne
 }
 // ------------------------------------ //
 void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(Lock &guard,
-    shared_ptr<NetworkRequest> request, ConnectionInfo* connection)
+    shared_ptr<NetworkRequest> request, Connection &connection)
 {
     // Verify that it is allowed //
     bool allowed = true;
 
+    if (request->GetType() != NETWORK_REQUEST_TYPE::ConnectInput)
+        goto notallowedfailedlabel;
+
     // If the packet is valid it should contain this //
-    RequestConnectInputData* data = request->GetConnectInputRequestData();
+    auto* data = static_cast<RequestConnectInput*>(request.get());
 
     {
-        if(!data)
-            goto notallowedfailedlabel;
-
 
         // We need to partially load the data here //
         int ownerid, inputid;
 
         NetworkedInput::LoadHeaderDataFromPacket(data->DataForObject, ownerid, inputid);
-
 
         // Create a temporary object from the packet //
         auto ournewobject = _NetworkInputFactory->CreateNewInstanceForReplication(inputid,
@@ -220,15 +211,10 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(Lock &guard,
         _NetworkInputFactory->ReplicationFinalized(GlobalOrLocalListeners.back().get());
 
         // Notify that we accepted it //
-        shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(request->GetExpectedResponseID(), 
-                PACKET_TIMEOUT_STYLE_TIMEDMS, 1500));
+        ResponseServerAllow response(request->GetIDForResponse(),
+            SERVER_ACCEPTED_TYPE::ConnectAccepted);
 
-
-        tmpresp->GenerateServerAllowResponse(new NetworkResponseDataForServerAllow(
-                NETWORKRESPONSE_SERVERACCEPTED_TYPE_CONNECT_ACCEPTED));
-
-        connection->SendPacketToConnection(tmpresp, 4);
-
+        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
 
         // Send messages to other clients //
         
@@ -246,7 +232,7 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(Lock &guard,
         // \todo Guarantee that the interface will be available when this is ran
         ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>(
                     [](shared_ptr<NetworkResponse> response, NetworkServerInterface* server,
-                        ConnectionInfo* skipme) -> void
+                        Connection* skipme) -> void
             {
                 
                 // Then tell the interface to send it to all but one connection //
@@ -266,31 +252,27 @@ void Leviathan::NetworkedInputHandler::_HandleConnectRequestPacket(Lock &guard,
 notallowedfailedlabel:
 
 	// Notify about we disallowing this connection //
-	shared_ptr<NetworkResponse> tmpresp(new NetworkResponse(NETWORKRESPONSETYPE_SERVERDISALLOW, 
-		PACKET_TIMEOUT_STYLE_TIMEDMS, 1));
+    ResponseServerDisallow tmpresp(request->GetIDForResponse(),
+        "Not allowed to create input with that ID",
+        NETWORK_RESPONSE_INVALIDREASON::NotAuthorized);
 
-	tmpresp->GenerateServerDisallowResponse(new 
-		NetworkResponseDataForServerDisallow(NETWORKRESPONSE_INVALIDREASON_NOT_AUTHORIZED,
-            "Not allowed to create input with that ID"));
-
-	connection->SendPacketToConnection(tmpresp, 1);
+	connection.SendPacketToConnection(tmpresp, RECEIVE_GUARANTEE::Critical);
 }
 // ------------------------------------ //
 bool NetworkedInputHandler::_HandleDisconnectRequestPacket(Lock &guard,
-    std::shared_ptr<NetworkResponse> response, ConnectionInfo* connection)
+    std::shared_ptr<NetworkResponse> response, Connection &connection)
 {
 #ifndef NETWORK_USE_SNAPSHOTS
 #error implement this
 #endif
 
-    Logger::Get()->Write("TODO: implement a check to see if the player is allowed to close the "
-        "connection");
-
-    auto data = response->GetResponseDataForDisconnectInput();
-
-    if(!data)
+    if (response->GetType() != NETWORK_RESPONSE_TYPE::DisconnectInput)
         return false;
-    
+
+    auto* data = static_cast<ResponseDisconnectInput*>(response.get());
+
+    LOG_WRITE("TODO: security check for _HandleDisconnectRequestPacket");
+
     for(size_t i = 0; i < GlobalOrLocalListeners.size(); i++){
 
         auto current = GlobalOrLocalListeners[i].get();
@@ -329,8 +311,9 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::UpdateInputStatus(){
 	_HandleDeleteQueue(guard);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkedInputHandler::GetNextInputIDNumber(boost::function<void (int)> onsuccess,
-    boost::function<void ()> onfailure)
+DLLEXPORT void Leviathan::NetworkedInputHandler::GetNextInputIDNumber(
+    std::function<void(int)> onsuccess,
+    std::function<void()> onfailure)
 {
 	GUARD_LOCK();
 
@@ -338,16 +321,16 @@ DLLEXPORT void Leviathan::NetworkedInputHandler::GetNextInputIDNumber(boost::fun
 }
 
 DLLEXPORT int Leviathan::NetworkedInputHandler::GetNextInputIDNumberOnServer(){
+
 	GUARD_LOCK();
 
-	assert(IsOnTheServer && "cannot call this function on the client");
-
+	LEVIATHAN_ASSERT(IsOnTheServer, "cannot call this function on the client");
 
 	return ++LastInputSourceID;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkedInputHandler::RegisterNewLocalGlobalReflectingInputSource(shared_ptr<NetworkedInput>
-    iobject)
+DLLEXPORT bool Leviathan::NetworkedInputHandler::RegisterNewLocalGlobalReflectingInputSource(
+    shared_ptr<NetworkedInput> iobject)
 {
 
 	assert(IsOnTheServer != true && "cannot call this function on the server");
@@ -362,8 +345,8 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::RegisterNewLocalGlobalReflectin
 
 	if(!iobject->ConnectToServersideInput()){
 
-		Logger::Get()->Error("NetworkedInputHandler: register local input source failed because connecting it to "
-            "the server didn't start properly");
+		Logger::Get()->Error("NetworkedInputHandler: register local input source failed "
+            "because connecting it to the server didn't start properly");
 		return false;
 	}
 
@@ -373,33 +356,6 @@ DLLEXPORT bool Leviathan::NetworkedInputHandler::RegisterNewLocalGlobalReflectin
 	LinkReceiver(guard, iobject.get());
 
 	return true;
-}
-// ------------------------------------ //
-void Leviathan::NetworkedInputHandler::_OnChildUnlink(InputReceiver* child){
-	GUARD_LOCK();
-
-	for(size_t i = 0; i < ConnectedReceivers.size(); i++){
-		if(ConnectedReceivers[i] == child){
-			// call disconnect function first //
-			ConnectedReceivers[i]->_OnDisconnect(this);
-			ConnectedReceivers.erase(ConnectedReceivers.begin()+i);
-
-			// Remove from the other place, too //
-			auto end = GlobalOrLocalListeners.end();
-			for(auto iter = GlobalOrLocalListeners.begin(); iter != end; ++iter){
-
-				// Discard the one matching the pointer //
-				if(child == static_cast<InputReceiver*>((*iter).get())){
-                    
-                    // Only unallocate if the factory is still around //
-                    if(_NetworkInputFactory && (*iter).get())
-                        _NetworkInputFactory->NoLongerNeeded(*(*iter).get(), guard);
-					break;
-				}
-			}
-			return;
-		}
-	}
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkedInputHandler::QueueDeleteInput(NetworkedInput* inputobj){
@@ -442,7 +398,7 @@ void Leviathan::NetworkedInputHandler::_HandleDeleteQueue(Lock &guard){
 }
 // ------------------------------------ //
 bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(Lock &guard,
-    shared_ptr<NetworkResponse> response, ConnectionInfo* connection)
+    shared_ptr<NetworkResponse> response, Connection* connection)
 {
 
 
@@ -502,7 +458,7 @@ bool Leviathan::NetworkedInputHandler::_HandleInputUpdateResponse(Lock &guard,
 }
 // ------------------------------------ //
 bool Leviathan::NetworkedInputHandler::_HandleInputCreateResponse(Lock &guard,
-    shared_ptr<NetworkResponse> response, ConnectionInfo* connection)
+    shared_ptr<NetworkResponse> response, Connection* connection)
 {
     NetworkResponseDataForCreateNetworkedInput* data = response->GetResponseDataForCreateNetworkedInputResponse();
 

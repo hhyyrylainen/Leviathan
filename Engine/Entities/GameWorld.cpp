@@ -236,7 +236,9 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposit
     return true;
 }
 
-DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection &connection) const{
+DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection &connection) const {
+
+    GUARD_LOCK();
 
     for(auto& player : ReceivingPlayers){
 

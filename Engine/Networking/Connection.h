@@ -281,6 +281,10 @@ public:
 
     //! \brief Ticks this connection, times out sent packets
     DLLEXPORT void UpdateListening();
+
+    inline CONNECTION_STATE GetState() const {
+        return State;
+    }
         
     //! Send a request packet to this connection
     //! \returns nullptr If this connection is closed

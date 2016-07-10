@@ -87,7 +87,7 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
     case NETWORK_REQUEST_TYPE::CloseRemoteConsole:
 		{
             Engine::Get()->GetRemoteConsole()->HandleRemoteConsoleRequestPacket(request, 
-                connection);
+                Owner->GetConnection(&connection));
 
 			return true;
 		}

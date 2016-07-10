@@ -266,9 +266,6 @@ public:
 		
     // Script proxies //
     DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);
-		
-    //! \brief Returns true when no players are marked as receiving initial update
-    DLLEXPORT bool AreAllPlayersSynced() const;
 
     //! \brief Returns true when the player matching the connection should receive updates
     //! about an object

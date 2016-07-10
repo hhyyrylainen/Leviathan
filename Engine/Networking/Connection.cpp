@@ -431,7 +431,9 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
             // We can possibly drop the connection or perform other extra tasks //
             if(RestrictType == CONNECTION_RESTRICTION::ReceiveRemoteConsole){
                 // Check type //
-                if (!Engine::Get()->GetRemoteConsole()->CanOpenNewConnection(*this, request)) {
+                if (!Engine::Get()->GetRemoteConsole()->CanOpenNewConnection(
+                    Owner->GetConnection(this), request)) 
+                {
 
                     _OnRestrictFail(static_cast<uint16_t>(request->GetType()));
                     return;

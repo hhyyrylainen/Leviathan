@@ -50,7 +50,13 @@ thingsToGenerate = [
      { type: "int32_t", name: "Ticks" },
      { type: "int32_t", name: "EngineMSTweak" },
      { type: "bool", name: "Absolute" }
+   ]],
+
+   ["DoRemoteConsoleOpen",
+   [
+     { type: "int32_t", name: "Token" }
    ]]
+   
 ]
 
 # Add all classes

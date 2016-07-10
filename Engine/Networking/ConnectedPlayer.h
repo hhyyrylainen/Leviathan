@@ -16,7 +16,7 @@ namespace Leviathan{
 //! \todo Add a kick method and use it in NetworkServerInterface::CloseDownServer
 class ConnectedPlayer : public CommandSender{
 public:
-    DLLEXPORT ConnectedPlayer(Connection* unsafeconnection,
+    DLLEXPORT ConnectedPlayer(std::shared_ptr<Connection> connection,
         NetworkServerInterface* owninginstance, int plyid);
     
     //! \brief Empty destructor for exporting

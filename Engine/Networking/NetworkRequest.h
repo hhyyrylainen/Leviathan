@@ -27,6 +27,9 @@ enum class NETWORK_REQUEST_TYPE : uint16_t{
         
 	CloseRemoteConsole,
 
+    //! The receiving side is now allowed to open a remote console with the token 
+    DoRemoteConsoleOpen,
+
     //! Client wants to join a server
     //! MasterServerToken The ID given by the master server
 	JoinServer,

@@ -91,11 +91,11 @@ DLLEXPORT void Leviathan::NetworkedInput::OnUpdateInputStates(){
 		return;
 
 	// Send updates through the network //
-	shared_ptr<NetworkResponse> response(new NetworkResponse(-1, PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED, 5));
-	response->GenerateUpdateNetworkedInputResponse(new NetworkResponseDataForUpdateNetworkedInput(*this));
+    DEBUG_BREAK;
+ //   ResponseUpdateNetworkedInput response();
 
-	// Send to the server for it to then distribute it around //
-	OwningHandler->ClientInterface->GetServerConnection()->SendPacketToConnection(response, 5);
+	//// Send to the server for it to then distribute it around //
+	//OwningHandler->ClientInterface->GetServerConnection()->SendPacketToConnection(response, 5);
 
 
 	// Notify local update //
@@ -108,64 +108,64 @@ DLLEXPORT bool Leviathan::NetworkedInput::ConnectToServersideInput(){
 
 	// Send a connect request //
 	CurrentState = NETWORKEDINPUT_STATE_WAITING;
-
+    DEBUG_BREAK;
 	// Create the request //
-	shared_ptr<NetworkRequest> request(new NetworkRequest(new RequestConnectInputData(*this), 1500));
-
-
-	// Send the request //
-	auto connection = OwningHandler->ClientInterface->GetServerConnection();
-
-	if(!connection)
-		return false;
-
-	shared_ptr<SentNetworkThing> netthing = connection->SendPacketToConnection(request, 12);
-
-	// Queue a task for checking the result later //
-	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(std::bind<void>(
-		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> void
-	{
-		if(!requestthing->GetStatus() || !requestthing->GotResponse){
-
-			// Destroy it //
-			Logger::Get()->Warning("NetworkedInput: closed due to the server not responding to connect request");
-			goto doactualdeletereleasethingforfaillabel;
-		}
-
-		// Check the response //
-		if(requestthing->GotResponse->GetType() != NETWORKRESPONSETYPE_SERVERALLOW){
-
-			// It failed because server denied it //
-			Logger::Get()->Warning("NetworkedInput: closed due to the server denying our connect request");
-			goto doactualdeletereleasethingforfaillabel;
-		}
-
-		// It succeeded so no further action is required //
-		return;
-
-doactualdeletereleasethingforfaillabel:
-
-		auto tmp = dynamic_cast<NetworkClientInterface*>(NetworkHandler::GetInterface());
-
-		if(tmp){
-			auto otherpotential = tmp->GetNetworkedInput();
-			if(otherpotential)
-				otherpotential->QueueDeleteInput(inputobj);
-		}
-
-	}, netthing, this), std::bind<bool>(
-		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> bool{
-		// Check has it arrived //
-		if(requestthing->IsFinalized())
-			return true;
-
-		// More waiting //
-		return false;
-	}, netthing, this), MillisecondDuration(10)));
-
-	
-
-
+//	shared_ptr<NetworkRequest> request(new NetworkRequest(new RequestConnectInputData(*this), 1500));
+//
+//
+//	// Send the request //
+//	auto connection = OwningHandler->ClientInterface->GetServerConnection();
+//
+//	if(!connection)
+//		return false;
+//
+//	shared_ptr<SentNetworkThing> netthing = connection->SendPacketToConnection(request, 12);
+//
+//	// Queue a task for checking the result later //
+//	ThreadingManager::Get()->QueueTask(new ConditionalDelayedTask(std::bind<void>(
+//		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> void
+//	{
+//		if(!requestthing->GetStatus() || !requestthing->GotResponse){
+//
+//			// Destroy it //
+//			Logger::Get()->Warning("NetworkedInput: closed due to the server not responding to connect request");
+//			goto doactualdeletereleasethingforfaillabel;
+//		}
+//
+//		// Check the response //
+//        if (requestthing->GotResponse->GetType() != NETWORK_RESPONSE_TYPE::ServerAllow) {
+//
+//			// It failed because server denied it //
+//			Logger::Get()->Warning("NetworkedInput: closed due to the server denying our connect request");
+//			goto doactualdeletereleasethingforfaillabel;
+//		}
+//
+//		// It succeeded so no further action is required //
+//		return;
+//
+//doactualdeletereleasethingforfaillabel:
+//
+//		auto tmp = dynamic_cast<NetworkClientInterface*>(NetworkHandler::GetInterface());
+//
+//		if(tmp){
+//			auto otherpotential = tmp->GetNetworkedInput();
+//			if(otherpotential)
+//				otherpotential->QueueDeleteInput(inputobj);
+//		}
+//
+//	}, netthing, this), std::bind<bool>(
+//		[](shared_ptr<SentNetworkThing> requestthing, NetworkedInput* inputobj) -> bool{
+//		// Check has it arrived //
+//		if(requestthing->IsFinalized())
+//			return true;
+//
+//		// More waiting //
+//		return false;
+//	}, netthing, this), MillisecondDuration(10)));
+//
+//	
+//
+//
 	return true;
 }
 // ------------------------------------ //
@@ -177,18 +177,19 @@ DLLEXPORT void Leviathan::NetworkedInput::TerminateConnection(){
         if(CurrentState == NETWOKREDINPUT_STATE_READY)
             return;
     
-        auto response = std::make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
+        DEBUG_BREAK;
+        //auto response = std::make_shared<NetworkResponse>(-1, PACKET_TIMEOUT_STYLE_TIMEDMS, 1000);
 
-        response->GenerateDisconnectInputResponse(
-            new NetworkResponseDataForDisconnectInput(InputID, OwnerID));
+        //response->GenerateDisconnectInputResponse(
+        //    new NetworkResponseDataForDisconnectInput(InputID, OwnerID));
     
-        // Send the request //
-        auto connection = OwningHandler->ClientInterface->GetServerConnection();
+        //// Send the request //
+        //auto connection = OwningHandler->ClientInterface->GetServerConnection();
 
-        if(!connection)
-            return;
+        //if(!connection)
+        //    return;
 
-        connection->SendPacketToConnection(response, 12);
+        //connection->SendPacketToConnection(response, 12);
 
     } else {
 

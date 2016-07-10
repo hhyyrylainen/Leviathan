@@ -49,7 +49,7 @@ public:
     //! \brief Gets corresponding player from a connection
     //! \return Returns a pointer from PlayerList
     DLLEXPORT std::shared_ptr<ConnectedPlayer> GetPlayerForConnection(
-        const std::shared_ptr<Connection> &connection);
+        Connection &connection);
 
     //! \brief Sends a response to a NETWORKREQUESTTYPE_SERVERSTATUS
     DLLEXPORT void RespondToServerStatusRequest(std::shared_ptr<NetworkRequest> request,
@@ -77,12 +77,11 @@ public:
 
     //! \brief Sends a response packet to all players except for the player(s)
     //! whose connection matches skipme
-    DLLEXPORT void SendToAllButOnePlayer(std::shared_ptr<NetworkResponse> response,
+    DLLEXPORT void SendToAllButOnePlayer(NetworkResponse &response,
         Connection* skipme, RECEIVE_GUARANTEE guarantee);
 
     //! \brief Sends a response packet to all of the players
-    DLLEXPORT void SendToAllPlayers(std::shared_ptr<NetworkResponse> response,
-        RECEIVE_GUARANTEE guarantee);
+    DLLEXPORT void SendToAllPlayers(NetworkResponse &response, RECEIVE_GUARANTEE guarantee);
 
     //! \brief Returns the active networked input handler or NULL
     DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
@@ -100,27 +99,29 @@ protected:
     //!
     //! Handles default packets that are meant to be processed by a server
     DLLEXPORT bool _HandleServerRequest(std::shared_ptr<NetworkRequest> request,
-        Connection* connectiontosendresult);
+        Connection &connectiontosendresult);
 
     //! \brief Utility function for subclasses to call for default handling of non-request responses
     //!
     //! Handles default types of response packages and returns true if processed.
     DLLEXPORT bool _HandleServerResponseOnly(std::shared_ptr<NetworkResponse> message,
-        Connection* connection, bool &dontmarkasreceived);
+        Connection &connection, bool &dontmarkasreceived);
 
     //! \brief Used to handle server join request packets
     //! \todo Check connection security status
     //! \todo Add basic connection checking and master server authentication check
     DLLEXPORT void _HandleServerJoinRequest(std::shared_ptr<NetworkRequest> request,
-        Connection* connection);
+        Connection &connection);
 
     // Callback functions //
 
     //! \brief Called when a player is about to connect
-    DLLEXPORT virtual void PlayerPreconnect(Connection* connection,
+    DLLEXPORT virtual void PlayerPreconnect(Connection &connection,
         std::shared_ptr<NetworkRequest> joinrequest);
-    DLLEXPORT virtual void _OnPlayerConnected(Lock &guard, ConnectedPlayer* newplayer);
-    DLLEXPORT virtual void _OnPlayerDisconnect(Lock &guard, ConnectedPlayer* newplayer);
+    DLLEXPORT virtual void _OnPlayerConnected(Lock &guard, 
+        std::shared_ptr<ConnectedPlayer> newplayer);
+    DLLEXPORT virtual void _OnPlayerDisconnect(Lock &guard, 
+        std::shared_ptr<ConnectedPlayer> newplayer);
     DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
 
     //! \brief Called when the application should register custom command handling providers
@@ -137,10 +138,10 @@ protected:
     //! Internally called when a player is about to be deleted
     //!
     //! Will call virtual notify functions
-    void _OnReportCloseConnection(ConnectedPlayer* plyptr, Lock &guard);
+    void _OnReportCloseConnection(std::shared_ptr<ConnectedPlayer> plyptr, Lock &guard);
 
     //! Internally used to detect when a new player has connected
-    void _OnReportPlayerConnected(ConnectedPlayer* plyptr, Connection* connection,
+    void _OnReportPlayerConnected(std::shared_ptr<ConnectedPlayer> plyptr, Connection &connection,
         Lock &guard);
 
     //! \brief Called from ConnectedPlayer when its connection is no longer good

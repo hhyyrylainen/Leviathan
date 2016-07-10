@@ -15,11 +15,13 @@ class RemoteConsoleSession{
     friend RemoteConsole;
 public:
     DLLEXPORT RemoteConsoleSession(const std::string &name,
-        std::shared_ptr<Connection> connection, int32_t token);
+        std::shared_ptr<Connection> connection, int32_t token) :
+        ConnectionName(name), SessionToken(token), CorrespondingConnection(connection),
+        IsOpened(true), TerminateSession(false)
+    { }
     DLLEXPORT ~RemoteConsoleSession();
 
     DLLEXPORT Connection* GetConnection();
-    DLLEXPORT void ResetConnection();
 
     //! \brief Sets the connection as closing
     DLLEXPORT void KillConnection();
@@ -40,7 +42,7 @@ private:
 
 
 //! Class used to handle remote server commands and receiving messages
-class RemoteConsole{
+class RemoteConsole : public ThreadSafe{
     friend Engine;
 
     struct RemoteConsoleExpect{
@@ -67,7 +69,7 @@ public:
 
     // Handle functions for interface to use //
     DLLEXPORT void HandleRemoteConsoleRequestPacket(std::shared_ptr<NetworkRequest> request,
-        Connection &connection);
+        std::shared_ptr<Connection> connection);
     DLLEXPORT void HandleRemoteConsoleResponse(std::shared_ptr<NetworkResponse> response,
         Connection &connection, std::shared_ptr<NetworkRequest> potentialrequest);
 
@@ -106,7 +108,7 @@ public:
 
     //! \brief Returns true if request from connection is allowed to open a remote console
     //! session
-    DLLEXPORT bool CanOpenNewConnection(Connection &connection,
+    DLLEXPORT bool CanOpenNewConnection(std::shared_ptr<Connection> connection,
         std::shared_ptr<NetworkRequest> request);
 
     DLLEXPORT void ExpectNewConnection(int SessionToken, const std::string &assignname = "",

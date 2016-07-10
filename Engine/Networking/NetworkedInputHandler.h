@@ -198,13 +198,13 @@ protected:
 
 
     //! The factory used for stuff
-    NetworkInputFactory* _NetworkInputFactory;
+    NetworkInputFactory* _NetworkInputFactory = nullptr;
 
     //! Pointer to the network interface when on a client
-    NetworkClientInterface* ClientInterface;
+    NetworkClientInterface* ClientInterface = nullptr;
 
     //! Pointer to the network interface when on a server
-    NetworkServerInterface* ServerInterface;
+    NetworkServerInterface* ServerInterface = nullptr;
 
     //! Vector of listeners that will be deleted soon
     std::vector<std::shared_ptr<NetworkedInput>> DeleteQueue;

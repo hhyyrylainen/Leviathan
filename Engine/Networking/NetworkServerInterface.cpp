@@ -5,7 +5,6 @@
 #include "Connection.h"
 #include "Gameplay/CommandHandler.h"
 #include "SyncedVariables.h"
-#include "NetworkedInputHandler.h"
 #include "Networking/NetworkCache.h"
 #include "Entities/GameWorld.h"
 #include "../TimeIncludes.h"
@@ -37,11 +36,6 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
         
 		iter = ServerPlayers.erase(iter);
 	}
-
-    GUARD_LOCK();
-    
-	PotentialInputHandler.reset();
-	SAFE_DELETE(_CommandHandler);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
@@ -60,6 +54,8 @@ DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
 
 		iter = ServerPlayers.erase(iter);
 	}
+
+    _CommandHandler.reset();
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<ConnectedPlayer> 
@@ -77,6 +73,12 @@ Leviathan::NetworkServerInterface::GetPlayerForConnection(
 	}
 
 	return nullptr;
+}
+
+DLLEXPORT std::vector<std::shared_ptr<Leviathan::Connection>>& 
+Leviathan::NetworkServerInterface::GetClientConnections() 
+{
+    return ServerPlayersConnections;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::RespondToServerStatusRequest(
@@ -105,14 +107,6 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(
     std::shared_ptr<NetworkRequest> request,
     Connection &connectiontosendresult)
 {
-	// Try to handle input packet if we have the proper handler //
-	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(request, 
-        connectiontosendresult))
-    {
-		
-		return true;
-	}
-
 	switch(request->GetType()){
     case NETWORK_REQUEST_TYPE::RequestCommandExecution:
 		{
@@ -163,12 +157,6 @@ DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(
     std::shared_ptr<NetworkResponse> message, Connection &connection, bool &dontmarkasreceived)
 {
-	// Try to handle input packet if we have the proper handler //
-	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
-
-		return true;
-	}
-
 	switch(message->GetType()){
     case NETWORK_RESPONSE_TYPE::ServerHeartbeat:
 		{
@@ -328,10 +316,21 @@ DLLEXPORT void Leviathan::NetworkServerInterface::RegisterCustomCommandHandlers(
 void Leviathan::NetworkServerInterface::_OnReportCloseConnection(
     std::shared_ptr<ConnectedPlayer> plyptr, Lock &guard)
 {
-	VerifyLock(guard);
+    // Close common interfaces that might be using this player //
 
-	Logger::Get()->Info("NetworkServerInterface: player (TODO: get name) has closed their "
-        "connection");
+    // Make sure player's connection is removed from client connections
+    for (auto iter = ServerPlayersConnections.begin(); iter != ServerPlayersConnections.end();
+        ++iter)
+    {
+        if ((*iter) == plyptr->GetConnection()) {
+
+            ServerPlayersConnections.erase(iter);
+            break;
+        }
+    }
+
+    Logger::Get()->Info("NetworkServerInterface: player \"" + plyptr->GetNickname() +
+        "\" unconnected");
 
     _OnPlayerDisconnect(guard, plyptr);
 }
@@ -340,26 +339,13 @@ void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(
     std::shared_ptr<ConnectedPlayer> plyptr, Connection &connection,
     Lock &guard)
 {
-	VerifyLock(guard);
-
-	Logger::Get()->Info("NetworkServerInterface: player (TODO: get name) has connected");
+    Logger::Get()->Info("NetworkServerInterface: player \"" + plyptr->GetNickname() +
+        "\" connected");
 
     // Make sure player's connection is in client connections
-    DEBUG_BREAK;
+    ServerPlayersConnections.push_back((plyptr->GetConnection()));
 
     _OnPlayerConnected(guard, plyptr);
-}
-
-void Leviathan::NetworkServerInterface::_OnPlayerConnectionCloseResources(Lock &guard,
-    ConnectedPlayer* ply)
-{
-    // Close common interfaces that might be using this player //
-    
-    // Make sure player's connection is removed from client connections
-    DEBUG_BREAK;
-
-    Logger::Get()->Info("NetworkServerInterface: player \""+ply->GetNickname()+
-        "\" unconnected from common resources");
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
@@ -390,20 +376,6 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
 
 	// Update the command handling //
 	_CommandHandler->UpdateStatus();
-
-	// Update networked input handling //
-	if(PotentialInputHandler)
-		PotentialInputHandler->UpdateInputStatus();
-}
-// ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkServerInterface::RegisterNetworkedInput(shared_ptr<NetworkedInputHandler> handler){
-
-	PotentialInputHandler = handler;
-	return true;
-}
-
-DLLEXPORT NetworkedInputHandler* Leviathan::NetworkServerInterface::GetNetworkedInput(){
-	return PotentialInputHandler.get();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(
@@ -413,8 +385,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(
     Lock plylock(PlayerListLocked);
     
 	// Loop the players and send to their connections //
-	auto end = ServerPlayers.end();
-	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
+	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
 
 		Connection* curconnection = (*iter)->GetConnection().get();
 
@@ -431,8 +402,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(
     Lock plylock(PlayerListLocked);
 
 	// Loop the players and send to their connections //
-	auto end = ServerPlayers.end();
-	for(auto iter = ServerPlayers.begin(); iter != end; ++iter){
+	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
 
 		(*iter)->GetConnection()->SendPacketToConnection(response, guarantee);
 	}

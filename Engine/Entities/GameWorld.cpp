@@ -708,6 +708,7 @@ void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID id){
 
     SendToAllPlayers(std::move(response), RECEIVE_GUARANTEE::Critical);
 }
+
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(Lock &guard, bool frozen){
 	// Skip if set to the same //
@@ -1072,17 +1073,26 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
 	SAFE_RELEASE_VECTOR(HitEntities);
 }
 // ------------------ Destroy functions ------------------ //
-template<> DLLEXPORT bool GameWorld::RemoveComponent<Position>(ObjectID id) {
-    try {
-        ComponentPosition.Destroy(id, false);
-        _OnComponentDestroyed(id, Component::GetTypeFromClass<Position>());
-        return true;
-    }
-    catch (...) {
-
-        return false;
-    }
+#define BASIC_DESTROY_FUNC(x) template<> DLLEXPORT bool \
+GameWorld::RemoveComponent<x>(ObjectID id) {\
+    try {\
+        Component ## x.Destroy(id, false); \
+        _OnComponentDestroyed(id, Component::GetTypeFromClass<x>());\
+        return true;\
+    }\
+    catch (...) {\
+        return false;\
+    }\
 }
+
+BASIC_DESTROY_FUNC(Position);
+BASIC_DESTROY_FUNC(RenderNode);
+BASIC_DESTROY_FUNC(Sendable);
+BASIC_DESTROY_FUNC(Physics);
+BASIC_DESTROY_FUNC(BoxGeometry);
+BASIC_DESTROY_FUNC(Model);
+BASIC_DESTROY_FUNC(Received);
+BASIC_DESTROY_FUNC(ManualObject);
 
 #undef ADDCOMPONENTFUNCTIONSTOGAMEWORLD
 #define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder) \

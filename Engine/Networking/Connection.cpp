@@ -360,8 +360,8 @@ DLLEXPORT void Connection::UpdateListening(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Connection::IsThisYours(sf::IpAddress &sender,
-    unsigned short &sentport)
+DLLEXPORT bool Leviathan::Connection::IsThisYours(const sf::IpAddress &sender,
+    unsigned short sentport)
 {
 	// Check for matching sender with our target //
 	if(sentport != TargetPortNumber || sender != TargetHost){

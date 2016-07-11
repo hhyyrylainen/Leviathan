@@ -173,7 +173,7 @@ DLLEXPORT void Leviathan::NetworkCache::_OnNewConnection(
 void Leviathan::NetworkCache::_OnVariableUpdated(Lock &guard, 
     const NamedVariableList &variable) 
 {
-    auto& connections = Owner->GetClientConnections();
+    auto& connections = Owner->GetInterface()->GetClientConnections();
 
     for (auto& connection : connections) {
 

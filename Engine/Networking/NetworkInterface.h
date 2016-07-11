@@ -6,7 +6,7 @@
 #include "Common/ThreadSafe.h"
 
 #include <memory>
-
+#include <vector>
 
 namespace Leviathan{
 
@@ -19,6 +19,9 @@ class NetworkInterface : public virtual ThreadSafe{
 public:
     DLLEXPORT NetworkInterface(NETWORKED_TYPE type);
     DLLEXPORT virtual ~NetworkInterface();
+
+    //! If this is a server returns all the clients
+    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>& GetClientConnections() = 0;
 
     //! \brief Called by ConnectionInfo to handle incoming packets
     //!

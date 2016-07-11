@@ -126,4 +126,9 @@ DLLEXPORT void ReceivedSystem::Run(std::unordered_map<ObjectID, Received*> &Inde
         }
     }
 }
-
+// ------------------------------------ //
+DLLEXPORT void Leviathan::SendableSystem::HandleNode(ObjectID id, Sendable &obj, 
+    GameWorld &world) 
+{
+    DEBUG_BREAK
+}

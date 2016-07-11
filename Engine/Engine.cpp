@@ -15,7 +15,6 @@
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Networking/NetworkCache.h"
 #include "Networking/NetworkHandler.h"
-#include "Networking/NetworkedInputHandler.h"
 #include "Networking/RemoteConsole.h"
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicsMaterialManager.h"
@@ -559,10 +558,6 @@ void Engine::Tick(){
         
     }
     
-    // Update physics //
-    SimulatePhysics();
-
-    
 	GUARD_LOCK();
 
 	if(PreReleaseWaiting){
@@ -680,16 +675,6 @@ DLLEXPORT void Engine::PreFirstTick(){
     ClearTimers();
     
 	Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
-}
-
-DLLEXPORT void Engine::SimulatePhysics(){
-    Lock lock(GameWorldsLock);
-
-    auto end = GameWorlds.end();
-    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
-
-        (*iter)->SimulatePhysics();
-    }
 }
 // ------------------------------------ //
 void Engine::RenderFrame(){

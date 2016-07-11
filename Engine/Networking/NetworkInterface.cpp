@@ -8,7 +8,6 @@
 #include "RemoteConsole.h"
 #include "Application/AppDefine.h"
 #include "SyncedVariables.h"
-#include "NetworkedInputHandler.h"
 #include "../Utility/Convert.h"
 #include "Engine.h"
 using namespace Leviathan;

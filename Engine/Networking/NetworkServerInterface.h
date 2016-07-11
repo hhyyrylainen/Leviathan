@@ -51,6 +51,9 @@ public:
     DLLEXPORT std::shared_ptr<ConnectedPlayer> GetPlayerForConnection(
         Connection &connection);
 
+    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>& GetClientConnections()
+        override;
+
     //! \brief Sends a response to a NETWORKREQUESTTYPE_SERVERSTATUS
     DLLEXPORT void RespondToServerStatusRequest(std::shared_ptr<NetworkRequest> request,
         Connection &connectiontouse);
@@ -65,16 +68,6 @@ public:
     //! \todo Actually call this, maybe make this an event listener
     DLLEXPORT void CloseDownServer();
 
-
-    //! \brief Enables the use of a NetworkedInputHandler
-    //! \param handler The object that implements the networked input interface,
-    //! this has to be guaranteed to stay allocated as long as it is still attached.
-    //! \warning The deletion of the old handler isn't thread safe
-    //! so be careful when switching handlers
-    DLLEXPORT virtual bool RegisterNetworkedInput(
-        std::shared_ptr<NetworkedInputHandler> handler);
-
-
     //! \brief Sends a response packet to all players except for the player(s)
     //! whose connection matches skipme
     DLLEXPORT void SendToAllButOnePlayer(NetworkResponse &response,
@@ -82,9 +75,6 @@ public:
 
     //! \brief Sends a response packet to all of the players
     DLLEXPORT void SendToAllPlayers(NetworkResponse &response, RECEIVE_GUARANTEE guarantee);
-
-    //! \brief Returns the active networked input handler or NULL
-    DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
     //! \brief Verifies that all current players are receiving world updates
     //! \note Prior to calling this (if your players will move)
@@ -144,8 +134,6 @@ protected:
     void _OnReportPlayerConnected(std::shared_ptr<ConnectedPlayer> plyptr, Connection &connection,
         Lock &guard);
 
-    //! \brief Called from ConnectedPlayer when its connection is no longer good
-    void _OnPlayerConnectionCloseResources(Lock &guard, ConnectedPlayer* ply);
     // ------------------------------------ //
 
 
@@ -153,15 +141,14 @@ protected:
 
     //! Holds the list of currently connected players
     std::vector<std::shared_ptr<ConnectedPlayer>> ServerPlayers;
+    //! All the connections used in ServerPlayers
+    std::vector<std::shared_ptr<Connection>> ServerPlayersConnections;
 
     //! Maximum allowed player count
     int MaxPlayers = 20;
 
     //! Currently active bots
     std::vector<int> ActiveBots;
-
-    //! This isn't always used, but when it is this will handle some packets
-    std::shared_ptr<NetworkedInputHandler> PotentialInputHandler;
 
     //! Name displayed in the server list
     std::string ServerName = "Default Name";
@@ -187,7 +174,7 @@ protected:
     int CurrentPlayerID = 1000;
 
     //! The object used to handle all player submitted commands
-    CommandHandler* _CommandHandler = nullptr;
+    std::shared_ptr<CommandHandler> _CommandHandler = nullptr;
 };
 
 }

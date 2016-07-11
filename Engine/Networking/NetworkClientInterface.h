@@ -38,6 +38,9 @@ public:
         DisconnectFromServer(guard, reason, connectiontimedout);
     }
 
+    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>& GetClientConnections() 
+        override;
+
     //! \brief Actual implementation of DisconnectFromServer
     DLLEXPORT void DisconnectFromServer(Lock &guard, const std::string &reason,
         bool connectiontimedout = false);
@@ -70,17 +73,6 @@ public:
 
     //! \brief Returns the ID that the server has assigned to us
     DLLEXPORT virtual int GetOurID() const;
-
-
-    //! \brief Enables the use of a NetworkedInputHandler
-    //! \param handler The object that implements the networked input interface
-    //! \warning The deletion of the old handler isn't thread safe so be careful
-    //! when switching handlers
-    DLLEXPORT virtual bool RegisterNetworkedInput(
-        std::shared_ptr<NetworkedInputHandler> handler);
-
-    //! \brief Returns the active networked input handler or NULL
-    DLLEXPORT virtual NetworkedInputHandler* GetNetworkedInput();
 
     //! \brief Returns the active server connection or NULL
     DLLEXPORT virtual std::shared_ptr<Connection> GetServerConnection();
@@ -172,10 +164,6 @@ protected:
 
     int ConnectTriesCount = 0;
     int MaxConnectTries = DEFAULT_MAXCONNECT_TRIES;
-
-    //! This isn't always used, but when it is this will handle some packets
-    std::shared_ptr<NetworkedInputHandler> PotentialInputHandler;
-
 
     //! Marks whether heartbeats are in use
     bool UsingHeartbeats = false;

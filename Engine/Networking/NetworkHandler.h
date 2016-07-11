@@ -83,6 +83,8 @@ public:
         const MasterServerInformation &info);
 
     //! \brief Checks whether a connection is open and ready for sending
+    //! \note Will check whether the connection is in Make sure it is in OpenConnections or not
+    //! Which may be a waste of time if only the connection needs to be checked for openness
     DLLEXPORT bool IsConnectionValid(Connection &connection) const;
 
     //! \brief Returns a persistent pointer to a connection
@@ -103,9 +105,6 @@ public:
     //! \see OpenConnectionTo
     DLLEXPORT std::shared_ptr<Connection> OpenConnectionTo(
         const sf::IpAddress &targetaddress, unsigned short port);
-
-    //! If this is a server returns all the clients
-    DLLEXPORT std::vector<std::shared_ptr<Connection>>& GetClientConnections();
 
     //! Returns the port to which our socket has been bind
     inline uint16_t GetOurPort() const{

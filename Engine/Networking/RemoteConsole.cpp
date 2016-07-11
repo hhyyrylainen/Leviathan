@@ -136,7 +136,7 @@ DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(
                 connectiontouse->IsTargetHostLocalhost(), std::chrono::seconds(15))));
 
 	// Send a request that the target connects to us //
-    DoRemoteConsoleOpen request(token);
+    RequestDoRemoteConsoleOpen request(token);
 
 	connectiontouse->SendPacketToConnection(request, RECEIVE_GUARANTEE::Critical);
 }

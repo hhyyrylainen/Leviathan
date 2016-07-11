@@ -3,7 +3,6 @@
 
 #include "Common/DataStoring/NamedVars.h"
 #include "GameSpecificPacketHandler.h"
-#include "NetworkedInput.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

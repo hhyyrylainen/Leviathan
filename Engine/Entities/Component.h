@@ -68,6 +68,41 @@ inline COMPONENT_TYPE Component::GetTypeFromClass<Position>() {
     return COMPONENT_TYPE::Position;
 }
 
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<RenderNode>() {
+    return COMPONENT_TYPE::RenderNode;
+}
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<Sendable>() {
+    return COMPONENT_TYPE::Sendable;
+}
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<Received>() {
+    return COMPONENT_TYPE::Received;
+}
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<Physics>() {
+    return COMPONENT_TYPE::Physics;
+}
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<BoxGeometry>() {
+    return COMPONENT_TYPE::BoxGeometry;
+}
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<Model>() {
+    return COMPONENT_TYPE::Model;
+}
+
+template<>
+inline COMPONENT_TYPE Component::GetTypeFromClass<ManualObject>() {
+    return COMPONENT_TYPE::ManualObject;
+}
+
 //! \brief Base class for all component data
 //!
 //! Used to force all components to define a serializer for its data

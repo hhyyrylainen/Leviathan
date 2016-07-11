@@ -118,8 +118,6 @@ else()
     "Networking/NetworkRequest.cpp" "Networking/NetworkRequest.h"
     "Networking/NetworkResponse.cpp" "Networking/NetworkResponse.h"
     "Networking/NetworkServerInterface.cpp" "Networking/NetworkServerInterface.h"
-    "Networking/NetworkedInput.cpp" "Networking/NetworkedInput.h"
-    "Networking/NetworkedInputHandler.cpp" "Networking/NetworkedInputHandler.h"
     "Networking/RemoteConsole.cpp" "Networking/RemoteConsole.h"
     "Networking/SyncedResource.cpp" "Networking/SyncedResource.h"
     "Networking/SyncedVariables.cpp" "Networking/SyncedVariables.h"

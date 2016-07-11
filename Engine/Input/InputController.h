@@ -12,7 +12,6 @@ namespace Leviathan{
 	// class to derive from when wanting to connect to input //
 	class InputReceiver{
 		friend InputController;
-		friend NetworkedInputHandler;
 	public:
 		DLLEXPORT InputReceiver();
 		DLLEXPORT virtual ~InputReceiver();

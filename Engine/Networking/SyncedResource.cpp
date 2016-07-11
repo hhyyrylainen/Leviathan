@@ -6,7 +6,9 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::SyncedResource::SyncedResource(const std::string &uniquename) : Name(uniquename){
+DLLEXPORT Leviathan::SyncedResource::SyncedResource(const std::string &uniquename) : 
+    Name(uniquename)
+{
 
 }
 
@@ -15,18 +17,14 @@ DLLEXPORT Leviathan::SyncedResource::~SyncedResource(){
 	ReleaseParentHooks();
 }
 
-DLLEXPORT void Leviathan::SyncedResource::StartSync(){
-	// The SyncedVariables might be unloaded at this point //
-	auto sync = SyncedVariables::Get();
-
-	if(!sync)
-		return;
-
-	// Register us //
-	ConnectToNotifier(sync);
+DLLEXPORT void Leviathan::SyncedResource::StartSync(SyncedVariables &variablesync)
+{
+	ConnectToNotifier(&variablesync);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(Lock &guard, sf::Packet &packet){
+DLLEXPORT bool Leviathan::SyncedResource::UpdateDataFromPacket(Lock &guard, 
+    sf::Packet &packet)
+{
     
 	// Load the custom data //
 	try{
@@ -86,9 +84,13 @@ DLLEXPORT std::string Leviathan::SyncedResource::GetSyncedResourceNameFromPacket
 // ------------------------------------ //
 DLLEXPORT void Leviathan::SyncedResource::UpdateOurNetworkValue(Lock &guard){
     
-    // TODO: proper locking
-	auto synman = SyncedVariables::Get();
-    if(synman)
-        synman->_NotifyUpdatedValue(guard, this);
+    if (ConnectedToParents.size() < 1) {
+
+        LOG_WARNING("Updating SyncedResource that isn't attached to SyncedVariables");
+        return;
+    }
+
+    static_cast<SyncedVariables*>(ConnectedToParents[0]->GetActualPointerToNotifierObject())
+        ->_NotifyUpdatedValue(guard, this);
 }
 

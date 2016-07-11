@@ -9,7 +9,6 @@
 #include "NetworkRequest.h"
 #include "../TimeIncludes.h"
 #include "Iterators/StringIterator.h"
-#include "NetworkedInputHandler.h"
 #include "Application/Application.h"
 #include "Entities/GameWorld.h"
 #include "Threading/ThreadingManager.h"
@@ -27,7 +26,6 @@ DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() :
 
 DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface(){
 
-	PotentialInputHandler.reset();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
@@ -87,17 +85,20 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &gua
 
 	_OnDisconnectFromServer(reason, connectiontimedout ? false: true);
 }
+
+DLLEXPORT std::vector<std::shared_ptr<Leviathan::Connection>>& 
+Leviathan::NetworkClientInterface::GetClientConnections() 
+{
+
+    DEBUG_BREAK;
+    LOG_ERROR("Calling GetClientConnections on a client interface");
+    throw Exception("Calling GetClientConnections on a client interface");
+}
+
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientRequest(
     shared_ptr<NetworkRequest> request, Connection &connectiontosendresult)
 {
-	// Try to handle input packet if we have the proper handler //
-	if(PotentialInputHandler &&
-        PotentialInputHandler->HandleInputPacket(request, connectiontosendresult))
-    {
-		return true;
-	}
-
 
     switch(request->GetType()){
         default:
@@ -109,12 +110,6 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::_HandleClientResponseOnly(
     shared_ptr<NetworkResponse> message, Connection &connection, bool &dontmarkasreceived)
 {
     LEVIATHAN_ASSERT(message, "_HandleClientResponseOnly message is null");
-
-	// Try to handle input packet if we have the proper handler //
-	if(PotentialInputHandler && PotentialInputHandler->HandleInputPacket(message, connection)){
-
-		return true;
-	}
 
 	switch(message->GetType()){
     case NETWORK_RESPONSE_TYPE::ServerHeartbeat:
@@ -219,10 +214,6 @@ checksentrequestsbeginlabel:
 
 	// Send heartbeats //
 	_UpdateHeartbeats(guard);
-
-	// Update networked input handling //
-	if(PotentialInputHandler)
-		PotentialInputHandler->UpdateInputStatus();
 
 }
 // ------------------------------------ //
@@ -530,21 +521,8 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(Lock &guard){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkClientInterface::RegisterNetworkedInput(
-    shared_ptr<NetworkedInputHandler> handler)
-{
-	GUARD_LOCK();
-    
-	PotentialInputHandler = handler;
-	return true;
-}
-// ------------------------------------ //
 DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const{
 	return OurPlayerID;
-}
-
-DLLEXPORT NetworkedInputHandler* Leviathan::NetworkClientInterface::GetNetworkedInput(){
-	return PotentialInputHandler.get();
 }
 
 DLLEXPORT std::shared_ptr<Connection>

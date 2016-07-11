@@ -284,21 +284,40 @@ bool Leviathan::NetworkHandler::_RunUpdateOnce()
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<std::promise<string>> Leviathan::NetworkHandler::QueryMasterServer(
-    const MasterServerInformation &info)
-{
-	// Copy the data //
-	StoredMasterServerInfo = info;
+    const MasterServerInformation &info) {
+    // Copy the data //
+    StoredMasterServerInfo = info;
 
-	shared_ptr<std::promise<string>> resultvalue(new std::promise<string>());
+    shared_ptr<std::promise<string>> resultvalue(new std::promise<string>());
 
-	// Make sure it doesn't die instantly //
-	CloseMasterServerConnection = false;
+    // Make sure it doesn't die instantly //
+    CloseMasterServerConnection = false;
 
-	// Run the task async //
-	MasterServerConnectionThread = std::thread(RunGetResponseFromMaster, this, resultvalue);
+    // Run the task async //
+    MasterServerConnectionThread = std::thread(RunGetResponseFromMaster, this, resultvalue);
 
-	return resultvalue;
+    return resultvalue;
 }
+
+DLLEXPORT bool Leviathan::NetworkHandler::IsConnectionValid(Connection &connection) const {
+
+    bool found = false;
+
+    for (auto& connectioniter : OpenConnections) {
+
+        if (connectioniter.get() == &connection) {
+
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+        return false;
+
+    return connection.IsOpen();
+}
+
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
@@ -516,6 +535,33 @@ DLLEXPORT std::shared_ptr<Connection> Leviathan::NetworkHandler::OpenConnectionT
 
 	return newconnection;
 }
+
+DLLEXPORT std::shared_ptr<Leviathan::Connection> Leviathan::NetworkHandler::OpenConnectionTo(
+    const sf::IpAddress &targetaddress, unsigned short port) 
+{
+    GUARD_LOCK();
+
+    // Find existing one //
+    for (auto& connection : OpenConnections) {
+
+        if (connection->IsThisYours(targetaddress, port))
+            return connection;
+    }
+
+    // Create new //
+    auto newconnection = std::make_shared<Connection>(targetaddress, port);
+
+    // Initialize the connection //
+    if (!newconnection->Init(this)) {
+
+        return nullptr;
+    }
+
+    OpenConnections.push_back(newconnection);
+
+    return newconnection;
+}
+
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RunListenerThread(){
 

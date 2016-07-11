@@ -240,15 +240,6 @@ public:
         return _PhysicalWorld.get();
     }
 
-    //! \brief Simulates physics
-    DLLEXPORT void SimulatePhysics(Lock &guard);
-
-    inline void SimulatePhysics(){
-
-        GUARD_LOCK();
-        SimulatePhysics(guard);
-    }
-
     //! \todo Synchronize this over the network
     DLLEXPORT void SetWorldPhysicsFrozenState(Lock &guard, bool frozen);
 

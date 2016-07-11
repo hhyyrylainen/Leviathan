@@ -270,7 +270,7 @@ public:
     DLLEXPORT void SetRestrictionMode(CONNECTION_RESTRICTION type);
 
     //! \brief Checks does the sender and port match our corresponding values
-    DLLEXPORT bool IsThisYours(sf::IpAddress &sender, unsigned short &sentport);
+    DLLEXPORT bool IsThisYours(const sf::IpAddress &sender, unsigned short sentport);
 
     //! \brief Handles a packet
     //! \note Care needs to be taken to avoid deadlocking while handling packet contents

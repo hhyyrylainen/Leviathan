@@ -5,9 +5,9 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-ConnectedPlayer::ConnectedPlayer(Connection* unsafeconnection, NetworkServerInterface* owninginstance,
-    int plyid) : 
-	CorrespondingConnection(unsafeconnection), Owner(owninginstance), UsingHeartbeats(false),
+ConnectedPlayer::ConnectedPlayer(std::shared_ptr<Connection> connection,
+    NetworkServerInterface* owninginstance, int plyid) :
+	CorrespondingConnection(connection), Owner(owninginstance), UsingHeartbeats(false),
     IsControlLost(false), SecondsWithoutConnection(0.f), ID(plyid)
 {
 }

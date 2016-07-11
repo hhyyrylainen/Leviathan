@@ -61,9 +61,6 @@ namespace Leviathan{
         //! \brief Clears physical timers
         DLLEXPORT void ClearTimers();
 
-        //! \brief Simulates all worlds that are not frozen
-        DLLEXPORT void SimulatePhysics();
-
 		// ------------------------------------ //
 		// Passes the commands and preprocesses them, but also interprets commands like --nogui //
 		DLLEXPORT void PassCommandLine(const std::string &commands);

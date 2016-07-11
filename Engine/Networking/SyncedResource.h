@@ -45,7 +45,7 @@ namespace Leviathan{
 
 		//! \brief Registers this resource with the SyncedVariables instance
 		//! \post The variable is now ready for use
-		DLLEXPORT virtual void StartSync();
+		DLLEXPORT virtual void StartSync(SyncedVariables &variablesync);
 
 		//! \brief Notify that this is changed and we want a local message, too
 		//!

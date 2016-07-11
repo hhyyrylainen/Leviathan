@@ -57,16 +57,24 @@ class GuiManager;
 }
 
 // Entities //
+
+// Component types //
 class Sendable;
 class Position;
 class Constraintable;
 class Parentable;
 class Parent;
+class Physics;
+class RenderNode;
+class Received;
+class BoxGeometry;
+class Model;
+class ManualObject;
+
 
 
 class EntitySerializer;
 
-class Physics;
 
 // Networking //
 class RemoteConsole;
@@ -120,8 +128,6 @@ class RepeatCountedDelayedTask;
 
 class NetworkCache;
 
-class NetworkedInput;
-class NetworkedInputHandler;
 class ConnectedPlayer;
 class CommandSender;
 class CommandHandler;

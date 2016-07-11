@@ -95,25 +95,6 @@ public:
     DLLEXPORT bool HandleResponseOnlySync(std::shared_ptr<NetworkResponse> response,
         Connection* connection);
 
-
-    //! \brief Adds another instance to sync with
-    //! \note The Connection parameter should be locked during this call
-    DLLEXPORT void AddAnotherToSyncWith(Connection* unsafeptr);
-
-    DLLEXPORT FORCE_INLINE void RemoveConnectionWithAnother(Connection* ptr,
-        bool alreadyunhooking = false)
-    {
-        GUARD_LOCK();
-        RemoveConnectionWithAnother(ptr, guard, alreadyunhooking);
-    }
-
-
-    //! \brief Stops updating with a single other
-    //! \param alreadyunhooking Used internally don't set to true unless you
-    //! know what you are doing
-    DLLEXPORT void RemoveConnectionWithAnother(Connection* ptr, Lock &guard,
-        bool alreadyunhooking = false);
-
     //! \brief Call before requesting full value sync
     //! \note Without calling this IsSyncDone won't work
     DLLEXPORT void PrepareForFullSync();

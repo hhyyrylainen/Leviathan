@@ -293,7 +293,7 @@ void SyncedVariables::_NotifyUpdatedValue(Lock &guard, const SyncedValue* const 
 
     ResponseSyncValData tmpresponse(useid, *valtosync->GetVariableAccess());
 
-    const auto& connections = Owner->GetClientConnections();
+    const auto& connections = Owner->GetInterface()->GetClientConnections();
 
 	// Send it //
 	for(auto& Connection : connections){
@@ -318,7 +318,7 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(Lock &guard, SyncedResource
     ResponseSyncResourceData tmpresponse(0, 
         std::string(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize()));
 
-    const auto& connections = Owner->GetClientConnections();
+    const auto& connections = Owner->GetInterface()->GetClientConnections();
 
 	// Send it //
     for (auto& Connection : connections) {

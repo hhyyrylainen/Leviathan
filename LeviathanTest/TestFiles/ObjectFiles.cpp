@@ -85,7 +85,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 
     DummyReporter reporter;
     ScriptExecutor exec;
-    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
+    PartialEngine<false> engine;
     
 	// First test the minimal file //
 	string minfile = "Data/Scripts/tests/SimpleTest.levof";

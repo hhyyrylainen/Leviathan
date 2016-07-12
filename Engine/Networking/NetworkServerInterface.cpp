@@ -38,7 +38,10 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkServerInterface::CloseDownServer(){
+DLLEXPORT void Leviathan::NetworkServerInterface::CloseDown(){
+
+    _OnCloseDown();
+
 	GUARD_LOCK();
 
 	// Prevent new players //

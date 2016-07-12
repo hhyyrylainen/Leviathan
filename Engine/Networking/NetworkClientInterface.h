@@ -63,7 +63,7 @@ public:
 
 
     //! \brief Closes all client related things
-    DLLEXPORT void OnCloseClient();
+    DLLEXPORT virtual void CloseDown() override;
 
     //! \brief Returns true if the client is connected to a server
     //!
@@ -107,6 +107,8 @@ protected:
     DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason){}
     DLLEXPORT virtual void _OnSuccessfullyConnectedToServer(){}
     
+    DLLEXPORT virtual void _OnCloseDown(){}
+
     //! \brief Called when this class generates a new update message
     DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string &message){}
 

@@ -25,11 +25,11 @@ public:
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests
-template<bool UseActualInit, NETWORKED_TYPE TestWithType>
+template<bool UseActualInit>
 class PartialEngine : public Engine{
 public:
 
-    PartialEngine() : Engine(&App), Log("Test/TestLog.txt"){
+    PartialEngine(NetworkHandler* handler = nullptr) : Engine(&App), Log("Test/TestLog.txt"){
 
         // Configure for test use //
         NoGui = true;
@@ -39,7 +39,8 @@ public:
         // Setup some core values //
         if(UseActualInit){
 
-            bool succeeded = Init(&Def, TestWithType);
+            REQUIRE(handler);
+            bool succeeded = Init(&Def, handler->GetNetworkType());
 
             REQUIRE(succeeded);
             
@@ -49,7 +50,7 @@ public:
 
             MainEvents = new EventHandler();
 
-            _NetworkHandler = new NetworkHandler(TestWithType, NULL);
+            _NetworkHandler = handler;
 
             IDDefaultInstance = new IDFactory();
         }
@@ -81,6 +82,4 @@ public:
     PartialApplication App;
     Logger Log;
     AppDef Def;
-
-    PartialClient DummyClient;
 };

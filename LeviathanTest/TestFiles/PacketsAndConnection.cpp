@@ -12,37 +12,52 @@ using namespace Leviathan;
 class TestClientInterface : public NetworkClientInterface {
 public:
     
-    
+    virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
+        Connection &connection, bool &dontmarkasreceived) override 
+    {
+    }
+
+protected:
+    virtual void _OnStartApplicationConnect() override {
+    }
+
 };
 
 class TestServerInterface : public NetworkServerInterface {
 public:
-    
 
+    TestServerInterface() : NetworkServerInterface(1, "TestServer"){ }
+    
+    virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
+        Connection &connection, bool &dontmarkasreceived) override 
+    {
+    }
 };
 
-TEST_CASE("Connect to localhost socket", "networking"){
-
-    PartialEngine<false, NETWORKED_TYPE::Master> engine;
-
-
-    TestClientInterface ClientInterface;
-    NetworkHandler Client;
-    
-    TestServerInterface ServerInterface;
-    NetworkHandler Server;
-
-}
-
-
-TEST_CASE("Ack field filling", "networking"){
+TEST_CASE("Ack field filling", "networking") {
 
     // We cannot test any client or server specific code,
     // so hopefully using master disables those
-    PartialEngine<false, NETWORKED_TYPE_MASTER> engine;
+    PartialEngine<false> engine;
 
     Connection conn(sf::IpAddress::LocalHost, 256);
 
 
-    
+
 }
+
+TEST_CASE("Connect to localhost socket", "networking"){
+
+    PartialEngine<false> engine;
+
+
+    TestClientInterface ClientInterface;
+    NetworkHandler Client(NETWORKED_TYPE::Client, &ClientInterface);
+    
+    TestServerInterface ServerInterface;
+    NetworkHandler Server(NETWORKED_TYPE::Server, &ServerInterface);
+
+}
+
+
+

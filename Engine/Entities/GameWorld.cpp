@@ -90,7 +90,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 
     // Clear all nodes //
 
-    // Clear all componenst //
+    // Clear all components //
     ComponentPosition.Clear();
     ComponentRenderNode.Clear();
     ComponentSendable.Clear();

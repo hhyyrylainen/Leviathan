@@ -29,13 +29,13 @@ public:
     DLLEXPORT inline ReferenceCounted() : RefCount(1){}
     DLLEXPORT virtual ~ReferenceCounted(){}
 
-    DLLEXPORT FORCE_INLINE void AddRef(){
+    FORCE_INLINE void AddRef(){
 
         intrusive_ptr_add_ref(this);
     }
         
     //! removes a reference and deletes the object if reference count reaches zero
-    DLLEXPORT FORCE_INLINE void Release(){
+    FORCE_INLINE void Release(){
 
         intrusive_ptr_release(this);
     }
@@ -43,7 +43,7 @@ public:
 #ifdef LEVIATHAN_USING_BOOST
     //! \brief Creates an intrusive_ptr from raw pointer
     template<class ActualType>
-        DLLEXPORT static boost::intrusive_ptr<ActualType> MakeShared(ActualType* ptr){
+        static boost::intrusive_ptr<ActualType> MakeShared(ActualType* ptr){
 
         if(!ptr)
             return nullptr;
@@ -57,7 +57,7 @@ public:
 
     //! \brief Returns the reference count
     //! \todo Make sure that the right memory order is used
-    DLLEXPORT int32_t GetRefCount() const{
+    int32_t GetRefCount() const{
             
         return RefCount.load(std::memory_order_acquire);
     }
@@ -65,12 +65,12 @@ public:
 
 protected:
         
-    DLLEXPORT friend void intrusive_ptr_add_ref(const ReferenceCounted * obj){
+    friend void intrusive_ptr_add_ref(const ReferenceCounted * obj){
             
         obj->RefCount.fetch_add(1, std::memory_order_relaxed);
     }
         
-    DLLEXPORT friend void intrusive_ptr_release(const ReferenceCounted * obj){
+    friend void intrusive_ptr_release(const ReferenceCounted * obj){
             
         if(obj->RefCount.fetch_sub(1, std::memory_order_release) == 1){
             std::atomic_thread_fence(std::memory_order_acquire);

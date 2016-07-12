@@ -66,7 +66,7 @@ public:
 
     //! \brief Call this before shutting down the server to kick all players properly
     //! \todo Actually call this, maybe make this an event listener
-    DLLEXPORT void CloseDownServer();
+    DLLEXPORT virtual void CloseDown() override;
 
     //! \brief Sends a response packet to all players except for the player(s)
     //! whose connection matches skipme
@@ -113,6 +113,9 @@ protected:
     DLLEXPORT virtual void _OnPlayerDisconnect(Lock &guard, 
         std::shared_ptr<ConnectedPlayer> newplayer);
     DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
+
+    DLLEXPORT virtual void _OnCloseDown(){}
+
 
     //! \brief Called when the application should register custom command handling providers
     //! \note If you actually want to use this

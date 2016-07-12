@@ -424,7 +424,10 @@ DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationSta
         "/"+Convert::ToString(expectedvariables));
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::OnCloseClient(){
+DLLEXPORT void Leviathan::NetworkClientInterface::CloseDown(){
+
+    _OnCloseDown();
+
 	GUARD_LOCK();
 
 	if(ServerConnection){

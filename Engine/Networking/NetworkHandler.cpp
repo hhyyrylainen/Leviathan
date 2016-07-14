@@ -109,6 +109,8 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 		return false;
 	}
 
+    PortNumber = _Socket.getLocalPort();
+
 	// Set the socket as blocking //
     if (BlockingMode) {
 
@@ -116,6 +118,9 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
         // Run the listening thread //
         ListenerThread = std::thread(std::bind(&NetworkHandler::_RunListenerThread, this));
+    } else {
+
+        _Socket.setBlocking(false);
     }
 
 	// Report success //
@@ -124,8 +129,24 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
 
 	return true;
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::NetworkHandler::Init(uint16_t port /*= 0*/) {
 
-DLLEXPORT void Leviathan::NetworkHandler::Release(){
+    if (_Socket.bind(port) != sf::Socket::Done) {
+
+        LOG_ERROR("NetworkHandler: Init: failed to bind to port " +
+            Convert::ToString(PortNumber));
+        return false;
+    }
+
+    PortNumber = _Socket.getLocalPort();
+
+    _Socket.setBlocking(false);
+
+    return true;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkHandler::Release() {
     
     {
         GUARD_LOCK();
@@ -301,6 +322,8 @@ DLLEXPORT std::shared_ptr<std::promise<string>> Leviathan::NetworkHandler::Query
 
 DLLEXPORT bool Leviathan::NetworkHandler::IsConnectionValid(Connection &connection) const {
 
+    GUARD_LOCK();
+
     bool found = false;
 
     for (auto& connectioniter : OpenConnections) {
@@ -399,6 +422,19 @@ DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(
 
 	return string(addressmatch[1]);
 }
+
+DLLEXPORT void Leviathan::NetworkHandler::_RegisterConnection(
+    std::shared_ptr<Connection> connection) 
+{
+    // Skip duplicates //
+    if (GetConnection(connection.get()))
+        return;
+
+    GUARD_LOCK();
+
+    OpenConnections.push_back(connection);
+}
+
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
@@ -406,23 +442,25 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
     auto rconsole = Engine::Get()->GetRemoteConsole();
     if(rconsole)
         rconsole->UpdateStatus();
+    {
+        GUARD_LOCK();
 
-    GUARD_LOCK();
-    
-    // Remove closed connections //
-    RemoveClosedConnections();
+        // Remove closed connections //
+        RemoveClosedConnections(guard);
 
-    // Do listening //
-    if (!BlockingMode) {
-        
-        _RunUpdateOnce();
+        // Do listening //
+        if (!BlockingMode) {
+
+            _RunUpdateOnce();
+        }
+
+        // Time-out requests //
+        for (auto& connection : OpenConnections) {
+
+            connection->UpdateListening();
+        }
     }
 
-    // Time-out requests //
-    for(auto& connection : OpenConnections){
-
-        connection->UpdateListening();
-    }
     
 	// Interface might want to do something //
 	GetInterface()->TickIt();
@@ -446,11 +484,9 @@ DLLEXPORT void NetworkHandler::CloseConnection(Connection &to){
 	ConnectionsToTerminate.push_back(&to);
 }
 
-DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
-
+DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(Lock &guard)
+{
     Lock terminatelock(ConnectionsToTerminateMutex);
-
-    GUARD_LOCK();
 
 	// Go through the removed connection list and remove closed connections //
     for (size_t a = 0; a < OpenConnections.size(); ) {

@@ -209,9 +209,12 @@ public:
     inline bool IsAckSet(uint8_t ackindex){
         
         // We can use division to find out which vector element is wanted //
-        size_t vecelement = ackindex/8;
+        size_t vecelement = ackindex / 8;
 
-        return (Acks[vecelement] & (1 << (ackindex-vecelement))) == 1;
+        if (vecelement >= Acks.size())
+            return false;
+
+        return (Acks[vecelement] & (1 << (ackindex % 8))) != 0;
     }
 
     // Data //
@@ -257,7 +260,8 @@ public:
     inline bool IsOpen() const{
         return State == CONNECTION_STATE::Connected ||
             State == CONNECTION_STATE::Secured ||
-            State == CONNECTION_STATE::Authenticated;
+            State == CONNECTION_STATE::Authenticated ||
+            State == CONNECTION_STATE::NothingReceived;
     }
 
     //! \brief Returns true if this socket is valid for sending
@@ -289,10 +293,10 @@ public:
     //! Send a request packet to this connection
     //! \returns nullptr If this connection is closed
     DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
-        NetworkRequest &request, RECEIVE_GUARANTEE guarantee);
+        const NetworkRequest &request, RECEIVE_GUARANTEE guarantee);
 
     inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
-        NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
+        const NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
     {
         GUARD_LOCK();
         return SendPacketToConnection(guard, request, guarantee);
@@ -301,10 +305,10 @@ public:
     //! Sends a response packet to this connection
     //! \returns nullptr If this connection is closed
     DLLEXPORT std::shared_ptr<SentNetworkThing> SendPacketToConnection(Lock &guard, 
-        NetworkResponse &response, RECEIVE_GUARANTEE guarantee);
+        const NetworkResponse &response, RECEIVE_GUARANTEE guarantee);
 
     inline std::shared_ptr<SentNetworkThing> SendPacketToConnection(
-        NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
+        const NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
     {
         GUARD_LOCK();
         return SendPacketToConnection(guard, response, guarantee);
@@ -366,6 +370,12 @@ public:
 
 protected:
 
+    DLLEXPORT void _HandleRequestPacket(Lock &guard, sf::Packet &packet, 
+        uint32_t packetnumber);
+
+    DLLEXPORT void _HandleResponsePacket(Lock &guard, sf::Packet &packet, 
+        bool &ShouldNotBeMarkedAsReceived);
+
     
     //! \brief Sets acks in a packet as properly sent in this
     //!
@@ -393,6 +403,10 @@ protected:
     DLLEXPORT void _OnRestrictFail(uint16_t type);
     
 private:
+
+    DLLEXPORT bool _HandleInternalRequest(Lock &guard, std::shared_ptr<NetworkRequest> request);
+    DLLEXPORT bool _HandleInternalResponse(Lock &guard, 
+        std::shared_ptr<NetworkResponse> response);
 
     //! \brief Prepares a new header for the thing but keeps the original local id and
     //! sends the packet again

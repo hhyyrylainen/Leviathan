@@ -70,14 +70,17 @@ public:
     DLLEXPORT virtual ~NetworkHandler();
 
     DLLEXPORT virtual bool Init(const MasterServerInformation &info);
-        
+
+    //! Don't use this version. This just creates a socket with the port
+    DLLEXPORT bool Init(uint16_t port = 0);
+
     // \note This waits for all connections to terminate
     DLLEXPORT virtual void Release();
 
     //! \note  Call as often as possible to receive responses
     DLLEXPORT virtual void UpdateAllConnections();
 
-    DLLEXPORT virtual void RemoveClosedConnections();
+    DLLEXPORT virtual void RemoveClosedConnections(Lock &guard);
 
     DLLEXPORT std::shared_ptr<std::promise<std::string>> QueryMasterServer(
         const MasterServerInformation &info);
@@ -170,6 +173,11 @@ public:
         const std::string &regextouse = "http://.*?/");
     
     
+    //! Adds a connection to the list of open connections. Use ONLY if you have manually
+    //! created a Connection object
+    DLLEXPORT void _RegisterConnection(std::shared_ptr<Connection> connection);
+
+
 protected:
     
     Lock LockSocketForUse();

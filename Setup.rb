@@ -928,6 +928,11 @@ class SFML < BaseDep
   def DoCompile
 
     Dir.chdir("build") do
+    
+      if BuildPlatform == "windows"
+        system "#{bringVSToPath} && MSBuild.exe ALL_BUILD.vcxproj /maxcpucount:#{CompileThreads} /p:Configuration=Debug"
+      end
+      
       runCompiler CompileThreads
     end
     $?.exitstatus == 0
@@ -1072,6 +1077,12 @@ if BuildPlatform == "windows"
   runGlobberAndCopy(Globber.new(["sfml-network.lib", "sfml-system.lib"], "#{CurrentDir}/../SFML/build"), 
     "Windows/ThirdParty/lib")
   runGlobberAndCopy(Globber.new(["sfml-network-2.dll", "sfml-system-2.dll"], "#{CurrentDir}/../SFML/build"), 
+    "Windows/ThirdParty/bin")
+    
+  # Debug versions
+  runGlobberAndCopy(Globber.new(["sfml-network-d.lib", "sfml-system-d.lib"], "#{CurrentDir}/../SFML/build"), 
+    "Windows/ThirdParty/lib")
+  runGlobberAndCopy(Globber.new(["sfml-network-d-2.dll", "sfml-system-d-2.dll"], "#{CurrentDir}/../SFML/build"), 
     "Windows/ThirdParty/bin")
     
     

@@ -15,10 +15,21 @@
 namespace Leviathan{
 
 enum class NETWORK_REQUEST_TYPE : uint16_t{
-	//! This is sent first, expected result is like
+
+    //! Opening a connection 
+    Connect,
+
+    //! Only one side of the connection can send this request, usually the client
+    Security,
+
+    //! Only the client may make this call, after this the Connection won't restrict 
+    //! any packets from being received
+    Authenticate,
+
+	//! This may be sent after CONNECTION_STATE::Connected has been reached
     //! "PongServer running version 0.5.1.0, status: 0/20"
 	Identification,
-        
+
 	Serverstatus,
         
 	RemoteConsoleOpen,
@@ -75,7 +86,7 @@ public:
     
     virtual ~NetworkRequest(){};
 
-    inline void AddDataToPacket(sf::Packet &packet){
+    inline void AddDataToPacket(sf::Packet &packet) const{
 
         packet << true << static_cast<uint16_t>(Type);
 
@@ -96,7 +107,7 @@ public:
 protected:
 
     //! \brief Base classes serialize their data
-    DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) = 0;
+    DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) const = 0;
 
     const NETWORK_REQUEST_TYPE Type;
 
@@ -110,7 +121,7 @@ class RequestCustom : public NetworkRequest{
         ActualRequest(actualrequest)
     {}
 
-    void _SerializeCustom(sf::Packet &packet) override{
+    void _SerializeCustom(sf::Packet &packet) const override{
 
         LEVIATHAN_ASSERT(0, "_SerializeCustom called on RequestCustom");
     }
@@ -145,7 +156,7 @@ public:
         NetworkRequest(actualtype)
     {}
 
-    void _SerializeCustom(sf::Packet &packet) override{
+    void _SerializeCustom(sf::Packet &packet) const override{
     }
 
     RequestEcho(NETWORK_REQUEST_TYPE actualtype, uint32_t idforresponse, sf::Packet &packet) :

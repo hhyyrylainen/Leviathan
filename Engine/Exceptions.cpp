@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "Exceptions.h"
 #include "Logger.h"
+#include "Define.h"
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

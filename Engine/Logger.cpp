@@ -20,6 +20,8 @@
 #include "WindowsInclude.h"
 #endif //_WIN32
 
+#include <stdlib.h>
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -78,7 +80,9 @@ Leviathan::Logger::~Logger(){
     
 	// Reset latest logger (this allows to create new logger,
     // which is quite bad, but won't crash
-	LatestLogger = NULL;
+    // There is also probably a race condition here
+    if(LatestLogger == this)
+        LatestLogger = nullptr;
 }
 
 Logger* Leviathan::Logger::LatestLogger = NULL;
@@ -104,15 +108,18 @@ void Leviathan::Logger::Fatal(const std::string &data) {
 
     const auto message = "[FATAL] " + data + "\n";
 
-    Lock lock(LoggerWriteMutex);
+    {
+        Lock lock(LoggerWriteMutex);
 
-    SendDebugMessage(message);
+        SendDebugMessage(message);
 
-    PendingLog += message;
+        PendingLog += message;
 
-    _LogUpdateEndPart();
+        _LogUpdateEndPart();
+    }
 
-    LEVIATHAN_ASSERT(0, "fatal message printed");
+    // Exit process //
+    abort();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Info(const std::string &data){

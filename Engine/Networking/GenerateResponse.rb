@@ -9,6 +9,26 @@ abort "no target file provided" if ARGV.count < 1
 generator = Generator.new ARGV[0]
 
 thingsToGenerate = [
+
+  ["Connect",
+   [
+     { type: "int32_t", name: "CheckValue", default: "42" }
+   ]],
+
+  ["Security",
+   [
+     { type: "CONNECTION_ENCRYPTION", as: "int32_t", name: "SecureType" },
+     { type: "std::string", name: "PublicKey", default: "" },
+     { type: "std::string", name: "EncryptedSymmetricKey", default: "" }
+   ]],
+   
+  ["Authenticate",
+   [
+     { type: "int32_t", name: "UserID"},
+     { type: "uint64_t", name: "UserToken", default: "0" }
+   ]],
+
+
   ["Identification",
    [
      { type: "std::string", name: "UserReadableData" },

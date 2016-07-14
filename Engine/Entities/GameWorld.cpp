@@ -849,7 +849,7 @@ void GameWorld::_ApplyInitialEntityPackets(Lock &guard){
     
     for(auto& response : InitialEntityPackets){
 
-        LEVIATHAN_ASSERT(response->Type == RESPONSE_TYPE::EntityCreation,
+        LEVIATHAN_ASSERT(response->GetType() == NETWORK_RESPONSE_TYPE::EntityCreation,
             "invalid type in InitialEntityPackets");
         
         ObjectID id = 0;

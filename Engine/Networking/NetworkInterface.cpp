@@ -53,8 +53,8 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
     case NETWORK_REQUEST_TYPE::Identification:
 		{
             // Avoid allowing DDOS amplification
-            const uint32_t maxlength = static_cast<RequestIdentification*>(request.get())->
-                DDOSBlock.size();
+            const uint32_t maxlength = static_cast<uint32_t>(
+                static_cast<RequestIdentification*>(request.get())->DDOSBlock.size());
 
 			// Fetch the data from the configuration object //
 			string userreadable, gamename, gameversion;

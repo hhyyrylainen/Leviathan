@@ -44,6 +44,8 @@ option(USE_CAUDIO "For using cAudio, required for normal builds" ON)
 option(USE_SFML "For using SFML, required for normal builds" ON)
     
 option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
+
+option(CREATE_SHIPPING "SET THIS ON WHEN BUILDING END USER BINARIES. Will disable some expensive checks" OFF)
     
 # \todo this option to copy right libs
 option(CREATE_SDK "For creating SDKs for developers" ON)
@@ -328,7 +330,9 @@ if(WIN32)
         CEGUIExpatParser.lib CEGUIOgreRenderer-9999.lib CEGUISILLYImageCodec.lib
     )
     
-    set(SFML_LIBRARIES sfml-network.lib sfml-system.lib)
+    set(SFML_LIBRARIES optimized sfml-network.lib optimized sfml-system.lib
+        debug sfml-network-d.lib debug sfml-system-d.lib
+        )
     set(cAudio_LIBRARIES cAudio.lib)
     
     include_directories("${CMAKE_SOURCE_DIR}/Windows/ThirdParty/include")
@@ -395,6 +399,7 @@ DefinePreprocessorMacro(USE_LEAP LEVIATHAN_USING_LEAP)
 
 DefinePreprocessorMacro(USE_BREAKPAD LEVIATHAN_USING_BREAKPAD)
 
+DefinePreprocessorMacro(CREATE_SHIPPING LEVIATHAN_NO_DEBUG)
 
 
 DefinePreprocessorMacro(CREATE_UE4_PLUGIN LEVIATHAN_CREATE_UE4_PLUGIN)

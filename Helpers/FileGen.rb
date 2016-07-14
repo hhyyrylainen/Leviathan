@@ -141,6 +141,13 @@ class OutputClass
 
   def addMember(arguments = {})
     abort "addMember not hash" if not arguments.class == Hash
+    # If default is an empty string change it to be "\"\""
+    if not arguments[:default].nil?
+        if arguments[:default].empty?
+            arguments[:default] = "\"\""
+        end
+    end
+    
     @members.push arguments
   end
 
@@ -254,7 +261,7 @@ end
 class ResponseClass < SFMLSerializeClass
 
   def genSerializer
-    "void _SerializeCustom(sf::Packet &packet) override{\n"+
+    "void _SerializeCustom(sf::Packet &packet) const override{\n"+
       genToPacket +
       ";\n}\n"
   end

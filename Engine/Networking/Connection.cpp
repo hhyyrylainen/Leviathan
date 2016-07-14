@@ -82,6 +82,12 @@ DLLEXPORT bool Connection::Init(NetworkHandler* owninghandler){
 
     // Reset various timers //
     LastSentPacketTime = LastReceivedPacketTime = Time::GetTimeMs64();
+
+    // Send hello message //
+    if (!SendPacketToConnection(RequestConnect(), RECEIVE_GUARANTEE::Critical)) {
+
+        LEVIATHAN_ASSERT(0, "Connection Init cannot send packet");
+    }
     
 	return true;
 }
@@ -113,7 +119,7 @@ DLLEXPORT void Connection::Release(){
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(Lock &guard,
-    NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
+    const NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
 {
     if (!IsValidForSend())
         return nullptr;
@@ -144,7 +150,7 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(L
 }
 
 DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(Lock &guard,
-    NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
+    const NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
 {
     if(!IsValidForSend())
         return nullptr;
@@ -374,7 +380,7 @@ DLLEXPORT bool Leviathan::Connection::IsThisYours(const sf::IpAddress &sender,
     return true;
 }
 
-DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
+DLLEXPORT void Connection::HandlePacket(sf::Packet &packet) {
     
     // Handle incoming packet //
 
@@ -400,7 +406,6 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
 		Logger::Get()->Error("Received package has invalid format");
 	}
 
-    // Mark as received a packet //
     GUARD_LOCK();
 
     // Payload header //
@@ -415,109 +420,15 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
 
 	if(isrequest){
 
-		// Generate a request object and make the interface handle it //
-        auto request = NetworkRequest::LoadFromPacket(packet, packetnumber);
-
-        if (!request) {
-
-            LOG_ERROR("Connection: received an invalid request packet");
-            goto Connectionafterprocesslabel;
-        }
-
-        if (RestrictType != CONNECTION_RESTRICTION::None) {
-
-            // Restrict mode checking //
-
-            // We can possibly drop the connection or perform other extra tasks //
-            if(RestrictType == CONNECTION_RESTRICTION::ReceiveRemoteConsole){
-                // Check type //
-                if (!Engine::Get()->GetRemoteConsole()->CanOpenNewConnection(
-                    Owner->GetConnection(this), request)) 
-                {
-
-                    _OnRestrictFail(static_cast<uint16_t>(request->GetType()));
-                    return;
-                }
-
-                // Successfully opened, connection should now be safe as a
-                // general purpose connection
-                RestrictType = CONNECTION_RESTRICTION::None;
-                goto Connectionafterprocesslabel;
-            }
-        }
-
-		try{
-			Owner->GetInterface()->HandleRequestPacket(request, *this);
-		} catch(const InvalidArgument &e){
-			// We couldn't handle this packet //
-			Logger::Get()->Error("Connection: couldn't handle request packet! :");
-			e.PrintToLog();
-		}
+        _HandleRequestPacket(guard, packet, packetnumber);
 
 	} else {
-		// Generate a response and pass to the interface //
-        auto response = NetworkResponse::LoadFromPacket(packet);
 
-        if (!response) {
-
-            LOG_ERROR("Connection: received an invalid response packet");
-            goto Connectionafterprocesslabel;
-        }
-
-		// The response might have a corresponding request //
-		auto possiblerequest = _GetPossibleRequestForResponse(
-            guard, response);
-
-		if(RestrictType != CONNECTION_RESTRICTION::None){
-
-            // Restrict mode checking //
-
-            // Not allowed //
-            _OnRestrictFail(static_cast<uint16_t>(response->GetType()));
-            return;
-		}
-
-		// See if interface wants to drop it //
-		if(!Owner->GetInterface()->PreHandleResponse(response, possiblerequest.get(), *this))
-        {
-
-			LOG_WARNING("Connection: dropping packet due to interface not accepting response");
-			return;
-		}
-
-		if(possiblerequest){
-
-			// Add the response to the request //
-			possiblerequest->GotResponse = response;
-
-            // Remove the request //
-            for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
-
-                if((*iter).get() == possiblerequest.get()){
-
-                    // Notify that the request is done /
-                    possiblerequest->OnFinalized(true);
-                    WaitingRequests.erase(iter);
-                    break;
-                }
-            }
-
-		} else {
-
-			// Just discard if it is an empty response //
-			if(response->GetType() != NETWORK_RESPONSE_TYPE::None){
-
-				// Handle the response only packet //
-				Owner->GetInterface()->HandleResponseOnlyPacket(response, *this, 
-                    ShouldNotBeMarkedAsReceived);
-			}
-		}
+        return _HandleResponsePacket(guard, packet, ShouldNotBeMarkedAsReceived);
 	}
 
-Connectionafterprocesslabel:
-    
     // Handle resends based on ack field //
-    SetPacketsReceivedIfNotSet(guard,otherreceivedpackages);
+    SetPacketsReceivedIfNotSet(guard, otherreceivedpackages);
 
     LastReceivedPacketTime = Time::GetTimeMs64();
 
@@ -533,6 +444,265 @@ Connectionafterprocesslabel:
         // Report the packet as received //
         ReceivedRemotePackets[packetnumber] = RECEIVED_STATE::StateReceived;
     }
+}
+
+DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(Lock &guard, sf::Packet &packet, 
+    bool &ShouldNotBeMarkedAsReceived) 
+{
+    // Generate a response and pass to the interface //
+    auto response = NetworkResponse::LoadFromPacket(packet);
+
+    if (!response) {
+
+        LOG_ERROR("Connection: received an invalid response packet");
+        return;
+    }
+
+    // The response might have a corresponding request //
+    auto possiblerequest = _GetPossibleRequestForResponse(guard, response);
+
+    // Add the response to the request //
+    if(possiblerequest)
+        possiblerequest->GotResponse = response;
+
+    if (_HandleInternalResponse(guard, response))
+        return;
+
+    if (RestrictType != CONNECTION_RESTRICTION::None) {
+
+        // Restrict mode checking //
+
+        // Not allowed //
+        _OnRestrictFail(static_cast<uint16_t>(response->GetType()));
+        return;
+    }
+
+    // See if interface wants to drop it //
+    if (!Owner->GetInterface()->PreHandleResponse(response, possiblerequest.get(), *this))
+    {
+
+        LOG_WARNING("Connection: dropping packet due to interface not accepting response");
+        return;
+    }
+
+    if (!possiblerequest) {
+
+        // Just discard if it is an empty response //
+        if (response->GetType() == NETWORK_RESPONSE_TYPE::None)
+            return;
+
+        // Handle the response only packet //
+        Owner->GetInterface()->HandleResponseOnlyPacket(response, *this,
+            ShouldNotBeMarkedAsReceived);
+        return;
+    }
+
+    // Remove the request //
+    for (auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter) {
+
+        if ((*iter).get() == possiblerequest.get()) {
+
+            // Notify that the request is done /
+            possiblerequest->OnFinalized(true);
+            WaitingRequests.erase(iter);
+            break;
+        }
+    }
+}
+
+DLLEXPORT void Leviathan::Connection::_HandleRequestPacket(Lock &guard, sf::Packet &packet,
+    uint32_t packetnumber) 
+{
+    // Generate a request object and make the interface handle it //
+    auto request = NetworkRequest::LoadFromPacket(packet, packetnumber);
+
+    if (!request) {
+
+        LOG_ERROR("Connection: received an invalid request packet");
+        return;
+    }
+
+    if (_HandleInternalRequest(guard, request))
+        return;
+
+    if (RestrictType != CONNECTION_RESTRICTION::None) {
+
+        // Restrict mode checking //
+
+        // We can possibly drop the connection or perform other extra tasks //
+        if (RestrictType == CONNECTION_RESTRICTION::ReceiveRemoteConsole) {
+            // Check type //
+            if (!Engine::Get()->GetRemoteConsole()->CanOpenNewConnection(
+                Owner->GetConnection(this), request))
+            {
+                _OnRestrictFail(static_cast<uint16_t>(request->GetType()));
+                return;
+            }
+
+            // Successfully opened, connection should now be safe as a
+            // general purpose connection
+            RestrictType = CONNECTION_RESTRICTION::None;
+            return;
+        }
+    }
+
+    try {
+        Owner->GetInterface()->HandleRequestPacket(request, *this);
+    }
+    catch (const InvalidArgument &e) {
+        // We couldn't handle this packet //
+        Logger::Get()->Error("Connection: couldn't handle request packet! :");
+        e.PrintToLog();
+    }
+}
+
+
+DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard, 
+    std::shared_ptr<NetworkRequest> request) 
+{
+    switch (request->GetType()) {
+    case NETWORK_REQUEST_TYPE::Connect:
+    {
+        SendPacketToConnection(guard, ResponseConnect(request->GetIDForResponse()), 
+            RECEIVE_GUARANTEE::Critical);
+        return true;
+    }
+    case NETWORK_REQUEST_TYPE::Security:
+    {
+        // CONNECTION_STATE::Initial is allowed here because the client might send a security
+        // request before sending us a response to our connect request
+        if (State != CONNECTION_STATE::Connected && State != CONNECTION_STATE::Initial) {
+
+            return true;
+        }
+
+        // Security has been set up for this connection //
+        ResponseSecurity response(request->GetIDForResponse(), CONNECTION_ENCRYPTION::None);
+
+        SendPacketToConnection(guard, response, RECEIVE_GUARANTEE::Critical);
+        return true;
+    }
+    case NETWORK_REQUEST_TYPE::Authenticate:
+    {
+        // Client is not allowed to respond to this //
+        if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+
+            LOG_ERROR("Connection: Client received NETWORK_REQUEST_TYPE::Authenticate");
+            return true;
+        }
+
+        // Connection is now authenticated //
+        State = CONNECTION_STATE::Authenticated;
+
+        LOG_INFO("Connection: Authenticate request accepted from: " +
+            GenerateFormatedAddressString());
+
+        int32_t ConnectedPlayerID = 0;
+        uint64_t token = 0;
+
+        ResponseAuthenticate response(request->GetIDForResponse(), ConnectedPlayerID, token);
+
+        SendPacketToConnection(guard, response, RECEIVE_GUARANTEE::Critical);
+        return true;
+    }
+    }
+
+    // Eat up all the packets if not properly opened yet
+    if (State != CONNECTION_STATE::Authenticated) {
+
+        return true;
+    }
+
+    // Did nothing, normal handling continues //
+    return false;
+}
+
+DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard, 
+    std::shared_ptr<NetworkResponse> response) 
+{
+    switch (response->GetType()) {
+    case NETWORK_RESPONSE_TYPE::CloseConnection:
+    {
+        // Forced disconnect //
+        State = CONNECTION_STATE::Closed;
+
+        // Release will be called by NetworkHandler which sends a close connection packet
+        return true;
+    }
+    case NETWORK_RESPONSE_TYPE::Connect:
+    {
+        // The first packet of this type that is in response to our initial request
+        // moves this connection to Connected on our side
+        if (State == CONNECTION_STATE::NothingReceived || State == CONNECTION_STATE::Initial) {
+
+            State = CONNECTION_STATE::Connected;
+
+            // Client will do security setup here //
+            // TODO: figure out how master server connections should work
+            if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+
+                SendPacketToConnection(guard, RequestSecurity(CONNECTION_ENCRYPTION::None),
+                    RECEIVE_GUARANTEE::Critical);
+            }
+        }
+        return true;
+    }
+    case NETWORK_RESPONSE_TYPE::Security:
+    {
+        if (State != CONNECTION_STATE::Connected) {
+
+            return true;
+        }
+
+
+        // Verify security type is what we wanted //
+        auto* securityresponse = static_cast<ResponseSecurity*>(response.get());
+
+        if (securityresponse->SecureType != CONNECTION_ENCRYPTION::None) {
+
+            LOG_ERROR("Connection: mismatch security, disconnecting");
+            SendCloseConnectionPacket(guard);
+            return true;
+        }
+
+        State == CONNECTION_STATE::Secured;
+
+        // TODO: send an empty authentication request if this is a master server connection
+        if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+
+            RequestAuthenticate authrequest("player");
+
+            SendPacketToConnection(guard, authrequest,
+                RECEIVE_GUARANTEE::Critical);
+        }
+
+        return true;
+    }
+    case NETWORK_RESPONSE_TYPE::Authenticate:
+    {
+        // Connection is now good to go //
+
+        auto* authresponse = static_cast<ResponseAuthenticate*>(response.get());
+
+        //authresponse->UserID;
+
+        State = CONNECTION_STATE::Authenticated;
+
+        LOG_INFO("Connection: Authenticate succeeded from: " +
+            GenerateFormatedAddressString());
+
+        return true;
+    }
+    }
+
+    // Eat up all the packets if not properly opened yet
+    if (State != CONNECTION_STATE::Authenticated) {
+
+        return true;
+    }
+
+    // Did nothing, normal handling continues //
+    return false;
 }
 // ------------------------------------ //
 void Leviathan::Connection::_PreparePacketHeaderForPacket(Lock &guard,
@@ -973,81 +1143,74 @@ DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid,
     if (FirstPacketID == 0)
         return;
 
-    auto iter = copyfrom.begin();
+    // Before we reach the first packet id we will want to skip stuff //
+    bool foundstart = false;
 
-    for (; iter != copyfrom.end(); ++iter) {
-        if (iter->first >= firstpacketid) {
-            break;
+    for (auto iter = copyfrom.begin(); iter != copyfrom.end(); ++iter) {
+
+        // Skip current if not received //
+        if (iter->second == RECEIVED_STATE::NotReceived)
+            continue;
+
+        if (!foundstart) {
+
+            if (iter->first >= FirstPacketID) {
+
+
+                // Adjust the starting index, if it is an exact match for firstpacketid
+                // this should be 0
+                auto startindex = iter->first - FirstPacketID;
+
+                // Check that the index is within the size of the field, otherwise fail
+                if (startindex >= maxacks)
+                    break;
+
+                foundstart = true;
+
+            } else {
+
+                continue;
+            }
+
         }
-    }
 
-    if (iter == copyfrom.end()) {
-        // No start ack found //
-        FirstPacketID = 0;
-        return;
-    }
+        uint8_t currentindex = iter->first - FirstPacketID;
 
-    // Reserve space for data //
-    Acks.reserve(maxacks / 8);
+        if (currentindex >= maxacks)
+            break;
 
-    // Start filling it //
-    for (char i = 0; i < maxacks; i++) {
-
-        uint32_t curcheckacknumber = firstpacketid + i;
-
-        size_t vecelement = i / 8;
+        // Copy current ack //
+        const auto vecelement = currentindex / 8;
 
         while (Acks.size() <= vecelement) {
 
             Acks.push_back(0);
         }
 
-        // If reached the end just leave the zeros //
-        if (iter == copyfrom.end()) {
+        Acks[vecelement] |= (1 << (currentindex % 8));
+
+        // Stop copying once enough acks have been set. The loop can end before this, but
+        // that just leaves the rest of the acks as 0
+        if (currentindex + 1 >= maxacks)
             break;
-        }
-
-        if (iter->first == curcheckacknumber) {
-
-setcurrentnumbertoackfield:
-
-            // Mark it as copied to a ack field //
-            // This isn't actually needed as we want to
-            //iter->second = RECEIVED_STATE::AcksSent;
-
-            // Set it //
-            Acks[vecelement] |= (1 << (i - vecelement));
-
-            ++iter;
-
-        } else if (iter->first > curcheckacknumber) {
-            // We are missing these packets so let them be zeroed out //
-
-        } else {
-            // Advance iterator to reach this //
-            for (; iter != copyfrom.end(); ++iter) {
-
-                if (iter->first == curcheckacknumber) {
-
-                    goto setcurrentnumbertoackfield;
-
-                } else if (iter->first > curcheckacknumber) {
-
-                    break;
-                }
-            }
-        }
     }
 
-    // We need to reset FirstPacketID if no acks set //
-    if (Acks.size() == 0)
+    if (!foundstart) {
+
+        // No acks to send //
         FirstPacketID = 0;
+        return;
+    }
 }
 
 DLLEXPORT NetworkAckField::NetworkAckField(sf::Packet &packet){
 
     // Get data //
 	packet >> FirstPacketID;
+
+    // Empty ack fields //
+    if (FirstPacketID == 0)
+        return;
     
 	uint8_t tmpsize = 0;
     
@@ -1066,13 +1229,16 @@ DLLEXPORT NetworkAckField::NetworkAckField(sf::Packet &packet){
 
 DLLEXPORT void NetworkAckField::AddDataToPacket(sf::Packet &packet){
 
-	// First set the trivial data //
-	uint8_t tmpsize = static_cast<uint8_t>(Acks.size());
-
-	packet << FirstPacketID << tmpsize;
+    packet << FirstPacketID;
     
-	// Now to fill in the ack data //
-	for(char i = 0; i < tmpsize; i++){
+    if (FirstPacketID == 0)
+        return;
+
+    uint8_t tmpsize = static_cast<uint8_t>(Acks.size());
+    packet << tmpsize;
+    
+	// fill in the ack data //
+	for(uint8_t i = 0; i < tmpsize; i++){
         
 		packet << Acks[i];
 	}

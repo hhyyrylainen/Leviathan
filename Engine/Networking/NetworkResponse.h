@@ -18,6 +18,17 @@ namespace Leviathan{
 
 //! Defines the type of response that the packet contains
 enum class NETWORK_RESPONSE_TYPE : uint16_t {
+
+    //! Sent in response to a NETWORK_REQUEST_TYPE::Connect
+    Connect,
+
+    //! Sent in response to a NETWORK_REQUEST_TYPE::Security
+    //! \todo Implemented packet breaking for this type
+    Security,
+
+    //! Sent in response to a NETWORK_REQUEST_TYPE::Authenticate
+    Authenticate,
+
     //! Sent in response to a NETWORK_REQUEST_TYPE::Identification contains a user readable
     //! string, game name, game version and leviathan version strings
     Identification,
@@ -133,7 +144,7 @@ public:
     
     virtual ~NetworkResponse(){};
 
-    inline void AddDataToPacket(sf::Packet &packet){
+    inline void AddDataToPacket(sf::Packet &packet) const{
 
         packet << false << static_cast<uint16_t>(Type) << ResponseID;
 
@@ -159,7 +170,7 @@ public:
 protected:
 
     //! \brief Base classes serialize their data
-    DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) = 0;
+    DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) const = 0;
 
     const NETWORK_RESPONSE_TYPE Type;
 
@@ -175,7 +186,7 @@ public:
         ActualResponse(actualresponse)
     {}
 
-    void _SerializeCustom(sf::Packet &packet) override{
+    void _SerializeCustom(sf::Packet &packet) const override{
 
         LEVIATHAN_ASSERT(0, "_SerializeCustom called on ResponseCustom");
     }
@@ -210,7 +221,7 @@ public:
         NetworkResponse(actualtype, responseid)
     {}
 
-    void _SerializeCustom(sf::Packet &packet) override{
+    void _SerializeCustom(sf::Packet &packet) const override{
     }
 
     ResponseNone(NETWORK_RESPONSE_TYPE actualtype, uint32_t responseid, sf::Packet &packet) :

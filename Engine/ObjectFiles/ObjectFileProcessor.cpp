@@ -698,8 +698,9 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
         UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
-    if (ourname)
+    if (ourname){
         StringOperations::RemovePreceedingTrailingSpaces(*ourname);
+    }
 
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
@@ -788,8 +789,10 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
         UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
-    if (ourname)
+    if (ourname){
+        
         StringOperations::RemovePreceedingTrailingSpaces(*ourname);
+    }
 
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){

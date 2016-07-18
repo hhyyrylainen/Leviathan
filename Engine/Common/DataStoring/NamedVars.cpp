@@ -484,10 +484,10 @@ DLLEXPORT std::string Leviathan::NamedVariableList::ToText(int WhichSeparator /*
 	// starting bracket //
     if(WrapInBrackets)
         stringifiedval += "[";
-
+    
 	// reserve some space //
-	stringifiedval.reserve(Datas.size()*4);
-
+    stringifiedval.reserve(Datas.size()*4);
+    
 	for(size_t i = 0; i < Datas.size(); i++){
 
 		if(i != 0)
@@ -543,7 +543,7 @@ DLLEXPORT std::string Leviathan::NamedVariableList::ToText(int WhichSeparator /*
     else
         stringifiedval += ";";
 
-	return stringifiedval;
+    return stringifiedval;
 }
 
 DLLEXPORT NamedVariableList& NamedVariableList::operator=(const NamedVariableList &other){
@@ -701,7 +701,7 @@ DLLEXPORT VariableBlock* NamedVariableList::GetValueDirect(size_t nindex){
     if(nindex >= Datas.size())
         return nullptr;
     
-	return Datas[nindex];
+    return Datas[nindex];
 }
 
 DLLEXPORT size_t NamedVariableList::GetVariableCount() const{

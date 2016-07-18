@@ -144,7 +144,7 @@ public:
         }
 
         //! \brief Sets BitNum bit in Updated
-        inline void SetBit(uint8_t BitNum = 0) const
+        inline void SetBit(uint8_t BitNum = 0)
         {
             Updated |= (1 << BitNum);
         }

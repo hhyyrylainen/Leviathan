@@ -457,8 +457,10 @@ bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const std::string &name,
 	AddRef();
 
     // A calling function might want to add extra parameters //
-    if(extraparam)
+    if(extraparam){
+        
         extraparam(Args);
+    }
 
 	ScriptRunningSetup sargs;
 	sargs.SetEntrypoint(mod->GetListeningFunctionName(name)).SetArguments(Args);

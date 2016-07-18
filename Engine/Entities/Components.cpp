@@ -97,9 +97,11 @@ void Physics::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
 	Float3 Force = tmp->World->GetGravityAtPosition(tmp->_Position.Members._Position)*mass;
     
 	// add other forces //
-    if(!tmp->ApplyForceList.empty())
+    if(!tmp->ApplyForceList.empty()){
+        
         Force += tmp->_GatherApplyForces(mass);
-
+    }
+    
 	NewtonBodyAddForce(body, &Force.X);
 	NewtonBodyAddTorque(body, &Torque.X);
 }
@@ -240,10 +242,10 @@ DLLEXPORT bool Physics::RemoveApplyForce(const std::string &name){
 }
 // ------------------------------------ //
 DLLEXPORT void Physics::SetPhysicalMaterialID(int ID){
-
-    if(!Body)
+    if(!Body){
         throw InvalidState("Calling set material ID without having physical Body");
-
+    }
+    
 	NewtonBodySetMaterialGroupID(Body, ID);
 }
 // ------------------ Received ------------------ //

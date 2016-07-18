@@ -25,7 +25,7 @@ thingsToGenerate = [
   ["Authenticate",
    [
      { type: "int32_t", name: "UserID"},
-     { type: "uint64_t", name: "UserToken", default: "0" }
+     { type: "uint64_t", as: "sf::Uint64", name: "UserToken", default: "0" }
    ]],
 
 

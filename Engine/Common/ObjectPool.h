@@ -107,7 +107,7 @@ public:
             auto object = std::get<0>(*iter);
             const auto id = std::get<1>(*iter);
 
-            object->Release(std::forward<Args>(args));
+            object->Release(std::forward<Args>(args)...);
 
             object->~ElementType();
             Elements.free(object);
@@ -129,13 +129,13 @@ public:
         if (!object)
             throw NotFound("entity not in pool");
 
-        object->Release(std::forward<Args>(args...));
+        object->Release(std::forward<Args>(args)...);
 
         object->~ElementType();
         Elements.free(object);
 
-        RemoveFromIndex(guard, id);
-        RemoveFromAdded(guard, id);
+        RemoveFromIndex(guard, entity);
+        RemoveFromAdded(guard, entity);
     }
 
     //! \brief Removes elements that are queued for destruction

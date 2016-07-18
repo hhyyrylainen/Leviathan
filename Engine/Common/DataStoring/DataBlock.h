@@ -208,7 +208,7 @@ namespace Leviathan{
 			Type = arg.Type;
 			// skip if other is null value //
 			if(arg.Value == NULL)
-				return;
+				return *this;
 			// deep copy //
 			Value = new DBlockT(*arg.Value);
 
@@ -219,7 +219,8 @@ namespace Leviathan{
 		// function used in deep copy //
 		virtual DataBlockAll* AllocateNewFromThis() const{
 
-			return static_cast<DataBlockAll*>((new DataBlock<DBlockT>(const_cast<const DataBlock<DBlockT>&>(*this))));
+			return static_cast<DataBlockAll*>((new DataBlock<DBlockT>(
+                        const_cast<const DataBlock<DBlockT>&>(*this))));
 		}
 
 		// shallow copy operator //
@@ -651,9 +652,6 @@ namespace Leviathan{
 		// conversion checkers //
 		template<class ConvertT>
 		inline bool IsConversionAllowedNonPtr() const{
-			// return if null //
-			if(this == NULL)
-				return false;
 			// check it //
 			if(BlockData->Type == DATABLOCK_TYPE_INT)
 				return TvalToTypeResolver<DATABLOCK_TYPE_INT>::Conversion(BlockData)->

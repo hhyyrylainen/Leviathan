@@ -25,7 +25,7 @@ thingsToGenerate = [
    ["Authenticate",
    [
      { type: "std::string", name: "UserName", default: "" },
-     { type: "uint64_t", name: "AuthToken", default: "0" },
+     { type: "uint64_t", as: "sf::Uint64", name: "AuthToken", default: "0" },
      { type: "std::string", name: "AuthPasswd", default: "" }
    ]],
 

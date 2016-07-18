@@ -490,13 +490,9 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
 
 		streamoff rpos = reader.tellg();
 
-
 		// cannot be loaded //
-#ifdef _WIN32
-		LEVIATHAN_ASSERT(SIZE_T_MAX >= rpos, "file is too large");
-#else
-        LEVIATHAN_ASSERT(std::numeric_limits<size_t>::max() >= rpos, "file is too large");
-#endif
+        LEVIATHAN_ASSERT(std::numeric_limits<streamoff>::max() >= rpos, "file is too large");
+        
 		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);
@@ -526,11 +522,8 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const string &file,
 
 
 		// cannot be loaded //
-    #ifdef _WIN32
-        LEVIATHAN_ASSERT(SIZE_T_MAX >= rpos, "file is too large");
-    #else
-        LEVIATHAN_ASSERT(std::numeric_limits<size_t>::max() >= rpos, "file is too large");
-    #endif
+        LEVIATHAN_ASSERT(std::numeric_limits<streamoff>::max() >= rpos, "file is too large");
+
 		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);

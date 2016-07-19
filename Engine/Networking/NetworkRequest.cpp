@@ -12,27 +12,30 @@ using namespace std;
 DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Packet &packet,
     uint32_t packetid)
 {
-	// Get the heading data //
-	uint16_t tmpval;
-	packet >> tmpval;
+    // Get the heading data //
+    uint16_t tmpval;
+    packet >> tmpval;
 
     if(!packet)
         throw InvalidArgument("packet has invalid format");
 
     const NETWORK_REQUEST_TYPE requesttype = static_cast<NETWORK_REQUEST_TYPE>(tmpval);
 
-	// Try to create the additional data if required for this type //
-	switch(requesttype){
+    // Try to create the additional data if required for this type //
+    switch(requesttype){
     case NETWORK_REQUEST_TYPE::Echo:
         return std::make_shared<RequestEcho>(requesttype, packetid, packet);
+    case NETWORK_REQUEST_TYPE::Connect:
+        return std::make_shared<RequestConnect>(packetid, packet);
     default:
-		{
+        {
             Logger::Get()->Warning("NetworkRequest: unused type: "+
                 Convert::ToString(static_cast<int>(requesttype)));
-            throw InvalidArgument("packet has invalid request type");
-		}
-		break;
-	}
+            throw InvalidArgument("packet has request type that is missing from "
+                "switch(requesttype)");
+        }
+        break;
+    }
 }
 
 

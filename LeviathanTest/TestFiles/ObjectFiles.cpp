@@ -87,23 +87,23 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
     ScriptExecutor exec;
     PartialEngine<false> engine;
     
-	// First test the minimal file //
-	string minfile = "Data/Scripts/tests/SimpleTest.levof";
+    // First test the minimal file //
+    string minfile = "Data/Scripts/tests/SimpleTest.levof";
 
-	// Try to parse it //
-	auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile, &reporter);
+    // Try to parse it //
+    auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile, &reporter);
 
     REQUIRE(ofile != nullptr);
 
-	const NamedVars& HeaderVars = *ofile->GetVariables();
+    const NamedVars& HeaderVars = *ofile->GetVariables();
 
-	// Validate the output //
+    // Validate the output //
     CHECK(HeaderVars.GetVariableCount() == 4);
 
     string TestFile = "Data/Scripts/tests/TestObjectFile.levof";
-	
-	// Make sure the loading is correct //
-	auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile, &reporter);
+    
+    // Make sure the loading is correct //
+    auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile, &reporter);
 
     REQUIRE(rofile != nullptr);
 

@@ -11,32 +11,33 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
 
     // First thing is the response ID //
     uint32_t responseid = 0;
-	packet >> responseid;
+    packet >> responseid;
 
-	// Second is the type, based on which we handle the rest of the data //
-	uint16_t rawtype;
+    // Second is the type, based on which we handle the rest of the data //
+    uint16_t rawtype;
     packet >> rawtype;
 
     if(!packet)
         throw InvalidArgument("packet has invalid format");
     
-	const auto responsetype = static_cast<NETWORK_RESPONSE_TYPE>(rawtype);
+    const auto responsetype = static_cast<NETWORK_RESPONSE_TYPE>(rawtype);
 
-	// Process based on the type //
-	switch(responsetype){
+    // Process based on the type //
+    switch(responsetype){
     case NETWORK_RESPONSE_TYPE::CloseConnection:
     case NETWORK_RESPONSE_TYPE::Keepalive:
     case NETWORK_RESPONSE_TYPE::None:
         return std::make_shared<ResponseNone>(responsetype, responseid, packet);
 
     default:
-		{
+        {
             Logger::Get()->Warning("NetworkResponse: unused type: "+
                 Convert::ToString(static_cast<int>(responsetype)));
-            throw InvalidArgument("packet has invalid response type");
-		}
-		break;
-	}
+            throw InvalidArgument("packet has response type that is missing from "
+                "switch(responsetype)");
+        }
+        break;
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::LimitResponseSize(ResponseIdentification &response,

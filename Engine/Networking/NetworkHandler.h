@@ -24,7 +24,7 @@ namespace Leviathan{
 
 void RunGetResponseFromMaster(NetworkHandler* instance,
     std::shared_ptr<std::promise<std::string>> resultvar);
-	
+    
 // Used to pass master server info to the application //
 struct MasterServerInformation{
     MasterServerInformation(bool iammaster, const std::string &identificationstr) :
@@ -186,7 +186,7 @@ protected:
     void _ReleaseSocket();
 
     //! \brief Returns false if the socket has been closed
-    bool _RunUpdateOnce();
+    bool _RunUpdateOnce(Lock &guard);
     
     //! \brief Constantly listens for packets in a blocked state
     void _RunListenerThread();

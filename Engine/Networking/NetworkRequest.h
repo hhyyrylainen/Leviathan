@@ -26,35 +26,35 @@ enum class NETWORK_REQUEST_TYPE : uint16_t{
     //! any packets from being received
     Authenticate,
 
-	//! This may be sent after CONNECTION_STATE::Connected has been reached
+    //! This may be sent after CONNECTION_STATE::Connected has been reached
     //! "PongServer running version 0.5.1.0, status: 0/20"
-	Identification,
+    Identification,
 
-	Serverstatus,
+    Serverstatus,
         
-	RemoteConsoleOpen,
+    RemoteConsoleOpen,
         
-	RemoteConsoleAccess,
+    RemoteConsoleAccess,
         
-	CloseRemoteConsole,
+    CloseRemoteConsole,
 
     //! The receiving side is now allowed to open a remote console with the token 
     DoRemoteConsoleOpen,
 
     //! Client wants to join a server
     //! MasterServerToken The ID given by the master server
-	JoinServer,
+    JoinServer,
         
-	GetSingleSyncValue,
+    GetSingleSyncValue,
         
-	GetAllSyncValues,
+    GetAllSyncValues,
         
-	//! Used to request the server to run a command, used for chat and other things
+    //! Used to request the server to run a command, used for chat and other things
     //! \todo Implement 	if(Command.length() > MAX_SERVERCOMMAND_LENGTH)
-	RequestCommandExecution,
+    RequestCommandExecution,
         
-	//! Sent when a player requests the server to connect a NetworkedInput
-	ConnectInput,
+    //! Sent when a player requests the server to connect a NetworkedInput
+    ConnectInput,
         
     //! Sent by servers to ping (time the time a client takes to respond) clients
     Echo,
@@ -68,8 +68,8 @@ enum class NETWORK_REQUEST_TYPE : uint16_t{
     //! applied by a single GameWorld
     WorldClockSync,
 
-	//! Used for game specific requests
-	Custom
+    //! Used for game specific requests
+    Custom
 };
 
 //! Base class for all request objects
@@ -115,7 +115,7 @@ protected:
 };
 
 class RequestCustom : public NetworkRequest{
-	public:
+    public:
     RequestCustom(std::shared_ptr<GameSpecificPacketData> actualrequest) :
         NetworkRequest(NETWORK_REQUEST_TYPE::Custom),
         ActualRequest(actualrequest)

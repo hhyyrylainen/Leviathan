@@ -22,7 +22,7 @@ using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype,
     NetworkInterface* packethandler) 
-	: AppType(ntype), CloseMasterServerConnection(false)
+    : AppType(ntype), CloseMasterServerConnection(false)
 {
     // This will assert if we were passed the wrong type
     packethandler->VerifyType(AppType);
@@ -37,8 +37,8 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype,
         ServerInterface = dynamic_cast<NetworkServerInterface*>(packethandler);
     }
     
-	// Create the variable sync object //
-	VariableSyncer = std::make_unique<SyncedVariables>(this, AppType, packethandler);
+    // Create the variable sync object //
+    VariableSyncer = std::make_unique<SyncedVariables>(this, AppType, packethandler);
 
     _NetworkCache = std::make_unique<NetworkCache>(AppType);
     
@@ -48,8 +48,8 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype,
         LEVIATHAN_ASSERT(0, "NetworkHandler: failed to create NetworkCache");
     }
 
-	// Create the custom packet handler //
-	_GameSpecificPacketHandler = std::make_unique<GameSpecificPacketHandler>(
+    // Create the custom packet handler //
+    _GameSpecificPacketHandler = std::make_unique<GameSpecificPacketHandler>(
         packethandler);
 }
 
@@ -59,59 +59,59 @@ DLLEXPORT NetworkHandler::~NetworkHandler(){
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
 
-	MasterServerMustPassIdentification = info.MasterServerIdentificationString;
+    MasterServerMustPassIdentification = info.MasterServerIdentificationString;
 
-	if(AppType != NETWORKED_TYPE::Master){
-		// Query master server //
-		QueryMasterServer(info);
+    if(AppType != NETWORKED_TYPE::Master){
+        // Query master server //
+        QueryMasterServer(info);
 
-	} else {
-		// We are our own master! //
+    } else {
+        // We are our own master! //
 
-		// Get out port number here //
-		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
+        // Get out port number here //
+        GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-		int tmpport = 0;
+        int tmpport = 0;
 
-		if(!vars->GetValueAndConvertTo<int>("MasterServerPort", tmpport)){
-			// This is quite bad //
-			Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
+        if(!vars->GetValueAndConvertTo<int>("MasterServerPort", tmpport)){
+            // This is quite bad //
+            Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
                 "'MasterServerPort' of type int");
-		}
+        }
 
-		PortNumber = (unsigned short)tmpport;
-	}
+        PortNumber = (unsigned short)tmpport;
+    }
 
-	if(AppType == NETWORKED_TYPE::Client){
-		// We can use any port we get //
-		PortNumber = sf::Socket::AnyPort;
+    if(AppType == NETWORKED_TYPE::Client){
+        // We can use any port we get //
+        PortNumber = sf::Socket::AnyPort;
 
-	} else if(AppType == NETWORKED_TYPE::Server){
-		// We need to use a specific port //
-		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
+    } else if(AppType == NETWORKED_TYPE::Server){
+        // We need to use a specific port //
+        GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-		int tmpport = 0;
+        int tmpport = 0;
 
-		if(!vars->GetValueAndConvertTo<int>("DefaultServerPort", tmpport)){
-			// This is quite bad //
-			Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
+        if(!vars->GetValueAndConvertTo<int>("DefaultServerPort", tmpport)){
+            // This is quite bad //
+            Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
                 "'ServerPort' of type int");
-		}
+        }
 
-		PortNumber = (unsigned short)tmpport;
-	}
+        PortNumber = (unsigned short)tmpport;
+    }
 
-	// We want to receive responses //
-	if(_Socket.bind(PortNumber) != sf::Socket::Done){
+    // We want to receive responses //
+    if(_Socket.bind(PortNumber) != sf::Socket::Done){
 
-		Logger::Get()->Error("NetworkHandler: Init: failed to bind to port "+
+        Logger::Get()->Error("NetworkHandler: Init: failed to bind to port "+
             Convert::ToString(PortNumber));
-		return false;
-	}
+        return false;
+    }
 
     PortNumber = _Socket.getLocalPort();
 
-	// Set the socket as blocking //
+    // Set the socket as blocking //
     if (BlockingMode) {
 
         _Socket.setBlocking(true);
@@ -123,11 +123,11 @@ DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &in
         _Socket.setBlocking(false);
     }
 
-	// Report success //
-	Logger::Get()->Info("NetworkHandler: running listening socket on port "+Convert::ToString(
+    // Report success //
+    Logger::Get()->Info("NetworkHandler: running listening socket on port "+Convert::ToString(
             _Socket.getLocalPort()));
 
-	return true;
+    return true;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(uint16_t port /*= 0*/) {
@@ -181,28 +181,28 @@ DLLEXPORT void Leviathan::NetworkHandler::Release() {
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
-	// This might cause the game to hang... //
+    // This might cause the game to hang... //
 
-	bool blockunbind = false;
+    bool blockunbind = false;
 
-	{
-		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
-		variables->GetValueAndConvertTo<bool>("DisableSocketUnbind", blockunbind);
-	}
+    {
+        GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+        variables->GetValueAndConvertTo<bool>("DisableSocketUnbind", blockunbind);
+    }
 
     auto lock = LockSocketForUse();
 
-	// This should do the trick //
-	if(!blockunbind || !BlockingMode){
+    // This should do the trick //
+    if(!blockunbind || !BlockingMode){
         
-		_Socket.unbind();
+        _Socket.unbind();
 
-	} else {
-		Logger::Get()->Info("NetworkHandler: _ReleaseSocket: blocked unbind");
-	}
+    } else {
+        Logger::Get()->Info("NetworkHandler: _ReleaseSocket: blocked unbind");
+    }
 }
 
-bool Leviathan::NetworkHandler::_RunUpdateOnce()
+bool Leviathan::NetworkHandler::_RunUpdateOnce(Lock &guard)
 {
     sf::Packet receivedpacket;
 
@@ -217,31 +217,31 @@ bool Leviathan::NetworkHandler::_RunUpdateOnce()
 
     while (true) {
 
+        guard.unlock();
+
         status = _Socket.receive(receivedpacket, sender, sentport);
+
+        guard.lock();
 
         if (status != sf::Socket::Done)
             break;
-
 
         // Process packet //
 
         // Pass to a connection //
         bool Passed = false;
 
-        {
-            GUARD_LOCK();
 
-            for (size_t i = 0; i < OpenConnections.size(); i++) {
-                // Keep passing until somebody handles it //
-                if (OpenConnections[i]->IsThisYours(sender, sentport)) {
+        for (size_t i = 0; i < OpenConnections.size(); i++) {
+            // Keep passing until somebody handles it //
+            if (OpenConnections[i]->IsThisYours(sender, sentport)) {
 
-                    auto curconnection = OpenConnections[i];
+                auto curconnection = OpenConnections[i];
 
-                    curconnection->HandlePacket(receivedpacket);
+                curconnection->HandlePacket(receivedpacket);
 
-                    Passed = true;
-                    break;
-                }
+                Passed = true;
+                break;
             }
         }
 
@@ -344,60 +344,60 @@ DLLEXPORT bool Leviathan::NetworkHandler::IsConnectionValid(Connection &connecti
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
-	// Set up the values //
-	vector<VariableBlock*> vals;
+    // Set up the values //
+    vector<VariableBlock*> vals;
     {
         vals.reserve(MasterServers.size());
 
-		// Only this scope requires locking //
-		GUARD_LOCK();
+        // Only this scope requires locking //
+        GUARD_LOCK();
 
-		for(size_t i = 0; i < MasterServers.size(); i++){
-			vals.push_back(new VariableBlock(*MasterServers[i].get()));
-		}
-	}
+        for(size_t i = 0; i < MasterServers.size(); i++){
+            vals.push_back(new VariableBlock(*MasterServers[i].get()));
+        }
+    }
 
-	NamedVars headervars;
+    NamedVars headervars;
     headervars.Add(std::make_shared<NamedVariableList>("MasterServers", vals));
 
-	ObjectFile file(headervars);
+    ObjectFile file(headervars);
 
-	ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile,
+    ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile,
         Logger::Get());
 }
 
 bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 
-	// Skip if there is no file defined //
-	if(!StoredMasterServerInfo.StoredListFile.size())
-		return false;
+    // Skip if there is no file defined //
+    if(!StoredMasterServerInfo.StoredListFile.size())
+        return false;
 
-	auto fileobj = ObjectFileProcessor::ProcessObjectFile(
+    auto fileobj = ObjectFileProcessor::ProcessObjectFile(
         StoredMasterServerInfo.StoredListFile, Logger::Get());
 
-	if(!fileobj)
-		return false;
+    if(!fileobj)
+        return false;
 
-	// Try to get the right variable with the name //
-	auto foundvar = fileobj->GetVariables()->GetValueDirectRaw("MasterServers");
+    // Try to get the right variable with the name //
+    auto foundvar = fileobj->GetVariables()->GetValueDirectRaw("MasterServers");
 
-	if(!foundvar)
-		return false;
+    if(!foundvar)
+        return false;
 
-	// Found value, load //
-	size_t maxval = foundvar->GetVariableCount();
+    // Found value, load //
+    size_t maxval = foundvar->GetVariableCount();
 
-	// We need locking for this add //
-	GUARD_LOCK();
+    // We need locking for this add //
+    GUARD_LOCK();
 
-	MasterServers.reserve(maxval);
+    MasterServers.reserve(maxval);
 
-	for(size_t i = 0; i < maxval; i++){
-		MasterServers.push_back(unique_ptr<string>(new std::string(
+    for(size_t i = 0; i < maxval; i++){
+        MasterServers.push_back(unique_ptr<string>(new std::string(
                     foundvar->GetValueDirect(i)->ConvertAndReturnVariable<std::string>())));
-	}
+    }
 
-	return true;
+    return true;
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::ShutdownCache() {
@@ -411,16 +411,16 @@ DLLEXPORT void Leviathan::NetworkHandler::ReleaseInputHandler() {
 DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(
     const string &fulladdress, const string &regextouse /*= "http://.*?/"*/)
 {
-	// Create a regex //
-	regex findaddressregex(regextouse, regex_constants::ECMAScript | regex_constants::icase);
+    // Create a regex //
+    regex findaddressregex(regextouse, regex_constants::ECMAScript | regex_constants::icase);
 
-	match_results<const char*> addressmatch;
+    match_results<const char*> addressmatch;
 
-	// Return the match //
-	regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
+    // Return the match //
+    regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
 
 
-	return string(addressmatch[1]);
+    return string(addressmatch[1]);
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::_RegisterConnection(
@@ -451,7 +451,7 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
         // Do listening //
         if (!BlockingMode) {
 
-            _RunUpdateOnce();
+            _RunUpdateOnce(guard);
         }
 
         // Time-out requests //
@@ -462,13 +462,13 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
     }
 
     
-	// Interface might want to do something //
-	GetInterface()->TickIt();
+    // Interface might want to do something //
+    GetInterface()->TickIt();
 }
 // ------------------------------------ //
 Lock Leviathan::NetworkHandler::LockSocketForUse(){
     
-	return Lock((SocketMutex));
+    return Lock((SocketMutex));
 }
 // ------------------------------------ //
 DLLEXPORT void NetworkHandler::CloseConnection(Connection &to){
@@ -476,19 +476,19 @@ DLLEXPORT void NetworkHandler::CloseConnection(Connection &to){
     Lock lock(ConnectionsToTerminateMutex);
 
     // Return if it is already queued //
-	for(auto& connection : ConnectionsToTerminate){
-		if(connection == &to)
-			return;
-	}
+    for(auto& connection : ConnectionsToTerminate){
+        if(connection == &to)
+            return;
+    }
 
-	ConnectionsToTerminate.push_back(&to);
+    ConnectionsToTerminate.push_back(&to);
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(Lock &guard)
 {
     Lock terminatelock(ConnectionsToTerminateMutex);
 
-	// Go through the removed connection list and remove closed connections //
+    // Go through the removed connection list and remove closed connections //
     for (size_t a = 0; a < OpenConnections.size(); ) {
 
         bool close = false;
@@ -558,18 +558,18 @@ DLLEXPORT std::shared_ptr<Connection> Leviathan::NetworkHandler::OpenConnectionT
             return connection;
     }
 
-	// Create new //
+    // Create new //
     auto newconnection = std::make_shared<Connection>(targetaddress);
 
-	// Initialize the connection //
-	if(!newconnection->Init(this)){
+    // Initialize the connection //
+    if(!newconnection->Init(this)){
         
-		return nullptr;
-	}
+        return nullptr;
+    }
 
     OpenConnections.push_back(newconnection);
 
-	return newconnection;
+    return newconnection;
 }
 
 DLLEXPORT std::shared_ptr<Leviathan::Connection> Leviathan::NetworkHandler::OpenConnectionTo(
@@ -603,9 +603,12 @@ void Leviathan::NetworkHandler::_RunListenerThread(){
 
     // Let's listen for things //
     Logger::Get()->Info("NetworkHandler: running listening thread");
+    {
 
-    while (_RunUpdateOnce()) {
+        GUARD_LOCK();
+        while (_RunUpdateOnce(guard)) {
 
+        }
     }
 
     Logger::Get()->Info("NetworkHandler: listening socket thread quitting");
@@ -691,31 +694,31 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
 
     }, instance));
 
-	if(!instance->_LoadMasterServerList()){
+    if(!instance->_LoadMasterServerList()){
 
-		// We need to request a new list before we can do anything //
-		Logger::Get()->Info("NetworkHandler: no stored list of master servers, "
+        // We need to request a new list before we can do anything //
+        Logger::Get()->Info("NetworkHandler: no stored list of master servers, "
             "waiting for the update to finish");
 
         if(!DataUpdaterThread.joinable())
             throw Exception("This should be joinable");
-		DataUpdaterThread.join();
-	}
+        DataUpdaterThread.join();
+    }
 
-	if(instance->CloseMasterServerConnection)
+    if(instance->CloseMasterServerConnection)
         return;
 
-	bool uselocalhost = false;
+    bool uselocalhost = false;
 
-	// We might want to try to connect to localhost //
+    // We might want to try to connect to localhost //
     {
-		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+        GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
-		if(variables)
-			variables->GetValueAndConvertTo<bool>("MasterServerForceLocalhost", uselocalhost);
-	}
+        if(variables)
+            variables->GetValueAndConvertTo<bool>("MasterServerForceLocalhost", uselocalhost);
+    }
 
-	// Try to find a master server to connect to //
+    // Try to find a master server to connect to //
     for (size_t i = 0; i < instance->MasterServers.size(); i++) {
 
         shared_ptr<string> tmpaddress;
@@ -827,23 +830,23 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
             resultvar));
     }
 
-	// TODO: run this only when all the tasks fail
-	if(false){
-		// If we got here, we haven't connected to anything //
-		Logger::Get()->Warning("NetworkHandler: could not connect to any fetched master "
+    // TODO: run this only when all the tasks fail
+    if(false){
+        // If we got here, we haven't connected to anything //
+        Logger::Get()->Warning("NetworkHandler: could not connect to any fetched master "
             "servers, you can restart to use a new list");
-		
-		// We can let whoever is waiting for us to go now, and finish some utility
+        
+        // We can let whoever is waiting for us to go now, and finish some utility
         // tasks after that
-		resultvar->set_value(std::string("Failed to connect to master server"));
-	}
+        resultvar->set_value(std::string("Failed to connect to master server"));
+    }
 
-	// This needs to be done here //
+    // This needs to be done here //
     if(DataUpdaterThread.joinable())
         DataUpdaterThread.join();
 
-	// Output the current list //
-	instance->_SaveMasterServerList();
+    // Output the current list //
+    instance->_SaveMasterServerList();
 }
 
 

@@ -3,6 +3,7 @@
 #include "Networking/NetworkRequest.h"
 
 #include "PartialEngine.h"
+#include "../DummyLog.h"
 
 #include "catch.hpp"
 
@@ -163,6 +164,34 @@ TEST_CASE("Ack field filling", "networking") {
         CHECK(receive.IsAckSet(11));
         CHECK(!receive.IsAckSet(93));
     }
+}
+
+TEST_CASE("Packet serialization and deserialization", "networking") {
+
+    PartialEngine<false> reporter;
+
+    SECTION("Connect basic data") {
+
+        sf::Packet packet;
+
+        RequestConnect request;
+
+        request.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkRequest::LoadFromPacket(packet, 0);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_REQUEST_TYPE::Connect);
+
+        RequestConnect* deserialized = static_cast<RequestConnect*>(loaded.get());
+
+        CHECK(deserialized->CheckValue == request.CheckValue);
+    }
+
+
 }
 
 class ConnectionTestFixture {

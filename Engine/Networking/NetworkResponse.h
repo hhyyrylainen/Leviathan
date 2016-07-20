@@ -146,7 +146,7 @@ public:
 
     inline void AddDataToPacket(sf::Packet &packet) const{
 
-        packet << false << static_cast<uint16_t>(Type) << ResponseID;
+        packet << static_cast<uint8_t>(false) << static_cast<uint16_t>(Type) << ResponseID;
 
         _SerializeCustom(packet);
     }

@@ -170,6 +170,7 @@ TEST_CASE("Packet serialization and deserialization", "networking") {
 
     PartialEngine<false> reporter;
 
+    // Requests //
     SECTION("Connect basic data") {
 
         sf::Packet packet;
@@ -186,9 +187,33 @@ TEST_CASE("Packet serialization and deserialization", "networking") {
         REQUIRE(loaded);
         REQUIRE(loaded->GetType() == NETWORK_REQUEST_TYPE::Connect);
 
-        RequestConnect* deserialized = static_cast<RequestConnect*>(loaded.get());
+        auto* deserialized = static_cast<RequestConnect*>(loaded.get());
 
         CHECK(deserialized->CheckValue == request.CheckValue);
+    }
+
+
+    // Responses //
+    SECTION("ResponseAuthenticate") {
+
+        sf::Packet packet;
+
+        ResponseAuthenticate response(0, 1001, 523980358035209);
+
+        response.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkResponse::LoadFromPacket(packet);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_RESPONSE_TYPE::Authenticate);
+
+        auto* deserialized = static_cast<ResponseAuthenticate*>(loaded.get());
+
+        CHECK(deserialized->UserID == response.UserID);
+        CHECK(deserialized->UserToken == response.UserToken);
     }
 
 

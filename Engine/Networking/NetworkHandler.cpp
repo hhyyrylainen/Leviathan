@@ -211,15 +211,16 @@ bool Leviathan::NetworkHandler::_RunUpdateOnce(Lock &guard)
 
     RemoteConsole* rcon = Engine::Get()->GetRemoteConsole();
 
-    auto lock = LockSocketForUse();
-
     sf::Socket::Status status;
 
     while (true) {
 
         guard.unlock();
 
-        status = _Socket.receive(receivedpacket, sender, sentport);
+        {
+            auto lock = LockSocketForUse();
+            status = _Socket.receive(receivedpacket, sender, sentport);
+        }
 
         guard.lock();
 

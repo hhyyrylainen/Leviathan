@@ -19,7 +19,7 @@ using namespace Leviathan;
 //! Makes the program spam a ton of debug info about packets //
 #define SPAM_ME_SOME_PACKETS 1
 
-#define OUTPUT_PACKET_BITS 1
+//#define OUTPUT_PACKET_BITS 1
 
 // ------------------------------------ //
 DLLEXPORT Connection::Connection(const std::string &hostname) : 
@@ -217,7 +217,7 @@ void Leviathan::Connection::_Resend(Lock &guard, SentNetworkThing &toresend){
     if (!IsValidForSend())
         return;
 
-    if (toresend.Resend != RECEIVE_GUARANTEE::None) {
+    if (toresend.Resend == RECEIVE_GUARANTEE::None) {
         LOG_ERROR("Connection: Trying to Resend non-guaranteed packet");
         return;
     }
@@ -419,7 +419,7 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet) {
     GUARD_LOCK();
 
     // Payload header //
-    bool isrequest;
+    uint8_t isrequest;
 
     if(!(packet >> isrequest)){
 
@@ -636,6 +636,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard,
     // Eat up all the packets if not properly opened yet
     if (State != CONNECTION_STATE::Authenticated) {
 
+        LOG_WARNING("Connection: not yet properly open, ignoring packet from: " +
+            GenerateFormatedAddressString());
         return true;
     }
 
@@ -680,7 +682,6 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
             return true;
         }
 
-
         // Verify security type is what we wanted //
         auto* securityresponse = static_cast<ResponseSecurity*>(response.get());
 
@@ -691,7 +692,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
             return true;
         }
 
-        State == CONNECTION_STATE::Secured;
+        State = CONNECTION_STATE::Secured;
 
         // TODO: send an empty authentication request if this is a master server connection
         if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
@@ -724,6 +725,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
     // Eat up all the packets if not properly opened yet
     if (State != CONNECTION_STATE::Authenticated) {
 
+        LOG_WARNING("Connection: not yet properly open, ignoring packet from: " + 
+            GenerateFormatedAddressString());
         return true;
     }
 
@@ -744,7 +747,8 @@ void Leviathan::Connection::_PreparePacketHeaderForPacket(Lock &guard,
 
     if(dontsendacks || ReceivedRemotePackets.empty()){
 
-        tofill << uint32_t(0) << uint8_t(0);
+        // Set first to be zero which assumes that no data follows
+        tofill << uint32_t(0);
 
     } else {
 

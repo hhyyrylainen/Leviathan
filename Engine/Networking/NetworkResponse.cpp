@@ -9,13 +9,14 @@ using namespace std;
 
 DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::Packet &packet){
 
-    // First thing is the response ID //
-    uint32_t responseid = 0;
-    packet >> responseid;
-
-    // Second is the type, based on which we handle the rest of the data //
+    // First thing is the type, based on which we handle the rest of the data
+    // This is before responseid to look more like a request packet
     uint16_t rawtype;
     packet >> rawtype;
+
+    // Second thing is the response ID //
+    uint32_t responseid = 0;
+    packet >> responseid;
 
     if(!packet)
         throw InvalidArgument("packet has invalid format");
@@ -28,7 +29,10 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
     case NETWORK_RESPONSE_TYPE::Keepalive:
     case NETWORK_RESPONSE_TYPE::None:
         return std::make_shared<ResponseNone>(responsetype, responseid, packet);
-
+    case NETWORK_RESPONSE_TYPE::Connect:
+        return std::make_shared<ResponseConnect>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::Authenticate:
+        return std::make_shared<ResponseAuthenticate>(responseid, packet);
     default:
         {
             Logger::Get()->Warning("NetworkResponse: unused type: "+

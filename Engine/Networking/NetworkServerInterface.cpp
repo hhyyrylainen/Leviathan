@@ -15,7 +15,7 @@ using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::NetworkServerInterface::NetworkServerInterface(
     int maxplayers, const std::string &servername, 
-	SERVER_JOIN_RESTRICT restricttype, int additionalflags /*= 0*/) :
+    SERVER_JOIN_RESTRICT restricttype, int additionalflags /*= 0*/) :
     NetworkInterface(NETWORKED_TYPE::Server),
     MaxPlayers(maxplayers), ServerName(servername), JoinRestrict(restricttype),
     ExtraServerFlags(additionalflags),
@@ -28,35 +28,35 @@ DLLEXPORT Leviathan::NetworkServerInterface::~NetworkServerInterface(){
 
     Lock lock(PlayerListLocked);
     
-	// Release the memory //
-	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
+    // Release the memory //
+    for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
 
-		// Can't report errors at this point, but maybe we should //
+        // Can't report errors at this point, but maybe we should //
         cout << "Warning! server quitting while player list has data in it" << endl;
         
-		iter = ServerPlayers.erase(iter);
-	}
+        iter = ServerPlayers.erase(iter);
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::CloseDown(){
 
     _OnCloseDown();
 
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// Prevent new players //
-	ServerStatus = SERVER_STATUS::Shutdown;
-	AllowJoin = false;
+    // Prevent new players //
+    ServerStatus = SERVER_STATUS::Shutdown;
+    AllowJoin = false;
 
     Lock uniqueplylock(PlayerListLocked);
     
-	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
+    for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ){
 
-		// Kick them //
-		(*iter)->OnKicked("Server closing");
+        // Kick them //
+        (*iter)->OnKicked("Server closing");
 
-		iter = ServerPlayers.erase(iter);
-	}
+        iter = ServerPlayers.erase(iter);
+    }
 
     _CommandHandler.reset();
 }
@@ -65,17 +65,17 @@ DLLEXPORT std::shared_ptr<ConnectedPlayer>
 Leviathan::NetworkServerInterface::GetPlayerForConnection(
     Connection &connection)
 {
-	GUARD_LOCK();
-	// Search through the connections //
+    GUARD_LOCK();
+    // Search through the connections //
     Lock plylock(PlayerListLocked);
     
-	for(size_t i = 0; i < ServerPlayers.size(); i++){
-		// Check with the pointer //
-		if(ServerPlayers[i]->IsConnectionYours(&connection))
-			return ServerPlayers[i];
-	}
+    for(size_t i = 0; i < ServerPlayers.size(); i++){
+        // Check with the pointer //
+        if(ServerPlayers[i]->IsConnectionYours(&connection))
+            return ServerPlayers[i];
+    }
 
-	return nullptr;
+    return nullptr;
 }
 
 DLLEXPORT std::vector<std::shared_ptr<Leviathan::Connection>>& 
@@ -91,117 +91,118 @@ DLLEXPORT void Leviathan::NetworkServerInterface::RespondToServerStatusRequest(
     Lock plylock(PlayerListLocked);
 
     ResponseServerStatus response(request->GetIDForResponse(), ServerName,
-        AllowJoin, JoinRestrict, ServerStatus, ServerPlayers.size(), MaxPlayers, 
-        ActiveBots.size(), ExtraServerFlags);
+        AllowJoin, JoinRestrict, ServerStatus, static_cast<int32_t>(ServerPlayers.size()), 
+        MaxPlayers, 
+        static_cast<int32_t>(ActiveBots.size()), ExtraServerFlags);
 
     // Send it //
     connectiontouse.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::SetServerStatus(SERVER_STATUS newstatus){
-	ServerStatus = newstatus;
+    ServerStatus = newstatus;
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::SetServerAllowPlayers(bool allowingplayers){
-	AllowJoin = allowingplayers;
+    AllowJoin = allowingplayers;
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerRequest(
     std::shared_ptr<NetworkRequest> request,
     Connection &connectiontosendresult)
 {
-	switch(request->GetType()){
+    switch(request->GetType()){
     case NETWORK_REQUEST_TYPE::RequestCommandExecution:
-		{
-			// Get the matching player //
-			auto ply = GetPlayerForConnection(connectiontosendresult);
+        {
+            // Get the matching player //
+            auto ply = GetPlayerForConnection(connectiontosendresult);
 
-			// Drop it if no matching players //
-			if(!ply)
-				return true;
+            // Drop it if no matching players //
+            if(!ply)
+                return true;
 
-			// Send a response to the sender //
+            // Send a response to the sender //
             ResponseNone response(NETWORK_RESPONSE_TYPE::None);
 
-			connectiontosendresult.SendPacketToConnection(response, 
+            connectiontosendresult.SendPacketToConnection(response, 
                 RECEIVE_GUARANTEE::Critical);
 
-			// Extract the command //
-			auto* data =  static_cast<RequestRequestCommandExecution*>(request.get());
+            // Extract the command //
+            auto* data =  static_cast<RequestRequestCommandExecution*>(request.get());
 
             // We need to lock the player object for the adding process //
-			GUARD_LOCK_OTHER_NAME(ply, lock2);
+            GUARD_LOCK_OTHER_NAME(ply, lock2);
 
-			// Execute it //
-			_CommandHandler->QueueCommand(data->Command, ply.get(), lock2);
+            // Execute it //
+            _CommandHandler->QueueCommand(data->Command, ply.get(), lock2);
 
-			return true;
-		}
+            return true;
+        }
     case NETWORK_REQUEST_TYPE::Serverstatus:
-		{
-			RespondToServerStatusRequest(request, connectiontosendresult);
-			return true;
-		}
+        {
+            RespondToServerStatusRequest(request, connectiontosendresult);
+            return true;
+        }
     case NETWORK_REQUEST_TYPE::JoinServer:
-		{
-			// Call handling function //
-			Logger::Get()->Info("NetworkServerInterface: player on " + connectiontosendresult.
+        {
+            // Call handling function //
+            Logger::Get()->Info("NetworkServerInterface: player on " + connectiontosendresult.
                 GenerateFormatedAddressString() + "is trying to connect");
             
-			_HandleServerJoinRequest(request, connectiontosendresult);
-			return true;
-		}
-	}
+            _HandleServerJoinRequest(request, connectiontosendresult);
+            return true;
+        }
+    }
 
-	// We didn't know how to handle this packet //
-	return false;
+    // We didn't know how to handle this packet //
+    return false;
 }
 
 DLLEXPORT bool Leviathan::NetworkServerInterface::_HandleServerResponseOnly(
     std::shared_ptr<NetworkResponse> message, Connection &connection, bool &dontmarkasreceived)
 {
-	switch(message->GetType()){
+    switch(message->GetType()){
     case NETWORK_RESPONSE_TYPE::ServerHeartbeat:
-		{
-			// Notify the matching player object about a heartbeat //
-			auto ply = GetPlayerForConnection(connection);
+        {
+            // Notify the matching player object about a heartbeat //
+            auto ply = GetPlayerForConnection(connection);
 
-			if(!ply){
+            if(!ply){
 
-				Logger::Get()->Warning("NetworkServerInterface: received a heartbeat packet "
+                Logger::Get()->Warning("NetworkServerInterface: received a heartbeat packet "
                     "from a non-existing player");
-				return true;
-			}
+                return true;
+            }
 
-			ply->HeartbeatReceived();
-			
-			// Avoid spamming packets back //
-			//dontmarkasreceived = true;
+            ply->HeartbeatReceived();
+            
+            // Avoid spamming packets back //
+            //dontmarkasreceived = true;
 
-			return true;
-		}
-	}
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
     std::shared_ptr<NetworkRequest> request,
     Connection &connection)
 {
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	if(!AllowJoin){
+    if(!AllowJoin){
 
         ResponseServerDisallow response(request->GetIDForResponse(), 
             "Server is not accepting any players at this time",
             NETWORK_RESPONSE_INVALIDREASON::ServerNotAcceptingPlayers);
 
-		connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
-		return;
-	}
+        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+        return;
+    }
 
-	// Check is the player already connected //
+    // Check is the player already connected //
     if (GetPlayerForConnection(connection)) {
 
         ResponseServerDisallow response(request->GetIDForResponse(),
@@ -212,10 +213,10 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
         return;
     }
 
-	// Call this here, so this can potentially kick players for reserved slots //
-	PlayerPreconnect(connection, request);
+    // Call this here, so this can potentially kick players for reserved slots //
+    PlayerPreconnect(connection, request);
 
-	// Check if we can fit a new player //
+    // Check if we can fit a new player //
     {
 
         Lock plylock(PlayerListLocked);
@@ -233,7 +234,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
         }
 
     }
-	// Connection security check //
+    // Connection security check //
     if (connection.GetState() != CONNECTION_STATE::Authenticated) {
 
         ResponseServerDisallow response(request->GetIDForResponse(),
@@ -244,24 +245,24 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
         return;
     }
 
-	// Do something with join restrict things //
+    // Do something with join restrict things //
 
 
-	// Check if the program wants to veto this join //
-	std::string disallowmessage;
+    // Check if the program wants to veto this join //
+    std::string disallowmessage;
 
-	if(!AllowPlayerConnectVeto(request, connection, disallowmessage)){
+    if(!AllowPlayerConnectVeto(request, connection, disallowmessage)){
 
         ResponseServerDisallow response(request->GetIDForResponse(),
             disallowmessage,
             NETWORK_RESPONSE_INVALIDREASON::ServerCustom);
 
         connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
-		return;
-	}
+        return;
+    }
 
-	// Player joined! //
-	int newid = ++CurrentPlayerID;
+    // Player joined! //
+    int newid = ++CurrentPlayerID;
     {
         // The player list needs to be locked while we add stuff and read //
         Lock plylock(PlayerListLocked);
@@ -272,10 +273,10 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
         _OnReportPlayerConnected(ServerPlayers.back(), connection, guard);
     }
     
-	Logger::Get()->Info("NetworkServerInterface: accepted a new player, ID: "+
+    Logger::Get()->Info("NetworkServerInterface: accepted a new player, ID: "+
         Convert::ToString(newid));
 
-	// Send connection notification back to the client //
+    // Send connection notification back to the client //
     ResponseServerAllow response(request->GetIDForResponse(),
         SERVER_ACCEPTED_TYPE::ConnectAccepted, "Allowed, ID: " +
         Convert::ToString(newid));
@@ -296,14 +297,14 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerDisconnect(Lock &guar
 }
 
 DLLEXPORT bool Leviathan::NetworkServerInterface::PlayerPotentiallyKicked(ConnectedPlayer* player){
-	return true;
+    return true;
 }
 
 DLLEXPORT bool Leviathan::NetworkServerInterface::AllowPlayerConnectVeto(
     std::shared_ptr<NetworkRequest> request,
     Connection &connection, std::string &message)
 {
-	return true;
+    return true;
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(Connection &connection,
@@ -352,7 +353,7 @@ void Leviathan::NetworkServerInterface::_OnReportPlayerConnected(
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
-	{
+    {
         // Lock the list while we are doing stuff //
         Lock plylock(PlayerListLocked);
         
@@ -375,10 +376,10 @@ DLLEXPORT void Leviathan::NetworkServerInterface::UpdateServerStatus(){
             (*iter)->UpdateHeartbeats();
             ++iter;
         }
-	}
+    }
 
-	// Update the command handling //
-	_CommandHandler->UpdateStatus();
+    // Update the command handling //
+    _CommandHandler->UpdateStatus();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(
@@ -387,16 +388,16 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(
 {
     Lock plylock(PlayerListLocked);
     
-	// Loop the players and send to their connections //
-	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
+    // Loop the players and send to their connections //
+    for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
 
-		Connection* curconnection = (*iter)->GetConnection().get();
+        Connection* curconnection = (*iter)->GetConnection().get();
 
-		if(curconnection != skipme){
+        if(curconnection != skipme){
 
-			curconnection->SendPacketToConnection(response, guarantee);
-		}
-	}
+            curconnection->SendPacketToConnection(response, guarantee);
+        }
+    }
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(
@@ -404,11 +405,11 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(
 {
     Lock plylock(PlayerListLocked);
 
-	// Loop the players and send to their connections //
-	for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
+    // Loop the players and send to their connections //
+    for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter){
 
-		(*iter)->GetConnection()->SendPacketToConnection(response, guarantee);
-	}
+        (*iter)->GetConnection()->SendPacketToConnection(response, guarantee);
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::VerifyWorldIsSyncedWithPlayers(
@@ -416,7 +417,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::VerifyWorldIsSyncedWithPlayers
 {
     Lock plylock(PlayerListLocked);
     
-	// We can safely add all players as they will only be added if they aren't there already //
+    // We can safely add all players as they will only be added if they aren't there already //
     for (auto iter = ServerPlayers.begin(); iter != ServerPlayers.end(); ++iter)
         world->SetPlayerReceiveWorld(*iter);
 }

@@ -88,7 +88,7 @@ public:
 
     inline void AddDataToPacket(sf::Packet &packet) const{
 
-        packet << true << static_cast<uint16_t>(Type);
+        packet << static_cast<uint8_t>(true) << static_cast<uint16_t>(Type);
 
         _SerializeCustom(packet);
     }

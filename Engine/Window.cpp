@@ -34,18 +34,18 @@ static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function"
 
 // X11 window focus find function //
 XID Leviathan::Window::GetForegroundWindow(){
-	// Method posted on stack overflow (split to two lines to not be too long
+    // Method posted on stack overflow (split to two lines to not be too long
     //http://stackoverflow.com/questions/1014822/
     //how-to-know-which-window-has-focus-and-how-to-change-it
 
-	VerifyRenderWindowHandle();
+    VerifyRenderWindowHandle();
 
-	XID win;
+    XID win;
 
-	int revert_to;
-	XGetInputFocus(XDisplay, &win, &revert_to); // see man
+    int revert_to;
+    XGetInputFocus(XDisplay, &win, &revert_to); // see man
 
-	return win;
+    return win;
 }
 
 
@@ -89,7 +89,7 @@ DLLEXPORT Leviathan::Window::Window(Ogre::RenderWindow* owindow,
 DLLEXPORT Leviathan::Window::~Window(){
     // Unregister, just in case //
     Ogre::WindowEventUtilities::removeWindowEventListener(OWindow, this);
-	
+    
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset){
@@ -293,7 +293,7 @@ bool Leviathan::Window::VerifyRenderWindowHandle(){
 bool Leviathan::Window::VerifyRenderWindowHandle(){
 
     if(IsInvalidated || !OWindow || OWindow->isClosed()){
-		
+        
         m_hwnd = 0;
         XDisplay = 0;
         return false;
@@ -570,7 +570,7 @@ bool Leviathan::Window::mouseMoved(const OIS::MouseEvent &arg){
     }
 
     _CheckMouseVisibilityStates();
-	
+    
     return true;
 }
 
@@ -623,7 +623,7 @@ bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButto
 
         inputreceiver->injectMouseButtonDown(pressed);
     }
-	
+    
     return true;
 }
 
@@ -735,7 +735,7 @@ DLLEXPORT Int4 Leviathan::Window::GetScreenPixelRect() const{
     unsigned int height;
     // We can use Ogre to get the metrics
     OWindow->getMetrics(width, height, unused, result.X, result.Y);
-	
+    
     result.Z = width;
     result.W = height;
     return result;
@@ -821,7 +821,7 @@ boost::bimap<std::string, OIS::KeyCode> Leviathan::Window::CharacterToOISConvert
           (SIMPLEONETOONE(F22))
           (SIMPLEONETOONE(F23))
           (SIMPLEONETOONE(F24))*/
-	
+    
         (SIMPLEONETOONE(HOME))
 
         (SIMPLEONETOONE(NUMPAD0))
@@ -857,7 +857,7 @@ DLLEXPORT OIS::KeyCode Leviathan::Window::ConvertStringToOISKeyCode(const string
 }
 
 DLLEXPORT string Leviathan::Window::ConvertOISKeyCodeToString(const OIS::KeyCode &code){
-	
+    
     auto iter = CharacterToOISConvert.right.find(code);
 
     if(iter == CharacterToOISConvert.right.end()){

@@ -6,6 +6,7 @@
 #include "Events/EventHandler.h"
 #include "TimeIncludes.h"
 #include "Networking/NetworkClientInterface.h"
+#include <string>
 
 #include "../catch/catch.hpp"
 
@@ -21,6 +22,30 @@ class PartialClient : public NetworkClientInterface{
 public:
     void _OnStartApplicationConnect() override{
         
+    }
+};
+
+class TestLogger : public Logger {
+public:
+    TestLogger(const std::string &file) : Logger(file){ }
+
+    void Error(const std::string &data) override {
+
+        REQUIRE(false);
+        Logger::Error(data);
+    }
+
+    void Warning(const std::string &data) override {
+
+        REQUIRE(false);
+        Logger::Warning(data);
+
+    }
+
+    void Fatal(const std::string &Text) override {
+
+        REQUIRE(false);
+        Logger::Fatal(Text);
     }
 };
 
@@ -80,6 +105,6 @@ public:
     }
 
     PartialApplication App;
-    Logger Log;
+    TestLogger Log;
     AppDef Def;
 };

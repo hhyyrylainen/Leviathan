@@ -27,6 +27,10 @@ DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Pac
         return std::make_shared<RequestEcho>(requesttype, packetid, packet);
     case NETWORK_REQUEST_TYPE::Connect:
         return std::make_shared<RequestConnect>(packetid, packet);
+    case NETWORK_REQUEST_TYPE::Security:
+        return std::make_shared<RequestSecurity>(packetid, packet);
+    case NETWORK_REQUEST_TYPE::Authenticate:
+        return std::make_shared<RequestAuthenticate>(packetid, packet);
     default:
         {
             Logger::Get()->Warning("NetworkRequest: unused type: "+

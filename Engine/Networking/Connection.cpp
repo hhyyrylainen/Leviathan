@@ -101,16 +101,12 @@ DLLEXPORT void Connection::Release(){
     Logger::Get()->Info("Connection: disconnecting from " + GenerateFormatedAddressString());
 
     // Send a close packet //
+    // This will mark this as closed
     SendCloseConnectionPacket(guard);
 
-    State = CONNECTION_STATE::Closed;
-
-    // Destroy some of our stuff //
-    TargetHost == sf::IpAddress::None;
-        
     // Make sure that all our remaining packets fail //
     auto end = WaitingRequests.end();
-    for(auto iter = WaitingRequests.begin(); iter != end; ++iter){
+    for (auto iter = WaitingRequests.begin(); iter != end; ++iter) {
 
         // Mark as failed //
         (*iter)->SetWaitStatus(false);
@@ -118,8 +114,45 @@ DLLEXPORT void Connection::Release(){
 
     // All are now properly closed //
     WaitingRequests.clear();
+
+    // Destroy some of our stuff //
+    TargetHost == sf::IpAddress::None;
 }
 // ------------------------------------ //
+#ifdef LEVIATHAN_DEBUG
+void VerifyTypeHadData(sf::Packet &packet, const NetworkRequest &request) {
+
+    if (packet.getDataSize() > 0)
+        return;
+
+    switch (request.GetType()) {
+    case NETWORK_REQUEST_TYPE::Echo:
+        return;
+    }
+
+
+    LOG_ERROR("Connection: sending packet that needs data without data, type request: " +
+        Convert::ToString(static_cast<int>(request.GetType())));
+    DEBUG_BREAK;
+}
+
+void VerifyTypeHadData(sf::Packet &packet, const NetworkResponse &response) {
+
+    if (packet.getDataSize() > 0)
+        return;
+
+    switch (response.GetType())
+    {
+    case NETWORK_RESPONSE_TYPE::CloseConnection:
+        return;
+    }
+
+    LOG_ERROR("Connection: sending packet that needs data without data, type response: " +
+        Convert::ToString(static_cast<int>(response.GetType())));
+    DEBUG_BREAK;
+}
+#endif // LEVIATHAN_DEBUG
+
 DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(Lock &guard,
     const NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
 {
@@ -136,6 +169,10 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(L
     sf::Packet messagedata;
 
     request.AddDataToPacket(messagedata);
+
+#ifdef LEVIATHAN_DEBUG
+    VerifyTypeHadData(messagedata, request);
+#endif // LEVIATHAN_DEBUG
 
     // Add the data to the actual packet //
     actualpackettosend.append(messagedata.getData(), messagedata.getDataSize());
@@ -167,6 +204,10 @@ DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(L
     sf::Packet messagedata;
 
     response.AddDataToPacket(messagedata);
+    
+#ifdef LEVIATHAN_DEBUG
+    VerifyTypeHadData(messagedata, response);
+#endif // LEVIATHAN_DEBUG
 
     // Add the data to the actual packet //
     actualpackettosend.append(messagedata.getData(), messagedata.getDataSize());
@@ -1007,7 +1048,7 @@ DLLEXPORT bool Leviathan::Connection::BlockUntilFinished(
 DLLEXPORT void Leviathan::Connection::AddDataForResponseWithoutData(sf::Packet &packet,
     NETWORK_RESPONSE_TYPE type) 
 {
-    packet << false << static_cast<uint32_t>(0) << static_cast<uint16_t>(type);
+    packet << false << static_cast<uint16_t>(type) << static_cast<uint32_t>(0);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Connection::SetPacketsReceivedIfNotSet(Lock &guard, 

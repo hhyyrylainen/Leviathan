@@ -263,14 +263,14 @@ bool Leviathan::NetworkHandler::_RunUpdateOnce(Lock &guard)
             // Accept the connection //
             LOG_WRITE("\t> Connection accepted");
 
-            tmpconnect = OpenConnectionTo(sender, sentport);
+            tmpconnect = OpenConnectionTo(guard, sender, sentport);
 
         } else if (rcon && rcon->IsAwaitingConnections()) {
 
             // We might allow a remote start remote console session //
             LOG_WRITE("\t> Connection accepted for remote console receive");
 
-            tmpconnect = OpenConnectionTo(sender, sentport);
+            tmpconnect = OpenConnectionTo(guard, sender, sentport);
 
             // We need a special restriction for this connection //
             if (tmpconnect)
@@ -574,10 +574,8 @@ DLLEXPORT std::shared_ptr<Connection> Leviathan::NetworkHandler::OpenConnectionT
 }
 
 DLLEXPORT std::shared_ptr<Leviathan::Connection> Leviathan::NetworkHandler::OpenConnectionTo(
-    const sf::IpAddress &targetaddress, unsigned short port) 
+    Lock &guard, const sf::IpAddress &targetaddress, unsigned short port) 
 {
-    GUARD_LOCK();
-
     // Find existing one //
     for (auto& connection : OpenConnections) {
 

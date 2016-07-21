@@ -106,8 +106,15 @@ public:
 
     //! \brief Variant for already resolved address
     //! \see OpenConnectionTo
-    DLLEXPORT std::shared_ptr<Connection> OpenConnectionTo(
+    DLLEXPORT std::shared_ptr<Connection> OpenConnectionTo(Lock &guard,
         const sf::IpAddress &targetaddress, unsigned short port);
+
+    inline std::shared_ptr<Connection> OpenConnectionTo(const sf::IpAddress &targetaddress,
+        unsigned short port)             
+    {
+        GUARD_LOCK();
+        return OpenConnectionTo(guard, targetaddress, port);
+    }
 
     //! Returns the port to which our socket has been bind
     inline uint16_t GetOurPort() const{

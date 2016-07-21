@@ -33,6 +33,8 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
         return std::make_shared<ResponseConnect>(responseid, packet);
     case NETWORK_RESPONSE_TYPE::Authenticate:
         return std::make_shared<ResponseAuthenticate>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::Security:
+        return std::make_shared<ResponseSecurity>(responseid, packet);
     default:
         {
             Logger::Get()->Warning("NetworkResponse: unused type: "+

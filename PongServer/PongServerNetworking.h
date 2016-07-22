@@ -13,39 +13,25 @@ namespace Pong{
 
     using namespace std;
 
-	class PongServerNetworking : public Leviathan::NetworkInterface,
-                                   public Leviathan::NetworkServerInterface
+    class PongServerNetworking : public Leviathan::NetworkServerInterface
     {
-	public:
-		PongServerNetworking();
-		virtual ~PongServerNetworking();
+    public:
+        PongServerNetworking();
+        virtual ~PongServerNetworking();
 
-		virtual void HandleResponseOnlyPacket(shared_ptr<Leviathan::NetworkResponse> message,
-            Leviathan::ConnectionInfo* connection, bool &dontmarkasreceived);
-		virtual void HandleRequestPacket(shared_ptr<NetworkRequest> request,
-            ConnectionInfo* connection);
+        //! Sets the current state and notifies clients
+        void SetStatus(PONG_JOINGAMERESPONSE_TYPE status);
 
-		virtual void TickIt();
+    protected:
 
-		virtual void CloseDown();
+        virtual void RegisterCustomCommandHandlers(CommandHandler* addhere);
 
-
-		//! Sets the current state and notifies clients
-		void SetStatus(PONG_JOINGAMERESPONSE_TYPE status);
-
-		//! Makes sure that all the players are synced with a world
-		void VerifySyncWorldForPlayers(Leviathan::GameWorld* world);
-
-	protected:
-
-		virtual void RegisterCustomCommandHandlers(CommandHandler* addhere);
-
-		//! \brief Removes the player from the game
-		virtual void _OnPlayerDisconnect(Leviathan::ConnectedPlayer* newplayer);
+        //! \brief Removes the player from the game
+        virtual void _OnPlayerDisconnect(Leviathan::ConnectedPlayer* newplayer);
 
 
-		PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;
-	};
+        PONG_JOINGAMERESPONSE_TYPE ServerStatusIs;
+    };
 
 }
 

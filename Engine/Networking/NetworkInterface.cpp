@@ -23,43 +23,43 @@ DLLEXPORT NetworkInterface::~NetworkInterface(){
 
 }
 // ------------------------------------ //
+DLLEXPORT bool NetworkInterface::PreHandleResponse(std::shared_ptr<NetworkResponse> response,
+    SentNetworkThing* originalrequest, Connection &connection) {
+    return true;
+}
+// ------------------------------------ //
 DLLEXPORT void NetworkInterface::HandleRequestPacket(
     shared_ptr<NetworkRequest> request, Connection &connection) 
 {
-	// We can only try the default handle function //
-	if(!_HandleDefaultRequest(request, connection)){
-		// We couldn't handle it //
+    // We can only try the default handle function //
+    if(!_HandleDefaultRequest(request, connection)){
+        // We couldn't handle it //
 
-		throw InvalidArgument("could not handle request with default handler");
-	}
-}
-
-DLLEXPORT bool NetworkInterface::PreHandleResponse(std::shared_ptr<NetworkResponse> response,
-    SentNetworkThing* originalrequest, Connection &connection)
-{
-	return true;
+        throw InvalidArgument("could not handle request with default handler");
+    }
 }
 // ------------------------------------ //
 bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
     Connection &connection)
 {
-	// Switch based on type //
+    // Switch based on type //
 
-	// See if it is a sync packet //
-	if(Owner->GetSyncedVariables()->HandleSyncRequests(request, &connection))
-		return true;
+    // See if it is a sync packet //
+    if(Owner->GetSyncedVariables()->HandleSyncRequests(request, &connection))
+        return true;
 
-	switch(request->GetType()){
+    switch(request->GetType()){
     case NETWORK_REQUEST_TYPE::Identification:
-		{
+        {
             // Avoid allowing DDOS amplification
             const uint32_t maxlength = static_cast<uint32_t>(
                 static_cast<RequestIdentification*>(request.get())->DDOSBlock.size());
 
-			// Fetch the data from the configuration object //
-			string userreadable, gamename, gameversion;
+            // Fetch the data from the configuration object //
+            string userreadable, gamename, gameversion;
 
-			AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, gameversion);
+            AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, 
+                gameversion);
 
             ResponseIdentification response(0, 
                     userreadable, gamename, gameversion, LEVIATHAN_VERSION_ANSIS);
@@ -67,11 +67,11 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
 
             NetworkResponse::LimitResponseSize(response, maxlength);
 
-			connection.SendPacketToConnection(response, 
+            connection.SendPacketToConnection(response, 
                 RECEIVE_GUARANTEE::ResendOnce);
 
-			return true;
-		}
+            return true;
+        }
     case NETWORK_REQUEST_TYPE::Echo:
         {
             // Send an empty response back //
@@ -84,12 +84,12 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
         }
     case NETWORK_REQUEST_TYPE::RemoteConsoleAccess: 
     case NETWORK_REQUEST_TYPE::CloseRemoteConsole:
-		{
+        {
             Engine::Get()->GetRemoteConsole()->HandleRemoteConsoleRequestPacket(request, 
                 Owner->GetConnection(&connection));
 
-			return true;
-		}
+            return true;
+        }
     case NETWORK_REQUEST_TYPE::ConnectInput:
         {
             DEBUG_BREAK;
@@ -102,46 +102,47 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
         }
         default:
             return false;
-	}
+    }
 
-	// Unhandled //
-	return false;
+    // Unhandled //
+    return false;
 }
 // ------------------------------------ //
-bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, Connection
-    &connection, bool &dontmarkasreceived)
+bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, 
+    Connection &connection, bool &dontmarkasreceived)
 {
 
-	// See if it is a sync packet //
-	if(Owner->GetSyncedVariables()->HandleResponseOnlySync(message, &connection))
-		return true;
+    // See if it is a sync packet //
+    if(Owner->GetSyncedVariables()->HandleResponseOnlySync(message, &connection))
+        return true;
 
-	// Switch on type //
-	switch(message->GetType()){
+    // Switch on type //
+    switch(message->GetType()){
     case NETWORK_RESPONSE_TYPE::Keepalive:
     case NETWORK_RESPONSE_TYPE::None:
         {
-            // Empty packets without a matching request are just ignored, but marked as received
+            // Empty packets without a matching request are just ignored, 
+            // but marked as received
             return true;
         }
     case NETWORK_RESPONSE_TYPE::CloseConnection:
-		{
-			// This connection should be closed //
-			Logger::Get()->Info("NetworkInterface: dropping connection due to "
+        {
+            // This connection should be closed //
+            Logger::Get()->Info("NetworkInterface: dropping connection due to "
                 "receiving a connection close packet (" +
                 connection.GenerateFormatedAddressString() + ")");
 
             Owner->CloseConnection(connection);
-			return true;
-		}
+            return true;
+        }
     case NETWORK_RESPONSE_TYPE::RemoteConsoleOpened: 
     case NETWORK_RESPONSE_TYPE::RemoteConsoleClosed:
-		{
-			// Pass to remote console //
+        {
+            // Pass to remote console //
             Engine::Get()->GetRemoteConsole()->HandleRemoteConsoleResponse(message, 
                 connection, NULL);
-			return true;
-		}
+            return true;
+        }
     case NETWORK_RESPONSE_TYPE::CreateNetworkedInput: 
     case NETWORK_RESPONSE_TYPE::UpdateNetworkedInput:
         {
@@ -157,18 +158,14 @@ bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> me
             
         default:
             return false;
-	}
-	// Not handled //
-	return false;
+    }
+    // Not handled //
+    return false;
 }
 // ------------------------------------ //
 DLLEXPORT bool NetworkInterface::CanConnectionTerminate(Connection &connection){
-	// By default allow connections to close //
-	return true;
-}
-// ------------------------------------ //
-DLLEXPORT void NetworkInterface::TickIt(){
-	return;
+    // By default allow connections to close //
+    return true;
 }
 // ------------------------------------ //
 DLLEXPORT void NetworkInterface::VerifyType(NETWORKED_TYPE type) const{

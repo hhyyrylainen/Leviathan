@@ -38,78 +38,79 @@ namespace Pong{
 
     using namespace std;
 
-	class BasePongParts;
-	//! \brief Should be in BasePongParts, used for static access
-	//!
-	//! Why is gcc so stupid on linux that it does not allow __declspec(selectany)
-	extern BasePongParts* BasepongStaticAccess;
+    class BasePongParts;
+    //! \brief Should be in BasePongParts, used for static access
+    //!
+    //! Why is gcc so stupid on linux that it does not allow __declspec(selectany)
+    extern BasePongParts* BasepongStaticAccess;
 
-	//! \brief A parent class for the CommonPongParts class to allow non-template use
-	//!
-	//! Mainly required for passing CommonPongParts to non-template functions
-	class BasePongParts{
-		friend Arena;
-	public:
+    //! \brief A parent class for the CommonPongParts class to allow non-template use
+    //!
+    //! Mainly required for passing CommonPongParts to non-template functions
+    class BasePongParts{
+        friend Arena;
+    public:
 
-		static void StatUpdater(PlayerList* list){
-			Get()->OnPlayerStatsUpdated(list);
-		}
+        static void StatUpdater(PlayerList* list){
+            Get()->OnPlayerStatsUpdated(list);
+        }
 
 
-		BasePongParts(bool isserver) :
+        BasePongParts(Leviathan::NetworkInterface* networkinterface) :
+            _NetworkInterface(networkinterface),
             GameArena(nullptr), ErrorState("No error"),  
-			ScoreLimit("ScoreLimit", 20),
-			GamePaused("GamePaused", false), GameAI(NULL),
+            ScoreLimit("ScoreLimit", 20),
+            GamePaused("GamePaused", false), GameAI(NULL),
             LastPlayerHitBallID("LastPlayerHitBallID", -1),
             _PlayerList(std::function<void (PlayerList*)>(&StatUpdater), 4)
-		{
-			BasepongStaticAccess = this;
-		}
+        {
+            BasepongStaticAccess = this;
+        }
 
-		~BasePongParts(){
+        ~BasePongParts(){
 
-			SAFE_DELETE(GameAI);
-			BasepongStaticAccess = NULL;
-		}
+            SAFE_DELETE(GameAI);
+            BasepongStaticAccess = NULL;
+        }
 
-		//! \brief Updates the ball trail based on the player colour
-		void SetBallLastHitColour(){
-			// Find the player with the last hit identifier and apply that player's colour //
-			auto tmplist = _PlayerList.GetVec();
+        //! \brief Updates the ball trail based on the player colour
+        void SetBallLastHitColour(){
+            // Find the player with the last hit identifier and apply that player's colour //
+            auto tmplist = _PlayerList.GetVec();
 
-			for(size_t i = 0; i < tmplist.size(); i++){
+            for(size_t i = 0; i < tmplist.size(); i++){
 
-				PlayerSlot* slotptr = tmplist[i];
+                PlayerSlot* slotptr = tmplist[i];
 
-				while(slotptr){
+                while(slotptr){
 
-					if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
-						// Set colour //
-						GameArena->ColourTheBallTrail(slotptr->GetColour());
-						return;
-					}
+                    if(LastPlayerHitBallID == slotptr->GetPlayerNumber()){
+                        // Set colour //
+                        GameArena->ColourTheBallTrail(slotptr->GetColour());
+                        return;
+                    }
 
-					slotptr = slotptr->GetSplit();
-				}
-			}
-			
-			// No other colour is applied so set the default colour //
-			GameArena->ColourTheBallTrail(Float4(1.f, 1.f, 1.f, 1.f));
-		}
-
-
-		//! \brief posts a quit message to quit after script has returned
-		void ScriptCloseGame(){
-
-			Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
-		}
+                    slotptr = slotptr->GetSplit();
+                }
+            }
+            
+            // No other colour is applied so set the default colour //
+            GameArena->ColourTheBallTrail(Float4(1.f, 1.f, 1.f, 1.f));
+        }
 
 
-		//! \brief Will determine if a paddle could theoretically hit the ball
-		bool IsBallInGoalArea(){
-			// Tell arena to handle this //
-			return GameArena->IsBallInPaddleArea();
-		}
+        //! \brief posts a quit message to quit after script has returned
+        void ScriptCloseGame(){
+
+            Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+        }
+
+
+        //! \brief Will determine if a paddle could theoretically hit the ball
+        bool IsBallInGoalArea(){
+            // Tell arena to handle this //
+            return GameArena->IsBallInPaddleArea();
+        }
 
         //! \brief Called before closing the engine, use to release some stuff
         virtual void CustomEnginePreShutdown(){
@@ -119,130 +120,125 @@ namespace Pong{
 
 
 
-		bool PlayerIDMatchesGoalAreaID(int plyid, ObjectID goal){
-			// Look through all players and compare find the right PlayerID and compare goal
+        bool PlayerIDMatchesGoalAreaID(int plyid, ObjectID goal){
+            // Look through all players and compare find the right PlayerID and compare goal
             // area ptr
-			for(size_t i = 0; i < _PlayerList.Size(); i++){
+            for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-				PlayerSlot* slotptr = _PlayerList[i];
+                PlayerSlot* slotptr = _PlayerList[i];
 
-				while(slotptr){
+                while(slotptr){
 
-					if(plyid == slotptr->GetPlayerNumber()){
+                    if(plyid == slotptr->GetPlayerNumber()){
                         
                         if(goal == slotptr->GetGoalArea()){
-							// Found matching goal area //
-							return true;
-						}
-					}
+                            // Found matching goal area //
+                            return true;
+                        }
+                    }
 
-					slotptr = slotptr->GetSplit();
-				}
-			}
+                    slotptr = slotptr->GetSplit();
+                }
+            }
             
-			// Not found //
-			return false;
-		}
+            // Not found //
+            return false;
+        }
 
 
-		ObjectID GetBall(){
+        ObjectID GetBall(){
             
             return GameArena->GetBall();
-		}
+        }
 
-		Leviathan::GameWorld* GetGameWorld(){
-			return WorldOfPong.get();
-		}
-		int GetLastHitPlayer(){
-			return LastPlayerHitBallID;
-		}
+        Leviathan::GameWorld* GetGameWorld(){
+            return WorldOfPong.get();
+        }
+        int GetLastHitPlayer(){
+            return LastPlayerHitBallID;
+        }
 
-		// Variable set/get //
-		PlayerSlot* GetPlayerSlot(int id){
-			return _PlayerList[id];
-		}
+        // Variable set/get //
+        PlayerSlot* GetPlayerSlot(int id){
+            return _PlayerList[id];
+        }
 
-		void inline SetError(const string &error){
-			ErrorState = error;
-		}
-		string GetErrorString(){
-			return ErrorState;
-		}
+        void inline SetError(const string &error){
+            ErrorState = error;
+        }
+        string GetErrorString(){
+            return ErrorState;
+        }
 
-		int GetScoreLimit(){
-			return ScoreLimit;
-		}
+        int GetScoreLimit(){
+            return ScoreLimit;
+        }
 
-		BaseNotifiableAll* GetPlayersAsNotifiable(){
+        BaseNotifiableAll* GetPlayersAsNotifiable(){
 
-			return static_cast<BaseNotifiableAll*>(&_PlayerList);
-		}
+            return static_cast<BaseNotifiableAll*>(&_PlayerList);
+        }
 
-		static BasePongParts* Get(){
-			return BasepongStaticAccess;
-		}
+        static BasePongParts* Get(){
+            return BasepongStaticAccess;
+        }
 
-		PlayerList* GetPlayers(){
+        PlayerList* GetPlayers(){
 
-			return &_PlayerList;
-		}
-
-		static PongInputFactory* GetInputFactory(){
-			return InputFactory;
-		}
+            return &_PlayerList;
+        }
 
         Arena* GetArena(){
 
             return GameArena.get();
         }
 
-	protected:
+    protected:
 
 
-		// These should be overridden by the child class //
-		virtual void DoSpecialPostLoad() = 0;
-		virtual void CustomizedGameEnd() = 0;
-		virtual void OnPlayerStatsUpdated(PlayerList* list) = 0;
+        // These should be overridden by the child class //
+        virtual void DoSpecialPostLoad() = 0;
+        virtual void CustomizedGameEnd() = 0;
+        virtual void OnPlayerStatsUpdated(PlayerList* list) = 0;
 
-		// ------------------------------------ //
+        // ------------------------------------ //
 
-		// game objects //
-		unique_ptr<Arena> GameArena;
-		shared_ptr<GameWorld> WorldOfPong;
+        NetworkInterface* _NetworkInterface = nullptr;
 
-		// AI module //
-		GameModule* GameAI;
+        // game objects //
+        std::unique_ptr<Arena> GameArena;
+        std::shared_ptr<GameWorld> WorldOfPong;
 
-		SyncedPrimitive<int> LastPlayerHitBallID;
+        // AI module //
+        GameModule* GameAI;
 
-		SyncedPrimitive<bool> GamePaused;
-		SyncedPrimitive<int> ScoreLimit;
+        SyncedPrimitive<int> LastPlayerHitBallID;
 
-		PlayerList _PlayerList;
+        SyncedPrimitive<bool> GamePaused;
+        SyncedPrimitive<int> ScoreLimit;
 
-		//! stores last error string for easy access from scripts
-		string ErrorState;
+        PlayerList _PlayerList;
 
-
-		static PongInputFactory* InputFactory;
-	};
-
+        //! stores last error string for easy access from scripts
+        std::string ErrorState;
+    };
 
 
-	//! \brief Class that contains common functions required both by Pong and PongServer
-	//!
-	//! Set the program type to match the proper class LeviathanApplication or ServerApplication and the IsServer bool
-	//! to match it (to make syncing with the server work)
-	template<class ProgramType, bool IsServer>
-	class CommonPongParts : public BasePongParts, public ProgramType{
-	public:
-		CommonPongParts() : BasePongParts(IsServer)
-		{
 
-		}
-		~CommonPongParts(){
+    //! \brief Class that contains common functions required both by Pong and PongServer
+    //!
+    //! Set the program type to match the proper class LeviathanApplication or ServerApplication and the IsServer bool
+    //! to match it (to make syncing with the server work)
+    template<class ProgramType, bool IsServer>
+    class CommonPongParts : public BasePongParts, public ProgramType{
+    public:
+        CommonPongParts(NetworkInterface* networkinterface) : BasePongParts(networkinterface)
+        {
 
-		}
+        }
+        ~CommonPongParts(){
+
+        }
 
 
         virtual shared_ptr<GameWorld> GetGameWorld(int id) override{
@@ -257,11 +253,11 @@ namespace Pong{
             return WorldOfPong;
         }
 
-		// These handle the common code between the server and client //
-		virtual void CustomizeEnginePostLoad(){
-			using namespace Leviathan;
+        // These handle the common code between the server and client //
+        virtual void CustomizeEnginePostLoad(){
+            using namespace Leviathan;
 
-			QUICKTIME_THISSCOPE;
+            QUICKTIME_THISSCOPE;
 
             // Load the game AI //
             GameAI = new GameModule("PongAIModule", "PongGameCore");
@@ -275,25 +271,26 @@ namespace Pong{
             // Load Pong specific packets //
             PongPackets::RegisterAllPongPacketTypes();
 
-			// Setup world //
-			WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);
+            // Setup world //
+            WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);
 
-			// create playing field manager with the world //
-			GameArena = unique_ptr<Arena>(new Arena(WorldOfPong.get()));
+            // create playing field manager with the world //
+            GameArena = unique_ptr<Arena>(new Arena(WorldOfPong.get()));
 
-			DoSpecialPostLoad();
+            DoSpecialPostLoad();
 
-			// Register the variables //
-			ScoreLimit.StartSync();
-			GamePaused.StartSync();
-			_PlayerList.StartSync();
-            LastPlayerHitBallID.StartSync();
-		}
+            // Register the variables //
+            auto& syncvars = *_NetworkInterface->GetOwner()->GetSyncedVariables();
+            ScoreLimit.StartSync(syncvars);
+            GamePaused.StartSync(syncvars);
+            _PlayerList.StartSync(syncvars);
+            LastPlayerHitBallID.StartSync(syncvars);
+        }
 
-		virtual void EnginePreShutdown() override{
-			// Only the AI needs this //
-			if(GameAI)
-				GameAI->ReleaseScript();
+        virtual void EnginePreShutdown() override{
+            // Only the AI needs this //
+            if(GameAI)
+                GameAI->ReleaseScript();
 
             // Release object pointers //
             _PlayerList.Release();
@@ -304,320 +301,320 @@ namespace Pong{
             CustomEnginePreShutdown();
 
             Logger::Get()->Info("Pong PreShutdown complete");
-		}
+        }
 
         //! Override this
-		virtual void Tick(int mspassed) override{
+        virtual void Tick(int mspassed) override{
 
             DEBUG_BREAK;
-		}
+        }
 
-		// customized callbacks //
-		virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override{
+        // customized callbacks //
+        virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override{
 
-			// register PongGame type //
-			if(engine->RegisterObjectType("PongBase", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
-				SCRIPT_REGISTERFAIL;
-			}
+            // register PongGame type //
+            if(engine->RegisterObjectType("PongBase", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+                SCRIPT_REGISTERFAIL;
+            }
 
-			// get function //
-			if(engine->RegisterGlobalFunction("PongBase@ GetPongBase()",
+            // get function //
+            if(engine->RegisterGlobalFunction("PongBase@ GetPongBase()",
                     WRAP_FN(&BasePongParts::Get), asCALL_GENERIC) < 0){
-				SCRIPT_REGISTERFAIL;
-			}
+                SCRIPT_REGISTERFAIL;
+            }
 
-			// functions //
-			if(engine->RegisterObjectMethod("PongBase", "void Quit()",
+            // functions //
+            if(engine->RegisterObjectMethod("PongBase", "void Quit()",
                     WRAP_MFN(BasePongParts, ScriptCloseGame), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterObjectMethod("PongBase", "string GetErrorString()",
+            if(engine->RegisterObjectMethod("PongBase", "string GetErrorString()",
                     WRAP_MFN(BasePongParts, GetErrorString), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterObjectMethod("PongBase", "int GetLastHitPlayer()",
+            if(engine->RegisterObjectMethod("PongBase", "int GetLastHitPlayer()",
                     WRAP_MFN(BasePongParts, GetLastHitPlayer), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			// For getting the game database //
-			if(engine->RegisterObjectMethod("PongBase", "GameWorld& GetGameWorld()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            // For getting the game database //
+            if(engine->RegisterObjectMethod("PongBase", "GameWorld& GetGameWorld()",
                     WRAP_MFN(BasePongParts, GetGameWorld), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PongBase", "ObjectID GetBall()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PongBase", "ObjectID GetBall()",
                     WRAP_MFN(BasePongParts, GetBall), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterObjectMethod("PongBase", "BaseNotifiableAll& GetPlayerChanges()",
+            if(engine->RegisterObjectMethod("PongBase", "BaseNotifiableAll& GetPlayerChanges()",
                     asMETHOD(BasePongParts, GetPlayersAsNotifiable), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
 
 
-			// Type enums //
-			if(engine->RegisterEnum("PLAYERTYPE") < 0){
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_CLOSED", PLAYERTYPE_CLOSED) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_COMPUTER",
+            // Type enums //
+            if(engine->RegisterEnum("PLAYERTYPE") < 0){
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_CLOSED", PLAYERTYPE_CLOSED) < 0)
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_COMPUTER",
                     PLAYERTYPE_COMPUTER) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_EMPTY", PLAYERTYPE_EMPTY) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_HUMAN", PLAYERTYPE_HUMAN) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_EMPTY", PLAYERTYPE_EMPTY) < 0)
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERTYPE", "PLAYERTYPE_HUMAN", PLAYERTYPE_HUMAN) < 0)
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterEnum("PLAYERCONTROLS") < 0){
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_NONE",
+            if(engine->RegisterEnum("PLAYERCONTROLS") < 0){
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_NONE",
                     PLAYERCONTROLS_NONE) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_AI",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_AI",
                     PLAYERCONTROLS_AI) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_WASD",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_WASD",
                     PLAYERCONTROLS_WASD) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_ARROWS",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_ARROWS",
                     PLAYERCONTROLS_ARROWS) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJKL",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_IJKL",
                     PLAYERCONTROLS_IJKL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_NUMPAD",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_NUMPAD",
                     PLAYERCONTROLS_NUMPAD) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_CONTROLLER",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("PLAYERCONTROLS", "PLAYERCONTROLS_CONTROLLER",
                     PLAYERCONTROLS_CONTROLLER) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
 
-			if(engine->RegisterEnum("CONTROLKEYACTION") < 0){
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_LEFT",
+            if(engine->RegisterEnum("CONTROLKEYACTION") < 0){
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_LEFT",
                     CONTROLKEYACTION_LEFT) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_RIGHT",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_RIGHT",
                     CONTROLKEYACTION_RIGHT) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_POWERUPDOWN",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_POWERUPDOWN",
                     CONTROLKEYACTION_POWERUPDOWN) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_POWERUPUP",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterEnumValue("CONTROLKEYACTION", "CONTROLKEYACTION_POWERUPUP",
                     CONTROLKEYACTION_POWERUPUP) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			// PlayerSlot //
-			if(engine->RegisterObjectType("PlayerSlot", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
-				SCRIPT_REGISTERFAIL;
-			}
+            // PlayerSlot //
+            if(engine->RegisterObjectType("PlayerSlot", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+                SCRIPT_REGISTERFAIL;
+            }
 
-			// get function //
-			if(engine->RegisterObjectMethod("PongBase", "PlayerSlot@ GetSlot(int number)",
+            // get function //
+            if(engine->RegisterObjectMethod("PongBase", "PlayerSlot@ GetSlot(int number)",
                     WRAP_MFN(BasePongParts, GetPlayerSlot), asCALL_GENERIC) < 0){
-				SCRIPT_REGISTERFAIL;
-			}
+                SCRIPT_REGISTERFAIL;
+            }
 
-			// functions //
-			if(engine->RegisterObjectMethod("PlayerSlot", "bool IsActive()",
+            // functions //
+            if(engine->RegisterObjectMethod("PlayerSlot", "bool IsActive()",
                     WRAP_MFN(PlayerSlot, IsSlotActive), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterObjectMethod("PlayerSlot", "PLAYERTYPE GetPlayerType()",
+            if(engine->RegisterObjectMethod("PlayerSlot", "PLAYERTYPE GetPlayerType()",
                     asMETHOD(PlayerSlot, GetPlayerType), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            
 
-			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerNumber()",
+            if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerNumber()",
                     WRAP_MFN(PlayerSlot, GetPlayerNumber), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterObjectMethod("PlayerSlot", "int GetScore()",
+            if(engine->RegisterObjectMethod("PlayerSlot", "int GetScore()",
                     WRAP_MFN(PlayerSlot, GetScore), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			if(engine->RegisterObjectMethod("PlayerSlot", "PlayerSlot@ GetSplit()",
+            if(engine->RegisterObjectMethod("PlayerSlot", "PlayerSlot@ GetSplit()",
                     WRAP_MFN(PlayerSlot, GetSplit), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "PLAYERCONTROLS GetControlType()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "PLAYERCONTROLS GetControlType()",
                     WRAP_MFN(PlayerSlot, GetControlType), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "void AddEmptySubSlot()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "void AddEmptySubSlot()",
                     WRAP_MFN(PlayerSlot, AddEmptySubSlot), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot",
                     "void SetControls(PLAYERCONTROLS type, int identifier)",
                     WRAP_MFN(PlayerSlot, SetControls), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot",
                     "void PassInputAction(CONTROLKEYACTION actiontoperform, bool active)",
                     WRAP_MFN(PlayerSlot, PassInputAction), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "bool IsVerticalSlot()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "bool IsVerticalSlot()",
                     WRAP_MFN(PlayerSlot, IsVerticalSlot), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "float GetTrackProgress()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "float GetTrackProgress()",
                     WRAP_MFN(PlayerSlot, GetTrackProgress), asCALL_GENERIC) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "ObjectID GetPaddle()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "ObjectID GetPaddle()",
                     asMETHOD(PlayerSlot, GetPaddle), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "ObjectID GetGoalArea()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "ObjectID GetGoalArea()",
                     asMETHOD(PlayerSlot, GetGoalArea), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "ObjectID GetTrackController()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "ObjectID GetTrackController()",
                     asMETHOD(PlayerSlot, GetTrackController), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot",
                     "bool DoesPlayerNumberMatchThisOrParent(int number)",
                     asMETHOD(PlayerSlot, DoesPlayerNumberMatchThisOrParent), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
-			if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerID()",
+            {
+                SCRIPT_REGISTERFAIL;
+            }
+            if(engine->RegisterObjectMethod("PlayerSlot", "int GetPlayerID()",
                     asMETHOD(PlayerSlot, GetPlayerID), asCALL_THISCALL) < 0)
-			{
-				SCRIPT_REGISTERFAIL;
-			}
+            {
+                SCRIPT_REGISTERFAIL;
+            }
 
-			return MoreCustomScriptTypes(engine);
-		}
+            return MoreCustomScriptTypes(engine);
+        }
 
-		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
+        virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
             std::map<int, string> &typeids)
         {
-			// we have registered just a one type, add it //
-			typeids.insert(make_pair(engine->GetTypeIdByDecl("PongBase"), "PongBase"));
-			typeids.insert(make_pair(engine->GetTypeIdByDecl("PlayerSlot"), "PlayerSlot"));
+            // we have registered just a one type, add it //
+            typeids.insert(make_pair(engine->GetTypeIdByDecl("PongBase"), "PongBase"));
+            typeids.insert(make_pair(engine->GetTypeIdByDecl("PlayerSlot"), "PlayerSlot"));
 
-			MoreCustomScriptRegister(engine, typeids);
-		}
+            MoreCustomScriptRegister(engine, typeids);
+        }
 
-		virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager){
-			// \todo implement loading from files //
+        virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager){
+            // \todo implement loading from files //
 
-			// load predefined materials //
-			unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial("PaddleMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial("ArenaMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> ArenaBottomMaterial(
+            // load predefined materials //
+            unique_ptr<Leviathan::PhysicalMaterial> PaddleMaterial(new Leviathan::PhysicalMaterial("PaddleMaterial"));
+            unique_ptr<Leviathan::PhysicalMaterial> ArenaMaterial(new Leviathan::PhysicalMaterial("ArenaMaterial"));
+            unique_ptr<Leviathan::PhysicalMaterial> ArenaBottomMaterial(
                 new Leviathan::PhysicalMaterial("ArenaBottomMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial("BallMaterial"));
-			unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(
+            unique_ptr<Leviathan::PhysicalMaterial> BallMaterial(new Leviathan::PhysicalMaterial("BallMaterial"));
+            unique_ptr<Leviathan::PhysicalMaterial> GoalAreaMaterial(
                 new Leviathan::PhysicalMaterial("GoalAreaMaterial"));
 
-			// Set callbacks //
-			BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(1.0f).SetFriction(1.f, 1.f).
-				SetCallbacks(NULL, GetBallPaddleCallback());
-			BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(NULL, GetBallGoalAreaCallback());
+            // Set callbacks //
+            BallMaterial->FormPairWith(*PaddleMaterial).SetSoftness(1.f).SetElasticity(1.0f).SetFriction(1.f, 1.f).
+                SetCallbacks(NULL, GetBallPaddleCallback());
+            BallMaterial->FormPairWith(*GoalAreaMaterial).SetCallbacks(NULL, GetBallGoalAreaCallback());
 
-			PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-			PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
-			PaddleMaterial->FormPairWith(*ArenaBottomMaterial).SetCollidable(false).SetSoftness(0.f).SetFriction(0.f, 0.f).SetElasticity(0.f);
-			PaddleMaterial->FormPairWith(*PaddleMaterial).SetCollidable(false);
-			ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-			ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(1.f).SetElasticity(1.f);
-			ArenaBottomMaterial->FormPairWith(*BallMaterial).SetElasticity(0.f).SetFriction(0.f, 0.f).SetSoftness(0.f);
-			ArenaBottomMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+            PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+            PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false).SetElasticity(0.f).SetSoftness(0.f);
+            PaddleMaterial->FormPairWith(*ArenaBottomMaterial).SetCollidable(false).SetSoftness(0.f).SetFriction(0.f, 0.f).SetElasticity(0.f);
+            PaddleMaterial->FormPairWith(*PaddleMaterial).SetCollidable(false);
+            ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+            ArenaMaterial->FormPairWith(*BallMaterial).SetFriction(0.f, 0.f).SetSoftness(1.f).SetElasticity(1.f);
+            ArenaBottomMaterial->FormPairWith(*BallMaterial).SetElasticity(0.f).SetFriction(0.f, 0.f).SetSoftness(0.f);
+            ArenaBottomMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
 
-			// Add the materials //
-			Leviathan::PhysicsMaterialManager* tmp = Leviathan::PhysicsMaterialManager::Get();
+            // Add the materials //
+            Leviathan::PhysicsMaterialManager* tmp = Leviathan::PhysicsMaterialManager::Get();
 
-			tmp->LoadedMaterialAdd(PaddleMaterial.release());
-			tmp->LoadedMaterialAdd(ArenaMaterial.release());
-			tmp->LoadedMaterialAdd(BallMaterial.release());
-			tmp->LoadedMaterialAdd(GoalAreaMaterial.release());
-			tmp->LoadedMaterialAdd(ArenaBottomMaterial.release());
-		}
+            tmp->LoadedMaterialAdd(PaddleMaterial.release());
+            tmp->LoadedMaterialAdd(ArenaMaterial.release());
+            tmp->LoadedMaterialAdd(BallMaterial.release());
+            tmp->LoadedMaterialAdd(GoalAreaMaterial.release());
+            tmp->LoadedMaterialAdd(ArenaBottomMaterial.release());
+        }
 
         
         
-		// ------------------ Physics callbacks for game logic ------------------ //
-		// Ball handling callback //
+        // ------------------ Physics callbacks for game logic ------------------ //
+        // Ball handling callback //
 
         virtual PhysicsMaterialContactCallback GetBallPaddleCallback() = 0;
 
         virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback() = 0;
         
-	protected:
+    protected:
 
-		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;
-		virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
+        virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;
+        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
             std::map<int, string> &typeids) = 0;
 
-		// ------------------------------------ //
+        // ------------------------------------ //
 
-	};
+    };
 
 }
 

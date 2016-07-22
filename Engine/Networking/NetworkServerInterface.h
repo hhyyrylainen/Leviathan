@@ -41,10 +41,17 @@ public:
     DLLEXPORT virtual ~NetworkServerInterface();
 
 
+    DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
+        Connection &connection);
+
+    DLLEXPORT virtual void HandleResponseOnlyPacket(
+        std::shared_ptr<NetworkResponse> message, Connection &connection,
+        bool &dontmarkasreceived);
+
     //! \brief Updates status of the status of the server's clients
     //!  
     //! \note Should be called by NetworkInterface::TickIt
-    DLLEXPORT void UpdateServerStatus();
+    DLLEXPORT void TickIt() override;
 
     //! \brief Gets corresponding player from a connection
     //! \return Returns a pointer from PlayerList
@@ -83,19 +90,6 @@ public:
     DLLEXPORT virtual void VerifyWorldIsSyncedWithPlayers(std::shared_ptr<GameWorld> world);
 
 protected:
-
-
-    //! \brief Utility function for subclasses to call for default handling of server packets
-    //!
-    //! Handles default packets that are meant to be processed by a server
-    DLLEXPORT bool _HandleServerRequest(std::shared_ptr<NetworkRequest> request,
-        Connection &connectiontosendresult);
-
-    //! \brief Utility function for subclasses to call for default handling of non-request responses
-    //!
-    //! Handles default types of response packages and returns true if processed.
-    DLLEXPORT bool _HandleServerResponseOnly(std::shared_ptr<NetworkResponse> message,
-        Connection &connection, bool &dontmarkasreceived);
 
     //! \brief Used to handle server join request packets
     //! \todo Check connection security status

@@ -1,9 +1,8 @@
 // ------------------------------------ //
-#ifndef PONG_GAME
 #include "PongGame.h"
-#endif
+
 #include "add_on/autowrapper/aswrappedcall.h"
-#include "Networking/ConnectionInfo.h"
+#include "Networking/Connection.h"
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/RemoteConsole.h"
 #include "Networking/NetworkRequest.h"
@@ -21,7 +20,7 @@ void TryToCrash(bool enable){
 
     string state = enable ? "On": "Off";
 
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(state))))));
 
@@ -45,34 +44,36 @@ void TryToCrash(bool enable){
 int Pong::PongGame::OnEvent(Event** pEvent){
 
     //TryToCrash(Toggle);
-	return 0;
+    return 0;
 }
 
-Pong::PongGame::PongGame() : GuiManagerAccess(NULL), GameInputHandler(NULL)
+Pong::PongGame::PongGame() : ClientInterface(new PongNetHandler()), 
+CommonPongParts(ClientInterface),
+GuiManagerAccess(NULL), GameInputHandler(NULL)
 #ifdef _WIN32
-	, ServerProcessHandle(NULL)
+    , ServerProcessHandle(NULL)
 #endif // _WIN32
 
 {
     
-	StaticGame = this;
+    StaticGame = this;
 }
 
 Pong::PongGame::~PongGame(){
-	GUARD_LOCK();
-	// delete memory //
-	
-	// Wait for the child process to die and close the handle //
+    GUARD_LOCK();
+    // delete memory //
+    
+    // Wait for the child process to die and close the handle //
 #ifdef _WIN32
-	// Wait for the server to close for 5 seconds //
+    // Wait for the server to close for 5 seconds //
 #ifndef _DEBUG
-	WaitForSingleObject(ServerProcessHandle, 5000);
+    WaitForSingleObject(ServerProcessHandle, 5000);
 
-	TerminateProcess(ServerProcessHandle, -1);
+    TerminateProcess(ServerProcessHandle, -1);
 #endif
 
-	CloseHandle(ServerProcessHandle);
-	ServerProcessHandle = NULL;
+    CloseHandle(ServerProcessHandle);
+    ServerProcessHandle = NULL;
 #else
 
 
@@ -80,254 +81,251 @@ Pong::PongGame::~PongGame(){
 }
 
 PongGame* Pong::PongGame::Get(){
-	return StaticGame;
+    return StaticGame;
 }
 
 PongGame* Pong::PongGame::StaticGame = NULL;
 // ------------------------------------ //
 std::string Pong::PongGame::GenerateWindowTitle(){
-	return string("Pong version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
+    return string("Pong version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
 }
 // ------------------------------------ //
-// This avoids using pointer to pointer (pointer/reference to shared_ptr) //
-
 int Pong::PongGame::StartServer(){
-	// Start the server process //
-	GUARD_LOCK();
+    // Start the server process //
+    GUARD_LOCK();
 
 #ifdef _DEBUG
-	string serverstartname = "PongServerD";
+    string serverstartname = "PongServerD";
 #else
-	string serverstartname = "PongServer";
+    string serverstartname = "PongServer";
 #endif // _DEBUG
 
 #ifdef _WIN32
-	serverstartname += ".exe";
+    serverstartname += ".exe";
 #else
-	// Linux type start //
-	serverstartname = "./"+serverstartname;
+    // Linux type start //
+    serverstartname = "./"+serverstartname;
 #endif // _WIN32
 
-	int Tokennmbr = Random::Get()->GetNumber();
+    int Tokennmbr = Random::Get()->GetNumber();
 
-	// Create proper arguments for the program //
-	string args = "--nogui -RemoteConsole:CloseIfNone -RemoteConsole:OpenTo:\"localhost:"+
-		Convert::ToString(NetworkHandler::Get()->GetOurPort())+"\":Token:"+Convert::ToString(Tokennmbr);
+    // Create proper arguments for the program //
+    string args = "--nogui -RemoteConsole:CloseIfNone -RemoteConsole:OpenTo:\"localhost:"+
+        Convert::ToString(ClientInterface->GetOwner()->GetOurPort())+"\":Token:" + 
+        Convert::ToString(Tokennmbr);
 
-	// We need to expect this connection //
-	RemoteConsole::Get()->ExpectNewConnection(Tokennmbr, "ServerConsole", true);
+    // We need to expect this connection //
+    Engine::Get()->GetRemoteConsole()->ExpectNewConnection(Tokennmbr, "ServerConsole", true);
 
-	// Start the server //
+    // Start the server //
 #ifdef _WIN32
-	// Create needed info //
-	STARTUPINFOW processstart;
-	PROCESS_INFORMATION startedinfo;
+    // Create needed info //
+    STARTUPINFOA processstart;
+    PROCESS_INFORMATION startedinfo;
 
-	ZeroMemory(&processstart, sizeof(STARTUPINFOW));
-	ZeroMemory(&startedinfo, sizeof(PROCESS_INFORMATION));
+    ZeroMemory(&processstart, sizeof(STARTUPINFOA));
+    ZeroMemory(&startedinfo, sizeof(PROCESS_INFORMATION));
 
-	processstart.cb = sizeof(STARTUPINFOW);
-	//processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
-	//processstart.wShowWindow = SW_SHOWMINIMIZED;
+    processstart.cb = sizeof(STARTUPINFOA);
+    //processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
+    //processstart.wShowWindow = SW_SHOWMINIMIZED;
 
-	string finalstart = "\""+serverstartname+"\" "+args;
+    string finalstart = "\""+serverstartname+"\" "+args;
 
-	// Use windows process creation //
-	if(!CreateProcessW(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, NULL, NULL, &processstart,
+    // Use windows process creation //
+    if(!CreateProcessA(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, 
+        NULL, NULL, &processstart,
             &startedinfo))
     {
-		// Failed to start the process
-		Logger::Get()->Error("Failed to start the server process, error code: "+Convert::ToString(GetLastError()));
-		return -1;
-	}
+        // Failed to start the process
+        Logger::Get()->Error("Failed to start the server process, error code: "+
+            Convert::ToString(GetLastError()));
+        return -1;
+    }
 
-	// Close our handles //
-	CloseHandle(startedinfo.hThread);
-	ServerProcessHandle = startedinfo.hProcess;
+    // Close our handles //
+    CloseHandle(startedinfo.hThread);
+    ServerProcessHandle = startedinfo.hProcess;
 
 
 #else
-	// Popen should work //
+    // Popen should work //
 
-	// Copy data away //
-	string* childprocessname = new string(serverstartname);
-	string* childargumentlist = new string(args);
+    // Copy data away //
+    string* childprocessname = new string(serverstartname);
+    string* childargumentlist = new string(args);
 
-	// Actually fork might be simpler //
-	if(fork() == 0){
-		// We are now in the child process //
+    // Actually fork might be simpler //
+    if(fork() == 0){
+        // We are now in the child process //
 
-		string tmpprocessname = *childprocessname;
-		delete childprocessname;
-		string allpacketargs = *childargumentlist;
-		delete childargumentlist;
+        string tmpprocessname = *childprocessname;
+        delete childprocessname;
+        string allpacketargs = *childargumentlist;
+        delete childargumentlist;
 
-		execl(tmpprocessname.c_str(), allpacketargs.c_str(), (char*) NULL);
-	}
+        execl(tmpprocessname.c_str(), allpacketargs.c_str(), (char*) NULL);
+    }
 
 
 #endif // _WIN32
 
-	// Queue a task for this //
+    // Queue a task for this //
 
-	_Engine->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::ConditionalTask(
-		std::bind<void>([](Leviathan::RemoteConsole* justforperformance) -> void
-	{
-		// No more waiting connections, see what happened //
-		if(justforperformance->GetActiveConnectionCount() == 0){
-			// Failed //
-			Logger::Get()->Error("Failed to receive a remote connection from the server");
-			EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    _Engine->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::ConditionalTask(
+        std::bind<void>([](Leviathan::RemoteConsole* justforperformance) -> void
+    {
+        // No more waiting connections, see what happened //
+        if(justforperformance->GetActiveConnectionCount() == 0){
+            // Failed //
+            Logger::Get()->Error("Failed to receive a remote connection from the server");
+            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
                     Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
                                 new VariableBlock(string("The server failed to start properly")))))));
-			StaticGame->Disconnect("Server failed to start properly");
+            StaticGame->Disconnect("Server failed to start properly");
 
-			// Kill the server //
+            // Kill the server //
 #ifdef _WIN32
-			TerminateProcess(StaticGame->ServerProcessHandle, -1);
+            TerminateProcess(StaticGame->ServerProcessHandle, -1);
 
 #endif // _WIN32
 
-			GUARD_LOCK_OTHER(StaticGame);
+            GUARD_LOCK_OTHER(StaticGame);
 
 #ifdef WIN32
-			CloseHandle(StaticGame->ServerProcessHandle);
-			StaticGame->ServerProcessHandle = NULL;
+            CloseHandle(StaticGame->ServerProcessHandle);
+            StaticGame->ServerProcessHandle = NULL;
 #endif // WIN32
 
 
-			return;
-		}
+            return;
+        }
 
-		Leviathan::ConnectionInfo* tmpconnection = RemoteConsole::Get()->
-            GetUnsafeConnectionForRemoteConsoleSession("ServerConsole");
+        auto tmpconnection = Engine::Get()->GetRemoteConsole()->
+            GetConnectionForRemoteConsoleSession("ServerConsole");
 
-		Logger::Get()->Info("Server started successfully");
-		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        Logger::Get()->Info("Server started successfully");
+        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new
                             VariableBlock(string("Server started, awaiting proper startup")))))));
 
-		// Add repeating timed task that checks if the server is up and properly running //
-		Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new
-                Leviathan::RepeatingDelayedTask(std::bind<void>([](Leviathan::ConnectionInfo* unsafeptr,
-                            shared_ptr<SentNetworkThing> taskdata) -> void
-		{
-			// Get a safe pointer //
-			auto safeptr = NetworkHandler::Get()->GetSafePointerToConnection(unsafeptr);
+        DEBUG_BREAK;
+    //    // Add repeating timed task that checks if the server is up and properly running //
+    //    Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new
+    //            Leviathan::RepeatingDelayedTask(std::bind<void>([](
+    //                std::shared_ptr<Connection> safeptr,
+    //                std::shared_ptr<SentNetworkThing> taskdata) -> void
+    //    {
+    //        if(!safeptr->IsOpen()){
+    //            // Destroy the attempt //
+    //            auto threadspecific = TaskThread::GetThreadSpecificThreadObject();
+    //            auto taskobject = threadspecific->QuickTaskAccess;
+    //            auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(taskobject.get());
+    //            assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
 
-			if(!safeptr){
-				// Destroy the attempt //
-				auto threadspecific = TaskThread::GetThreadSpecificThreadObject();
-				auto taskobject = threadspecific->QuickTaskAccess;
-				auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(taskobject.get());
-				assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
+    //            tmpptr->SetRepeatStatus(false);
 
-				tmpptr->SetRepeatStatus(false);
+    //            // Queue disconnect //
+    //            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    //                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(
+    //                            new NamedVariableList("Message", new VariableBlock(
+    //                                    string("Server connection closed unexpectedly")))))));
 
-				// Queue disconnect //
-				EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
-                        Leviathan::NamedVars(shared_ptr<NamedVariableList>(
-                                new NamedVariableList("Message", new VariableBlock(
-                                        string("Server connection closed unexpectedly")))))));
+    //            return;
+    //        }
 
-				return;
-			}
+    //        // Send state request //
+    //        if(!taskdata){
+    //            // Send a new request //
 
-			// Send state request //
-			if(!taskdata){
-				// Send a new request //
+    //            shared_ptr<Leviathan::NetworkRequest> tmprequest(new
+    //                NetworkRequest(NETWORKREQUESTTYPE_SERVERSTATUS));
 
-				shared_ptr<Leviathan::NetworkRequest> tmprequest(new
-                    NetworkRequest(NETWORKREQUESTTYPE_SERVERSTATUS));
+    //            taskdata = safeptr->SendPacketToConnection(tmprequest, 2);
 
-				taskdata = safeptr->SendPacketToConnection(tmprequest, 2);
+    //            return;
+    //        }
 
-				return;
-			}
+    //        // Check if the request is ready //
+    //        if(taskdata->IsFinalized()){
 
-			// Check if the request is ready //
-			if(taskdata->IsFinalized()){
+    //            auto response = taskdata->GotResponse;
 
-				auto response = taskdata->GotResponse;
+    //            if(response){
+    //                // Check what we got //
+    //                if(response->GetTypeOfResponse() == NETWORKRESPONSETYPE_SERVERSTATUS){
 
-				if(response){
-					// Check what we got //
-					if(response->GetTypeOfResponse() == NETWORKRESPONSETYPE_SERVERSTATUS){
+    //                    auto responsedata = response->GetResponseDataForServerStatus();
 
-						auto responsedata = response->GetResponseDataForServerStatus();
+    //                    if(responsedata){
+    //                        // Check is it joinable //
+    //                        if(responsedata->Joinable){
+    //                            // Stop repeating the task //
+    //                            auto threadspecific = TaskThread::GetThreadSpecificThreadObject();
+    //                            auto taskobject = threadspecific->QuickTaskAccess;
+    //                            auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(taskobject.get());
+    //                            assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
 
-						if(responsedata){
-							// Check is it joinable //
-							if(responsedata->Joinable){
-								// Stop repeating the task //
-								auto threadspecific = TaskThread::GetThreadSpecificThreadObject();
-								auto taskobject = threadspecific->QuickTaskAccess;
-								auto tmpptr = dynamic_cast<RepeatingDelayedTask*>(taskobject.get());
-								assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
+    //                            tmpptr->SetRepeatStatus(false);
 
-								tmpptr->SetRepeatStatus(false);
-
-								EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
-                                        Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
-                                                    "Message", new VariableBlock(string(
-                                                            "Attempting to connect in 1 second...")))))));
-
-
-								// Queue a connect to the server //
-								Engine::Get()->GetThreadingManager()->QueueTask(
-                                    shared_ptr<Leviathan::QueuedTask>(new
-                                        Leviathan::DelayedTask(std::bind(&PongGame::ConnectNoError,
-                                                PongGame::Get(),
-                                                safeptr->GenerateFormatedAddressString()),
-                                            MillisecondDuration(1000))));
-
-							} else {
-								EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
-                                        Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
-                                                    "Message", new VariableBlock(string("Server still starting")))))));
-							}
-
-						} else {
-							EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
-                                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
-                                                "Message", new VariableBlock(string("Invalid packet!")))))));
-						}
-					}
-
-				} else {
-
-					EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
-                            Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
-                                        new VariableBlock(string("Taskdata to server timed out, resending...")))))));
-				}
-
-				// Reset the sent taskdata to resend it //
-				taskdata.reset();
-
-				return;
-			}
-
-			// We are waiting for the request //
-			EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
-                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new
-                                VariableBlock(string("Waiting for the server to respond to our status request")))))));
+    //                            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    //                                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
+    //                                                "Message", new VariableBlock(string(
+    //                                                        "Attempting to connect in 1 second...")))))));
 
 
-		}, tmpconnection, shared_ptr<SentNetworkThing>()), MillisecondDuration(50))));
+    //                            // Queue a connect to the server //
+    //                            Engine::Get()->GetThreadingManager()->QueueTask(
+    //                                shared_ptr<Leviathan::QueuedTask>(new
+    //                                    Leviathan::DelayedTask(std::bind(&PongGame::ConnectNoError,
+    //                                            PongGame::Get(),
+    //                                            safeptr->GenerateFormatedAddressString()),
+    //                                        MillisecondDuration(1000))));
+
+    //                        } else {
+    //                            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    //                                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
+    //                                                "Message", new VariableBlock(string("Server still starting")))))));
+    //                        }
+
+    //                    } else {
+    //                        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    //                                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
+    //                                            "Message", new VariableBlock(string("Invalid packet!")))))));
+    //                    }
+    //                }
+
+    //            } else {
+
+    //                EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    //                        Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
+    //                                    new VariableBlock(string("Taskdata to server timed out, resending...")))))));
+    //            }
+
+    //            // Reset the sent taskdata to resend it //
+    //            taskdata.reset();
+
+    //            return;
+    //        }
+
+    //        // We are waiting for the request //
+    //        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    //                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new
+    //                            VariableBlock(string("Waiting for the server to respond to our status request")))))));
 
 
-	}, Leviathan::RemoteConsole::Get()), std::bind<bool>([](Leviathan::RemoteConsole* justforperformance) -> bool{
-		
-		// Check if all remote console connections are timed out / connected // 
-		return !justforperformance->IsAwaitingConnections();
-		
-	}, Leviathan::RemoteConsole::Get()))));
+    //    }, tmpconnection, shared_ptr<SentNetworkThing>()), MillisecondDuration(50))));
 
 
+    }, Engine::Get()->GetRemoteConsole()), std::bind<bool>([](Leviathan::RemoteConsole* justforperformance) -> bool{
+        
+        // Check if all remote console connections are timed out / connected // 
+        return !justforperformance->IsAwaitingConnections();
+        
+    }, Engine::Get()->GetRemoteConsole()))));
 
-
-	// succeeded //
-	return 1;
+    // succeeded //
+    return 1;
 }
 // ------------------------------------ //
 void Pong::PongGame::CustomEnginePreShutdown(){
@@ -341,43 +339,43 @@ void Pong::PongGame::Tick(int mspassed){
 }
 // ------------------------------------ //
 void Pong::PongGame::AllowPauseMenu(){
-	// Allow pause menu //
-	GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", true);
+    // Allow pause menu //
+    GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", true);
 }
 
 void Pong::PongGame::CustomizedGameEnd(){
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// Disable pause menu //
-	GuiManagerAccess->SetCollectionState("PauseMenu", false);
-	GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", false);
+    // Disable pause menu //
+    GuiManagerAccess->SetCollectionState("PauseMenu", false);
+    GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", false);
 }
 // ------------------------------------ //
 void Pong::PongGame::CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj){
-	// Check for various variables //
+    // Check for various variables //
 
-	NamedVars* vars = configobj->AccessVariables(guard);
+    NamedVars* vars = configobj->AccessVariables(guard);
 
-	// Master server force localhost //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<bool>("MasterServerForceLocalhost")){
-		// Add new //
-		vars->AddVar("MasterServerForceLocalhost", new VariableBlock(false));
-		configobj->MarkModified(guard);
-	}
+    // Master server force localhost //
+    if(vars->ShouldAddValueIfNotFoundOrWrongType<bool>("MasterServerForceLocalhost")){
+        // Add new //
+        vars->AddVar("MasterServerForceLocalhost", new VariableBlock(false));
+        configobj->MarkModified(guard);
+    }
 
-	// Game configuration database //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
-		// Add new //
-		vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
-		configobj->MarkModified(guard);
-	}
+    // Game configuration database //
+    if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
+        // Add new //
+        vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
+        configobj->MarkModified(guard);
+    }
 
-	// Default server port //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
-		// Add new //
-		vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
-		configobj->MarkModified(guard);
-	}
+    // Default server port //
+    if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
+        // Add new //
+        vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
+        configobj->MarkModified(guard);
+    }
 
 }
 
@@ -386,18 +384,18 @@ void Pong::PongGame::CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* 
 }
 // ------------------------------------ //
 void Pong::PongGame::MoveBackToLobby(){
-	GUARD_LOCK();
-	DEBUG_BREAK;
+    GUARD_LOCK();
+    DEBUG_BREAK;
 }
 
 void Pong::PongGame::Disconnect(const string &reasonstring){
-	GUARD_LOCK();
-	 
-	// Disconnect from active servers //
-	ClientInterface->DisconnectFromServer(reasonstring);
-	
-	// Disable lobby screen //
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+    GUARD_LOCK();
+     
+    // Disconnect from active servers //
+    ClientInterface->DisconnectFromServer(reasonstring);
+    
+    // Disable lobby screen //
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(string("Off")))))));
 
@@ -421,11 +419,12 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
 // ------------------------------------ //
 void Pong::PongGame::DoSpecialPostLoad(){
 
-	ClientInterface = dynamic_cast<PongNetHandler*>(Leviathan::NetworkHandler::GetInterface());
 
-	GameInputHandler = shared_ptr<GameInputController>(new GameInputController());
+    LEVIATHAN_ASSERT(ClientInterface, "ClientInterface failed to create object");
 
-	shared_ptr<ViewerCameraPos> MainCamera;
+    GameInputHandler = shared_ptr<GameInputController>(new GameInputController());
+
+    shared_ptr<ViewerCameraPos> MainCamera;
 
     // Camera //
     MainCamera = make_shared<ViewerCameraPos>();
@@ -437,36 +436,33 @@ void Pong::PongGame::DoSpecialPostLoad(){
     // Sound listening camera //
     MainCamera->BecomeSoundPerceiver();
 
-	// Load GUI documents (but only if graphics are enabled) //
-	if(Engine::Get()->GetNoGui()){
-		
-		// Skip the graphical objects when not in graphical mode //
-		return;
-	}
+    // Load GUI documents (but only if graphics are enabled) //
+    if(Engine::Get()->GetNoGui()){
+        
+        // Skip the graphical objects when not in graphical mode //
+        return;
+    }
 
-	GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
+    GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-	GuiManagerAccess = window1->GetGUI();
+    GuiManagerAccess = window1->GetGUI();
 
-	if(!GuiManagerAccess->LoadGUIFile("./Data/Scripts/GUI/PongMenus.txt")){
-		
-		Logger::Get()->Error("Pong: failed to load the GuiFile, quitting");
-		LeviathanApplication::GetApp()->StartRelease();
-	}
+    if(!GuiManagerAccess->LoadGUIFile("./Data/Scripts/GUI/PongMenus.txt")){
+        
+        Logger::Get()->Error("Pong: failed to load the GuiFile, quitting");
+        LeviathanApplication::GetApp()->StartRelease();
+    }
 
-	// set skybox to have some sort of visuals //
-	WorldOfPong->SetSkyBox("NiceDaySky");
+    // set skybox to have some sort of visuals //
+    WorldOfPong->SetSkyBox("NiceDaySky");
     
     GameArena->VerifyTrail();
 
-	// link world and camera to a window //
-	window1->LinkObjects(MainCamera, WorldOfPong);
+    // link world and camera to a window //
+    window1->LinkObjects(MainCamera, WorldOfPong);
 
-	// link window input to game logic //
-	window1->SetCustomInputController(GameInputHandler);
-
-	// TODO: Register this even in NoGui mode and allow basic connecting to a server
-	ClientInterface->RegisterNetworkedInput(GameInputHandler);
+    // link window input to game logic //
+    window1->SetCustomInputController(GameInputHandler);
 
     // This is how to do something every frame //
     Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
@@ -476,7 +472,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 // ------------------------------------ //
 string GetPongVersionProxy(){
 
-	return GAME_VERSIONS;
+    return GAME_VERSIONS;
 }
 // ------------------------------------ //
 int Pong::PongGame::GetOurPlayerID(){
@@ -489,136 +485,135 @@ int Pong::PongGame::GetOurPlayerID(){
 // ------------------------------------ //
 bool Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
 
-	if(engine->RegisterObjectType("PongGame", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
-		SCRIPT_REGISTERFAIL;
-	}
+    if(engine->RegisterObjectType("PongGame", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        SCRIPT_REGISTERFAIL;
+    }
 
 
-	if(engine->RegisterGlobalFunction("PongGame@ GetPongGame()", WRAP_FN(PongGame::Get), asCALL_GENERIC) < 0){
-		SCRIPT_REGISTERFAIL;
-	}
+    if(engine->RegisterGlobalFunction("PongGame@ GetPongGame()", WRAP_FN(PongGame::Get), asCALL_GENERIC) < 0){
+        SCRIPT_REGISTERFAIL;
+    }
 
-	if(engine->RegisterObjectMethod("PongGame", "int StartServer()", WRAP_MFN(PongGame, StartServer), asCALL_GENERIC)
+    if(engine->RegisterObjectMethod("PongGame", "int StartServer()", WRAP_MFN(PongGame, StartServer), asCALL_GENERIC)
         < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
+    {
+        SCRIPT_REGISTERFAIL;
+    }
 
-	if(engine->RegisterObjectMethod("PongGame", "void MoveBackToLobby()", WRAP_MFN(PongGame, MoveBackToLobby),
+    if(engine->RegisterObjectMethod("PongGame", "void MoveBackToLobby()", WRAP_MFN(PongGame, MoveBackToLobby),
             asCALL_GENERIC) < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("PongGame", "void Disconnect(const string &in statusmessage)", WRAP_MFN(PongGame,
+    {
+        SCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectMethod("PongGame", "void Disconnect(const string &in statusmessage)", WRAP_MFN(PongGame,
                 Disconnect), asCALL_GENERIC) < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("PongGame", "bool Connect(const string &in address, string &out errormessage)",
+    {
+        SCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectMethod("PongGame", "bool Connect(const string &in address, string &out errormessage)",
             asMETHOD(PongGame, Connect), asCALL_THISCALL) < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectMethod("PongGame", "bool SendServerCommand(const string &in command)", asMETHOD(PongGame,
+    {
+        SCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectMethod("PongGame", "bool SendServerCommand(const string &in command)", asMETHOD(PongGame,
                 SendServerCommand), asCALL_THISCALL) < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
+    {
+        SCRIPT_REGISTERFAIL;
+    }
     if(engine->RegisterObjectMethod("PongGame", "int GetOurPlayerID()", asMETHOD(PongGame, GetOurPlayerID),
             asCALL_THISCALL) < 0)
-	{
-		SCRIPT_REGISTERFAIL;
-	}
+    {
+        SCRIPT_REGISTERFAIL;
+    }
 
  
-	
+    
 
 
-	// Version getting function //
-	if(engine->RegisterGlobalFunction("string GetPongVersion()", asFUNCTION(GetPongVersionProxy), asCALL_CDECL) < 0){
-		SCRIPT_REGISTERFAIL;
-	}
+    // Version getting function //
+    if(engine->RegisterGlobalFunction("string GetPongVersion()", asFUNCTION(GetPongVersionProxy), asCALL_CDECL) < 0){
+        SCRIPT_REGISTERFAIL;
+    }
 
 
     return true;
 }
 
 void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, string> &typeids){
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("PongGame"), "PongGame"));
+    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongGame"), "PongGame"));
 }
 
 bool Pong::PongGame::Connect(const string &address, string &errorstr){
-	Logger::Get()->Info("About to connect to address "+address);
+    Logger::Get()->Info("About to connect to address "+address);
 
-	// Send an event about the server name //
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ServerInfoUpdate",
+    // Send an event about the server name //
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ServerInfoUpdate",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Name",
                         new VariableBlock(address))))));
 
 
-	// Get a connection to use //
-	auto tmpconnection = Leviathan::NetworkHandler::Get()->GetOrCreatePointerToConnection(address);
+    // Get a connection to use //
+    auto tmpconnection = ClientInterface->GetOwner()->OpenConnectionTo(address);
 
-	if(!tmpconnection){
+    if(!tmpconnection){
 
-		errorstr = "Tried to connect to an invalid address, "+address;
+        errorstr = "Tried to connect to an invalid address, "+address;
 
-		EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
                             new VariableBlock(errorstr))))));
-		return false;
-	}
+        return false;
+    }
 
-	EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
                         new VariableBlock("Opening connection to server at "+address))))));
 
-	// We are a client and we can use our interface to handle the server connection functions //
+    // We are a client and we can use our interface to handle the server connection functions //
 
-	dynamic_cast<NetworkClientInterface*>(Leviathan::NetworkHandler::GetInterface())->JoinServer(tmpconnection);
-	// The function automatically reports any errors //
+    ClientInterface->JoinServer(tmpconnection);
+    // The function automatically reports any errors //
 
 
-	// Now it should be fine, waiting for messages //
-	return true;
+    // Now it should be fine, waiting for messages //
+    return true;
 }
 
 void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
-	// Fire an event to notify the GUI about this //
-	EventHandler::Get()->CallEvent(new GenericEvent("PlayerStatusUpdated", NamedVars(new NamedVariableList())));
+    // Fire an event to notify the GUI about this //
+    EventHandler::Get()->CallEvent(new GenericEvent("PlayerStatusUpdated", NamedVars(new NamedVariableList())));
 
 
 }
 
 bool Pong::PongGame::SendServerCommand(const string &command){
 
-	NetworkClientInterface* clientinterface = NetworkClientInterface::Get();
-	if(clientinterface != NULL){
-		
-		if(!clientinterface->IsConnected())
-			return false;
+    if(ClientInterface != nullptr){
+        
+        if(!ClientInterface->IsConnected())
+            return false;
 
-		try{
-			clientinterface->SendCommandStringToServer(command);
+        try{
+            ClientInterface->SendCommandStringToServer(command);
 
-		} catch(const Exception &e){
+        } catch(const Exception &e){
 
-			Logger::Get()->Warning("Failed to send command to the server: ");
-			e.PrintToLog();
-			return false;
-		}
+            Logger::Get()->Warning("Failed to send command to the server: ");
+            e.PrintToLog();
+            return false;
+        }
 
-		// Nothing failed so it should have worked //
-		return true;
-	}
+        // Nothing failed so it should have worked //
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus){
 
-	switch(serverstatus){
-	case PONG_JOINGAMERESPONSE_TYPE_LOBBY:
+    switch(serverstatus){
+    case PONG_JOINGAMERESPONSE_TYPE_LOBBY:
     {
         // Show the lobby //
         // Send event to enable the lobby screen //
@@ -669,5 +664,5 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
             Logger::Get()->Error("Pong: unknown state!");
             DEBUG_BREAK;
         }
-	}
+    }
 }

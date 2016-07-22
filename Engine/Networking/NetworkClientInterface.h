@@ -22,6 +22,14 @@ public:
     DLLEXPORT NetworkClientInterface();
     DLLEXPORT virtual ~NetworkClientInterface();
 
+
+    DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
+        Connection &connection);
+
+    DLLEXPORT virtual void HandleResponseOnlyPacket(
+        std::shared_ptr<NetworkResponse> message, Connection &connection,
+        bool &dontmarkasreceived);
+
     //! \brief Connects the client to a server
     //! \return Returns true when successfully started the join process,
     //! false if already connected (and DisconnectFromServer should be called)
@@ -80,25 +88,12 @@ public:
     //! \brief Marks a keep alive to be sent on next tick
     DLLEXPORT void MarkForNotifyReceivedStates();
 
-protected:
-
-    //! \brief Utility function for subclasses to call for default handling of server packets
-    //!
-    //! Handles default packets that are meant to be processed by a client
-    DLLEXPORT bool _HandleClientRequest(std::shared_ptr<NetworkRequest> request,
-        Connection &connectiontosendresult);
-
-    //! \brief Utility function for subclasses to call for default handling of
-    //! non-request responses
-    //!
-    //! Handles default types of response packages and returns true if processed.
-    DLLEXPORT bool _HandleClientResponseOnly(std::shared_ptr<NetworkResponse> message,
-        Connection &connection, bool &dontmarkasreceived);
-
     //! \brief Updates status of the client to server connections
     //!  
     //! \note Should be called by NetworkInterface::TickIt
-    DLLEXPORT void UpdateClientStatus();
+    DLLEXPORT void TickIt() override;
+
+protected:
 
     // Callbacks for child classes to implement //
     DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring,
@@ -127,7 +122,7 @@ protected:
     DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
 
 private:
-		
+        
     void _SendConnectRequest(Lock &guard);
 
     //! \brief Handles succeeded requests, removes clutter from other places

@@ -34,7 +34,7 @@ using Leviathan::LeviathanApplication;
 using Leviathan::StringIterator;
 using Leviathan::NetworkRequest;
 using Leviathan::NetworkResponse;
-using Leviathan::ConnectionInfo;
+using Leviathan::Connection;
 using Leviathan::Window;
 using Leviathan::VariableBlock;
 using Leviathan::TimingMonitor;

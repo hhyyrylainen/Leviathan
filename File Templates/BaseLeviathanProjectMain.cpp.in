@@ -80,8 +80,8 @@ int main(int argcount, char* args[]){
 #ifndef _DEBUG
     google_breakpad::ExceptionHandler ExceptionHandler(L"C://tmp", NULL, DumpCallback, NULL, 
         google_breakpad::ExceptionHandler::HANDLER_ALL,
-		(MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
-		(const wchar_t*)nullptr, NULL);
+        (MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
+        (const wchar_t*)nullptr, NULL);
         
 #endif //_DEBUG
 #else

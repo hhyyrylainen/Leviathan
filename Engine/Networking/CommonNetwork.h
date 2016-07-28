@@ -118,7 +118,7 @@ enum class NETWORK_RESPONSE_INVALIDREASON : uint8_t{
     //! The server has used a custom rule to disallow this
     ServerCustom
  };
-	
+    
 //! Defines what request the server accepted and any potential data
 enum class SERVER_ACCEPTED_TYPE : uint8_t{
 

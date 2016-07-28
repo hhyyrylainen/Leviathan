@@ -3,6 +3,7 @@
 #include "Networking/NetworkRequest.h"
 
 #include "PartialEngine.h"
+#include "../DummyLog.h"
 
 #include "catch.hpp"
 
@@ -163,6 +164,128 @@ TEST_CASE("Ack field filling", "networking") {
         CHECK(receive.IsAckSet(11));
         CHECK(!receive.IsAckSet(93));
     }
+}
+
+TEST_CASE("Packet serialization and deserialization", "networking") {
+
+    PartialEngine<false> reporter;
+
+    // Requests //
+    SECTION("Connect basic data") {
+
+        sf::Packet packet;
+
+        RequestConnect request;
+
+        request.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkRequest::LoadFromPacket(packet, 0);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_REQUEST_TYPE::Connect);
+
+        auto* deserialized = static_cast<RequestConnect*>(loaded.get());
+
+        CHECK(deserialized->CheckValue == request.CheckValue);
+    }
+    SECTION("RequestSecurity") {
+
+        sf::Packet packet;
+
+        RequestSecurity request(CONNECTION_ENCRYPTION::Standard, "1235312125", "315247268");
+
+        request.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkRequest::LoadFromPacket(packet, 0);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_REQUEST_TYPE::Security);
+
+        auto* deserialized = static_cast<RequestSecurity*>(loaded.get());
+
+        CHECK(deserialized->SecureType == request.SecureType);
+        CHECK(deserialized->PublicKey == request.PublicKey);
+        CHECK(deserialized->AdditionalSettings == request.AdditionalSettings);
+    }
+    SECTION("RequestAuthenticate") {
+
+        sf::Packet packet;
+
+        RequestAuthenticate request("griefer-123", 57332578, "my-pass");
+
+        request.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkRequest::LoadFromPacket(packet, 0);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_REQUEST_TYPE::Authenticate);
+
+        auto* deserialized = static_cast<RequestAuthenticate*>(loaded.get());
+
+        CHECK(deserialized->UserName == request.UserName);
+        CHECK(deserialized->AuthToken == request.AuthToken);
+        CHECK(deserialized->AuthPasswd == request.AuthPasswd);
+    }
+
+
+
+    // Responses //
+    SECTION("ResponseAuthenticate") {
+
+        sf::Packet packet;
+
+        ResponseAuthenticate response(0, 1001, 523980358035209);
+
+        response.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkResponse::LoadFromPacket(packet);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_RESPONSE_TYPE::Authenticate);
+
+        auto* deserialized = static_cast<ResponseAuthenticate*>(loaded.get());
+
+        CHECK(deserialized->GetResponseID() == response.GetResponseID());
+        CHECK(deserialized->UserID == response.UserID);
+        CHECK(deserialized->UserToken == response.UserToken);
+    }
+    SECTION("ResponseSecurity") {
+
+        sf::Packet packet;
+
+        ResponseSecurity response(712, CONNECTION_ENCRYPTION::Standard, "523980358035209",
+            "234650879135789035209547");
+
+        response.AddDataToPacket(packet);
+
+        bool dummy;
+        packet >> dummy;
+
+        auto loaded = NetworkResponse::LoadFromPacket(packet);
+
+        REQUIRE(loaded);
+        REQUIRE(loaded->GetType() == NETWORK_RESPONSE_TYPE::Security);
+
+        auto* deserialized = static_cast<ResponseSecurity*>(loaded.get());
+
+        CHECK(deserialized->GetResponseID() == response.GetResponseID());
+        CHECK(deserialized->SecureType == response.SecureType);
+        CHECK(deserialized->PublicKey == response.PublicKey);
+        CHECK(deserialized->EncryptedSymmetricKey == response.EncryptedSymmetricKey);
+    }
+   
 }
 
 class ConnectionTestFixture {

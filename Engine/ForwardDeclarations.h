@@ -52,7 +52,7 @@ class InputReceiver;
 class InputController;
 
 namespace Gui{
-		
+        
 class GuiManager;
 }
 

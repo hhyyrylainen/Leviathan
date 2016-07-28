@@ -233,27 +233,43 @@ class SFMLSerializeClass < OutputClass
 
     str = ""
     
-    nonAsIfThings = false
+    insideBracketExpression = false
 
     @members.each do |a|
 
       if a[:as].nil?
-
-        nonAsIfThings = true
-        next
+        if not insideBracketExpression
+        
+          str += "packet"
+          insideBracketExpression = true
+          
+        end
+        
+        str += " >> " + a[:name]
+        
+      else
+        
+        if insideBracketExpression
+          
+          str += ";\n"
+          insideBracketExpression = false
+        end
+      
+        tempName = "temp_#{a[:name]}"
+        str += "#{a[:as]} #{tempName};\n"
+        str += "packet >> #{tempName};\n"
+        str += "#{a[:name]} = static_cast<#{a[:type]}>(#{tempName});\n"
       end
 
-      tempName = "temp_#{a[:name]}"
-      str += "#{a[:as]} #{tempName};\n"
-      str += "packet >> #{tempName};\n"
-      str += "#{a[:name]} = static_cast<#{a[:type]}>(#{tempName});\n"
+
       
     end
     
-    if nonAsIfThings
-      str += "packet >> " + @members.select{ |a| a[:as].nil? }.map { |a| "#{a[:name]}" }.
-                            join(" >> ") + ";\n"
+    if insideBracketExpression
+          
+      str += ";\n"
     end
+    
     str
   end
 end

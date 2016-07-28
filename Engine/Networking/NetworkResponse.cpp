@@ -9,34 +9,41 @@ using namespace std;
 
 DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::Packet &packet){
 
-    // First thing is the response ID //
-    uint32_t responseid = 0;
-	packet >> responseid;
-
-	// Second is the type, based on which we handle the rest of the data //
-	uint16_t rawtype;
+    // First thing is the type, based on which we handle the rest of the data
+    // This is before responseid to look more like a request packet
+    uint16_t rawtype;
     packet >> rawtype;
+
+    // Second thing is the response ID //
+    uint32_t responseid = 0;
+    packet >> responseid;
 
     if(!packet)
         throw InvalidArgument("packet has invalid format");
     
-	const auto responsetype = static_cast<NETWORK_RESPONSE_TYPE>(rawtype);
+    const auto responsetype = static_cast<NETWORK_RESPONSE_TYPE>(rawtype);
 
-	// Process based on the type //
-	switch(responsetype){
+    // Process based on the type //
+    switch(responsetype){
     case NETWORK_RESPONSE_TYPE::CloseConnection:
     case NETWORK_RESPONSE_TYPE::Keepalive:
     case NETWORK_RESPONSE_TYPE::None:
         return std::make_shared<ResponseNone>(responsetype, responseid, packet);
-
+    case NETWORK_RESPONSE_TYPE::Connect:
+        return std::make_shared<ResponseConnect>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::Authenticate:
+        return std::make_shared<ResponseAuthenticate>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::Security:
+        return std::make_shared<ResponseSecurity>(responseid, packet);
     default:
-		{
+        {
             Logger::Get()->Warning("NetworkResponse: unused type: "+
                 Convert::ToString(static_cast<int>(responsetype)));
-            throw InvalidArgument("packet has invalid response type");
-		}
-		break;
-	}
+            throw InvalidArgument("packet has response type that is missing from "
+                "switch(responsetype)");
+        }
+        break;
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkResponse::LimitResponseSize(ResponseIdentification &response,

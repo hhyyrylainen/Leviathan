@@ -261,7 +261,8 @@ public:
         return State == CONNECTION_STATE::Connected ||
             State == CONNECTION_STATE::Secured ||
             State == CONNECTION_STATE::Authenticated ||
-            State == CONNECTION_STATE::NothingReceived;
+            State == CONNECTION_STATE::NothingReceived ||
+            State == CONNECTION_STATE::Initial;
     }
 
     //! \brief Returns true if this socket is valid for sending

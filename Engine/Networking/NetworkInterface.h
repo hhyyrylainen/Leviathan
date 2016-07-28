@@ -11,7 +11,7 @@
 namespace Leviathan{
 
 
-	//! \brief Class that encapsulates common networking functionality that is required by
+    //! \brief Class that encapsulates common networking functionality that is required by
 //! all networked programs
 //! \see NetworkServerInterface NetworkClientInterface
 class NetworkInterface : public virtual ThreadSafe{
@@ -32,7 +32,7 @@ public:
     //! since it can become invalid after this function returns. Get a shared pointer
     //! from NetworkHandler instead
     DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
-        Connection &connection);
+        Connection &connection) = 0;
         
     //! \brief Called by ConnectionInfo to verify that a response is good.
     //!
@@ -73,7 +73,7 @@ public:
     //! \note This NetworkInterface doesn't need any ticking,
     //! but NetworkClientInterface does
     //! \see NetworkClientInterface::UpdateClientStatus
-    DLLEXPORT virtual void TickIt();
+    DLLEXPORT virtual void TickIt() = 0;
 
 
     //! \brief Called when the program is closing
@@ -84,8 +84,27 @@ public:
 
     //! \brief Asserts if types don't match
     DLLEXPORT void VerifyType(NETWORKED_TYPE type) const;
-		
+    
+    inline NetworkHandler* GetOwner() {
+
+        return Owner;
+    }
+
 protected:
+
+
+    virtual bool _CustomHandleRequestPacket(std::shared_ptr<NetworkRequest> request,
+        Connection &connection) 
+    {
+        return false;
+    }
+
+    virtual bool _CustomHandleResponseOnlyPacket(
+        std::shared_ptr<NetworkResponse> message, Connection &connection,
+        bool &dontmarkasreceived) 
+    {
+        return false;
+    }
 
     //! \brief Utility function for subclasses to call for default handling
     //!

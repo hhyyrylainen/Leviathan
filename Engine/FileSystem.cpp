@@ -365,6 +365,13 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
 
 	// Start searching //
 	DIR* dir = opendir(dirpath.c_str());
+
+    if(!dir){
+
+        // Non-existant directory
+        return false;
+    }
+    
 	while((ent = readdir(dir)) != NULL){
 		const string file_name = ent->d_name;
 

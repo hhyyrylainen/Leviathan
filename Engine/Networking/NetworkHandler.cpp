@@ -54,7 +54,8 @@ DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype,
 }
 
 DLLEXPORT NetworkHandler::~NetworkHandler(){
-    
+
+    _NetworkCache.reset();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
@@ -175,9 +176,12 @@ DLLEXPORT void Leviathan::NetworkHandler::Release() {
     
     _ReleaseSocket();
 
-    // This thread is blocked in infinite read //
-    //ListenerThread.join();
-    ListenerThread.detach();
+    if(BlockingMode){
+        // This thread is blocked in infinite read //
+        //ListenerThread.join();
+        if(ListenerThread.joinable())
+            ListenerThread.detach();
+    }
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
@@ -402,11 +406,13 @@ bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::ShutdownCache() {
-    DEBUG_BREAK;
+
+    if(_NetworkCache)
+        _NetworkCache->Release();
 }
 
 DLLEXPORT void Leviathan::NetworkHandler::ReleaseInputHandler() {
-    DEBUG_BREAK;
+
 }
 // ------------------------------------ //
 DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(

@@ -99,7 +99,16 @@ int main(int argcount, char* args[]){
             "@ENGINECONFIGURATION@", 
         "@PROGRAMCONFIGURATION@", "@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
         &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
-        
+
+    // Fail if no definition could be created //
+    if(!ProgramDefinition){
+
+        DEBUG_BREAK;
+        std::cout << "FATAL: failed to create AppDefine" << std::endl;
+        return 2;
+    }
+    
+    
     // customize values //
 #ifdef _WIN32
     ProgramDefinition->SetHInstance(hInstance);

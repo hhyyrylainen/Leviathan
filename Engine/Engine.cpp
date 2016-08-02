@@ -474,11 +474,12 @@ void Engine::Release(bool forced){
 
     }
 
-    _NetworkHandler->ShutdownCache();
-	
-	// Wait for tasks to finish //
-	if(!forced)
-		_ThreadingManager->WaitForAllTasksToFinish();
+    if(_NetworkHandler)
+        _NetworkHandler->ShutdownCache();
+    
+    // Wait for tasks to finish //
+    if(!forced)
+       _ThreadingManager->WaitForAllTasksToFinish();
 
     // Make windows clear their stored objects //
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
@@ -490,61 +491,61 @@ void Engine::Release(bool forced){
     AdditionalGraphicalEntities.clear();
 
     // Finally the main window //
-	if(GraphicalEntity1){
+    if(GraphicalEntity1){
 
-		GraphicalEntity1->ReleaseLinked();
-	}
+        GraphicalEntity1->ReleaseLinked();
+    }
 
-	// Destroy windows //
-	SAFE_DELETE(GraphicalEntity1);
+    // Destroy windows //
+    SAFE_DELETE(GraphicalEntity1);
 
-	// Release newton //
-	SAFE_DELETE(PhysMaterials);
-	SAFE_DELETE(_NewtonManager);
+    // Release newton //
+    SAFE_DELETE(PhysMaterials);
+    SAFE_DELETE(_NewtonManager);
 
 #ifdef LEVIATHAN_USES_LEAP
-	SAFE_RELEASEDEL(LeapData);
+    SAFE_RELEASEDEL(LeapData);
 #endif
 
-	// Console needs to be released before script release //
-	SAFE_RELEASEDEL(MainConsole);
+    // Console needs to be released before script release //
+    SAFE_RELEASEDEL(MainConsole);
 
-	SAFE_DELETE(MainScript);
+    SAFE_DELETE(MainScript);
 
-	// Save at this point (just in case it crashes before exiting) //
-	Logger::Get()->Save();
+    // Save at this point (just in case it crashes before exiting) //
+    Logger::Get()->Save();
 
-	SAFE_RELEASEDEL(Graph);
-	SAFE_DELETE(RenderTimer);
+    SAFE_RELEASEDEL(Graph);
+    SAFE_DELETE(RenderTimer);
 
     _EntitySerializer.reset();
 
-	SAFE_RELEASEDEL(Sound);
-	SAFE_DELETE(Mainstore);
+    SAFE_RELEASEDEL(Sound);
+    SAFE_DELETE(Mainstore);
 
-	SAFE_RELEASEDEL(MainEvents);
-	// delete randomizer last, for obvious reasons //
-	SAFE_DELETE(MainRandom);
+    SAFE_RELEASEDEL(MainEvents);
+    // delete randomizer last, for obvious reasons //
+    SAFE_DELETE(MainRandom);
 
-	Gui::GuiManager::KillGlobalCache();
+    Gui::GuiManager::KillGlobalCache();
 
-	ObjectFileProcessor::Release();
-	SAFE_DELETE(MainFileHandler);
+    ObjectFileProcessor::Release();
+    SAFE_DELETE(MainFileHandler);
 
-	// Stop threads //
-	if(!forced)
-		_ThreadingManager->WaitForAllTasksToFinish();
-	SAFE_RELEASEDEL(_ThreadingManager);
+    // Stop threads //
+    if(!forced)
+        _ThreadingManager->WaitForAllTasksToFinish();
+    SAFE_RELEASEDEL(_ThreadingManager);
 
-	// clears all running timers that might have accidentally been left running //
-	TimingMonitor::ClearTimers();
+    // clears all running timers that might have accidentally been left running //
+    TimingMonitor::ClearTimers();
 
-	// safe to delete this here //
-	SAFE_DELETE(OutOMemory);
+    // safe to delete this here //
+    SAFE_DELETE(OutOMemory);
 
-	SAFE_DELETE(IDDefaultInstance);
+    SAFE_DELETE(IDDefaultInstance);
 
-	Logger::Get()->Write("Goodbye cruel world!");
+    Logger::Get()->Write("Goodbye cruel world!");
 }
 // ------------------------------------ //
 void Engine::Tick(){
@@ -558,47 +559,47 @@ void Engine::Tick(){
         
     }
     
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	if(PreReleaseWaiting){
+    if(PreReleaseWaiting){
 
-		PreReleaseWaiting = false;
-		PreReleaseDone = true;
+        PreReleaseWaiting = false;
+        PreReleaseDone = true;
 
-		Logger::Get()->Info("Engine: performing final release tick");
+        Logger::Get()->Info("Engine: performing final release tick");
 
         
         
-		// Call last tick event //
+        // Call last tick event //
         
-	}
+    }
 
-	// Get the passed time since the last update //
-	auto CurTime = Time::GetTimeMs64();
-	TimePassed = (int)(CurTime-LastTickTime);
-
-
-	if((TimePassed < TICKSPEED)){
-		// It's not tick time yet //
-		return;
-	}
+    // Get the passed time since the last update //
+    auto CurTime = Time::GetTimeMs64();
+    TimePassed = (int)(CurTime-LastTickTime);
 
 
-	LastTickTime += TICKSPEED;
-	TickCount++;
+    if((TimePassed < TICKSPEED)){
+        // It's not tick time yet //
+        return;
+    }
 
-	// Update input //
+
+    LastTickTime += TICKSPEED;
+    TickCount++;
+
+    // Update input //
 #ifdef LEVIATHAN_USES_LEAP
-	if(LeapData)
-		LeapData->OnTick(TimePassed);
+    if(LeapData)
+        LeapData->OnTick(TimePassed);
 #endif
 
-	if(!NoGui){
-		// sound tick //
-		if(Sound)
-		   Sound->Tick(TimePassed);
+    if(!NoGui){
+        // sound tick //
+        if(Sound)
+           Sound->Tick(TimePassed);
 
-		// update windows //
+        // update windows //
         if(GraphicalEntity1)
             GraphicalEntity1->Tick(TimePassed);
 
@@ -606,7 +607,7 @@ void Engine::Tick(){
 
             AdditionalGraphicalEntities[i]->Tick(TimePassed);
         }
-	}
+    }
 
 
     // Update worlds //
@@ -622,37 +623,36 @@ void Engine::Tick(){
     }
     
     
-	// Some dark magic here //
-	if(TickCount % 25 == 0){
-		// update values
-		Mainstore->SetTickCount(TickCount);
-		Mainstore->SetTickTime(TickTime);
+    // Some dark magic here //
+    if(TickCount % 25 == 0){
+        // update values
+        Mainstore->SetTickCount(TickCount);
+        Mainstore->SetTickTime(TickTime);
 
-		if(!NoGui){
-			// send updated rendering statistics //
-			RenderTimer->ReportStats(Mainstore);
-		}
-	}
+        if(!NoGui){
+            // send updated rendering statistics //
+            RenderTimer->ReportStats(Mainstore);
+        }
+    }
 
-	// Update file listeners //
-	if(_ResourceRefreshHandler)
-		_ResourceRefreshHandler->CheckFileStatus();
+    // Update file listeners //
+    if(_ResourceRefreshHandler)
+        _ResourceRefreshHandler->CheckFileStatus();
 
-	// Send the tick event //
-	MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new IntegerEventData(TickCount)));
-
-	// Call the default app tick //
-	Owner->Tick(TimePassed);
+    // Send the tick event //
+    if(MainEvents)
+        MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new IntegerEventData(TickCount)));
+    
+    // Call the default app tick //
+    Owner->Tick(TimePassed);
 
     // Detect closed windows //
     if(GraphicalEntity1 && !GraphicalEntity1->GetWindow()->IsOpen()){
-
         // Window closed //
         ReportClosedWindow(guard, GraphicalEntity1);
     }
-
+   
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
-
         if(!AdditionalGraphicalEntities[i]->GetWindow()->IsOpen()){
 
             ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
@@ -662,7 +662,7 @@ void Engine::Tick(){
         }
     }
     
-	TickTime = (int)(Time::GetTimeMs64()-CurTime);
+    TickTime = (int)(Time::GetTimeMs64()-CurTime);
 }
 
 DLLEXPORT void Engine::PreFirstTick(){
@@ -674,33 +674,33 @@ DLLEXPORT void Engine::PreFirstTick(){
 
     ClearTimers();
     
-	Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
+    Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
 }
 // ------------------------------------ //
 void Engine::RenderFrame(){
-	// We want to totally ignore this if we are in text mode //
-	if(NoGui)
-		return;
+    // We want to totally ignore this if we are in text mode //
+    if(NoGui)
+        return;
 
-	int SinceLastFrame = -1;
-	GUARD_LOCK();
+    int SinceLastFrame = -1;
+    GUARD_LOCK();
 
-	// limit check //
-	if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
+    // limit check //
+    if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
         
-		// fps would go too high //
-		return;
-	}
+        // fps would go too high //
+        return;
+    }
 
-	// since last frame is in microseconds 10^-6 convert to milliseconds //
-	// SinceLastTickTime is always more than 1000 (always 1 ms or more) //
-	SinceLastFrame /= 1000;
-	FrameCount++;
+    // since last frame is in microseconds 10^-6 convert to milliseconds //
+    // SinceLastTickTime is always more than 1000 (always 1 ms or more) //
+    SinceLastFrame /= 1000;
+    FrameCount++;
 
-	// advanced statistic start monitoring //
-	RenderTimer->RenderingStart();
+    // advanced statistic start monitoring //
+    RenderTimer->RenderingStart();
 
-	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
+    MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
             new IntegerEventData(SinceLastFrame)));
 
     // Run rendering systems //
@@ -723,11 +723,11 @@ void Engine::RenderFrame(){
     }
     
 
-	bool shouldrender = false;
+    bool shouldrender = false;
 
-	// Render //
-	if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame))
-		shouldrender = true;
+    // Render //
+    if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame))
+        shouldrender = true;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 
@@ -736,26 +736,26 @@ void Engine::RenderFrame(){
     }
 
     guard.unlock();
-	if(shouldrender)
-		Graph->Frame();
+    if(shouldrender)
+        Graph->Frame();
 
     guard.lock();
-	MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
+    MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
 
-	// advanced statistics frame has ended //
-	RenderTimer->RenderingEnd();
+    // advanced statistics frame has ended //
+    RenderTimer->RenderingEnd();
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::PreRelease(){
-	GUARD_LOCK();
-	if(PreReleaseWaiting || PreReleaseCompleted)
-		return;
-	
-	PreReleaseWaiting = true;
-	// This will stay true until the end of times //
-	PreReleaseCompleted = true;
+    GUARD_LOCK();
+    if(PreReleaseWaiting || PreReleaseCompleted)
+        return;
+    
+    PreReleaseWaiting = true;
+    // This will stay true until the end of times //
+    PreReleaseCompleted = true;
 
-	// Stop command handling first //
+    // Stop command handling first //
     if(_ConsoleInput){
 
         _ConsoleInput->Release(false);
@@ -765,29 +765,29 @@ DLLEXPORT void Engine::PreRelease(){
     // Automatically destroy input sources //
     _NetworkHandler->ReleaseInputHandler();
 
-	// Then kill the network //
+    // Then kill the network //
     {
         Lock lock(NetworkHandlerLock);
         
         _NetworkHandler->GetInterface()->CloseDown();
     }
 
-	// Let the game release it's resources //
-	Owner->EnginePreShutdown();
+    // Let the game release it's resources //
+    Owner->EnginePreShutdown();
 
-	// Close remote console //
-	SAFE_DELETE(_RemoteConsole);
+    // Close remote console //
+    SAFE_DELETE(_RemoteConsole);
 
-	// Close all connections //
+    // Close all connections //
     {
         Lock lock(NetworkHandlerLock);
         
         SAFE_RELEASEDEL(_NetworkHandler);
     }
 
-	SAFE_RELEASEDEL(_ResourceRefreshHandler);
+    SAFE_RELEASEDEL(_ResourceRefreshHandler);
 
-	// Set worlds to empty //
+    // Set worlds to empty //
     {
         Lock lock(GameWorldsLock);
         
@@ -797,34 +797,34 @@ DLLEXPORT void Engine::PreRelease(){
         }
     }
 
-	// Set tasks to a proper state //
-	_ThreadingManager->SetDiscardConditionalTasks(true);
-	_ThreadingManager->SetDisallowRepeatingTasks(true);
+    // Set tasks to a proper state //
+    _ThreadingManager->SetDiscardConditionalTasks(true);
+    _ThreadingManager->SetDisallowRepeatingTasks(true);
 
-	Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
+    Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::SaveScreenShot(){
-	LEVIATHAN_ASSERT(!NoGui, "really shouldn't try to screenshot in text-only mode");
-	GUARD_LOCK();
+    LEVIATHAN_ASSERT(!NoGui, "really shouldn't try to screenshot in text-only mode");
+    GUARD_LOCK();
 
-	const string fileprefix = MainFileHandler->GetDataFolder()+"Screenshots/Captured_frame_";
+    const string fileprefix = MainFileHandler->GetDataFolder()+"Screenshots/Captured_frame_";
 
-	GraphicalEntity1->SaveScreenShot(fileprefix);
+    GraphicalEntity1->SaveScreenShot(fileprefix);
 }
 
 DLLEXPORT int Engine::GetWindowOpenCount(){
-	int openwindows = 0;
+    int openwindows = 0;
 
-	// If we are in text only mode always return 1 //
-	if(NoGui)
-		return 1;
+    // If we are in text only mode always return 1 //
+    if(NoGui)
+        return 1;
     
-	GUARD_LOCK();
+    GUARD_LOCK();
     
 
-	if(GraphicalEntity1 && GraphicalEntity1->GetWindow()->IsOpen())
-		openwindows++;
+    if(GraphicalEntity1 && GraphicalEntity1->GetWindow()->IsOpen())
+        openwindows++;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 
@@ -832,7 +832,7 @@ DLLEXPORT int Engine::GetWindowOpenCount(){
             openwindows++;
     }
 
-	return openwindows;
+    return openwindows;
 }
 // ------------------------------------ //
 DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow(){
@@ -887,17 +887,17 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* o
     std::shared_ptr<ViewerCameraPos> worldscamera)
 {
     
-	auto tmp = make_shared<GameWorld>(_NetworkHandler->GetNetworkType());
+    auto tmp = make_shared<GameWorld>(_NetworkHandler->GetNetworkType());
     
-	tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
+    tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
     
-	if(owningwindow)
-		owningwindow->LinkObjects(worldscamera, tmp);
+    if(owningwindow)
+        owningwindow->LinkObjects(worldscamera, tmp);
     
     Lock lock(GameWorldsLock);
     
-	GameWorlds.push_back(tmp);
-	return GameWorlds.back();
+    GameWorlds.push_back(tmp);
+    return GameWorlds.back();
 }
 
 DLLEXPORT void Engine::DestroyWorld(shared_ptr<GameWorld> &world){
@@ -935,11 +935,11 @@ DLLEXPORT void Engine::ClearTimers(){
 }
 // ------------------------------------ //
 void Engine::_NotifyThreadsRegisterOgre(){
-	if(NoGui)
-		return;
+    if(NoGui)
+        return;
     
-	// Register threads to use graphical objects //
-	_ThreadingManager->MakeThreadsWorkWithOgre();
+    // Register threads to use graphical objects //
+    _ThreadingManager->MakeThreadsWorkWithOgre();
 }
 // ------------------------------------ //
 DLLEXPORT int64_t Leviathan::Engine::GetTimeSinceLastTick() const
@@ -1020,39 +1020,39 @@ int TestCrash(int writenum){
 
 DLLEXPORT void Engine::PassCommandLine(const string &commands){
 
-	Logger::Get()->Info("Command line: "+commands);
+    Logger::Get()->Info("Command line: "+commands);
 
-	GUARD_LOCK();
-	// Split all flags and check for some flags that might be set //
-	StringIterator itr(commands);
-	unique_ptr<string> splitval;
+    GUARD_LOCK();
+    // Split all flags and check for some flags that might be set //
+    StringIterator itr(commands);
+    unique_ptr<string> splitval;
 
-	while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE))
+    while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE))
         != NULL)
     {
 
-		if(*splitval == "--nogui"){
-			NoGui = true;
-			Logger::Get()->Info("Engine starting in non-GUI mode");
-			continue;
-		}
-		if(*splitval == "--noleap"){
-			NoLeap = true;
+        if(*splitval == "--nogui"){
+            NoGui = true;
+            Logger::Get()->Info("Engine starting in non-GUI mode");
+            continue;
+        }
+        if(*splitval == "--noleap"){
+            NoLeap = true;
 
 #ifdef LEVIATHAN_USES_LEAP
-			Logger::Get()->Info("Engine starting with LeapMotion disabled");
+            Logger::Get()->Info("Engine starting with LeapMotion disabled");
 #endif
-			continue;
-		}
+            continue;
+        }
         if(*splitval == "--nocin"){
 
             NoSTDInput = true;
             continue;
         }
-		if(*splitval == "--nonothing"){
-			// Shouldn't try to open the console on windows //
-			DEBUG_BREAK;
-		}
+        if(*splitval == "--nonothing"){
+            // Shouldn't try to open the console on windows //
+            DEBUG_BREAK;
+        }
         if(*splitval == "--crash"){
             
             Logger::Get()->Info("Engine testing crash handling");
@@ -1066,95 +1066,95 @@ DLLEXPORT void Engine::PassCommandLine(const string &commands){
             continue;
         }
         
-		// Add (if not processed already) //
-		PassedCommands.push_back(move(splitval));
-	}
+        // Add (if not processed already) //
+        PassedCommands.push_back(move(splitval));
+    }
 }
 
 DLLEXPORT void Engine::ExecuteCommandLine(){
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	StringIterator itr(NULL, false);
+    StringIterator itr(NULL, false);
 
-	// Iterate over the commands and process them //
-	for(size_t i = 0; i < PassedCommands.size(); i++){
+    // Iterate over the commands and process them //
+    for(size_t i = 0; i < PassedCommands.size(); i++){
         
-		itr.ReInit(PassedCommands[i].get());
-		// Skip the preceding '-'s //
-		itr.SkipCharacters('-');
+        itr.ReInit(PassedCommands[i].get());
+        // Skip the preceding '-'s //
+        itr.SkipCharacters('-');
 
-		// Get the command //
-		auto firstpart = itr.GetUntilNextCharacterOrAll<string>(':');
+        // Get the command //
+        auto firstpart = itr.GetUntilNextCharacterOrAll<string>(':');
 
-		// Execute the wanted command //
-		if(StringOperations::CompareInsensitive<string>(*firstpart, "RemoteConsole")){
-			
-			// Get the next command //
-			auto commandpart = itr.GetUntilNextCharacterOrAll<string>(L':');
+        // Execute the wanted command //
+        if(StringOperations::CompareInsensitive<string>(*firstpart, "RemoteConsole")){
+            
+            // Get the next command //
+            auto commandpart = itr.GetUntilNextCharacterOrAll<string>(L':');
 
-			if(*commandpart == "CloseIfNone"){
-				// Set the command //
-				_RemoteConsole->SetCloseIfNoRemoteConsole(true);
-				Logger::Get()->Info("Engine will close when no active/waiting remote console "
+            if(*commandpart == "CloseIfNone"){
+                // Set the command //
+                _RemoteConsole->SetCloseIfNoRemoteConsole(true);
+                Logger::Get()->Info("Engine will close when no active/waiting remote console "
                     "sessions");
 
-			} else if(*commandpart == "OpenTo"){
-				// Get the to part //
-				auto topart = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+            } else if(*commandpart == "OpenTo"){
+                // Get the to part //
+                auto topart = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH);
 
-				int token = 0;
+                int token = 0;
 
-				auto numberpart = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_NONE);
+                auto numberpart = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_NONE);
 
-				if(numberpart->size() == 0){
+                if(numberpart->size() == 0){
 
-					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
+                    Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
                         "no token number provided");
-					continue;
-				}
-				// Convert to a real number. Maybe we could see if the token is
+                    continue;
+                }
+                // Convert to a real number. Maybe we could see if the token is
                 // complex enough here, but that isn't necessary
-				token = Convert::StringTo<int>(*numberpart);
+                token = Convert::StringTo<int>(*numberpart);
 
-				if(token == 0){
-					// Invalid number? //
-					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
+                if(token == 0){
+                    // Invalid number? //
+                    Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
                         "couldn't parse token number, " + *numberpart);
-					continue;
-				}
+                    continue;
+                }
 
-				// Create a connection (or potentially use an existing one) //
-				shared_ptr<Connection> tmpconnection =
+                // Create a connection (or potentially use an existing one) //
+                shared_ptr<Connection> tmpconnection =
                     _NetworkHandler->OpenConnectionTo(*topart);
 
-				// Tell remote console to open a command to it //
-				if(tmpconnection){
+                // Tell remote console to open a command to it //
+                if(tmpconnection){
 
-					_RemoteConsole->OfferConnectionTo(tmpconnection, "AutoOpen",
+                    _RemoteConsole->OfferConnectionTo(tmpconnection, "AutoOpen",
                         token);
 
-				} else {
-					// Something funky happened... //
-					Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
+                } else {
+                    // Something funky happened... //
+                    Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
                         "couldn't open connection to "+*topart+", couldn't resolve address");
-				}
+                }
 
-			} else {
-				// Unknown command //
-				Logger::Get()->Warning("Engine: ExecuteCommandLine: unknown RemoteConsole "
+            } else {
+                // Unknown command //
+                Logger::Get()->Warning("Engine: ExecuteCommandLine: unknown RemoteConsole "
                     "command: "+*commandpart+", whole argument: "+*PassedCommands[i]);
-			}
-		}
+            }
+        }
 
-	}
+    }
 
 
-	PassedCommands.clear();
+    PassedCommands.clear();
 
-	// Now we can set some things that require command line arguments //
-	// _RemoteConsole might be NULL //
-	if(_RemoteConsole)
-		_RemoteConsole->SetAllowClose();
+    // Now we can set some things that require command line arguments //
+    // _RemoteConsole might be NULL //
+    if(_RemoteConsole)
+        _RemoteConsole->SetAllowClose();
 
 }
 // ------------------------------------ //

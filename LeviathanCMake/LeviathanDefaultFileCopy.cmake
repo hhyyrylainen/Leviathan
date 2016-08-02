@@ -82,7 +82,7 @@ if(WIN32)
       "Newton/bin/Newton.dll" "Newton/bin/Newton.dll")
   endif()
   
-  file(GLOB THIRD_PARTY_DLLS "${CMAKE_SOURCE_DIR}/Windows/ThirdParty/bin/*")
+  file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/Windows/ThirdParty/bin/*")
   list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
   
 else()
@@ -100,6 +100,8 @@ else()
 endif(WIN32)
 
 if(USE_OGRE AND NOT WIN32)
+
+  set(NewtonMoveFiles "${LEVIATHAN_SRC}/Newton/bin/libNewton.so")
 
   set(RawFilesToMove ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES}
     ${CEGUI_CoreWindowRendererSet_LIBRARIES} 

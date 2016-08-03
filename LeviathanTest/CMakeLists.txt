@@ -4,6 +4,8 @@ if(NOT CREATE_UE4_PLUGIN)
 set(TestSources
   resource.h
   TestMain.cpp
+  TestFiles/PartialEngine.h TestFiles/PartialEngine.cpp
+
   TestFiles/StringIterator.cpp
   TestFiles/StringOperations.cpp
   TestFiles/IDFactory.cpp
@@ -12,8 +14,8 @@ set(TestSources
   TestFiles/ObjectFiles.cpp
   TestFiles/Floats.cpp
   TestFiles/Regex.cpp
+  TestFiles/DataBlock.cpp
   TestFiles/DeltaStates.cpp
-  TestFiles/PartialEngine.h TestFiles/PartialEngine.cpp
   TestFiles/Sendable.cpp
   TestFiles/NamedVars.cpp
   TestFiles/Components.cpp

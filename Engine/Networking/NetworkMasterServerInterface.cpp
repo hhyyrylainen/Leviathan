@@ -26,8 +26,8 @@ DLLEXPORT void Leviathan::NetworkMasterServerInterface::HandleRequestPacket(
     if (_HandleDefaultRequest(request, connection))
         return;
 
-    switch (request->GetType()) {
-    }
+    // switch (request->GetType()) {
+    // }
 
     if (_CustomHandleRequestPacket(request, connection))
         return;
@@ -45,8 +45,8 @@ DLLEXPORT void Leviathan::NetworkMasterServerInterface::HandleResponseOnlyPacket
     if (_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
         return;
 
-    switch (message->GetType()) {
-    }
+    // switch (message->GetType()) {
+    // }
 
     if (_CustomHandleResponseOnlyPacket(message, connection, dontmarkasreceived))
         return;

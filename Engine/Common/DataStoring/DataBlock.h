@@ -348,8 +348,9 @@ namespace Leviathan{
         // value getting operators //
         template<class ConvertT>
         operator ConvertT() const{
-            LEVIATHAN_ASSERT(false, "data block pointer cannot be made into value");
-            return ConvertT();
+            //LEVIATHAN_ASSERT(false, "data block pointer cannot be made into value");
+            //return ConvertT();
+            return reinterpret_cast<ConvertT>(Value);
         }
         // explicit so that this doesn't get called all the time with invalid values and such //
         template<class ConvertT>

@@ -1,5 +1,4 @@
-#pragma once
-#include "Common/Datastoring/DataBlock.h"
+#include "Common/DataStoring/DataBlock.h"
 #include "Utility/Convert.h"
 #include "Common/Types.h"
 
@@ -61,6 +60,22 @@ TEST_CASE("DataBlock value casts", "[datablock, script, networking]"){
 
 	Float4* returnptr = (Float4*)(void*)(vblocky);
 
-	CHECK(returnptr == floaty);
+	CHECK(returnptr == floaty.get());
     CHECK(*returnptr == *floaty);
 }
+
+TEST_CASE("DataBlock void ptr cast", "[datablock]"){
+
+    void* testptr = reinterpret_cast<void*>(0x42);
+
+    auto block = std::make_shared<NamedVariableBlock>(new VoidPtrBlock(testptr), "Block1");
+
+    void* returned = static_cast<void*>(*block);
+
+    CHECK(returned == testptr);
+}
+
+
+
+
+

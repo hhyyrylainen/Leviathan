@@ -31,21 +31,20 @@ public:
 
     void Error(const std::string &data) override {
 
-        REQUIRE(false);
         Logger::Error(data);
+        REQUIRE(false);
     }
 
     void Warning(const std::string &data) override {
 
-        REQUIRE(false);
         Logger::Warning(data);
-
+        REQUIRE(false);
     }
 
     void Fatal(const std::string &Text) override {
 
-        REQUIRE(false);
         Logger::Fatal(Text);
+        REQUIRE(false);
     }
 };
 

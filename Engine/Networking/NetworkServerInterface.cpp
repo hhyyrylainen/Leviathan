@@ -87,6 +87,8 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleRequestPacket(
         _HandleServerJoinRequest(request, connection);
         return;
     }
+    default:
+        break;
     }
 
     if (_CustomHandleRequestPacket(request, connection))
@@ -125,6 +127,8 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleResponseOnlyPacket(
 
         return;
     }
+    default:
+        break;
     }
 
     if (_CustomHandleResponseOnlyPacket(message, connection, dontmarkasreceived))

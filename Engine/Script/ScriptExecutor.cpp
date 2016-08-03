@@ -385,7 +385,7 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 				} else {
                     
 					// types match, we can pass in the raw pointer //
-					void* ptrtostuff = (void*)(*parameters->Parameters[i]);
+					void* ptrtostuff = static_cast<void*>(*parameters->Parameters[i]);
 					ScriptContext->SetArgAddress(i, ptrtostuff);
 				}
 			}

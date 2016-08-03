@@ -443,7 +443,9 @@ void Engine::PostLoad(){
 		Mainstore->SetValue("StartCount", new VariableBlock(new IntBlock(startcounts+1)));
 	} else {
 
-		Mainstore->AddVar(new NamedVariableList("StartCount", new VariableBlock(1)));
+		Mainstore->AddVar(std::make_shared<NamedVariableList>("StartCount",
+                new VariableBlock(1)));
+        
 		// set as persistent //
 		Mainstore->SetPersistance("StartCount", true);
 	}

@@ -9,86 +9,86 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::DataStore::DataStore(){
-	Load();
+    Load();
 
-	// set default values //
-	TickTime = 0;
-	TickCount = 0;
-	FrameTime = 0;
-	FPS = 0;
+    // set default values //
+    TickTime = 0;
+    TickCount = 0;
+    FrameTime = 0;
+    FPS = 0;
 
-	FrameTimeMin = 0;
-	FrameTimeMax = 0;
-	FrameTimeAverage = 0;
+    FrameTimeMin = 0;
+    FrameTimeMax = 0;
+    FrameTimeAverage = 0;
 
 
-	FPSMin = 0;
-	FPSMax = 0;
-	FPSAverage = 0;
+    FPSMin = 0;
+    FPSMax = 0;
+    FPSAverage = 0;
 
-	// set font multiplier default //
-	FontSizeMultiplier = 1;
+    // set font multiplier default //
+    FontSizeMultiplier = 1;
 
 }
 DLLEXPORT Leviathan::DataStore::DataStore(bool man){
 
-	LEVIATHAN_ASSERT(man, "this shouldn't be called with false");
+    LEVIATHAN_ASSERT(man, "this shouldn't be called with false");
 
-	Staticaccess = this;
+    Staticaccess = this;
 
-	Load();
+    Load();
 
-	TickCount = 0;
+    TickCount = 0;
 
-	// set default values //
-	TickTime = 0;
-	TickCount = 0;
-	FrameTime = 0;
-	FPS = 0;
+    // set default values //
+    TickTime = 0;
+    TickCount = 0;
+    FrameTime = 0;
+    FPS = 0;
 
-	FrameTimeMin = 0;
-	FrameTimeMax = 0;
-	FrameTimeAverage = 0;
+    FrameTimeMin = 0;
+    FrameTimeMax = 0;
+    FrameTimeAverage = 0;
 
 
-	FPSMin = 0;
-	FPSMax = 0;
-	FPSAverage = 0;
+    FPSMin = 0;
+    FPSMax = 0;
+    FPSAverage = 0;
 
-	// set font multiplier default //
-	FontSizeMultiplier = 1;
+    // set font multiplier default //
+    FontSizeMultiplier = 1;
 
-	// register data indexes for use in Gui stuff //
-	// moved directly to object file processor
+    // register data indexes for use in Gui stuff //
+    // moved directly to object file processor
 
 }
 DLLEXPORT Leviathan::DataStore::~DataStore(){
-	Save();
+    Save();
 }
 
 DataStore* Leviathan::DataStore::Staticaccess = NULL;
 
 DataStore* Leviathan::DataStore::Get(){
-	return Staticaccess;
+    return Staticaccess;
 }
 // ------------------------------------ //
 void Leviathan::DataStore::Load(){
-	// load //
-	vector<shared_ptr<NamedVariableList>> tempvec;
-	FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+"Persist.txt", tempvec,
+    // load //
+    vector<shared_ptr<NamedVariableList>> tempvec;
+    FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+"Persist.txt", tempvec,
         Logger::Get());
 
-	Values.SetVec(tempvec);
+    Values.SetVec(tempvec);
 
-	// All loaded from file will also be saved again //
-	Persistencestates.resize(tempvec.size(), true);
+    // All loaded from file will also be saved again //
+    Persistencestates.resize(tempvec.size(), true);
 }
 void Leviathan::DataStore::Save(){
-	std::string tosave = "";
-	vector<shared_ptr<NamedVariableList>>* tempvec = Values.GetVec();
+    std::string tosave = "";
+    vector<shared_ptr<NamedVariableList>>* tempvec = Values.GetVec();
 
-	for(unsigned int i = 0; i < Persistencestates.size(); i++){
-		if(Persistencestates[i]){
+    for(unsigned int i = 0; i < Persistencestates.size(); i++){
+        if(Persistencestates[i]){
 
             try{
                 
@@ -102,436 +102,424 @@ void Leviathan::DataStore::Save(){
                 continue;
             }
             
-			if(i+1 < Persistencestates.size()){
-				tosave += "\n";
-			}
-		}
+            if(i+1 < Persistencestates.size()){
+                tosave += "\n";
+            }
+        }
 
-	}
+    }
 
-	FileSystem::WriteToFile(tosave, AppDef::GetDefault()->GetLogFile()+"Persist.txt");
+    FileSystem::WriteToFile(tosave, AppDef::GetDefault()->GetLogFile()+"Persist.txt");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::DataStore::GetValue(const std::string &name, VariableBlock &receiver) const{
-	return Values.GetValue(name, receiver);
+    return Values.GetValue(name, receiver);
 }
 
 DLLEXPORT size_t Leviathan::DataStore::GetValueCount(const std::string &name) const{
-	return Values.GetValueCount(name);
+    return Values.GetValueCount(name);
 }
 
 DLLEXPORT bool Leviathan::DataStore::GetValues(const std::string &name, vector<const VariableBlock*> &receiver) const{
-	return Values.GetValues(name, receiver);
+    return Values.GetValues(name, receiver);
 }
 // ------------------------------------ //
 void Leviathan::DataStore::SetPersistance(unsigned int index, bool toset){
 
-	Persistencestates[index] = toset;
+    Persistencestates[index] = toset;
 }
 void DataStore::SetPersistance(const std::string &name, bool toset){
-	auto index = Values.Find(name);
+    auto index = Values.Find(name);
 
     if (!Values.IsIndexValid(index))
         throw Exception("SetPersitance called for non-existent value");
-
-	Persistencestates[index] = toset;
+    
+    Persistencestates[index] = toset;
 }
 int DataStore::GetPersistance(unsigned int index) const{
 
-	return Persistencestates[index];
+    return Persistencestates[index];
 }
 int DataStore::GetPersistance(const std::string &name) const{
-	auto index = Values.Find(name);
-
+    auto index = Values.Find(name);
+    
     if (!Values.IsIndexValid(index))
         throw Exception("GetPersistance called for non-existent value");
-
-	return Persistencestates[index];
+    
+    return Persistencestates[index];
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name, const VariableBlock &value1){
-	// use variable holder to do this //
-	Values.SetValue(name, value1);
+    // use variable holder to do this //
+    Values.SetValue(name, value1);
 
-	// send update to value listeners //
-	ValueUpdate(name);
+    // send update to value listeners //
+    ValueUpdate(name);
 
-	return true;
+    return true;
 }
 
 DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name, VariableBlock* value1){
-	// use variable holder to do this //
-	Values.SetValue(name, value1);
+    // use variable holder to do this //
+    Values.SetValue(name, value1);
 
-	// send update to value listeners //
-	ValueUpdate(name);
+    // send update to value listeners //
+    ValueUpdate(name);
 
-	return true;
+    return true;
 }
 
 DLLEXPORT bool Leviathan::DataStore::SetValue(const std::string &name,
     const vector<VariableBlock*> &values)
 {
-	// use variable holder to do this //
-	this->Values.SetValue(name, values);
+    // use variable holder to do this //
+    this->Values.SetValue(name, values);
 
-	// send update to value listeners //
-	ValueUpdate(name);
+    // send update to value listeners //
+    ValueUpdate(name);
 
-	return true;
+    return true;
 }
 
 DLLEXPORT bool Leviathan::DataStore::SetValue(NamedVariableList &nameandvalues){
 
-	// send update to value listeners //
-	ValueUpdate(nameandvalues.GetName());
+    // send update to value listeners //
+    ValueUpdate(nameandvalues.GetName());
 
-	return true;
+    return true;
 }
 
 // ----------------------------------------------- //
-DLLEXPORT void Leviathan::DataStore::AddVar(NamedVariableList* newvaluetoadd){
-	if(Values.Find(newvaluetoadd->GetName()) < 0){
-		// can add new //
-		Values.AddVar(newvaluetoadd);
-
-		// don't forget to add persistence //
-		Persistencestates.push_back(false);
-
-
-	} else {
-		// can't add, must delete //
-		SAFE_DELETE(newvaluetoadd);
-	}
-}
-
 DLLEXPORT void Leviathan::DataStore::AddVar(shared_ptr<NamedVariableList> values){
-	if(this->Values.Find(values->GetName()) < 0){
-		// can add new //
-		this->Values.AddVar(values);
+    if(Values.Find(values->GetName()) > Values.GetVariableCount()){
+        // can add new //
+        this->Values.AddVar(values);
 
-		// don't forget to add persistence //
-		Persistencestates.push_back(false);
-	}
+        // don't forget to add persistence //
+        Persistencestates.push_back(false);
+    }
 }
 
 DLLEXPORT void Leviathan::DataStore::Remove(size_t index){
 
-	// remove from store //
-	Values.Remove(index);
-	// don't forget to remove from persistence states //
-	Persistencestates.erase(Persistencestates.begin()+index);
+    if(index >= Values.GetVariableCount())
+        return;
+    
+    // remove from store //
+    Values.Remove(index);
+    // don't forget to remove from persistence states //
+    Persistencestates.erase(Persistencestates.begin()+index);
 }
 
 DLLEXPORT void Leviathan::DataStore::Remove(const std::string &name){
-	// call overload //
-	Remove(Values.Find(name));
+    // call overload //
+    Remove(Values.Find(name));
 }
 // ----------------------------------------------- //
 DLLEXPORT int Leviathan::DataStore::GetVariableType(const std::string &name) const{
-	return Values.GetVariableType(name);
+    return Values.GetVariableType(name);
 }
 
 DLLEXPORT int Leviathan::DataStore::GetVariableTypeOfAll(const std::string &name) const{
-	return Values.GetVariableTypeOfAll(name);
+    return Values.GetVariableTypeOfAll(name);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::DataStore::RegisterListener(AutoUpdateableObject* object,
     DataListener* listen)
 {
-	// set into the map //
+    // set into the map //
 
-	DataListenHolder* tmpptre = Listeners[object].get();
+    DataListenHolder* tmpptre = Listeners[object].get();
 
-	if(tmpptre == NULL){
-		// new required //
-		// add back to map //
-		Listeners[object] = std::make_shared<DataListenHolder>();
+    if(tmpptre == NULL){
+        // new required //
+        // add back to map //
+        Listeners[object] = std::make_shared<DataListenHolder>();
         
-		// recurse to use the new object //
-		return RegisterListener(object, listen);
-	}
+        // recurse to use the new object //
+        return RegisterListener(object, listen);
+    }
 
-	// can add new one //
-	tmpptre->HandledListeners.push_back(listen);
+    // can add new one //
+    tmpptre->HandledListeners.push_back(listen);
 }
 
 DLLEXPORT void Leviathan::DataStore::RemoveListener(AutoUpdateableObject* object, int valueid,
     const std::string &name, bool all)
 {
-	if(all){
-		// just erase the bulk //
-		Listeners.erase(object);
-		return;
-	}
+    if(all){
+        // just erase the bulk //
+        Listeners.erase(object);
+        return;
+    }
 
-	// get pointer to block //
-	DataListenHolder* tmpptre = Listeners[object].get();
+    // get pointer to block //
+    DataListenHolder* tmpptre = Listeners[object].get();
 
-	if(tmpptre == NULL){
-		return;
-	}
+    if(tmpptre == NULL){
+        return;
+    }
 
-	// erase the wanted ones //
-	for(size_t i = 0; i < tmpptre->HandledListeners.size(); i++){
-		if(tmpptre->HandledListeners[i]->ListenIndex == valueid){
-			// check name if wanted //
-			if(name.size() == 0 || name == tmpptre->HandledListeners[i]->VarName){
-				// erase //
+    // erase the wanted ones //
+    for(size_t i = 0; i < tmpptre->HandledListeners.size(); i++){
+        if(tmpptre->HandledListeners[i]->ListenIndex == valueid){
+            // check name if wanted //
+            if(name.size() == 0 || name == tmpptre->HandledListeners[i]->VarName){
+                // erase //
 
-				SAFE_DELETE(tmpptre->HandledListeners[i]);
-				tmpptre->HandledListeners.erase(tmpptre->HandledListeners.begin()+i);
+                SAFE_DELETE(tmpptre->HandledListeners[i]);
+                tmpptre->HandledListeners.erase(tmpptre->HandledListeners.begin()+i);
 
-				break;
-			}
-		}
-	}
+                break;
+            }
+        }
+    }
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::DataStore::GetTickTime() const{
-	return TickTime;
+    return TickTime;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetTickCount() const{
-	return TickCount;
+    return TickCount;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFrameTime() const{
-	return FrameTime;
+    return FrameTime;
 }
 
 void Leviathan::DataStore::ValueUpdate(int index){
-	shared_ptr<NamedVariableList> updatedval(nullptr);
+    shared_ptr<NamedVariableList> updatedval(nullptr);
 
-	for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
-		// iterate held indexes //
+    for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
+        // iterate held indexes //
         
-		for(size_t i = 0; i < iter->second->HandledListeners.size(); i++){
-			// check for match //
+        for(size_t i = 0; i < iter->second->HandledListeners.size(); i++){
+            // check for match //
             
-			if(iter->second->HandledListeners[i]->ListenIndex == index){
-				// check is value fine or not //
-				if(updatedval.get() == NULL){
-					// create //
-					updatedval = std::make_shared<NamedVariableList>(Convert::ToString(index),
+            if(iter->second->HandledListeners[i]->ListenIndex == index){
+                // check is value fine or not //
+                if(updatedval.get() == NULL){
+                    // create //
+                    updatedval = std::make_shared<NamedVariableList>(Convert::ToString(index),
                         new IntBlock(GetValueFromValIndex(index)));
-				}
+                }
                 
-				// send update //
-				iter->first->OnUpdate(updatedval);
-			}
-		}
-	}
+                // send update //
+                iter->first->OnUpdate(updatedval);
+            }
+        }
+    }
 }
 
 void Leviathan::DataStore::ValueUpdate(const std::string& name){
-	shared_ptr<NamedVariableList> updatedval(nullptr);
+    shared_ptr<NamedVariableList> updatedval(nullptr);
 
-	for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
-		// iterate held indexes //
-		for(size_t i = 0; i < iter->second->HandledListeners.size(); i++){
-			// check for match //
-			if(iter->second->HandledListeners[i]->VarName == name){
-				// check is value fine or not //
-				if(updatedval.get() == NULL){
-					// create //
-					updatedval = std::shared_ptr<NamedVariableList>(new NamedVariableList(name, new VariableBlock(
-						Values.GetValue(name)->GetBlockConst()->AllocateNewFromThis())));
-				}
-				// send update //
-				iter->first->OnUpdate(updatedval);
-			}
-		}
-	}
+    for(auto iter = Listeners.begin(); iter != Listeners.end(); ++iter) {
+        // iterate held indexes //
+        for(size_t i = 0; i < iter->second->HandledListeners.size(); i++){
+            // check for match //
+            if(iter->second->HandledListeners[i]->VarName == name){
+                // check is value fine or not //
+                if(updatedval.get() == NULL){
+                    // create //
+                    updatedval = std::shared_ptr<NamedVariableList>(new NamedVariableList(name, new VariableBlock(
+                        Values.GetValue(name)->GetBlockConst()->AllocateNewFromThis())));
+                }
+                // send update //
+                iter->first->OnUpdate(updatedval);
+            }
+        }
+    }
 }
 
 
 
 DLLEXPORT void Leviathan::DataStore::SetHeight(int newval){
-	Height = newval; 
-	ValueUpdate(DATAINDEX_HEIGHT);
+    Height = newval; 
+    ValueUpdate(DATAINDEX_HEIGHT);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetWidth(int newval){
-	Width = newval; 
-	ValueUpdate(DATAINDEX_WIDTH);
+    Width = newval; 
+    ValueUpdate(DATAINDEX_WIDTH);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetGUiActive(int newval){
-	Gui = newval; 
-	//ValueUpdate(4);
+    Gui = newval; 
+    //ValueUpdate(4);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFPS(int newval){
-	FPS = newval; 
-	ValueUpdate(4);
+    FPS = newval; 
+    ValueUpdate(4);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFrameTime(int newval){
-	FrameTime = newval; 
-	ValueUpdate(3);
+    FrameTime = newval; 
+    ValueUpdate(3);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetTickCount(int newval){
-	TickCount = newval; 
-	ValueUpdate(2);
+    TickCount = newval; 
+    ValueUpdate(2);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetTickTime(int newval){
-	TickTime = newval; 
-	ValueUpdate(1);
+    TickTime = newval; 
+    ValueUpdate(1);
 }
 
 DLLEXPORT int Leviathan::DataStore::GetGUiActive() const{
-	return Gui;
+    return Gui;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetWidth() const{
-	return Width;
+    return Width;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetHeight() const{
-	return Height;
+    return Height;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFPS() const{
-	return FPS;
+    return FPS;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetValueFromValIndex(int valindex) const{
-	switch(valindex){
-		case DATAINDEX_TICKTIME:
-			{
-				return TickTime;
-			}
-		break;
-		case DATAINDEX_TICKCOUNT:
-			{
-				return TickCount;
-			}
-		break;
-		case DATAINDEX_FRAMETIME:
-			{
-				return FrameTime;
-			}
-		break;
-		case DATAINDEX_FPS:
-			{
-				return FPS;
-			}
-		break;
-		case DATAINDEX_HEIGHT:
-			{
-				return Height;
-			}
-		break;
-		case DATAINDEX_FRAMETIME_MAX:
-			{
-				return FrameTimeMax;
-			}
-		break;
-		case DATAINDEX_FRAMETIME_MIN:
-			{
-				return FrameTimeMin;
-			}
-		break;
-		case DATAINDEX_FRAMETIME_AVERAGE:
-			{
-				return FrameTimeAverage;
-			}
-		break;
-		case DATAINDEX_FPS_MIN:
-			{
-				return FPSMin;
-			}
-		break;
-		case DATAINDEX_FPS_MAX:
-			{
-				return FPSMax;
-			}
-		break;
-		case DATAINDEX_FPS_AVERAGE:
-			{
-				return FPSAverage;
-			}
-		break;
-	}
-	return -1;
+    switch(valindex){
+        case DATAINDEX_TICKTIME:
+            {
+                return TickTime;
+            }
+        break;
+        case DATAINDEX_TICKCOUNT:
+            {
+                return TickCount;
+            }
+        break;
+        case DATAINDEX_FRAMETIME:
+            {
+                return FrameTime;
+            }
+        break;
+        case DATAINDEX_FPS:
+            {
+                return FPS;
+            }
+        break;
+        case DATAINDEX_HEIGHT:
+            {
+                return Height;
+            }
+        break;
+        case DATAINDEX_FRAMETIME_MAX:
+            {
+                return FrameTimeMax;
+            }
+        break;
+        case DATAINDEX_FRAMETIME_MIN:
+            {
+                return FrameTimeMin;
+            }
+        break;
+        case DATAINDEX_FRAMETIME_AVERAGE:
+            {
+                return FrameTimeAverage;
+            }
+        break;
+        case DATAINDEX_FPS_MIN:
+            {
+                return FPSMin;
+            }
+        break;
+        case DATAINDEX_FPS_MAX:
+            {
+                return FPSMax;
+            }
+        break;
+        case DATAINDEX_FPS_AVERAGE:
+            {
+                return FPSAverage;
+            }
+        break;
+    }
+    return -1;
 }
 
 
 DLLEXPORT int Leviathan::DataStore::GetFrameTimeMin() const{
-	return FrameTimeMin;
+    return FrameTimeMin;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFrameTimeMax() const{
-	return FrameTimeMax;
+    return FrameTimeMax;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFrameTimeAverage() const{
-	return FrameTimeAverage;
+    return FrameTimeAverage;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFPSMin() const{
-	return FPSMax;
+    return FPSMax;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFPSMax() const{
-	return FPSMax;
+    return FPSMax;
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFPSAverage() const{
-	return FPSAverage;
+    return FPSAverage;
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFrameTimeMin(int newval){
-	FrameTimeMin = newval;
-	ValueUpdate(DATAINDEX_FRAMETIME_MIN);
+    FrameTimeMin = newval;
+    ValueUpdate(DATAINDEX_FRAMETIME_MIN);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFrameTimeMax(int newval){
-	FrameTimeMax = newval;
-	ValueUpdate(DATAINDEX_FRAMETIME_MAX);
+    FrameTimeMax = newval;
+    ValueUpdate(DATAINDEX_FRAMETIME_MAX);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFrameTimeAverage(int newval){
-	FrameTimeAverage = newval;
-	ValueUpdate(DATAINDEX_FRAMETIME_AVERAGE);
+    FrameTimeAverage = newval;
+    ValueUpdate(DATAINDEX_FRAMETIME_AVERAGE);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFPSMin(int newval){
-	FPSMin = newval;
-	ValueUpdate(DATAINDEX_FPS_MIN);
+    FPSMin = newval;
+    ValueUpdate(DATAINDEX_FPS_MIN);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFPSMax(int newval){
-	FPSMax = newval;
-	ValueUpdate(DATAINDEX_FPS_MAX);
+    FPSMax = newval;
+    ValueUpdate(DATAINDEX_FPS_MAX);
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFPSAverage(int newval){
-	FPSAverage = newval;
-	ValueUpdate(DATAINDEX_FPS_AVERAGE);
+    FPSAverage = newval;
+    ValueUpdate(DATAINDEX_FPS_AVERAGE);
 }
 
 DLLEXPORT int Leviathan::DataStore::GetFontSizeMultiplier() const{
-	return FontSizeMultiplier;
+    return FontSizeMultiplier;
 }
 
 DLLEXPORT void Leviathan::DataStore::SetFontSizeMultiplier(int newval){
-	FontSizeMultiplier = newval;
+    FontSizeMultiplier = newval;
 }
 
 // ----------------------------------------------- //
 DLLEXPORT Leviathan::DataListener::DataListener(){
-	ListenIndex = -1;
-	ListenOnIndex = false;
-	VarName = "";
+    ListenIndex = -1;
+    ListenOnIndex = false;
+    VarName = "";
 }
 
 DLLEXPORT Leviathan::DataListener::DataListener(int index, bool onindex, const std::string &var){
     
-	ListenIndex = index;
-	ListenOnIndex = onindex;
-	VarName = var;
+    ListenIndex = index;
+    ListenOnIndex = onindex;
+    VarName = var;
 }

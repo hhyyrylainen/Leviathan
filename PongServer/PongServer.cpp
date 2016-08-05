@@ -1,8 +1,7 @@
 #include "PongIncludes.h"
 // ------------------------------------ //
-#ifndef PONG_SERVER
 #include "PongServer.h"
-#endif
+
 #include "Common/DataStoring/NamedVars.h"
 #include "Application/GameConfiguration.h"
 #include "PongServerNetworking.h"
@@ -19,12 +18,12 @@ using namespace Pong;
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
-Pong::PongServer::PongServer() :
-    ServerInterface(new PongServerNetworking()),
-    CommonPongParts(ServerInterface),
+Pong::PongServer::PongServer(PongServerNetworking &network) :
+    ServerInterface(network),
     ServerInputHandler(NULL), BallLastPos(0.f), DeadAxis(0.f),
     StuckThresshold(0)
 {
+    SetInterface(&ServerInterface);
     Staticaccess = this;
 }
 
@@ -293,10 +292,10 @@ void Pong::PongServer::DoSpecialPostLoad(){
 
     // Setup receiving networked controls from players //
     ServerInputHandler = shared_ptr<GameInputController>(new GameInputController());
-    //ServerInterface->RegisterNetworkedInput(ServerInputHandler);
+    //ServerInterface.RegisterNetworkedInput(ServerInputHandler);
 
     // Create all the server variables //
-    Leviathan::SyncedVariables* tmpvars = ServerInterface->GetOwner()->GetSyncedVariables();
+    Leviathan::SyncedVariables* tmpvars = ServerInterface.GetOwner()->GetSyncedVariables();
 
     tmpvars->AddNewVariable(std::make_shared<SyncedValue>(
         new NamedVariableList("TheAnswer",
@@ -363,8 +362,8 @@ void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine,
 
 void Pong::PongServer::PreFirstTick(){
 
-    ServerInterface->SetServerAllowPlayers(true);
-    ServerInterface->SetServerStatus(Leviathan::SERVER_STATUS::Running);
+    ServerInterface.SetServerAllowPlayers(true);
+    ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
 }
 
 void Pong::PongServer::PassCommandLine(const string &params){
@@ -398,12 +397,12 @@ void Pong::PongServer::OnStartPreMatch(){
     }
 
     // Notify the clients //
-    ServerInterface->SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
+    ServerInterface.SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
 
     
     // Make sure that everyone is receiving our world //
     // This will send many objects at once to all the players (or rather should send them in bulk)
-    ServerInterface->VerifyWorldIsSyncedWithPlayers(WorldOfPong);
+    ServerInterface.VerifyWorldIsSyncedWithPlayers(WorldOfPong);
 
 
     // Queue a readyness checking task //
@@ -415,7 +414,7 @@ void Pong::PongServer::OnStartPreMatch(){
             
             // Start the match //
             server->WorldOfPong->SetWorldPhysicsFrozenState(false);
-            server->ServerInterface->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
+            server->ServerInterface.SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
 
             // Spawn a ball //
             server->GameArena->ServeBall();

@@ -256,7 +256,7 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 #ifdef PONG_VERSION
 
     // Update everything related to input //
-    if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
+    if(PlayerID == PongGame::Get()->GetInterface().GetOurID()){
 
         // Create new one only if there isn't one already created //
         if(!InputObj){

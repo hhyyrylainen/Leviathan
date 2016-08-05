@@ -556,6 +556,9 @@ DLLEXPORT std::shared_ptr<Connection> NetworkHandler::GetConnection(Connection* 
 DLLEXPORT std::shared_ptr<Connection> Leviathan::NetworkHandler::OpenConnectionTo(
     const string &targetaddress)
 {
+    if(targetaddress.empty())
+        return nullptr;
+    
     GUARD_LOCK();
 
     // Find existing one //
@@ -747,6 +750,13 @@ void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
 
             // Right now the part we don't want is retrieved //
             auto tmpres = itr.GetUntilEnd<string>();
+
+            if(!tmpres){
+
+                // Got nothing //
+                LOG_WARNING("GetMasterServerList: got an empty response");
+                continue;
+            }
 
             // The result now should have the ':' character and the possible port //
 

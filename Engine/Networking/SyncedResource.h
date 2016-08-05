@@ -94,8 +94,9 @@ namespace Leviathan{
         //! \warning The order of the initializer list is important since anytime after calling
         //! SyncedResource we can receive updates
         SyncedPrimitive(const std::string &uniquename, const DTypeName &initialvalue,
-            CallbackPtr updatecallback = NULL) : OurValue(initialvalue), 
-            ValueUpdateCallback(updatecallback), SyncedResource(uniquename)
+            CallbackPtr updatecallback = NULL) :
+            SyncedResource(uniquename), 
+            ValueUpdateCallback(updatecallback), OurValue(initialvalue)
         {
             // Now we are ready to be updated //
             IsValid = true;

@@ -56,13 +56,12 @@ namespace Pong{
         }
 
 
-        BasePongParts(Leviathan::NetworkInterface* networkinterface) :
-            _NetworkInterface(networkinterface),
-            GameArena(nullptr), ErrorState("No error"),  
-            ScoreLimit("ScoreLimit", 20),
-            GamePaused("GamePaused", false), GameAI(NULL),
+        BasePongParts() :
+            _NetworkInterface(nullptr),
             LastPlayerHitBallID("LastPlayerHitBallID", -1),
-            _PlayerList(std::function<void (PlayerList*)>(&StatUpdater), 4)
+            GamePaused("GamePaused", false), ScoreLimit("ScoreLimit", 20), 
+            _PlayerList(std::function<void (PlayerList*)>(&StatUpdater), 4),
+            ErrorState("No error")  
         {
             BasepongStaticAccess = this;
         }
@@ -71,6 +70,11 @@ namespace Pong{
 
             SAFE_DELETE(GameAI);
             BasepongStaticAccess = NULL;
+        }
+
+        void SetInterface(NetworkInterface* networkinterface){
+
+            _NetworkInterface = networkinterface;
         }
 
         //! \brief Updates the ball trail based on the player colour
@@ -210,7 +214,7 @@ namespace Pong{
         std::shared_ptr<GameWorld> WorldOfPong;
 
         // AI module //
-        GameModule* GameAI;
+        GameModule* GameAI = nullptr;
 
         SyncedPrimitive<int> LastPlayerHitBallID;
 
@@ -232,13 +236,15 @@ namespace Pong{
     template<class ProgramType, bool IsServer>
     class CommonPongParts : public BasePongParts, public ProgramType{
     public:
-        CommonPongParts(NetworkInterface* networkinterface) : BasePongParts(networkinterface)
+        CommonPongParts()
         {
 
         }
         ~CommonPongParts(){
 
         }
+
+
 
 
         virtual shared_ptr<GameWorld> GetGameWorld(int id) override{
@@ -255,6 +261,10 @@ namespace Pong{
 
         // These handle the common code between the server and client //
         virtual void CustomizeEnginePostLoad(){
+
+            LEVIATHAN_ASSERT(_NetworkInterface, "SetInterface not called!");
+            LEVIATHAN_ASSERT(_NetworkInterface->GetOwner(), "_NetworkInterface has no owner!");
+            
             using namespace Leviathan;
 
             QUICKTIME_THISSCOPE;

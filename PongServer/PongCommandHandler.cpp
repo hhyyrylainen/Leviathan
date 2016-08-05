@@ -10,7 +10,7 @@
 #include "Networking/NetworkServerInterface.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner), PlayerUniqueCounter(10000){
+Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner){
 
 }
 
@@ -20,10 +20,9 @@ Pong::PongCommandHandler::~PongCommandHandler(){
 // ------------------------------------ //
 bool Pong::PongCommandHandler::CanHandleCommand(const string &cmd) const{
     // Just compare to our command strings //
-    if(cmd == "join" || cmd == "open" || cmd == "kickslot" || cmd == "leave" || cmd == "ready" || cmd == "start" ||
-        cmd == "close" || cmd == "controls" || cmd == "colour")
+    if(cmd == "join" || cmd == "open" || cmd == "kickslot" || cmd == "leave" || cmd == "ready"
+        || cmd == "start" || cmd == "close" || cmd == "controls" || cmd == "colour")
     {
-
         return true;
     }
 

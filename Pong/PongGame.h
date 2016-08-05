@@ -19,7 +19,7 @@ namespace Pong{
                        public Leviathan::CallableObject
     {
     public:
-        PongGame();
+        PongGame(PongNetHandler &network);
         ~PongGame();
 
         int StartServer();
@@ -60,7 +60,7 @@ namespace Pong{
         void VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus);
 
 
-        PongNetHandler* GetInterface() const{
+        PongNetHandler& GetInterface() const{
 
             return ClientInterface;
         }
@@ -123,7 +123,7 @@ namespace Pong{
         Leviathan::Gui::GuiManager* GuiManagerAccess;
         shared_ptr<GameInputController> GameInputHandler;
 
-        PongNetHandler* ClientInterface;
+        PongNetHandler& ClientInterface;
 
 #ifdef _WIN32
 

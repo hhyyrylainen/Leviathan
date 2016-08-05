@@ -572,8 +572,9 @@ void Pong::Arena::VerifyTrail(Lock &guard){
     
     if(TrailKeeper != 0)
         return;
-    
-    DEBUG_BREAK;
+
+    std::cout << "TODO: trail" << std::endl;
+    //DEBUG_BREAK;
 
     //// These settings are overwritten almost instantly //
     //Trail::Properties balltrailproperties(5, 10, 100, false);

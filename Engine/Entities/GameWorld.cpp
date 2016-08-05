@@ -455,15 +455,14 @@ DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
         );
 
     // Clear added //
-    ComponentPosition.ClearAdded();
-    ComponentRenderNode.ClearAdded();
+    ComponentPosition.ClearAdded(positionlock);
+    ComponentRenderNode.ClearAdded(rendernodelock);
     ComponentSendable.ClearAdded();
-    ComponentReceived.ClearAdded();
+    ComponentReceived.ClearAdded(receivedlock);
     ComponentModel.ClearAdded();
     ComponentPhysics.ClearAdded();
     ComponentBoxGeometry.ClearAdded();
     ComponentManualObject.ClearAdded();
-    ComponentReceived.ClearAdded();
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){

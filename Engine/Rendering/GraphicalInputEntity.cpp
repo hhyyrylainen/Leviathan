@@ -27,6 +27,8 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 
+constexpr auto CLEAR_WORKSPACE_NAME = "GraphicalInputEntity_clear_workspace";
+
 namespace Leviathan{
 
 //! \brief Used to hold objects that are required for clearing a GraphicalInputEntity each frame
@@ -258,14 +260,20 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     if(AutoClearResourcesCreated)
         return;
 
-    Ogre::CompositorManager2* manager = Graphics::Get()->GetOgreRoot()->getCompositorManager2();
+    Ogre::CompositorManager2* manager =
+        Graphics::Get()->GetOgreRoot()->getCompositorManager2();
 
-    auto templatedworkspace = manager->addWorkspaceDefinition("GraphicalInputEntity_clear_workspace");
+    auto templatedworkspace =
+        manager->addWorkspaceDefinition(CLEAR_WORKSPACE_NAME);
 
     // Create a node for rendering on top of everything
     auto rendernode = manager->addNodeDefinition("GraphicalInputEntity_clear_node");
 
     rendernode->setNumTargetPass(1);
+
+    // The rendernode reads in the main render target in order to clear it
+    rendernode->addTextureSourceName("renderwindow", 0,
+        Ogre::TextureDefinitionBase::TEXTURE_INPUT);
 
     // Pass for it
     Ogre::CompositorTargetDef* targetpasses = 
@@ -290,7 +298,6 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     
     // Connect the main render target to the node
     templatedworkspace->connectOutput("GraphicalInputEntity_clear_node", 0);
-    
 
     AutoClearResourcesCreated = true;
 }
@@ -305,20 +312,23 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string &sk
 
     Ogre::Root* ogre = Graphics::Get()->GetOgreRoot();
 
-    AutoClearResources = move(unique_ptr<GEntityAutoClearResources>(new GEntityAutoClearResources(
-                ogre)));
+    AutoClearResources = std::make_unique<GEntityAutoClearResources>(ogre);
     
 	// create scene manager //
     AutoClearResources->WorldsScene = ogre->createSceneManager(Ogre::ST_GENERIC, 1,
-        Ogre::INSTANCING_CULLING_SINGLETHREAD, "GraphicalInputEntity_clear_scene_"+Convert::ToString(WindowNumber));
+        Ogre::INSTANCING_CULLING_SINGLETHREAD,
+        "GraphicalInputEntity_clear_scene_"+Convert::ToString(WindowNumber));
 
 	// create camera //
-	AutoClearResources->WorldSceneCamera = AutoClearResources->WorldsScene->createCamera("Cam");
+	AutoClearResources->WorldSceneCamera =
+        AutoClearResources->WorldsScene->createCamera("Cam");
 
 	// Create the workspace for this scene //
 	// Which will be rendered before the overlay workspace //
-	AutoClearResources->WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(AutoClearResources->WorldsScene,
-        DisplayWindow->GetOgreWindow(), AutoClearResources->WorldSceneCamera, "WorldsWorkspace", true, 0);
+	AutoClearResources->WorldWorkspace =
+        ogre->getCompositorManager2()->addWorkspace(AutoClearResources->WorldsScene,
+        DisplayWindow->GetOgreWindow(), AutoClearResources->WorldSceneCamera,
+            CLEAR_WORKSPACE_NAME, true, 0);
 
     // Without a skybox CEGUI flickers... //
     if(skyboxmaterial.empty())
@@ -330,7 +340,8 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string &sk
         
 	} catch(const Ogre::InvalidParametersException &e){
 
-		Logger::Get()->Error("GraphicalInputEntity: setting auto clear skybox "+e.getFullDescription());
+		Logger::Get()->Error("GraphicalInputEntity: setting auto clear skybox " +
+            e.getFullDescription());
 	}
 
 }

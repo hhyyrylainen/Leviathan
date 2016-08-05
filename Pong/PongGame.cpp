@@ -47,15 +47,14 @@ int Pong::PongGame::OnEvent(Event** pEvent){
     return 0;
 }
 
-Pong::PongGame::PongGame() : ClientInterface(new PongNetHandler()), 
-CommonPongParts(ClientInterface),
-GuiManagerAccess(NULL), GameInputHandler(NULL)
+Pong::PongGame::PongGame(PongNetHandler &network) : 
+    GuiManagerAccess(NULL), GameInputHandler(NULL), ClientInterface(network)
 #ifdef _WIN32
     , ServerProcessHandle(NULL)
 #endif // _WIN32
 
 {
-    
+    SetInterface(&ClientInterface);
     StaticGame = this;
 }
 
@@ -111,7 +110,7 @@ int Pong::PongGame::StartServer(){
 
     // Create proper arguments for the program //
     string args = "--nogui -RemoteConsole:CloseIfNone -RemoteConsole:OpenTo:\"localhost:"+
-        Convert::ToString(ClientInterface->GetOwner()->GetOurPort())+"\":Token:" + 
+        Convert::ToString(ClientInterface.GetOwner()->GetOurPort())+"\":Token:" + 
         Convert::ToString(Tokennmbr);
 
     // We need to expect this connection //
@@ -392,7 +391,7 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
     GUARD_LOCK();
      
     // Disconnect from active servers //
-    ClientInterface->DisconnectFromServer(reasonstring);
+    ClientInterface.DisconnectFromServer(reasonstring);
     
     // Disable lobby screen //
     EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
@@ -418,9 +417,6 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
 }
 // ------------------------------------ //
 void Pong::PongGame::DoSpecialPostLoad(){
-
-
-    LEVIATHAN_ASSERT(ClientInterface, "ClientInterface failed to create object");
 
     GameInputHandler = shared_ptr<GameInputController>(new GameInputController());
 
@@ -477,10 +473,7 @@ string GetPongVersionProxy(){
 // ------------------------------------ //
 int Pong::PongGame::GetOurPlayerID(){
 
-    if(ClientInterface)
-        return ClientInterface->GetOurID();
-    
-    return -1;
+    return ClientInterface.GetOurID();
 }
 // ------------------------------------ //
 bool Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
@@ -553,7 +546,7 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
 
 
     // Get a connection to use //
-    auto tmpconnection = ClientInterface->GetOwner()->OpenConnectionTo(address);
+    auto tmpconnection = ClientInterface.GetOwner()->OpenConnectionTo(address);
 
     if(!tmpconnection){
 
@@ -571,7 +564,7 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
 
     // We are a client and we can use our interface to handle the server connection functions //
 
-    ClientInterface->JoinServer(tmpconnection);
+    ClientInterface.JoinServer(tmpconnection);
     // The function automatically reports any errors //
 
 
@@ -588,26 +581,21 @@ void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
 
 bool Pong::PongGame::SendServerCommand(const string &command){
 
-    if(ClientInterface != nullptr){
-        
-        if(!ClientInterface->IsConnected())
-            return false;
+    if(!ClientInterface.IsConnected())
+        return false;
 
-        try{
-            ClientInterface->SendCommandStringToServer(command);
+    try{
+        ClientInterface.SendCommandStringToServer(command);
 
-        } catch(const Exception &e){
+    } catch(const Exception &e){
 
-            Logger::Get()->Warning("Failed to send command to the server: ");
-            e.PrintToLog();
-            return false;
-        }
-
-        // Nothing failed so it should have worked //
-        return true;
+        Logger::Get()->Warning("Failed to send command to the server: ");
+        e.PrintToLog();
+        return false;
     }
 
-    return false;
+    // Nothing failed so it should have worked //
+    return true;
 }
 
 void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus){

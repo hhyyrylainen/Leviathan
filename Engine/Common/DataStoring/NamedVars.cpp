@@ -840,7 +840,7 @@ DLLEXPORT void NamedVars::AddDataToPacket(sf::Packet &packet) const{
 DLLEXPORT bool NamedVars::Add(std::shared_ptr<NamedVariableList> value){
 
     GUARD_LOCK();
-	auto index = Find(value->Name);
+	auto index = Find(guard, value->Name);
 	// index check //
 	if(index >= Variables.size()){
 

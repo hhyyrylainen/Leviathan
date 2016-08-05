@@ -79,22 +79,19 @@ DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSo
 }
 
 DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
-#ifdef _WIN32
-	throw exception("not implemented");
-#else
-	throw bad_exception();
-#endif
+    
+	throw std::runtime_error("not implemented");
 }
 
 DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &pos,
     const Float3 &pitchyawroll)
 {
     
-    DEBUG_BREAK;
+    //LOG_WRITE("TODO: SetSoundListenerPosition");
     
 	// we need to create a vector from the angles //
-	Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
-        sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));
+	// Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
+    //     sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));
 }
 
 DLLEXPORT void Leviathan::SoundDevice::SetGlobalVolume(const float &vol){

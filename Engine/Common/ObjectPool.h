@@ -177,9 +177,14 @@ public:
     }
 
     //! \brief Clears the added list
-    void ClearAdded(){
+    inline void ClearAdded(){
 
         GUARD_LOCK();
+        ClearAdded(guard);
+    }
+
+    void ClearAdded(Lock &guard){
+
         Added.clear();
     }
 

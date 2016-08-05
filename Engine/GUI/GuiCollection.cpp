@@ -21,12 +21,24 @@ Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name,
 	Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui),
     AllowEnable(allowenable), 
 	AutoTarget(autotarget), 
-    AutoAnimationOnEnable(move(inanimations)), 
-	AutoAnimationOnDisable(move(outanimations)),
+    AutoAnimationOnEnable(std::move(inanimations)), 
+	AutoAnimationOnDisable(std::move(outanimations)),
     ApplyAnimationsToChildren(applyanimstochildren),
     OwningManager(manager)
 {
 	Toggle = GKey::GenerateKeyFromString(toggle);
+
+    if(AutoAnimationOnEnable.size() % 2 != 0){
+
+        DEBUG_BREAK;
+        LOG_ERROR("GuiCollection: AutoAnimationOnEnable size not dividable by 2");
+    }
+    
+    if(AutoAnimationOnDisable.size() % 2 != 0){
+
+        DEBUG_BREAK;
+        LOG_ERROR("GuiCollection: AutoAnimationOnEnable size not dividable by 2");
+    }
 }
 
 Leviathan::Gui::GuiCollection::~GuiCollection(){

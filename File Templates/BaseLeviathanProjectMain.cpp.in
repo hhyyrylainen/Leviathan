@@ -92,8 +92,8 @@ int main(int argcount, char* args[]){
 #endif //USE_BREAKPAD
     
     // create program object //
-    @PROGRAMCLASSNAME@ app;
     @PROGRAMNETWORKINGNAME@ network;
+    @PROGRAMCLASSNAME@ app(network);
 
     unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@",
             "@ENGINECONFIGURATION@", 

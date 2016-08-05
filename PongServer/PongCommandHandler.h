@@ -27,7 +27,7 @@ namespace Pong{
     private:
 
         //! Number for opened players (this has to be unique between all slots)
-        int PlayerUniqueCounter;
+        int PlayerUniqueCounter = 10000;
 
         //! Mutex for PlayerUniqueCounter
         Mutex PlayerIDMutex;

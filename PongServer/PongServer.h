@@ -14,7 +14,7 @@ namespace Pong{
 
     class PongServer : public CommonPongParts<Leviathan::ServerApplication, true>{
     public:
-        PongServer();
+        PongServer(PongServerNetworking &network);
         ~PongServer();
         
 
@@ -44,7 +44,7 @@ namespace Pong{
         //! Changes the server to preparing screen
         void OnStartPreMatch();
 
-        PongServerNetworking* GetServerNetworkInterface() {
+        PongServerNetworking& GetServerNetworkInterface() {
 
             return ServerInterface;
         }
@@ -97,8 +97,7 @@ namespace Pong{
 
         // Server specific connection handling //
 
-
-        PongServerNetworking* ServerInterface;
+        PongServerNetworking& ServerInterface;
 
         shared_ptr<GameInputController> ServerInputHandler;
 

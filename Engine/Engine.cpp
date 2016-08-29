@@ -517,13 +517,21 @@ void Engine::Release(bool forced){
     // Save at this point (just in case it crashes before exiting) //
     Logger::Get()->Save();
 
-    SAFE_RELEASEDEL(Graph);
+
     SAFE_DELETE(RenderTimer);
 
     _EntitySerializer.reset();
 
     SAFE_RELEASEDEL(Sound);
     SAFE_DELETE(Mainstore);
+
+    // If graphics aren't unregistered crashing will occur //
+    _ThreadingManager->UnregisterGraphics();
+
+    // Stop threads //
+    SAFE_RELEASEDEL(_ThreadingManager);
+    
+    SAFE_RELEASEDEL(Graph);
 
     SAFE_RELEASEDEL(MainEvents);
     // delete randomizer last, for obvious reasons //
@@ -533,11 +541,6 @@ void Engine::Release(bool forced){
 
     ObjectFileProcessor::Release();
     SAFE_DELETE(MainFileHandler);
-
-    // Stop threads //
-    if(!forced)
-        _ThreadingManager->WaitForAllTasksToFinish();
-    SAFE_RELEASEDEL(_ThreadingManager);
 
     // clears all running timers that might have accidentally been left running //
     TimingMonitor::ClearTimers();

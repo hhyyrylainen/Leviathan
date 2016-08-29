@@ -10,10 +10,6 @@
 #include "Exceptions.h"
 #endif //ALLOW_INTERNAL_EXCEPTIONS
 
-#ifdef LEVIATHAN_USING_OGRE
-#include "OgreRoot.h"
-#endif // LEVIATHAN_USING_OGRE
-
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -48,7 +44,7 @@ void Leviathan::RunNewThread(TaskThread* thisthread){
 
             try{
                 // Run the task //
-                thisthread->SetTask->RunTask();
+                TaskThread::ThreadThreadPtr->QuickTaskAccess->RunTask();
 
             } catch(const Exception &e){
 
@@ -136,14 +132,6 @@ void Leviathan::TaskThread::_ThreadEndClean(Lock &guard){
 		Logger::Get()->Error("Releasing threads while scripts are running!");
 	}
 #endif // LEVIATHAN_USING_ANGELSCRIPT
-
-#ifdef LEVIATHAN_USING_OGRE
-	// Release Ogre (if Ogre is still active) //
-	Ogre::Root* tmproot = Ogre::Root::getSingletonPtr();
-
-	if(tmproot)
-		tmproot->getRenderSystem()->unregisterThread();
-#endif // LEVIATHAN_USING_OGRE
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::TaskThread::SetTaskAndNotify(shared_ptr<QueuedTask> task){

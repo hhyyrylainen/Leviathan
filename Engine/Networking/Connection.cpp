@@ -23,7 +23,7 @@ using namespace Leviathan;
 
 // ------------------------------------ //
 DLLEXPORT Connection::Connection(const std::string &hostname) : 
-    HostName(hostname), RawAddress(hostname)
+    RawAddress(hostname), HostName(hostname)
 {
     // We need to split the port number from the address //
     StringIterator itr(hostname);
@@ -116,7 +116,7 @@ DLLEXPORT void Connection::Release(){
     WaitingRequests.clear();
 
     // Destroy some of our stuff //
-    TargetHost == sf::IpAddress::None;
+    TargetHost = sf::IpAddress::None;
 }
 // ------------------------------------ //
 #ifdef LEVIATHAN_DEBUG
@@ -128,6 +128,8 @@ void VerifyTypeHadData(sf::Packet &packet, const NetworkRequest &request) {
     switch (request.GetType()) {
     case NETWORK_REQUEST_TYPE::Echo:
         return;
+    default:
+        break;
     }
 
 
@@ -145,6 +147,8 @@ void VerifyTypeHadData(sf::Packet &packet, const NetworkResponse &response) {
     {
     case NETWORK_RESPONSE_TYPE::CloseConnection:
         return;
+    default:
+        break;
     }
 
     LOG_ERROR("Connection: sending packet that needs data without data, type response: " +
@@ -672,6 +676,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard,
         SendPacketToConnection(guard, response, RECEIVE_GUARANTEE::Critical);
         return true;
     }
+    default:
+        break;
     }
 
     // Eat up all the packets if not properly opened yet
@@ -761,6 +767,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
 
         return true;
     }
+    default:
+        break;
     }
 
     // Eat up all the packets if not properly opened yet
@@ -849,7 +857,7 @@ copyacksfromtheendlabel:
                 count = DEFAULT_ACKCOUNT;
             }
 
-            last = firstselected - count >= 0 ? firstselected - count: 0;
+            last = static_cast<int32_t>(firstselected) - count >= 0 ? firstselected - count: 0;
             
             std::swap(firstselected, last);
         }
@@ -872,7 +880,7 @@ std::shared_ptr<SentNetworkThing> Connection::_GetPossibleRequestForResponse(
     Lock &guard, std::shared_ptr<NetworkResponse> response)
 {
     // Return if it doesn't have a proper matching expected response id //
-    const int lookingforid = response->GetResponseID();
+    const auto lookingforid = response->GetResponseID();
 
     if(lookingforid == 0)
         return nullptr;
@@ -1132,7 +1140,7 @@ DLLEXPORT void Leviathan::Connection::_FailPacketAcks(uint32_t packetid) {
 
     for (auto iter = SentAckPackets.begin(); iter != SentAckPackets.end(); ++iter) {
 
-        if ((*iter)->InsidePacket = packetid) {
+        if ((*iter)->InsidePacket == packetid) {
 
             SentAckPackets.erase(iter);
             return;
@@ -1253,7 +1261,7 @@ DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid,
 
         }
 
-        uint8_t currentindex = iter->first - FirstPacketID;
+        size_t currentindex = iter->first - FirstPacketID;
 
         if (currentindex >= maxacks)
             break;

@@ -1,7 +1,6 @@
 // ------------------------------------ //
-#ifndef LEVIATHAN_GRAPHICS
 #include "Graphics.h"
-#endif
+
 #include "Application/AppDefine.h"
 #include <OgreMeshManager.h>
 #include "GUI/FontManager.h"

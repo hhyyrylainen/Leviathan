@@ -183,7 +183,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
 	// Mark the Window as unusable //
 	DisplayWindow->InvalidateWindow();
 
-
 	// GUI is very picky about delete order
 	SAFE_RELEASEDEL(WindowsGui);
 

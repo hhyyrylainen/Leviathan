@@ -118,10 +118,9 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(
             }
         }
     }
+    default:
+        return false;
     }
-
-    // Didn't find a match //
-    return false;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(
@@ -170,9 +169,10 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(
             connection->SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
             return;
         }
+    default:
+        LOG_ERROR("RemoteConsole unhandled request type");        
     }
 
-    LOG_ERROR("RemoteConsole unhandled request type");
     DEBUG_BREAK;
 }
 

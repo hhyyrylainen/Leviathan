@@ -212,7 +212,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
 void Leviathan::Gui::GuiCollection::_PlayAnimations(Lock &lock,
     const std::vector<unique_ptr<std::string>> &anims)
 {
-	LEVIATHAN_ASSERT(anims.size() % 2,
+	LEVIATHAN_ASSERT((anims.size() % 2) == 0,
         "_PlayAnimations has invalid vector, size non divisable by 2");
 
 	// Loop the animations and start them //

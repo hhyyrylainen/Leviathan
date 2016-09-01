@@ -420,7 +420,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
     if(IsOnServer){
 
         // Notify new entities //
-        DEBUG_BREAK;
+        //DEBUG_BREAK;
 
         // Skip if not tick that will be stored //
         if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL == 0){

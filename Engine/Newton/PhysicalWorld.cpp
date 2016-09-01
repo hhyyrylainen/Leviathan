@@ -91,7 +91,6 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorldFixed(uint32_t mspassed, 
     uint32_t stepcount /*= 1*/) 
 {
-    DEBUG_BREAK;
     float timestep = (mspassed / 1000.f) / stepcount;
 
     for (uint32_t i = 0; i < stepcount; ++i) {

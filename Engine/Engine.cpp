@@ -50,10 +50,6 @@ DLLEXPORT Engine::Engine(LeviathanApplication* owner) :
     // This makes sure that uninitialized engine will have at least some last frame time //
 	LastTickTime = Time::GetTimeMs64();
 
-#ifdef LEVIATHAN_USES_LEAP
-	LeapData = NULL;
-#endif
-
     instance = this;
 }
 
@@ -456,6 +452,9 @@ void Engine::PostLoad(){
     
 	// get time //
 	LastTickTime = Time::GetTimeMs64();
+
+    // Run startup command line //
+    _RunQueuedConsoleCommands();
 }
 
 void Engine::Release(bool forced){
@@ -1025,17 +1024,21 @@ int TestCrash(int writenum){
 
 DLLEXPORT void Engine::PassCommandLine(const string &commands){
 
+    if(commands.empty())
+        return;
+
     Logger::Get()->Info("Command line: "+commands);
 
     GUARD_LOCK();
+    
     // Split all flags and check for some flags that might be set //
     StringIterator itr(commands);
     unique_ptr<string> splitval;
 
-    while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE))
+    while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE
+                | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS))
         != NULL)
     {
-
         if(*splitval == "--nogui"){
             NoGui = true;
             Logger::Get()->Info("Engine starting in non-GUI mode");
@@ -1052,6 +1055,7 @@ DLLEXPORT void Engine::PassCommandLine(const string &commands){
         if(*splitval == "--nocin"){
 
             NoSTDInput = true;
+            Logger::Get()->Info("Engine not listening for terminal commands");
             continue;
         }
         if(*splitval == "--nonothing"){
@@ -1070,9 +1074,46 @@ DLLEXPORT void Engine::PassCommandLine(const string &commands){
             
             continue;
         }
+        if(*splitval == "--cmd" || *splitval == "cmd"){
+
+            if(itr.GetCharacter() == '=')
+                itr.MoveToNext();
+
+            auto cmd = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+            if(!cmd || cmd->empty()){
+
+                LOG_ERROR("Engine: command line parsing failed, no command "
+                    "after '--cmd'");
+                continue;
+            }
+
+            if(StringOperations::IsCharacterQuote(cmd->at(0))){
+
+                StringIterator itr2(cmd.get());
+
+                auto withoutquotes = itr2.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
+
+                if(withoutquotes){
+
+                    QueuedConsoleCommands.push_back(std::move(withoutquotes));
+                    
+                } else {
+
+                    LOG_WARNING("Engine: command line '--cmd' command in quotes is empty");
+                }
+                
+            } else {
+
+                // cmd is the final command
+                QueuedConsoleCommands.push_back(std::move(cmd));
+            }
+
+            continue;
+        }
         
         // Add (if not processed already) //
-        PassedCommands.push_back(move(splitval));
+        PassedCommands.push_back(std::move(splitval));
     }
 }
 
@@ -1163,6 +1204,26 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
 
 }
 // ------------------------------------ //
+void Engine::_RunQueuedConsoleCommands(){
+
+    if(QueuedConsoleCommands.empty())
+        return;
+
+    if(!MainConsole){
+
+        LOG_FATAL("Engine: MainConsole has not been created before running command line "
+            "passed commands");
+        return;
+    }
+
+    for(auto& command : QueuedConsoleCommands){
+
+        MainConsole->RunConsoleCommand(*command);
+    }
+
+    QueuedConsoleCommands.clear();
+}
+// ------------------------------------ //
 bool Engine::_ReceiveConsoleInput(const std::string &command){
 
     GUARD_LOCK();
@@ -1179,3 +1240,4 @@ bool Engine::_ReceiveConsoleInput(const std::string &command){
     // Listening thread quits if PreReleaseWaiting is true
     return PreReleaseWaiting;
 }
+// ------------------------------------ //

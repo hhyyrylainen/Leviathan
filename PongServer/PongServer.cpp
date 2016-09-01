@@ -367,13 +367,10 @@ void Pong::PongServer::PreFirstTick(){
 }
 
 void Pong::PongServer::PassCommandLine(const string &params){
-    // Add "--nogui" if not found //
-    if(params.find("--nogui") == string::npos){
 
-        _Engine->PassCommandLine(params+" --nogui");
-        return;
-    }
-
+    // Force nogui //
+    _Engine->SetNoGUI();
+    
     // Now pass it //
     _Engine->PassCommandLine(params);
 

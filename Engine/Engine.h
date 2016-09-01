@@ -121,6 +121,12 @@ namespace Leviathan{
 
 		inline bool GetNoGui(){ return NoGui; };
 
+        // Command line settings can only be set before initializing //
+        inline void SetNoGUI(){
+
+            NoGui = true;
+        }
+
 		// Static access //
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
@@ -147,6 +153,9 @@ namespace Leviathan{
 
         //! Console input comes through this
         bool _ReceiveConsoleInput(const std::string &command);
+
+        //! Runs all commands in QueuedConsoleCommands
+        void _RunQueuedConsoleCommands();
         
 		// ------------------------------------ //
 		AppDef* Define = nullptr;
@@ -224,6 +233,9 @@ namespace Leviathan{
 
 		// Stores the command line before running it //
 		std::vector<std::unique_ptr<std::string>> PassedCommands;
+
+        //! Stores console commands that came from the command line
+        std::vector<std::unique_ptr<std::string>> QueuedConsoleCommands;
 
 		static Engine* instance;
 	};

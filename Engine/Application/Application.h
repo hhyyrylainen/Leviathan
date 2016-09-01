@@ -73,18 +73,25 @@ namespace Leviathan{
 		DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
 		DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
+
+        // Utility functions //
+        DLLEXPORT static void StartServerProcess(const std::string &processname,
+            const std::string &commandline);
+
 	protected:
 
 		//! \brief Performs the final steps in the release process
 		//! \warning This should not be called directly
 		DLLEXPORT virtual void Release();
 
-		// called just before returning from initialization, and can be used setting start time etc. //
+		//! called just before returning from initialization,
+        //! and can be used setting start time etc.
 		DLLEXPORT virtual void _InternalInit();
 		// ------------------------------------ //
 
 		bool Quit = false;
 		bool ShouldQuit = false;
+        
 		//! This can be quickly set anywhere to quit sometime in the future 
 		bool QuitSometime = false;
 

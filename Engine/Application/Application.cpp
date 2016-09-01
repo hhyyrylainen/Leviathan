@@ -209,3 +209,51 @@ DLLEXPORT void Leviathan::LeviathanApplication::MarkAsClosing(){
 	QuitSometime = true;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::StartServerProcess(
+    const std::string &processname, const std::string &commandline)
+{
+
+#ifdef _WIN32
+    // Create needed info //
+    STARTUPINFOA processstart;
+    PROCESS_INFORMATION startedinfo;
+
+    ZeroMemory(&processstart, sizeof(STARTUPINFOA));
+    ZeroMemory(&startedinfo, sizeof(PROCESS_INFORMATION));
+
+    processstart.cb = sizeof(STARTUPINFOA);
+    //processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
+    //processstart.wShowWindow = SW_SHOWMINIMIZED;
+
+    string finalstart = "\""+processname+"\" "+commandline;
+
+    // Use windows process creation //
+    if(!CreateProcessA(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, 
+            NULL, NULL, &processstart,
+            &startedinfo))
+    {
+        // Failed to start the process
+        Logger::Get()->Error("Failed to start the server process, error code: "+
+            Convert::ToString(GetLastError()));
+        return -1;
+    }
+
+    // Close our handles //
+    CloseHandle(startedinfo.hThread);
+    ServerProcessHandle = startedinfo.hProcess;
+
+
+#else
+    // Popen should work //
+
+    // Actually fork might be simpler //
+    if(fork() == 0){
+        // We are now in the child process //
+
+        execl(processname.c_str(), commandline.c_str(), (char*) NULL);
+    }
+
+
+#endif // _WIN32
+
+}

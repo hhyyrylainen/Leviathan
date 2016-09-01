@@ -117,58 +117,10 @@ int Pong::PongGame::StartServer(){
     Engine::Get()->GetRemoteConsole()->ExpectNewConnection(Tokennmbr, "ServerConsole", true);
 
     // Start the server //
-#ifdef _WIN32
-    // Create needed info //
-    STARTUPINFOA processstart;
-    PROCESS_INFORMATION startedinfo;
-
-    ZeroMemory(&processstart, sizeof(STARTUPINFOA));
-    ZeroMemory(&startedinfo, sizeof(PROCESS_INFORMATION));
-
-    processstart.cb = sizeof(STARTUPINFOA);
-    //processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
-    //processstart.wShowWindow = SW_SHOWMINIMIZED;
-
-    string finalstart = "\""+serverstartname+"\" "+args;
-
-    // Use windows process creation //
-    if(!CreateProcessA(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, 
-        NULL, NULL, &processstart,
-            &startedinfo))
-    {
-        // Failed to start the process
-        Logger::Get()->Error("Failed to start the server process, error code: "+
-            Convert::ToString(GetLastError()));
-        return -1;
-    }
-
-    // Close our handles //
-    CloseHandle(startedinfo.hThread);
-    ServerProcessHandle = startedinfo.hProcess;
-
-
-#else
-    // Popen should work //
-
-    // Copy data away //
-    string* childprocessname = new string(serverstartname);
-    string* childargumentlist = new string(args);
-
-    // Actually fork might be simpler //
-    if(fork() == 0){
-        // We are now in the child process //
-
-        string tmpprocessname = *childprocessname;
-        delete childprocessname;
-        string allpacketargs = *childargumentlist;
-        delete childargumentlist;
-
-        execl(tmpprocessname.c_str(), allpacketargs.c_str(), (char*) NULL);
-    }
-
-
-#endif // _WIN32
-
+    DEBUG_BREAK;
+    // StaticGame->ServerProcessHandle = LeviathanApplication::StartServerProcess(
+    //     serverstartname, args);
+    
     // Queue a task for this //
 
     _Engine->GetThreadingManager()->QueueTask(shared_ptr<Leviathan::QueuedTask>(new Leviathan::ConditionalTask(

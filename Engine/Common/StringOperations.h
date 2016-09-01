@@ -39,6 +39,15 @@ public:
         return false;
     }
 
+    template<typename CharType>
+		static bool IsCharacterQuote(CharType character){
+
+        if(character == '"' || character == '\'')
+            return true;
+
+        return false;
+    }
+
     // Helper functions //
 
     template<class StringTypeN>

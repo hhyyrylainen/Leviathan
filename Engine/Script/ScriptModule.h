@@ -14,8 +14,12 @@ namespace Leviathan{
 
 	enum SCRIPTBUILDSTATE{
         
-        SCRIPTBUILDSTATE_EMPTY, SCRIPTBUILDSTATE_READYTOBUILD, SCRIPTBUILDSTATE_BUILT, SCRIPTBUILDSTATE_FAILED,
-		//! Only set when the module can no longer be retrieved, and the whole ScriptModule needs to be recreated
+        SCRIPTBUILDSTATE_EMPTY,
+        SCRIPTBUILDSTATE_READYTOBUILD,
+        SCRIPTBUILDSTATE_BUILT,
+        SCRIPTBUILDSTATE_FAILED,
+		//! Only set when the module can no longer be retrieved,
+        //! and the whole ScriptModule needs to be recreated
 		SCRIPTBUILDSTATE_DISCARDED
 	};
 
@@ -68,9 +72,10 @@ namespace Leviathan{
 
 	//! some data that is stored when a listener is found
 	struct ValidListenerData{
-		ValidListenerData(asIScriptFunction* funcptr, std::string* name, std::string* metadataend);
-		ValidListenerData(asIScriptFunction* funcptr, std::string* name, std::string* metadataend,
-            std::string* generictypename);
+		ValidListenerData(asIScriptFunction* funcptr, std::string* name,
+            std::string* metadataend);
+		ValidListenerData(asIScriptFunction* funcptr, std::string* name,
+            std::string* metadataend, std::string* generictypename);
 		~ValidListenerData();
 
 		asIScriptFunction* FuncPtr;
@@ -83,7 +88,8 @@ namespace Leviathan{
 	struct ScriptSourceFileData{
 
         //! \param line The line to start from. First line in a file is 1
-		DLLEXPORT ScriptSourceFileData(const std::string &file, int line, const std::string &code);
+		DLLEXPORT ScriptSourceFileData(const std::string &file, int line,
+            const std::string &code);
 
 
         std::string SourceFile;
@@ -166,13 +172,15 @@ namespace Leviathan{
 		DLLEXPORT size_t GetScriptSegmentCount() const;
 
 		//! \brief Gets the data associated with a code segment
-		//! \param index The index of the segment in the vector, use GetScriptSegmentCount to get max index
+		//! \param index The index of the segment in the vector,
+        //! use GetScriptSegmentCount to get max index
 		//! \return The segments data or NULL
 		DLLEXPORT std::shared_ptr<ScriptSourceFileData> GetScriptSegment(size_t index) const;
 
 
 		//! \brief Adds a new script section
-		//! \return True when the file is not included already (and it got added), false otherwise
+		//! \return True when the file is not included already (and it got added),
+        //! false otherwise
 		DLLEXPORT FORCE_INLINE bool AddScriptSegment(const std::string &file, int line,
             const std::string &code){
 
@@ -190,8 +198,8 @@ namespace Leviathan{
 
 		//! \brief Rebuilds the module and tries to restore data
 		//!
-		//! Not all data can be restored (things changing types, application owned handles etc...)
-		//! \todo Add calls to OnRelease and OnInit events, just needs a way for the script owner to provide parameters
+		//! Not all data can be restored (things changing types,
+        //! application owned handles etc...)
 		DLLEXPORT bool ReLoadModuleCode();
 
 		//! \brief Sets the module as invalid to avoid usage
@@ -209,7 +217,8 @@ namespace Leviathan{
 
 
 		//! \brief Call when this module is added to a bridge
-		//! \return True when this is not in a bridge and it is added, false if this is removed from the bridge
+		//! \return True when this is not in a bridge and it is added,
+        //! false if this is removed from the bridge
 		DLLEXPORT bool OnAddedToBridge(std::shared_ptr<ScriptArgumentsProviderBridge> bridge);
 
 	private:
@@ -237,7 +246,8 @@ namespace Leviathan{
 		void _StartMonitoringFiles(Lock &guard);
 
 		//! \brief Releases file listeners
-		//! \note This will need to be called before deleting this object unless the user wants access violations
+		//! \note This will need to be called before deleting this object
+        //! unless the user wants access violations
 		void _StopFileMonitoring(Lock &guard);
 
 
@@ -283,7 +293,8 @@ namespace Leviathan{
 		static int LatestAssigned;
 
 
-		//! Only one module can build code at a time so this mutex has to be locked while building
+		//! Only one module can build code at a time so this mutex has to be locked
+        //! while building
 		static Mutex ModuleBuildingMutex;
 
 		//! A connection to an object that provides us with parameters for automatically called
@@ -293,7 +304,8 @@ namespace Leviathan{
 		// Data for file listening //
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-		//! The list of file listeners used to release them when this module is about to be deleted
+		//! The list of file listeners used to release them when this module is about to
+        //! be deleted
 		std::vector<int> FileListeners;
 
 

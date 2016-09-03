@@ -10,15 +10,14 @@
 #include "add_on/serializer/serializer.h"
 #include "Events/CallableObject.h"
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 ScriptModule::ScriptModule(asIScriptEngine* engine, const std::string &name, int id,
-    const string &source) :
+    const std::string &source) :
     Name(name), Source(source), ID(id), ScriptBuilder(new CScriptBuilder())
 {
 	{
 		Lock lock(ModuleBuildingMutex);
-        ModuleName = string(source+"_;"+Convert::ToString<int>(LatestAssigned));
+        ModuleName = std::string(source+"_;"+Convert::ToString<int>(LatestAssigned));
 		LatestAssigned++;
 	}
 
@@ -61,16 +60,24 @@ DLLEXPORT void Leviathan::ScriptModule::Release(){
 
 int Leviathan::ScriptModule::LatestAssigned = 0;
 
-const map<std::string, int> Leviathan::ScriptModule::ListenerNameType = boost::assign::map_list_of
-    (LISTENERNAME_ONSHOW, LISTENERVALUE_ONSHOW)(LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE)
-    (LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW) (LISTENERNAME_ONCLICK, LISTENERVALUE_ONCLICK)
-    (LISTENERNAME_ONVALUECHANGE, LISTENERVALUE_ONVALUECHANGE) (LISTENERNAME_ONINIT, LISTENERVALUE_ONINIT)
-    (LISTENERNAME_ONRELEASE, LISTENERVALUE_ONRELEASE) (LISTENERNAME_ONSUBMIT, LISTENERVALUE_ONSUBMIT)
-    (LISTENERNAME_ONTICK, LISTENERVALUE_ONTICK) (LISTENERNAME_ONCLOSECLICKED, LISTENERVALUE_ONCLOSECLICKED)
-    (LISTENERNAME_LISTSELECTIONACCEPTED, LISTENERVALUE_LISTSELECTIONACCEPTED);
+const std::map<std::string, int> Leviathan::ScriptModule::ListenerNameType = {
+    {LISTENERNAME_ONSHOW, LISTENERVALUE_ONSHOW},
+    {LISTENERNAME_ONHIDE, LISTENERVALUE_ONHIDE},
+    {LISTENERNAME_ONLISTENUPDATE, LISTENERVALUE_ONSHOW},
+    {LISTENERNAME_ONCLICK, LISTENERVALUE_ONCLICK},
+    {LISTENERNAME_ONVALUECHANGE, LISTENERVALUE_ONVALUECHANGE},
+    {LISTENERNAME_ONINIT, LISTENERVALUE_ONINIT},
+    {LISTENERNAME_ONRELEASE, LISTENERVALUE_ONRELEASE},
+    {LISTENERNAME_ONSUBMIT, LISTENERVALUE_ONSUBMIT},
+    {LISTENERNAME_ONTICK, LISTENERVALUE_ONTICK},
+    {LISTENERNAME_ONCLOSECLICKED, LISTENERVALUE_ONCLOSECLICKED},
+    {LISTENERNAME_LISTSELECTIONACCEPTED, LISTENERVALUE_LISTSELECTIONACCEPTED}
+};
 
 // ------------------------------------ //
-FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScriptFunction* func){
+FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(
+    asIScriptFunction* func)
+{
 	// get function id
 	int funcid = func->GetId();
 
@@ -85,7 +92,7 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(asIScrip
 	unsigned int parameterc = func->GetParamCount();
 
 	// generate new //
-	unique_ptr<FunctionParameterInfo> newinfo(new FunctionParameterInfo(funcid, parameterc));
+    auto newinfo = std::make_unique<FunctionParameterInfo>(funcid, parameterc);
 
 	// fill it with data //
 
@@ -173,7 +180,9 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(Lock &guard){
 			return NULL;
 		}
 
-	} else if(ScriptState == SCRIPTBUILDSTATE_FAILED || ScriptState == SCRIPTBUILDSTATE_DISCARDED){
+	} else if(ScriptState == SCRIPTBUILDSTATE_FAILED ||
+        ScriptState == SCRIPTBUILDSTATE_DISCARDED)
+    {
 
 		return NULL;
 	}
@@ -188,7 +197,9 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(Lock &guard){
 		if(!ASModule){
 
 			// The module is invalid //
-			Logger::Get()->Error("ScriptModule: GetModule: module is no longer anywhere to be found in the AS engine");
+			LOG_ERROR("ScriptModule: GetModule: module is no longer anywhere "
+                "to be found in the AS engine");
+            
 			ScriptState = SCRIPTBUILDSTATE_DISCARDED;
 			return NULL;
 		}
@@ -199,10 +210,11 @@ DLLEXPORT asIScriptModule* Leviathan::ScriptModule::GetModule(Lock &guard){
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<ScriptScript> Leviathan::ScriptModule::GetScriptInstance(){
 
-	return std::shared_ptr<ScriptScript>(new ScriptScript(ID, ScriptExecutor::Get()->GetModule(ID)));
+	return std::make_shared<ScriptScript>(ID, ScriptExecutor::Get()->GetModule(ID));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(const std::string &listenername,
+DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(
+    const std::string &listenername,
     const std::string* generictype /*= NULL*/)
 {
 	GUARD_LOCK();
@@ -218,7 +230,9 @@ DLLEXPORT bool Leviathan::ScriptModule::DoesListenersContainSpecificListener(con
 	return false;
 }
 
-DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<shared_ptr<ValidListenerData>> &receiver){
+DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(
+    std::vector<std::shared_ptr<ValidListenerData>> &receiver)
+{
 	GUARD_LOCK();
 	// build info if not built //
 	if(!ListenerDataBuilt)
@@ -227,12 +241,15 @@ DLLEXPORT void Leviathan::ScriptModule::GetListOfListeners(std::vector<shared_pt
 	receiver.reserve(FoundListenerFunctions.size());
 	
 
-	for(auto iter = FoundListenerFunctions.begin(); iter != FoundListenerFunctions.end(); ++iter) {
+	for(auto iter = FoundListenerFunctions.begin(); iter != FoundListenerFunctions.end();
+        ++iter)
+    {
 		receiver.push_back(iter->second);
 	}
 }
 
-DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const std::string &listenername,
+DLLEXPORT std::string Leviathan::ScriptModule::GetListeningFunctionName(
+    const std::string &listenername,
     const std::string* generictype /*= NULL*/)
 {
 	GUARD_LOCK();
@@ -243,7 +260,7 @@ DLLEXPORT string Leviathan::ScriptModule::GetListeningFunctionName(const std::st
 
 	if(itr != FoundListenerFunctions.end()){
 		// Get name from pointer //
-		return string(itr->second->FuncPtr->GetName());
+		return std::string(itr->second->FuncPtr->GetName());
 	}
     
 	// Nothing found //
@@ -262,8 +279,6 @@ DLLEXPORT void Leviathan::ScriptModule::DeleteThisModule(){
 }
 // ------------------------------------ //
 void Leviathan::ScriptModule::_BuildListenerList(Lock &guard){
-
-	VerifyLock(guard);
 
 	// We need to find functions with metadata specifying which listener it is //
 	asIScriptModule* mod = GetModule(guard);
@@ -293,7 +308,7 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func,
 {
     
 	// Start of by getting metadata string //
-	string meta = ScriptBuilder->GetMetadataStringForFunc(func);
+    std::string meta = ScriptBuilder->GetMetadataStringForFunc(func);
 
 	if(meta.size() < 3){
 		// Too short for anything //
@@ -311,7 +326,8 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func,
 		itr.MoveToNext();
 
 		// get until assignment //
-		auto metaname = itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_EQUALITY);
+		auto metaname = itr.GetUntilEqualityAssignment<std::string>(
+            EQUALITYCHARACTER_TYPE_EQUALITY);
 
 		// check name //
 		if(*metaname == "Listener"){
@@ -329,7 +345,7 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func,
 
 				if(generictype->size() == 0){
 
-					Logger::Get()->Warning("ScriptModule: ProcessMetadata: Generic listener has "
+					LOG_WARNING("ScriptModule: ProcessMetadata: Generic listener has "
                         "no type defined (expected declaration like \""
 						"[@Listener=\"Generic\", @Type=\"ScoreUpdated\"]\"");
 					return;
@@ -423,7 +439,7 @@ DLLEXPORT void Leviathan::ScriptModule::PrintFunctionsInModule(){
 		// get function //
 		asIScriptFunction* func = mod->GetFunctionByIndex(n);
 		// print the function //
-		Logger::Get()->Write(string("> ")+func->GetName()+"("+func->GetDeclaration()+")");
+		Logger::Get()->Write(std::string("> ")+func->GetName()+"("+func->GetDeclaration()+")");
 	}
 
 	Logger::Get()->Write("[END]");
@@ -433,13 +449,13 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
     const char* from, CScriptBuilder* builder, void* userParam)
 {
 	// by default we need to try to add include to from path and try to open it //
-	string file(include);
-	string infile(from);
+    std::string file(include);
+    std::string infile(from);
 
 	ScriptModule* module = reinterpret_cast<ScriptModule*>(userParam);
     // The module has to be locked during this call
 
-	// if it is prefixed with ".\" or "./" then just look for the file with it's relative path //
+	// if it is prefixed with ".\" or "./" then just look for the file with it's relative path
 	if(file.find(".\\") == 0 || file.find("./") == 0){
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
@@ -447,16 +463,17 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 		module->_AddFileToMonitorIfNotAlready(file);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
-        const string beginstripped = file.substr(2, file.size()-2);
+        const std::string beginstripped = file.substr(2, file.size()-2);
         
 		return builder->AddSectionFromFile(file.c_str());
 	}
 
 	size_t lastpathseparator = infile.find_last_of('/');
-	if(lastpathseparator != string::npos){
-		string justpath = infile.substr(0, lastpathseparator+1); 
+	if(lastpathseparator != std::string::npos){
+        
+        std::string justpath = infile.substr(0, lastpathseparator+1); 
 
-		string completefile = justpath += file;
+        std::string completefile = justpath += file;
 
 		if(FileSystem::FileExists(completefile)){
 			// completed search //
@@ -520,7 +537,9 @@ DLLEXPORT std::shared_ptr<ScriptSourceFileData> Leviathan::ScriptModule::GetScri
 	return ScriptSourceSegments[index];
 }
 
-DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSourceFileData> data){
+DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(
+    std::shared_ptr<ScriptSourceFileData> data)
+{
 	GUARD_LOCK();
 	// Check is it already there //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
@@ -540,7 +559,7 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(shared_ptr<ScriptSource
 	return true;
 }
 
-DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &file){
+DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const std::string &file){
 	GUARD_LOCK();
 	// Check is it already there //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
@@ -552,18 +571,18 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const string &f
 	}
 
 	// Load the source code from the file //
-	string scriptdata;
+    std::string scriptdata;
 	FileSystem::ReadFileEntirely(file, scriptdata);
 
-	ScriptSourceSegments.push_back(shared_ptr<ScriptSourceFileData>(
-            new ScriptSourceFileData(file, 1, scriptdata)));
+	ScriptSourceSegments.push_back(std::make_shared<ScriptSourceFileData>(
+            file, 1, scriptdata));
     
     // Needs to be built next //
     ScriptState = SCRIPTBUILDSTATE_READYTOBUILD;
 	return true;
 }
 
-DLLEXPORT const string& Leviathan::ScriptModule::GetModuleName() const{
+DLLEXPORT const std::string& Leviathan::ScriptModule::GetModuleName() const{
 	return ModuleName;
 }
 // ------------------------------------ //
@@ -649,7 +668,8 @@ DLLEXPORT bool Leviathan::ScriptModule::ReLoadModuleCode(){
 	if(ArgsBridge){
 
 		// Do a OnRelease event call //
-		const std::string& listenername = CallableObject::GetListenerNameFromType(EVENT_TYPE_INIT);
+		const std::string& listenername = CallableObject::GetListenerNameFromType(
+            EVENT_TYPE_INIT);
 
 		// check does the script contain right listeners //
 		if(DoesListenersContainSpecificListener(listenername)){
@@ -712,7 +732,9 @@ void Leviathan::ScriptModule::_StartMonitoringFiles(Lock& guard){
 
 		for(auto iter2 = iter+1; iter2 != end2; ++iter2){
 
-			if(basepath == StringOperations::GetPathString(*(*iter2)->File) && !(*iter2)->Added){
+			if(basepath == StringOperations::GetPathString(*(*iter2)->File) &&
+                !(*iter2)->Added)
+            {
 				
 				// This is in the same folder and thus can be monitored by the same listener //
 				targetfiles.push_back((*iter2)->File.get());
@@ -725,7 +747,7 @@ void Leviathan::ScriptModule::_StartMonitoringFiles(Lock& guard){
 		// Start monitoring for them //
 		int listenerid;
 		tmphandler->ListenForFileChanges(targetfiles, std::bind(&ScriptModule::_FileChanged,
-                this, placeholders::_1, placeholders::_2), listenerid);
+                this, std::placeholders::_1, std::placeholders::_2), listenerid);
 
 		FileListeners.push_back(listenerid);
 	}
@@ -756,7 +778,7 @@ void Leviathan::ScriptModule::_StopFileMonitoring(Lock &guard){
 
 }
 
-void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(const string &file){
+void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(const std::string &file){
 
 	// Look for a matching string //
 	auto end = AlreadyMonitoredFiles.end();
@@ -768,7 +790,7 @@ void Leviathan::ScriptModule::_AddFileToMonitorIfNotAlready(const string &file){
 
 
 	// Add it as it isn't there yet //
-	AlreadyMonitoredFiles.push_back(make_unique<AutomonitoredFile>(file));
+	AlreadyMonitoredFiles.push_back(std::make_unique<AutomonitoredFile>(file));
 }
 
 void Leviathan::ScriptModule::_FileChanged(const std::string &file,
@@ -835,9 +857,10 @@ void Leviathan::ScriptModule::_BuildTheModule(Lock &guard){
 	ScriptState = SCRIPTBUILDSTATE_BUILT;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ScriptModule::OnAddedToBridge(shared_ptr<ScriptArgumentsProviderBridge> bridge){
-
-	assert(this == bridge->GetModule() && "OnAddedToBridge it's not ours!");
+DLLEXPORT bool Leviathan::ScriptModule::OnAddedToBridge(
+    std::shared_ptr<ScriptArgumentsProviderBridge> bridge)
+{
+	LEVIATHAN_ASSERT(this == bridge->GetModule(), "OnAddedToBridge it's not ours!");
 
 	if(ArgsBridge){
 
@@ -873,10 +896,10 @@ Leviathan::ValidListenerData::~ValidListenerData(){
 	FuncPtr->Release();
 }
 // ------------------ ScriptSourceFileData ------------------ //
-DLLEXPORT ScriptSourceFileData::ScriptSourceFileData(const string &file, int line,
-    const string &code) :
+DLLEXPORT ScriptSourceFileData::ScriptSourceFileData(const std::string &file, int line,
+    const std::string &code) :
     SourceFile(file), StartLine(line), 
-	SourceCode(new string(code))
+	SourceCode(std::make_shared<std::string>(code))
 {
 
 }

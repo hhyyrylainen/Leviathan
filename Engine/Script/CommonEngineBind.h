@@ -132,6 +132,16 @@ static std::string GetLeviathanVersionProxy(){
     return Leviathan::VERSIONS;
 }
 
+static void QuitWrapper(){
+
+    Engine* engine = Engine::Get();
+
+    if(!engine)
+        LOG_WARNING("Cannot Quit. No engine instance");
+
+    engine->MarkQuit();
+}
+
 
 //! \todo Create a wrapper around NewtonBody which has reference counting
 bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
@@ -798,7 +808,12 @@ bool BindEngineCommonScriptIterface(asIScriptEngine* engine){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-
+    if(engine->RegisterGlobalFunction("void Quit()",
+            asFUNCTION(QuitWrapper), asCALL_CDECL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
 
 
 	return true;

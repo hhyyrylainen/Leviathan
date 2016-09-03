@@ -1,8 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SCRIPT_EXECUTOR
 #include "ScriptExecutor.h"
-#endif
+
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Script/AngelScriptCommon.h"
@@ -15,6 +14,9 @@ using namespace Leviathan;
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptstdstring/scriptstdstring.h>
 #include <add_on/scriptgrid/scriptgrid.h>
+#include <add_on/scripthandle/scripthandle.h>
+#include <add_on/datetime/datetime.h>
+#include <add_on/weakref/weakref.h>
 
 #include "ScriptModule.h"
 
@@ -61,11 +63,19 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 	// register other script extensions //
 	RegisterStdStringUtils(engine);
 
+    
+    RegisterScriptDateTime(engine);
+    
 	// register dictionary object //
 	RegisterScriptDictionary(engine);
 	
 	// Register the grid addon //
 	RegisterScriptGrid(engine);
+
+    // Register reference handles //
+    RegisterScriptHandle(engine);
+
+    RegisterScriptWeakRef(engine);
 
 	// register global functions and classes //
 	if(engine->RegisterGlobalFunction("void Print(const string &in message)",
@@ -81,7 +91,7 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 	// binding Event DataStore DataBlock and others //
 	if(!BindEngineCommonScriptIterface(engine)){
 		// failed //
-		Logger::Get()->Error("ScriptExecutor: Init: AngelScript: register Engine object things failed");
+		LOG_ERROR("ScriptExecutor: Init: AngelScript: register Engine object things failed");
         throw Exception("Script bind failed");
 	}
 

@@ -366,14 +366,13 @@ void Pong::PongServer::PreFirstTick(){
     ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
 }
 
-void Pong::PongServer::PassCommandLine(const string &params){
+bool Pong::PongServer::PassCommandLine(int argcount, char* args[]){
 
     // Force nogui //
     _Engine->SetNoGUI();
     
     // Now pass it //
-    _Engine->PassCommandLine(params);
-
+    return _Engine->PassCommandLine(argcount, args);
 }
 // ------------------------------------ //
 void Pong::PongServer::OnStartPreMatch(){

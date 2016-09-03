@@ -61,13 +61,16 @@ namespace Leviathan{
         //! \brief Clears physical timers
         DLLEXPORT void ClearTimers();
 
-		// ------------------------------------ //
-		// Passes the commands and preprocesses them, but also interprets commands like --nogui //
-		DLLEXPORT void PassCommandLine(const std::string &commands);
-        
-		// Runs the normal commands passed by the PassCommandLine function //
-		DLLEXPORT void ExecuteCommandLine();
+        //! \brief Marks the owning application to quit
+        DLLEXPORT void MarkQuit();
 
+		// ------------------------------------ //
+		//! Passes the commands and preprocesses them
+        //!
+        //! Also interprets commands like --nogui
+        //! \returns False if invalid command line and the game should quit instantly
+		DLLEXPORT bool PassCommandLine(int argcount, char* args[]);
+        
         //! \brief Creates a GameWorld for placing entities into
 		DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
             std::shared_ptr<ViewerCameraPos> worldscamera);
@@ -135,6 +138,10 @@ namespace Leviathan{
 		// after load function //
 		void PostLoad();
 
+        //! Runs the normal commands passed by the PassCommandLine function //
+        //! Ran automatically after Init
+		DLLEXPORT void ExecuteCommandLine();
+
 		//! Function called by first instance of Window class after creating a window to not error
         //! when registering threads to work with Ogre
 		void _NotifyThreadsRegisterOgre();
@@ -156,6 +163,10 @@ namespace Leviathan{
 
         //! Runs all commands in QueuedConsoleCommands
         void _RunQueuedConsoleCommands();
+
+        //! Helper for PassCommandLine
+        bool ParseSingleCommand(StringIterator &itr, int &argindex, const int argcount,
+            char* args[]);
         
 		// ------------------------------------ //
 		AppDef* Define = nullptr;

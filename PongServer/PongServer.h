@@ -36,7 +36,7 @@ namespace Pong{
 
 
         //! Makes sure doesn't start in GUI mode
-        virtual void PassCommandLine(const string &params);
+        bool PassCommandLine(int argcount, char* args[]) override;
 
         //! This doesn't need any handling
         virtual void OnPlayerStatsUpdated(PlayerList* list){}

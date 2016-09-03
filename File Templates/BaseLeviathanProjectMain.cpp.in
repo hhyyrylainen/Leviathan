@@ -56,12 +56,12 @@ int main(int argcount, char* args[]){
 #endif
     
 #ifdef _WIN32
-    std::string commandline = lpCmdLine;
+    int argcount = 1;
+    char* args[] = { lpCmdLine };
 #else
-    std::string commandline = "";
-    for(int i = 1; i < argcount; i++){
-        commandline += std::string(" ") + args[i];
-    }
+    // We need to skip the program name
+    args += 1;
+    --argcount;
 #endif
     
     int Return = 0;
@@ -103,7 +103,6 @@ int main(int argcount, char* args[]){
     // Fail if no definition could be created //
     if(!ProgramDefinition){
 
-        DEBUG_BREAK;
         std::cout << "FATAL: failed to create AppDefine" << std::endl;
         return 2;
     }
@@ -124,16 +123,16 @@ int main(int argcount, char* args[]){
 #endif
         &app);
 
-    app.PassCommandLine(commandline);
+    if(!app.PassCommandLine(argcount, args)){
+
+        LOG_ERROR("Invalid Command Line arguments. Shutting down");
+        return 3;
+    }
     
     if(app.Initialize(ProgramDefinition.get())){
 
         // this is where the game should customize the engine //
         app.CustomizeEnginePostLoad();
-
-        // After everything is ready the command line should be flushed //
-        app.FlushCommandLine();
-
 
         Logger::Get()->Info(std::string("Engine successfully initialized"));
         Return = app.RunMessageLoop();

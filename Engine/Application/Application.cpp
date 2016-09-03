@@ -87,12 +87,8 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	SAFE_DELETE(_Engine);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const std::string &params){
-	_Engine->PassCommandLine(params);
-}
-
-DLLEXPORT void Leviathan::LeviathanApplication::FlushCommandLine(){
-	_Engine->ExecuteCommandLine();
+DLLEXPORT bool Leviathan::LeviathanApplication::PassCommandLine(int argcount, char* args[]){
+	return _Engine->PassCommandLine(argcount, args);
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::_InternalInit(){

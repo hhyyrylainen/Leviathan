@@ -453,6 +453,8 @@ void Engine::PostLoad(){
 	// get time //
 	LastTickTime = Time::GetTimeMs64();
 
+    ExecuteCommandLine();
+    
     // Run startup command line //
     _RunQueuedConsoleCommands();
 }
@@ -1012,7 +1014,7 @@ DLLEXPORT void Leviathan::Engine::DumpMemoryLeaks() {
 
     LOG_INFO("TODO: memory leak detection, or remove this function");
 }
-
+// ------------------------------------ //
 int TestCrash(int writenum){
 
     int* target = nullptr;
@@ -1022,17 +1024,11 @@ int TestCrash(int writenum){
     return 42;
 }
 
-DLLEXPORT void Engine::PassCommandLine(const string &commands){
-
-    if(commands.empty())
-        return;
-
-    Logger::Get()->Info("Command line: "+commands);
-
-    GUARD_LOCK();
+bool Engine::ParseSingleCommand(StringIterator &itr, int &argindex, const int argcount,
+    char* args[])
+{
     
     // Split all flags and check for some flags that might be set //
-    StringIterator itr(commands);
     unique_ptr<string> splitval;
 
     while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE
@@ -1047,9 +1043,9 @@ DLLEXPORT void Engine::PassCommandLine(const string &commands){
         if(*splitval == "--noleap"){
             NoLeap = true;
 
-#ifdef LEVIATHAN_USES_LEAP
+        #ifdef LEVIATHAN_USES_LEAP
             Logger::Get()->Info("Engine starting with LeapMotion disabled");
-#endif
+        #endif
             continue;
         }
         if(*splitval == "--nocin"){
@@ -1081,11 +1077,22 @@ DLLEXPORT void Engine::PassCommandLine(const string &commands){
 
             auto cmd = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
+            
+
             if(!cmd || cmd->empty()){
 
-                LOG_ERROR("Engine: command line parsing failed, no command "
-                    "after '--cmd'");
-                continue;
+                if(argindex + 1 < argcount){
+
+                    // Next argument is the command //
+                    ++argindex;
+                    cmd = std::make_unique<std::string>(args[argindex]);
+                    
+                } else {
+
+                    LOG_ERROR("Engine: command line parsing failed, no command "
+                        "after '--cmd'");
+                    continue;
+                }
             }
 
             if(StringOperations::IsCharacterQuote(cmd->at(0))){
@@ -1115,10 +1122,44 @@ DLLEXPORT void Engine::PassCommandLine(const string &commands){
         // Add (if not processed already) //
         PassedCommands.push_back(std::move(splitval));
     }
+
+    return true;
+}
+
+DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[]){
+
+    if(argcount < 1)
+        return true;
+
+    LOG_INFO("Engine: Command line: " + std::string(args[0]));
+
+    for(int i = 1; i < argcount; ++i){
+
+        LOG_WRITE("\t> " + std::string(args[i]));
+    }
+
+    int argindex = 0;
+
+    while(argindex < argcount){
+
+        StringIterator itr(args[argindex]);
+
+        while(!itr.IsOutOfBounds()){
+
+            if(!ParseSingleCommand(itr, argindex, argcount, args)){
+
+                return false;
+            }
+            
+        }
+
+        ++argindex;
+    }
+
+    return true;
 }
 
 DLLEXPORT void Engine::ExecuteCommandLine(){
-    GUARD_LOCK();
 
     StringIterator itr(NULL, false);
 
@@ -1216,8 +1257,12 @@ void Engine::_RunQueuedConsoleCommands(){
         return;
     }
 
+    LOG_INFO("Engine: Running PostStartup command line. Commands: " +
+        std::to_string(QueuedConsoleCommands.size()));
+
     for(auto& command : QueuedConsoleCommands){
 
+        LOG_INFO("Engine: Running \"" + *command + "\"");
         MainConsole->RunConsoleCommand(*command);
     }
 
@@ -1241,3 +1286,8 @@ bool Engine::_ReceiveConsoleInput(const std::string &command){
     return PreReleaseWaiting;
 }
 // ------------------------------------ //
+DLLEXPORT void Engine::MarkQuit(){
+
+    if(Owner)
+        Owner->MarkAsClosing();
+}

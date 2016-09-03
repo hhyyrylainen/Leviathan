@@ -1112,10 +1112,6 @@ end
   
 
 if BuildPlatform == "linux"
-  # Create a symbolic link for build database
-  builddblink = "compile_commands.json"
-  File.delete(builddblink) if File.exist?(builddblink)
-  FileUtils.ln_s File.join("build", "compile_commands.json"), builddblink
   
   info "Indexing with cscope"
   system "./RunCodeIndexing.sh"

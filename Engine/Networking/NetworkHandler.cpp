@@ -169,7 +169,11 @@ DLLEXPORT void Leviathan::NetworkHandler::Release() {
         }
 
         OpenConnections.clear();
+        
 
+    }
+
+    if(MasterServerConnectionThread.joinable()){
         MasterServerConnectionThread.join();
         MasterServerConnection.reset();
     }

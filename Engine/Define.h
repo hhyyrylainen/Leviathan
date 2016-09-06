@@ -85,7 +85,8 @@ constexpr float EPSILON = 0.00000001f;
 // For making SIGINT work as debug break on linux //
 #include <signal.h>
 #ifndef DEBUG_BREAK
-#define DEBUG_BREAK { Leviathan::Logger::Get()->Write("DEBUG_BREAK HIT!"); raise(SIGINT); }
+#define DEBUG_BREAK { LOG_WRITE("DEBUG_BREAK HIT! at:"); \
+ LOG_WRITE(__FILE__ "(" + std::to_string(__LINE__) + ")"); raise(SIGINT); }
 #endif //DEBUG_BREAK
 
 #else

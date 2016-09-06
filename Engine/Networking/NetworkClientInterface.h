@@ -18,17 +18,34 @@ namespace Leviathan{
 //! additionally in client network interface classes.
 //! \see NetworkInterface
 class NetworkClientInterface : public NetworkInterface{
+
+    enum class CLIENT_CONNECTION_STATE {
+
+        //! Not connected to a server
+        None,
+
+        //! JoinServer has been called and the client is now waiting for the connection
+        //! object to become open
+        WaitingForOpening,
+
+        //! Properly connected
+        Connected,
+
+        //! Client is leaving a server
+        Closed
+    };
+    
 public:
     DLLEXPORT NetworkClientInterface();
     DLLEXPORT virtual ~NetworkClientInterface();
 
 
     DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
-        Connection &connection);
+        Connection &connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
         std::shared_ptr<NetworkResponse> message, Connection &connection,
-        bool &dontmarkasreceived);
+        bool &dontmarkasreceived) override;
 
     //! \brief Connects the client to a server
     //! \return Returns true when successfully started the join process,
@@ -123,8 +140,6 @@ protected:
 
 private:
         
-    void _SendConnectRequest(Lock &guard);
-
     //! \brief Handles succeeded requests, removes clutter from other places
     void _ProcessCompletedRequest(Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing,
         std::shared_ptr<NetworkResponse> response);
@@ -155,12 +170,8 @@ protected:
     //! This vector holds the made requests to allow using the response to do stuff
     std::vector<std::shared_ptr<SentNetworkThing>> OurSentRequests;
 
+    CLIENT_CONNECTION_STATE ConnectState = CLIENT_CONNECTION_STATE::None;
     std::shared_ptr<Connection> ServerConnection;
-
-    bool ConnectedToServer = false;
-
-    int ConnectTriesCount = 0;
-    int MaxConnectTries = DEFAULT_MAXCONNECT_TRIES;
 
     //! Marks whether heartbeats are in use
     bool UsingHeartbeats = false;

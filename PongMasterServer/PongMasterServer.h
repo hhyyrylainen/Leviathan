@@ -12,10 +12,10 @@ namespace Pong{
 		PongMasterServer(PongMasterNetworking &network);
 		~PongMasterServer();
 
-		virtual void Tick(int mspassed);
+		void Tick(int mspassed) override;
 
 		void CustomizeEnginePostLoad();
-		void EnginePreShutdown();
+		void EnginePreShutdown() override;
 
 		static std::string GenerateWindowTitle();
 

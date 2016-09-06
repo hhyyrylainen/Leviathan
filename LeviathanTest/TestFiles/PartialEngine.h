@@ -16,6 +16,11 @@ using namespace Leviathan;
 class PartialApplication : public LeviathanApplication{
 public:
 
+    NETWORKED_TYPE GetProgramNetType() const override {
+
+        // Don't want to mimic either client or server to make testing easier
+        return NETWORKED_TYPE::Master;
+    }
 };
 
 class PartialClient : public NetworkClientInterface{

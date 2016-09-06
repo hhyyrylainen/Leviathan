@@ -76,6 +76,8 @@ namespace Leviathan{
         DLLEXPORT static void StartServerProcess(const std::string &processname,
             const std::string &commandline);
 
+        DLLEXPORT virtual NETWORKED_TYPE GetProgramNetType() const = 0;
+        
 	protected:
 
 		//! \brief Performs the final steps in the release process

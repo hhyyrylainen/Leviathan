@@ -91,6 +91,7 @@ else()
     "Application/KeyConfiguration.cpp" "Application/KeyConfiguration.h"
     "Application/MasterServerApplication.cpp" "Application/MasterServerApplication.h"
     "Application/ServerApplication.cpp" "Application/ServerApplication.h"
+    "Application/ClientApplication.cpp" "Application/ClientApplication.h"
     "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
     )
 

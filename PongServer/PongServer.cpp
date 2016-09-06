@@ -365,15 +365,6 @@ void Pong::PongServer::PreFirstTick(){
     ServerInterface.SetServerAllowPlayers(true);
     ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
 }
-
-bool Pong::PongServer::PassCommandLine(int argcount, char* args[]){
-
-    // Force nogui //
-    _Engine->SetNoGUI();
-    
-    // Now pass it //
-    return _Engine->PassCommandLine(argcount, args);
-}
 // ------------------------------------ //
 void Pong::PongServer::OnStartPreMatch(){
 

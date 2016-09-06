@@ -109,10 +109,14 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
     // Store the connection //
     ServerConnection = connectiontouse;
 
-    ConnectTriesCount = 0;
+    KeepAliveQueued = false;
+    UsingHeartbeats = false;
 
-    // Send connect request //
-    _SendConnectRequest(guard);
+    ConnectState = CLIENT_CONNECTION_STATE::WaitingForOpening;
+
+    // Send message //
+    _OnNewConnectionStatusMessage("Trying to connect to a server on "+ServerConnection->
+        GenerateFormatedAddressString());
 
     return true;
 }
@@ -120,12 +124,10 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
 DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &guard,
     const std::string &reason, bool connectiontimedout)
 {
-    VerifyLock(guard);
-
     // Return if no connection //
     if(!ServerConnection){
 
-        Logger::Get()->Info("NetworkClientInterface: DisconnectFromServer: not connected "
+        LOG_WARNING("NetworkClientInterface: DisconnectFromServer: not connected "
             "to any servers");
         return;
     }
@@ -141,10 +143,11 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &gua
     //Owner->GetSyncedVariables()->Clear();
 
     // Close connection //
+    LOG_WRITE("TODO: send disconnect reason to server");
     Owner->CloseConnection(*ServerConnection);
     ServerConnection.reset();
 
-    ConnectedToServer = false;
+    ConnectState = CLIENT_CONNECTION_STATE::Closed;
     OurPlayerID = -1;
 
     _OnDisconnectFromServer(reason, connectiontimedout ? false: true);
@@ -153,24 +156,41 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &gua
 DLLEXPORT std::vector<std::shared_ptr<Leviathan::Connection>>& 
 Leviathan::NetworkClientInterface::GetClientConnections() 
 {
-
-    DEBUG_BREAK;
-    LOG_ERROR("Calling GetClientConnections on a client interface");
+    LOG_FATAL("Calling GetClientConnections on a client interface");
     throw Exception("Calling GetClientConnections on a client interface");
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
+    
     GUARD_LOCK();
 
-    if(!ServerConnection || !ConnectedToServer)
+    switch(ConnectState){
+    case CLIENT_CONNECTION_STATE::None:
         return;
-
-    // Check did The connection close //
-    if(!Owner->IsConnectionValid(*ServerConnection)){
-
-        DisconnectFromServer(guard, "Connection Interrupted", true);
+    case CLIENT_CONNECTION_STATE::Closed:
+    {
+        // Everything should have been handled already
+        ConnectState = CLIENT_CONNECTION_STATE::None;
         return;
     }
+    case CLIENT_CONNECTION_STATE::WaitingForOpening:
+    {
+        if(!Owner->IsConnectionValid(*ServerConnection)){
+
+            DisconnectFromServer(guard, "Server Refused Connection", true);
+            return;
+        }
+
+        
+        return;
+    }
+    default:
+        break;
+    }
+
+    LEVIATHAN_ASSERT(ServerConnection, "ServerConnection null when ConnectState isn't None");
+
+    // Check did The connection close //
 
     if(KeepAliveQueued){
 
@@ -231,23 +251,6 @@ checksentrequestsbeginlabel:
     // Send heartbeats //
     _UpdateHeartbeats(guard);
 
-}
-// ------------------------------------ //
-void Leviathan::NetworkClientInterface::_SendConnectRequest(Lock &guard){
-
-    // Increase connect number //
-    ConnectTriesCount++;
-
-
-    // Send connect request //
-    DEBUG_BREAK;
-
-    // Store it //
-    //OurSentRequests.push_back(sentthing);
-
-    // Send message //
-    _OnNewConnectionStatusMessage("Trying to connect to a server on "+ServerConnection->
-        GenerateFormatedAddressString()+", attempt "+Convert::ToString(ConnectTriesCount));
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
@@ -347,8 +350,7 @@ void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(Lock &guard){
     VerifyLock(guard);
 
     // Set the variables //
-    ConnectedToServer = true;
-
+    ConnectState = CLIENT_CONNECTION_STATE::Connected;
 
     // TODO: clear synced variables
     //Owner->GetSyncedVariables()->Clear();
@@ -457,11 +459,10 @@ DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(
     const string &messagestr)
 {
     // Make sure that we are connected to a server //
-    if(!ConnectedToServer){
+    if(ConnectState != CLIENT_CONNECTION_STATE::Connected){
 
         throw InvalidState("cannot send command because we aren't connected to a server");
     }
-
 
     // Check the length //
     if(messagestr.length() >= MAX_SERVERCOMMAND_LENGTH){
@@ -481,7 +482,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkClientInterface::IsConnected() const{
-    return ConnectedToServer;
+    return ConnectState != CLIENT_CONNECTION_STATE::None &&
+        ConnectState != CLIENT_CONNECTION_STATE::Closed;
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_OnStartHeartbeats(){

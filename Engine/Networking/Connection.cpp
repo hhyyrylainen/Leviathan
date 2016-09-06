@@ -13,6 +13,8 @@
 #include "TimeIncludes.h"
 #include "Utility/Convert.h"
 #include "Engine.h"
+#include "Application/GameConfiguration.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -36,10 +38,20 @@ DLLEXPORT Connection::Connection(const std::string &hostname) :
     result = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
 
     if(!result){
-        // Probably should get the default port number //
+        
+        GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
+
+        int tmpport = 0;
+
+        if(!vars->GetValueAndConvertTo<int>("DefaultServerPort", tmpport)){
+
+            tmpport = 80;
+        }
+
+        TargetPortNumber = (unsigned short)tmpport;
+        
         LOG_WARNING("Connection: no port defined, using default, "
-            "hostname: " + hostname);
-        TargetPortNumber = 80;
+            "hostname: " + hostname + ":" + std::to_string(TargetPortNumber));
         return;
     }
     

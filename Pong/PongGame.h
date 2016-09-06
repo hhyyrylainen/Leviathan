@@ -6,6 +6,7 @@
 #include "GUI/GuiManager.h"
 #include "Application/GameConfiguration.h"
 #include "Application/KeyConfiguration.h"
+#include "Application/ClientApplication.h"
 #include "CommonPong.h"
 
 #include "Events/EventHandler.h"
@@ -15,7 +16,7 @@ namespace Pong{
     class PongNetHandler;
 
 
-    class PongGame : public CommonPongParts<Leviathan::LeviathanApplication, false>,
+    class PongGame : public CommonPongParts<Leviathan::ClientApplication, false>,
                        public Leviathan::CallableObject
     {
     public:

@@ -77,9 +77,6 @@ public:
 
 
     //! \brief Called when the program is closing
-    //!
-    //! This should be used to call network interface type based functions
-    //! (NetworkServerInterface::CloseDownServer() etc.)
     DLLEXPORT virtual void CloseDown() = 0;
 
     //! \brief Asserts if types don't match

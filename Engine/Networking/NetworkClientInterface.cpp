@@ -132,6 +132,8 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &gua
         return;
     }
 
+    LOG_INFO("Client: disconnected from server, reason: " + reason);
+
     // Discard waiting requests //
     OurSentRequests.clear();
 
@@ -177,6 +179,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
     {
         if(!Owner->IsConnectionValid(*ServerConnection)){
 
+            LOG_WARNING("Connection to server failed");
             DisconnectFromServer(guard, "Server Refused Connection", true);
             return;
         }
@@ -184,7 +187,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
         
         return;
     }
-    default:
+    case CLIENT_CONNECTION_STATE::Connected:
         break;
     }
 
@@ -449,7 +452,6 @@ DLLEXPORT void Leviathan::NetworkClientInterface::CloseDown(){
     GUARD_LOCK();
 
     if(ServerConnection){
-
 
         DisconnectFromServer(guard, "Game closing");
     }

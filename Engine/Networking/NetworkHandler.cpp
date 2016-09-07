@@ -349,7 +349,6 @@ DLLEXPORT bool Leviathan::NetworkHandler::IsConnectionValid(Connection &connecti
 
     return connection.IsOpen();
 }
-
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
@@ -471,7 +470,6 @@ DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
             connection->UpdateListening();
         }
     }
-
     
     // Interface might want to do something //
     GetInterface()->TickIt();

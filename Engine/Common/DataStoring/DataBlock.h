@@ -851,7 +851,7 @@ namespace Leviathan{
     class DataBlockConverter<FromDataBlockType, std::wstring>{
     public:
         static inline std::wstring DoConvert(const FromDataBlockType* block){
-            return Convert::ToWstring(*block->Value);
+            return std::to_wstring(*block->Value);
         }
         static const bool AllowedConversion = true;
     };
@@ -859,7 +859,7 @@ namespace Leviathan{
     class DataBlockConverter<FromDataBlockType, std::string>{
     public:
         static inline std::string DoConvert(const FromDataBlockType* block){
-            return Convert::ToString(*block->Value);
+            return std::to_string(*block->Value);
         }
         static const bool AllowedConversion = true;
     };

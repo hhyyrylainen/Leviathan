@@ -66,6 +66,7 @@ end
 # For breakpad depot tools
 class PathModifier
   def initialize(newpathentry)
+    
     @OldPath = ENV["PATH"]
 
     abort "Failed to get env path" if @OldPath == nil
@@ -74,17 +75,15 @@ class PathModifier
       
       newpath = newpathentry + ":" + @OldPath
       
-      info "Setting path to: #{newpath}"
-      ENV["PATH"] = newpath
-      
     else
 
       newpath = @OldPath + ";" + newpathentry
       
-      info "Setting path to: #{newpath}"
-      ENV["PATH"] = newpath
-      
     end
+
+    info "Setting path to: #{newpath}"
+    ENV["PATH"] = newpath
+
   end
 
   def Restore()

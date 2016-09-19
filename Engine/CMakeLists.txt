@@ -19,7 +19,6 @@ if(CREATE_UE4_PLUGIN)
   
   set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ErrorTypes.h" "Common/ErrorTypes.h"
     "Common/ReferenceCounted.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
     "Common/ThreadSafe.h" 
@@ -51,7 +50,7 @@ else()
   
   set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ErrorTypes.h" "Common/ObjectPool.h"
+    "Common/ObjectPool.h"
     "Common/ReferenceCounted.h"
     "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"

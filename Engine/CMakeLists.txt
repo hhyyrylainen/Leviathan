@@ -164,7 +164,11 @@ endif()
 file(GLOB GroupObjectFiles "ObjectFiles/*.cpp" "ObjectFiles/*.h")
 
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
-file(GLOB GroupIterators "Iterators/*.cpp" "Iterators/*.h")
+file(GLOB GroupIterators
+  "Iterators/IteratorData.h"
+  "Iterators/StringDataIterator.cpp" "Iterators/StringDataIterator.h"
+  "Iterators/StringIterator.cpp" "Iterators/StringIterator.h"
+  )
 
 file(GLOB GeneratorInput "GeneratorInput/*.*")
 

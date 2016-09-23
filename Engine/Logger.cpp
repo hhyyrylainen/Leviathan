@@ -8,7 +8,10 @@
 #include "Exceptions.h"
 #endif //ALTERNATIVE_EXCEPTIONS_FATAL
 #include "FileSystem.h"
+
+#ifdef _WIN32
 #include "Utility/Convert.h"
+#endif //_WIN32
 
 #include <chrono>
 #include <fstream>

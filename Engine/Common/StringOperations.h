@@ -505,6 +505,35 @@ public:
         return out;
     }
 
+
+    template<class StringTypeN>
+		static StringTypeN ReplaceSingleCharacter(const StringTypeN &data,
+            const StringTypeN &toreplace, int replacer = ' ')
+    {
+        // Copy the string and then modify it //
+        StringTypeN out(data);
+
+        for(auto iter = out.begin(); iter != out.end(); ++iter){
+
+            // Check does it contain //
+            bool replace = false;
+
+            for(auto iter2 = toreplace.begin(); iter2 != toreplace.end(); ++iter2){
+
+                if((*iter2) == (*iter)){
+
+                    replace = true;
+                    break;
+                }
+            }
+
+            if(replace)
+                (*iter) = replacer;
+        }
+
+        return out;
+    }
+
     template<class StringTypeN, typename CharType>
 		static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
 

@@ -237,3 +237,15 @@ TEST_CASE("StringOperations indent lines", "[string]") {
         CHECK(StringOperations::IndentLinesString(input, 3) == result);
     }
 }
+
+TEST_CASE("StringOperations replace sha hash character", "[string]") {
+
+    CHECK(StringOperations::Replace<std::string>(
+            "II+O7pSQgH8BG/gWrc+bAetVgxJNrJNX4zhA4oWV+V0=", "/", "_") ==
+        "II+O7pSQgH8BG_gWrc+bAetVgxJNrJNX4zhA4oWV+V0=");
+
+    CHECK(StringOperations::ReplaceSingleCharacter<std::string>(
+            "II+O7pSQgH8BG/gWrc+bAetVgxJNrJNX4zhA4oWV+V0=", "/", '_') ==
+        "II+O7pSQgH8BG_gWrc+bAetVgxJNrJNX4zhA4oWV+V0=");
+    
+}

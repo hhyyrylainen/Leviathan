@@ -859,7 +859,7 @@ namespace Leviathan{
     class DataBlockConverter<FromDataBlockType, std::string>{
     public:
         static inline std::string DoConvert(const FromDataBlockType* block){
-            return std::to_string(*block->Value);
+            return Convert::ToString(*block->Value);
         }
         static const bool AllowedConversion = true;
     };

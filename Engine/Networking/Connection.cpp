@@ -51,7 +51,7 @@ DLLEXPORT Connection::Connection(const std::string &hostname) :
         TargetPortNumber = (unsigned short)tmpport;
         
         LOG_WARNING("Connection: no port defined, using default, "
-            "hostname: " + hostname + ":" + std::to_string(TargetPortNumber));
+            "hostname: " + hostname + ":" + Convert::ToString(TargetPortNumber));
         return;
     }
     

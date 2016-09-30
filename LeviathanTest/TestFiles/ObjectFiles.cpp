@@ -359,3 +359,18 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
         == "default");
 
 }
+
+TEST_CASE("Floats don't have culture specific ',' in them", "[objectfile, variable]"){
+
+    DummyReporter reporter;
+
+    ObjectFile obj;
+    obj.AddNamedVariable(std::make_shared<NamedVariableList>("MyFloat", new FloatBlock(2.5f)));
+
+    std::string serialized;
+    REQUIRE(ObjectFileProcessor::SerializeObjectFile(obj, serialized));
+
+    REQUIRE(serialized.size() > 0);
+
+    CHECK(serialized.find_first_of(',') == std::string::npos);
+}

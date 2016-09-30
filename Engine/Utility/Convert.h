@@ -27,6 +27,9 @@ namespace Leviathan{
         static inline T WstringTo(const std::wstring &str){
             T tempval(0);
             std::wstringstream stream;
+            std::locale globallocale("C");
+            stream.imbue(globallocale);
+            
             stream.str(str.c_str());
             stream >> tempval;
             return tempval;
@@ -36,6 +39,9 @@ namespace Leviathan{
         static inline T StringTo(const std::string &str){
             T tempval(0);
             std::stringstream stream;
+            std::locale globallocale("C");
+            stream.imbue(globallocale);
+            
             stream.str(str.c_str());
             stream >> tempval;
             return tempval;
@@ -51,6 +57,9 @@ namespace Leviathan{
         template<typename T>
         static std::wstring ToWstring(const T& val){
             std::wstringstream stream;
+            std::locale globallocale("C");
+            stream.imbue(globallocale);
+            
             if(!(stream << val)){
                 return L"";
             }
@@ -59,6 +68,9 @@ namespace Leviathan{
         template<typename T>
         static std::string ToString(const T& val){
             std::stringstream stream;
+            std::locale globallocale("C");
+            stream.imbue(globallocale);
+            
             if(!(stream << val)){
                 return "";
             }

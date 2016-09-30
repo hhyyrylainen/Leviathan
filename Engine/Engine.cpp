@@ -1258,7 +1258,7 @@ void Engine::_RunQueuedConsoleCommands(){
     }
 
     LOG_INFO("Engine: Running PostStartup command line. Commands: " +
-        std::to_string(QueuedConsoleCommands.size()));
+        Convert::ToString(QueuedConsoleCommands.size()));
 
     for(auto& command : QueuedConsoleCommands){
 

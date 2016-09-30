@@ -161,7 +161,10 @@ else()
 
 endif()
 
-file(GLOB GroupObjectFiles "ObjectFiles/*.cpp" "ObjectFiles/*.h")
+set(GroupObjectFiles
+  "ObjectFiles/ObjectFile.cpp" "ObjectFiles/ObjectFile.h"
+  "ObjectFiles/ObjectFileProcessor.cpp" "ObjectFiles/ObjectFileProcessor.h"
+  )
 
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
 file(GLOB GroupIterators

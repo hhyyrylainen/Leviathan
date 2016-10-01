@@ -184,7 +184,9 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile> ObjectFileProcessor::ProcessObj
 
                 reporterror->Error("ObjectFileProcessor: variable name already in use, file: "
                     "" + filenameforerrors + "(" + Convert::ToString(thisstart) + "):");
-                return NULL;
+                
+                succeeded = false;
+                break;
             }
 
             continue;
@@ -424,7 +426,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 		if(!tmpldata){
 
 			reporterror->Error("ObjectFile template has an invalid argument list "
-                "(missing the ending '>' or the instantiation is missing it's parameters) , "
+                "(missing the ending '>' or the instantiation is missing its parameters) , "
                 "file: "+file+"("+Convert::ToString(startline)+")");
 			return false;
 		}
@@ -616,7 +618,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 	if(itr.GetCharacter() != '{'){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile object is missing a '{' after it's name, file: "+
+		reporterror->Error("ObjectFile object is missing a '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return NULL;
 	}
@@ -684,8 +686,9 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 	}
 
 	// It didn't end properly //
-	reporterror->Error("ObjectFile object is missing a closing '}' after it's contents, "
-        "file: "+file+"("+Convert::ToString(startline)+")");
+	reporterror->Error("ObjectFile object \"" + *oname + "\"is missing a closing '}' "
+        "after its contents, file: "+file+"("+Convert::ToString(startline)+")");
+    
 	return NULL;
 }
 // ------------------------------------ //
@@ -716,7 +719,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 	if(itr.GetCharacter() != '{'){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile variable list is missing '{' after it's name, file: "+
+		reporterror->Error("ObjectFile variable list is missing '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}
@@ -745,7 +748,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 			if(!obj.AddVariableList(std::move(ourobj))){
 
 				reporterror->Error("ObjectFile variable list has conflicting name inside "
-                    "it's object, file: "+file+"("+Convert::ToString(ourstartline)+")");
+                    "its object, file: "+file+"("+Convert::ToString(ourstartline)+")");
 				return false;
 			}
             
@@ -766,7 +769,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 		// Add a variable to us //
 		if(!ourobj->AddVariable(loadvar)){
 
-			reporterror->Error("ObjectFile variable list has conflicting name inside it's "
+			reporterror->Error("ObjectFile variable list has conflicting name inside its "
                 "object, name: \""+loadvar->GetName()+"\", file: "+file+"("+
                 Convert::ToString(itr.GetCurrentLine())+")");
 			return false;
@@ -808,7 +811,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
 	if(itr.GetCharacter() != '{'){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile variable list is missing '{' after it's name, file: "+
+		reporterror->Error("ObjectFile variable list is missing '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}
@@ -888,7 +891,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const std::string &fil
 	if(itr.GetCharacter() != '{' && !linechanged){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile script block is missing '{' after it's name, file: "+
+		reporterror->Error("ObjectFile script block is missing '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}

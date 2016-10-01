@@ -688,7 +688,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 	}
 
 	// It didn't end properly //
-	reporterror->Error("ObjectFile object \"" + *oname + "\"is missing a closing '}' "
+	reporterror->Error("ObjectFile object \"" + *oname + "\" is missing a closing '}' "
         "after its contents, file: "+file+"("+Convert::ToString(startline)+")");
     
 	return NULL;

@@ -4,7 +4,9 @@
 
 #include "FileSystem.h"
 #include "Common/DataStoring/DataBlock.h"
+#ifndef NO_DEFAULT_DATAINDEX
 #include "../Common/DataStoring/DataStore.h"
+#endif
 #include "Common/StringOperations.h"
 #include "Iterators/StringIterator.h"
 #include "utf8/core.h"

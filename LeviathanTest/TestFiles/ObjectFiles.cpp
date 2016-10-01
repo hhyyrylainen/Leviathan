@@ -374,3 +374,44 @@ TEST_CASE("Floats don't have culture specific ',' in them", "[objectfile, variab
 
     CHECK(serialized.find_first_of(',') == std::string::npos);
 }
+
+
+TEST_CASE("Malformed files don't leak exceptions", "[objectfile]"){
+
+    RequireErrorReporter reporter;
+
+    constexpr auto File = "SettingsVersion = 1;\n"
+        "SavedWithVersion = \"DualView 0.0.1\";\n"
+        "\n"
+        "o \"Collection\"{\n"
+        "\n"
+        "    l settings {\n"
+        "        DatabaseFolder = \"./\";\n"
+        "        PublicCollection = \"./public_collection/\";\n"
+        "        PrivateCollection = \"./private_collection/\";\n"
+        "    } // End settings\n"
+        "\n"
+        "} // End Object Collection\n"
+        "\n"
+        "o \"Images\"{\n"
+        "\n"
+        "    l delays {\n"
+        "        NextImage = 0.2;\n"
+        "    } // End delays\n"
+        "\n"
+        "    l pre-load {\n"
+        "        CollectionForward = 3;\n"
+        "        CollectionBackwards = 1;\n"
+        "    } // End pre-load\n"
+        "\n"
+        "\n"
+        "\n"
+        "\n"
+        "";
+
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+        "malformed_1", &reporter);
+
+    REQUIRE(ofile == nullptr);
+
+}

@@ -76,8 +76,13 @@ Leviathan::UTF8DataIterator::UTF8DataIterator(const std::string &str) : OurStrin
 // ------------------------------------ //
 bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
 
+    // Check is it out of range
+    if(Current + forward >= End)
+        return false;
+
     // We can just peek the next character if forward is 0 //
     if(!forward){
+
     #if !defined(ALTERNATIVE_EXCEPTIONS_FATAL) || defined(ALLOW_INTERNAL_EXCEPTIONS)
         codepointreceiver = utf8::peek_next(Current, End);
     #else

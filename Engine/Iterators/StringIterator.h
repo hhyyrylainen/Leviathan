@@ -509,7 +509,12 @@ namespace Leviathan{
 
                 if(!CurrentStored){
 
-                    DataIterator->GetNextCharCode(CurrentCharacter, 0);
+                    if(!DataIterator->GetNextCharCode(CurrentCharacter, 0)){
+
+                        // Invalid position //
+                        return -1;
+                    }
+
                     CurrentStored = true;
 
                     ITR_COREDEBUG("Current char: (" +

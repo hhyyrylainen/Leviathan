@@ -66,7 +66,7 @@ constexpr float EPSILON = 0.00000001f;
 #define LOG_WARNING(x) Logger::Get()->Warning(x);
 #define LOG_ERROR(x) Logger::Get()->Error(x);
 #define LOG_WRITE(x) Logger::Get()->Write(x);
-#define LOG_FATAL(x) Logger::Get()->Fatal(x);
+#define LOG_FATAL(x) Logger::Get()->Fatal(x + (", at: " __FILE__ "(" + std::to_string(__LINE__) + ")"));
 
 // Assertions for controlled crashing
 #ifndef LEVIATHAN_ASSERT

@@ -249,3 +249,84 @@ TEST_CASE("StringOperations replace sha hash character", "[string]") {
         "II+O7pSQgH8BG_gWrc+bAetVgxJNrJNX4zhA4oWV+V0=");
     
 }
+
+TEST_CASE("StringOperations cut on new line", "[string]") {
+
+    SECTION("Single line"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("just a single string", output) == 1);
+
+        REQUIRE(!output.empty());
+        CHECK(output[0] == "just a single string");
+    }
+
+    SECTION("Basic two lines"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("this is\n two lines", output) == 2);
+
+        REQUIRE(output.size() == 2);
+        CHECK(output[0] == "this is");
+        CHECK(output[1] == " two lines");
+    }
+
+    SECTION("Windows separator"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("this is\r\n two lines", output) == 2);
+
+        REQUIRE(output.size() == 2);
+        CHECK(output[0] == "this is");
+        CHECK(output[1] == " two lines");
+    }
+
+    SECTION("Ending with a line separator"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("this is\n two lines\n", output) == 2);
+
+        REQUIRE(output.size() == 2);
+        CHECK(output[0] == "this is");
+        CHECK(output[1] == " two lines");
+    }
+
+    SECTION("Counting lines"){
+
+        SECTION("Without empty lines"){
+
+            std::vector<std::string> output;
+
+            CHECK(StringOperations::CutLines<std::string>("just put \nsome line\nseparators "
+                    "in here to\ncheck", output) == 4);
+
+            REQUIRE(output.size() == 4);
+        }
+        
+        SECTION("With empty lines"){
+
+            SECTION("\\n"){
+                std::vector<std::string> output;
+
+                CHECK(StringOperations::CutLines<std::string>("just put \n\nseparators "
+                        "in here to\ncheck", output) == 4);
+
+                REQUIRE(output.size() == 4);
+            }
+
+            SECTION("Windows separator"){
+
+                std::vector<std::string> output;
+
+                CHECK(StringOperations::CutLines<std::string>("just put \r\n\r\nseparators "
+                        "in here to\r\ncheck", output) == 4);
+
+                REQUIRE(output.size() == 4);
+            }
+        }
+    }
+}

@@ -313,6 +313,55 @@ public:
         return results;
     }
 
+    //! \brief Splits a string on line separators
+    template<class StringTypeN>
+        static size_t CutLines(const StringTypeN &input, std::vector<StringTypeN> &output)
+    {
+        size_t copystart = 0;
+        size_t copyend = 0;
+
+        for(size_t i = 0; i < input.size(); i++){
+            // Check is at a line separator
+            bool windows = input[i] == WINDOWS_LINE_SEPARATOR[0] &&
+                i+1 < input.size() && input[i+1] == WINDOWS_LINE_SEPARATOR[1];
+            
+            if(windows || (input[i] == UNIVERSAL_LINE_SEPARATOR[0]))
+            {
+                // Check that previous character wasn't the beginning of
+                // a windows line separator. If it was this is already added
+                // and should be ignored
+                if(i > 0 && input[i - 1] == WINDOWS_LINE_SEPARATOR[0]){
+
+                    // Skip adding this
+                    continue;
+                }
+                
+                // Found a line separator //
+                // Copy the current thing //
+                if(copyend >= copystart && copystart-copyend > 1){
+                    
+                    output.push_back(input.substr(copystart, copyend - copystart + 1));
+                    
+                } else {
+                    // There was an empty line //
+                    output.push_back(StringTypeN());
+                }
+
+                copystart = windows ? i + 2 : i + 1;
+                copyend = 0;
+
+                continue;
+            }
+
+            copyend = i;
+        }
+
+        if(copyend >= copystart && copystart-copyend > 1)
+            output.push_back(input.substr(copystart, copyend - copystart + 1));
+        
+        return output.size();
+    }
+
 
     // ------------------ General string operations ------------------ //
     template<class StringTypeN>

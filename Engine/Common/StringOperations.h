@@ -647,6 +647,37 @@ public:
     }
 
     template<class StringTypeN>
+		static StringTypeN StitchTogether(const std::vector<StringTypeN> &data,
+            const StringTypeN &separator)
+    {
+        StringTypeN ret;
+        bool first = true;
+        // reserve space //
+        int totalcharacters = 0;
+
+        // This might be faster than not reserving space //
+        for(size_t i = 0; i < data.size(); i++){
+            totalcharacters += data[i].length();
+        }
+        
+        totalcharacters += separator.length()*data.size();
+			
+        // By reserving space we don't have to allocate more memory
+        // during copying which might be faster
+        ret.reserve(totalcharacters);
+        
+        for(size_t i = 0; i < data.size(); i++){
+            if(!first)
+                ret += separator;
+            ret += data[i];
+            first = false;
+        }
+
+        return ret;
+    }
+
+
+    template<class StringTypeN>
 		static StringTypeN StitchTogether(
             const std::vector<std::shared_ptr<StringTypeN>> &data,
             const StringTypeN &separator)

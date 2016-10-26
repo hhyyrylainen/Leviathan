@@ -330,3 +330,31 @@ TEST_CASE("StringOperations cut on new line", "[string]") {
         }
     }
 }
+
+TEST_CASE("StringOperations remove characters", "[string]") {
+
+    SECTION("Nothing gets removed"){
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", "") ==
+            "just a single string");
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", "z") ==
+            "just a single string");
+        
+    }
+
+    SECTION("Single character"){
+        
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", " ") ==
+            "justasinglestring");
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", "i") ==
+            "just a sngle strng");
+    }
+
+    SECTION("Multiple characters"){
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", " i") ==
+            "justasnglestrng");
+    }
+}

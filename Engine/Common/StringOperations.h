@@ -583,6 +583,36 @@ public:
         return out;
     }
 
+    template<class StringTypeN>
+		static StringTypeN RemoveCharacters(const StringTypeN &data,
+            const StringTypeN &toremove)
+    {
+        StringTypeN out;
+        out.reserve(data.size());
+
+        for(auto iter = data.begin(); iter != data.end(); ++iter){
+
+            // Check does it contain //
+            bool ignore = false;
+
+            for(auto iter2 = toremove.begin(); iter2 != toremove.end(); ++iter2){
+
+                if((*iter2) == (*iter)){
+
+                    ignore = true;
+                    break;
+                }
+            }
+
+            if(ignore)
+                continue;
+
+            out.push_back(*iter);
+        }
+
+        return out;
+    }
+
     template<class StringTypeN, typename CharType>
 		static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
 

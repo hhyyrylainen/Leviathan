@@ -179,16 +179,20 @@ void Leviathan::BaseNotifier<ParentType, ChildType>::NotifyAll(){
 	// Notify all the children //
 	GUARD_LOCK();
 
+    auto* actualptr = GetActualPointerToNotifierObject();
+
 	auto end = ConnectedChildren.end();
 	for(auto iter = ConnectedChildren.begin(); iter != end; ++iter){
 
 		GUARD_LOCK_OTHER_NAME((*iter), guard2);
-		(*iter)->OnNotified();
+		(*iter)->OnNotified(guard2, actualptr, guard);
 	}
 }
 
 template<class ParentType, class ChildType>
-void Leviathan::BaseNotifier<ParentType, ChildType>::OnNotified(){
+    void Leviathan::BaseNotifier<ParentType, ChildType>::OnNotified(Lock &ownlock,
+        ChildType* child, Lock &childlock)
+{
 
 }
 

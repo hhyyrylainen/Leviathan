@@ -28,7 +28,8 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Calls into the script engine
-		virtual void OnNotified();
+		virtual void OnNotified(Lock &ownlock, BaseNotifiableAll* child, Lock &childlock)
+            override;
 
 		// ------------------------------------ //
 
@@ -50,7 +51,8 @@ namespace Leviathan{
 	protected:
 
 		//! \brief Calls into the script engine
-		virtual void OnNotified();
+		virtual void OnNotified(Lock &ownlock, BaseNotifierAll* parent, Lock &parentlock)
+            override;
 
 		// ------------------------------------ //
 

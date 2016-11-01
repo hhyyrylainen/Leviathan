@@ -83,7 +83,7 @@ namespace Leviathan{
 		//! \brief Called when our parent notifies us about something
 		//! \note Both the parent and this object has been locked when this is called
 		//! \warning Do not directly call this if you don't know what you are doing!
-		virtual void OnNotified();
+		virtual void OnNotified(Lock &ownlock, ParentType* parent, Lock &parentlock);
 
 
 	protected:

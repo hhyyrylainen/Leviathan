@@ -17,7 +17,7 @@ Leviathan::BaseNotifier<ParentType, ChildType>::~BaseNotifier(){
 
 	// Last chance to unhook if not already //
 	if(ConnectedChildren.size())
-		ReleaseChildHooks();
+		ReleaseChildHooks(guard);
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>

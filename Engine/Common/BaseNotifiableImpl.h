@@ -17,13 +17,12 @@ Leviathan::BaseNotifiable<ParentType, ChildType>::~BaseNotifiable(){
 
 	// Last chance to unhook //
 	if(ConnectedToParents.size())
-		ReleaseParentHooks();
+		ReleaseParentHooks(guard);
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
-void Leviathan::BaseNotifiable<ParentType, ChildType>::ReleaseParentHooks(){
+void Leviathan::BaseNotifiable<ParentType, ChildType>::ReleaseParentHooks(Lock &guard){
 	// This needs a bit of trickery since the lock order must be parent, child so we may not lock ourselves
-	GUARD_LOCK();
 
 	while(!ConnectedToParents.empty()){
 

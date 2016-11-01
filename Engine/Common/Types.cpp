@@ -34,7 +34,7 @@ DLLEXPORT const Float4& Float4::GetColourTransparent() {
 }
 
 // ------------------ Stream operators ------------------ //
-using namespace Leviathan;
+namespace Leviathan{
 DLLEXPORT std::ostream& operator <<(std::ostream &stream,
     const Float4 &value) {
 
@@ -77,4 +77,4 @@ DLLEXPORT std::ostream& operator<<(std::ostream &stream, const StartEndIndex &va
     return stream;
 }
 
-
+}

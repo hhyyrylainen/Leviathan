@@ -999,7 +999,6 @@ struct StartEndIndex {
 		DLLEXPORT static const Float4& GetColourWhite();
 		DLLEXPORT static const Float4& GetColourTransparent();
 	};
-}
 
 // Stream operators //
 DLLEXPORT std::ostream& operator <<(std::ostream &stream,
@@ -1016,5 +1015,8 @@ DLLEXPORT std::ostream& operator <<(std::ostream &stream,
 
 DLLEXPORT std::ostream& operator <<(std::ostream &stream,
     const Leviathan::PotentiallySetIndex &value);
+
+
+}
 
 

@@ -16,6 +16,7 @@
 
 #include "GameInputController.h"
 using namespace Pong;
+using namespace Leviathan;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
     Slot(slotnumber), PlayerType(PLAYERTYPE_CLOSED), PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE),
@@ -353,8 +354,9 @@ void Pong::PlayerSlot::_ResetNetworkInput(Lock &guard){
 }
 
 // ------------------ PlayerList ------------------ //
-Pong::PlayerList::PlayerList(std::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) :
-    SyncedResource("PlayerList"), CallbackFunc(callback), GamePlayers(4)
+Pong::PlayerList::PlayerList(std::function<void (PlayerList*)> callback, size_t playercount
+    /*= 4*/) :
+    SyncedResource("PlayerList"), GamePlayers(4), CallbackFunc(callback)
 {
 
     // Fill default player data //

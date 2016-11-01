@@ -69,7 +69,7 @@ std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControls
 // ------------------ PongNInputter ------------------ //
 Pong::PongNInputter::PongNInputter(int ownerid, int networkid, PlayerSlot* controlthis, PLAYERCONTROLS typetoreceive) : 
     ControlledSlot(controlthis), CtrlGroup(typetoreceive),
-    CreatedByUs(false), ControlStates(0), ChangedKeys(0)
+    ControlStates(0), ChangedKeys(0), CreatedByUs(false)
 {
     
 }

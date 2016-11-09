@@ -613,7 +613,7 @@ public:
         return out;
     }
 
-    template<class StringTypeN, typename CharType>
+    template<class StringTypeN>
 		static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
 
         size_t firstpos = 0;

@@ -13,8 +13,11 @@ DLLEXPORT Leviathan::SyncedResource::SyncedResource(const std::string &uniquenam
 }
 
 DLLEXPORT Leviathan::SyncedResource::~SyncedResource(){
+
+    GUARD_LOCK();
+
 	// Unregister (if not already done) //
-	ReleaseParentHooks();
+	ReleaseParentHooks(guard);
 }
 
 DLLEXPORT void Leviathan::SyncedResource::StartSync(SyncedVariables &variablesync)

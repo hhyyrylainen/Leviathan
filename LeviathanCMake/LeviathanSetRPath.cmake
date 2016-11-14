@@ -18,12 +18,13 @@ endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 if(WIN32)
     
 else(WIN32)
+  # This one is probably not used
+  #set(CMAKE_RPATH "$ORIGIN/:$ORIGIN/lib")
+  
+  set(CMAKE_INSTALL_RPATH "$ORIGIN/:$ORIGIN/lib")
+  #set(CMAKE_BUILD_RPATH "$ORIGIN/:$ORIGIN/lib")
 
-    set(CMAKE_RPATH "$ORIGIN/:$ORIGIN/lib")
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/:$ORIGIN/lib")
-    #set(CMAKE_BUILD_RPATH "$ORIGIN/:$ORIGIN/lib")
-
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
 
 endif(WIN32)
 

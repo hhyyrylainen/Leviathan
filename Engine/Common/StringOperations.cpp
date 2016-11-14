@@ -15,6 +15,16 @@ template<>
         str[i] = (wchar_t)characters[i];
 }
 
+std::string StringOperations::URLProtocol(const std::string &url){
+
+    const auto colonpos = url.find_first_of(':');
+
+    if(colonpos == std::string::npos)
+        return "";
+
+    return url.substr(0, colonpos);
+}
+
 std::string StringOperations::BaseHostName(const std::string &url){
 
     if(url.empty())

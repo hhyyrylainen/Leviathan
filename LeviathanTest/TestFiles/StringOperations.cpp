@@ -369,6 +369,14 @@ TEST_CASE("StringOperations URL combine", "[string][url]"){
 
     }
 
+    SECTION("Get protocol"){
+
+        CHECK(StringOperations::URLProtocol("http://google.fi/") == "http");
+        CHECK(StringOperations::URLProtocol("https://google.fi/") == "https");
+        CHECK(StringOperations::URLProtocol("tel:936704") == "tel");
+        CHECK(StringOperations::URLProtocol("telnet://site.com") == "telnet");
+    }
+
     SECTION("Combines"){
         CHECK(StringOperations::CombineURL("http://google.fi", "img.jpg") ==
             "http://google.fi/img.jpg");

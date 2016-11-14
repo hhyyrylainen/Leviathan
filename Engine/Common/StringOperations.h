@@ -221,11 +221,15 @@ public:
         return filepath.substr(startcopy, endcopy-startcopy+1);
     }
 
-    //! \brief Returns the base hostname from an URL
+    //! \brief Returns the protocol from a URL
+    //! \example URLProtocol("http://google.fi/index.html") = "http"
+    static std::string URLProtocol(const std::string &url);
+
+    //! \brief Returns the base hostname from a URL
     //! \example BaseHostName("http://google.fi/index.html") = "http://google.fi/"
     static std::string BaseHostName(const std::string &url);
 
-    //! \brief Combines an URL with another (relative) URL
+    //! \brief Combines a URL with another (relative) URL
     //! \example CombineURL("http://google.fi/index.html", "img.jpg") =
     //! "http://google.fi/img.jpg"
     static std::string CombineURL(const std::string &first, const std::string &second);

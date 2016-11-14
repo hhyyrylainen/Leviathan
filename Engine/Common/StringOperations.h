@@ -26,6 +26,7 @@ constexpr char UNIVERSAL_LINE_SEPARATOR[] = "\n";
 //! or wstring to avoid headaches.
 //! \todo Get rid of ElementType and just use ints for everything and hope that it is large
 //! enough
+//! \todo Drop wstring support
 class StringOperations{
 public:
     template<typename CharType>
@@ -219,6 +220,16 @@ public:
         // return the wanted part //
         return filepath.substr(startcopy, endcopy-startcopy+1);
     }
+
+    //! \brief Returns the base hostname from an URL
+    //! \example BaseHostName("http://google.fi/index.html") = "http://google.fi/"
+    static std::string BaseHostName(const std::string &url);
+
+    //! \brief Combines an URL with another (relative) URL
+    //! \example CombineURL("http://google.fi/index.html", "img.jpg") =
+    //! "http://google.fi/img.jpg"
+    static std::string CombineURL(const std::string &first, const std::string &second);
+    
 
 
 

@@ -358,3 +358,37 @@ TEST_CASE("StringOperations remove characters", "[string]") {
             "justasnglestrng");
     }
 }
+
+TEST_CASE("StringOperations URL combine", "[string][url]"){
+
+    SECTION("Hostnames"){
+        
+        CHECK(StringOperations::BaseHostName("http://google.fi") == "http://google.fi/");
+
+        CHECK(StringOperations::BaseHostName("http://google.fi/") == "http://google.fi/");
+
+    }
+
+    SECTION("Combines"){
+        CHECK(StringOperations::CombineURL("http://google.fi", "img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/", "img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/", "/img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi", "/img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/index.html", "/img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/index.html/", "img.jpg") ==
+            "http://google.fi/index.html/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/index.html", "/other/img.jpg") ==
+            "http://google.fi/other/img.jpg");
+    }
+}

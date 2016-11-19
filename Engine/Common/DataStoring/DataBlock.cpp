@@ -65,7 +65,7 @@ DLLEXPORT Leviathan::VariableBlock::VariableBlock(const std::string &valuetopars
 	}
     
 	// check does it contain non numeric characters //
-	if(!StringOperations::IsStringNumeric<std::string, char>(valuetoparse)){
+	if(!StringOperations::IsStringNumeric<std::string>(valuetoparse)){
 
 		// check does it match true/false //
 		bool possiblevalue = false;

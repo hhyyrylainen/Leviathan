@@ -127,23 +127,23 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 	string paththing2 = TESTPATHSTRWIN;
 
 
-	wstring result = StringOperations::RemoveExtension<wstring, wchar_t>(paththing, true);
-	string result2 = StringOperations::RemoveExtension<string, char>(paththing2, true);
+	wstring result = StringOperations::RemoveExtension<wstring>(paththing, true);
+	string result2 = StringOperations::RemoveExtension<string>(paththing2, true);
 
 	wstring wstringified = Convert::Utf8ToUtf16(result2);
 
     CHECK(result == wstringified);
     CHECK(result == L"filesthis");
 
-	result = StringOperations::GetExtension<wstring, wchar_t>(paththing);
+	result = StringOperations::GetExtension<wstring>(paththing);
 
 	CHECK(result == L"extsuper");
 
-	result = StringOperations::ChangeExtension<wstring, wchar_t>(paththing, L"superier");
+	result = StringOperations::ChangeExtension<wstring>(paththing, L"superier");
 
 	CHECK(result == L"My/super/path/filesthis.superier");
 
-	wstring ressecond = StringOperations::RemovePath<wstring, wchar_t>(result);
+	wstring ressecond = StringOperations::RemovePath<wstring>(result);
 
 	CHECK(ressecond == L"filesthis.superier");
 

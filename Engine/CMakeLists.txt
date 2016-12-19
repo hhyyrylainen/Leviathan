@@ -21,6 +21,7 @@ if(CREATE_UE4_PLUGIN)
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
     "Common/ReferenceCounted.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
+    "Common/ExtraAlgorithms.h"
     "Common/ThreadSafe.h" 
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"

@@ -8,6 +8,7 @@ set(TestSources
 
   TestFiles/StringIterator.cpp
   TestFiles/StringOperations.cpp
+  TestFiles/ExtraAlgorithms.cpp
   TestFiles/IDFactory.cpp
   TestFiles/Script.cpp
   TestFiles/HashTesting.cpp

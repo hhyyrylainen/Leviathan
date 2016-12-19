@@ -415,3 +415,28 @@ TEST_CASE("Malformed files don't leak exceptions", "[objectfile]"){
     REQUIRE(ofile == nullptr);
 
 }
+
+TEST_CASE("Example file segments that cause errors", "[objectfile]") {
+
+    DummyReporter reporter;
+
+    SECTION("Last line commented in text block") {
+
+        constexpr auto File = "o \"Plugins\"{\n"
+            "    l settings {\n"
+            "    PluginsFolder = \"plugins/\";\n"
+            "    } // End settings\n"
+            "\n"
+            "    t load_plugins {\n"
+            "    Plugin_Imgur\n"
+            "    //Commented thing causes errors\n"
+            "    } // End load_plugins\n"
+            "\n"
+            "    } // End Object Plugins";
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+            "issue_example1", &reporter);
+
+        REQUIRE(ofile != nullptr);
+    }
+}

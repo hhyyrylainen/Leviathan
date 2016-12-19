@@ -88,7 +88,7 @@ namespace Leviathan{
     class SyncedPrimitive : public SyncedResource{
     public:
         //! The callback type
-        typedef void (*CallbackPtr)(Lock &guard, SyncedPrimitive<DTypeName>* updated);
+        using CallbackPtr = void (*)(Lock &guard, SyncedPrimitive<DTypeName>* updated);
 
         //! \brief Constructs an instance with a initial value
         //! \warning The order of the initializer list is important since anytime after calling
@@ -103,10 +103,13 @@ namespace Leviathan{
         }
         
         ~SyncedPrimitive(){
-            // Unhook already //
-            ReleaseParentHooks();
-            // Set us as invalid after locking //
+
             GUARD_LOCK();
+            
+            // Unhook already //
+            ReleaseParentHooks(guard);
+            // Set us as invalid after locking //
+
             IsValid = false;
 
             // Destructors will take care of the rest //

@@ -1,4 +1,4 @@
-#!/bin/ruby
+#!/usr/bin/env ruby
 # coding: utf-8
 # Setup script for Leviathan
 # Downloads the assets and dependencies and then builds and installs them
@@ -7,29 +7,32 @@ require 'fileutils'
 require 'colorize'
 require 'etc'
 
+def checkRunFolder(suggested)
+
+    doxyFile = File.join(suggested, "LeviathanDoxy.in")
+
+    onError("Not ran from Leviathan base directory!") if not File.exist?(doxyFile)
+
+    return File.expand_path("..", suggested)
+    
+end
 
 require_relative 'Helpers/CommonCode'
 require_relative 'Helpers/DepGlobber'
 
-# Setup code
 
-CMakeBuildType = "RelWithDebInfo"
-CompileThreads = Etc.nprocessors
 
 # If set to true will install CEGUI editor
 InstallCEED = false
 
-# If set to false won't install libs that need sudo
-DoSudoInstalls = true
-
 # If false won't get breakpad
 GetBreakpad = true
 
+# If true new version of depot tools and breakpad won't be fetched on install
+NoBreakpadUpdateOnWindows = false
+
 # Doesn't get the resources for samples into leviathan/bin if set to false
 FetchAssets = true
-
-# If true dependencies won't be updated from remote repositories
-SkipPullUpdates = false
 
 # If true will only setup / update dependencies and skip Leviathan
 OnlyDependencies = false
@@ -37,30 +40,6 @@ OnlyDependencies = false
 # If true skips all dependencies and only tries to configure Leviathan
 OnlyLeviathan = false
 
-# If true new version of depot tools and breakpad won't be fetched on install
-NoBreakpadUpdateOnWindows = false
-
-# On windows visual studio will be automatically opened if required
-AutoOpenVS = true
-
-# Visual studio version on windows, required for forced 64 bit builds
-VSVersion = "Visual Studio 14 2015 Win64"
-VSToolsEnv = "VS140COMNTOOLS"
-
-# Check that the directory is correct
-info "Running in dir '#{CurrentDir}'"
-
-# Check for correct folder
-verifyIsMainFolder
-
-puts "Using #{CompileThreads} threads to compile, configuration: #{CMakeBuildType}"
-
-if BuildPlatform == "windows"
-  puts "Sorry but this doesn't actually work entirely. Here's a list of manual fixes:"
-  puts "copy everything from Ogre RelWithDebInfo folders to Release folders for CEGUI to find Ogre"
-  puts "Manually compile CEGUI debs as Debug and Release"
-  
-end
 
 # Path helper
 # For breakpad depot tools

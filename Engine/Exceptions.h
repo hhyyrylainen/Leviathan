@@ -4,7 +4,6 @@
 #include <exception>
 #include "ErrorReporter.h"
 
-
 namespace Leviathan{
 
     //! \brief Base class for all exceptions thrown by Leviathan
@@ -12,6 +11,7 @@ namespace Leviathan{
     public:
         //! \param description Description of the error in utf8 encoding
         DLLEXPORT Exception(const char* description) noexcept;
+        DLLEXPORT Exception(const std::string &description) noexcept;
         DLLEXPORT Exception(const Exception &e) noexcept;
 
         ~Exception() = default;
@@ -28,37 +28,43 @@ namespace Leviathan{
         
     protected:
         
-        const char* Message;
+        std::string Message;
     };
     
     
     class InvalidAccess : public Exception{
     public:
         DLLEXPORT InvalidAccess(const char* description) noexcept;
+        DLLEXPORT InvalidAccess(const std::string &description) noexcept;
     };
 
     class InvalidArgument : public Exception{
     public:
         DLLEXPORT InvalidArgument(const char* description) noexcept;
+        DLLEXPORT InvalidArgument(const std::string &description) noexcept;
     };
 
     class InvalidState : public Exception{
     public:
         DLLEXPORT InvalidState(const char* description) noexcept;
+        DLLEXPORT InvalidState(const std::string &description) noexcept;
     };
 
     class InvalidType : public Exception{
     public:
         DLLEXPORT InvalidType(const char* description) noexcept;
+        DLLEXPORT InvalidType(const std::string &description) noexcept;
     };
 
     class NotFound : public Exception{
     public:
         DLLEXPORT NotFound(const char* description) noexcept;
+        DLLEXPORT NotFound(const std::string &description) noexcept;
     };
 
     class NULLPtr : public Exception{
     public:
         DLLEXPORT NULLPtr(const char* description) noexcept;
+        DLLEXPORT NULLPtr(const std::string &description) noexcept;
     };
 }

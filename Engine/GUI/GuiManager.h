@@ -208,30 +208,32 @@ namespace Leviathan{ namespace Gui{
 	private:
 
 		//! The implementation of PlayAnimationOnWindow
-		void _PlayAnimationOnWindow(Lock &guard, CEGUI::Window* targetwind, CEGUI::Animation* animdefinition,
-            bool recurse, const std::string &ignoretypenames);
+		void _PlayAnimationOnWindow(Lock &guard, CEGUI::Window* targetwind,
+            CEGUI::Animation* animdefinition, bool recurse,
+            const std::string &ignoretypenames);
 
 		// ------------------------------------ //
 
-		bool Visible;
+		bool Visible = true;
 
 		//! Used to determine when to scan collections for active ones
-		bool GuiMouseUseUpdated;
+		bool GuiMouseUseUpdated = true;
+        
 		//! Set when containing window of the GUI shouldn't be allowed to capture mouse
-		bool GuiDisallowMouseCapture;
+		bool GuiDisallowMouseCapture = true;
 
 
-		GraphicalInputEntity* ThisWindow;
+		GraphicalInputEntity* ThisWindow = nullptr;
 
         
 		//! Gui elements
         std::vector<BaseGuiObject*> Objects;
 
 		//! The corresponding CEGUI context
-		CEGUI::GUIContext* GuiContext;
+		CEGUI::GUIContext* GuiContext = nullptr;
 
 		//! The input handler for the context
-		CEGUI::InputAggregator* ContextInput;
+		CEGUI::InputAggregator* ContextInput = nullptr;
 
 		//! Used to keep track of elapsed time for keeping CEGUI posted on the current time
 		WantedClockType::time_point LastTimePulseTime;
@@ -241,33 +243,38 @@ namespace Leviathan{ namespace Gui{
 
 		//! Set when this is the first created gui manager
 		//! \detail Used for injecting time pulses into CEGUI
-		bool MainGuiManager;
+		bool MainGuiManager = false;
 
 		int ID;
 
 		//! Used to stop listening for file changes
-		int FileChangeID;
+		int FileChangeID = 0;
+
+        //! When set to true will reload files on next tick
+        bool ReloadQueued = false;
 
 		// Collections //
 		std::vector<GuiCollection*> Collections;
 
 
 		//! The clipboard access object
-		GuiClipboardHandler* _GuiClipboardHandler;
+		GuiClipboardHandler* _GuiClipboardHandler = nullptr;
 
         //! Disables the GUI trying to capture the mouse when no collection is active
-        bool DisableGuiMouseCapture;
+        bool DisableGuiMouseCapture = false;
 
 		// ------------------------------------ //
 		// Static animation files //
-		//! Holds the loaded animation files, used to prevent loading a single file multiple times
+		//! Holds the loaded animation files, used to prevent loading a single file
+        //! multiple times
 		static std::vector<std::string> LoadedAnimationFiles;
 
 		static Mutex GlobalGUIMutex;
 
 		static bool IsAnimationFileLoaded(Lock &lock, const std::string &file);
 
-		//! \warning Won't check if the file is already in the vector, use IsAnimationFileLoaded
+		//! \warning Won't check if the file is already in the vector,
+        //! use IsAnimationFileLoaded
 		static void SetAnimationFileLoaded(Lock &lock, const std::string &file);
 
         

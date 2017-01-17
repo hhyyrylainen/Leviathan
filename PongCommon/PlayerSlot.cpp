@@ -16,6 +16,7 @@
 
 #include "GameInputController.h"
 using namespace Pong;
+using namespace Leviathan;
 // ------------------------------------ //
 Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
     Slot(slotnumber), PlayerType(PLAYERTYPE_CLOSED), PlayerNumber(0), ControlType(PLAYERCONTROLS_NONE),
@@ -28,96 +29,97 @@ Pong::PlayerSlot::PlayerSlot(int slotnumber, PlayerList* owner) :
 }
 
 Pong::PlayerSlot::~PlayerSlot(){
-	_ResetNetworkInput();
-	SAFE_DELETE(SplitSlot);
+    _ResetNetworkInput();
+    SAFE_DELETE(SplitSlot);
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::Init(PLAYERTYPE type /*= PLAYERTYPE_EMPTY*/, int PlayerNumber /*= 0*/,
     PLAYERCONTROLS controltype /*= PLAYERCONTROLS_NONE*/, int ctrlidentifier /*= 0*/, int playercontrollerid /*= -1*/,
     const Float4 &playercolour /*= Float4::GetColourWhite()*/)
 {
-	PlayerType = type;
-	PlayerNumber = PlayerNumber;
-	ControlType = controltype;
-	ControlIdentifier = ctrlidentifier;
-	Colour = playercolour;
-	PlayerControllerID = playercontrollerid;
+    PlayerType = type;
+    PlayerNumber = PlayerNumber;
+    ControlType = controltype;
+    ControlIdentifier = ctrlidentifier;
+    Colour = playercolour;
+    PlayerControllerID = playercontrollerid;
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::SetPlayer(PLAYERTYPE type, int identifier){
-	PlayerType = type;
-	PlayerNumber = identifier;
+    PlayerType = type;
+    PlayerNumber = identifier;
 }
 
 Pong::PLAYERTYPE Pong::PlayerSlot::GetPlayerType(){
-	return PlayerType;
+    return PlayerType;
 }
 
 int Pong::PlayerSlot::GetPlayerNumber(){
-	return PlayerNumber;
+    return PlayerNumber;
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::SetControls(PLAYERCONTROLS type, int identifier){
-	ControlType = type;
-	ControlIdentifier = identifier;
+    ControlType = type;
+    ControlIdentifier = identifier;
 }
 
 Pong::PLAYERCONTROLS Pong::PlayerSlot::GetControlType(){
-	return ControlType;
+    return ControlType;
 }
 
 int Pong::PlayerSlot::GetControlIdentifier(){
-	return ControlIdentifier;
+    return ControlIdentifier;
 }
 // ------------------------------------ //
 int Pong::PlayerSlot::GetSlotNumber(){
-	return Slot;
+    return Slot;
 }
 // ------------------------------------ //
 int Pong::PlayerSlot::GetSplitCount(){
-	return SplitSlot != NULL ? 1+SplitSlot->GetSplitCount(): 0;
+    return SplitSlot != NULL ? 1+SplitSlot->GetSplitCount(): 0;
 }
 
 void Pong::PlayerSlot::PassInputAction(CONTROLKEYACTION actiontoperform, bool active){
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// if this is player 0 or 3 flip inputs //
-	if(Slot == 0 || Slot == 2){
+    // if this is player 0 or 3 flip inputs //
+    if(Slot == 0 || Slot == 2){
 
-		switch(actiontoperform){
-		case CONTROLKEYACTION_LEFT: actiontoperform = CONTROLKEYACTION_POWERUPUP; break;
-		case CONTROLKEYACTION_POWERUPDOWN: actiontoperform = CONTROLKEYACTION_RIGHT; break;
-		case CONTROLKEYACTION_RIGHT: actiontoperform = CONTROLKEYACTION_POWERUPDOWN; break;
-		case  CONTROLKEYACTION_POWERUPUP: actiontoperform = CONTROLKEYACTION_LEFT; break;
-		}
-	}
+        switch(actiontoperform){
+        case CONTROLKEYACTION_LEFT: actiontoperform = CONTROLKEYACTION_POWERUPUP; break;
+        case CONTROLKEYACTION_POWERUPDOWN: actiontoperform = CONTROLKEYACTION_RIGHT; break;
+        case CONTROLKEYACTION_RIGHT: actiontoperform = CONTROLKEYACTION_POWERUPDOWN; break;
+        case  CONTROLKEYACTION_POWERUPUP: actiontoperform = CONTROLKEYACTION_LEFT; break;
+        }
+    }
 
-	// set control state //
-	if(active){
+    // set control state //
+    if(active){
 
-		if(actiontoperform == CONTROLKEYACTION_LEFT){
-			MoveState = 1;
-		} else if(actiontoperform == CONTROLKEYACTION_RIGHT){
-			MoveState = -1;
-		}
+        if(actiontoperform == CONTROLKEYACTION_LEFT){
+            MoveState = 1;
+        } else if(actiontoperform == CONTROLKEYACTION_RIGHT){
+            MoveState = -1;
+        }
 
-	} else {
+    } else {
 
-		if(actiontoperform == CONTROLKEYACTION_LEFT && MoveState == 1){
-			MoveState = 0;
-		} else if(actiontoperform == CONTROLKEYACTION_RIGHT && MoveState == -1){
-			MoveState = 0;
-		}
+        if(actiontoperform == CONTROLKEYACTION_LEFT && MoveState == 1){
+            MoveState = 0;
+        } else if(actiontoperform == CONTROLKEYACTION_RIGHT && MoveState == -1){
+            MoveState = 0;
+        }
 
-	}
+    }
 
     try{
-        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
-            TrackObject);
+        DEBUG_BREAK;
+        //auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+        //    TrackObject);
 
-        // Set the track speed based on move direction //
-        track.ChangeSpeed = MoveState*INPUT_TRACK_ADVANCESPEED;
-        track.Marked = true;
+        //// Set the track speed based on move direction //
+        //track.ChangeSpeed = MoveState*INPUT_TRACK_ADVANCESPEED;
+        //track.Marked = true;
     
     } catch(const NotFound&){
 
@@ -134,14 +136,15 @@ void Pong::PlayerSlot::InputDisabled(){
     if(TrackObject == 0)
         return;
     
-	// Set apply force to zero //
+    // Set apply force to zero //
     try{
-        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
-            TrackObject);
+        DEBUG_BREAK;
+        //auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+        //    TrackObject);
 
-        // Set the track speed based on move direction //
-        track.ChangeSpeed = 0;
-        track.Marked = true;
+        //// Set the track speed based on move direction //
+        //track.ChangeSpeed = 0;
+        //track.Marked = true;
     
     } catch(const NotFound&){
 
@@ -149,113 +152,115 @@ void Pong::PlayerSlot::InputDisabled(){
 }
 
 int Pong::PlayerSlot::GetScore(){
-	return Score;
+    return Score;
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::AddEmptySubSlot(){
-	SplitSlot = new PlayerSlot(this->Slot, Parent);
-	// Set this as the parent //
-	SplitSlot->ParentSlot = this;
+    SplitSlot = new PlayerSlot(this->Slot, Parent);
+    // Set this as the parent //
+    SplitSlot->ParentSlot = this;
 
 
 }
 
 bool Pong::PlayerSlot::IsVerticalSlot(){
-	return Slot == 0 || Slot == 2;
+    return Slot == 0 || Slot == 2;
 }
 
 float Pong::PlayerSlot::GetTrackProgress(){
 
     try{
-        auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
-            TrackObject);
+        DEBUG_BREAK;
+        //auto& track = BasePongParts::Get()->GetGameWorld()->GetComponent<TrackController>(
+        //    TrackObject);
 
-        return track.NodeProgress;
+        //return track.NodeProgress;
     
     } catch(const NotFound&){
 
-        return 0.f;
     }
+
+    return 0.f;
 }
 
 bool Pong::PlayerSlot::DoesPlayerNumberMatchThisOrParent(int number){
-	if(number == PlayerNumber)
-		return true;
-	// Recurse to parent, if one exists //
-	if(ParentSlot)
-		return ParentSlot->DoesPlayerNumberMatchThisOrParent(number);
+    if(number == PlayerNumber)
+        return true;
+    // Recurse to parent, if one exists //
+    if(ParentSlot)
+        return ParentSlot->DoesPlayerNumberMatchThisOrParent(number);
 
-	return false;
+    return false;
 }
 // ------------------------------------ //
 void Pong::PlayerSlot::AddDataToPacket(sf::Packet &packet){
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// Write all our data to the packet //
-	packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier
+    // Write all our data to the packet //
+    packet << Slot << (int)PlayerType << PlayerNumber << NetworkedInputID << ControlIdentifier
            << (int)ControlType << PlayerControllerID 
            << Colour;
     packet << PaddleObject << GoalAreaObject << TrackObject;
 
-	packet << PlayerID << Score << (bool)(SplitSlot != NULL);
+    packet << PlayerID << Score << (bool)(SplitSlot != NULL);
 
-	if(SplitSlot){
-		// Add our sub slot data //
-		SplitSlot->AddDataToPacket(packet);
-	}
+    if(SplitSlot){
+        // Add our sub slot data //
+        SplitSlot->AddDataToPacket(packet);
+    }
 }
 
 void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 
     GUARD_LOCK();
     
-	int tmpival;
+    int tmpival;
 
-	// Get our data from it //
-	packet >> Slot >> tmpival;
+    // Get our data from it //
+    packet >> Slot >> tmpival;
 
-	PlayerType = static_cast<PLAYERTYPE>(tmpival);
+    PlayerType = static_cast<PLAYERTYPE>(tmpival);
 
-	packet >> PlayerNumber  >> NetworkedInputID  >> ControlIdentifier  >> tmpival;
+    packet >> PlayerNumber  >> NetworkedInputID  >> ControlIdentifier  >> tmpival;
 
-	ControlType = static_cast<PLAYERCONTROLS>(tmpival);
+    ControlType = static_cast<PLAYERCONTROLS>(tmpival);
 
-	packet >> PlayerControllerID;
+    packet >> PlayerControllerID;
     packet >> Colour;
 
     packet >> PaddleObject >> GoalAreaObject >> TrackObject;
     
     packet >> PlayerID >> Score;
-	
+    
 
-	bool wantedsplit;
+    bool wantedsplit;
 
-	packet >> wantedsplit;
+    packet >> wantedsplit;
 
     if(!packet)
         throw InvalidArgument("packet format for PlayerSlot is invalid");
 
-	// Check do we need to change split //
-	if(wantedsplit && !SplitSlot){
-		AddEmptySubSlot();
+    // Check do we need to change split //
+    if(wantedsplit && !SplitSlot){
+        AddEmptySubSlot();
 
-	} else if(!wantedsplit && SplitSlot){
-		SAFE_DELETE(SplitSlot);
-	}
+    } else if(!wantedsplit && SplitSlot){
+        SAFE_DELETE(SplitSlot);
+    }
 
-	// Update split value //
-	if(wantedsplit){
+    // Update split value //
+    if(wantedsplit){
 
-		SplitSlot->UpdateDataFromPacket(packet, listlock);
-	}
+        SplitSlot->UpdateDataFromPacket(packet, listlock);
+    }
 
 #ifdef PONG_VERSION
 
-	// Update everything related to input //
-	if(PlayerID == PongGame::Get()->GetInterface()->GetOurID()){
+    // Update everything related to input //
+    if(PlayerID == PongGame::Get()->GetInterface().GetOurID()){
 
-		// Create new one only if there isn't one already created //
-		if(!InputObj){
+        // Create new one only if there isn't one already created //
+        if(!InputObj){
 
             // Skip if it is an AI slot //
             if(ControlType != PLAYERCONTROLS_AI){
@@ -264,12 +269,13 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
                         NetworkedInputID));
             
                 // Hook a networked input receiver to the server //
-                PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
-                    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(guard,
-                        NetworkedInputID, true));
+                DEBUG_BREAK;
+                //PongGame::Get()->GetInputController()->RegisterNewLocalGlobalReflectingInputSource(
+                //    PongGame::GetInputFactory()->CreateNewInstanceForLocalStart(guard,
+                //        NetworkedInputID, true));
             }
 
-		} else {
+        } else {
 
             if(ControlType == PLAYERCONTROLS_AI){
                 // Destroy out input if there is an AI //
@@ -281,8 +287,8 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
                 InputObj->UpdateSettings(ControlType);
                 Logger::Get()->Info("Updated our control type: "+Convert::ToString(ControlType));
             }
-		}
-	}
+        }
+    }
 
 
 #endif //PONG_VERSION
@@ -291,16 +297,16 @@ void Pong::PlayerSlot::UpdateDataFromPacket(sf::Packet &packet, Lock &listlock){
 }
 
 int Pong::PlayerSlot::GetPlayerControllerID(){
-	return PlayerControllerID;
+    return PlayerControllerID;
 }
 
 void Pong::PlayerSlot::SlotJoinPlayer(Leviathan::ConnectedPlayer* ply, int uniqnumber){
-	SlotsPlayer = ply;
+    SlotsPlayer = ply;
 
-	PlayerID = SlotsPlayer->GetID();
+    PlayerID = SlotsPlayer->GetID();
     PlayerNumber = uniqnumber;
 
-	PlayerType = PLAYERTYPE_HUMAN;
+    PlayerType = PLAYERTYPE_HUMAN;
 }
 
 void Pong::PlayerSlot::AddServerAI(int uniquenumber, int aitype /*= 2*/){
@@ -316,9 +322,9 @@ void Pong::PlayerSlot::AddServerAI(int uniquenumber, int aitype /*= 2*/){
 }
 
 void Pong::PlayerSlot::SlotLeavePlayer(){
-	SlotsPlayer = NULL;
-	ControlType = PLAYERCONTROLS_NONE;
-	PlayerType = PLAYERTYPE_EMPTY;
+    SlotsPlayer = NULL;
+    ControlType = PLAYERCONTROLS_NONE;
+    PlayerType = PLAYERTYPE_EMPTY;
 }
 
 void Pong::PlayerSlot::SetInputThatSendsControls(Lock &guard, PongNInputter* input){
@@ -329,7 +335,7 @@ void Pong::PlayerSlot::SetInputThatSendsControls(Lock &guard, PongNInputter* inp
         _ResetNetworkInput(guard);
     }
     
-	InputObj = input;
+    InputObj = input;
 }
 
 void PlayerSlot::InputDeleted(Lock &guard){
@@ -339,104 +345,96 @@ void PlayerSlot::InputDeleted(Lock &guard){
 
 void Pong::PlayerSlot::_ResetNetworkInput(Lock &guard){
 
-	if(InputObj){
+    if(InputObj){
 
+        InputObj->StopSendingInput(this);
+    }
 
-		InputObj->StopSendingInput(this);
-        // The game InputController might be getting deleted during this, so potentially avoid this call //
-        auto icontroller = GameInputController::Get();
-        
-        if(icontroller){
-            // Hopefully it is impossible for it to get deleted during this call //
-            icontroller->QueueDeleteInput(InputObj);
-        }
-            
-	}
-
-	InputObj = NULL;
+    InputObj = NULL;
 }
 
 // ------------------ PlayerList ------------------ //
-Pong::PlayerList::PlayerList(std::function<void (PlayerList*)> callback, size_t playercount /*= 4*/) :
-    SyncedResource("PlayerList"), CallbackFunc(callback), GamePlayers(4)
+Pong::PlayerList::PlayerList(std::function<void (PlayerList*)> callback, size_t playercount
+    /*= 4*/) :
+    SyncedResource("PlayerList"), GamePlayers(4), CallbackFunc(callback)
 {
 
-	// Fill default player data //
-	for(int i = 0; i < 4; i++){
+    // Fill default player data //
+    for(int i = 0; i < 4; i++){
 
-		GamePlayers[i] = new PlayerSlot(i, this);
-	}
+        GamePlayers[i] = new PlayerSlot(i, this);
+    }
 
 }
 
 Pong::PlayerList::~PlayerList(){
-	SAFE_DELETE_VECTOR(GamePlayers);
+    SAFE_DELETE_VECTOR(GamePlayers);
 }
 // ------------------------------------ //
 void Pong::PlayerList::UpdateCustomDataFromPacket(Lock &guard, sf::Packet &packet){
-	
-	sf::Int32 vecsize;
+    
+    sf::Int32 vecsize;
 
-	if(!(packet >> vecsize)){
+    if(!(packet >> vecsize)){
 
-		throw InvalidArgument("packet format for PlayerSlot is invalid");
-	}
+        throw InvalidArgument("packet format for PlayerSlot is invalid");
+    }
 
-	if(vecsize != static_cast<int>(GamePlayers.size())){
-		// We need to resize //
-		int difference = vecsize-GamePlayers.size();
+    if(vecsize != static_cast<int>(GamePlayers.size())){
+        // We need to resize //
+        int difference = vecsize-GamePlayers.size();
 
-		if(difference < 0){
+        if(difference < 0){
 
-			// Loop and delete items //
-			int deleted = 0;
-			while(deleted < difference){
+            // Loop and delete items //
+            int deleted = 0;
+            while(deleted < difference){
 
-				SAFE_DELETE(GamePlayers[GamePlayers.size()-1]);
-				GamePlayers.pop_back();
-				deleted++;
-			}
-		} else {
-			// We need to add items //
-			for(int i = 0; i < difference; i++){
+                SAFE_DELETE(GamePlayers[GamePlayers.size()-1]);
+                GamePlayers.pop_back();
+                deleted++;
+            }
+        } else {
+            // We need to add items //
+            for(int i = 0; i < difference; i++){
 
-				GamePlayers.push_back(new PlayerSlot(GamePlayers.size(), this));
-			}
-		}
-	}
+                GamePlayers.push_back(new PlayerSlot(GamePlayers.size(), this));
+            }
+        }
+    }
 
-	// Update the data //
-	auto end = GamePlayers.end();
-	for(auto iter = GamePlayers.begin(); iter != end; ++iter){
+    // Update the data //
+    auto end = GamePlayers.end();
+    for(auto iter = GamePlayers.begin(); iter != end; ++iter){
 
-		(*iter)->UpdateDataFromPacket(packet, guard);
-	}
+        (*iter)->UpdateDataFromPacket(packet, guard);
+    }
 }
 
 void Pong::PlayerList::SerializeCustomDataToPacket(Lock &guard, sf::Packet &packet){
     
-	// First put the size //
-	packet << static_cast<sf::Int32>(GamePlayers.size());
+    // First put the size //
+    packet << static_cast<sf::Int32>(GamePlayers.size());
 
-	// Loop through them and add them //
-	for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){
+    // Loop through them and add them //
+    for(auto iter = GamePlayers.begin(); iter != GamePlayers.end(); ++iter){
 
-		// Serialize it //
-		(*iter)->AddDataToPacket(packet);
-	}
+        // Serialize it //
+        (*iter)->AddDataToPacket(packet);
+    }
 }
 
 void Pong::PlayerList::OnValueUpdated(Lock &guard){
     
-	// Call our callback //
-	CallbackFunc(this);
+    // Call our callback //
+    CallbackFunc(this);
 }
 
 PlayerSlot* Pong::PlayerList::GetSlot(size_t index){
-	if(index >= GamePlayers.size())
-		throw InvalidArgument("player index is out of range");
+    if(index >= GamePlayers.size())
+        throw InvalidArgument("player index is out of range");
 
-	return GamePlayers[index];
+    return GamePlayers[index];
 }
 // ------------------------------------ //
 void Pong::PlayerList::ReportPlayerInfoToLog() const{

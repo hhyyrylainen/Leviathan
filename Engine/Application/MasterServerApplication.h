@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_MASTERSERVERAPPLICATION
-#define LEVIATHAN_MASTERSERVERAPPLICATION
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Application.h"
 
 
@@ -16,14 +12,16 @@ namespace Leviathan{
 		DLLEXPORT MasterServerApplication();
 		DLLEXPORT ~MasterServerApplication();
 
-		// Overloaded functions to make this program actually a master server //
-		DLLEXPORT virtual bool Initialize(AppDef* configuration);
+        //! Makes sure doesn't start in GUI mode
+        bool PassCommandLine(int argcount, char* args[]) override;
 
+        NETWORKED_TYPE GetProgramNetType() const override {
 
+            return NETWORKED_TYPE::Master;
+        }
 
 	private:
 
 	};
 
 }
-#endif

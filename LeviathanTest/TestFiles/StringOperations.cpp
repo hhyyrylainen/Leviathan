@@ -9,6 +9,35 @@
 using namespace Leviathan;
 using namespace std;
 
+TEST_CASE("StringOperations::MakeString", "[string]") {
+
+    REQUIRE(sizeof(WINDOWS_LINE_SEPARATOR) - 1 == 2);
+    REQUIRE(sizeof(UNIVERSAL_LINE_SEPARATOR) - 1 == 1);
+
+    REQUIRE(WINDOWS_LINE_SEPARATOR[0] == '\r');
+    REQUIRE(WINDOWS_LINE_SEPARATOR[1] == '\n');
+    REQUIRE(WINDOWS_LINE_SEPARATOR[2] == '\0');
+
+    SECTION("Win separator wstring") {
+
+        std::wstring separator;
+        StringOperations::MakeString(separator, WINDOWS_LINE_SEPARATOR,
+            sizeof(WINDOWS_LINE_SEPARATOR));
+
+        CHECK(separator == L"\r\n");
+    }
+
+    SECTION("Win separator string") {
+
+        std::string separator;
+        StringOperations::MakeString(separator, WINDOWS_LINE_SEPARATOR,
+            sizeof(WINDOWS_LINE_SEPARATOR));
+
+        CHECK(separator == "\r\n");
+    }
+
+}
+
 // First test duplicated for wstring and string others are string only as wstring versions
 // *should* also work if they pass
 TEST_CASE("Wstring cutting", "[string]"){
@@ -98,23 +127,23 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 	string paththing2 = TESTPATHSTRWIN;
 
 
-	wstring result = StringOperations::RemoveExtension<wstring, wchar_t>(paththing, true);
-	string result2 = StringOperations::RemoveExtension<string, char>(paththing2, true);
+	wstring result = StringOperations::RemoveExtension<wstring>(paththing, true);
+	string result2 = StringOperations::RemoveExtension<string>(paththing2, true);
 
 	wstring wstringified = Convert::Utf8ToUtf16(result2);
 
     CHECK(result == wstringified);
     CHECK(result == L"filesthis");
 
-	result = StringOperations::GetExtension<wstring, wchar_t>(paththing);
+	result = StringOperations::GetExtension<wstring>(paththing);
 
 	CHECK(result == L"extsuper");
 
-	result = StringOperations::ChangeExtension<wstring, wchar_t>(paththing, L"superier");
+	result = StringOperations::ChangeExtension<wstring>(paththing, L"superier");
 
 	CHECK(result == L"My/super/path/filesthis.superier");
 
-	wstring ressecond = StringOperations::RemovePath<wstring, wchar_t>(result);
+	wstring ressecond = StringOperations::RemovePath<wstring>(result);
 
 	CHECK(ressecond == L"filesthis.superier");
 
@@ -132,6 +161,12 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
             string("this")));
 
 	// Line end changing //
+    wstring simplestr = L"Two\nlines";
+
+    const wstring convresult = StringOperations::ChangeLineEndsToWindowsWstring(simplestr);
+
+    CHECK(convresult == L"Two\r\nlines");
+
 	wstring pathtestoriginal = L"My text is quite nice\nand has\n multiple\r\n lines\n"
         L"that are separated\n";
 
@@ -200,5 +235,168 @@ TEST_CASE("StringOperations indent lines", "[string]") {
         constexpr auto result = "   this is a\n   multiline story\n   that spans many lines\n";
 
         CHECK(StringOperations::IndentLinesString(input, 3) == result);
+    }
+}
+
+TEST_CASE("StringOperations replace sha hash character", "[string]") {
+
+    CHECK(StringOperations::Replace<std::string>(
+            "II+O7pSQgH8BG/gWrc+bAetVgxJNrJNX4zhA4oWV+V0=", "/", "_") ==
+        "II+O7pSQgH8BG_gWrc+bAetVgxJNrJNX4zhA4oWV+V0=");
+
+    CHECK(StringOperations::ReplaceSingleCharacter<std::string>(
+            "II+O7pSQgH8BG/gWrc+bAetVgxJNrJNX4zhA4oWV+V0=", "/", '_') ==
+        "II+O7pSQgH8BG_gWrc+bAetVgxJNrJNX4zhA4oWV+V0=");
+    
+}
+
+TEST_CASE("StringOperations cut on new line", "[string]") {
+
+    SECTION("Single line"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("just a single string", output) == 1);
+
+        REQUIRE(!output.empty());
+        CHECK(output[0] == "just a single string");
+    }
+
+    SECTION("Basic two lines"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("this is\n two lines", output) == 2);
+
+        REQUIRE(output.size() == 2);
+        CHECK(output[0] == "this is");
+        CHECK(output[1] == " two lines");
+    }
+
+    SECTION("Windows separator"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("this is\r\n two lines", output) == 2);
+
+        REQUIRE(output.size() == 2);
+        CHECK(output[0] == "this is");
+        CHECK(output[1] == " two lines");
+    }
+
+    SECTION("Ending with a line separator"){
+
+        std::vector<std::string> output;
+
+        CHECK(StringOperations::CutLines<std::string>("this is\n two lines\n", output) == 2);
+
+        REQUIRE(output.size() == 2);
+        CHECK(output[0] == "this is");
+        CHECK(output[1] == " two lines");
+    }
+
+    SECTION("Counting lines"){
+
+        SECTION("Without empty lines"){
+
+            std::vector<std::string> output;
+
+            CHECK(StringOperations::CutLines<std::string>("just put \nsome line\nseparators "
+                    "in here to\ncheck", output) == 4);
+
+            REQUIRE(output.size() == 4);
+        }
+        
+        SECTION("With empty lines"){
+
+            SECTION("\\n"){
+                std::vector<std::string> output;
+
+                CHECK(StringOperations::CutLines<std::string>("just put \n\nseparators "
+                        "in here to\ncheck", output) == 4);
+
+                REQUIRE(output.size() == 4);
+            }
+
+            SECTION("Windows separator"){
+
+                std::vector<std::string> output;
+
+                CHECK(StringOperations::CutLines<std::string>("just put \r\n\r\nseparators "
+                        "in here to\r\ncheck", output) == 4);
+
+                REQUIRE(output.size() == 4);
+            }
+        }
+    }
+}
+
+TEST_CASE("StringOperations remove characters", "[string]") {
+
+    SECTION("Nothing gets removed"){
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", "") ==
+            "just a single string");
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", "z") ==
+            "just a single string");
+        
+    }
+
+    SECTION("Single character"){
+        
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", " ") ==
+            "justasinglestring");
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", "i") ==
+            "just a sngle strng");
+    }
+
+    SECTION("Multiple characters"){
+
+        CHECK(StringOperations::RemoveCharacters<std::string>("just a single string", " i") ==
+            "justasnglestrng");
+    }
+}
+
+TEST_CASE("StringOperations URL combine", "[string][url]"){
+
+    SECTION("Hostnames"){
+        
+        CHECK(StringOperations::BaseHostName("http://google.fi") == "http://google.fi/");
+
+        CHECK(StringOperations::BaseHostName("http://google.fi/") == "http://google.fi/");
+
+    }
+
+    SECTION("Get protocol"){
+
+        CHECK(StringOperations::URLProtocol("http://google.fi/") == "http");
+        CHECK(StringOperations::URLProtocol("https://google.fi/") == "https");
+        CHECK(StringOperations::URLProtocol("tel:936704") == "tel");
+        CHECK(StringOperations::URLProtocol("telnet://site.com") == "telnet");
+    }
+
+    SECTION("Combines"){
+        CHECK(StringOperations::CombineURL("http://google.fi", "img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/", "img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/", "/img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi", "/img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/index.html", "/img.jpg") ==
+            "http://google.fi/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/index.html/", "img.jpg") ==
+            "http://google.fi/index.html/img.jpg");
+
+        CHECK(StringOperations::CombineURL("http://google.fi/index.html", "/other/img.jpg") ==
+            "http://google.fi/other/img.jpg");
     }
 }

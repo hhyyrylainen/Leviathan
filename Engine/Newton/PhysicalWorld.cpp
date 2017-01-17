@@ -8,9 +8,8 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
-    LastSimulatedTime(0), PassedTimeTotal(0), OwningWorld(owner), ResimulatedBody(NULL)
+    OwningWorld(owner)
 {
-
 	// create newton world //
 	World = NewtonCreate();
 
@@ -62,6 +61,9 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 	PassedTimeTotal += curtime-LastSimulatedTime;
 	LastSimulatedTime = curtime;
 
+    // Cap passed time, if over one second //
+    if(PassedTimeTotal > MICROSECONDS_IN_SECOND)
+        PassedTimeTotal = MICROSECONDS_IN_SECOND;
     
     Lock lock(WorldUpdateLock);
 
@@ -73,16 +75,32 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
                     OwningWorld)));
 
 		NewtonUpdate(World, NEWTON_TIMESTEP);
-		PassedTimeTotal -= NEWTON_FPS_IN_MICROSECONDS;
+		PassedTimeTotal -= static_cast<int64_t>(NEWTON_FPS_IN_MICROSECONDS);
         runs++;
 
         if(runs == maxruns){
 
-            Logger::Get()->Warning("PhysicalWorld: bailing from update after "+
-                Convert::ToString(runs)+" with time left: "+Convert::ToString(PassedTimeTotal));
-            return;
+            Logger::Get()->Warning("PhysicalWorld: bailing from update after " +
+                Convert::ToString(runs) + " with time left: " +
+                Convert::ToString(PassedTimeTotal));
+            break;
         }
 	}
+}
+
+DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorldFixed(uint32_t mspassed, 
+    uint32_t stepcount /*= 1*/) 
+{
+    float timestep = (mspassed / 1000.f) / stepcount;
+
+    for (uint32_t i = 0; i < stepcount; ++i) {
+
+        EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
+            new PhysicsStartEventData(timestep,
+                OwningWorld)));
+
+        NewtonUpdate(World, timestep);
+    }
 }
 // ------------------------------------ //
 int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,

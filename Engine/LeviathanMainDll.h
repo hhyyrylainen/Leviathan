@@ -1,10 +1,13 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/Application.h"
 
-// Some core classes that most likely won't conflict are brought to the global namespace here with 'using' statements //
+// Some core classes that most likely won't conflict are brought to the global namespace here
+// with 'using' statements
 
 using Leviathan::Locker;
 using Leviathan::Mutex;
@@ -31,7 +34,7 @@ using Leviathan::LeviathanApplication;
 using Leviathan::StringIterator;
 using Leviathan::NetworkRequest;
 using Leviathan::NetworkResponse;
-using Leviathan::ConnectionInfo;
+using Leviathan::Connection;
 using Leviathan::Window;
 using Leviathan::VariableBlock;
 using Leviathan::TimingMonitor;
@@ -54,7 +57,6 @@ using Leviathan::BaseNotifiableAll;
 using Leviathan::BaseNotifierAll;
 using Leviathan::CommandSender;
 using Leviathan::CommandHandler;
-using Leviathan::NetworkedInput;
 using Leviathan::ThreadSafe;
 
 

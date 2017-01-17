@@ -1,13 +1,17 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
-#include "Networking/NetworkInterface.h"
+#include "Networking/CommonNetwork.h"
+
 #include <inttypes.h>
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <memory>
 
 
 namespace Leviathan{
@@ -21,7 +25,7 @@ namespace Leviathan{
 		friend GraphicalInputEntity;
 		friend Gui::GuiManager;
         friend GameWorld;
-	public:
+    public:
 		DLLEXPORT Engine(LeviathanApplication* owner);
 		DLLEXPORT ~Engine();
 
@@ -35,16 +39,17 @@ namespace Leviathan{
 
 		//! \brief Checks if PreRelease is done and Release can be called
 		//! \pre PreRelease is called
-		DLLEXPORT bool HasPreReleaseBeenDone() const;
+		DLLEXPORT inline bool HasPreReleaseBeenDone() const{
+            return PreReleaseDone;
+        }
 
         //! \brief Calculates how long has elapsed since the last tick
         //! \return The time in milliseconds
-        DLLEXPORT int GetTimeSinceLastTick() const;
+        DLLEXPORT int64_t GetTimeSinceLastTick() const;
 
         //! \brief Returns the number of tick that was last simulated
         DLLEXPORT int GetCurrentTick() const;
 
-		//! \brief Causes VLD to dump current memory leaks
 		DLLEXPORT static void DumpMemoryLeaks();
 
 		DLLEXPORT void Tick();
@@ -56,16 +61,16 @@ namespace Leviathan{
         //! \brief Clears physical timers
         DLLEXPORT void ClearTimers();
 
-        //! \brief Simulates all worlds that are not frozen
-        DLLEXPORT void SimulatePhysics();
+        //! \brief Marks the owning application to quit
+        DLLEXPORT void MarkQuit();
 
 		// ------------------------------------ //
-		// Passes the commands and preprocesses them, but also interprets commands like --nogui //
-		DLLEXPORT void PassCommandLine(const std::string &commands);
+		//! Passes the commands and preprocesses them
+        //!
+        //! Also interprets commands like --nogui
+        //! \returns False if invalid command line and the game should quit instantly
+		DLLEXPORT bool PassCommandLine(int argcount, char* args[]);
         
-		// Runs the normal commands passed by the PassCommandLine function //
-		DLLEXPORT void ExecuteCommandLine();
-
         //! \brief Creates a GameWorld for placing entities into
 		DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
             std::shared_ptr<ViewerCameraPos> worldscamera);
@@ -95,40 +100,47 @@ namespace Leviathan{
         
 		DLLEXPORT void SaveScreenShot();
 
-		DLLEXPORT Graphics* GetGraphics(){ return Graph; };
-		DLLEXPORT EventHandler* GetEventHandler(){ return MainEvents; };
-		DLLEXPORT RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
-		DLLEXPORT ScriptConsole* GetScriptConsole(){ return MainConsole;};
-		DLLEXPORT FileSystem* GetFileSystem(){ return MainFileHandler; };
-		DLLEXPORT AppDef* GetDefinition(){ return Define;};
-		DLLEXPORT NewtonManager* GetNewtonManager(){ return _NewtonManager; };
-		DLLEXPORT LeviathanApplication* GetOwningApplication(){ return Owner; };
-		DLLEXPORT PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
-		DLLEXPORT NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
-		DLLEXPORT ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
-		DLLEXPORT ResourceRefreshHandler* GetResourceRefreshHandler(){ return _ResourceRefreshHandler; };
-        DLLEXPORT EntitySerializerManager* GetEntitySerializerManager(){ return _EntitySerializerManager; };
-        DLLEXPORT ConstraintSerializerManager* GetConstraintSerializerManager(){ return _ConstraintSerializerManager; };
-        DLLEXPORT AINetworkCache* GetAINetworkCache(){ return _AINetworkCache; };
-
+		inline Graphics* GetGraphics(){ return Graph; };
+		inline EventHandler* GetEventHandler(){ return MainEvents; };
+		inline RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
+		inline ScriptConsole* GetScriptConsole(){ return MainConsole;};
+		inline FileSystem* GetFileSystem(){ return MainFileHandler; };
+		inline AppDef* GetDefinition(){ return Define;};
+		inline NewtonManager* GetNewtonManager(){ return _NewtonManager; };
+		inline LeviathanApplication* GetOwningApplication(){ return Owner; };
+		inline PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
+		inline NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
+		inline ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
+		inline ResourceRefreshHandler* GetResourceRefreshHandler(){
+            return _ResourceRefreshHandler; };
+        inline EntitySerializer* GetEntitySerializer(){ return _EntitySerializer.get(); };
+        inline RemoteConsole* GetRemoteConsole() {
+            return _RemoteConsole;
+        }
+        
 #ifdef LEVIATHAN_USES_LEAP
-		DLLEXPORT LeapManager* GetLeapManager(){ return LeapData; };
+		inline LeapManager* GetLeapManager(){ return LeapData; };
 #endif
 
-		DLLEXPORT bool GetNoGui(){ return NoGui; };
+		inline bool GetNoGui(){ return NoGui; };
+
+        // Command line settings can only be set before initializing //
+        inline void SetNoGUI(){
+
+            NoGui = true;
+        }
 
 		// Static access //
 		DLLEXPORT static Engine* GetEngine();
 		DLLEXPORT static Engine* Get();
 
-		// For NoGui mode //
-#ifdef _WIN32
-		DLLEXPORT static void WinAllocateConsole();
-#endif
-
 	protected:
 		// after load function //
 		void PostLoad();
+
+        //! Runs the normal commands passed by the PassCommandLine function //
+        //! Ran automatically after Init
+		DLLEXPORT void ExecuteCommandLine();
 
 		//! Function called by first instance of Window class after creating a window to not error
         //! when registering threads to work with Ogre
@@ -137,7 +149,8 @@ namespace Leviathan{
         //! \brief Sets the tick clock to a certain value
         //! \note Should only be used to match the server's clock
         //! \param amount The amount of time in milliseconds to set or change
-        //! \param absolute When true sets the time until a tick to amount otherwise changes the remaining
+        //! \param absolute When true sets the time until a tick to amount otherwise
+        //! changes the remaining
         //! time by amount
         void _AdjustTickClock(int amount, bool absolute = true);
 
@@ -145,40 +158,50 @@ namespace Leviathan{
         //! \note Should only be called on the client as this may break some simulations
         void _AdjustTickNumber(int tickamount, bool absolute);
 
-		// ------------------------------------ //
-		AppDef* Define;
+        //! Console input comes through this
+        bool _ReceiveConsoleInput(const std::string &command);
 
-		RenderingStatistics* RenderTimer;
-		Graphics* Graph;
+        //! Runs all commands in QueuedConsoleCommands
+        void _RunQueuedConsoleCommands();
+
+        //! Helper for PassCommandLine
+        bool ParseSingleCommand(StringIterator &itr, int &argindex, const int argcount,
+            char* args[]);
         
-		GraphicalInputEntity* GraphicalEntity1;
+		// ------------------------------------ //
+		AppDef* Define = nullptr;
+
+		RenderingStatistics* RenderTimer = nullptr;
+		Graphics* Graph = nullptr;
+        
+		GraphicalInputEntity* GraphicalEntity1 = nullptr;
         std::vector<GraphicalInputEntity*> AdditionalGraphicalEntities;
 
-		SoundDevice* Sound;
-		DataStore* Mainstore;
-		EventHandler* MainEvents;
-		ScriptExecutor* MainScript;
-		ScriptConsole* MainConsole;
-		FileSystem* MainFileHandler;
-		Random* MainRandom;
-		OutOfMemoryHandler* OutOMemory;
-		NewtonManager* _NewtonManager;
-		PhysicsMaterialManager* PhysMaterials;
-		NetworkHandler* _NetworkHandler;
-		ThreadingManager* _ThreadingManager;
-		RemoteConsole* _RemoteConsole;
-		ResourceRefreshHandler* _ResourceRefreshHandler;
-        EntitySerializerManager* _EntitySerializerManager;
-        ConstraintSerializerManager* _ConstraintSerializerManager;
-        AINetworkCache* _AINetworkCache;
+		SoundDevice* Sound = nullptr;
+		DataStore* Mainstore = nullptr;
+		EventHandler* MainEvents = nullptr;
+		ScriptExecutor* MainScript = nullptr;
+		ScriptConsole* MainConsole = nullptr;
+		FileSystem* MainFileHandler = nullptr;
+		Random* MainRandom = nullptr;
+		OutOfMemoryHandler* OutOMemory = nullptr;
+		NewtonManager* _NewtonManager = nullptr;
+		PhysicsMaterialManager* PhysMaterials = nullptr;
+		NetworkHandler* _NetworkHandler = nullptr;
+		ThreadingManager* _ThreadingManager = nullptr;
+		RemoteConsole* _RemoteConsole = nullptr;
+		ResourceRefreshHandler* _ResourceRefreshHandler = nullptr;
+        
+        std::unique_ptr<ConsoleInput> _ConsoleInput;
+        std::unique_ptr<EntitySerializer> _EntitySerializer;
 
 #ifdef LEVIATHAN_USES_LEAP
-		LeapManager* LeapData;
+		LeapManager* LeapData = nullptr;
 #endif
 
 
-		IDFactory* IDDefaultInstance;
-		LeviathanApplication* Owner;
+		IDFactory* IDDefaultInstance = nullptr;
+		LeviathanApplication* Owner = nullptr;
         
 		//! List of current worlds
 		std::vector<std::shared_ptr<GameWorld>> GameWorlds;
@@ -192,38 +215,38 @@ namespace Leviathan{
 		// data //
 		int64_t LastTickTime;
         
-		int TimePassed;
-		int FrameLimit;
-		int TickCount;
-		int TickTime;
-		int FrameCount;
+		int TimePassed = 0;
+		int FrameLimit = 0;
+		int TickCount = 0;
+        int TickTime = 0;
+        int FrameCount = 0;
 
 		//! Set when PreRelease is called and Tick has happened
-		bool PreReleaseDone;
+		bool PreReleaseDone = false;
         
 		//! Set when PreRelease called and waiting for Tick
 		//! see PreReleaseDone
-		bool PreReleaseWaiting;
+		bool PreReleaseWaiting = false;
 
         // Engine settings //
-		bool NoGui;
-		bool NoLeap;
-        bool NoSTDInput;
+		bool NoGui = false;
+		bool NoLeap = false;
+        bool NoSTDInput = false;
 
         //! \brief Set to true when initialized as a client
         //!
         //! Used to call client specific events
-        bool IsClient;
+        bool IsClient = false;
 
 		// Marks that the Engine has already done prerelease //
-		bool PreReleaseCompleted;
+		bool PreReleaseCompleted = false;
 
 
 		// Stores the command line before running it //
 		std::vector<std::unique_ptr<std::string>> PassedCommands;
 
-		// NoGui input handler //
-		std::thread CinThread;
+        //! Stores console commands that came from the command line
+        std::vector<std::unique_ptr<std::string>> QueuedConsoleCommands;
 
 		static Engine* instance;
 	};

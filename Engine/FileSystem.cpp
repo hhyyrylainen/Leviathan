@@ -2,7 +2,7 @@
 // ------------------------------------ //
 #include "FileSystem.h"
 
-#ifdef USING_OGRE
+#ifdef LEVIATHAN_USING_OGRE
 #include "OgreResourceGroupManager.h"
 #endif
 #include "Common/StringOperations.h"
@@ -15,7 +15,7 @@
 #include <ostream>
 #include <fstream>
 
-#ifdef __GNUC__
+#ifdef __linux__
 #include <dirent.h>
 #include <sys/stat.h>
 #else
@@ -361,10 +361,17 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
     const string &dirpath, const string &pattern /*= "*.*"*/, bool recursive /*= true*/)
 {
 	dirent* ent;
-	class stat st;
+	struct stat st;
 
 	// Start searching //
 	DIR* dir = opendir(dirpath.c_str());
+
+    if(!dir){
+
+        // Non-existant directory
+        return false;
+    }
+    
 	while((ent = readdir(dir)) != NULL){
 		const string file_name = ent->d_name;
 
@@ -490,13 +497,9 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
 
 		streamoff rpos = reader.tellg();
 
-
 		// cannot be loaded //
-#ifdef _WIN32
-		LEVIATHAN_ASSERT(SIZE_T_MAX >= rpos, "file is too large");
-#else
-        LEVIATHAN_ASSERT(std::numeric_limits<size_t>::max() >= rpos, "file is too large");
-#endif
+        LEVIATHAN_ASSERT(std::numeric_limits<streamoff>::max() >= rpos, "file is too large");
+        
 		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);
@@ -526,11 +529,8 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const string &file,
 
 
 		// cannot be loaded //
-    #ifdef _WIN32
-        LEVIATHAN_ASSERT(SIZE_T_MAX >= rpos, "file is too large");
-    #else
-        LEVIATHAN_ASSERT(std::numeric_limits<size_t>::max() >= rpos, "file is too large");
-    #endif
+        LEVIATHAN_ASSERT(std::numeric_limits<streamoff>::max() >= rpos, "file is too large");
+
 		resultreceiver.resize(static_cast<size_t>(rpos));
 		// back to start //
 		reader.seekg(0, ios::beg);
@@ -880,7 +880,7 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
 	indexed = true;
 }
 
-#ifdef USING_OGRE
+#ifdef LEVIATHAN_USING_OGRE
 DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// get the resource managing singleton //
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
@@ -980,7 +980,7 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 
 	manager.initialiseResourceGroup(groupname);
 }
-#endif // USING_OGRE
+#endif // LEVIATHAN_USING_OGRE
 // ------------------ FileDefinitionType ------------------ //
 Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const string &path) :
     RelativePath(path)

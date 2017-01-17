@@ -10,7 +10,7 @@ using namespace std;
 TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
     // For outputting debug info //
-    Logger log("Test/TestLog.txt");
+    Logger log("Test/ExtraTest.txt");
 
 	StringIterator itr((string*)NULL);
 
@@ -74,19 +74,38 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
     SECTION("Whitespace and control characters stop"){
 
-        itr.ReInit("get-this nice_prefix[but not this!");
+        SECTION("Underscores and ['s"){
+        
+            itr.ReInit("get-this nice_prefix[but not this!");
 
-        auto results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
-            UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+            auto results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
+                UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
-        REQUIRE(results != nullptr);
-        CHECK(*results == "get-this");
+            REQUIRE(results != nullptr);
+            CHECK(*results == "get-this");
 
-        results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
-            UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
+                UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
-        REQUIRE(results != nullptr);
-        CHECK(*results == "nice_prefix");
+            REQUIRE(results != nullptr);
+            CHECK(*results == "nice_prefix");
+        }
+
+        SECTION("= as a control character"){
+
+            itr.ReInit("cmd=\"stuff\"");
+
+            auto results = itr.GetNextCharacterSequence<string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+            REQUIRE(results != nullptr);
+            CHECK(*results == "cmd");
+
+            results = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+
+            REQUIRE(results != nullptr);
+            CHECK(*results == "stuff");
+        }
     }
 
     SECTION("Getting decimal separator numbers"){
@@ -318,6 +337,105 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
         itr.SkipWhiteSpace(SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
         CHECK(itr.GetCharacter() == '}');
+    }
+
+    SECTION("Command line parsing"){
+
+        SECTION("Without quotes"){
+
+            itr.ReInit("--cmd=Print(string(1)); --other-stuff");
+
+            auto results = itr.GetNextCharacterSequence<string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE
+                | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+            REQUIRE(results != nullptr);
+            CHECK(*results == "--cmd");
+
+            if(itr.GetCharacter() == '=')
+                itr.MoveToNext();
+
+            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+            REQUIRE(results);
+            CHECK(*results == "Print(string(1));");
+        }
+
+        SECTION("With quotes"){
+
+            itr.ReInit("--cmd='Print(string(1)); Print(string(2)); ' --other-stuff");
+
+            auto results = itr.GetNextCharacterSequence<string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE
+                | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+            REQUIRE(results != nullptr);
+            CHECK(*results == "--cmd");
+
+            if(itr.GetCharacter() == '=')
+                itr.MoveToNext();
+
+            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+            REQUIRE(results);
+            CHECK(*results == "'Print(string(1)); Print(string(2)); '");
+
+            StringIterator itr2(*results);
+
+            CHECK(StringOperations::IsCharacterQuote(itr2.GetCharacter()));
+            results = itr2.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
+
+            REQUIRE(results);
+            CHECK(*results == "Print(string(1)); Print(string(2)); ");
+        }
+
+        SECTION("Without equals"){
+
+            itr.ReInit("--cmd Print(string(1)); --other-stuff");
+
+            auto results = itr.GetNextCharacterSequence<string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE
+                | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+            REQUIRE(results != nullptr);
+            CHECK(*results == "--cmd");
+
+            if(itr.GetCharacter() == '=')
+                itr.MoveToNext();
+
+            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+            REQUIRE(results);
+            CHECK(*results == "Print(string(1));");
+        }
+
+        SECTION("whitespace"){
+
+            SECTION("quotes"){
+
+            }
+
+            SECTION("No quotes"){
+
+                itr.ReInit("--cmd= Print(string(1)); --other-stuff");
+
+                auto results = itr.GetNextCharacterSequence<string>(
+                    UNNORMALCHARACTER_TYPE_WHITESPACE
+                    | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+
+                REQUIRE(results != nullptr);
+                CHECK(*results == "--cmd");
+
+                if(itr.GetCharacter() == '=')
+                    itr.MoveToNext();
+
+                results = itr.GetNextCharacterSequence<string>(
+                    UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+                REQUIRE(results);
+                CHECK(*results == "Print(string(1));");
+            }
+        }
     }
 }
 

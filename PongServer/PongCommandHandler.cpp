@@ -10,7 +10,7 @@
 #include "Networking/NetworkServerInterface.h"
 using namespace Pong;
 // ------------------------------------ //
-Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner), PlayerUniqueCounter(10000){
+Pong::PongCommandHandler::PongCommandHandler(PongServerNetworking* owner) : Owner(owner){
 
 }
 
@@ -18,94 +18,93 @@ Pong::PongCommandHandler::~PongCommandHandler(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Pong::PongCommandHandler::CanHandleCommand(const string &cmd) const{
-	// Just compare to our command strings //
-	if(cmd == "join" || cmd == "open" || cmd == "kickslot" || cmd == "leave" || cmd == "ready" || cmd == "start" ||
-        cmd == "close" || cmd == "controls" || cmd == "colour")
+bool Pong::PongCommandHandler::CanHandleCommand(const string &cmd) const{
+    // Just compare to our command strings //
+    if(cmd == "join" || cmd == "open" || cmd == "kickslot" || cmd == "leave" || cmd == "ready"
+        || cmd == "start" || cmd == "close" || cmd == "controls" || cmd == "colour")
     {
+        return true;
+    }
 
-		return true;
-	}
-
-	return false;
+    return false;
 }
 // ------------------------------------ //
-DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecommand, CommandSender* sender){
+void Pong::PongCommandHandler::ExecuteCommand(const string &wholecommand, CommandSender* sender){
 
-	StringIterator itr(new UTF8DataIterator(wholecommand));
+    StringIterator itr(new UTF8DataIterator(wholecommand));
 
-	auto cmd = itr.GetNextCharacterSequence<string>(Leviathan::UNNORMALCHARACTER_TYPE_LOWCODES);
+    auto cmd = itr.GetNextCharacterSequence<string>(Leviathan::UNNORMALCHARACTER_TYPE_LOWCODES);
 
-	// Perform something based on the command //
-	if(*cmd == "join"){
+    // Perform something based on the command //
+    if(*cmd == "join"){
 
-		// Get the target slot and target split //
-		auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+        // Get the target slot and target split //
+        auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
-		auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+        auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
-		// The variables for the join //
-		int slotnumber;
-		bool split;
-
-
-		// Process them //
-		if(!targetsplit || targetsplit->empty()){
-
-			split = false;
-		} else {
-
-			int tmpvar = Convert::StringTo<int>(*targetsplit);
-
-			if(!tmpvar){
-
-				split = false;
-			} else {
-
-				split = true;
-			}
-		}
+        // The variables for the join //
+        int slotnumber;
+        bool split;
 
 
-		// Then the slot //
-		if(!targetslot || targetslot->empty()){
+        // Process them //
+        if(!targetsplit || targetsplit->empty()){
 
-			slotnumber = -1;
-		} else {
+            split = false;
+        } else {
 
-			int tmpvar = Convert::StringTo<int>(*targetslot);
+            int tmpvar = Convert::StringTo<int>(*targetsplit);
 
-			slotnumber = tmpvar;
-		}
+            if(!tmpvar){
+
+                split = false;
+            } else {
+
+                split = true;
+            }
+        }
 
 
-		// Check are the values right //
-		if(slotnumber < 0 || slotnumber > 3){
+        // Then the slot //
+        if(!targetslot || targetslot->empty()){
 
-			sender->SendPrivateMessage("invalid slot number");
-			return;
-		}
+            slotnumber = -1;
+        } else {
 
-		PlayerList* slots = BasePongParts::Get()->GetPlayers();
+            int tmpvar = Convert::StringTo<int>(*targetslot);
 
-		// Check is the slot empty //
-		auto chosenslot = slots->GetSlot(slotnumber);
+            slotnumber = tmpvar;
+        }
 
-		if(split)
-			chosenslot = chosenslot->GetSplit();
 
-		if(!chosenslot){
+        // Check are the values right //
+        if(slotnumber < 0 || slotnumber > 3){
 
-			sender->SendPrivateMessage("The chosen slot/sub-slot is not open/created.");
-			return;
-		}
+            sender->SendPrivateMessage("invalid slot number");
+            return;
+        }
 
-		if(chosenslot->GetPlayerType() != PLAYERTYPE_EMPTY){
+        PlayerList* slots = BasePongParts::Get()->GetPlayers();
 
-			// Somebody has taken it //
-			sender->SendPrivateMessage("that slot is already taken");
-			return;
-		}
+        // Check is the slot empty //
+        auto chosenslot = slots->GetSlot(slotnumber);
+
+        if(split)
+            chosenslot = chosenslot->GetSplit();
+
+        if(!chosenslot){
+
+            sender->SendPrivateMessage("The chosen slot/sub-slot is not open/created.");
+            return;
+        }
+
+        if(chosenslot->GetPlayerType() != PLAYERTYPE_EMPTY){
+
+            // Somebody has taken it //
+            sender->SendPrivateMessage("that slot is already taken");
+            return;
+        }
 
         {
             Lock lock(PlayerIDMutex);
@@ -115,112 +114,113 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
             
         }
 
-		// Create a controller id for this player //
-		int newid = PongServer::Get()->GetServerNetworkInterface()->GetNetworkedInput()->GetNextInputIDNumberOnServer();
+        // Create a controller id for this player //
+        DEBUG_BREAK
+        //int newid = PongServer::Get()->GetServerNetworkInterface()->GetNetworkedInput()->GetNextInputIDNumberOnServer();
 
-		chosenslot->SetNetworkedInputID(newid);
+        //chosenslot->SetNetworkedInputID(newid);
 
-		// \todo Move this to some proper place
-		chosenslot->SetControls(PLAYERCONTROLS_ARROWS, 0);
+        //// \todo Move this to some proper place
+        //chosenslot->SetControls(PLAYERCONTROLS_ARROWS, 0);
 
 
-		Logger::Get()->Info("Player joined slot "+Convert::ToString(slotnumber)+", split "+
-            Convert::ToString<int>(split)+" (networked control: "+Convert::ToString(newid)+
-            ") named "+sender->GetNickname());
+        //Logger::Get()->Info("Player joined slot "+Convert::ToString(slotnumber)+", split "+
+        //    Convert::ToString<int>(split)+" (networked control: "+Convert::ToString(newid)+
+        //    ") named "+sender->GetNickname());
 
-		slots->NotifyUpdatedValue();
+        slots->NotifyUpdatedValue();
         
-	} else if(*cmd == "open"){
+    } else if(*cmd == "open"){
 
-		// Get the target slot and target split //
-		auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+        // Get the target slot and target split //
+        auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
-		auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+        auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
-		// The variables for the join //
-		int slotnumber;
-		bool split;
-
-
-		// Process them //
-		if(!targetsplit || targetsplit->empty()){
-
-			split = false;
-		} else {
-
-			int tmpvar = Convert::StringTo<int>(*targetsplit);
-
-			if(!tmpvar){
-
-				split = false;
-			} else {
-
-				split = true;
-			}
-		}
+        // The variables for the join //
+        int slotnumber;
+        bool split;
 
 
-		// Then the slot //
-		if(!targetslot || targetslot->empty()){
+        // Process them //
+        if(!targetsplit || targetsplit->empty()){
 
-			slotnumber = -1;
-		} else {
+            split = false;
+        } else {
 
-			int tmpvar = Convert::StringTo<int>(*targetslot);
+            int tmpvar = Convert::StringTo<int>(*targetsplit);
 
-			slotnumber = tmpvar;
-		}
+            if(!tmpvar){
+
+                split = false;
+            } else {
+
+                split = true;
+            }
+        }
 
 
-		// Check are the values right //
-		if(slotnumber < 0 || slotnumber > 3){
+        // Then the slot //
+        if(!targetslot || targetslot->empty()){
 
-			sender->SendPrivateMessage("invalid slot number");
-			return;
-		}
+            slotnumber = -1;
+        } else {
 
-		PlayerList* slots = BasePongParts::Get()->GetPlayers();
+            int tmpvar = Convert::StringTo<int>(*targetslot);
 
-		// Check is the slot empty //
-		auto chosenslot = slots->GetSlot(slotnumber);
+            slotnumber = tmpvar;
+        }
 
-		if(split){
 
-			auto splitslot = chosenslot->GetSplit();
+        // Check are the values right //
+        if(slotnumber < 0 || slotnumber > 3){
 
-			if(!splitslot){
+            sender->SendPrivateMessage("invalid slot number");
+            return;
+        }
 
-				// Add a new sub-slot //
-				chosenslot->AddEmptySubSlot();
+        PlayerList* slots = BasePongParts::Get()->GetPlayers();
 
-				// And set it as open //
-				chosenslot->GetSplit()->SetPlayer(PLAYERTYPE_EMPTY, 0);
+        // Check is the slot empty //
+        auto chosenslot = slots->GetSlot(slotnumber);
 
-				Logger::Get()->Info("New split slot opened, "+Convert::ToString(slotnumber));
-				slots->NotifyUpdatedValue();
-				return;
-			}
+        if(split){
 
-			chosenslot = splitslot;
-		}
+            auto splitslot = chosenslot->GetSplit();
 
-		if(chosenslot->GetPlayerType() != PLAYERTYPE_CLOSED){
+            if(!splitslot){
 
-			// Somebody has opened it //
-			sender->SendPrivateMessage("that slot is already open");
-			return;
-		}
+                // Add a new sub-slot //
+                chosenslot->AddEmptySubSlot();
 
-		// Open the slot //
-		chosenslot->SetPlayer(PLAYERTYPE_EMPTY, 0);
+                // And set it as open //
+                chosenslot->GetSplit()->SetPlayer(PLAYERTYPE_EMPTY, 0);
 
-		// Reset some settings //
-		chosenslot->SetControls(PLAYERCONTROLS_NONE, 0);
-		chosenslot->SetColour(Float4::GetColourWhite());
+                Logger::Get()->Info("New split slot opened, "+Convert::ToString(slotnumber));
+                slots->NotifyUpdatedValue();
+                return;
+            }
 
-		slots->NotifyUpdatedValue();
+            chosenslot = splitslot;
+        }
 
-	} else if(*cmd == "start"){
+        if(chosenslot->GetPlayerType() != PLAYERTYPE_CLOSED){
+
+            // Somebody has opened it //
+            sender->SendPrivateMessage("that slot is already open");
+            return;
+        }
+
+        // Open the slot //
+        chosenslot->SetPlayer(PLAYERTYPE_EMPTY, 0);
+
+        // Reset some settings //
+        chosenslot->SetControls(PLAYERCONTROLS_NONE, 0);
+        chosenslot->SetColour(Float4::GetColourWhite());
+
+        slots->NotifyUpdatedValue();
+
+    } else if(*cmd == "start"){
 
         ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([]() -> void
             {
@@ -235,18 +235,18 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 
             })));
         
-	} else if(*cmd == "controls"){
+    } else if(*cmd == "controls"){
 
-		// Get the target parameters //
-		auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+        // Get the target parameters //
+        auto targetslot = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
-		auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
+        auto targetsplit = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
         auto targetcontrols = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
         auto targetnumber = itr.GetNextNumber<string>(Leviathan::DECIMALSEPARATORTYPE_NONE);
 
-		bool split;
+        bool split;
 
         // Fail if invalid format //
         if(!targetsplit || !targetslot || !targetcontrols || !targetnumber)
@@ -270,21 +270,21 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
 
         if(slotnumber < 0 || slotnumber > 3){
 
-			sender->SendPrivateMessage("invalid slot number");
-			return;
-		}
+            sender->SendPrivateMessage("invalid slot number");
+            return;
+        }
         
         // Find the target slot //
 
-		PlayerList* slots = BasePongParts::Get()->GetPlayers();
+        PlayerList* slots = BasePongParts::Get()->GetPlayers();
 
-		// Check is the slot empty //
-		auto chosenslot = slots->GetSlot(slotnumber);
+        // Check is the slot empty //
+        auto chosenslot = slots->GetSlot(slotnumber);
 
-		if(split){
+        if(split){
 
-			chosenslot = chosenslot->GetSplit();
-		}
+            chosenslot = chosenslot->GetSplit();
+        }
 
         Logger::Get()->Info("TODO: check whether the player changing controls is the player in the slot");
 
@@ -295,9 +295,9 @@ DLLEXPORT void Pong::PongCommandHandler::ExecuteCommand(const string &wholecomma
             Convert::ToString(split)+"controls to "+Convert::ToString(controls)+
             ", "+Convert::ToString(number));
         
-		chosenslot->SetControls(static_cast<PLAYERCONTROLS>(controls), number);
+        chosenslot->SetControls(static_cast<PLAYERCONTROLS>(controls), number);
 
-		slots->NotifyUpdatedValue();
+        slots->NotifyUpdatedValue();
         
     } else {
 

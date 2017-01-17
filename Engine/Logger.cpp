@@ -8,7 +8,10 @@
 #include "Exceptions.h"
 #endif //ALTERNATIVE_EXCEPTIONS_FATAL
 #include "FileSystem.h"
+
+#ifdef _WIN32
 #include "Utility/Convert.h"
+#endif //_WIN32
 
 #include <chrono>
 #include <fstream>
@@ -19,6 +22,8 @@
 #ifdef _WIN32
 #include "WindowsInclude.h"
 #endif //_WIN32
+
+#include <stdlib.h>
 
 using namespace Leviathan;
 using namespace std;
@@ -35,10 +40,10 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
 #ifdef _WIN32
     struct tm curtime;
     localtime_s(&curtime, &t);
-    formatedtime << std::put_time(&curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    formatedtime << std::put_time(&curtime, "%H:%M:%S %A %d.%m.%Y (%Z)");
 #else
     struct tm* curtime = localtime(&t);
-    formatedtime << std::put_time(curtime, "%S:%M:%H %A %d.%m.%Y (%Z)");
+    formatedtime << std::put_time(curtime, "%H:%M:%S %A %d.%m.%Y (%Z)");
 #endif //_WIN32
 
     string write = "Start of Leviathan log for leviathan version: " + VERSIONS;
@@ -51,6 +56,7 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
     if (!writer.is_open()) {
 
     #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
+        DEBUG_BREAK;
         throw Exception("Cannot open log file");
     #else
         LEVIATHAN_ASSERT(0, "Cannot open log file");
@@ -77,7 +83,9 @@ Leviathan::Logger::~Logger(){
     
 	// Reset latest logger (this allows to create new logger,
     // which is quite bad, but won't crash
-	LatestLogger = NULL;
+    // There is also probably a race condition here
+    if(LatestLogger == this)
+        LatestLogger = nullptr;
 }
 
 Logger* Leviathan::Logger::LatestLogger = NULL;
@@ -103,15 +111,18 @@ void Leviathan::Logger::Fatal(const std::string &data) {
 
     const auto message = "[FATAL] " + data + "\n";
 
-    Lock lock(LoggerWriteMutex);
+    {
+        Lock lock(LoggerWriteMutex);
 
-    SendDebugMessage(message);
+        SendDebugMessage(message);
 
-    PendingLog += message;
+        PendingLog += message;
 
-    _LogUpdateEndPart();
+        _LogUpdateEndPart();
+    }
 
-    LEVIATHAN_ASSERT(0, "fatal message printed");
+    // Exit process //
+    abort();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::Logger::Info(const std::string &data){

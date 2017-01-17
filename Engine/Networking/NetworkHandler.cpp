@@ -2,7 +2,7 @@
 #include "NetworkHandler.h"
 
 #include "Application/GameConfiguration.h"
-#include "ConnectionInfo.h"
+#include "Connection.h"
 #include "FileSystem.h"
 #include "GameSpecificPacketHandler.h"
 #include "Iterators/StringIterator.h"
@@ -15,116 +15,139 @@
 #include "SyncedVariables.h"
 #include "Threading/ThreadingManager.h"
 #include "Utility/ComplainOnce.h"
+#include "NetworkCache.h"
+#include "Engine.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler) 
-	: AppType(ntype), CloseMasterServerConnection(false), UpdaterThreadStop(false)
+DLLEXPORT Leviathan::NetworkHandler::NetworkHandler(NETWORKED_TYPE ntype,
+    NetworkInterface* packethandler) 
+    : AppType(ntype), CloseMasterServerConnection(false)
 {
-	instance = this;
-	interfaceinstance = packethandler;
+    // This will assert if we were passed the wrong type
+    packethandler->VerifyType(AppType);
+    packethandler->SetOwner(this);
+    
+    if(AppType == NETWORKED_TYPE::Client){
 
-	// Set our type to the NetworkInteface //
-    if(interfaceinstance)
-        interfaceinstance->_SetNetworkType(AppType);
+        ClientInterface = dynamic_cast<NetworkClientInterface*>(packethandler);
+        
+    } else if(AppType == NETWORKED_TYPE::Server){
 
-	// Create the variable syncer //
-	VariableSyncer = new SyncedVariables(this, AppType == NETWORKED_TYPE_SERVER, interfaceinstance);
+        ServerInterface = dynamic_cast<NetworkServerInterface*>(packethandler);
+    }
+    
+    // Create the variable sync object //
+    VariableSyncer = std::make_unique<SyncedVariables>(this, AppType, packethandler);
 
-	// Create the custom packet handler //
-	_GameSpecificPacketHandler = new GameSpecificPacketHandler(interfaceinstance);
+    _NetworkCache = std::make_unique<NetworkCache>(AppType);
+    
+    if(!_NetworkCache || !_NetworkCache->Init(this)){
+
+        LOG_ERROR("NetworkHandler: failed to create NetworkCache");
+        LEVIATHAN_ASSERT(0, "NetworkHandler: failed to create NetworkCache");
+    }
+
+    // Create the custom packet handler //
+    _GameSpecificPacketHandler = std::make_unique<GameSpecificPacketHandler>(
+        packethandler);
 }
 
-DLLEXPORT Leviathan::NetworkHandler::~NetworkHandler(){
-	instance = NULL;
+DLLEXPORT NetworkHandler::~NetworkHandler(){
 
-	SAFE_DELETE(VariableSyncer);
-	SAFE_DELETE(_GameSpecificPacketHandler);
+    _NetworkCache.reset();
 }
-
-DLLEXPORT NetworkHandler* Leviathan::NetworkHandler::Get(){
-	return instance;
-}
-
-DLLEXPORT NetworkInterface* Leviathan::NetworkHandler::GetInterface(){
-	return interfaceinstance;
-}
-
-NetworkHandler* Leviathan::NetworkHandler::instance = NULL;
-NetworkInterface* Leviathan::NetworkHandler::interfaceinstance = NULL;
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::NetworkHandler::Init(const MasterServerInformation &info){
 
-    GUARD_LOCK();
+    MasterServerMustPassIdentification = info.MasterServerIdentificationString;
 
-	MasterServerMustPassIdentification = info.MasterServerIdentificationString;
+    if(AppType != NETWORKED_TYPE::Master){
+        // Query master server //
+        QueryMasterServer(info);
 
-	if(AppType != NETWORKED_TYPE_MASTER){
-		// Query master server //
-		QueryMasterServer(guard, info);
+    } else {
+        // We are our own master! //
 
-	} else {
-		// We are our own master! //
+        // Get out port number here //
+        GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-		// Get out port number here //
-		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
+        int tmpport = 0;
 
-		int tmpport = 0;
-
-		if(!vars->GetValueAndConvertTo<int>("MasterServerPort", tmpport)){
-			// This is quite bad //
-			Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
+        if(!vars->GetValueAndConvertTo<int>("MasterServerPort", tmpport)){
+            // This is quite bad //
+            Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
                 "'MasterServerPort' of type int");
-		}
+        }
 
-		PortNumber = (unsigned short)tmpport;
-	}
+        PortNumber = (unsigned short)tmpport;
+    }
 
-	if(AppType == NETWORKED_TYPE_CLIENT){
-		// We can use any port we get //
-		PortNumber = sf::Socket::AnyPort;
+    if(AppType == NETWORKED_TYPE::Client){
+        // We can use any port we get //
+        PortNumber = sf::Socket::AnyPort;
 
-	} else if(AppType == NETWORKED_TYPE_SERVER){
-		// We need to use a specific port //
-		GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
+    } else if(AppType == NETWORKED_TYPE::Server){
+        // We need to use a specific port //
+        GAMECONFIGURATION_GET_VARIABLEACCESS(vars);
 
-		int tmpport = 0;
+        int tmpport = 0;
 
-		if(!vars->GetValueAndConvertTo<int>("DefaultServerPort", tmpport)){
-			// This is quite bad //
-			Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
+        if(!vars->GetValueAndConvertTo<int>("DefaultServerPort", tmpport)){
+            // This is quite bad //
+            Logger::Get()->Error("NetworkHandler: Init: no port configured, config missing "
                 "'ServerPort' of type int");
-		}
+        }
 
-		PortNumber = (unsigned short)tmpport;
-	}
+        PortNumber = (unsigned short)tmpport;
+    }
 
-	// We want to receive responses //
-	if(_Socket.bind(PortNumber) != sf::Socket::Done){
+    // We want to receive responses //
+    if(_Socket.bind(PortNumber) != sf::Socket::Done){
 
-		Logger::Get()->Error("NetworkHandler: Init: failed to bind to a port "+
+        Logger::Get()->Error("NetworkHandler: Init: failed to bind to port "+
             Convert::ToString(PortNumber));
-		return false;
-	}
+        return false;
+    }
 
-	// Set the socket as blocking //
-	_Socket.setBlocking(true);
+    PortNumber = _Socket.getLocalPort();
 
-    // Run the listening thread //
-    ListenerThread = std::thread(std::bind(&NetworkHandler::_RunListenerThread, this));
+    // Set the socket as blocking //
+    if (BlockingMode) {
 
-	// Report success //
-	Logger::Get()->Info("NetworkHandler: running listening socket on port "+Convert::ToString(
+        _Socket.setBlocking(true);
+
+        // Run the listening thread //
+        ListenerThread = std::thread(std::bind(&NetworkHandler::_RunListenerThread, this));
+    } else {
+
+        _Socket.setBlocking(false);
+    }
+
+    // Report success //
+    Logger::Get()->Info("NetworkHandler: running listening socket on port "+Convert::ToString(
             _Socket.getLocalPort()));
 
-    // Run temporary update thread //
-    TemporaryUpdateThread = std::thread(std::bind(&NetworkHandler::_RunTemporaryUpdaterThread,
-            this));
-
-	return true;
+    return true;
 }
+// ------------------------------------ //
+DLLEXPORT bool Leviathan::NetworkHandler::Init(uint16_t port /*= 0*/) {
 
-DLLEXPORT void Leviathan::NetworkHandler::Release(){
+    if (_Socket.bind(port) != sf::Socket::Done) {
+
+        LOG_ERROR("NetworkHandler: Init: failed to bind to port " +
+            Convert::ToString(PortNumber));
+        return false;
+    }
+
+    PortNumber = _Socket.getLocalPort();
+
+    _Socket.setBlocking(false);
+
+    return true;
+}
+// ------------------------------------ //
+DLLEXPORT void Leviathan::NetworkHandler::Release() {
     
     {
         GUARD_LOCK();
@@ -139,698 +162,708 @@ DLLEXPORT void Leviathan::NetworkHandler::Release(){
             MasterServerConnection->Release();
         }
 
-        {
-            {
-                Lock lock(AutoOpenedConnectionsMutex);
-        
-                // Close all connections //
-                for(size_t i = 0; i < AutoOpenedConnections.size(); i++){
+        // Close all connections //
+        for(auto& connection : OpenConnections){
 
-                    AutoOpenedConnections[i]->Release();
-                }
-
-                AutoOpenedConnections.clear();
-            }
-
-            MasterServerConnectionThread.join();
-            MasterServerConnection.reset();
+            connection->Release();
         }
-    
-        // This might have been left on by accident
-        StopOwnUpdaterThread(guard);
 
-        // Set the static instance to nothing //
-        instance = NULL;
+        OpenConnections.clear();
+        
 
+    }
+
+    if(MasterServerConnectionThread.joinable()){
+        MasterServerConnectionThread.join();
+        MasterServerConnection.reset();
     }
     
     _ReleaseSocket();
 
-    // This thread is blocked in infinite read //
-    //ListenerThread.join();
-    ListenerThread.detach();
+    if(BlockingMode){
+        // This thread is blocked in infinite read //
+        //ListenerThread.join();
+        if(ListenerThread.joinable())
+            ListenerThread.detach();
+    }
 }
 
 void Leviathan::NetworkHandler::_ReleaseSocket(){
-	// This might cause the game to hang... //
+    // This might cause the game to hang... //
 
-	bool blockunbind = false;
+    bool blockunbind = false;
 
-	{
-		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
-		variables->GetValueAndConvertTo<bool>("DisableSocketUnbind", blockunbind);
-	}
+    {
+        GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+        variables->GetValueAndConvertTo<bool>("DisableSocketUnbind", blockunbind);
+    }
 
-    auto lock = std::move(LockSocketForUse());
+    auto lock = LockSocketForUse();
 
-	// This should do the trick //
-	if(!blockunbind){
+    // This should do the trick //
+    if(!blockunbind || !BlockingMode){
         
-		_Socket.unbind();
+        _Socket.unbind();
 
-	} else {
-		Logger::Get()->Info("NetworkHandler: _ReleaseSocket: blocked unbind");
-	}
+    } else {
+        Logger::Get()->Info("NetworkHandler: _ReleaseSocket: blocked unbind");
+    }
+}
+
+bool Leviathan::NetworkHandler::_RunUpdateOnce(Lock &guard)
+{
+    sf::Packet receivedpacket;
+
+    sf::IpAddress sender;
+    unsigned short sentport;
+
+    RemoteConsole* rcon = Engine::Get()->GetRemoteConsole();
+
+    sf::Socket::Status status;
+
+    while (true) {
+
+        guard.unlock();
+
+        {
+            auto lock = LockSocketForUse();
+            status = _Socket.receive(receivedpacket, sender, sentport);
+        }
+
+        guard.lock();
+
+        if (status != sf::Socket::Done)
+            break;
+
+        // Process packet //
+
+        // Pass to a connection //
+        bool Passed = false;
+
+
+        for (size_t i = 0; i < OpenConnections.size(); i++) {
+            // Keep passing until somebody handles it //
+            if (OpenConnections[i]->IsThisYours(sender, sentport)) {
+
+                auto curconnection = OpenConnections[i];
+
+                curconnection->HandlePacket(receivedpacket);
+
+                Passed = true;
+                break;
+            }
+        }
+
+        if (Passed)
+            continue;
+
+        shared_ptr<Connection> tmpconnect;
+
+        // TODO: Check is it a close or a keep alive packet //
+
+        // We might want to open a new connection to this client //
+        Logger::Get()->Info("Received a new connection from " + sender.toString() + ":" +
+            Convert::ToString(sentport));
+
+        // \todo Make sure that the console won't be deleted between this and the actual check
+
+        if (AppType != NETWORKED_TYPE::Client) {
+            // Accept the connection //
+            LOG_WRITE("\t> Connection accepted");
+
+            tmpconnect = OpenConnectionTo(guard, sender, sentport);
+
+        } else if (rcon && rcon->IsAwaitingConnections()) {
+
+            // We might allow a remote start remote console session //
+            LOG_WRITE("\t> Connection accepted for remote console receive");
+
+            tmpconnect = OpenConnectionTo(guard, sender, sentport);
+
+            // We need a special restriction for this connection //
+            if (tmpconnect)
+                tmpconnect->SetRestrictionMode(CONNECTION_RESTRICTION::ReceiveRemoteConsole);
+
+        } else {
+            // Deny the connection //
+            LOG_WRITE("\t> Dropping connection due to not being a server "
+                "(and not expecting anything)");
+            continue;
+        }
+
+        if (!tmpconnect) {
+
+            LOG_WRITE("\t> Failed to create connection object");
+            continue;
+        }
+
+        // Try to handle the packet //
+        if (!tmpconnect->IsThisYours(sender, sentport)) {
+            // That's an error //
+            Logger::Get()->Error("NetworkHandler: UpdateAllConnections: new connection "
+                "refused to process its packet from " + sender.toString() + ":" +
+                Convert::ToString(sentport));
+            CloseConnection(*tmpconnect);
+        } else {
+
+            tmpconnect->HandlePacket(receivedpacket);
+        }
+    }
+
+    return (status != sf::Socket::Error) && (status != sf::Socket::Disconnected);
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<std::promise<string>> Leviathan::NetworkHandler::QueryMasterServer(
-    Lock &guard, const MasterServerInformation &info)
-{
-	// Copy the data //
-	StoredMasterServerInfo = info;
+    const MasterServerInformation &info) {
+    // Copy the data //
+    StoredMasterServerInfo = info;
 
-	shared_ptr<std::promise<string>> resultvalue(new std::promise<string>());
+    shared_ptr<std::promise<string>> resultvalue(new std::promise<string>());
 
-	// Make sure it doesn't die instantly //
-	CloseMasterServerConnection = false;
+    // Make sure it doesn't die instantly //
+    CloseMasterServerConnection = false;
 
-	// Run the task async //
-	MasterServerConnectionThread = std::thread(RunGetResponseFromMaster, this, resultvalue);
+    // Run the task async //
+    MasterServerConnectionThread = std::thread(RunGetResponseFromMaster, this, resultvalue);
 
-	return resultvalue;
+    return resultvalue;
+}
+
+DLLEXPORT bool Leviathan::NetworkHandler::IsConnectionValid(Connection &connection) const {
+
+    GUARD_LOCK();
+
+    bool found = false;
+
+    for (auto& connectioniter : OpenConnections) {
+
+        if (connectioniter.get() == &connection) {
+
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+        return false;
+
+    return connection.IsOpen();
 }
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_SaveMasterServerList(){
 
-	// Set up the values //
-	vector<VariableBlock*> vals;
+    // Set up the values //
+    vector<VariableBlock*> vals;
     {
         vals.reserve(MasterServers.size());
 
-		// Only this scope requires locking //
-		GUARD_LOCK();
+        // Only this scope requires locking //
+        GUARD_LOCK();
 
-		for(size_t i = 0; i < MasterServers.size(); i++){
-			vals.push_back(new VariableBlock(*MasterServers[i].get()));
-		}
-	}
+        for(size_t i = 0; i < MasterServers.size(); i++){
+            vals.push_back(new VariableBlock(*MasterServers[i].get()));
+        }
+    }
 
-	NamedVars headervars(new NamedVariableList("MasterServers", vals));
+    NamedVars headervars;
+    headervars.Add(std::make_shared<NamedVariableList>("MasterServers", vals));
 
-	ObjectFile file(headervars);
+    ObjectFile file(headervars);
 
-
-	ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile);
+    ObjectFileProcessor::WriteObjectFile(file, StoredMasterServerInfo.StoredListFile,
+        Logger::Get());
 }
 
 bool Leviathan::NetworkHandler::_LoadMasterServerList(){
 
-	// Skip if there is no file defined //
-	if(!StoredMasterServerInfo.StoredListFile.size())
-		return false;
+    // Skip if there is no file defined //
+    if(!StoredMasterServerInfo.StoredListFile.size())
+        return false;
 
-	auto fileobj = ObjectFileProcessor::ProcessObjectFile(StoredMasterServerInfo.StoredListFile);
+    auto fileobj = ObjectFileProcessor::ProcessObjectFile(
+        StoredMasterServerInfo.StoredListFile, Logger::Get());
 
-	if(!fileobj)
-		return false;
+    if(!fileobj)
+        return false;
 
-	// Try to get the right variable with the name //
-	auto foundvar = fileobj->GetVariables()->GetValueDirectRaw("MasterServers");
+    // Try to get the right variable with the name //
+    auto foundvar = fileobj->GetVariables()->GetValueDirectRaw("MasterServers");
 
-	if(!foundvar)
-		return false;
+    if(!foundvar)
+        return false;
 
-	// Found value, load //
-	size_t maxval = foundvar->GetVariableCount();
+    // Found value, load //
+    size_t maxval = foundvar->GetVariableCount();
 
-	// We need locking for this add //
-	GUARD_LOCK();
+    // We need locking for this add //
+    GUARD_LOCK();
 
-	MasterServers.reserve(maxval);
+    MasterServers.reserve(maxval);
 
-	for(size_t i = 0; i < maxval; i++){
-		MasterServers.push_back(unique_ptr<string>(new string(
-                    foundvar->GetValueDirect(i)->ConvertAndReturnVariable<string>())));
-	}
+    for(size_t i = 0; i < maxval; i++){
+        MasterServers.push_back(unique_ptr<string>(new std::string(
+                    foundvar->GetValueDirect(i)->ConvertAndReturnVariable<std::string>())));
+    }
 
-	return true;
+    return true;
+}
+
+DLLEXPORT void Leviathan::NetworkHandler::ShutdownCache() {
+
+    if(_NetworkCache)
+        _NetworkCache->Release();
+}
+
+DLLEXPORT void Leviathan::NetworkHandler::ReleaseInputHandler() {
+
 }
 // ------------------------------------ //
-DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(const string &fulladdress,
-    const string &regextouse /*= "http://.*?/"*/)
+DLLEXPORT string Leviathan::NetworkHandler::GetServerAddressPartOfAddress(
+    const string &fulladdress, const string &regextouse /*= "http://.*?/"*/)
 {
-	// Create a regex //
-	regex findaddressregex(regextouse, regex_constants::ECMAScript | regex_constants::icase);
+    // Create a regex //
+    regex findaddressregex(regextouse, regex_constants::ECMAScript | regex_constants::icase);
 
-	match_results<const char*> addressmatch;
+    match_results<const char*> addressmatch;
 
-	// Return the match //
-	regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
+    // Return the match //
+    regex_search(fulladdress.c_str(), addressmatch, findaddressregex);
 
 
-	return string(addressmatch[1]);
+    return string(addressmatch[1]);
 }
+
+DLLEXPORT void Leviathan::NetworkHandler::_RegisterConnection(
+    std::shared_ptr<Connection> connection) 
+{
+    // Skip duplicates //
+    if (GetConnection(connection.get()))
+        return;
+
+    GUARD_LOCK();
+
+    OpenConnections.push_back(connection);
+}
+
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkHandler::UpdateAllConnections(){
 
-    // Remove closed connections //
-    RemoveClosedConnections();
-
     // Update remote console sessions if they exist //
-    auto rconsole = RemoteConsole::Get();
+    auto rconsole = Engine::Get()->GetRemoteConsole();
     if(rconsole)
         rconsole->UpdateStatus();
-        
-
     {
-        Lock lock(ConnectionsToUpdateMutex);
-        
+        GUARD_LOCK();
+
+        // Remove closed connections //
+        RemoveClosedConnections(guard);
+
+        // Do listening //
+        if (!BlockingMode) {
+
+            _RunUpdateOnce(guard);
+        }
+
         // Time-out requests //
-        for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
+        for (auto& connection : OpenConnections) {
 
-            auto connection = ConnectionsToUpdate[i];
-
-            GUARD_LOCK_OTHER(connection);
-
-            connection->UpdateListening(guard);
+            connection->UpdateListening();
         }
     }
-
-	// Interface might want to do something //
-	interfaceinstance->TickIt();
+    
+    // Interface might want to do something //
+    GetInterface()->TickIt();
 }
 // ------------------------------------ //
-void Leviathan::NetworkHandler::_RegisterConnectionInfo(ConnectionInfo* tomanage){
-
-    Lock lock(ConnectionsToUpdateMutex);
-	ConnectionsToUpdate.push_back(tomanage);
-}
-
-void Leviathan::NetworkHandler::_UnregisterConnectionInfo(ConnectionInfo* unregisterme){
-
-    Lock lock(ConnectionsToUpdateMutex);
-    
-	for(auto iter = ConnectionsToUpdate.begin(); iter != ConnectionsToUpdate.end(); ++iter){
-		if((*iter) == unregisterme){
-
-			ConnectionsToUpdate.erase(iter);
-			return;
-		}
-	}
-}
-
 Lock Leviathan::NetworkHandler::LockSocketForUse(){
     
-	return std::move(Lock((SocketMutex)));
+    return Lock((SocketMutex));
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkHandler::SafelyCloseConnectionTo(ConnectionInfo* to){
+DLLEXPORT void NetworkHandler::CloseConnection(Connection &to){
 
     Lock lock(ConnectionsToTerminateMutex);
 
     // Return if it is already queued //
-	for(auto& connection : ConnectionsToTerminate){
-		if(connection == to)
-			return;
-	}
+    for(auto& connection : ConnectionsToTerminate){
+        if(connection == &to)
+            return;
+    }
 
-	ConnectionsToTerminate.push_back(to);
+    ConnectionsToTerminate.push_back(&to);
 }
 
-DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(){
-
+DLLEXPORT void Leviathan::NetworkHandler::RemoveClosedConnections(Lock &guard)
+{
     Lock terminatelock(ConnectionsToTerminateMutex);
 
-	if(ConnectionsToTerminate.empty())
-		return;
+    // Go through the removed connection list and remove closed connections //
+    for (size_t a = 0; a < OpenConnections.size(); ) {
 
-	// Go through the removed connection list and remove them //
-	for(size_t i = 0; i < ConnectionsToTerminate.size(); i++){
+        bool close = false;
 
-        auto connection = ConnectionsToTerminate[i];
+        if (!OpenConnections[a]->IsOpen()) {
 
-        ConnectionsToTerminate.erase(ConnectionsToTerminate.begin()+i);
+            close = true;
 
-        terminatelock.unlock();
-        
-		// Send a close packet //
-		connection->SendCloseConnectionPacket();
+        } else {
 
-		// Close it //
-        // The connection will automatically remove itself from the vector //
-		connection->Release();
+            for (size_t i = 0; i < ConnectionsToTerminate.size(); i++) {
 
-        {
-            Lock openedlock(AutoOpenedConnectionsMutex);
-        
-            // But if we have opened it we need to delete our pointer //
-            auto end = AutoOpenedConnections.end();
-            for(auto iter = AutoOpenedConnections.begin(); iter != end; ++iter){
-            
-                if((*iter).get() == connection){
-                
-                    AutoOpenedConnections.erase(iter);
+                if (OpenConnections[a].get() == ConnectionsToTerminate[i]) {
+
+                    close = true;
                     break;
                 }
             }
         }
 
-        terminatelock.lock();
-	}
-}
-// ------------------------------------ //
-DLLEXPORT unsigned short Leviathan::NetworkHandler::GetOurPort(){
-	auto lock = std::move(LockSocketForUse());
-	return _Socket.getLocalPort();
-}
+        if (close) {
 
-DLLEXPORT NETWORKED_TYPE Leviathan::NetworkHandler::GetNetworkType() const{
-	return AppType;
-}
-// ------------------------------------ //
-DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::OpenConnectionTo(const string &targetaddress)
-{
-	// Create object //
-	shared_ptr<ConnectionInfo> tmpconnection(new ConnectionInfo(targetaddress));
+            auto& connection = OpenConnections[a];
 
-	// Initialize the connection //
-	if(!tmpconnection || !tmpconnection->Init()){
-        
-		return NULL;
-	}
+            // Send a close packet //
+            connection->SendCloseConnectionPacket();
 
-    Lock autolock(AutoOpenedConnectionsMutex);
-    
-	// If succeeded add to the automatically managed connections //
-	AutoOpenedConnections.push_back(tmpconnection);
+            // Close it //
+            connection->Release();
 
-	return tmpconnection;
-}
+            connection.reset();
 
-DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetSafePointerToConnection(ConnectionInfo* unsafeptr){
+            OpenConnections.erase(OpenConnections.begin() + a);
 
-    Lock autolock(AutoOpenedConnectionsMutex);
-    
-	for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
-		if(iter->get() == unsafeptr)
-			return *iter;
-	}
+        } else {
 
-	return NULL;
-}
-
-DLLEXPORT std::shared_ptr<ConnectionInfo> Leviathan::NetworkHandler::GetOrCreatePointerToConnection(const string &address){
-
-    {
-        Lock autolock(AutoOpenedConnectionsMutex);
-    
-        for(auto iter = AutoOpenedConnections.begin(); iter != AutoOpenedConnections.end(); ++iter){
-            if((*iter)->GenerateFormatedAddressString() == address)
-                return *iter;
+            a++;
         }
-
     }
 
-	// We need to open a new connection //
-	return OpenConnectionTo(address);
+    ConnectionsToTerminate.clear();
 }
+// ------------------------------------ //
+DLLEXPORT std::shared_ptr<Connection> NetworkHandler::GetConnection(Connection* directptr)
+    const
+{
+    GUARD_LOCK();
+
+    for(auto& connection : OpenConnections){
+
+        if(connection.get() == directptr)
+            return connection;
+    }
+
+    return nullptr;
+}
+// ------------------------------------ //
+DLLEXPORT std::shared_ptr<Connection> Leviathan::NetworkHandler::OpenConnectionTo(
+    const string &targetaddress)
+{
+    if(targetaddress.empty())
+        return nullptr;
+    
+    GUARD_LOCK();
+
+    // Find existing one //
+    for (auto& connection : OpenConnections) {
+
+        if (connection->GetRawAddress() == targetaddress)
+            return connection;
+    }
+
+    // Create new //
+    auto newconnection = std::make_shared<Connection>(targetaddress);
+
+    // Initialize the connection //
+    if(!newconnection->Init(this)){
+        
+        return nullptr;
+    }
+
+    OpenConnections.push_back(newconnection);
+
+    return newconnection;
+}
+
+DLLEXPORT std::shared_ptr<Leviathan::Connection> Leviathan::NetworkHandler::OpenConnectionTo(
+    Lock &guard, const sf::IpAddress &targetaddress, unsigned short port) 
+{
+    // Find existing one //
+    for (auto& connection : OpenConnections) {
+
+        if (connection->IsThisYours(targetaddress, port))
+            return connection;
+    }
+
+    // Create new //
+    auto newconnection = std::make_shared<Connection>(targetaddress, port);
+
+    // Initialize the connection //
+    if (!newconnection->Init(this)) {
+
+        return nullptr;
+    }
+
+    OpenConnections.push_back(newconnection);
+
+    return newconnection;
+}
+
 // ------------------------------------ //
 void Leviathan::NetworkHandler::_RunListenerThread(){
 
     // Let's listen for things //
-	sf::Packet receivedpacket;
-
-	sf::IpAddress sender;
-	unsigned short sentport;
-
     Logger::Get()->Info("NetworkHandler: running listening thread");
+    {
 
-	// Loop through all received packets //
-	while(_Socket.receive(receivedpacket, sender, sentport) == sf::Socket::Done){
+        GUARD_LOCK();
+        while (_RunUpdateOnce(guard)) {
 
-        // Quit if no longer valid //
-        if(Get() != this)
-            break;
-        
-		// Process packet //
-        
-		// Pass to a connection //
-		bool Passed = false;
-
-        Lock connectionlock(ConnectionsToUpdateMutex);
-        
-		for(size_t i = 0; i < ConnectionsToUpdate.size(); i++){
-			// Keep passing until somebody handles it //
-			if(ConnectionsToUpdate[i]->IsThisYours(sender, sentport)){
-
-                auto curconnection = ConnectionsToUpdate[i];
-                
-                // Handle it //
-                connectionlock.unlock();
-                
-                curconnection->HandlePacket(receivedpacket);
-                
-                connectionlock.lock();
-                
-				Passed = true;
-				break;
-			}
-		}
-
-		if(Passed)
-			continue;
-
-		shared_ptr<ConnectionInfo> tmpconnect;
-
-		// \todo Check is it a close or a keepalive packet //
-
-
-
-		// We might want to open a new connection to this client //
-		Logger::Get()->Info("Received a new connection from "+sender.toString()+":"+Convert::ToString(sentport));
-
-        // \todo Make sure that the console won't be deleted between this and the actual check
-        RemoteConsole* rcon = RemoteConsole::Get();
-
-		if(AppType != NETWORKED_TYPE_CLIENT){
-			// Accept the connection //
-			Logger::Get()->Info("\t> Connection accepted");
-
-			tmpconnect = std::shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
-
-		} else if(rcon && rcon->IsAwaitingConnections()){
-            
-			// We might allow a remote start remote console session //
-			Logger::Get()->Info("\t> Connection accepted for remote console receive");
-
-			tmpconnect = std::shared_ptr<ConnectionInfo>(new ConnectionInfo(sender, sentport));
-			// We need a special restriction for this connection //
-			tmpconnect->SetRestrictionMode(CONNECTION_RESTRICTION_RECEIVEREMOTECONSOLE);
-
-		} else {
-			// Deny the connection //
-			Logger::Get()->Info("\t> Dropping connection due to not being a server (and not expecting anything)");
-
-		}
-
-		if(tmpconnect){
-
-            // This doesn't need relocking as it will be recreated next loop //
-            connectionlock.unlock();
-            
-			// Try to handle with the new connection //
-			// We need to initialize the new connection first //
-			if(!tmpconnect->Init()){
-				// This should never happen //
-				assert(0 && "connection init function should never fail");
-			}
-
-            {
-                Lock autolock(AutoOpenedConnectionsMutex);
-            
-                AutoOpenedConnections.push_back(tmpconnect);
-
-            }
-
-			// Try to handle the packet //
-			if(!tmpconnect->IsThisYours(sender, sentport)){
-				// That's an error //
-				Logger::Get()->Error("NetworkHandler: UpdateAllConnections: new connection refused to process "
-                    "its packet from "+sender.toString()+":"+Convert::ToString(sentport));
-			} else {
-
-                tmpconnect->HandlePacket(receivedpacket);
-            }
-		}
-	}
+        }
+    }
 
     Logger::Get()->Info("NetworkHandler: listening socket thread quitting");
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkHandler::StopOwnUpdaterThread(Lock &guard){
-    
-    // Tell the thread to stop //
-    UpdaterThreadStop = true;
-
-    // Make it stop waiting for faster quitting //
-    NotifyTemporaryUpdater.notify_all();
-
-    // Wait for the thread to die //
-    guard.unlock();
-    
-    // TODO: check that this doesn't deadlock //
-    if(TemporaryUpdateThread.joinable())
-        TemporaryUpdateThread.join();
-
-    guard.lock();
-}
-
-void Leviathan::NetworkHandler::_RunTemporaryUpdaterThread(){
-
-    GUARD_LOCK_NAME(lockit);
-
-    // Run until told to stop and update connections when enough time has elapsed //
-    while(!UpdaterThreadStop){
-
-        lockit.unlock();
-
-        // This whole object doesn't need to be locked in here //
-        UpdateAllConnections();
-
-        lockit.lock();
-        
-        NotifyTemporaryUpdater.wait_for(lockit, std::chrono::milliseconds(50));
-    }
 }
 // ------------------------------------ //
 void Leviathan::RunGetResponseFromMaster(NetworkHandler* instance,
     std::shared_ptr<std::promise<string>> resultvar)
 {
-	// Try to load master server list //
+    // Try to load master server list //
 
-	// To reduce duplicated code and namespace pollution use a lambda thread for this //
-	std::thread DataUpdaterThread(std::bind<void>([](NetworkHandler* instance) -> void{
+    // To reduce duplicated code and namespace pollution use a lambda thread for this //
+    std::thread DataUpdaterThread(std::bind<void>([](NetworkHandler* instance)
+        -> void
+    {
 
-		Logger::Get()->Info("NetworkHandler: Fetching new master server list...");
-		sf::Http::Request request(instance->StoredMasterServerInfo.MasterListFetchPage,
+        Logger::Get()->Info("NetworkHandler: Fetching new master server list...");
+        sf::Http::Request request(instance->StoredMasterServerInfo.MasterListFetchPage,
             sf::Http::Request::Get);
 
-		sf::Http httpserver(instance->StoredMasterServerInfo.MasterListFetchServer);
+        sf::Http httpserver(instance->StoredMasterServerInfo.MasterListFetchServer);
 
-		sf::Http::Response response = httpserver.sendRequest(request, sf::seconds(2.f));
+        sf::Http::Response response = httpserver.sendRequest(request, sf::seconds(2.f));
 
-		if(instance->CloseMasterServerConnection)
-			return;
+        if (instance->CloseMasterServerConnection)
+            return;
 
-		if(response.getStatus() == sf::Http::Response::Ok){
+        if (response.getStatus() == sf::Http::Response::Ok) {
 
-			// It should just be a list of master servers one on each line //
-			StringIterator itr(response.getBody());
+            // It should just be a list of master servers one on each line //
+            StringIterator itr(response.getBody());
 
-			unique_ptr<string> data;
+            unique_ptr<string> data;
 
-			std::vector<unique_ptr<string>> tmplist;
-
-
-			while((data = itr.GetUntilNextCharacterOrAll<string>(L'\n')) && (data->size())){
-
-				tmplist.push_back(move(data));
-			}
-
-			// Check //
-			if(tmplist.size() == 0){
-
-				Logger::Get()->Warning("NetworkHandler: retrieved an empty list of master "
-                    "servers, not updated");
-				return;
-			}
-
-			if(instance->CloseMasterServerConnection)
-				return;
-
-			// Update real list //
-			GUARD_LOCK_OTHER(instance);
-
-			instance->MasterServers.clear();
-			instance->MasterServers.reserve(tmplist.size());
-			for(auto iter = tmplist.begin(); iter != tmplist.end(); ++iter){
-
-				instance->MasterServers.push_back(shared_ptr<string>(new string((*(*iter)))));
-			}
+            std::vector<unique_ptr<string>> tmplist;
 
 
-			// Notify successful fetch //
-			auto tmpget = Logger::Get();
-			if(tmpget)
-				tmpget->Info("NetworkHandler: Successfully fetched a master server list:");
-			for(auto iter = instance->MasterServers.begin(); iter != instance->MasterServers.end();
-                ++iter)
-            {
-				if(tmpget)
-				Logger::Get()->Write("\t> "+*(*iter).get());
+            while ((data = itr.GetUntilNextCharacterOrAll<string>(L'\n')) && (data->size())) {
+
+                tmplist.push_back(move(data));
             }
 
-		} else {
-			// Fail //
-			Logger::Get()->Error("NetworkHandler: failed to update the master server list, using the old list");
-		}
+            // Check //
+            if (tmplist.size() == 0) {
+
+                Logger::Get()->Warning("NetworkHandler: retrieved an empty list of master "
+                    "servers, not updated");
+                return;
+            }
+
+            if (instance->CloseMasterServerConnection)
+                return;
+
+            // Update real list //
+            GUARD_LOCK_OTHER(instance);
+
+            instance->MasterServers.clear();
+            instance->MasterServers.reserve(tmplist.size());
+            for (auto iter = tmplist.begin(); iter != tmplist.end(); ++iter) {
+
+                instance->MasterServers.push_back(shared_ptr<string>(new string((*(*iter)))));
+            }
 
 
-	}, instance));
+            // Notify successful fetch //
+            auto tmpget = Logger::Get();
+            if (tmpget)
+                tmpget->Info("NetworkHandler: Successfully fetched a master server list:");
 
-	if(!instance->_LoadMasterServerList()){
+            for (auto iter = instance->MasterServers.begin();
+                iter != instance->MasterServers.end();
+                ++iter)
+            {
+                if (tmpget)
+                    Logger::Get()->Write("\t> " + *(*iter).get());
+            }
 
-		// We need to request a new list before we can do anything //
-		Logger::Get()->Info("NetworkHandler: no stored list of master servers, waiting for the update to finish");
+        } else {
+            // Fail //
+            Logger::Get()->Error("NetworkHandler: failed to update the master server list, "
+                "using the old list");
+        }
+
+
+    }, instance));
+
+    if(!instance->_LoadMasterServerList()){
+
+        // We need to request a new list before we can do anything //
+        Logger::Get()->Info("NetworkHandler: no stored list of master servers, "
+            "waiting for the update to finish");
 
         if(!DataUpdaterThread.joinable())
             throw Exception("This should be joinable");
-		DataUpdaterThread.join();
-	}
+        DataUpdaterThread.join();
+    }
 
-	if(instance->CloseMasterServerConnection)
-		return;
+    if(instance->CloseMasterServerConnection)
+        return;
 
-	bool uselocalhost = false;
+    bool uselocalhost = false;
 
-	// We might want to try to connect to localhost //
-	{
-		GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+    // We might want to try to connect to localhost //
+    {
+        GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
-		if(variables)
-			variables->GetValueAndConvertTo<bool>("MasterServerForceLocalhost", uselocalhost);
-	}
+        if(variables)
+            variables->GetValueAndConvertTo<bool>("MasterServerForceLocalhost", uselocalhost);
+    }
 
-	// Try to find a master server to connect to //
-	for(size_t i = 0; i < instance->MasterServers.size(); i++){
+    // Try to find a master server to connect to //
+    for (size_t i = 0; i < instance->MasterServers.size(); i++) {
 
-		shared_ptr<string> tmpaddress;
+        shared_ptr<string> tmpaddress;
 
-		{
-			GUARD_LOCK_OTHER(instance);
+        {
+            GUARD_LOCK_OTHER(instance);
 
-			tmpaddress = instance->MasterServers[i];
-		}
+            tmpaddress = instance->MasterServers[i];
+        }
 
-		if(uselocalhost){
+        if (uselocalhost) {
 
-			// We might want to warn about this //
-			ComplainOnce::PrintWarningOnce("MasterServerForceLocalhostOn",
-                "Master server list forced to use localhost as address, might not be what you want");
+            // We might want to warn about this //
+            ComplainOnce::PrintWarningOnce("MasterServerForceLocalhostOn",
+                "Master server list forced to use localhost as address, "
+                "might not be what you want");
 
-			StringIterator itr(tmpaddress.get());
+            StringIterator itr(tmpaddress.get());
 
-			itr.GetUntilNextCharacterOrAll<string>(L':');
+            itr.GetUntilNextCharacterOrAll<string>(':');
 
-			// Right now the part we don't want is retrieved //
-			auto tmpres = itr.GetUntilEnd<string>();
+            // Right now the part we don't want is retrieved //
+            auto tmpres = itr.GetUntilEnd<string>();
 
-			// The result now should have the ':' character and the possible port //
+            if(!tmpres){
 
-			tmpaddress = std::shared_ptr<string>(new string("localhost"+*tmpres.get()));
-		}
+                // Got nothing //
+                LOG_WARNING("GetMasterServerList: got an empty response");
+                continue;
+            }
 
-		if(instance->CloseMasterServerConnection)
-			return;
+            // The result now should have the ':' character and the possible port //
 
-		// Try connection //
-		shared_ptr<ConnectionInfo> tmpinfo(new ConnectionInfo(*tmpaddress));
+            tmpaddress = std::shared_ptr<string>(new string("localhost" + *tmpres.get()));
+        }
 
-		if(!tmpinfo->Init()){
+        if (instance->CloseMasterServerConnection)
+            return;
 
-			Logger::Get()->Error("NetworkHandler: failed to open a connection to target");
-			continue;
-		}
+        // Try connection //
+        auto tmpinfo = instance->OpenConnectionTo(*tmpaddress);
 
-		// Create an identification request //
-		shared_ptr<NetworkRequest> inforequest(new NetworkRequest(NETWORKREQUESTTYPE_IDENTIFICATION, 1500,
-                PACKET_TIMEOUT_STYLE_TIMEDMS));
+        if (!tmpinfo) {
 
-		// Send the request and create a task that'll wait for the response //
-		shared_ptr<SentNetworkThing> serverinforesponse = tmpinfo->SendPacketToConnection(inforequest, 5);
+            Logger::Get()->Error("NetworkHandler: failed to open a connection to target");
+            continue;
+        }
+
+        // Create an identification request //
+        RequestIdentification request;
+
+        // Send the request and create a task that'll wait for the response //
+        shared_ptr<SentNetworkThing> serverinforesponse =
+            tmpinfo->SendPacketToConnection(request, RECEIVE_GUARANTEE::Critical);
+
+        serverinforesponse->SetCallbackFunc(std::bind([](
+            bool succeeded, SentNetworkThing &sentthing,
+            NetworkHandler* instance,
+            std::shared_ptr<Connection> currentconnection,
+            std::shared_ptr<string> tmpaddress,
+            std::shared_ptr<std::promise<string>> resultvar
+            ) -> void 
+        {
+            // Report this for easier debugging //
+            Logger::Get()->Info("Master server check with \"" + *tmpaddress +
+                "\" completed");
+
+            // Quit if the instance is gone //
+            if (instance->CloseMasterServerConnection)
+                return;
+
+            auto actualresponse = sentthing.GotResponse;
 
 
-        std::shared_ptr<std::promise<bool>> sendpromise(new std::promise<bool>());
+            if (!actualresponse) {
+                // Failed to receive something from the server //
+                Logger::Get()->Warning("NetworkHandler: failed to receive a "
+                    "response from master server(" + *tmpaddress + ")");
+
+                // Release connection //
+                currentconnection->Release();
+                return;
+            }
+
+            Logger::Get()->Warning("NetworkHandler: received a response from "
+                "master server(" + *tmpaddress + "):");
+
+            // Get data //
+            ResponseIdentification* tmpresponse = static_cast<ResponseIdentification*>(
+                actualresponse.get());
+
+            if (actualresponse->GetType() != NETWORK_RESPONSE_TYPE::Identification) {
+                // Failed to receive valid response //
+                Logger::Get()->Warning("NetworkHandler: received an invalid response "
+                    "from master server(" + *tmpaddress + ")");
+                // Release connection //
+                currentconnection->Release();
+                return;
+            }
+
+            // Ensure data validness //
+
+            // \todo verify that the data is sane //
+
+            {
+                // Set a working server //
+                GUARD_LOCK_OTHER(instance);
+                instance->MasterServerConnection = currentconnection;
+            }
+
+            // Successfully connected //
+            resultvar->set_value(string("ConnectedToMasterServer = " + *tmpaddress + ";"));
 
 
-		// Now we'll just wait until it is done //
-		ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](
-                        std::shared_ptr<SentNetworkThing> response, NetworkHandler* instance,
-                        std::shared_ptr<std::promise<bool>> result, std::shared_ptr<ConnectionInfo> currentconnection,
-                        std::shared_ptr<string> tmpaddress, std::shared_ptr<std::promise<string>> resultvar) -> void
-				{
-					// Report this for easier debugging //
-					Logger::Get()->Info("Master server check with \""+*tmpaddress+
-										"\" completed");
+        }, std::placeholders::_1, std::placeholders::_2, instance, tmpinfo, tmpaddress,
+            resultvar));
+    }
 
-					// Quit if the instance is gone //
-					if(instance->CloseMasterServerConnection)
-						return;
-					
-					auto actualresponse = response->GotResponse;
-					
-					
-					if(!actualresponse){
-						// Failed to receive something from the server //
-						Logger::Get()->Warning("NetworkHandler: failed to receive a response from master server("+
-                            *tmpaddress+")");
-						// Release connection //
-						currentconnection->Release();
-						return;
-					}
-					
-					Logger::Get()->Warning("NetworkHandler: received a response from master server("+*tmpaddress+
-                        "):");
-					
-					// Get data //
-					
-					NetworkResponseDataForIdentificationString* tmpresponse =
-                        actualresponse->GetResponseDataForIdentificationString();
-					
-					if(!tmpresponse){
-						// Failed to receive valid response //
-						Logger::Get()->Warning("NetworkHandler: received an invalid response from master server("+
-                            *tmpaddress+")");
-						// Release connection //
-						currentconnection->Release();
-						return;
-					}
-					
-					// Ensure data validness //
-					
-					// \todo verify that the data is sane //
-					
-					{
-						// Set a working server //
-						GUARD_LOCK_OTHER(instance);
-						instance->MasterServerConnection = currentconnection;
-					}
-						
-					// Successfully connected //
-					resultvar->set_value(string("ConnectedToMasterServer = "+*tmpaddress+";"));
-					
-						
-					// Tell all our friends of the result //
-					result->set_value(true);
-						
-						
-				}, serverinforesponse, instance, sendpromise, tmpinfo, tmpaddress, resultvar),
-                std::bind<bool>([](std::shared_ptr<SentNetworkThing> response) -> bool
-					{
-						
-						return response->IsFinalized();
-					}, serverinforesponse)));
-	}
-	
-
-	// TODO: run this only when all the tasks fail
-	if(false){
-		// If we got here, we haven't connected to anything //
-		Logger::Get()->Warning("NetworkHandler: could not connect to any fetched master servers, "
-            "you can restart to use a new list");
-		
-		// We can let whoever is waiting for us to go now, and finish some utility
+    // TODO: run this only when all the tasks fail
+    if(false){
+        // If we got here, we haven't connected to anything //
+        Logger::Get()->Warning("NetworkHandler: could not connect to any fetched master "
+            "servers, you can restart to use a new list");
+        
+        // We can let whoever is waiting for us to go now, and finish some utility
         // tasks after that
-		resultvar->set_value(string("Failed to connect to master server"));
-	}
+        resultvar->set_value(std::string("Failed to connect to master server"));
+    }
 
-
-	// This needs to be done here //
+    // This needs to be done here //
     if(DataUpdaterThread.joinable())
         DataUpdaterThread.join();
 
-	// Output the current list //
-	instance->_SaveMasterServerList();
+    // Output the current list //
+    instance->_SaveMasterServerList();
 }
 
 

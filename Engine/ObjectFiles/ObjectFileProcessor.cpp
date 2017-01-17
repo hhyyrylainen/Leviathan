@@ -4,6 +4,9 @@
 
 #include "FileSystem.h"
 #include "Common/DataStoring/DataBlock.h"
+#ifndef NO_DEFAULT_DATAINDEX
+#include "../Common/DataStoring/DataStore.h"
+#endif
 #include "Common/StringOperations.h"
 #include "Iterators/StringIterator.h"
 #include "utf8/core.h"
@@ -15,11 +18,11 @@
 #include "Exceptions.h"
 #endif // ALLOW_INTERNAL_EXCEPTIONS
 
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 #include "../Script/ScriptModule.h"
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptScript.h"
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -32,7 +35,8 @@ Leviathan::ObjectFileProcessor::~ObjectFileProcessor(){}
                 new IntBlock(x)))}
 
 
-map<std::string, std::shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor::RegisteredValues = {
+map<std::string, std::shared_ptr<VariableBlock>>
+    Leviathan::ObjectFileProcessor::RegisteredValues = {
     ADDDATANAMEINTDEFINITION(DATAINDEX_TICKTIME),
     ADDDATANAMEINTDEFINITION(DATAINDEX_TICKCOUNT),
     ADDDATANAMEINTDEFINITION(DATAINDEX_FRAMETIME),
@@ -54,11 +58,11 @@ map<std::string, std::shared_ptr<VariableBlock>> Leviathan::ObjectFileProcessor:
 void Leviathan::ObjectFileProcessor::Initialize(){
 #if defined(_DEBUG) && !defined(NO_DEFAULT_DATAINDEX)
 	// Just out of curiosity check this //
-	auto iter = RegisteredValues.find(L"DATAINDEX_TICKTIME");
+	auto iter = RegisteredValues.find("DATAINDEX_TICKTIME");
 
 	if(iter == RegisteredValues.end()){
 
-		reporterror->Error("ObjectFileProcessor: RegisteredValues are messed up, "
+		LOG_ERROR("ObjectFileProcessor: RegisteredValues are messed up, "
             "DATAINDEX_TICKTIME is not defined, check the macros!");
         
 		return;
@@ -182,7 +186,9 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile> ObjectFileProcessor::ProcessObj
 
                 reporterror->Error("ObjectFileProcessor: variable name already in use, file: "
                     "" + filenameforerrors + "(" + Convert::ToString(thisstart) + "):");
-                return NULL;
+                
+                succeeded = false;
+                break;
             }
 
             continue;
@@ -422,7 +428,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 		if(!tmpldata){
 
 			reporterror->Error("ObjectFile template has an invalid argument list "
-                "(missing the ending '>' or the instantiation is missing it's parameters) , "
+                "(missing the ending '>' or the instantiation is missing its parameters) , "
                 "file: "+file+"("+Convert::ToString(startline)+")");
 			return false;
 		}
@@ -614,7 +620,7 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 	if(itr.GetCharacter() != '{'){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile object is missing a '{' after it's name, file: "+
+		reporterror->Error("ObjectFile object is missing a '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return NULL;
 	}
@@ -682,8 +688,9 @@ shared_ptr<ObjectFileObject> Leviathan::ObjectFileProcessor::TryToLoadObject(
 	}
 
 	// It didn't end properly //
-	reporterror->Error("ObjectFile object is missing a closing '}' after it's contents, "
-        "file: "+file+"("+Convert::ToString(startline)+")");
+	reporterror->Error("ObjectFile object \"" + *oname + "\" is missing a closing '}' "
+        "after its contents, file: "+file+"("+Convert::ToString(startline)+")");
+    
 	return NULL;
 }
 // ------------------------------------ //
@@ -696,8 +703,9 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
         UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
-    if (ourname)
+    if (ourname){
         StringOperations::RemovePreceedingTrailingSpaces(*ourname);
+    }
 
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
@@ -713,7 +721,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 	if(itr.GetCharacter() != '{'){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile variable list is missing '{' after it's name, file: "+
+		reporterror->Error("ObjectFile variable list is missing '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}
@@ -742,7 +750,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 			if(!obj.AddVariableList(std::move(ourobj))){
 
 				reporterror->Error("ObjectFile variable list has conflicting name inside "
-                    "it's object, file: "+file+"("+Convert::ToString(ourstartline)+")");
+                    "its object, file: "+file+"("+Convert::ToString(ourstartline)+")");
 				return false;
 			}
             
@@ -763,7 +771,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadVariableList(const std::string &fi
 		// Add a variable to us //
 		if(!ourobj->AddVariable(loadvar)){
 
-			reporterror->Error("ObjectFile variable list has conflicting name inside it's "
+			reporterror->Error("ObjectFile variable list has conflicting name inside its "
                 "object, name: \""+loadvar->GetName()+"\", file: "+file+"("+
                 Convert::ToString(itr.GetCurrentLine())+")");
 			return false;
@@ -786,8 +794,10 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
         UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS,
 		SPECIAL_ITERATOR_FILEHANDLING);
 
-    if (ourname)
+    if (ourname){
+        
         StringOperations::RemovePreceedingTrailingSpaces(*ourname);
+    }
 
 	// Check is it valid //
 	if(!ourname || ourname->size() == 0){
@@ -803,7 +813,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
 	if(itr.GetCharacter() != '{'){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile variable list is missing '{' after it's name, file: "+
+		reporterror->Error("ObjectFile variable list is missing '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}
@@ -883,7 +893,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const std::string &fil
 	if(itr.GetCharacter() != '{' && !linechanged){
 		// There is a missing brace //
 
-		reporterror->Error("ObjectFile script block is missing '{' after it's name, file: "+
+		reporterror->Error("ObjectFile script block is missing '{' after its name, file: "+
             file+"("+Convert::ToString(itr.GetCurrentLine())+")");
 		return false;
 	}
@@ -925,7 +935,7 @@ bool Leviathan::ObjectFileProcessor::TryToLoadScriptBlock(const std::string &fil
     auto ourmod = ourobj->GetModule();
 
 
-    ourmod->AddScriptSegment(file, ourstartline, *scriptdata);
+    ourmod->AddScriptSegment(file, static_cast<int>(ourstartline), *scriptdata);
     ourmod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
     // Add to the object //

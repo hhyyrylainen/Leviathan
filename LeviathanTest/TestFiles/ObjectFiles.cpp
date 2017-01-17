@@ -28,12 +28,13 @@ constexpr auto BasicTestStr = "FirstVariable = 42;\n"
 TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
 
     DummyReporter reporter;
-    Logger log("Test/TestLog.txt");
+    Logger log("Test/ExtraTest.txt");
 
     SECTION("minimal syntax string") {
 
         // Try to parse a minimal syntax file //
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(BasicTestStr, "basic in memory test", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(BasicTestStr,
+            "basic in memory test", &reporter);
 
         REQUIRE(ofile != nullptr);
 
@@ -59,7 +60,8 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
         REQUIRE(value);
 
         int firstValue;
-        CHECK(ObjectFileProcessor::LoadValueFromNamedVars(list->GetVariables(), "firstValue", firstValue, 0));
+        CHECK(ObjectFileProcessor::LoadValueFromNamedVars(list->GetVariables(),
+                "firstValue", firstValue, 0));
 
         CHECK(firstValue == 1);
     }
@@ -70,7 +72,8 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
             "\n"
             "}\n";
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(ObjToParse, "ObjToParse", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(ObjToParse,
+            "ObjToParse", &reporter);
 
         REQUIRE(ofile != nullptr);
         REQUIRE(ofile->GetTotalObjectCount() == 1);
@@ -80,26 +83,27 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
 #ifndef LEVIATHAN_UE_PLUGIN
 TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 
+    DummyReporter reporter;
     ScriptExecutor exec;
-    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
+    PartialEngine<false> engine;
     
-	// First test the minimal file //
-	string minfile = "Data/Scripts/tests/SimpleTest.levof";
+    // First test the minimal file //
+    string minfile = "Data/Scripts/tests/SimpleTest.levof";
 
-	// Try to parse it //
-	auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile);
+    // Try to parse it //
+    auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile, &reporter);
 
     REQUIRE(ofile != nullptr);
 
-	const NamedVars& HeaderVars = *ofile->GetVariables();
+    const NamedVars& HeaderVars = *ofile->GetVariables();
 
-	// Validate the output //
+    // Validate the output //
     CHECK(HeaderVars.GetVariableCount() == 4);
 
     string TestFile = "Data/Scripts/tests/TestObjectFile.levof";
-	
-	// Make sure the loading is correct //
-	auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile);
+    
+    // Make sure the loading is correct //
+    auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile, &reporter);
 
     REQUIRE(rofile != nullptr);
 
@@ -113,7 +117,8 @@ TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
 
     SECTION("Header var") {
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12", "missing ; parse test", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("Basic = 12",
+            "missing ; parse test", &reporter);
 
         REQUIRE(ofile != nullptr);
 
@@ -143,7 +148,8 @@ TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
             "    }\n"
             "}";
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "parse test", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "parse test",
+            &reporter);
 
         REQUIRE(ofile != nullptr);
 
@@ -154,15 +160,20 @@ TEST_CASE("Allow missing ending ';' in objectfile", "[objectfile]") {
 
         REQUIRE(variables.GetValueDirect("is_default"));
         CHECK(variables.GetValueDirect("is_default")->GetCommonType() == DATABLOCK_TYPE_BOOL);
-        CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>() == true);
+        CHECK(variables.GetValueDirect("is_default")->GetValue().
+            ConvertAndReturnVariable<bool>() == true);
 
         REQUIRE(variables.GetValueDirect("chat_prefix"));
-        CHECK(variables.GetValueDirect("chat_prefix")->GetCommonType() == DATABLOCK_TYPE_STRING);
-        CHECK(variables.GetValueDirect("chat_prefix")->GetValue().ConvertAndReturnVariable<std::string>() == "[NEW] ");
+        CHECK(variables.GetValueDirect("chat_prefix")->GetCommonType() ==
+            DATABLOCK_TYPE_STRING);
+        CHECK(variables.GetValueDirect("chat_prefix")->GetValue().
+            ConvertAndReturnVariable<std::string>() == "[NEW] ");
 
         REQUIRE(variables.GetValueDirect("auto_promote"));
-        CHECK(variables.GetValueDirect("auto_promote")->GetCommonType() == DATABLOCK_TYPE_STRING);
-        CHECK(variables.GetValueDirect("auto_promote")->GetValue().ConvertAndReturnVariable<std::string>() == "1hr");
+        CHECK(variables.GetValueDirect("auto_promote")->GetCommonType() ==
+            DATABLOCK_TYPE_STRING);
+        CHECK(variables.GetValueDirect("auto_promote")->GetValue().
+            ConvertAndReturnVariable<std::string>() == "1hr");
     }
 }
 
@@ -181,7 +192,8 @@ TEST_CASE("Object file saving", "[objectfile]") {
 
         CHECK(serialized.size() > 0);
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized,
+            "serialized", &reporter);
 
         REQUIRE(ofile);
         REQUIRE(ofile->GetTotalObjectCount() == 1);
@@ -200,16 +212,18 @@ TEST_CASE("Object file saving", "[objectfile]") {
 
         auto list1 = std::make_unique<ObjectFileListProper>("Just a list");
 
-        list1->AddVariable(std::make_shared<NamedVariableList>("boring variable", new VariableBlock(true)));
-        list1->AddVariable(std::make_shared<NamedVariableList>("another var", new VariableBlock(4)));
+        list1->AddVariable(std::make_shared<NamedVariableList>("boring variable",
+                new VariableBlock(true)));
+        list1->AddVariable(std::make_shared<NamedVariableList>("another var",
+                new VariableBlock(4)));
 
-        obj1->AddVariableList(std::move(std::unique_ptr<ObjectFileList>(list1.release())));
+        obj1->AddVariableList(std::unique_ptr<ObjectFileList>(list1.release()));
 
         auto text1 = std::make_unique<ObjectFileTextBlockProper>("Just a list");
         text1->AddTextLine("This is the place for a cool");
         text1->AddTextLine("story that spans multiple lines");
 
-        obj1->AddTextBlock(std::move(std::unique_ptr<ObjectFileTextBlock>(text1.release())));
+        obj1->AddTextBlock(std::unique_ptr<ObjectFileTextBlock>(text1.release()));
 
         CHECK(prefixes.size() == 0);
 
@@ -221,15 +235,18 @@ TEST_CASE("Object file saving", "[objectfile]") {
         obj.AddObject(obj1);
         obj.AddObject(obj2);
 
-        obj.AddNamedVariable(std::make_shared<NamedVariableList>("TestVar", new VariableBlock(17.5)));
-        obj.AddNamedVariable(std::make_shared<NamedVariableList>("Var2", new VariableBlock(std::string("things"))));
+        obj.AddNamedVariable(std::make_shared<NamedVariableList>("TestVar",
+                new VariableBlock(17.5)));
+        obj.AddNamedVariable(std::make_shared<NamedVariableList>("Var2",
+                new VariableBlock(std::string("things"))));
 
         std::string serialized;
         REQUIRE(ObjectFileProcessor::SerializeObjectFile(obj, serialized));
 
         CHECK(serialized.size() > 0);
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized",
+            &reporter);
 
         REQUIRE(ofile);
         REQUIRE(ofile->GetTotalObjectCount() == 2);
@@ -238,7 +255,8 @@ TEST_CASE("Object file saving", "[objectfile]") {
         REQUIRE(ofile->GetObject(0)->GetPrefixesCount() == 1);
         CHECK(ofile->GetObject(0)->GetPrefix(0) == "prefix1");
         REQUIRE(ofile->GetObject(0)->GetListWithName("Just a list"));
-        CHECK(ofile->GetObject(0)->GetListWithName("Just a list")->GetVariables().GetValueDirect("another var"));
+        CHECK(ofile->GetObject(0)->GetListWithName("Just a list")->GetVariables().
+            GetValueDirect("another var"));
 
         CHECK(ofile->GetObject(1)->GetName() == "A fine object");
         CHECK(ofile->GetObject(1)->GetTypeName() == "Gui");
@@ -274,7 +292,8 @@ TEST_CASE("Object file saving", "[objectfile]") {
 
         CHECK(serialized.size() > 0);
 
-        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized, "serialized", &reporter);
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(serialized,
+            "serialized", &reporter);
 
         REQUIRE(ofile);
         REQUIRE(ofile->GetTotalObjectCount() == 1);
@@ -287,7 +306,7 @@ TEST_CASE("Object file saving", "[objectfile]") {
 }
 
 
-TEST_CASE("Fabricators permissions parse test", "[objectfile, fabricators]") {
+TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
 
     constexpr auto File = "permissions_version: 1;\n"
         "\n"
@@ -309,7 +328,8 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile, fabricators]") {
         "}";
 
     DummyReporter reporter;
-    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File, "permissions_test1", &reporter);
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+        "permissions_test1", &reporter);
 
     REQUIRE(ofile != nullptr);
 
@@ -320,125 +340,103 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile, fabricators]") {
     const auto& variables = ofile->GetObject(0)->GetListWithName("values")->GetVariables();
 
     REQUIRE(variables.GetValueDirect("is_default"));
-    CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>() == true);
+    CHECK(variables.GetValueDirect("is_default")->GetValue().ConvertAndReturnVariable<bool>()
+        == true);
 
     REQUIRE(variables.GetValueDirect("chat_prefix"));
-    CHECK(variables.GetValueDirect("chat_prefix")->GetValue().ConvertAndReturnVariable<std::string>() == "[NEW] ");
+    CHECK(variables.GetValueDirect("chat_prefix")->GetValue().
+        ConvertAndReturnVariable<std::string>() == "[NEW] ");
 
 
     const auto& nodes = ofile->GetObject(0)->GetListWithName("nodes")->GetVariables();
 
     REQUIRE(nodes.GetValueDirect("core.home"));
-    CHECK(nodes.GetValueDirect("core.home")->GetValue().ConvertAndReturnVariable<bool>() == true);
+    CHECK(nodes.GetValueDirect("core.home")->GetValue().ConvertAndReturnVariable<bool>()
+        == true);
 
     REQUIRE(nodes.GetValueDirect("core.kill"));
-    CHECK(nodes.GetValueDirect("core.kill")->GetValue().ConvertAndReturnVariable<std::string>() == "default");
+    CHECK(nodes.GetValueDirect("core.kill")->GetValue().ConvertAndReturnVariable<std::string>()
+        == "default");
 
 }
 
-TEST_CASE("Fabricators permissions full default file", "[objectfile, fabricators]") {
+TEST_CASE("Floats don't have culture specific ',' in them", "[objectfile, variable]"){
 
-    constexpr auto DefaultPermissions = "permissions_version: 1;\n"
-    "\n"
-    "o Rank \"default\"{\n"
-    "    \n"
-    "    l values{\n"
-    "        is_default: true\n"
-    "        chat_prefix: \"[NEW] \"\n"
-    "        auto_promote: \"1hr\"\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        core.tp.request: true\n"
-    "        core.home: true\n"
-    "        core.kill.self: true\n"
-    "        core.kill: default\n"
-    "        core.kill.other: false\n"
-    "    }\n"
-    "}\n"
-    "\n"
-    "o Rank \"builder\"{\n"
-    "    l values{\n"
-    "        auto_promote: \"100hr\"\n"
-    "        next_of: default\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        core.tp.home: true\n"
-    "    }\n"
-    "}\n"
-    "    \n"
-    "o Rank \"regular\"{\n"
-    "    l values{\n"
-    "        chat_prefix: \"[REG] \"\n"
-    "        next_of: builder\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        core.tp: true\n"
-    "        core.kill.self: true\n"
-    "        core.votekick: true\n"
-    "    }\n"
-    "}\n"
-    "\n"
-    "o Rank \"vip\"{\n"
-    "    l values{\n"
-    "        chat_prefix: \"[VIP] \"\n"
-    "        next_of: regular\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        core.vip.hurray: true\n"
-    "    }\n"
-    "}\n"
-    "    \n"
-    "o Rank \"moderator\"{\n"
-    "    l values{\n"
-    "        next_of: vip\n"
-    "        chat_prefix: \"[MOD] \"\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        core.tp: true\n"
-    "        core.tp.other: true\n"
-    "        core.kill: true\n"
-    "        core.kill.other: true\n"
-    "        core.home: inherit\n"
-    "        core.ban: true\n"
-    "        core.chat.mod: true\n"
-    "        core.vip.hurray: false\n"
-    "    }\n"
-    "}\n"
-    "\n"
-    "o Rank \"admin\"{\n"
-    "    l values{\n"
-    "        next_of: moderator\n"
-    "        chat_prefix: \"[ADMIN] \"\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        core.ban.no-verify: true\n"
-    "    }\n"
-    "}\n"
-    "\n"
-    "o Rank \"owner\"{\n"
-    "    l values{\n"
-    "        next_of: admin\n"
-    "        chat_prefix: \"[OWNER] \"\n"
-    "    }\n"
-    "    \n"
-    "    l nodes{\n"
-    "        *: true\n"
-    "        core.vip.hurray: false\n"
-    "    }\n"
-    "}";
+    DummyReporter reporter;
 
-    DummyReporter Errors;
-    
-    auto FileObj = Leviathan::ObjectFileProcessor::ProcessObjectFileFromString(
-        std::string(DefaultPermissions), 
-        "DefaultPermissionsStr", &Errors);
+    ObjectFile obj;
+    obj.AddNamedVariable(std::make_shared<NamedVariableList>("MyFloat", new FloatBlock(2.5f)));
 
-    REQUIRE(FileObj);
+    std::string serialized;
+    REQUIRE(ObjectFileProcessor::SerializeObjectFile(obj, serialized));
+
+    REQUIRE(serialized.size() > 0);
+
+    CHECK(serialized.find_first_of(',') == std::string::npos);
 }
 
+
+TEST_CASE("Malformed files don't leak exceptions", "[objectfile]"){
+
+    RequireErrorReporter reporter;
+
+    constexpr auto File = "SettingsVersion = 1;\n"
+        "SavedWithVersion = \"DualView 0.0.1\";\n"
+        "\n"
+        "o \"Collection\"{\n"
+        "\n"
+        "    l settings {\n"
+        "        DatabaseFolder = \"./\";\n"
+        "        PublicCollection = \"./public_collection/\";\n"
+        "        PrivateCollection = \"./private_collection/\";\n"
+        "    } // End settings\n"
+        "\n"
+        "} // End Object Collection\n"
+        "\n"
+        "o \"Images\"{\n"
+        "\n"
+        "    l delays {\n"
+        "        NextImage = 0.2;\n"
+        "    } // End delays\n"
+        "\n"
+        "    l pre-load {\n"
+        "        CollectionForward = 3;\n"
+        "        CollectionBackwards = 1;\n"
+        "    } // End pre-load\n"
+        "\n"
+        "\n"
+        "\n"
+        "\n"
+        "";
+
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+        "malformed_1", &reporter);
+
+    REQUIRE(ofile == nullptr);
+
+}
+
+TEST_CASE("Example file segments that cause errors", "[objectfile]") {
+
+    DummyReporter reporter;
+
+    SECTION("Last line commented in text block") {
+
+        constexpr auto File = "o \"Plugins\"{\n"
+            "    l settings {\n"
+            "    PluginsFolder = \"plugins/\";\n"
+            "    } // End settings\n"
+            "\n"
+            "    t load_plugins {\n"
+            "    Plugin_Imgur\n"
+            "    //Commented thing causes errors\n"
+            "    } // End load_plugins\n"
+            "\n"
+            "    } // End Object Plugins";
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+            "issue_example1", &reporter);
+
+        REQUIRE(ofile != nullptr);
+    }
+}

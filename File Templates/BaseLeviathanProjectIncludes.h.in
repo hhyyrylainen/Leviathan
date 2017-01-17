@@ -2,6 +2,7 @@
 
 #include "LeviathanMainDll.h"
 
+#include <string>
 
 #define @BaseProgramName@_VERSION           @PROGRAM_VERSION@
 #define @BaseProgramName@_VERSIONS          @PROGRAM_VERSIONS@

@@ -1,214 +1,176 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "SFML/Network/Packet.hpp"
-#include "NetworkHandler.h"
+#include "Common/SFMLPackets.h"
+#include "CommonNetwork.h"
+#include "Exceptions.h"
 
+#include "GameSpecificPacketHandler.h"
 
-#define MAX_SERVERCOMMAND_LENGTH		550
+#include <memory>
 
 namespace Leviathan{
 
-	enum NETWORKREQUESTTYPE {
-		//! This is sent first, expected result is like "PongServer running version 0.5.1.0, status: 0/20"
-		NETWORKREQUESTTYPE_IDENTIFICATION,
-		NETWORKREQUESTTYPE_SERVERSTATUS,
-		NETWORKREQUESTTYPE_OPENREMOTECONSOLETO,
-		NETWORKREQUESTTYPE_ACCESSREMOTECONSOLE,
-		NETWORKREQUESTTYPE_CLOSEREMOTECONSOLE,
-		NETWORKREQUESTTYPE_JOINSERVER,
-		NETWORKREQUESTTYPE_GETSINGLESYNCVALUE,
-		NETWORKREQUESTTYPE_GETALLSYNCVALUES,
+enum class NETWORK_REQUEST_TYPE : uint16_t{
+
+    //! Opening a connection 
+    Connect,
+
+    //! Only one side of the connection can send this request, usually the client
+    Security,
+
+    //! Only the client may make this call, after this the Connection won't restrict 
+    //! any packets from being received
+    Authenticate,
+
+    //! This may be sent after CONNECTION_STATE::Connected has been reached
+    //! "PongServer running version 0.5.1.0, status: 0/20"
+    Identification,
+
+    Serverstatus,
         
-		//! Used to request the server to run a command, used for chat and other things
-		NETWORKREQUESTTYPE_REQUESTEXECUTION,
+    RemoteConsoleOpen,
         
-		//! Sent when a player requests the server to connect a NetworkedInput
-		NETWORKREQUESTTYPE_CONNECTINPUT,
+    RemoteConsoleAccess,
         
-        //! Sent by servers to ping (time the time a client takes to respond) clients
-        NETWORKREQUESTTYPE_ECHO,
+    CloseRemoteConsole,
+
+    //! The receiving side is now allowed to open a remote console with the token 
+    DoRemoteConsoleOpen,
+
+    //! Client wants to join a server
+    //! MasterServerToken The ID given by the master server
+    JoinServer,
         
-        //! Contains timing data to sync world clocks on a client
-        NETWORKREQUESTTYPE_WORLD_CLOCK_SYNC,
+    GetSingleSyncValue,
         
+    GetAllSyncValues,
+        
+    //! Used to request the server to run a command, used for chat and other things
+    //! \todo Implement 	if(Command.length() > MAX_SERVERCOMMAND_LENGTH)
+    RequestCommandExecution,
+        
+    //! Sent when a player requests the server to connect a NetworkedInput
+    ConnectInput,
+        
+    //! Sent by servers to ping (time the time a client takes to respond) clients
+    Echo,
+        
+    //! Contains timing data to sync world clocks on a client
+    //! Ticks The amount of ticks to set or change by
+    //! Absolute Whether the tick count should be set to be the current or
+    //! just added to the current tick
+    //!
+    //! EngineMSTweak The engine tick tweaking, this should only be
+    //! applied by a single GameWorld
+    WorldClockSync,
 
+    //! Used for game specific requests
+    Custom
+};
 
-		//! Used for game specific requests
-		NETWORKREQUESTTYPE_CUSTOM
-	};
+//! Base class for all request objects
+//! \note Even though it cannot be required by the base class, sub classes should
+//! implement a constructor taking in an sf::Packet object
+class NetworkRequest{
+public:
 
-	class BaseNetworkRequestData{
-	public:
+    NetworkRequest(NETWORK_REQUEST_TYPE type, uint32_t idforresponse = 0) :
+        Type(type), IDForResponse(idforresponse)
+    {
+        
+    }
+    
+    virtual ~NetworkRequest(){};
 
-		DLLEXPORT virtual ~BaseNetworkRequestData(){};
+    inline void AddDataToPacket(sf::Packet &packet) const{
 
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) = 0;
-	};
+        packet << static_cast<uint8_t>(true) << static_cast<uint16_t>(Type);
 
-	class RemoteConsoleOpenRequestDataTo : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT RemoteConsoleOpenRequestDataTo(int token);
-		DLLEXPORT RemoteConsoleOpenRequestDataTo(sf::Packet &frompacket);
+        _SerializeCustom(packet);
+    }
 
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+    inline NETWORK_REQUEST_TYPE GetType() const{
+        return Type;
+    }
 
-		int SessionToken;
-	};
+    inline uint32_t GetIDForResponse() const {
+        return IDForResponse;
+    }
 
-	//! \todo add security to this
-	class RemoteConsoleAccessRequestData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT RemoteConsoleAccessRequestData(int token);
-		DLLEXPORT RemoteConsoleAccessRequestData(sf::Packet &frompacket);
+    DLLEXPORT static std::shared_ptr<NetworkRequest> LoadFromPacket(sf::Packet &packet, 
+        uint32_t packetid);
 
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+protected:
 
-		int SessionToken;
-	};
+    //! \brief Base classes serialize their data
+    DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) const = 0;
 
-	//! \todo Add security establishing functions
-	//! \todo Add security to the ConnectionInfo class
-	class JoinServerRequestData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT JoinServerRequestData(int outmasterid = -1);
-		DLLEXPORT JoinServerRequestData(sf::Packet &frompacket);
+    const NETWORK_REQUEST_TYPE Type;
 
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
+    const uint32_t IDForResponse = 0;
+};
 
-		//! The ID given by the master server
-		int MasterServerID;
-	};
-
-
-	class GetSingleSyncValueRequestData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT GetSingleSyncValueRequestData(const std::string &name);
-		DLLEXPORT GetSingleSyncValueRequestData(sf::Packet &frompacket);
-
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
-
-		//! The name of the wanted value
-		std::string NameOfValue;
-	};
-
-	class RequestCommandExecutionData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT RequestCommandExecutionData(const std::string &commandstr);
-		DLLEXPORT RequestCommandExecutionData(sf::Packet &frompacket);
-
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
-
-		//! The command to execute
-        std::string Command;
-	};
-
-	class CustomRequestData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT CustomRequestData(GameSpecificPacketData* newddata);
-		DLLEXPORT CustomRequestData(BaseGameSpecificRequestPacket* newddata);
-		DLLEXPORT CustomRequestData(sf::Packet &frompacket);
-
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
-
-		//! The actual data 
-        std::shared_ptr<GameSpecificPacketData> ActualPacketData;
-	};
-
-	class RequestConnectInputData : public BaseNetworkRequestData{
-	public:
-		DLLEXPORT RequestConnectInputData(NetworkedInput &tosend);
-		DLLEXPORT RequestConnectInputData(sf::Packet &frompacket);
-
-		DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet);
-
-		//! This contains the data required to create the object
-		sf::Packet DataForObject;
-	};
-
-    //! \brief Stores data for synchronizing world clocks
-    class RequestWorldClockSyncData : public BaseNetworkRequestData{
+class RequestCustom : public NetworkRequest{
     public:
+    RequestCustom(std::shared_ptr<GameSpecificPacketData> actualrequest) :
+        NetworkRequest(NETWORK_REQUEST_TYPE::Custom),
+        ActualRequest(actualrequest)
+    {}
 
-        DLLEXPORT RequestWorldClockSyncData(sf::Packet &frompacket);
+    void _SerializeCustom(sf::Packet &packet) const override{
 
-        //! \brief Sets up a clock sync packet
-        DLLEXPORT RequestWorldClockSyncData(int worldid, int ticks, int enginetick, bool absolute = true);
+        LEVIATHAN_ASSERT(0, "_SerializeCustom called on RequestCustom");
+    }
 
-        DLLEXPORT virtual void AddDataToPacket(sf::Packet &packet) override;
-
-        //! The ID of the target world
-        int WorldID;
+    RequestCustom(GameSpecificPacketHandler &handler, sf::Packet &packet) :
+        NetworkRequest(NETWORK_REQUEST_TYPE::Custom)
+    {
+        ActualRequest = handler.ReadGameSpecificPacketFromPacket(false, packet);
         
-        //! The amount of ticks to set or change by
-        int Ticks;
+        if(!ActualRequest){
 
-        //! Whether the tick count should be set to be the current or just added to the current tick
-        bool Absolute;
+            throw InvalidArgument("invalid packet format for user defined request");
+        }
+    }
 
-        //! The engine tick tweaking, this should only be applied by a single GameWorld
-        int EngineMSTweak;
-    };
+    inline void AddDataToPacket(GameSpecificPacketHandler &handler, sf::Packet &packet){
+
+        packet << static_cast<uint16_t>(Type);
+
+        handler.PassGameSpecificDataToPacket(ActualRequest.get(), packet);
+    }
+
+    std::shared_ptr<GameSpecificPacketData> ActualRequest;
+};
+
+//! \brief Empty request for ones that require no data
+//!
+//! Also used for all other request that don't need any data members
+class RequestEcho : public NetworkRequest {
+public:
+    RequestEcho(NETWORK_REQUEST_TYPE actualtype) :
+        NetworkRequest(actualtype)
+    {}
+
+    void _SerializeCustom(sf::Packet &packet) const override{
+    }
+
+    RequestEcho(NETWORK_REQUEST_TYPE actualtype, uint32_t idforresponse, sf::Packet &packet) :
+        NetworkRequest(actualtype, idforresponse)
+    {
+    }
+};
 
 
 
+// This file is generated by the script GenerateRequest.rb
+// and contains implementations for all the response types
+#include "../Generated/RequestImpl.h"
 
-	class NetworkRequest{
-	public:
-		DLLEXPORT NetworkRequest(NETWORKREQUESTTYPE type, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKET_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(RemoteConsoleOpenRequestDataTo* newddata, int timeout = 1000,
-            PACKET_TIMEOUT_STYLE style = PACKET_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(RemoteConsoleAccessRequestData* newddata, int timeout = 1000,
-            PACKET_TIMEOUT_STYLE style = PACKET_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(JoinServerRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKET_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(GetSingleSyncValueRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style
-            = PACKET_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(CustomRequestData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKET_TIMEOUT_STYLE_TIMEDMS);
-		DLLEXPORT NetworkRequest(RequestCommandExecutionData* newddata, int timeout = 10, PACKET_TIMEOUT_STYLE style =
-            PACKET_TIMEOUT_STYLE_PACKAGESAFTERRECEIVED);
-		DLLEXPORT NetworkRequest(RequestConnectInputData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKET_TIMEOUT_STYLE_TIMEDMS);
-        DLLEXPORT NetworkRequest(RequestWorldClockSyncData* newddata, int timeout = 1000, PACKET_TIMEOUT_STYLE style =
-            PACKET_TIMEOUT_STYLE_TIMEDMS);
-		
-		DLLEXPORT ~NetworkRequest();
-
-		DLLEXPORT NetworkRequest(sf::Packet &frompacket);
-
-		DLLEXPORT sf::Packet GeneratePacketForRequest();
-
-		DLLEXPORT NETWORKREQUESTTYPE GetType();
-
-		// Specific type data get functions //
-		DLLEXPORT RemoteConsoleOpenRequestDataTo* GetRemoteConsoleOpenToData();
-		DLLEXPORT RemoteConsoleAccessRequestData* GetRemoteConsoleAccessRequestData();
-		DLLEXPORT CustomRequestData* GetCustomRequestData();
-		DLLEXPORT RequestCommandExecutionData* GetCommandExecutionRequestData();
-		DLLEXPORT RequestConnectInputData* GetConnectInputRequestData();
-        DLLEXPORT RequestWorldClockSyncData* GetWorldClockSyncRequestData();
-
-		DLLEXPORT int GetExpectedResponseID();
-
-		DLLEXPORT int GetTimeOutValue();
-		DLLEXPORT PACKET_TIMEOUT_STYLE GetTimeOutType();
-
-	protected:
-
-		int ResponseID;
-
-		int TimeOutValue;
-		PACKET_TIMEOUT_STYLE TimeOutStyle;
-
-		NETWORKREQUESTTYPE TypeOfRequest;
-		BaseNetworkRequestData* RequestData;
-		
-	private:
-		NetworkRequest(const NetworkRequest &other){}
-	};
 
 }
 

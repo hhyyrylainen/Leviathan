@@ -14,9 +14,10 @@ DLLEXPORT Leviathan::ScriptNotifier::ScriptNotifier(asIScriptFunction* functiont
 }
 
 DLLEXPORT Leviathan::ScriptNotifier::~ScriptNotifier(){
-	ReleaseChildHooks();
+
+    GUARD_LOCK();
     
-	GUARD_LOCK();
+	ReleaseChildHooks(guard);
     
 	if(CallbackFunction)
 		CallbackFunction->Release();
@@ -24,8 +25,9 @@ DLLEXPORT Leviathan::ScriptNotifier::~ScriptNotifier(){
 	CallbackFunction = NULL;
 }
 // ------------------------------------ //
-void Leviathan::ScriptNotifier::OnNotified(){
-
+void Leviathan::ScriptNotifier::OnNotified(Lock &ownlock, BaseNotifiableAll* child,
+    Lock &childlock)
+{
 	ScriptRunningSetup params;
 	params.ErrorOnNonExistingFunction = true;
     
@@ -41,10 +43,10 @@ DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* funct
 }
 
 DLLEXPORT Leviathan::ScriptNotifiable::~ScriptNotifiable(){
-    
-	ReleaseParentHooks();
-    
-	GUARD_LOCK();
+
+    GUARD_LOCK();
+
+	ReleaseParentHooks(guard);
     
 	if(CallbackFunction)
 		CallbackFunction->Release();
@@ -52,7 +54,9 @@ DLLEXPORT Leviathan::ScriptNotifiable::~ScriptNotifiable(){
 	CallbackFunction = NULL;
 }
 // ------------------------------------ //
-void Leviathan::ScriptNotifiable::OnNotified(){
+void Leviathan::ScriptNotifiable::OnNotified(Lock &ownlock, BaseNotifierAll* parent,
+    Lock &parentlock)
+{
 
 	ScriptRunningSetup params;
 	params.ErrorOnNonExistingFunction = true;

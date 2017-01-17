@@ -6,7 +6,7 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const string &configfile) :
-    GameConfigFile(configfile), Modified(false), GameVars(NULL)
+    GameConfigFile(configfile)
 {
 	staticaccess = this;
 }
@@ -28,7 +28,7 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(
 
 	GameVars = new NamedVars();
 
-	if(!GameVars->LoadVarsFromFile(GameConfigFile)){
+	if(!GameVars->LoadVarsFromFile(GameConfigFile, Logger::Get())){
 		// Unknown error //
 		Logger::Get()->Error("GameConfiguration: Unknown error from LoadVarsFromFile");
 		return false;

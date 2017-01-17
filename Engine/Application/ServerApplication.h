@@ -1,11 +1,7 @@
-#ifndef LEVIATHAN_SERVERAPPLICATION
-#define LEVIATHAN_SERVERAPPLICATION
+#pragma once
 // ------------------------------------ //
-#ifndef LEVIATHAN_DEFINE
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Application.h"
 
 namespace Leviathan{
@@ -15,12 +11,18 @@ namespace Leviathan{
 		DLLEXPORT ServerApplication();
 		DLLEXPORT ~ServerApplication();
 
-		//! Overloaded functions to make this program actually a server
-		DLLEXPORT virtual bool Initialize(AppDef* configuration);
+        //! Makes sure doesn't start in GUI mode
+        bool PassCommandLine(int argcount, char* args[]) override;
+
+        NETWORKED_TYPE GetProgramNetType() const override {
+            
+            return NETWORKED_TYPE::Server;
+        }
+
 
 	protected:
 
 	};
 
 }
-#endif
+

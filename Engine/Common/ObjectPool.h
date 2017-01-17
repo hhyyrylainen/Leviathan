@@ -3,350 +3,407 @@
 #include "Include.h"
 
 #include "ThreadSafe.h"
+
+#include "Exceptions.h"
+
 #include <unordered_map>
 #include <functional>
 #include <tuple>
 #include <vector>
+#include <type_traits>
 
-#include "boost/pool/object_pool.hpp"
+//#include "boost/pool/object_pool.hpp"
+#include "boost/pool/pool.hpp"
 
 namespace Leviathan{
 
-    
 
-    template<class ElementType, typename KeyType>
-	class ObjectPool : public ThreadSafe{
-	public:
+template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
+class ObjectPool : public ThreadSafe{
+public:
 
-        DLLEXPORT ObjectPool() : Elements(100){
+    ObjectPool() : Elements(sizeof(ElementType), 100, 200){
 
+    }
+
+    ~ObjectPool() {
+
+        if (!AutoCleanupObjects)
+            return;
+
+        Clear();
+    }
+
+    //! \brief Constructs a new component of the held type for entity
+    //! \exception Exception when component has not been created
+    template<typename... Args>
+    ElementType* ConstructNew(Lock &guard, KeyType forentity, Args&&... args){
+
+        if(Find(guard, forentity))
+            throw Exception("Entity with ID already has object in pool of this type");
+
+        // Get memory to hold the object //
+        void* memoryforobject = Elements.malloc();
+
+        if(!memoryforobject)
+            throw Exception("Out of memory for element");
+
+        // Construct the object //
+        ElementType* created;
+        try {
+            created = new(memoryforobject) ElementType(std::forward<Args>(args)...);
+        }
+        catch (...) {
+
+            Elements.free(memoryforobject);
+            throw;
         }
 
-        //! \brief Constructs a new component of the held type for entity
-        //! \exception Exception when component has not been created
-        template<typename... Args>
-        DLLEXPORT ElementType* ConstructNew(Lock &guard, KeyType forentity, Args&&... args){
+        // Add to index for finding later //
+        Index.insert(std::make_pair(forentity, created));
 
-            if(Find(guard, forentity))
-                throw Exception("Entity with ID already has object in pool of this type");
-
-            try{
-
-                auto created = Elements.construct(args...);
-
-                // Add to index for finding later //
-                Index.insert(std::make_pair(forentity, created));
-
-                Added.push_back(std::make_tuple(created, forentity));
+        Added.push_back(std::make_tuple(created, forentity));
             
-                return created;
+        return created;
+    }
 
-                
-            } catch(const Exception){
+    template<typename... Args>
+    inline ElementType* ConstructNew(KeyType forentity, Args&&... args){
 
-                throw Exception("Failed to construct element");
-            }
+        GUARD_LOCK();
+        return ConstructNew(guard, forentity, args...);
+    }
+
+    //! \brief Returns true if there are objects in Removed
+    bool HasElementsInRemoved() const{
+
+        GUARD_LOCK();
+        return !Removed.empty();
+    }
+
+    //! \brief Returns true if there are objects in Added
+    bool HasElementsInAdded() const{
+
+        GUARD_LOCK();
+        return !Added.empty();
+    }
+
+    //! \brief Returns true if there are objects in Queued
+    bool HasElementsInQueued() const{
+
+        GUARD_LOCK();
+        return !Queued.empty();
+    }
+
+    //! \brief Calls Release with the specified arguments on elements that are queued
+    //! for destruction
+    template<typename... Args>
+    void ReleaseQueued(Args&&... args){
+
+        GUARD_LOCK();
+
+        for(auto iter = Queued.begin(); iter != Queued.end(); ++iter){
+
+            auto object = std::get<0>(*iter);
+            const auto id = std::get<1>(*iter);
+
+            object->Release(std::forward<Args>(args)...);
+
+            object->~ElementType();
+            Elements.free(object);
+            Removed.push_back(std::make_tuple(object, id));
+            RemoveFromIndex(guard, id);
         }
 
-        template<typename... Args>
-        DLLEXPORT inline ElementType* ConstructNew(KeyType forentity, Args&&... args){
+        Queued.clear();
+    }
 
-            GUARD_LOCK();
-            return ConstructNew(guard, forentity, args...);
+    //! \brief Calls Release on an object and then removes it from the pool
+    template<typename... Args>
+    void Release(KeyType entity, Args&&... args) {
+
+        GUARD_LOCK();
+
+        auto* object = Find(guard, entity);
+
+        if (!object)
+            throw NotFound("entity not in pool");
+
+        object->Release(std::forward<Args>(args)...);
+
+        object->~ElementType();
+        Elements.free(object);
+
+        RemoveFromIndex(guard, entity);
+        RemoveFromAdded(guard, entity);
+    }
+
+    //! \brief Removes elements that are queued for destruction
+    //! without calling release 
+    void ClearQueued(){
+
+        GUARD_LOCK();
+
+        for(auto iter = Queued.begin(); iter != Queued.end(); ++iter){
+
+            auto object = std::get<0>(*iter);
+            const auto id = std::get<1>(*iter);
+
+            object->~ElementType();
+            Elements.free(object);
+            Removed.push_back(std::make_tuple(object, id));
+            RemoveFromIndex(guard, id);
         }
 
-        //! \brief Returns true if there are objects in Removed
-        DLLEXPORT bool HasElementsInRemoved() const{
+        Queued.clear();
+    }
 
-            GUARD_LOCK();
-            return !Removed.empty();
-        }
+    //! \brief Returns a reference to the vector of removed elements
+    //! \note This object needs to be locked and kept locked while using the result
+    //! of this call
+    const auto& GetRemoved(Lock &locked) const{
 
-        //! \brief Returns true if there are objects in Added
-        DLLEXPORT bool HasElementsInAdded() const{
-
-            GUARD_LOCK();
-            return !Added.empty();
-        }
-
-        //! \brief Returns true if there are objects in Queued
-        DLLEXPORT bool HasElementsInQueued() const{
-
-            GUARD_LOCK();
-            return !Queued.empty();
-        }
-
-        //! \brief Calls Release with the specified arguments on elements that are queued
-        //! for desctuction
-        template<typename... Args>
-        DLLEXPORT void ReleaseQueued(Args&&... args){
-
-            GUARD_LOCK();
-
-            for(auto iter = Queued.begin(); iter != Queued.end(); ++iter){
-
-                auto object = std::get<0>(*iter);
-                const auto id = std::get<1>(*iter);
-
-                object->Release(args...);
-
-                Elements.destroy(object);
-                Removed.push_back(std::make_tuple(object, id));
-                RemoveFromIndex(guard, id);
-            }
-
-            Queued.clear();
-        }
-
-
-        //! \brief Removes elements that are queued for destruction
-        //! without calling release 
-        DLLEXPORT void ClearQueued(){
-
-            GUARD_LOCK();
-
-            for(auto iter = Queued.begin(); iter != Queued.end(); ++iter){
-
-                auto object = std::get<0>(*iter);
-                const auto id = std::get<1>(*iter);
-
-                Elements.destroy(object);
-                Removed.push_back(std::make_tuple(object, id));
-                RemoveFromIndex(guard, id);
-            }
-
-            Queued.clear();
-        }
-
-        //! \brief Returns a reference to the vector of removed elements
-        //! \note This object needs to be locked and kept locked while using the result
-        //! of this call
-        DLLEXPORT const auto& GetRemoved(Lock &locked) const{
-
-            return Removed;
-        }
+        return Removed;
+    }
         
         
 
-        //! \brief Returns a reference to the vector of added elements
-        //! \note This object needs to be locked and kept locked while using the result
-        //! of this call
-        DLLEXPORT auto& GetAdded(Lock &locked){
+    //! \brief Returns a reference to the vector of added elements
+    //! \note This object needs to be locked and kept locked while using the result
+    //! of this call
+    auto& GetAdded(Lock &locked){
 
-            return Added;
-        }
+        return Added;
+    }
 
-        //! \brief Clears the added list
-        DLLEXPORT void ClearAdded(){
+    //! \brief Clears the added list
+    inline void ClearAdded(){
 
-            GUARD_LOCK();
-            Added.clear();
-        }
+        GUARD_LOCK();
+        ClearAdded(guard);
+    }
 
-        //! \brief Clears the removed list
-        DLLEXPORT void ClearRemoved(){
+    void ClearAdded(Lock &guard){
 
-            GUARD_LOCK();
-            Removed.clear();
-        }
+        Added.clear();
+    }
 
-        //! \brief Destroys without releasing elements based on ids in vector
-        //! \param addtoremoved If true will add the elements to the Removed index
-        //! for (possibly) using them to remove attached resources
-        template<typename Any>
-        DLLEXPORT void RemoveBasedOnKeyTupleList(
-            const std::vector<std::tuple<Any, KeyType>> &values, bool addtoremoved = false)
-        {
+    //! \brief Clears the removed list
+    void ClearRemoved(){
 
-            GUARD_LOCK();
+        GUARD_LOCK();
+        Removed.clear();
+    }
+
+    //! \brief Destroys without releasing elements based on ids in vector
+    //! \param addtoremoved If true will add the elements to the Removed index
+    //! for (possibly) using them to remove attached resources
+    template<typename Any>
+    void RemoveBasedOnKeyTupleList(
+        const std::vector<std::tuple<Any, KeyType>> &values, bool addtoremoved = false)
+    {
+
+        GUARD_LOCK();
             
-            for(auto iter = values.begin(); iter != values.end(); ++iter){
+        for(auto iter = values.begin(); iter != values.end(); ++iter){
 
-                auto todelete = Index.find(std::get<1>(*iter));
+            auto todelete = Index.find(std::get<1>(*iter));
 
-                if(todelete == Index.end())
-                    continue;
+            if(todelete == Index.end())
+                continue;
 
                 
-                if(addtoremoved){
+            if(addtoremoved){
                     
-                    Removed.push_back(std::make_tuple(todelete->second, todelete->first));
-                }
+                Removed.push_back(std::make_tuple(todelete->second, todelete->first));
+            }
 
-                RemoveFromAdded(guard, todelete->first);
+            RemoveFromAdded(guard, todelete->first);
                 
-                Index.erase(todelete);
+            Index.erase(todelete);
+        }
+    }
+
+    //! \brief Removes a specific id from the added list
+    //!
+    //! Used to remove entries that have been deleted before clearing the added ones
+    //! \todo Check if this gives better performance than noticing missing elements
+    //! during node construction
+    void RemoveFromAdded(Lock &guard, KeyType id){
+
+        for(auto iter = Added.begin(); iter != Added.end(); ++iter){
+
+            if(std::get<1>(*iter) == id){
+
+                Added.erase(iter);
+                return;
             }
         }
+    }
 
-        //! \brief Removes a specific id from the added list
-        //!
-        //! Used to remove entries that have been deleted before clearing the added ones
-        //! \todo Check if this gives better performance than noticing missing elements
-        //! during node construction
-        DLLEXPORT void RemoveFromAdded(Lock &guard, KeyType id){
+    //! \return The found component or NULL
+    ElementType* Find(Lock &guard, KeyType id) const{
 
-            for(auto iter = Added.begin(); iter != Added.end(); ++iter){
+        auto iter = Index.find(id);
 
-                if(std::get<1>(*iter) == id){
+        if(iter == Index.end())
+            return nullptr;
 
-                    Added.erase(iter);
-                    return;
-                }
-            }
-        }
+        return iter->second;
+    }
 
-        //! \return The found component or NULL
-        DLLEXPORT ElementType* Find(Lock &guard, KeyType id) const{
+    inline ElementType* Find(KeyType id) const{
 
-            auto iter = Index.find(id);
+        GUARD_LOCK();
+        return Find(guard, id);
+    }
 
-            if(iter == Index.end())
-                return nullptr;
+    //! \brief Destroys a component based on id
+    void Destroy(Lock &guard, KeyType id, bool addtoremoved = true){
 
-            return iter->second;
-        }
+        auto object = Find(guard, id);
 
-        DLLEXPORT inline ElementType* Find(KeyType id) const{
+        if(!object)
+            throw InvalidArgument("ID is not in index");
 
-            GUARD_LOCK();
-            return Find(guard, id);
-        }
+        object->~ElementType();
+        Elements.free(object);
 
-        //! \brief Destroys a component based on id
-        DLLEXPORT void Destroy(Lock &guard, KeyType id){
-
-            auto object = Find(guard, id);
-
-            if(!object)
-                throw InvalidArgument("ID is not in index");
-
-            Elements.destroy(object);
-
+        if(addtoremoved)
             Removed.push_back(std::make_tuple(object, id));
             
-            RemoveFromIndex(guard, id);
-            RemoveFromAdded(guard, id);
-        }
+        RemoveFromIndex(guard, id);
+        RemoveFromAdded(guard, id);
+    }
 
-        DLLEXPORT inline void Destroy(KeyType id){
+    inline void Destroy(KeyType id, bool addtoremoved = true){
 
-            GUARD_LOCK();
-            Destroy(guard, id);
-        }
+        GUARD_LOCK();
+        Destroy(guard, id, addtoremoved);
+    }
 
-        //! \brief Queues destruction of an element
-        //! \exception InvalidArgument when key is not found (is already deleted)
-        //! \note This has to be used for objects that require calling Release
-        DLLEXPORT void QueueDestroy(Lock &guard, KeyType id){
+    //! \brief Queues destruction of an element
+    //! \exception InvalidArgument when key is not found (is already deleted)
+    //! \note This has to be used for objects that require calling Release
+    void QueueDestroy(Lock &guard, KeyType id){
 
-            auto end = Index.end();
-            for(auto iter = Index.begin(); iter != end; ++iter){
+        auto end = Index.end();
+        for(auto iter = Index.begin(); iter != end; ++iter){
 
-                if(iter->first == id){
+            if(iter->first == id){
 
-                    Queued.push_back(std::make_tuple(iter->second, id));
+                Queued.push_back(std::make_tuple(iter->second, id));
 
-                    RemoveFromAdded(guard, id);
+                RemoveFromAdded(guard, id);
                     
-                    return;
-                }
-            }
-
-            throw InvalidArgument("ID is not in index");
-        }
-
-        DLLEXPORT inline void QueueDestroy(KeyType id){
-
-            GUARD_LOCK();
-            QueueDestroy(guard, id);
-        }
-
-        //! \brief Calls an function on all the objects in the pool
-        //! \note The order of the objects is not guaranteed and can change between runs
-        //! \param function The function that is called with all of the components of this type
-        //! the first parameter is the component, the second is the id of the entity owning the
-        //! component and the last one is a lock to this ComponentHolder,
-        //! the return value specifies
-        //! if the component should be destroyed (true being yes and false being no)
-        DLLEXPORT void Call(std::function<bool (ElementType&, KeyType, Lock&)> function){
-
-            GUARD_LOCK();
-
-            for(auto iter = Index.begin(); iter != Index.end(); ){
-
-                if(function(*iter->second, iter->first, guard)){
-
-                    Elements.destroy(iter->second);
-                    iter = Index.erase(iter);
-                    
-                } else {
-                    
-                    ++iter;
-                }
+                return;
             }
         }
 
-        //! \brief Clears the index and replaces the pool with a new one
-        //! \warning All objects after this call are invalid
-        DLLEXPORT void Clear(){
+        throw InvalidArgument("ID is not in index");
+    }
 
-            GUARD_LOCK();
+    inline void QueueDestroy(KeyType id){
+
+        GUARD_LOCK();
+        QueueDestroy(guard, id);
+    }
+
+    //! \brief Calls an function on all the objects in the pool
+    //! \note The order of the objects is not guaranteed and can change between runs
+    //! \param function The function that is called with all of the components of this type
+    //! the first parameter is the component, the second is the id of the entity owning the
+    //! component and the last one is a lock to this ComponentHolder,
+    //! the return value specifies
+    //! if the component should be destroyed (true being yes and false being no)
+    void Call(std::function<bool (ElementType&, KeyType, Lock&)> function){
+
+        GUARD_LOCK();
+
+        for(auto iter = Index.begin(); iter != Index.end(); ){
+
+            if(function(*iter->second, iter->first, guard)){
+
+                iter->second->~ElementType();
+                Elements.free(iter->second);
+                iter = Index.erase(iter);
+                    
+            } else {
+                    
+                ++iter;
+            }
+        }
+    }
+
+    //! \brief Clears the index and replaces the pool with a new one
+    //! \warning All objects after this call are invalid
+    void Clear(){
+
+        GUARD_LOCK();
             
-            for(auto iter = Index.begin(); iter != Index.end(); ++iter){
+        for(auto iter = Index.begin(); iter != Index.end(); ++iter){
 
-                Elements.destroy(iter->second);
-            }
+            iter->second->~ElementType();
+            Elements.free(iter->second);
+        }
             
-            Index.clear();
-            Removed.clear();
-            Queued.clear();
-            Added.clear();
-        }
+        Index.clear();
+        Removed.clear();
+        Queued.clear();
+        Added.clear();
+    }
 
-    protected:
-        //! \brief Removes an component from the index but doesn't destruct it
-        //! \note The component will only be deallocated once this object is destructed
-        DLLEXPORT bool RemoveFromIndex(Lock &guard, KeyType id){
+    //! \brief Returns a direct access to Index
+    //! \note Do not change the returned index it is intended only for looping.
+    //! Okay, you may change it but you have to be extremely careful
+    inline std::unordered_map<KeyType, ElementType*>& GetIndex(){
 
-            auto end = Index.end();
-            for(auto iter = Index.begin(); iter != end; ++iter){
+        return Index;
+    }
 
-                if(iter->first == id){
+protected:
+    //! \brief Removes an component from the index but doesn't destruct it
+    //! \note The component will only be deallocated once this object is destructed
+    bool RemoveFromIndex(Lock &guard, KeyType id){
 
-                    Index.erase(iter);
-                    return true;
-                }
+        auto end = Index.end();
+        for(auto iter = Index.begin(); iter != end; ++iter){
+
+            if(iter->first == id){
+
+                Index.erase(iter);
+                return true;
             }
-
-            return false;
         }
 
-        inline bool RemoveFromIndex(KeyType id){
+        return false;
+    }
 
-            GUARD_LOCK();
-            return RemoveFromIndex(id);
-        }
+    inline bool RemoveFromIndex(KeyType id){
 
-    protected:
+        GUARD_LOCK();
+        return RemoveFromIndex(id);
+    }
 
-        //! Used for looking up element belonging to id
-        std::unordered_map<KeyType, ElementType*> Index;
+protected:
 
-        //! Used for detecting deleted elements later
-        //! Can be used to unlink resources that have pointers to
-        //! elements
-        std::vector<std::tuple<ElementType*, KeyType>> Removed;
+    //! Used for looking up element belonging to id
+    std::unordered_map<KeyType, ElementType*> Index;
 
-        //! Used for marking elements to be deleted later at a suitable
-        //! time
-        //! GameWorld uses this to control when components are deleted
-        std::vector<std::tuple<ElementType*, KeyType>> Queued;
+    //! Used for detecting deleted elements later
+    //! Can be used to unlink resources that have pointers to
+    //! elements
+    std::vector<std::tuple<ElementType*, KeyType>> Removed;
 
-        //! Used for detecting created elements
-        std::vector<std::tuple<ElementType*, KeyType>> Added;
+    //! Used for marking elements to be deleted later at a suitable
+    //! time
+    //! GameWorld uses this to control when components are deleted
+    std::vector<std::tuple<ElementType*, KeyType>> Queued;
 
-        //! Pool for objects
-        boost::object_pool<ElementType> Elements;
-	};
+    //! Used for detecting created elements
+    std::vector<std::tuple<ElementType*, KeyType>> Added;
+
+    //! Pool for objects
+    boost::pool<> Elements;
+};
 }

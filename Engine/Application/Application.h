@@ -32,10 +32,8 @@ namespace Leviathan{
 		// perform actions //
 		DLLEXPORT virtual int RunMessageLoop();
 		DLLEXPORT virtual void Render();
-		DLLEXPORT virtual void PassCommandLine(const std::string &params);
+		DLLEXPORT virtual bool PassCommandLine(int argcount, char* args[]);
         
-		// Executes all pending command line arguments //
-		DLLEXPORT void FlushCommandLine();
 		DLLEXPORT virtual void Tick(int mspassed);
 		DLLEXPORT virtual void PreFirstTick();
 		
@@ -73,23 +71,32 @@ namespace Leviathan{
 		DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
 		DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
+
+        // Utility functions //
+        DLLEXPORT static void StartServerProcess(const std::string &processname,
+            const std::string &commandline);
+
+        DLLEXPORT virtual NETWORKED_TYPE GetProgramNetType() const = 0;
+        
 	protected:
 
 		//! \brief Performs the final steps in the release process
 		//! \warning This should not be called directly
 		DLLEXPORT virtual void Release();
 
-		// called just before returning from initialization, and can be used setting start time etc. //
+		//! called just before returning from initialization,
+        //! and can be used setting start time etc.
 		DLLEXPORT virtual void _InternalInit();
 		// ------------------------------------ //
 
-		bool Quit;
-		bool ShouldQuit;
+		bool Quit = false;
+		bool ShouldQuit = false;
+        
 		//! This can be quickly set anywhere to quit sometime in the future 
-		bool QuitSometime;
+		bool QuitSometime = false;
 
 		Engine* _Engine;
-		AppDef* ApplicationConfiguration;
+		AppDef* ApplicationConfiguration = nullptr;
         
 		// static part //
 		static LeviathanApplication* Curapp;

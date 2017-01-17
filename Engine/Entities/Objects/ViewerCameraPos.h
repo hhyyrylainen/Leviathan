@@ -28,9 +28,6 @@ namespace Leviathan{
 		DLLEXPORT void SetRotation(const Float3 &orientation);
 
 
-		DLLEXPORT virtual bool SendCustomMessage(int entitycustommessagetype, void* dataptr);
-
-
 		// input receiving //
 		DLLEXPORT virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
 		DLLEXPORT virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
@@ -59,31 +56,32 @@ namespace Leviathan{
 
 		// ------------------------------------ //
 
-		bool SendSoundPosition;
+		bool SendSoundPosition = false;
 
-		float FrameTime;
+		float FrameTime = 0;
 
-		Float3 Orientation; /* Yaw, Pitch, Roll*/
-		Float3 Position;
+        /* Yaw, Pitch, Roll*/
+		Float3 Orientation = Float3(0, 0, 0); 
+		Float3 Position = Float3(0, 0, 0);
 
 		// internal inertia store //
-		float forward;
-		float backward;
-		float left;
-		float right;
-		float zup;
-		float zdown;
+		float forward = 0;
+		float backward = 0;
+		float left = 0;
+		float right = 0;
+		float zup = 0;
+		float zdown = 0;
 
 		// mouse //
-		float MouseXSensitivity;
-		float MouseYSensitivity;
-		float xmoved;
-		float ymoved;
+		float MouseXSensitivity = 0.2f;
+		float MouseYSensitivity = 0.15f;
+		float xmoved = 0;
+		float ymoved = 0;
 
 		// stored key input //
-		int m_SideWays;
-		int m_Forward;
-		int m_Vertical;
+		int m_SideWays = 0;
+		int m_Forward = 0;
+		int m_Vertical = 0;
 	};
 }
 

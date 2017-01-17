@@ -4,17 +4,19 @@ if(NOT CREATE_UE4_PLUGIN)
 set(TestSources
   resource.h
   TestMain.cpp
+  TestFiles/PartialEngine.h TestFiles/PartialEngine.cpp
+
   TestFiles/StringIterator.cpp
   TestFiles/StringOperations.cpp
+  TestFiles/ExtraAlgorithms.cpp
   TestFiles/IDFactory.cpp
   TestFiles/Script.cpp
   TestFiles/HashTesting.cpp
   TestFiles/ObjectFiles.cpp
   TestFiles/Floats.cpp
   TestFiles/Regex.cpp
+  TestFiles/DataBlock.cpp
   TestFiles/DeltaStates.cpp
-  TestFiles/PartialEngine.h
-  TestFiles/PartialEngine.cpp
   TestFiles/Sendable.cpp
   TestFiles/NamedVars.cpp
   TestFiles/Components.cpp
@@ -38,7 +40,7 @@ endif()
 
 set(ExtraFiles "DummyLog.cpp" "DummyLog.h")
 
-include_directories(catch)
+include_directories("catch")
 
 set(CurrentProjectName LeviathanTest)
 

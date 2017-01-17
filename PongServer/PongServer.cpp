@@ -1,8 +1,7 @@
 #include "PongIncludes.h"
 // ------------------------------------ //
-#ifndef PONG_SERVER
 #include "PongServer.h"
-#endif
+
 #include "Common/DataStoring/NamedVars.h"
 #include "Application/GameConfiguration.h"
 #include "PongServerNetworking.h"
@@ -19,28 +18,27 @@ using namespace Pong;
 // Put this here, since nowhere else to put it //
 BasePongParts* Pong::BasepongStaticAccess = NULL;
 
-Pong::PongServer::PongServer() :
-    ServerInputHandler(NULL), _PongServerNetworking(NULL), BallLastPos(0.f), DeadAxis(0.f),
+Pong::PongServer::PongServer(PongServerNetworking &network) :
+    ServerInterface(network),
+    ServerInputHandler(NULL), BallLastPos(0.f), DeadAxis(0.f),
     StuckThresshold(0)
 {
-
-	Staticaccess = this;
+    SetInterface(&ServerInterface);
+    Staticaccess = this;
 }
 
 Pong::PongServer::~PongServer(){
-	Staticaccess = NULL;
+    Staticaccess = NULL;
 }
 
 std::string Pong::PongServer::GenerateWindowTitle(){
-	return string("PongServer for version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
+    return string("PongServer for version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
 }
-
 
 PongServer* Pong::PongServer::Staticaccess = NULL;
 
-
 PongServer* Pong::PongServer::Get(){
-	return Staticaccess;
+    return Staticaccess;
 }
 // ------------------------------------ //
 void Pong::PongServer::Tick(int mspassed){
@@ -93,7 +91,7 @@ void Pong::PongServer::Tick(int mspassed){
         ObjectID ball = GameArena->GetBall();
 
         try{
-            auto& pos = WorldOfPong->GetComponent<Position>(ball);
+            auto& pos = WorldOfPong->GetComponent<Position>(ball).Members;
 
             const auto& ballcurpos = pos._Position;
 
@@ -191,22 +189,22 @@ void Pong::PongServer::Tick(int mspassed){
 }
 // ------------------------------------ //
 void Pong::PongServer::CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj){
-	// Check for various variables //
-	NamedVars* vars = configobj->AccessVariables(guard);
+    // Check for various variables //
+    NamedVars* vars = configobj->AccessVariables(guard);
 
-	// Default server port //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
-		// Add new //
-		vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
-		configobj->MarkModified(guard);
-	}
+    // Default server port //
+    if(vars->ShouldAddValueIfNotFoundOrWrongType<int>("DefaultServerPort")){
+        // Add new //
+        vars->AddVar("DefaultServerPort", new VariableBlock(int(53221)));
+        configobj->MarkModified(guard);
+    }
 
-	// Game configuration database //
-	if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
-		// Add new //
-		vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
-		configobj->MarkModified(guard);
-	}
+    // Game configuration database //
+    if(vars->ShouldAddValueIfNotFoundOrWrongType<string>("GameDatabase")){
+        // Add new //
+        vars->AddVar("GameDatabase", new VariableBlock(string("PongGameDatabase.txt")));
+        configobj->MarkModified(guard);
+    }
 
 }
 
@@ -215,95 +213,93 @@ void Pong::PongServer::CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration
 }
 // ------------------------------------ //
 void Pong::PongServer::CheckForGameEnd(){
-	// Look through all players and see if any team/player has reached score limit // //
-	for(size_t i = 0; i < _PlayerList.Size(); i++){
+    // Look through all players and see if any team/player has reached score limit // //
+    for(size_t i = 0; i < _PlayerList.Size(); i++){
 
-		PlayerSlot* slotptr = _PlayerList[i];
+        PlayerSlot* slotptr = _PlayerList[i];
 
-		int totalteamscore = 0;
+        int totalteamscore = 0;
 
-		while(slotptr){
+        while(slotptr){
 
-			totalteamscore += slotptr->GetScore();
-			slotptr = slotptr->GetSplit();
-		}
+            totalteamscore += slotptr->GetScore();
+            slotptr = slotptr->GetSplit();
+        }
 
-		if(totalteamscore >= ScoreLimit){
-			// Team has won //
-			Logger::Get()->Info("Team "+Convert::ToString(i)+" has won the match!");
+        if(totalteamscore >= ScoreLimit){
+            // Team has won //
+            Logger::Get()->Info("Team "+Convert::ToString(i)+" has won the match!");
 
 
-			// Do various activities related to winning the game //
+            // Do various activities related to winning the game //
 
-			// Set the camera location //
-			auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+            // Set the camera location //
+            auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
 
-			switch(i){
-			case 0:
-				{
-					cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
-					cam->SetRotation(Float3(-90.f, -30.f, 0.f));
-				}
-				break;
-			case 1:
-				{
-					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
-					cam->SetRotation(Float3(-180.f, -30.f, 0.f));
-				}
-				break;
-			case 2:
-				{
-					cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
-					cam->SetRotation(Float3(90.f, -30.f, 0.f));
-				}
-				break;
-			case 3:
-				{
-					cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
-					cam->SetRotation(Float3(0.f, -30.f, 0.f));
-				}
-				break;
-			}
+            switch(i){
+            case 0:
+                {
+                    cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+                    cam->SetRotation(Float3(-90.f, -30.f, 0.f));
+                }
+                break;
+            case 1:
+                {
+                    cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+                    cam->SetRotation(Float3(-180.f, -30.f, 0.f));
+                }
+                break;
+            case 2:
+                {
+                    cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+                    cam->SetRotation(Float3(90.f, -30.f, 0.f));
+                }
+                break;
+            case 3:
+                {
+                    cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+                    cam->SetRotation(Float3(0.f, -30.f, 0.f));
+                }
+                break;
+            }
 
             Logger::Get()->Info("TODO: make clients move the camera around");
 
-			// Send the game end event which should trigger proper menus //
-			Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new string("MatchEnded"),
+            // Send the game end event which should trigger proper menus //
+            Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new string("MatchEnded"),
                     new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("WinningTeam",
                                 new Leviathan::VariableBlock((int)i))))));
 
-			// And finally destroy the ball //
-			GameArena->LetGoOfBall();
+            // And finally destroy the ball //
+            GameArena->LetGoOfBall();
 
             // Send a message to all players that we are now in post match mode
             DEBUG_BREAK;
 
-			// (Don't block input so players can wiggle around //
+            // (Don't block input so players can wiggle around //
 
 
-			return;
-		}
-	}
+            return;
+        }
+    }
 }
 
 void Pong::PongServer::ServerCheckEnd(){
-	CheckForGameEnd();
+    CheckForGameEnd();
 }
 // ------------------------------------ //
 void Pong::PongServer::DoSpecialPostLoad(){
 
-	_PongServerNetworking = dynamic_cast<PongServerNetworking*>(Leviathan::NetworkHandler::GetInterface());
+    // Setup receiving networked controls from players //
+    ServerInputHandler = shared_ptr<GameInputController>(new GameInputController());
+    //ServerInterface.RegisterNetworkedInput(ServerInputHandler);
 
+    // Create all the server variables //
+    Leviathan::SyncedVariables* tmpvars = ServerInterface.GetOwner()->GetSyncedVariables();
 
-	// Setup receiving networked controls from players //
-	ServerInputHandler = shared_ptr<GameInputController>(new GameInputController());
-	_PongServerNetworking->RegisterNetworkedInput(ServerInputHandler);
-
-	// Create all the server variables //
-	Leviathan::SyncedVariables* tmpvars = Leviathan::SyncedVariables::Get();
-
-	tmpvars->AddNewVariable(shared_ptr<SyncedValue>(new SyncedValue(new NamedVariableList("TheAnswer",
-                    new VariableBlock(42)))));
+    tmpvars->AddNewVariable(std::make_shared<SyncedValue>(
+        new NamedVariableList("TheAnswer",
+                    new VariableBlock(42))));
 
     GameArena->VerifyTrail();
 
@@ -311,7 +307,7 @@ void Pong::PongServer::DoSpecialPostLoad(){
 }
 
 void Pong::PongServer::CustomizedGameEnd(){
-	// Tell all clients to go to score screen //
+    // Tell all clients to go to score screen //
 
 }
 // ------------------------------------ //
@@ -332,13 +328,13 @@ void Pong::PongServer::RunAITestMatch(){
 bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
 
     if(engine->RegisterObjectType("PongServer", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
-		SCRIPT_REGISTERFAIL;
-	}
+        SCRIPT_REGISTERFAIL;
+    }
 
 
-	if(engine->RegisterGlobalFunction("PongServer@ GetPongServer()", asFUNCTION(PongServer::Get), asCALL_CDECL) < 0){
-		SCRIPT_REGISTERFAIL;
-	}
+    if(engine->RegisterGlobalFunction("PongServer@ GetPongServer()", asFUNCTION(PongServer::Get), asCALL_CDECL) < 0){
+        SCRIPT_REGISTERFAIL;
+    }
 
     
     if(engine->RegisterObjectMethod("PongServer", "void GameMatchEnded()", asMETHOD(PongServer, GameMatchEnded),
@@ -348,11 +344,11 @@ bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
     }
 
     // Testing functions //
-	if(engine->RegisterObjectMethod("PongServer", "void RunAITestMatch()", asMETHOD(PongServer, RunAITestMatch),
+    if(engine->RegisterObjectMethod("PongServer", "void RunAITestMatch()", asMETHOD(PongServer, RunAITestMatch),
             asCALL_THISCALL) < 0)
     {
-		SCRIPT_REGISTERFAIL;
-	}
+        SCRIPT_REGISTERFAIL;
+    }
 
     
     return true;
@@ -365,22 +361,9 @@ void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine,
 }
 
 void Pong::PongServer::PreFirstTick(){
-	auto casted = static_cast<PongServerNetworking*>(Leviathan::NetworkHandler::GetInterface());
-	casted->SetServerAllowPlayers(true);
-	casted->SetServerStatus(Leviathan::NETWORKRESPONSE_SERVERSTATUS_RUNNING);
-}
 
-void Pong::PongServer::PassCommandLine(const string &params){
-	// Add "--nogui" if not found //
-	if(params.find("--nogui") == string::npos){
-
-		_Engine->PassCommandLine(params+" --nogui");
-		return;
-	}
-
-	// Now pass it //
-	_Engine->PassCommandLine(params);
-
+    ServerInterface.SetServerAllowPlayers(true);
+    ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
 }
 // ------------------------------------ //
 void Pong::PongServer::OnStartPreMatch(){
@@ -400,17 +383,17 @@ void Pong::PongServer::OnStartPreMatch(){
         return;
     }
 
-	// Notify the clients //
-	_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
+    // Notify the clients //
+    ServerInterface.SetStatus(PONG_JOINGAMERESPONSE_TYPE_PREMATCH);
 
     
-	// Make sure that everyone is receiving our world //
+    // Make sure that everyone is receiving our world //
     // This will send many objects at once to all the players (or rather should send them in bulk)
-	_PongServerNetworking->VerifyWorldIsSyncedWithPlayers(WorldOfPong);
+    ServerInterface.VerifyWorldIsSyncedWithPlayers(WorldOfPong);
 
 
-	// Queue a readyness checking task //
-	ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](PongServer* server)
+    // Queue a readyness checking task //
+    ThreadingManager::Get()->QueueTask(new ConditionalTask(std::bind<void>([](PongServer* server)
                 -> void
         {
 
@@ -418,7 +401,7 @@ void Pong::PongServer::OnStartPreMatch(){
             
             // Start the match //
             server->WorldOfPong->SetWorldPhysicsFrozenState(false);
-            server->_PongServerNetworking->SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
+            server->ServerInterface.SetStatus(PONG_JOINGAMERESPONSE_TYPE_MATCH);
 
             // Spawn a ball //
             server->GameArena->ServeBall();
@@ -429,40 +412,37 @@ void Pong::PongServer::OnStartPreMatch(){
         }, this), std::bind<bool>([](shared_ptr<GameWorld> world) -> bool
             {
                 // We are ready to start once all clients are reported to be up to date by the world //
-                return world->AreAllPlayersSynced();
+                DEBUG_BREAK;
+                //return world->AreAllPlayersSynced();
+                return true;
 
             }, WorldOfPong)));
 
-	// Clear all other sorts of data like scores etc. //
+    // Clear all other sorts of data like scores etc. //
 
 
     
-	auto split0 = _PlayerList[0]->GetSplit();
-	auto split1 = _PlayerList[1]->GetSplit();
-	auto split2 = _PlayerList[2]->GetSplit();
-	auto split3 = _PlayerList[3]->GetSplit();
-	// Setup dead angle //
-	DeadAxis = Float3(0.f);
+    auto split0 = _PlayerList[0]->GetSplit();
+    auto split1 = _PlayerList[1]->GetSplit();
+    auto split2 = _PlayerList[2]->GetSplit();
+    auto split3 = _PlayerList[3]->GetSplit();
+    // Setup dead angle //
+    DeadAxis = Float3(0.f);
 
-	if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() &&
+    if(!_PlayerList[0]->IsSlotActive() && !_PlayerList[2]->IsSlotActive() &&
         (split0 ? !split0->IsSlotActive() : true) && (split2 ? !split2->IsSlotActive() : true))
-	{
+    {
 
-		DeadAxis = Float3(1.f, 0.f, 0.f);
+        DeadAxis = Float3(1.f, 0.f, 0.f);
 
-	} else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() &&
+    } else if(!_PlayerList[1]->IsSlotActive() && !_PlayerList[3]->IsSlotActive() &&
         (split1 ? !split1->IsSlotActive() : true) && (split3 ? !split3->IsSlotActive() : true))
-	{
+    {
 
-		DeadAxis = Float3(0.f, 0.f, 1.f);
-	}
+        DeadAxis = Float3(0.f, 0.f, 1.f);
+    }
 }
 // ------------------------------------ //
-PongServerNetworking* PongServer::GetServerNetworkInterface(){
-
-    return _PongServerNetworking;
-}
-
 void PongServer::SetScoreLimit(int scorelimit){
     ScoreLimit = scorelimit;
 }
@@ -576,7 +556,7 @@ void PongServer::_DisposeOldBall(){
     LastPlayerHitBallID = -1;
     StuckThresshold = 0;
     // This should reset the ball trail colour //
-			
+            
 }
 
 void PongServer::GameMatchEnded(){

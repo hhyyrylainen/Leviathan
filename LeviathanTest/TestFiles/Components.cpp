@@ -11,17 +11,17 @@ using namespace std;
 
 TEST_CASE("Manual component add and remove", "[entity]"){
 
-    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
+    PartialEngine<false> engine;
 
-    GameWorld TargetWorld;
+    GameWorld TargetWorld(NETWORKED_TYPE::Client);
 
     auto brush = TargetWorld.CreateEntity();
 
     CHECK(TargetWorld.RemoveComponent<Sendable>(brush) == false);
 
-    CHECK_NOTHROW(TargetWorld.CreateSendable(brush, SENDABLE_TYPE_BRUSH));
+    CHECK_NOTHROW(TargetWorld.CreateSendable(brush));
 
-    CHECK(TargetWorld.GetComponent<Sendable>(brush).SendableHandleType == SENDABLE_TYPE_BRUSH);
+    CHECK_NOTHROW(TargetWorld.GetComponent<Sendable>(brush));
 
     CHECK(TargetWorld.RemoveComponent<Sendable>(brush) == true);
 

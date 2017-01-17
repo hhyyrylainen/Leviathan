@@ -4,21 +4,28 @@
 // ------------------------------------ //
 #include <cmath>
 
+#ifdef LEVIATHAN_USING_OGRE
+#include "OGRE/OgreQuaternion.h"
+#include "OGRE/OgreColourValue.h"
+#include "OGRE/OgreVector3.h"
+#include "OGRE/OgreVector4.h"
+#endif // LEVIATHAN_USING_OGRE
+
 namespace Leviathan{
 
 
 struct PotentiallySetIndex {
 
-    PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {
+    inline PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {
     }
-    PotentiallySetIndex() = default;
+    inline PotentiallySetIndex() = default;
 
-    operator bool() const {
+    inline operator bool() const {
 
         return ValueSet;
     }
 
-    operator size_t() const {
+    inline operator size_t() const {
     #ifdef _DEBUG
         LEVIATHAN_ASSERT(ValueSet, "PotentiallySetIndex size_t() called when ValueSet is false");
     #endif // _DEBUG
@@ -41,14 +48,14 @@ struct PotentiallySetIndex {
         return *this;
     }
 
-    PotentiallySetIndex& operator=(const size_t &value) {
+    inline PotentiallySetIndex& operator=(const size_t &value) {
 
         ValueSet = true;
         Index = value;
         return *this;
     }
 
-    bool IsSet() const {
+    inline bool IsSet() const {
 
         return ValueSet;
     }
@@ -61,15 +68,33 @@ struct StartEndIndex {
 
     using Index = PotentiallySetIndex;
 
-    StartEndIndex(size_t start, size_t end) : Start(start), End(end) {
+    inline StartEndIndex(size_t start, size_t end) : Start(start), End(end) {
 
     }
 
-    StartEndIndex(size_t start) : Start(start) {
+    inline StartEndIndex(size_t start) : Start(start) {
 
     }
 
-    StartEndIndex() = default;
+    inline StartEndIndex() = default;
+
+    //! Reset the Start and End to unset
+    inline void Reset() {
+
+        Start = Index();
+        End = Index();
+    }
+
+    //! Calculates the length of the indexes between start and end
+    //! \returns The length or if either is unset 0 Or if Start > End
+    inline size_t Length() const {
+        
+        if (!Start || !End || static_cast<size_t>(Start) > static_cast<size_t>(End))
+            return 0;
+
+        return 1 + (static_cast<size_t>(End) - static_cast<size_t>(Start));
+    }
+
 
     Index Start;
     Index End;
@@ -607,10 +632,18 @@ struct StartEndIndex {
 			return Float3(0.f, 0.f, 1.f);
 		}
 		// ----------------- casts ------------------- //
-		// waiting for Microsoft's compilers to add support for "explicit" here //
-		//DLLEXPORT inline operator D3DXVECTOR3(){
-		//	return D3DXVECTOR3(X, Y, Z);
-		//}
+    #ifdef LEVIATHAN_USING_OGRE
+		DLLEXPORT Float3(const Ogre::Vector3 &vec){
+			// copy values //
+			X = vec.x;
+			Y = vec.y;
+			Z = vec.z;
+		}
+
+		DLLEXPORT inline operator Ogre::Vector3() const{
+			return Ogre::Vector3(X, Y, Z);
+		}
+    #endif // LEVIATHAN_USING_OGRE
 		// ------------------------------------ //
 
 
@@ -846,6 +879,30 @@ struct StartEndIndex {
 			return Float4(0.f, 0.f, 0.f, 1.f);
 		}
 
+    #ifdef LEVIATHAN_USING_OGRE
+        DLLEXPORT Float4(const Ogre::Quaternion &quat){
+			// copy values //
+			X = quat.x;
+			Y = quat.y;
+			Z = quat.z;
+			W = quat.w;
+		}
+
+		DLLEXPORT inline operator Ogre::Quaternion() const{
+
+			return Ogre::Quaternion(W, X, Y, Z);
+		}
+
+		DLLEXPORT inline operator Ogre::ColourValue() const{
+
+			return Ogre::ColourValue(X, Y, Z, W);
+		}
+		DLLEXPORT inline operator Ogre::Vector4() const{
+
+			return Ogre::Vector4(X, Y, Z, W);
+		}
+    #endif // LEVIATHAN_USING_OGRE
+
         // ----------------- Quaternions ------------------- //
 		DLLEXPORT static inline Float4 CreateQuaternionFromAngles(const Float3 &angles){
 			// multiplied by 0.5 to get double the value //
@@ -943,17 +1000,23 @@ struct StartEndIndex {
 		DLLEXPORT static const Float4& GetColourTransparent();
 	};
 
-    // Stream operators //
-    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
-        const Leviathan::Float4 &value);
+// Stream operators //
+DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+    const Leviathan::Float4 &value);
 
-    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
-        const Leviathan::Float3 &value);
+DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+    const Leviathan::Float3 &value);
 
-    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
-        const Leviathan::StartEndIndex &value);
+DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+    const Leviathan::Float2 &value);
 
-    DLLEXPORT std::ostream& operator <<(std::ostream &stream,
-        const Leviathan::PotentiallySetIndex &value);
+DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+    const Leviathan::StartEndIndex &value);
+
+DLLEXPORT std::ostream& operator <<(std::ostream &stream,
+    const Leviathan::PotentiallySetIndex &value);
+
+
 }
+
 

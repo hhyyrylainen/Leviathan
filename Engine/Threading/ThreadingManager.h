@@ -11,12 +11,13 @@
 #include "WindowsInclude.h"
 #endif //_WIN32
 
-#define DEFAULT_THREADS_PER_CORE		2
+#define DEFAULT_THREADS_PER_CORE		1
 
 namespace Leviathan{
 
 #ifdef LEVIATHAN_USING_OGRE
-	DLLEXPORT void RegisterOgreOnThread();
+DLLEXPORT void RegisterOgreOnThread();
+DLLEXPORT void UnregisterOgreOnThread();
 #endif //LEVIATHAN_USING_OGRE
 
 	//! \todo Improve performance
@@ -97,6 +98,8 @@ namespace Leviathan{
 		//! Makes the threads work with Ogre
 		DLLEXPORT void MakeThreadsWorkWithOgre();
 
+        //! Must be called if MakeThreadsWorkWithOgre has been called, BEFORE releasing graphics
+        DLLEXPORT void UnregisterGraphics();
 
 		DLLEXPORT static ThreadingManager* Get();
 	protected:
@@ -121,7 +124,7 @@ namespace Leviathan{
 		//! List of the tasks queued by the application
 		std::list<std::shared_ptr<QueuedTask>> WaitingTasks;
 		std::condition_variable_any TaskQueueNotify;
-		std::list<std::shared_ptr<TaskThread>> UsableThreads;
+		std::vector<std::shared_ptr<TaskThread>> UsableThreads;
 
 		//! Thread used to set tasks to threads
 		std::thread WorkQueueHandler;

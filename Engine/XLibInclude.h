@@ -1,12 +1,10 @@
 #pragma once
-#ifdef __linux
-#ifndef LEVIATHAN_XINCLUDES
-#define LEVIATHAN_XINCLUDES
+#ifdef __linux__
 // ------------------------------------ //
 //! \file
 //! File that defines Xlib includes and undefines (most) conflicting things
-// ---- includes ---- //
 
+// ---- includes ---- //
 #include <X11/Xlib.h>
     
 // X11 additional includes
@@ -18,6 +16,4 @@
 #include <X11/Xmu/Atoms.h>
 
 
-
-#endif
-#endif //__linux
+#endif //__linux__

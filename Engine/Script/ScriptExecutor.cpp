@@ -1,8 +1,7 @@
 #include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_SCRIPT_EXECUTOR
 #include "ScriptExecutor.h"
-#endif
+
 using namespace Leviathan;
 // ------------------------------------ //
 #include "Script/AngelScriptCommon.h"
@@ -15,6 +14,9 @@ using namespace Leviathan;
 #include <add_on/scriptarray/scriptarray.h>
 #include <add_on/scriptstdstring/scriptstdstring.h>
 #include <add_on/scriptgrid/scriptgrid.h>
+#include <add_on/scripthandle/scripthandle.h>
+#include <add_on/datetime/datetime.h>
+#include <add_on/weakref/weakref.h>
 
 #include "ScriptModule.h"
 
@@ -61,11 +63,19 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 	// register other script extensions //
 	RegisterStdStringUtils(engine);
 
+    
+    RegisterScriptDateTime(engine);
+    
 	// register dictionary object //
 	RegisterScriptDictionary(engine);
 	
 	// Register the grid addon //
 	RegisterScriptGrid(engine);
+
+    // Register reference handles //
+    RegisterScriptHandle(engine);
+
+    RegisterScriptWeakRef(engine);
 
 	// register global functions and classes //
 	if(engine->RegisterGlobalFunction("void Print(const string &in message)",
@@ -81,7 +91,7 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 	// binding Event DataStore DataBlock and others //
 	if(!BindEngineCommonScriptIterface(engine)){
 		// failed //
-		Logger::Get()->Error("ScriptExecutor: Init: AngelScript: register Engine object things failed");
+		LOG_ERROR("ScriptExecutor: Init: AngelScript: register Engine object things failed");
         throw Exception("Script bind failed");
 	}
 
@@ -310,11 +320,13 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
     ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo)
 {
 	// Get the number of parameters expected //
-	int parameterc = paraminfo->ParameterTypeIDS.size();
+	auto parameterc = static_cast<asUINT>(paraminfo->ParameterTypeIDS.size());
 
 	// Start passing the parameters provided by the application //
-	for(int i = 0; i < parameterc; i++){
-		if(i >= (int)parameters->Parameters.size()) // no more parameters //
+	for(asUINT i = 0; i < parameterc; ++i){
+
+        // no more parameters //
+		if(i >= parameters->Parameters.size())
 			break;
 
 		// Try to pass the parameter //
@@ -383,7 +395,7 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
 				} else {
                     
 					// types match, we can pass in the raw pointer //
-					void* ptrtostuff = (void*)(*parameters->Parameters[i]);
+					void* ptrtostuff = static_cast<void*>(*parameters->Parameters[i]);
 					ScriptContext->SetArgAddress(i, ptrtostuff);
 				}
 			}
@@ -640,7 +652,7 @@ void Leviathan::ScriptExecutor::PrintAdditionalExcept(asIScriptContext *ctx){
     
 	// Loop the stack starting from the frame below the current function
     // (actually might be nice to print the top frame too)
-	for(size_t n = 0; n < ctx->GetCallstackSize(); n++){
+	for(asUINT n = 0; n < ctx->GetCallstackSize(); n++){
         
 		// Get the function object //
 		const asIScriptFunction* function = ctx->GetFunction(n);

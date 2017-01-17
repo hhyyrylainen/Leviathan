@@ -37,6 +37,7 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 #include <iomanip> // for setfill
+#include <sstream> // for std::stringstream
 // Constants for MD5Transform routine.
 #define S11 7
 #define S12 12

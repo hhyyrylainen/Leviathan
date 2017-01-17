@@ -3,19 +3,19 @@
 
 #include "FileSystem.h"
 #include "OGRE/OgreWindowEventUtilities.h"
-#include <boost/date_time/posix_time/posix_time_duration.hpp>
+
+#include <iostream>
+
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() :
-    Quit(false), _Engine(new Engine(this)), ApplicationConfiguration(NULL), ShouldQuit(false),
-    QuitSometime(false)
+    _Engine(new Engine(this))
 {
 	Curapp = this;
 }
 
 DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
-	Curapp = NULL;
+	Curapp = nullptr;
 }
 
 DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::GetApp(){
@@ -36,8 +36,9 @@ DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration
 	ApplicationConfiguration = configuration;
 
 	// init engine //
-	if(!_Engine->Init(ApplicationConfiguration, NETWORKED_TYPE_CLIENT))
+	if(!_Engine->Init(ApplicationConfiguration, GetProgramNetType()))
 		return false;
+    
 	_InternalInit();
 	return true;
 }
@@ -78,7 +79,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	Quit = true;
 
 	if(_Engine){
-		// The prelease does some stuff which is necessary and that requires tick to be called... //
+		// The prelease does some which requires a tick //
 		_Engine->PreRelease();
 		_Engine->Tick();
 		_Engine->Release(true);
@@ -87,12 +88,8 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	SAFE_DELETE(_Engine);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::PassCommandLine(const std::string &params){
-	_Engine->PassCommandLine(params);
-}
-
-DLLEXPORT void Leviathan::LeviathanApplication::FlushCommandLine(){
-	_Engine->ExecuteCommandLine();
+DLLEXPORT bool Leviathan::LeviathanApplication::PassCommandLine(int argcount, char* args[]){
+	return _Engine->PassCommandLine(argcount, args);
 }
 
 DLLEXPORT void Leviathan::LeviathanApplication::_InternalInit(){
@@ -135,11 +132,11 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 			continue;
 		}
 
-
 		Render();
 
-
 		// We could potentially wait here //
+        //! TODO: make this wait happen only if tick wasn't actually and no frame was
+        //! rendered
 		try{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		} catch(...){
@@ -209,3 +206,51 @@ DLLEXPORT void Leviathan::LeviathanApplication::MarkAsClosing(){
 	QuitSometime = true;
 }
 // ------------------------------------ //
+DLLEXPORT void Leviathan::LeviathanApplication::StartServerProcess(
+    const std::string &processname, const std::string &commandline)
+{
+
+#ifdef _WIN32
+    // Create needed info //
+    STARTUPINFOA processstart;
+    PROCESS_INFORMATION startedinfo;
+
+    ZeroMemory(&processstart, sizeof(STARTUPINFOA));
+    ZeroMemory(&startedinfo, sizeof(PROCESS_INFORMATION));
+
+    processstart.cb = sizeof(STARTUPINFOA);
+    //processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
+    //processstart.wShowWindow = SW_SHOWMINIMIZED;
+
+    string finalstart = "\""+processname+"\" "+commandline;
+
+    // Use windows process creation //
+    if(!CreateProcessA(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, 
+            NULL, NULL, &processstart,
+            &startedinfo))
+    {
+        // Failed to start the process
+        Logger::Get()->Error("Failed to start the server process, error code: "+
+            Convert::ToString(GetLastError()));
+        return -1;
+    }
+
+    // Close our handles //
+    CloseHandle(startedinfo.hThread);
+    ServerProcessHandle = startedinfo.hProcess;
+
+
+#else
+    // Popen should work //
+
+    // Actually fork might be simpler //
+    if(fork() == 0){
+        // We are now in the child process //
+
+        execl(processname.c_str(), commandline.c_str(), (char*) NULL);
+    }
+
+
+#endif // _WIN32
+
+}

@@ -13,7 +13,7 @@ using namespace std;
 
 TEST_CASE("Basic script running", "[script]"){
 
-    PartialEngine<false, NETWORKED_TYPE_CLIENT> engine;
+    PartialEngine<false> engine;
     
     IDFactory ids;
     auto exec(move(unique_ptr<ScriptExecutor>(new ScriptExecutor())));

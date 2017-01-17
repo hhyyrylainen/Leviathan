@@ -31,13 +31,13 @@ DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name, const Va
 	Datas[0] = new VariableBlock(val);
 }
 
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 DLLEXPORT NamedVariableList::NamedVariableList(ScriptSafeVariableBlock* const data) :
     Datas(1), Name(data->GetName()) {
     // Copy value //
     Datas[0] = new VariableBlock(*data);
 }
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 
 DLLEXPORT NamedVariableList::NamedVariableList(const std::string &name, vector<VariableBlock*> values_willclear)
     : Datas(values_willclear.size()), Name(name)
@@ -207,7 +207,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
         try {
             tmpcreated = std::make_unique<VariableBlock>(*valuestr, predefined);
         }
-        catch (const InvalidArgument &e) {
+        catch (const InvalidArgument) {
 
             // Rethrow the exception //
             SAFE_DELETE_VECTOR(resultvalues);
@@ -260,7 +260,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string &va
                 throw InvalidArgument("NamedVariableList could not parse top level bracket "
                     "expression");
             }
-        } catch(const InvalidArgument &e){
+        } catch(const InvalidArgument){
 
             throw;
         }
@@ -302,7 +302,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string &va
 	try{
         tmpcreated = std::make_unique<VariableBlock>(variablestr, predefined);
 	}
-	catch (const InvalidArgument &e){
+	catch (const InvalidArgument){
 
 		// Rethrow the exception //
         SAFE_DELETE_VECTOR(Datas);
@@ -452,10 +452,6 @@ DLLEXPORT VariableBlock& NamedVariableList::GetValue(size_t nindex){
 	return *Datas[nindex];
 }
 
-DLLEXPORT std::string& NamedVariableList::GetName(){
-	return Name;
-}
-
 DLLEXPORT void NamedVariableList::GetName(std::string &name) const{
 	// return name in a reference //
 	name = Name;
@@ -488,10 +484,10 @@ DLLEXPORT std::string Leviathan::NamedVariableList::ToText(int WhichSeparator /*
 	// starting bracket //
     if(WrapInBrackets)
         stringifiedval += "[";
-
+    
 	// reserve some space //
-	stringifiedval.reserve(Datas.size()*4);
-
+    stringifiedval.reserve(Datas.size()*4);
+    
 	for(size_t i = 0; i < Datas.size(); i++){
 
 		if(i != 0)
@@ -547,7 +543,7 @@ DLLEXPORT std::string Leviathan::NamedVariableList::ToText(int WhichSeparator /*
     else
         stringifiedval += ";";
 
-	return stringifiedval;
+    return stringifiedval;
 }
 
 DLLEXPORT NamedVariableList& NamedVariableList::operator=(const NamedVariableList &other){
@@ -632,9 +628,9 @@ DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
 		// create a named var //
     #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
 		try{
-			shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], predefined));
+			auto var = std::make_shared<NamedVariableList>(*Lines[i], Logger::Get(), predefined);
 
-            if (!var || !*var) {
+            if (!var || !var->IsValid()) {
                 // Invalid value //
                 continue;
             }
@@ -648,15 +644,16 @@ DLLEXPORT  bool NamedVariableList::ProcessDataDump(const std::string &data,
 
             // This should remove null characters from the string //
             
-			Logger::Get()->Info("NamedVar: ProcessDataDump: contains invalid line, line (with only ASCII characters): "
-                +Convert::ToString(Lines[i])+"\nEND");
+			Logger::Get()->Info("NamedVar: ProcessDataDump: contains invalid line, "
+                "line (with only ASCII characters): " + Convert::ToString(Lines[i]) + "\nEND");
             
 			continue;
 		}
 
     #else
 
-            shared_ptr<NamedVariableList> var(new NamedVariableList(*Lines[i], errorreport, predefined));
+            shared_ptr<NamedVariableList> var(new NamedVariableList(*
+                    Lines[i], errorreport, predefined));
 
             if (!var || !var->IsValid()) {
                 // Invalid value //
@@ -704,7 +701,7 @@ DLLEXPORT VariableBlock* NamedVariableList::GetValueDirect(size_t nindex){
     if(nindex >= Datas.size())
         return nullptr;
     
-	return Datas[nindex];
+    return Datas[nindex];
 }
 
 DLLEXPORT size_t NamedVariableList::GetVariableCount() const{
@@ -817,7 +814,7 @@ DLLEXPORT NamedVars::NamedVars(sf::Packet &packet){
 
         shared_ptr<NamedVariableList> newvalue(new NamedVariableList(packet));
 
-        if(!newvalue || !*newvalue)
+        if(!newvalue || !newvalue->IsValid())
             continue;
 
 		Variables.push_back(newvalue);
@@ -840,6 +837,21 @@ DLLEXPORT void NamedVars::AddDataToPacket(sf::Packet &packet) const{
 }
 #endif // SFML_PACKETS
 // ------------------------------------ //
+DLLEXPORT bool NamedVars::Add(std::shared_ptr<NamedVariableList> value){
+
+    GUARD_LOCK();
+	auto index = Find(guard, value->Name);
+	// index check //
+	if(index >= Variables.size()){
+
+		Variables.push_back(value);
+		return true;
+	}
+    
+    Variables[index] = value;
+    return false;
+}
+
 DLLEXPORT bool NamedVars::SetValue(const std::string &name, const VariableBlock &value1){
 	GUARD_LOCK();
 	auto index = Find(name);
@@ -1162,10 +1174,10 @@ DLLEXPORT size_t NamedVars::Find(Lock &guard, const std::string &name) const{
 			return i;
 	}
     
-	return SIZE_MAX;
+	return std::numeric_limits<size_t>::max();
 }
 // ------------------ Script compatible functions ------------------ //
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 ScriptSafeVariableBlock* NamedVars::GetScriptCompatibleValue(const std::string &name){
 	// Use a try block to not throw exceptions to the script engine //
 	try{
@@ -1197,7 +1209,7 @@ bool NamedVars::AddScriptCompatibleValue(ScriptSafeVariableBlock* value){
 
     return true;
 }
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 
 DLLEXPORT size_t NamedVars::GetVariableCount() const{
 	return Variables.size();

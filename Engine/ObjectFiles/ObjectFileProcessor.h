@@ -19,8 +19,9 @@ namespace Leviathan{
 		DLLEXPORT static std::unique_ptr<ObjectFile> ProcessObjectFile(const std::string &file, 
             LErrorReporter* reporterror);
 
-        static DLLEXPORT std::unique_ptr<ObjectFile> ProcessObjectFileFromString(std::string filecontents, 
-            const std::string &filenameforerrors, LErrorReporter* reporterror);
+        static DLLEXPORT std::unique_ptr<ObjectFile> ProcessObjectFileFromString(
+            std::string filecontents,  const std::string &filenameforerrors,
+            LErrorReporter* reporterror);
 
 
 		//! \brief Writes an ObjectFile's data structure to a file
@@ -47,7 +48,7 @@ namespace Leviathan{
 
 		// function to shorten value loading in many places //
 		template<class T>
-		DLLEXPORT static bool LoadValueFromNamedVars(NamedVars* block, const std::string &varname,
+		static bool LoadValueFromNamedVars(NamedVars* block, const std::string &varname,
             T &receiver, const T &defaultvalue, LErrorReporter* ReportError = nullptr,
             const std::string &errorprefix = "")
 		{
@@ -79,7 +80,7 @@ namespace Leviathan{
 
 
 		template<class RType, class SingleType, int VarCount>
-		DLLEXPORT static void LoadMultiPartValueFromNamedVars(NamedVars* block,
+		static void LoadMultiPartValueFromNamedVars(NamedVars* block,
             const std::string &varname, RType &receiver, const RType &defaultvalue,
             LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{
@@ -105,7 +106,7 @@ namespace Leviathan{
 		}
 
 		template<class RType, class SingleType, int VarCount>
-		DLLEXPORT static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block,
+		static bool LoadMultiPartValueFromNamedVariableList(NamedVariableList* block,
             int &valuestartindex, RType &receiver, const RType &defaultvalue,
             LErrorReporter* ReportError = nullptr, const std::string &errorprefix = "")
 		{

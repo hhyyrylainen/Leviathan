@@ -19,12 +19,24 @@ void Leviathan::RegisterOgreOnThread(){
 	Ogre::Root::getSingleton().getRenderSystem()->registerThread();
 	Logger::Get()->Info("Thread registered to work with Ogre");
 }
+
+DLLEXPORT void Leviathan::UnregisterOgreOnThread(){
+
+    // Release Ogre (if Ogre is still active) //
+	Ogre::Root* tmproot = Ogre::Root::getSingletonPtr();
+    LEVIATHAN_ASSERT(tmproot, "Calling UnregisterOgreOnThread after Ogre has been released");
+
+    tmproot->getRenderSystem()->unregisterThread();
+}
+
 #endif //LEVIATHAN_USING_OGRE
 
 // ------------------ ThreadingManager ------------------ //
-DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /*= DEFAULT_THREADS_PER_CORE*/) :
-    AllowStartTasksFromQueue(true), StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
-    AllowConditionalWait(true), AllowRepeats(true)
+DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore
+    /*= DEFAULT_THREADS_PER_CORE*/) :
+    AllowStartTasksFromQueue(true), StopProcessing(false),
+    TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
+    AllowRepeats(true), AllowConditionalWait(true)
 {
 	WantedThreadCount = std::thread::hardware_concurrency()*basethreadspercore;
 
@@ -33,7 +45,9 @@ DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore /
 
 DLLEXPORT Leviathan::ThreadingManager::~ThreadingManager(){
 
-	staticaccess = NULL;
+    // Joins all threads before quitting //
+    UsableThreads.clear();
+	staticaccess = nullptr;
 }
 
 DLLEXPORT ThreadingManager* Leviathan::ThreadingManager::Get(){
@@ -296,7 +310,9 @@ DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<Queued
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
+    
 	QUICKTIME_THISSCOPE;
+    
 	// Disallow new tasks //
 	{
 		GUARD_LOCK();
@@ -321,9 +337,10 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 		GUARD_LOCK_NAME(lockit);
 
 #ifdef LEVIATHAN_USING_OGRE
-        Ogre::Root::getSingleton().getRenderSystem()->preExtraThreadsStarted();
 		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
-			(*iter)->SetTaskAndNotify(shared_ptr<QueuedTask>(new QueuedTask(std::bind(RegisterOgreOnThread))));
+
+			//(*iter)->SetTaskAndNotify(
+            //   std::make_shared<QueuedTask>(std::bind(RegisterOgreOnThread)));
 			// Wait for it to end //
 #ifdef __GNUC__
 			while((*iter)->HasRunningTask()){
@@ -331,7 +348,8 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 					TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(50));
 				}
 				catch(...){
-					Logger::Get()->Warning("ThreadingManager: MakeThreadsWorkWithOgre: linux fix wait interrupted");
+					LOG_WARNING("ThreadingManager: MakeThreadsWorkWithOgre: "
+                        "linux fix wait interrupted");
 				}
 			}
 #endif
@@ -356,8 +374,47 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre(){
 	}
 }
 
+DLLEXPORT void Leviathan::ThreadingManager::UnregisterGraphics(){
+
+    // Wait for threads to finish //
+	FlushActiveThreads();
+
+    {
+		GUARD_LOCK_NAME(lockit);
+
+    #ifdef LEVIATHAN_USING_OGRE
+        
+		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
+
+			//(*iter)->SetTaskAndNotify(
+            //    std::make_shared<QueuedTask>(std::bind(UnregisterOgreOnThread)));
+			// Wait for it to end //
+        // #ifdef __GNUC__
+		// 	while((*iter)->HasRunningTask()){
+		// 		try{
+		// 			TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(50));
+		// 		}
+		// 		catch(...){
+		// 			LOG_WARNING("ThreadingManager: MakeThreadsWorkWithOgre: "
+        //                 "linux fix wait interrupted");
+		// 		}
+		// 	}
+        // #endif
+		}
+    #endif //LEVIATHAN_USING_OGRE
+	}
+
+    FlushActiveThreads();
+    
+    // Allow new threads //
+	{
+		GUARD_LOCK();
+		AllowStartTasksFromQueue = true;
+	}
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::NotifyQueuerThread(){
-	GUARD_LOCK();
+
 	TaskQueueNotify.notify_all();
 }
 

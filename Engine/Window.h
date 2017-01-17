@@ -121,7 +121,8 @@ namespace Leviathan{
 		DLLEXPORT inline Ogre::Camera* GetOverlayCamera() const{
 			return OverLayCamera;
 		}
-		// map that converts OIS::KeyCode to CEGUI key codes, not required since the codes are the same! //
+		// map that converts OIS::KeyCode to CEGUI key codes,
+        // not required since the codes are the same! //
 		//static std::map<OIS::KeyCode, CEGUI::Key::Scan> OISCEGUIKeyConvert;
 		static boost::bimap<std::string, OIS::KeyCode> CharacterToOISConvert;
 
@@ -146,47 +147,47 @@ namespace Leviathan{
 		void _CheckMouseVisibilityStates();
 		// ------------------------------------ //
 #ifdef _WIN32
-		HWND m_hwnd;
+		HWND m_hwnd = nullptr;
 #else
-		XID m_hwnd;
-		Display* XDisplay;
+		XID m_hwnd = 0;
+		Display* XDisplay = nullptr;
 
-		Cursor XInvCursor;
+		Cursor XInvCursor = 0;
 #endif
-		Ogre::RenderWindow* OWindow;
-		Ogre::SceneManager* OverlayScene;
-		Ogre::Camera* OverLayCamera;
+		Ogre::RenderWindow* OWindow = nullptr;
+		Ogre::SceneManager* OverlayScene = nullptr;
+		Ogre::Camera* OverLayCamera = nullptr;
 
         //! Like entity ID
         //! Makes sure that created Ogre resources are unique
         int ID;
 
-		GraphicalInputEntity* OwningWindow;
+		GraphicalInputEntity* OwningWindow = nullptr;
 
-		OIS::InputManager* WindowsInputManager;
-		OIS::Mouse* WindowMouse;
-		OIS::Keyboard* WindowKeyboard;
+		OIS::InputManager* WindowsInputManager = nullptr;
+		OIS::Mouse* WindowMouse = nullptr;
+		OIS::Keyboard* WindowKeyboard = nullptr;
 		std::vector<OIS::JoyStick*> WindowJoysticks;
 
 		//! This is temporarily stored during input gathering
-		CEGUI::InputAggregator* inputreceiver;
+		CEGUI::InputAggregator* inputreceiver = nullptr;
 
-		bool ThisFrameHandledCreate;
-		int LastFrameDownMouseButtons;
+		bool ThisFrameHandledCreate = false;
+		int LastFrameDownMouseButtons = 0;
 		
 		// Set when the native window is no longer valid //
-		bool IsInvalidated;
+		bool IsInvalidated = false;
 
 		// this is updated every time input is gathered //
-		int SpecialKeyModifiers;
-		bool Focused;
+		int SpecialKeyModifiers = 0;
+		bool Focused = true;
 		bool ApplicationWantCursorState;
-		bool ForceMouseVisible;
-		bool CursorState;
+		bool ForceMouseVisible = false;
+		bool CursorState = true;
 
-		bool FirstInput;
+		bool FirstInput = true;
 
-		bool MouseCaptured;
+		bool MouseCaptured = false;
 	};
 
 

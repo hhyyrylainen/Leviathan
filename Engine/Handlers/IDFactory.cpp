@@ -9,7 +9,7 @@ IDFactory::~IDFactory(){
 	Instance = NULL;
 }
 
-IDFactory* Leviathan::IDFactory::Instance = NULL;
+DLLEXPORT IDFactory* Leviathan::IDFactory::Instance = NULL;
 // ------------------------------------ //
 DLLEXPORT IDFactory* Leviathan::IDFactory::Get(){
 

@@ -1,4 +1,5 @@
 #!/bin/sh
-gtags
-cscope -b -e -R -U -q
-ctags -R -e
+#cscope -b -q
+find . -iname "*.h" -o -iname "*.cpp" -not -path "./build/*" > cscope.files
+cscope -b
+

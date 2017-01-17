@@ -3,19 +3,19 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/MasterServerApplication.h"
-
+#include "PongMasterNetworking.h"
 
 namespace Pong{
 
 	class PongMasterServer : public Leviathan::MasterServerApplication{
 	public:
-		PongMasterServer();
+		PongMasterServer(PongMasterNetworking &network);
 		~PongMasterServer();
 
-		virtual void Tick(int mspassed);
+		void Tick(int mspassed) override;
 
 		void CustomizeEnginePostLoad();
-		void EnginePreShutdown();
+		void EnginePreShutdown() override;
 
 		static std::string GenerateWindowTitle();
 
@@ -32,6 +32,7 @@ namespace Pong{
 
 	protected:
 
+        PongMasterNetworking& MasterInterface;
 	};
 
 }

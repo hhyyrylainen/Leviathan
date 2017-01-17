@@ -25,7 +25,7 @@ namespace Leviathan{
 		// Get functions for getting as strings Rocket compatible get functions //
 		DLLEXPORT virtual void GetRow(std::vector<std::string> &row, const std::string &table,
             int row_index, const std::vector<std::string> &columns);
-		DLLEXPORT virtual int GetNumRows(const std::string &table);
+		DLLEXPORT virtual size_t GetNumRows(const std::string &table);
 
 		// Search functions //
 		DLLEXPORT std::shared_ptr<VariableBlock> GetValueOnRow(const std::string &table,

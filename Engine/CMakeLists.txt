@@ -11,117 +11,168 @@
 # get all files in their groups
 if(CREATE_UE4_PLUGIN)
 
-set(GroupCore "Define.cpp" "Define.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
+  set(GroupCore "Define.cpp" "Define.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
     "ErrorReporter.h" "Logger.cpp" "Logger.h" "utf8.h" "Include.h"
     "Exceptions.h" "Exceptions.cpp"
     "TimeIncludes.h" "TimeIncludes.cpp" "WindowsInclude.h"
     )
-    
-set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
+  
+  set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ErrorTypes.h" "Common/ErrorTypes.h"
     "Common/ReferenceCounted.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
+    "Common/ExtraAlgorithms.h"
     "Common/ThreadSafe.h" 
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
     )
-    
-set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
+  
+  set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
     "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
     )
-    
-set(GroupUtility "Utility/Convert.cpp" "Utility/Convert.h"
+  
+  set(GroupUtility "Utility/Convert.cpp" "Utility/Convert.h"
     "Utility/Random.cpp" "Utility/Random.h"
     )
-    
-set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h")
+  
+  set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h")
 
-set(GroupEntities "Entities/EntityCommon.h")
+  set(GroupEntities "Entities/EntityCommon.h")
 
 else()
-set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
+  set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h"
+    "ForwardDeclarations.h"
     "LeviathanMainDll.h" "Logger.cpp" "Logger.h" "ErrorReporter.h"
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
     "Exceptions.h" "Exceptions.cpp"
     "TimeIncludes.h" "TimeIncludes.cpp"
     "CEGUIInclude.h" "WindowsInclude.h"
     )
-    
-set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
+  
+  set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ErrorTypes.h" "Common/ObjectPool.h"
+    "Common/ObjectPool.h"
     "Common/ReferenceCounted.h"
     "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
     "Common/ThreadSafe.h" 
-    "Common/Types.h" "Common/Types.cpp" "Common/TypesOgreCompat.h"
+    "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
     )
-    
-set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
+  
+  set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
     "Math/RayTracing.cpp" "Math/RayTracing.h"
     "Math/TriangulateDelaunay.cpp" "Math/TriangulateDelaunay.h"
     )
 
-set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
+  set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
     "Utility/Convert.cpp" "Utility/Convert.h"
     "Utility/DebugVariableNotifier.cpp" "Utility/DebugVariableNotifier.h"
     "Utility/MD5Generator.cpp" "Utility/MD5Generator.h"
     "Utility/Random.cpp" "Utility/Random.h"
     "Utility/well.h"
     )
-    
-set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
+  
+  set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
     "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
     "Common/DataStoring/DataStore.cpp" "Common/DataStoring/DataStore.h"
     )
-    
-set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
-    "Entities/Component.cpp" "Entities/Component.h"
-    "Entities/Components.h" "Entities/EntityCommon.h"
+  
+  set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
+    "Entities/Components.cpp" "Entities/Components.h"
+    "Entities/Component.h" "Entities/EntityCommon.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
-    "Entities/Node.h" "Entities/Nodes.cpp" "Entities/Nodes.h"
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
     )
-    
-file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
-file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
-file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
-file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
-file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
+  
+  file(GLOB GroupApplication "Application/AppDefine.cpp" "Application/AppDefine.h"
+    "Application/Application.cpp" "Application/Application.h"
+    "Application/GameConfiguration.cpp" "Application/GameConfiguration.h"
+    "Application/KeyConfiguration.cpp" "Application/KeyConfiguration.h"
+    "Application/MasterServerApplication.cpp" "Application/MasterServerApplication.h"
+    "Application/ServerApplication.cpp" "Application/ServerApplication.h"
+    "Application/ClientApplication.cpp" "Application/ClientApplication.h"
+    "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
+    )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+    )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+    )
+
+  
+  set(GroupNetworking
+    "Networking/Connection.cpp" "Networking/Connection.h"
+    "Networking/GameSpecificPacketHandler.cpp" "Networking/GameSpecificPacketHandler.h"
+    "Networking/MasterServer.cpp" "Networking/MasterServer.h"
+    "Networking/NetworkCache.cpp" "Networking/NetworkCache.h"
+    "Networking/NetworkClientInterface.cpp" "Networking/NetworkClientInterface.h"
+    "Networking/NetworkHandler.cpp" "Networking/NetworkHandler.h"
+    "Networking/NetworkInterface.cpp" "Networking/NetworkInterface.h"
+    "Networking/NetworkRequest.cpp" "Networking/NetworkRequest.h"
+    "Networking/NetworkResponse.cpp" "Networking/NetworkResponse.h"
+    "Networking/NetworkServerInterface.cpp" "Networking/NetworkServerInterface.h"
+    "Networking/NetworkMasterServerInterface.cpp" "Networking/NetworkMasterServerInterface.h"
+    "Networking/RemoteConsole.cpp" "Networking/RemoteConsole.h"
+    "Networking/SyncedResource.cpp" "Networking/SyncedResource.h"
+    "Networking/SyncedVariables.cpp" "Networking/SyncedVariables.h"
+    "Networking/ConnectedPlayer.cpp" "Networking/ConnectedPlayer.h"
+    "Networking/CommonNetwork.h"
+    "Generated/RequestImpl.h" "Networking/GenerateRequest.rb"
+    "Generated/ResponseImpl.h" "Networking/GenerateResponse.rb"
+    )
+  
+  
+  file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
+  file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
+  file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
+  file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
+  file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
 
 
-file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
-file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
+  file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
+  file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
 
-file(GLOB GroupEvents "Events/*.cpp" "Events/*.h")
-file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
-file(GLOB GroupApplication "Application/*.cpp" "Application/*.h")
-file(GLOB GroupSound "Sound/*.cpp" "Sound/*.h")
+  file(GLOB GroupEvents "Events/*.cpp" "Events/*.h")
+  file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
+  file(GLOB GroupSound "Sound/*.cpp" "Sound/*.h")
 
-file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
-file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
-file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
-file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
-file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
+  file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
+  file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
+  file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
+  file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
+  file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
 
-file(GLOB GroupNetworking "Networking/*.cpp" "Networking/*.h")
-file(GLOB GroupStatistics "Statistics/*.cpp" "Statistics/*.h")
 
-file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
-file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
+  file(GLOB GroupStatistics "Statistics/*.cpp" "Statistics/*.h")
 
-if(USING_LEAP)
-  file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
+  file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
+  file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
+
+  if(USING_LEAP)
+    file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
+  endif()
+
 endif()
 
-endif()
-
-file(GLOB GroupObjectFiles "ObjectFiles/*.cpp" "ObjectFiles/*.h")
+set(GroupObjectFiles
+  "ObjectFiles/ObjectFile.cpp" "ObjectFiles/ObjectFile.h"
+  "ObjectFiles/ObjectFileProcessor.cpp" "ObjectFiles/ObjectFileProcessor.h"
+  )
 
 file(GLOB GroupThreading "Threading/*.cpp" "Threading/*.h")
-file(GLOB GroupIterators "Iterators/*.cpp" "Iterators/*.h")
+file(GLOB GroupIterators
+  "Iterators/IteratorData.h"
+  "Iterators/StringDataIterator.cpp" "Iterators/StringDataIterator.h"
+  "Iterators/StringIterator.cpp" "Iterators/StringIterator.h"
+  )
 
 file(GLOB GeneratorInput "GeneratorInput/*.*")
 
@@ -193,13 +244,17 @@ if(USE_LEAP)
 endif()
 
 # collect all files to one group
-set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics} ${GroupMath} ${GroupSound}
+set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
+  ${GroupMath} ${GroupSound}
     ${GroupScript} ${GroupGUI}  ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
-    ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte} ${GroupUtilityFile}
+    ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
+    ${GroupUtilityFile}
     ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators} ${GroupGameplay} 
-    ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp} ${GeneratorInput} ${GroupGeneratedFiles}
+    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
+    ${GroupGameplay} 
+    ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
+    ${GeneratorInput} ${GroupGeneratedFiles}
     ${Grouputf8})
     
 if(USE_LEAP)
@@ -219,11 +274,13 @@ else()
 endif()
 
 
-set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES} ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES})
+set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES}
+  ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES} ${cAudio_LIBRARIES})
 
 if(NOT WIN32)
-# Link with X11 and threads
-set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${X11_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+  # Link with X11 and threads
+  set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${X11_LIBRARIES} ${X11_Xmu_LIB}
+    ${CMAKE_THREAD_LIBS_INIT})
 
 endif(NOT WIN32)
 

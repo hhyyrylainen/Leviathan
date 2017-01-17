@@ -200,7 +200,7 @@ namespace Leviathan{
 	public:
 		//! Constructs a task that can be controlled how many times it is ran
 		//! \param repeatcount The task is ran this specified times, or the task calls StopRepeating before that
-		DLLEXPORT RepeatCountedTask(std::function<void ()> functorun, int repeatcount);
+		DLLEXPORT RepeatCountedTask(std::function<void ()> functorun, size_t repeatcount);
 
         
 		DLLEXPORT virtual ~RepeatCountedTask();
@@ -216,7 +216,7 @@ namespace Leviathan{
 
 		//! \brief Gets the number of repeats done
 		//! \note This will only be accurate if IsRepeating is only called once per repeat
-		DLLEXPORT int GetRepeatCount() const;
+		DLLEXPORT size_t GetRepeatCount() const;
 
 		//! \brief Checks if this is the last repeat
 		//!
@@ -226,11 +226,11 @@ namespace Leviathan{
 	protected:
         
 		//! Holds the maximum run count
-		int MaxRepeats;
+		size_t MaxRepeats;
 
 		//! Keeps track of how many times the task has been ran
 		//! \see IsRepeating
-		int RepeatedCount;
+		size_t RepeatedCount;
 	};
     
 	//! \brief Encapsulates a function that is ran after a time period and repeated certain amount

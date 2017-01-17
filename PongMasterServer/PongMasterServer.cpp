@@ -1,14 +1,15 @@
 #include "PongMasterServerIncludes.h"
 // ------------------------------------ //
-#ifndef PONG_MASTERSERVER
 #include "PongMasterServer.h"
-#endif
+
 #include "Common/DataStoring/NamedVars.h"
 #include "Application/GameConfiguration.h"
 using namespace Pong;
 using namespace std;
 // ------------------------------------ //
-Pong::PongMasterServer::PongMasterServer(){
+Pong::PongMasterServer::PongMasterServer(PongMasterNetworking &network) :
+    MasterInterface(network)
+{
 
 }
 

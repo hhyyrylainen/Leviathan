@@ -12,19 +12,22 @@ DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(const std::string &name)
 
 }
 
-DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(shared_ptr<ObjectFileObject> fileobject) :
+DLLEXPORT Leviathan::PhysicalMaterial::PhysicalMaterial(
+    shared_ptr<ObjectFileObject> fileobject) :
     EngineID(IDFactory::GetID())
 {
 	throw std::exception();
 }
 
 DLLEXPORT Leviathan::PhysicalMaterial::~PhysicalMaterial(){
-	// Material ID cannot be removed unless the world is empty, so just let smart ptrs do their magic //
-
+	// Material ID cannot be removed unless the world is empty, so just let smart ptrs do
+    // their magic
 }
 // ------------------------------------ //
-DLLEXPORT PhysMaterialDataPair& Leviathan::PhysicalMaterial::FormPairWith(const PhysicalMaterial &other){
-	InterractionVariables.push_back(shared_ptr<PhysMaterialDataPair>(new PhysMaterialDataPair(other.Name)));
+DLLEXPORT PhysMaterialDataPair& Leviathan::PhysicalMaterial::FormPairWith(
+    const PhysicalMaterial &other)
+{
+	InterractionVariables.push_back(std::make_shared<PhysMaterialDataPair>(other.Name));
 
 	// Return last element in the list //
 	return *InterractionVariables.back().get();
@@ -61,10 +64,13 @@ void PhysicalMaterial::_ClearFromWorld(NewtonWorld* world){
 
 void Leviathan::PhysicalMaterial::_ApplyMaterialPropertiesToWorld(NewtonWorld* world){
 	// Loop interaction variables and apply their properties //
-	for(auto iter = InterractionVariables.begin(); iter != InterractionVariables.end(); ++iter){
+	for(auto iter = InterractionVariables.begin(); iter != InterractionVariables.end();
+        ++iter)
+    {
 
 		(*iter)->ApplySettingsToWorld(world, GetMaterialIDIfLoaded(world),
-			PhysicsMaterialManager::Get()->GetMaterial((*iter)->OtherName)->GetMaterialIDIfLoaded(world), this);
+			PhysicsMaterialManager::Get()->GetMaterial((*iter)->OtherName)->
+            GetMaterialIDIfLoaded(world), this);
 	}
 }
 // ------------------ PhysMaterialDataPair ------------------ //
@@ -79,8 +85,11 @@ void Leviathan::PhysMaterialDataPair::ApplySettingsToWorld(NewtonWorld* world, i
 	NewtonMaterialSetDefaultSoftness(world, thisid, otherid, Softness);
 
 	// Callback setting //
-	NewtonMaterialSetCollisionCallback(world, thisid, otherid, materialowner, AABBCallback,
+	NewtonMaterialSetCollisionCallback(world, thisid, otherid, AABBCallback,
         ContactCallback);
+
+    // TODO: check if this is actually used
+    NewtonMaterialSetCallbackUserData(world, thisid, otherid, materialowner);
 }
 
 

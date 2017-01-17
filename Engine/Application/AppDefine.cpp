@@ -12,12 +12,10 @@ using namespace std;
 DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) :
     ConfigurationValues(new NamedVars()), 
 #ifdef _WIN32
-	HInstance(NULL), 
+	HInstance(NULL)
 #else
-	HInstance(0),
+	HInstance(0)
 #endif //_WIN32
-	_GameConfiguration(NULL),
-	_KeyConfiguration(NULL), DeleteLog(false), _NetworkInterface(NULL), Mainlog(NULL)
 {
 	// If this is the default configuration set as the static access one //
 	if(isdef)
@@ -44,8 +42,9 @@ NamedVars* Leviathan::AppDef::GetValues(){
 
 DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &logfile,
     const std::string &engineconfigfile, const std::string &gameconfig,
-    const std::string &keyconfig, std::function<void (Lock &guard, GameConfiguration* configobj)>
-    configchecker, std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker)
+    const std::string &keyconfig,
+    std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
+    std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker)
 {
 
 	unique_ptr<AppDef> tmpptr(new AppDef(true));
@@ -59,7 +58,7 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &logfil
     tmpptr->DeleteLog = true;
 
 	// load variables from configuration file //
-	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile);
+	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile, tmpptr->Mainlog);
 
 	// Load game configuration //
 	tmpptr->_GameConfiguration = new GameConfiguration(gameconfig);
@@ -98,11 +97,11 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const std::string &title,
 	bool window;
 
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Width", width, 800,
-        true, "Create window: ");
+        Logger::Get(), "Create window: ");
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Height", height, 600,
-        true, "Create window: ");
+        Logger::Get(), "Create window: ");
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Windowed", window,
-        true, true, "Create window: ");
+        true, Logger::Get(), "Create window: ");
     
 #ifdef _WIN32
 	this->SetWindowDetails(WindowDataDetails(title, width, height, window, windowborder, icon, appvirtualptr));
@@ -133,7 +132,8 @@ DLLEXPORT void Leviathan::AppDef::GetGameIdentificationData(std::string &userrea
 DLLEXPORT bool Leviathan::AppDef::GetVSync(){
 	bool vsync;
 
-	ObjectFileProcessor::LoadValueFromNamedVars<bool>(*ConfigurationValues, "Vsync", vsync, false, false);
+	ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        *ConfigurationValues, "Vsync", vsync, false);
 	return vsync;
 }
 
@@ -150,7 +150,7 @@ Leviathan::WindowDataDetails::WindowDataDetails(const std::string &title, const 
 Leviathan::WindowDataDetails::WindowDataDetails(const std::string &title, const int &width,
     const int &height, const bool &windowed,
 	const bool &windowborder, LeviathanApplication* appvirtualptr) :
-    Title(title), Width(width), Height(height), Windowed(windowed)
+    Title(title), Height(height), Width(width), Windowed(windowed)
 {
 
 }

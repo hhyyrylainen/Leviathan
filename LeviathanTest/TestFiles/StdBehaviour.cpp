@@ -97,3 +97,19 @@ TEST_CASE("std::function passing between threads", "[std]"){
     CHECK(secondary == (int)(12 + 25.4));
     CHECK(Functions.size() == 0);
 }
+
+TEST_CASE("Modulo '%' operator expected results", "[std]") {
+
+    CHECK(0 % 8 == 0);
+    CHECK(1 % 8 == 1);
+    CHECK(2 % 8 == 2);
+    CHECK(3 % 8 == 3);
+    CHECK(4 % 8 == 4);
+    CHECK(5 % 8 == 5);
+    CHECK(6 % 8 == 6);
+    CHECK(7 % 8 == 7);
+    CHECK(8 % 8 == 0);
+    CHECK(9 % 8 == 1);
+
+}
+

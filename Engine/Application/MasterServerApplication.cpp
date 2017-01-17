@@ -1,8 +1,5 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef LEVIATHAN_MASTERSERVERAPPLICATION
 #include "MasterServerApplication.h"
-#endif
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::MasterServerApplication::MasterServerApplication(){
@@ -13,21 +10,14 @@ DLLEXPORT Leviathan::MasterServerApplication::~MasterServerApplication(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::MasterServerApplication::Initialize(AppDef* configuration){
-	// store configuration //
-	ApplicationConfiguration = configuration;
+bool Leviathan::MasterServerApplication::PassCommandLine(int argcount, char* args[]){
 
-	// init engine //
-	if(!_Engine->Init(ApplicationConfiguration, NETWORKED_TYPE_MASTER))
-		return false;
-	_InternalInit();
-	return true;
+    // Force nogui //
+    _Engine->SetNoGUI();
+    
+    // Now pass it //
+    return _Engine->PassCommandLine(argcount, args);
 }
-// ------------------------------------ //
-
-// ------------------------------------ //
-
-// ------------------------------------ //
 
 
 

@@ -10,9 +10,9 @@
 #include <memory>
 
 
-#ifdef USING_ANGELSCRIPT
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
 #include "Script/ScriptScript.h"
-#endif // USING_ANGELSCRIPT
+#endif // LEVIATHAN_USING_ANGELSCRIPT
 
 namespace Leviathan{
 

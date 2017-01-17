@@ -56,17 +56,17 @@ namespace Leviathan{
             return Unique(TurnToPointer(object)->ObjectsLock);
         }
 
-        //template<typename ObjectClass>
-        //static auto Object(std::shared_ptr<ObjectClass> object){
+        template<typename ObjectClass>
+        static auto Object(std::shared_ptr<ObjectClass> &object){
 
-        //    return Unique(object->ObjectsLock);
-        //}
+            return Unique(object->ObjectsLock);
+        }
 
-        //template<typename ObjectClass>
-        //static auto Object(std::unique_ptr<ObjectClass> object){
+        template<typename ObjectClass>
+        static auto Object(std::unique_ptr<ObjectClass> &object){
 
-        //    return Unique(object->ObjectsLock);
-        //}
+            return Unique(object->ObjectsLock);
+        }
 
         template<class LockType>
         static auto Unique(LockType &lockref){
@@ -75,26 +75,27 @@ namespace Leviathan{
         }
     };
     
-#ifdef MOVE_NEW_LOCKS
-#define GUARD_LOCK() auto guard = std::move(Locker::Object(this));
+#if 0
+    // These prevent copy elision
+#define GUARD_LOCK() auto guard = std::move(Leviathan::Locker::Object(this));
     
-#define GUARD_LOCK_OTHER(x) auto guard = std::move(Locker::Object(x));
-#define GUARD_LOCK_NAME(y) auto y = std::move(Locker::Object(this));
-#define GUARD_LOCK_OTHER_NAME(x,y) auto y = std::move(Locker::Object(x));
+#define GUARD_LOCK_OTHER(x) auto guard = std::move(Leviathan::Locker::Object(x));
+#define GUARD_LOCK_NAME(y) auto y = std::move(Leviathan::Locker::Object(this));
+#define GUARD_LOCK_OTHER_NAME(x,y) auto y = std::move(Leviathan::Locker::Object(x));
     
-#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = std::move(Locker::Object(x));
-#define UNIQUE_LOCK_THIS() auto lockit = std::move(Locker::Object(this));
+#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = std::move(Leviathan::Locker::Object(x));
+#define UNIQUE_LOCK_THIS() auto lockit = std::move(Leviathan::Locker::Object(this));
 #else
-#define GUARD_LOCK() auto guard = (Locker::Object(this));
+#define GUARD_LOCK() auto guard = (Leviathan::Locker::Object(this));
     
-#define GUARD_LOCK_OTHER(x) auto guard = (Locker::Object(x));
-#define GUARD_LOCK_NAME(y) auto y = (Locker::Object(this));
-#define GUARD_LOCK_OTHER_NAME(x,y) auto y = (Locker::Object(x));
+#define GUARD_LOCK_OTHER(x) auto guard = (Leviathan::Locker::Object(x));
+#define GUARD_LOCK_NAME(y) auto y = (Leviathan::Locker::Object(this));
+#define GUARD_LOCK_OTHER_NAME(x,y) auto y = (Leviathan::Locker::Object(x));
     
-#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = (Locker::Object(x));
-#define UNIQUE_LOCK_THIS() auto lockit = (Locker::Object(this));
+#define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = (Leviathan::Locker::Object(x));
+#define UNIQUE_LOCK_THIS() auto lockit = (Leviathan::Locker::Object(this));
 #endif
-
+    
 	//! \brief Allows the inherited object to be locked
     //! \note Not allowed to be used as a pointer type
     template<class MutexType>

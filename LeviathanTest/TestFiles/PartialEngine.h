@@ -6,8 +6,9 @@
 #include "Events/EventHandler.h"
 #include "TimeIncludes.h"
 #include "Networking/NetworkClientInterface.h"
+#include <string>
 
-#include "catch.hpp"
+#include "../catch/catch.hpp"
 
 using namespace Leviathan;
 
@@ -15,6 +16,11 @@ using namespace Leviathan;
 class PartialApplication : public LeviathanApplication{
 public:
 
+    NETWORKED_TYPE GetProgramNetType() const override {
+
+        // Don't want to mimic either client or server to make testing easier
+        return NETWORKED_TYPE::Master;
+    }
 };
 
 class PartialClient : public NetworkClientInterface{
@@ -24,12 +30,35 @@ public:
     }
 };
 
+class TestLogger : public Logger {
+public:
+    TestLogger(const std::string &file) : Logger(file){ }
+
+    void Error(const std::string &data) override {
+
+        Logger::Error(data);
+        REQUIRE(false);
+    }
+
+    void Warning(const std::string &data) override {
+
+        Logger::Warning(data);
+        REQUIRE(false);
+    }
+
+    void Fatal(const std::string &Text) override {
+
+        Logger::Fatal(Text);
+        REQUIRE(false);
+    }
+};
+
 //! \brief Partial implementation of Leviathan::Engine for tests
-template<bool UseActualInit, NETWORKED_TYPE TestWithType>
+template<bool UseActualInit>
 class PartialEngine : public Engine{
 public:
 
-    PartialEngine() : Log("Test/TestLog.txt"), Def(), App(), Engine(&App){
+    PartialEngine(NetworkHandler* handler = nullptr) : Engine(&App), Log("Test/TestLog.txt"){
 
         // Configure for test use //
         NoGui = true;
@@ -39,7 +68,8 @@ public:
         // Setup some core values //
         if(UseActualInit){
 
-            bool succeeded = Init(&Def, TestWithType);
+            REQUIRE(handler);
+            bool succeeded = Init(&Def, handler->GetNetworkType());
 
             REQUIRE(succeeded);
             
@@ -49,7 +79,7 @@ public:
 
             MainEvents = new EventHandler();
 
-            _NetworkHandler = new NetworkHandler(TestWithType, NULL);
+            _NetworkHandler = handler;
 
             IDDefaultInstance = new IDFactory();
         }
@@ -79,8 +109,6 @@ public:
     }
 
     PartialApplication App;
-    Logger Log;
+    TestLogger Log;
     AppDef Def;
-
-    PartialClient DummyClient;
 };

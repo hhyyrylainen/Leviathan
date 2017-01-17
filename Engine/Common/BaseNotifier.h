@@ -10,20 +10,20 @@ namespace Leviathan{
 	template<class ParentType, class ChildType>
 	class BaseNotifier : public virtual ThreadSafe{
 	public:
-		DLLEXPORT BaseNotifier(ParentType* ourptr);
-		DLLEXPORT virtual ~BaseNotifier();
+		BaseNotifier(ParentType* ourptr);
+		virtual ~BaseNotifier();
 
 		//! Release function that unhooks all child objects
-		DLLEXPORT inline void ReleaseChildHooks(){
+		inline void ReleaseChildHooks(){
 
             GUARD_LOCK();
             ReleaseChildHooks(guard);
         }
 
-        DLLEXPORT void ReleaseChildHooks(Lock &guard);
+        void ReleaseChildHooks(Lock &guard);
 
 		//! Connects this to a notifiable object for holding a reference to it
-		DLLEXPORT FORCE_INLINE bool ConnectToNotifiable(
+		FORCE_INLINE bool ConnectToNotifiable(
             BaseNotifiable<ParentType, ChildType>* child)
         {
 			GUARD_LOCK();
@@ -32,21 +32,21 @@ namespace Leviathan{
 		}
 
 		//! \brief The actual implementation of ConnecToNotifiable
-		DLLEXPORT bool ConnectToNotifiable(Lock &guard,
+		bool ConnectToNotifiable(Lock &guard,
             BaseNotifiable<ParentType, ChildType>* child, Lock &childlock);
 
 
 		//! \brief Notifies the children about something
 		//!
 		//! This will call the BaseNotifiable::OnNotified on all the child objects
-		DLLEXPORT virtual void NotifyAll();
+		virtual void NotifyAll();
 
 
 		//! \brief Disconnects from previously connected notifiable
-		DLLEXPORT bool UnConnectFromNotifiable(Lock &guard,
+		bool UnConnectFromNotifiable(Lock &guard,
             BaseNotifiable<ParentType, ChildType>* unhookfrom);
 
-		DLLEXPORT FORCE_INLINE bool UnConnectFromNotifiable(
+		FORCE_INLINE bool UnConnectFromNotifiable(
             BaseNotifiable<ParentType, ChildType>* child)
         {
 			GUARD_LOCK();
@@ -54,13 +54,13 @@ namespace Leviathan{
 		}
 
 		//! \brief Searches the connected notifiable objects and calls the above function with it's pointer
-		DLLEXPORT bool UnConnectFromNotifiable(int id);
+		bool UnConnectFromNotifiable(int id);
 
 		//! \brief Actual implementation of this method
-		DLLEXPORT bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check, Lock &guard);
+		bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check, Lock &guard);
 
 		//! \brief Returns true when the specified object is already connected
-		DLLEXPORT FORCE_INLINE bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check){
+		FORCE_INLINE bool IsConnectedTo(BaseNotifiable<ParentType, ChildType>* check){
 			GUARD_LOCK();
 			return IsConnectedTo(check, guard);
 		}
@@ -74,20 +74,20 @@ namespace Leviathan{
             Lock &childlock);
 
 		//! \brief Gets the internal pointer to the actual object
-		DLLEXPORT ParentType* GetActualPointerToNotifierObject();
+		ParentType* GetActualPointerToNotifierObject();
 
 		//! \brief Called when one of our children notifies us about something
 		//! \note Both the child and this object has been locked when this is called
 		//! \warning Do not directly call this if you don't know what you are doing!
-		virtual void OnNotified();
+		virtual void OnNotified(Lock &ownlock, ChildType* child, Lock &childlock);
 
 	protected:
 
 		// Callbacks for child classes to implement //
 		// This object should already be locked during this call //
-		DLLEXPORT virtual void _OnNotifiableConnected(Lock &guard, ChildType* childadded,
+		virtual void _OnNotifiableConnected(Lock &guard, ChildType* childadded,
             Lock &childlock);
-		DLLEXPORT virtual void _OnNotifiableDisconnected(Lock &guard, ChildType* childtoremove,
+		virtual void _OnNotifiableDisconnected(Lock &guard, ChildType* childtoremove,
             Lock &childlock);
 		// ------------------------------------ //
 
@@ -101,9 +101,9 @@ namespace Leviathan{
 	//! \brief Specialized class for accepting all parent/child objects
 	class BaseNotifierAll : public BaseNotifier<BaseNotifierAll, BaseNotifiableAll>{
 	public:
-		DLLEXPORT inline BaseNotifierAll() : BaseNotifier(this){
+		inline BaseNotifierAll() : BaseNotifier(this){
 		}
-		DLLEXPORT inline ~BaseNotifierAll(){
+		inline ~BaseNotifierAll(){
 		}
 	};
 }

@@ -3,14 +3,10 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
-#if @BREAKPAD_STATE@ == 1
-#define USE_BREAKPAD 1
-#else
-#undef USE_BREAKPAD
-#endif
+#include "LeviathanMainDll.h"
 
 // Breakpad is used to detect and report crashes
-#ifdef USE_BREAKPAD
+#ifdef LEVIATHAN_USING_BREAKPAD
 #ifdef __linux
 #include "client/linux/handler/exception_handler.h"
 #elif defined(_WIN32)
@@ -25,7 +21,7 @@ using namespace std;
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
 
-#ifdef USE_BREAKPAD
+#if LEVIATHAN_USING_BREAKPAD
 #ifdef _WIN32
 #ifndef _DEBUG
 bool DumpCallback(const wchar_t* dump_path,
@@ -49,11 +45,6 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* c
 #endif
 #endif //USE_BREAKPAD
 
-#ifdef LEVIATHAN_USES_VLD
-// visual leak detector //
-#include <vld.h>
-#endif // LEVIATHAN_USES_VLD
-
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 #if defined(DEBUG) | defined(_DEBUG)
@@ -65,12 +56,12 @@ int main(int argcount, char* args[]){
 #endif
     
 #ifdef _WIN32
-    string commandline = lpCmdLine;
+    int argcount = 1;
+    char* args[] = { lpCmdLine };
 #else
-    string commandline = "";
-    for(int i = 1; i < argcount; i++){
-        commandline += string(" ")+args[i];
-    }
+    // We need to skip the program name
+    args += 1;
+    --argcount;
 #endif
     
     int Return = 0;
@@ -83,20 +74,14 @@ int main(int argcount, char* args[]){
 
 #endif
 
-#ifdef LEVIATHAN_USES_VLD
-    // now that we are in code we can start tracking //
-
-    VLDEnable();
-#endif // LEVIATHAN_USES_VLD
-
-#ifdef USE_BREAKPAD
+#if LEVIATHAN_USING_BREAKPAD
     // Crash handler //
 #ifdef _WIN32
 #ifndef _DEBUG
     google_breakpad::ExceptionHandler ExceptionHandler(L"C://tmp", NULL, DumpCallback, NULL, 
         google_breakpad::ExceptionHandler::HANDLER_ALL,
-		(MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
-		(const wchar_t*)nullptr, NULL);
+        (MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
+        (const wchar_t*)nullptr, NULL);
         
 #endif //_DEBUG
 #else
@@ -104,20 +89,25 @@ int main(int argcount, char* args[]){
 
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
 #endif
-
-
-    
-
 #endif //USE_BREAKPAD
     
     // create program object //
-    @PROGRAMCLASSNAME@ app;
     @PROGRAMNETWORKINGNAME@ network;
+    @PROGRAMCLASSNAME@ app(network);
 
-    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@", "@ENGINECONFIGURATION@", 
+    unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@",
+            "@ENGINECONFIGURATION@", 
         "@PROGRAMCONFIGURATION@", "@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
         &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
-        
+
+    // Fail if no definition could be created //
+    if(!ProgramDefinition){
+
+        std::cout << "FATAL: failed to create AppDefine" << std::endl;
+        return 2;
+    }
+    
+    
     // customize values //
 #ifdef _WIN32
     ProgramDefinition->SetHInstance(hInstance);
@@ -133,18 +123,18 @@ int main(int argcount, char* args[]){
 #endif
         &app);
 
-    app.PassCommandLine(commandline);
+    if(!app.PassCommandLine(argcount, args)){
+
+        LOG_ERROR("Invalid Command Line arguments. Shutting down");
+        return 3;
+    }
     
     if(app.Initialize(ProgramDefinition.get())){
 
         // this is where the game should customize the engine //
         app.CustomizeEnginePostLoad();
 
-        // After everything is ready the command line should be flushed //
-        app.FlushCommandLine();
-
-
-        Logger::Get()->Info("Engine successfully initialized");
+        Logger::Get()->Info(std::string("Engine successfully initialized"));
         Return = app.RunMessageLoop();
     } else {
         Logger::Get()->Error("App init failed, closing");

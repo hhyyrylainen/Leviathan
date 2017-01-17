@@ -8,32 +8,32 @@
 
 namespace Pong{
 
-	class PongServerNetworking;
+    class PongServerNetworking;
 
     using namespace std;
 
-	//! \brief Pong's command handler
-	//! \see Leviathan::CustomCommandHandler
-	class PongCommandHandler : public Leviathan::CustomCommandHandler{
-	public:
-		PongCommandHandler(PongServerNetworking* owner);
-		~PongCommandHandler();
+    //! \brief Pong's command handler
+    //! \see Leviathan::CustomCommandHandler
+    class PongCommandHandler : public Leviathan::CustomCommandHandler{
+    public:
+        PongCommandHandler(PongServerNetworking* owner);
+        ~PongCommandHandler();
 
 
-		DLLEXPORT virtual bool CanHandleCommand(const string &cmd) const;
+        bool CanHandleCommand(const string &cmd) const override;
 
-		DLLEXPORT virtual void ExecuteCommand(const string &wholecommand, CommandSender* sender);
+        void ExecuteCommand(const string &wholecommand, CommandSender* sender) override;
 
-	private:
+    private:
 
         //! Number for opened players (this has to be unique between all slots)
-        int PlayerUniqueCounter;
+        int PlayerUniqueCounter = 10000;
 
         //! Mutex for PlayerUniqueCounter
         Mutex PlayerIDMutex;
         
-		PongServerNetworking* Owner;
-	};
+        PongServerNetworking* Owner;
+    };
 
 }
 

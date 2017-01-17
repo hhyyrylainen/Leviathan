@@ -63,7 +63,7 @@ template<class StrType>
 class IteratorUntilSequenceData {
 public:
     IteratorUntilSequenceData(const StrType &finduntil) :
-        CurMatchedIndex(0), StringToMatch(finduntil), EndFound(false) {
+        StringToMatch(finduntil), CurMatchedIndex(0), EndFound(false) {
 
     }
 

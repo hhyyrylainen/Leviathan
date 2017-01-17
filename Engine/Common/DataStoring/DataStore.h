@@ -95,9 +95,8 @@ namespace Leviathan{
 
 		//DLLEXPORT vector<VariableBlock*>* GetValues(const std::string &name) throw(...);
 
-		DLLEXPORT void AddVar(NamedVariableList* newvaluetoadd);
 		DLLEXPORT void AddVar(std::shared_ptr<NamedVariableList> values);
-		DLLEXPORT void Remove(unsigned int index);
+		DLLEXPORT void Remove(size_t index);
 		DLLEXPORT void Remove(const std::string &name);
 
 		DLLEXPORT int GetVariableType(const std::string &name) const;

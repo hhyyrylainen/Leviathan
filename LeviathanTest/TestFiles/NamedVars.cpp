@@ -10,37 +10,37 @@ using namespace std;
 
 TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
 
-	vector<shared_ptr<NamedVariableList>> Variables;
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var1",
+    vector<shared_ptr<NamedVariableList>> Variables;
+    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var1",
                 new VariableBlock(1))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var2",
+    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var2",
                 new VariableBlock(2))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var3",
+    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var3",
                 new VariableBlock(3))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var4",
+    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var4",
                 new VariableBlock(4))));
     
-	Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var5",
+    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var5",
                 new VariableBlock(5))));
 
-	// create holder //
-	NamedVars holder = NamedVars();
+    // create holder //
+    NamedVars holder = NamedVars();
 
-	holder.SetVec(Variables);
+    holder.SetVec(Variables);
 
-	// add some more values //
-	holder.AddVar("var66", new VariableBlock(25));
-	holder.Remove(holder.Find("var2"));
+    // add some more values //
+    holder.AddVar("var66", new VariableBlock(25));
+    holder.Remove(holder.Find("var2"));
 
     CHECK(holder.Find("var66") < holder.GetVariableCount());
     CHECK(holder.Find("var2") >= holder.GetVariableCount());
 
     int checkval;
     
-	REQUIRE(holder.GetValueAndConvertTo<int>("var3", checkval) == true);
+    REQUIRE(holder.GetValueAndConvertTo<int>("var3", checkval) == true);
 
     CHECK(checkval == 3);
 }
@@ -79,7 +79,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
     SECTION("Line 'oh=2;'"){
         
         string line = "oh=2;";
-	
+    
         auto result = make_shared<NamedVariableList>(line, &reporter);
 
         REQUIRE(result);
@@ -119,30 +119,30 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
 #ifdef SFML_PACKETS
 TEST_CASE("NamedVars packet serialization", "[variable]"){
 
-	NamedVars packettestorig;
+    NamedVars packettestorig;
 
-	packettestorig.AddVar("MyVar1", new VariableBlock((string)"string_block"));
-	packettestorig.AddVar("Secy", new VariableBlock(true));
+    packettestorig.AddVar("MyVar1", new VariableBlock((string)"string_block"));
+    packettestorig.AddVar("Secy", new VariableBlock(true));
 
-	// Add to packet //
-	sf::Packet packetdata;
+    // Add to packet //
+    sf::Packet packetdata;
 
-	packettestorig.AddDataToPacket(packetdata);
+    packettestorig.AddDataToPacket(packetdata);
     
-	// Read from a packet //
-	NamedVars frompacket(packetdata);
+    // Read from a packet //
+    NamedVars frompacket(packetdata);
 
     REQUIRE(frompacket.GetVec()->size() == packettestorig.GetVec()->size());
 
-	// Check values //
-	auto datablock = frompacket.GetValue("MyVar1");
+    // Check values //
+    auto datablock = frompacket.GetValue("MyVar1");
 
     REQUIRE(datablock);
     
-	CHECK(datablock->GetBlockConst()->Type == DATABLOCK_TYPE_STRING);
+    CHECK(datablock->GetBlockConst()->Type == DATABLOCK_TYPE_STRING);
 
-	VariableBlock receiver2;
-	frompacket.GetValue(1, receiver2);
+    VariableBlock receiver2;
+    frompacket.GetValue(1, receiver2);
 
     CHECK(static_cast<bool>(receiver2) == true);
 }

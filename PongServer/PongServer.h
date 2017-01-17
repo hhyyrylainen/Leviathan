@@ -12,58 +12,57 @@ namespace Pong{
 
     using namespace std;
 
-	class PongServer : public CommonPongParts<Leviathan::ServerApplication, true>{
-	public:
-		PongServer();
-		~PongServer();
+    class PongServer : public CommonPongParts<Leviathan::ServerApplication, true>{
+    public:
+        PongServer(PongServerNetworking &network);
+        ~PongServer();
         
 
         void Tick(int mspassed) override;
 
-		void TryStartMatch();
-		void CheckForGameEnd();
+        void TryStartMatch();
+        void CheckForGameEnd();
 
 
-		static string GenerateWindowTitle();
-		
+        static string GenerateWindowTitle();
+        
 
-		// Game configuration checkers //
-		static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
-		static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
+        // Game configuration checkers //
+        static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
+        static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
 
-		//! Used to set the server status as joinable (it has started)
-		virtual void PreFirstTick();
+        //! Used to set the server status as joinable (it has started)
+        virtual void PreFirstTick();
 
+        //! This doesn't need any handling
+        virtual void OnPlayerStatsUpdated(PlayerList* list){}
 
-		//! Makes sure doesn't start in GUI mode
-		virtual void PassCommandLine(const string &params);
+        //! Changes the server to preparing screen
+        void OnStartPreMatch();
 
-		//! This doesn't need any handling
-		virtual void OnPlayerStatsUpdated(PlayerList* list){}
+        PongServerNetworking& GetServerNetworkInterface() {
 
-		//! Changes the server to preparing screen
-		void OnStartPreMatch();
-
-		PongServerNetworking* GetServerNetworkInterface();
+            return ServerInterface;
+        }
 
         
-		void SetScoreLimit(int scorelimit);
+        void SetScoreLimit(int scorelimit);
 
 
         //! \brief Called when scored, will handle everything
-		int PlayerScored(ObjectID goal);
+        int PlayerScored(ObjectID goal);
 
-		//! This function sets the player ID who should get points for scoring //
-		void _SetLastPaddleHit(ObjectID objptr, ObjectID objptr2);
+        //! This function sets the player ID who should get points for scoring //
+        void _SetLastPaddleHit(ObjectID objptr, ObjectID objptr2);
         
 
-		//! Handles score increase from scoring and destruction of ball.
+        //! Handles score increase from scoring and destruction of ball.
         //! The second parameter is used to ensuring it is the right ball
-		int _BallEnterGoalArea(ObjectID goal, ObjectID ballobject);
+        int _BallEnterGoalArea(ObjectID goal, ObjectID ballobject);
 
-		void _DisposeOldBall();
+        void _DisposeOldBall();
         
-		void GameMatchEnded();
+        void GameMatchEnded();
 
         static PongServer* Get();
 
@@ -71,44 +70,43 @@ namespace Pong{
         static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
             int threadIndex);
         
-		static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
+        static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
             int threadIndex);
 
         PhysicsMaterialContactCallback GetBallPaddleCallback() override;
 
         PhysicsMaterialContactCallback GetBallGoalAreaCallback() override;
         
-	protected:
+    protected:
         
-		virtual void ServerCheckEnd();
-		virtual void DoSpecialPostLoad();
-		virtual void CustomizedGameEnd();
+        virtual void ServerCheckEnd();
+        virtual void DoSpecialPostLoad();
+        virtual void CustomizedGameEnd();
 
-		virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
-		virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
+        virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
+        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
             std::map<int, string> &typeids);
 
         //! \brief For testing AI with valgrind
         //! \todo Add a score limit and a way to go back to default state afterwards
         void RunAITestMatch();
 
-		// Server specific connection handling //
+        // Server specific connection handling //
+
+        PongServerNetworking& ServerInterface;
+
+        shared_ptr<GameInputController> ServerInputHandler;
 
 
-		PongServerNetworking* _PongServerNetworking;
-
-		shared_ptr<GameInputController> ServerInputHandler;
-
-
-		//! Ball's position during last tick. This is used to see if the ball is "stuck"
-		Float3 BallLastPos;
+        //! Ball's position during last tick. This is used to see if the ball is "stuck"
+        Float3 BallLastPos;
         
-		//! Direction in which the ball can get stuck
-		Float3 DeadAxis;
-		int StuckThresshold;
+        //! Direction in which the ball can get stuck
+        Float3 DeadAxis;
+        int StuckThresshold;
 
         
-		static PongServer* Staticaccess;
-	};
+        static PongServer* Staticaccess;
+    };
 }
 

@@ -432,6 +432,8 @@ public:
         }
 
         if(CopyOperations.size() < 2){
+
+            vec.push_back(strtocut);
             // would be just one string, for legacy
             // (actually we don't want caller to think it got cut) reasons we return nothing //
             return false;

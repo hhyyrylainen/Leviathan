@@ -88,6 +88,15 @@ TEST_CASE("String cutting", "[string]"){
 
         REQUIRE(result[i] == exampleresult[i]);
     }
+
+    SECTION("Single value gets copied to output"){
+
+        std::vector<std::string> tagparts;
+        StringOperations::CutString<std::string>("tag", ";", tagparts);
+    
+        REQUIRE(tagparts.size() == 1);
+        CHECK(tagparts[0] == "tag");
+    }
 }
 
 TEST_CASE("String text replacing ", "[string]"){

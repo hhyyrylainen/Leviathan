@@ -431,17 +431,21 @@ public:
             }
         }
 
+        // make sure final position has end //
+        if(!CopyOperations.back().End)
+            CopyOperations.back().End = strtocut.length();
+
         if(CopyOperations.size() < 2){
 
-            vec.push_back(strtocut);
+            vec.push_back(strtocut.substr(CopyOperations.front().Start,
+                    static_cast<size_t>(CopyOperations.front().End) -
+                    static_cast<size_t>(CopyOperations.front().Start)));
+            
             // would be just one string, for legacy
             // (actually we don't want caller to think it got cut) reasons we return nothing //
             return false;
         }
 
-        // make sure final position has end //
-        if(!CopyOperations.back().End)
-            CopyOperations.back().End = strtocut.length();
         // length-1 is not used here, because it would have to be added in copy phase to the
         // substring length, and we didn't add that earlier...
 

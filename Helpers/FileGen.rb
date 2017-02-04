@@ -31,6 +31,9 @@ class Generator
 
       end
     end
+
+    # Prevent editing
+    FileUtils.chmod 'a-w', file
   end
 end
 

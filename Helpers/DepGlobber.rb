@@ -1,6 +1,6 @@
 # A really hacky way to find libraries to link to by globbing
 # all matching file names
-require_relative 'CommonCode'
+require_relative 'RubyCommon'
 
 
 class Globber

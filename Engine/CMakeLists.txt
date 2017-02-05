@@ -190,7 +190,12 @@ set(GroupGeneratedFiles)
 
 # AngelScript addon sources
 if(USE_ANGELSCRIPT)
-  file(GLOB_RECURSE GroupScriptAddons "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.cpp" "${PROJECT_SOURCE_DIR}/AngelScript/add_on/*.h")
+  file(GLOB_RECURSE GroupScriptAddons "${PROJECT_SOURCE_DIR}/libraries/include/add_on/*.cpp" "${PROJECT_SOURCE_DIR}/libraries/include/add_on/*.h")
+
+  if(NOT GroupScriptAddons)
+
+    message(SEND_ERROR "AngelScript add_on files haven't been copied to libraries directory")
+  endif()
 endif()
 
 # set groups

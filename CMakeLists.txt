@@ -129,7 +129,14 @@ include(LeviathanSetRPath)
 include(LeviathanFindLibraries)
 
 # Configure engine include file
-configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_SOURCE_DIR}/Engine/Include.h")
+configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
+# Make a readonly copy of it
+file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "${PROJECT_SOURCE_DIR}/Engine"
+  NO_SOURCE_PERMISSIONS
+  FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+
+
+
 
 # configure the doxygen file
 find_package(Doxygen)

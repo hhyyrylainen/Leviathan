@@ -92,7 +92,7 @@ endif()
 option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 
 # Strip symbols from install
-option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
+option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" OFF)
 
 
 # Check is leap motion used

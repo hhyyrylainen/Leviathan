@@ -234,32 +234,16 @@ if(NOT WIN32)
   endif()
 endif()
 
-if(USE_ANGELSCRIPT)
-  include_directories("${LEVIATHAN_SRC}/AngelScript/include")
-  include_directories("${LEVIATHAN_SRC}/AngelScript")
-endif()
+include_directories("${LEVIATHAN_SRC}/libraries/include")
+link_directories("${LEVIATHAN_SRC}/libraries/lib")
 
-if(USE_NEWTON)
-  include_directories("${LEVIATHAN_SRC}/Newton/include")
-endif()
 
 if(USING_LEAP)
   include_directories("${LEVIATHAN_SRC}/Leap/include")
   include_directories("${LEVIATHAN_SRC}/Leap")
-endif()
-
-if(USE_ANGELSCRIPT)
-  link_directories("${LEVIATHAN_SRC}/AngelScript/lib")
-endif()
-
-if(USE_NEWTON)
-  link_directories("${LEVIATHAN_SRC}/Newton/lib/")
-  link_directories("${LEVIATHAN_SRC}/Newton/bin/")
-endif()
-
-if(USE_LEAP)
   link_directories("${LEVIATHAN_SRC}/Leap/lib/x64")
 endif()
+
 
 
 

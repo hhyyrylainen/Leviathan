@@ -18,12 +18,13 @@ def checkRunFolder(suggested)
     
 end
 
+def projectFolder(baseDir)
+
+  return File.join baseDir, "leviathan"
+  
+end
 
 require_relative 'Helpers/RubySetupSystem.rb'
-
-# If set to true will install CEGUI editor
-# Note: this doesn't work
-InstallCEED = false
 
 # If false won't get breakpad
 GetBreakpad = true
@@ -31,35 +32,28 @@ GetBreakpad = true
 # Doesn't get the resources for samples into leviathan/bin if set to false
 FetchAssets = true
 
-# If true will only setup / update dependencies and skip Leviathan
-OnlyDependencies = true
 
-# If true skips all dependencies and only tries to configure Leviathan
-OnlyLeviathan = false
+# All the objects
+if BuildPlatform == "windows"
 
+  installer = Installer.new(Array[Newton.new, AngelScript.new, OpenAL.new, CAudio.new,
+                                  SFML.new, Ogre.new, CEGUIDependencies.new, CEGUI.new])
+else
+  installer = Installer.new(Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new,
+                                  CEGUI.new])
+end
 
-if not OnlyLeviathan
+if GetBreakpad
 
-  info "Installing Leviathan dependencies"
+  installer.addLibrary Breakpad.new
 
-  # All the objects
-  if BuildPlatform == "windows"
-    depobjects = Array[Newton.new, AngelScript.new, OpenAL.new, CAudio.new, SFML.new,
-                       Ogre.new, CEGUIDependencies.new, CEGUI.new]
-  else
-    depobjects = Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new, CEGUI.new]
-  end
+end
 
-  if GetBreakpad
-    # Add this last as this does some environment variable trickery
-    depobjects.push Breakpad.new
-  end
-  
-  installer = Installer.new(depobjects)
+installer.run
 
-  installer.run
-
-  success "Dependencies done."
+# Library windows hackery
+# TODO: move this into installer.run
+if not OnlyMainProject
 
   if BuildPlatform == "windows"
 
@@ -117,18 +111,11 @@ if not OnlyLeviathan
   
 end
 
-if OnlyDependencies
-
-  info "Skipping Leviathan setup because only dependencies were wanted"
-  exit 0
-end
-
 if not File.exist? File.join(CurrentDir, "leviathan")
 
   onError "'leviathan' folder is missing"
 
 end
-
 
 Dir.chdir(File.join(CurrentDir, "leviathan")) do
   

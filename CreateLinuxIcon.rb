@@ -7,10 +7,14 @@ require 'colorize'
 require 'optparse'
 require 'pathname'
 
-require_relative 'Helpers/CommonCode'
+require_relative 'Helpers/RubyCommon.rb'
 
 # Abort if not in leviathan/ folder
-verifyIsMainFolder
+doxyFile = "LeviathanDoxy.in"
+
+onError("Not ran from Leviathan base directory!") if not File.exist?(doxyFile)
+
+CurrentDir = Dir.pwd
 
 options = {}
 OptionParser.new do |opts|

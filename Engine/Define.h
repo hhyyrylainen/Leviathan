@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 #include "Include.h"
 

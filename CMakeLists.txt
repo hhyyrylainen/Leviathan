@@ -167,9 +167,6 @@ link_directories("${PROJECT_BINARY_DIR}/bin")
 # Controls how LeviathanCoreProject.cmake works
 set(CREATE_CONSOLE_APP OFF)
 
-# First project must be the file generator
-add_subdirectory(FileGenerator)
-
 # engine project 
 add_subdirectory(Engine)
 

@@ -931,3 +931,7 @@ namespace Leviathan{
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::VariableBlock;
+#endif
+

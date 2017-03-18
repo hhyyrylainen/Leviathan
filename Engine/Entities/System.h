@@ -18,7 +18,7 @@ template<class NodeType>
 public:
 
 };
-    
+
 //! \brief Base for all entity component related systems
 //!
 //! For ones that use nodes. Not for ones that directly use a single component type

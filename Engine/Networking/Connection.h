@@ -499,3 +499,8 @@ private:
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::SentNetworkThing;
+using Leviathan::Connection;
+#endif
+

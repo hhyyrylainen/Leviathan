@@ -4,7 +4,9 @@
 // ------------------------------------ //
 #pragma once
 
+#ifndef BASENOTIFIABLE_H
 #include "BaseNotifier.h"
+#endif
 // ------------------------------------ //
 template<class ParentType, class ChildType>
 Leviathan::BaseNotifiable<ParentType, ChildType>::BaseNotifiable(ChildType* ourptr) : PointerToOurNotifiable(ourptr){

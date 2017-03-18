@@ -20,17 +20,17 @@
 #endif
 
 #ifdef ALLOW_DEBUG
-#define ITR_FUNCDEBUG(x) {                                              \
-        if(DebugMode){                                                  \
-            Logger::Get()->Write("Iterator: procfunc: " + std::string(x)); \
-        }                                                               \
-    }
+#define ITR_FUNCDEBUG(x) {                                          \
+if(DebugMode){                                                      \
+    Logger::Get()->Write("Iterator: procfunc: " + std::string(x));  \
+}                                                                   \
+}
 
-#define ITR_COREDEBUG(x) {                                          \
-        if(DebugMode){                                              \
-            Logger::Get()->Write("Iterator: " + std::string(x));    \
-        }                                                           \
-    }
+#define ITR_COREDEBUG(x) {                                  \
+if(DebugMode){                                              \
+    Logger::Get()->Write("Iterator: " + std::string(x));    \
+}                                                           \
+}
 #else
 #define ITR_FUNCDEBUG(x) {}
 #define ITR_COREDEBUG(x) {}
@@ -39,887 +39,887 @@
 
 namespace Leviathan{
     
-	enum QUOTETYPE {QUOTETYPE_DOUBLEQUOTES, QUOTETYPE_SINGLEQUOTES, QUOTETYPE_BOTH};
+enum QUOTETYPE {QUOTETYPE_DOUBLEQUOTES, QUOTETYPE_SINGLEQUOTES, QUOTETYPE_BOTH};
     
-	enum DECIMALSEPARATORTYPE {
-        DECIMALSEPARATORTYPE_DOT,
-        DECIMALSEPARATORTYPE_COMMA,
-        DECIMALSEPARATORTYPE_BOTH,
-        DECIMALSEPARATORTYPE_NONE
-    };
+enum DECIMALSEPARATORTYPE {
+    DECIMALSEPARATORTYPE_DOT,
+    DECIMALSEPARATORTYPE_COMMA,
+    DECIMALSEPARATORTYPE_BOTH,
+    DECIMALSEPARATORTYPE_NONE
+};
 
-	enum UNNORMALCHARACTER{
-        UNNORMALCHARACTER_TYPE_NON_ASCII = 0x1,
-		UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS = 0x2,
-        UNNORMALCHARACTER_TYPE_WHITESPACE = 0x4,
-		UNNORMALCHARACTER_TYPE_LOWCODES = 0x8,
-		UNNORMALCHARACTER_TYPE_NON_NAMEVALID = 0x10,
-		UNNORMALCHARACTER_TYPE_LINEEND = 0x20
-    };
+enum UNNORMALCHARACTER{
+    UNNORMALCHARACTER_TYPE_NON_ASCII = 0x1,
+    UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS = 0x2,
+    UNNORMALCHARACTER_TYPE_WHITESPACE = 0x4,
+    UNNORMALCHARACTER_TYPE_LOWCODES = 0x8,
+    UNNORMALCHARACTER_TYPE_NON_NAMEVALID = 0x10,
+    UNNORMALCHARACTER_TYPE_LINEEND = 0x20
+};
 
-	enum EQUALITYCHARACTER{
-        EQUALITYCHARACTER_TYPE_EQUALITY,
-        EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE,
-        EQUALITYCHARACTER_TYPE_ALL};
+enum EQUALITYCHARACTER{
+    EQUALITYCHARACTER_TYPE_EQUALITY,
+    EQUALITYCHARACTER_TYPE_DOUBLEDOTSTYLE,
+    EQUALITYCHARACTER_TYPE_ALL};
 
-	enum ITERATORCALLBACK_RETURNTYPE{
-        ITERATORCALLBACK_RETURNTYPE_STOP,
-        ITERATORCALLBACK_RETURNTYPE_CONTINUE
-    };
+enum ITERATORCALLBACK_RETURNTYPE{
+    ITERATORCALLBACK_RETURNTYPE_STOP,
+    ITERATORCALLBACK_RETURNTYPE_CONTINUE
+};
 
-	//! Special case handling flags for iterator
-	enum SPECIAL_ITERATOR{
+//! Special case handling flags for iterator
+enum SPECIAL_ITERATOR{
 
-		SPECIAL_ITERATOR_ONNEWLINE_STOP = 0x4,
-		//SPECIAL_ITERATOR_ONNEWLINE_WHITESPACE = 0x8,
-		//! Causes comments to be handled as whitespace/delimiting
-		SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING = 0x10,
-	};
+    SPECIAL_ITERATOR_ONNEWLINE_STOP = 0x4,
+    //SPECIAL_ITERATOR_ONNEWLINE_WHITESPACE = 0x8,
+    //! Causes comments to be handled as whitespace/delimiting
+    SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING = 0x10,
+};
 
-	//! Common flag for file handling
+//! Common flag for file handling
 #define SPECIAL_ITERATOR_FILEHANDLING SPECIAL_ITERATOR_ONNEWLINE_STOP | SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING
 
 
-	//! Set flags for the iterator, this is changed to this for performance
-	enum ITERATORFLAG_SET{
+//! Set flags for the iterator, this is changed to this for performance
+enum ITERATORFLAG_SET{
 
-		//! \ is found, next special character will be ignored
-		ITERATORFLAG_SET_IGNORE_SPECIAL = 0x1,
+    //! \ is found, next special character will be ignored
+    ITERATORFLAG_SET_IGNORE_SPECIAL = 0x1,
 
-		//! The iterator has finished the current operation and will stop for now
-		ITERATORFLAG_SET_STOP = 0x2,
-		//! Iterator is currently inside a string
-		ITERATORFLAG_SET_INSIDE_STRING = 0x4,
-		//! Iterator is currently inside double quoted string, "like this"
-		ITERATORFLAG_SET_INSIDE_STRING_DOUBLE = 0x8,
-		//! Iterator is currently inside single quoted string, 'like this'
-		ITERATORFLAG_SET_INSIDE_STRING_SINGLE = 0x10,
-		//! Iterator is currently on the closing '
-        //! character and the string might end after this character
-		ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END = 0x20,
+    //! The iterator has finished the current operation and will stop for now
+    ITERATORFLAG_SET_STOP = 0x2,
+    //! Iterator is currently inside a string
+    ITERATORFLAG_SET_INSIDE_STRING = 0x4,
+    //! Iterator is currently inside double quoted string, "like this"
+    ITERATORFLAG_SET_INSIDE_STRING_DOUBLE = 0x8,
+    //! Iterator is currently inside single quoted string, 'like this'
+    ITERATORFLAG_SET_INSIDE_STRING_SINGLE = 0x10,
+    //! Iterator is currently on the closing '
+    //! character and the string might end after this character
+    ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END = 0x20,
 
-		//! Iterator is currently on the closing " character
-        //! and the string might end after this character
-		ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END = 0x40,
+    //! Iterator is currently on the closing " character
+    //! and the string might end after this character
+    ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END = 0x40,
 
-		//! Set when the next character is no longer affected by \,
-        //! meaning this is always set when ITERATORFLAG_SET_IGNORE_SPECIAL is set
-		ITERATORFLAG_SET_IGNORE_SPECIAL_END = 0x80,
+    //! Set when the next character is no longer affected by \,
+    //! meaning this is always set when ITERATORFLAG_SET_IGNORE_SPECIAL is set
+    ITERATORFLAG_SET_IGNORE_SPECIAL_END = 0x80,
 
-		//! Set when a comment is beginning. The iterator is currently on a / character
-        //! which is followed by a / or *
-		ITERATORFLAG_SET_COMMENT_BEGINNING = 0x100,
-		//! Set when a comment is active, the iterator is on either the beginning // or /*
-        //! or the ending */ or the line end
-		ITERATORFLAG_SET_INSIDE_COMMENT = 0x200,
-		//! Set when inside a // comment
-		ITERATORFLAG_SET_INSIDE_CPPCOMMENT = 0x400,
-		//! Set when inside a /* comment
-		ITERATORFLAG_SET_INSIDE_CCOMMENT = 0x800,
-		//! Set when a c++ style comment will end on the next character
-		ITERATORFLAG_SET_CPPCOMMENT_END = 0x1000,
-		//! Set when a c style comment will end on the next character
-		ITERATORFLAG_SET_CCOMMENT_END = 0x2000
-	};
-
-
+    //! Set when a comment is beginning. The iterator is currently on a / character
+    //! which is followed by a / or *
+    ITERATORFLAG_SET_COMMENT_BEGINNING = 0x100,
+    //! Set when a comment is active, the iterator is on either the beginning // or /*
+    //! or the ending */ or the line end
+    ITERATORFLAG_SET_INSIDE_COMMENT = 0x200,
+    //! Set when inside a // comment
+    ITERATORFLAG_SET_INSIDE_CPPCOMMENT = 0x400,
+    //! Set when inside a /* comment
+    ITERATORFLAG_SET_INSIDE_CCOMMENT = 0x800,
+    //! Set when a c++ style comment will end on the next character
+    ITERATORFLAG_SET_CPPCOMMENT_END = 0x1000,
+    //! Set when a c style comment will end on the next character
+    ITERATORFLAG_SET_CCOMMENT_END = 0x2000
+};
 
 
-	//! Iterator class for getting parts of a string
-	class StringIterator{
-	public:
-		//! \brief Creates a iterator from the iterating object
-		//! \param TakesOwnership Set to true when iterator should be deleted by this object
-		DLLEXPORT StringIterator(StringDataIterator* iterator, bool TakesOwnership = false);	
-
-		//! \brief Helper constructor for common string type
-		DLLEXPORT StringIterator(const std::wstring &text);
-		//! \brief Helper constructor for common string type
-		DLLEXPORT StringIterator(const std::string &text);
-		//! \brief Helper constructor for common string type
-		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT StringIterator(const std::wstring* text);
-		//! \brief Helper constructor for common string type
-		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT StringIterator(const std::string* text);
-
-        //! \brief Creates an empty iterator
-        //!
-        //! Use ReInit to fill with data
-        DLLEXPORT StringIterator();
 
 
-		DLLEXPORT virtual ~StringIterator();
+//! Iterator class for getting parts of a string
+class StringIterator{
+public:
+    //! \brief Creates a iterator from the iterating object
+    //! \param TakesOwnership Set to true when iterator should be deleted by this object
+    DLLEXPORT StringIterator(StringDataIterator* iterator, bool TakesOwnership = false);	
 
-		//! \brief Changes the current iterator to the new iterator and goes to the beginning
-		DLLEXPORT void ReInit(StringDataIterator* iterator, bool TakesOwnership = false);
-		//! \brief Helper function for ReInit for common string type
-		DLLEXPORT void ReInit(const std::wstring &text);
-		//! \brief Helper function for ReInit for common string type
-		DLLEXPORT void ReInit(const std::string &text);
-		//! \brief Helper function for ReInit for common string type
-		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT void ReInit(const std::wstring* text);
-		//! \brief Helper function for ReInit for common string type
-		//! \param text Pointer to a string that won't be deleted by this
-		DLLEXPORT void ReInit(const std::string* text);
+    //! \brief Helper constructor for common string type
+    DLLEXPORT StringIterator(const std::wstring &text);
+    //! \brief Helper constructor for common string type
+    DLLEXPORT StringIterator(const std::string &text);
+    //! \brief Helper constructor for common string type
+    //! \param text Pointer to a string that won't be deleted by this
+    DLLEXPORT StringIterator(const std::wstring* text);
+    //! \brief Helper constructor for common string type
+    //! \param text Pointer to a string that won't be deleted by this
+    DLLEXPORT StringIterator(const std::string* text);
 
-		// Iterating functions //
+    //! \brief Creates an empty iterator
+    //!
+    //! Use ReInit to fill with data
+    DLLEXPORT StringIterator();
 
-		//! \brief Gets the next string in quotes
-		//!
-		//! This function will skip until it finds a quote (either " or ' specified by quotes)
-        //! and then returns the content inside
-		//! \return The string found or NULL
-		template<class RStrType>
+
+    DLLEXPORT virtual ~StringIterator();
+
+    //! \brief Changes the current iterator to the new iterator and goes to the beginning
+    DLLEXPORT void ReInit(StringDataIterator* iterator, bool TakesOwnership = false);
+    //! \brief Helper function for ReInit for common string type
+    DLLEXPORT void ReInit(const std::wstring &text);
+    //! \brief Helper function for ReInit for common string type
+    DLLEXPORT void ReInit(const std::string &text);
+    //! \brief Helper function for ReInit for common string type
+    //! \param text Pointer to a string that won't be deleted by this
+    DLLEXPORT void ReInit(const std::wstring* text);
+    //! \brief Helper function for ReInit for common string type
+    //! \param text Pointer to a string that won't be deleted by this
+    DLLEXPORT void ReInit(const std::string* text);
+
+    // Iterating functions //
+
+    //! \brief Gets the next string in quotes
+    //!
+    //! This function will skip until it finds a quote (either " or ' specified by quotes)
+    //! and then returns the content inside
+    //! \return The string found or NULL
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetStringInQuotes(QUOTETYPE quotes,
             int specialflags = 0)
-        {
+    {
 
-			// Setup the result object //
-			IteratorPositionData data;
+        // Setup the result object //
+        IteratorPositionData data;
 
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindFirstQuotedString,
-                &data, quotes, specialflags);
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindFirstQuotedString,
+            &data, quotes, specialflags);
 
-			// Create the substring from the result //
-            std::unique_ptr<RStrType> resultstr;
+        // Create the substring from the result //
+        std::unique_ptr<RStrType> resultstr;
 
-			// NULL if nothing found //
-			if(!data.Positions.Start || !data.Positions.End)
-				return nullptr;
+        // NULL if nothing found //
+        if(!data.Positions.Start || !data.Positions.End)
+            return nullptr;
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-		//! \brief Gets the next number
-		//!
-		//! This function will skip until it finds a number and returns the number string
-        //! according to the decimal parameter.
-		//! If the type is DECIMALSEPARATORTYPE_NONE decimal numbers are only read until the dot
-		//! \return The string found or NULL
-		template<class RStrType>
+    //! \brief Gets the next number
+    //!
+    //! This function will skip until it finds a number and returns the number string
+    //! according to the decimal parameter.
+    //! If the type is DECIMALSEPARATORTYPE_NONE decimal numbers are only read until the dot
+    //! \return The string found or NULL
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetNextNumber(DECIMALSEPARATORTYPE decimal,
             int specialflags = 0)
-        {
+    {
 
-			// Setup the result object //
-			IteratorNumberFindData data;
+        // Setup the result object //
+        IteratorNumberFindData data;
 
-			// iterate over the string getting the proper part //
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindNextNumber,
-                &data, decimal, specialflags);
+        // iterate over the string getting the proper part //
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindNextNumber,
+            &data, decimal, specialflags);
 
-			// Check for nothing found //
-			if(!data.Positions.Start){
-				return nullptr;
-			}
+        // Check for nothing found //
+        if(!data.Positions.Start){
+            return nullptr;
+        }
 
-			// create substring of the wanted part //
+        // create substring of the wanted part //
 
 
-			// Make sure end is fine //
-			if(!data.Positions.End)
-				data.Positions.End = GetLastValidCharIndex();
+        // Make sure end is fine //
+        if(!data.Positions.End)
+            data.Positions.End = GetLastValidCharIndex();
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-		//! \brief Gets the next sequence of characters according to stopcaseflags
-		//! \param stopcaseflags Specifies until what type of characters this string is read.
-		//! Should be created by using UNNORMALCHARACTER as bit flags inside the argument int
-		//! \return The string found or NULL
-		template<class RStrType>
+    //! \brief Gets the next sequence of characters according to stopcaseflags
+    //! \param stopcaseflags Specifies until what type of characters this string is read.
+    //! Should be created by using UNNORMALCHARACTER as bit flags inside the argument int
+    //! \return The string found or NULL
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetNextCharacterSequence(int stopcaseflags,
             int specialflags = 0)
-        {
+    {
 
-			// Setup the result object //
-			IteratorPositionData data;
+        // Setup the result object //
+        IteratorPositionData data;
 
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindNextNormalCharacterString,
-                &data, stopcaseflags, specialflags);
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindNextNormalCharacterString,
+            &data, stopcaseflags, specialflags);
 
-			// check for nothing found //
-			if(!data.Positions.Start && !data.Positions.Start){
+        // check for nothing found //
+        if(!data.Positions.Start && !data.Positions.Start){
 
-				return NULL;
-			}
+            return NULL;
+        }
 
-			// Make sure end is fine //
-			if(!data.Positions.End)
-				data.Positions.End = GetLastValidCharIndex();
+        // Make sure end is fine //
+        if(!data.Positions.End)
+            data.Positions.End = GetLastValidCharIndex();
 			
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-		//! \brief Gets the string that is before the equality assignment
-		//!
-		//! This function will read until either : or = is encountered specified by stopcase
-		//! \return The string found or NULL
-		template<class RStrType>
+    //! \brief Gets the string that is before the equality assignment
+    //!
+    //! This function will read until either : or = is encountered specified by stopcase
+    //! \return The string found or NULL
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetUntilEqualityAssignment(EQUALITYCHARACTER stopcase,
             int specialflags = 0)
-        {
+    {
 			
-			// Setup the result object //
-			IteratorAssignmentData data;
+        // Setup the result object //
+        IteratorAssignmentData data;
 
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindUntilEquality,
-                &data, stopcase, specialflags);
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindUntilEquality,
+            &data, stopcase, specialflags);
 
-			// Check for validity //
-			if(!data.Positions.Start || data.Positions.Start == data.Positions.End ||
-                data.SeparatorFound == false)
-            {
-				// nothing found //
-				return nullptr;
-			}
+        // Check for validity //
+        if(!data.Positions.Start || data.Positions.Start == data.Positions.End ||
+            data.SeparatorFound == false)
+        {
+            // nothing found //
+            return nullptr;
+        }
 
-			if(!data.Positions.End){
-				// Set to start, this only happens if there is just one character //
-				data.Positions.End = data.Positions.Start;
-			}
+        if(!data.Positions.End){
+            // Set to start, this only happens if there is just one character //
+            data.Positions.End = data.Positions.Start;
+        }
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
 
-		//! \brief Gets all characters until the end
-		//! \note This does not advance the iterator so this object can still be used after this
-		//! \return The string found or NULL if the read position is invalid
-		template<class RStrType>
+    //! \brief Gets all characters until the end
+    //! \note This does not advance the iterator so this object can still be used after this
+    //! \return The string found or NULL if the read position is invalid
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetUntilEnd(){
 
-			// Just return from here to the last character //
-			return GetSubstringFromIndexes<RStrType>(GetPosition(), GetLastValidCharIndex());
-		}
+        // Just return from here to the last character //
+        return GetSubstringFromIndexes<RStrType>(GetPosition(), GetLastValidCharIndex());
+    }
 
-		//! \brief Gets all characters until a line end
-		//!
-		//! This function will read until a new line character and end after it
-		//! \return The string found or NULL
-		template<class RStrType>
+    //! \brief Gets all characters until a line end
+    //!
+    //! This function will read until a new line character and end after it
+    //! \return The string found or NULL
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetUntilLineEnd(){
 
-			// Setup the result object //
-			IteratorFindUntilData data;
+        // Setup the result object //
+        IteratorFindUntilData data;
 
-			// Iterate with our getting function //
-			StartIterating(0, &StringIterator::FindUntilNewLine, &data);
+        // Iterate with our getting function //
+        StartIterating(0, &StringIterator::FindUntilNewLine, &data);
 
-			// Check for validity //
-			if(!data.Positions.Start){
-				// Nothing found //
-				return nullptr;
-			}
+        // Check for validity //
+        if(!data.Positions.Start){
+            // Nothing found //
+            return nullptr;
+        }
 
-			if(!data.Positions.End){
-				// Set to end of string //
-				data.Positions.End = GetLastValidCharIndex();
-			}
+        if(!data.Positions.End){
+            // Set to end of string //
+            data.Positions.End = GetLastValidCharIndex();
+        }
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
             
         
             
-        //! \brief Gets characters until a character or nothing
-        //! if the specified character is not found
-		//!
-		//! This function will read until charactertolookfor and return the string without
-        //! charactertolookfor, or if not found nothing
-		//! \param charactertolookfor The code point to look for
-		//! \return The string found or NULL
-		//! \see GetUntilNextCharacterOrAll
-		template<class RStrType>
+    //! \brief Gets characters until a character or nothing
+    //! if the specified character is not found
+    //!
+    //! This function will read until charactertolookfor and return the string without
+    //! charactertolookfor, or if not found nothing
+    //! \param charactertolookfor The code point to look for
+    //! \return The string found or NULL
+    //! \see GetUntilNextCharacterOrAll
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetUntilNextCharacterOrNothing(int charactertolookfor,
             int specialflags = 0)
-        {
+    {
             
-			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
+        auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
-			// Check was the end found //
-			if(!data.FoundEnd || !data.Positions.Start){
-				// not found the ending character //
-				return nullptr;
-			}
+        // Check was the end found //
+        if(!data.FoundEnd || !data.Positions.Start){
+            // not found the ending character //
+            return nullptr;
+        }
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-		//! \brief Gets characters until a character or all remaining characters
-		//!
-		//! This function will read until charactertolookfor and return the string without
-        //! charactertolookfor, or if not found until the end
-		//! \param charactertolookfor The code point to look for
-		//! \return The string found or NULL if there are no valid characters left
-		//! \see GetUntilNextCharacterOrAll GetUntilEnd
-		template<class RStrType>
+    //! \brief Gets characters until a character or all remaining characters
+    //!
+    //! This function will read until charactertolookfor and return the string without
+    //! charactertolookfor, or if not found until the end
+    //! \param charactertolookfor The code point to look for
+    //! \return The string found or NULL if there are no valid characters left
+    //! \see GetUntilNextCharacterOrAll GetUntilEnd
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetUntilNextCharacterOrAll(int charactertolookfor,
             int specialflags = 0)
+    {
+
+        auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
+
+        if(!data.Positions.Start || !data.Positions.End){
+            // return empty string //
+            return nullptr;
+        }
+
+        // Return all if not found //
+        if(!data.FoundEnd && (!data.NewLineBreak ||
+                !(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP)))
         {
 
-			auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
+            return GetSubstringFromIndexes<RStrType>(data.Positions.Start,
+                GetLastValidCharIndex());
+        }
 
-			if(!data.Positions.Start || !data.Positions.End){
-				// return empty string //
-				return nullptr;
-			}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-			// Return all if not found //
-			if(!data.FoundEnd && (!data.NewLineBreak ||
-                    !(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP)))
-            {
-
-				return GetSubstringFromIndexes<RStrType>(data.Positions.Start,
-                    GetLastValidCharIndex());
-			}
-
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
-
-		//! \brief Gets all characters until a sequence is matched
-		//! \return The string found or NULL
-		//! \bug Finding until an UTF-8 sequence doesn't work, the findstr parameter should be
-        //! a StringDataIterator for it to work
-		template<class RStrType>
+    //! \brief Gets all characters until a sequence is matched
+    //! \return The string found or NULL
+    //! \bug Finding until an UTF-8 sequence doesn't work, the findstr parameter should be
+    //! a StringDataIterator for it to work
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetUntilCharacterSequence(const RStrType &findstr,
             int specialflags = 0)
-        {
+    {
 
-			// Setup the result object //
-			IteratorUntilSequenceData<RStrType> data(findstr);
+        // Setup the result object //
+        IteratorUntilSequenceData<RStrType> data(findstr);
 
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindUntilSequence<RStrType>,
-                &data, specialflags);
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindUntilSequence<RStrType>,
+            &data, specialflags);
 
-			// Check for validity //
-			if(!data.Positions.Start){
-				// Nothing found //
-				return nullptr;
-			}
+        // Check for validity //
+        if(!data.Positions.Start){
+            // Nothing found //
+            return nullptr;
+        }
 
-			// This only happens when the string ends with a partial match //
-			// Example: look for "this", string is like this: my super nice th
-			if(!data.Positions.End){
-				// Set to end of string //
-				data.Positions.End = GetLastValidCharIndex();
-			}
+        // This only happens when the string ends with a partial match //
+        // Example: look for "this", string is like this: my super nice th
+        if(!data.Positions.End){
+            // Set to end of string //
+            data.Positions.End = GetLastValidCharIndex();
+        }
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-        //! \brief Gets characters inside brackets
-		//!
-		//! This function will skip until it finds a a left bracket '['
-        //! and then returns the content inside keeping track of the number of '[' and ']'
-        //! characters encountered and returns once the top level brackets close
-        //! \note Empty brackets "[]" are considered invalid and return NULL
-		//! \return The string found or NULL
-		template<class RStrType>
+    //! \brief Gets characters inside brackets
+    //!
+    //! This function will skip until it finds a a left bracket '['
+    //! and then returns the content inside keeping track of the number of '[' and ']'
+    //! characters encountered and returns once the top level brackets close
+    //! \note Empty brackets "[]" are considered invalid and return NULL
+    //! \return The string found or NULL
+    template<class RStrType>
 		std::unique_ptr<RStrType> GetStringInBracketsRecursive(int specialflags = 0){
 
-			// Setup the result object //
-			IteratorNestingLevelData data;
+        // Setup the result object //
+        IteratorNestingLevelData data;
 
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindInMatchingParentheses,
-                &data, '[', ']', specialflags);
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindInMatchingParentheses,
+            &data, '[', ']', specialflags);
 
-			// Create the substring from the result //
-            std::unique_ptr<RStrType> resultstr;
+        // Create the substring from the result //
+        std::unique_ptr<RStrType> resultstr;
 
-			// NULL if nothing found //
-			if(!data.Positions.Start || !data.Positions.End)
-				return nullptr;
+        // NULL if nothing found //
+        if(!data.Positions.Start || !data.Positions.End)
+            return nullptr;
 
-			// Return the wanted part //
-			return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
-		}
+        // Return the wanted part //
+        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+    }
 
-		//! \brief Skips until characters that are not whitespace are found
-		//! \see SkipCharacters
-		void inline SkipWhiteSpace(int specialflags = 0){
+    //! \brief Skips until characters that are not whitespace are found
+    //! \see SkipCharacters
+    void inline SkipWhiteSpace(int specialflags = 0){
 
-			SkipCharacters(32, UNNORMALCHARACTER_TYPE_LOWCODES, specialflags);
-		}
+        SkipCharacters(32, UNNORMALCHARACTER_TYPE_LOWCODES, specialflags);
+    }
 
-		//! \brief Skips until chartoskip doesn't match the current character
-		//! \param chartoskip The code point to skip
-		//! \param additionalflag Flag composing of UNNORMALCHARACTER_TYPE
-        //! which defines additional things to skip
-		//! \see SkipWhiteSpace
-		void SkipCharacters(int chartoskip, int additionalflag = 0,
-            int specialflags = 0)
-        {
+    //! \brief Skips until chartoskip doesn't match the current character
+    //! \param chartoskip The code point to skip
+    //! \param additionalflag Flag composing of UNNORMALCHARACTER_TYPE
+    //! which defines additional things to skip
+    //! \see SkipWhiteSpace
+    void SkipCharacters(int chartoskip, int additionalflag = 0,
+        int specialflags = 0)
+    {
 
-            IteratorCharacterData stufftoskip(chartoskip);
+        IteratorCharacterData stufftoskip(chartoskip);
 
-			// Iterate over the string skipping until hit something that doesn't need to be
-            // skipped
-			StartIterating(specialflags, &StringIterator::SkipSomething,
-                stufftoskip, additionalflag, specialflags);
-		}
+        // Iterate over the string skipping until hit something that doesn't need to be
+        // skipped
+        StartIterating(specialflags, &StringIterator::SkipSomething,
+            stufftoskip, additionalflag, specialflags);
+    }
 
-		// Utility functions //
+    // Utility functions //
 
-    #ifdef ITERATOR_ALLOW_DEBUG
-		//! \brief When set to true prints lots of debug output
-		void SetDebugMode(bool mode){
+#ifdef ITERATOR_ALLOW_DEBUG
+    //! \brief When set to true prints lots of debug output
+    void SetDebugMode(bool mode){
 
-            DebugMode = mode;
-        }
-    #endif
+        DebugMode = mode;
+    }
+#endif
 
-		//! \brief Returns the current reading position
-		//! \note This might be somewhat expensive operation based on the
-        //! underlying StringDataIterator
-        //! class (mostly expensive for UTF8 strings)
-		inline size_t GetPosition(){
+    //! \brief Returns the current reading position
+    //! \note This might be somewhat expensive operation based on the
+    //! underlying StringDataIterator
+    //! class (mostly expensive for UTF8 strings)
+    inline size_t GetPosition(){
 
-            return DataIterator->CurrentIteratorPosition();
-        }
+        return DataIterator->CurrentIteratorPosition();
+    }
 
-		//! \brief Returns the current line the processing is happening
-		inline size_t GetCurrentLine(){
+    //! \brief Returns the current line the processing is happening
+    inline size_t GetCurrentLine(){
 
-            return DataIterator->GetCurrentLineNumber();
-        }
+        return DataIterator->GetCurrentLineNumber();
+    }
 
-		//! \brief Gets the character in the position current + forward
-		inline int GetCharacter(size_t forward = 0){
+    //! \brief Gets the character in the position current + forward
+    inline int GetCharacter(size_t forward = 0){
 
-            // Special case for current character //
-            if(!forward){
+        // Special case for current character //
+        if(!forward){
 
-                if(!CurrentStored){
+            if(!CurrentStored){
 
-                    if(!DataIterator->GetNextCharCode(CurrentCharacter, 0)){
+                if(!DataIterator->GetNextCharCode(CurrentCharacter, 0)){
 
-                        // Invalid position //
-                        return -1;
-                    }
-
-                    CurrentStored = true;
-
-                    ITR_COREDEBUG("Current char: (" +
-                        Convert::CodePointToUtf8(CurrentCharacter) + ")");
+                    // Invalid position //
+                    return -1;
                 }
 
-                return CurrentCharacter;
+                CurrentStored = true;
+
+                ITR_COREDEBUG("Current char: (" +
+                    Convert::CodePointToUtf8(CurrentCharacter) + ")");
             }
 
-            // Get the character from our iterator and store it to a temporary value
-            // and then return it
-            int tmpval = -1;
-            DataIterator->GetNextCharCode(tmpval, forward);
-
-            ITR_COREDEBUG("Peek forward char: (" + Convert::CodePointToUtf8(tmpval) + ")");
-
-            return tmpval;
+            return CurrentCharacter;
         }
 
-        //! \brief Returns true if current character is a new line
-        inline bool IsAtNewLine(){
+        // Get the character from our iterator and store it to a temporary value
+        // and then return it
+        int tmpval = -1;
+        DataIterator->GetNextCharCode(tmpval, forward);
 
-            // Ignore new lines if '\' is put before them
-            if (CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)
-                return false;
+        ITR_COREDEBUG("Peek forward char: (" + Convert::CodePointToUtf8(tmpval) + ")");
 
-            return StringOperations::IsLineTerminator(GetCharacter());
+        return tmpval;
+    }
+
+    //! \brief Returns true if current character is a new line
+    inline bool IsAtNewLine(){
+
+        // Ignore new lines if '\' is put before them
+        if (CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)
+            return false;
+
+        return StringOperations::IsLineTerminator(GetCharacter());
+    }
+
+    //! \brief Gets the previous character
+    DLLEXPORT int GetPreviousCharacter();
+
+    //! \brief Returns the last valid index on the iterator
+    inline size_t GetLastValidCharIndex() const{
+
+        return DataIterator->GetLastValidIteratorPosition();
+    }
+
+    //! \brief Skips the current character and moves to the next
+    //! \return True when there is a valid character or false if the end
+    //! has already been reached
+    inline bool MoveToNext(){
+
+        DataIterator->MoveToNextCharacter();
+        bool valid = DataIterator->IsPositionValid();
+        // It's important to reset this //
+        CurrentStored = false;
+
+        // We need to handle the flags on this position if we aren't on the first character //
+        if(valid && DataIterator->CurrentIteratorPosition() != 0){
+
+            ITR_COREDEBUG("Move to next");
+
+            CheckActiveFlags();
+
+            // check current character //
+            HandleSpecialCharacters();
         }
 
-		//! \brief Gets the previous character
-		DLLEXPORT int GetPreviousCharacter();
+        return valid;
+    }
 
-		//! \brief Returns the last valid index on the iterator
-		inline size_t GetLastValidCharIndex() const{
+    //! \brief Skips characters until the line number changes
+    DLLEXPORT void SkipLineEnd();
 
-            return DataIterator->GetLastValidIteratorPosition();
-        }
+    //! \brief Returns true when the read position is valid
+    inline bool IsOutOfBounds(){
 
-		//! \brief Skips the current character and moves to the next
-		//! \return True when there is a valid character or false if the end
-        //! has already been reached
-		inline bool MoveToNext(){
+        return !DataIterator->IsPositionValid();
+    }
 
-            DataIterator->MoveToNextCharacter();
-            bool valid = DataIterator->IsPositionValid();
-            // It's important to reset this //
-            CurrentStored = false;
-
-            // We need to handle the flags on this position if we aren't on the first character //
-            if(valid && DataIterator->CurrentIteratorPosition() != 0){
-
-                ITR_COREDEBUG("Move to next");
-
-                CheckActiveFlags();
-
-                // check current character //
-                HandleSpecialCharacters();
-            }
-
-            return valid;
-        }
-
-        //! \brief Skips characters until the line number changes
-        DLLEXPORT void SkipLineEnd();
-
-		//! \brief Returns true when the read position is valid
-		inline bool IsOutOfBounds(){
-
-            return !DataIterator->IsPositionValid();
-        }
-
-		//! \brief Returns substring from the wanted indexes
-		template<class STRSType>
+    //! \brief Returns substring from the wanted indexes
+    template<class STRSType>
 		std::unique_ptr<STRSType> GetSubstringFromIndexes(size_t firstcharacter,
             size_t lastcharacter) const
-        {
-			// Don't want to do anything if no string //
-			if(!DataIterator)
-				return nullptr;
+    {
+        // Don't want to do anything if no string //
+        if(!DataIterator)
+            return nullptr;
 
-			// Return a substring from our data source //
-            std::unique_ptr<STRSType> returnval(new STRSType());
+        // Return a substring from our data source //
+        std::unique_ptr<STRSType> returnval(new STRSType());
 
-			if(DataIterator->ReturnSubString(firstcharacter, lastcharacter, *returnval)){
+        if(DataIterator->ReturnSubString(firstcharacter, lastcharacter, *returnval)){
 
-				return returnval;
-			}
-
-			// It failed for some reason //
-			return nullptr;
-		}
-
-
-		//! \brief Gets the position of the current character and the specified character
-		IteratorFindUntilData GetPositionsUntilACharacter(int character,
-            int specialflags = 0)
-        {
-			// Setup the result object //
-			IteratorFindUntilData data;
-
-			// Iterate with our getting function //
-			StartIterating(specialflags, &StringIterator::FindUntilSpecificCharacter,
-                &data, character, specialflags);
-
-        #ifdef ITERATOR_ALLOW_DEBUG
-			if(DebugMode){
-				Logger::Get()->Write("Iterator: find GetPositionsUntilACharacter, positions: " +
-                    Convert::ToString(data.Positions) + ", found: "+
-                    Convert::ToString(data.FoundEnd));
-			}
-        #endif // _DEBUG
-
-			return data;
-		}
-
-	private:
-
-		StringIterator(const StringIterator &other) = delete;
-
-        //! Checks if current character causes the flags to change
-		inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters(){
-
-            // check should this special character be ignored //
-            if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)
-                return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
-	
-            // check for special characters //
-            int character = GetCharacter();
-
-            switch(character){
-            case '\\':
-                {
-                    if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-                        // ignore next special character //
-                        CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL;
-
-                    #ifdef ALLOW_DEBUG
-                        if(DebugMode){
-                            Logger::Get()->Write(
-                                "Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
-                        }
-                    #endif // _DEBUG
-                    }
-                }
-                break;
-            case '"':
-                {
-                    // Strings cannot be inside comments //
-                    if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-                        // a string //
-                        if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE)){
-                        #ifdef ALLOW_DEBUG
-                            if(DebugMode){
-                                Logger::Get()->Write(
-                                    "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
-                            }
-
-                            if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-                                Logger::Get()->Write(
-                                    "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
-                            }
-                        #endif // _DEBUG
-                            // set //
-                            CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE;
-
-                            // set as inside string //
-                            CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
-
-                        } else {
-                        #ifdef ALLOW_DEBUG
-                            if(DebugMode){
-                                Logger::Get()->Write("Iterator: set flag end: "
-                                    "ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
-                            }
-                        #endif // _DEBUG
-                            // set ending flag //
-                            CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END;
-                        }
-                    }
-                }
-                break;
-            case '\'':
-                {
-                    // Strings cannot be inside comments //
-                    if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
-                        // a string //
-                        if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
-                        #ifdef ALLOW_DEBUG
-                            if(DebugMode){
-                                Logger::Get()->Write(
-                                    "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
-                            }
-
-                            if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-                                Logger::Get()->Write(
-                                    "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
-                            }
-                        #endif // _DEBUG
-                            // set //
-                            CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE;
-
-                            // set as inside string //
-                            CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
-
-                        } else {
-                        #ifdef ALLOW_DEBUG
-                            if(DebugMode){
-                                Logger::Get()->Write("Iterator: set flag end: "
-                                    "ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
-                            }
-                        #endif // _DEBUG
-
-                            CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END;
-                        }
-                    }
-                }
-                break;
-            case '/':
-                {
-                    // Comments cannot be inside strings //
-                    if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
-                        // There might be a comment beginning //
-                        int nextchar = GetCharacter(1);
-
-                        if(nextchar == '/'){
-                            // C++-style comment starts //
-                            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT)){
-                            #ifdef ALLOW_DEBUG
-                                if(DebugMode){
-                                    Logger::Get()->Write(
-                                        "Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
-                                }
-
-                                if(DebugMode &&
-                                    !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT))
-                                {
-                                    Logger::Get()->Write(
-                                        "Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
-                                }
-                            #endif // _DEBUG
-                                CurrentFlags |= ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
-                                CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
-                            }
-
-
-                        } else if(nextchar == '*'){
-                            // C-style comment starts //
-                            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
-                            #ifdef ALLOW_DEBUG
-                                if(DebugMode){
-                                    Logger::Get()->Write(
-                                        "Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
-                                }
-
-                                if(DebugMode &&
-                                    !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT))
-                                {
-                                    Logger::Get()->Write(
-                                        "Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
-                                }
-                            #endif // _DEBUG
-                                CurrentFlags |= ITERATORFLAG_SET_INSIDE_CCOMMENT;
-                                CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
-                            }
-
-                        } else if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT){
-                            // C-style comment might end //
-
-                            int previouschar = GetPreviousCharacter();
-
-                            if(previouschar == '*'){
-
-                                // Set as ending //
-                                CurrentFlags |= ITERATORFLAG_SET_CCOMMENT_END;
-                            #ifdef ALLOW_DEBUG
-                                if(DebugMode){
-                                    Logger::Get()->Write(
-                                        "Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
-                                }
-                            #endif // _DEBUG
-                            }
-                        }
-                    }
-
-                }
-                break;
-            }
-
-            if (IsAtNewLine()) {
-                // A C++-style comment might end //
-                if (CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT) {
-                    // Set as ending //
-                    CurrentFlags |= ITERATORFLAG_SET_CPPCOMMENT_END;
-                #ifdef ALLOW_DEBUG
-                    if (DebugMode) {
-                        Logger::Get()->Write(
-                            "Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
-                    }
-                #endif // _DEBUG
-                }
-            }
-
-            return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+            return returnval;
         }
 
-        //! Makes flags that are due to end end
-		inline ITERATORCALLBACK_RETURNTYPE CheckActiveFlags(){
-            if(CurrentFlags & ITERATORFLAG_SET_STOP)
-                return ITERATORCALLBACK_RETURNTYPE_STOP;
+        // It failed for some reason //
+        return nullptr;
+    }
 
-            // Reset 1 character long flags //
-            if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL){
+
+    //! \brief Gets the position of the current character and the specified character
+    IteratorFindUntilData GetPositionsUntilACharacter(int character,
+        int specialflags = 0)
+    {
+        // Setup the result object //
+        IteratorFindUntilData data;
+
+        // Iterate with our getting function //
+        StartIterating(specialflags, &StringIterator::FindUntilSpecificCharacter,
+            &data, character, specialflags);
+
+    #ifdef ITERATOR_ALLOW_DEBUG
+        if(DebugMode){
+            Logger::Get()->Write("Iterator: find GetPositionsUntilACharacter, positions: " +
+                Convert::ToString(data.Positions) + ", found: "+
+                Convert::ToString(data.FoundEnd));
+        }
+    #endif // _DEBUG
+
+        return data;
+    }
+
+private:
+
+    StringIterator(const StringIterator &other) = delete;
+
+    //! Checks if current character causes the flags to change
+    inline ITERATORCALLBACK_RETURNTYPE HandleSpecialCharacters(){
+
+        // check should this special character be ignored //
+        if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL)
+            return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+	
+        // check for special characters //
+        int character = GetCharacter();
+
+        switch(character){
+        case '\\':
+        {
+            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+                // ignore next special character //
+                CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL;
+
             #ifdef ALLOW_DEBUG
                 if(DebugMode){
-                    Logger::Get()->Write("Iterator: flag: STRINGITERATOR_IGNORE_SPECIAL");
+                    Logger::Get()->Write(
+                        "Iterator: setting: ITERATORFLAG_SET_IGNORE_SPECIAL");
                 }
             #endif // _DEBUG
-
-                // check should end now //
-                if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL_END){
+            }
+        }
+        break;
+        case '"':
+        {
+            // Strings cannot be inside comments //
+            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+                // a string //
+                if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE)){
                 #ifdef ALLOW_DEBUG
                     if(DebugMode){
                         Logger::Get()->Write(
-                            "Iterator: flag ended: STRINGITERATOR_IGNORE_SPECIAL");
+                            "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+                    }
+
+                    if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+                        Logger::Get()->Write(
+                            "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
                     }
                 #endif // _DEBUG
-                    // unset both //
-                    CurrentFlags &= ~ITERATORFLAG_SET_IGNORE_SPECIAL_END;
-                    CurrentFlags &= ~ITERATORFLAG_SET_IGNORE_SPECIAL;
+                    // set //
+                    CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE;
+
+                    // set as inside string //
+                    CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
 
                 } else {
                 #ifdef ALLOW_DEBUG
                     if(DebugMode){
-                        Logger::Get()->Write("Iterator: flag ends next character: "
-                            "ITERATORFLAG_SET_IGNORE_SPECIAL");
+                        Logger::Get()->Write("Iterator: set flag end: "
+                            "ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
                     }
                 #endif // _DEBUG
-                    // set to end next character //
-                    CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL_END;
+                    // set ending flag //
+                    CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END;
                 }
             }
-
-            // reset end flags before we process this cycle further //
-            if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END){
-            #ifdef ALLOW_DEBUG
-                if(DebugMode){
-                    Logger::Get()->Write(
-                        "Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
-                }
-            #endif // _DEBUG
-                // unset flag //
-                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_DOUBLE;
-                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END;
-            }
-
-            if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END){
-            #ifdef ALLOW_DEBUG
-                if(DebugMode){
-                    Logger::Get()->Write(
-                        "Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
-                }
-            #endif // _DEBUG
-                // unset flag //
-                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_SINGLE;
-                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END;
-            }
-
-            // Check can we unset the whole string flag //
-            if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING){
-                if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE) &&
-                    !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE))
-                {
+        }
+        break;
+        case '\'':
+        {
+            // Strings cannot be inside comments //
+            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT)){
+                // a string //
+                if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE)){
                 #ifdef ALLOW_DEBUG
                     if(DebugMode){
                         Logger::Get()->Write(
-                            "Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING");
+                            "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+                    }
+
+                    if(DebugMode && !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+                        Logger::Get()->Write(
+                            "Iterator: setting: ITERATORFLAG_SET_INSIDE_STRING");
                     }
                 #endif // _DEBUG
-                    // can unset this //
-                    CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING;
+                    // set //
+                    CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE;
+
+                    // set as inside string //
+                    CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING;
+
+                } else {
+                #ifdef ALLOW_DEBUG
+                    if(DebugMode){
+                        Logger::Get()->Write("Iterator: set flag end: "
+                            "ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+                    }
+                #endif // _DEBUG
+
+                    CurrentFlags |= ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END;
+                }
+            }
+        }
+        break;
+        case '/':
+        {
+            // Comments cannot be inside strings //
+            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING)){
+                // There might be a comment beginning //
+                int nextchar = GetCharacter(1);
+
+                if(nextchar == '/'){
+                    // C++-style comment starts //
+                    if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT)){
+                    #ifdef ALLOW_DEBUG
+                        if(DebugMode){
+                            Logger::Get()->Write(
+                                "Iterator: setting: ITERATORFLAG_SET_INSIDE_CPPCOMMENT");
+                        }
+
+                        if(DebugMode &&
+                            !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT))
+                        {
+                            Logger::Get()->Write(
+                                "Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+                        }
+                    #endif // _DEBUG
+                        CurrentFlags |= ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
+                        CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
+                    }
+
+
+                } else if(nextchar == '*'){
+                    // C-style comment starts //
+                    if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT)){
+                    #ifdef ALLOW_DEBUG
+                        if(DebugMode){
+                            Logger::Get()->Write(
+                                "Iterator: setting: ITERATORFLAG_SET_INSIDE_CCOMMENT");
+                        }
+
+                        if(DebugMode &&
+                            !(CurrentFlags & ITERATORFLAG_SET_INSIDE_COMMENT))
+                        {
+                            Logger::Get()->Write(
+                                "Iterator: setting: ITERATORFLAG_SET_INSIDE_COMMENT");
+                        }
+                    #endif // _DEBUG
+                        CurrentFlags |= ITERATORFLAG_SET_INSIDE_CCOMMENT;
+                        CurrentFlags |= ITERATORFLAG_SET_INSIDE_COMMENT;
+                    }
+
+                } else if(CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT){
+                    // C-style comment might end //
+
+                    int previouschar = GetPreviousCharacter();
+
+                    if(previouschar == '*'){
+
+                        // Set as ending //
+                        CurrentFlags |= ITERATORFLAG_SET_CCOMMENT_END;
+                    #ifdef ALLOW_DEBUG
+                        if(DebugMode){
+                            Logger::Get()->Write(
+                                "Iterator: set flag end: ITERATORFLAG_SET_CCOMMENT_END");
+                        }
+                    #endif // _DEBUG
+                    }
                 }
             }
 
-            // Unsetting comment flags //
-            if(CurrentFlags & ITERATORFLAG_SET_CPPCOMMENT_END){
-            #ifdef ALLOW_DEBUG
-                if(DebugMode){
-                    Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_CPPCOMMENT_END");
-                }
-            #endif // _DEBUG
-                // unset flag //
-                CurrentFlags &= ~ITERATORFLAG_SET_CPPCOMMENT_END;
-                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
-            }
+        }
+        break;
+        }
 
-            // C-style flag //
-            if(CurrentFlags & ITERATORFLAG_SET_CCOMMENT_END){
+        if (IsAtNewLine()) {
+            // A C++-style comment might end //
+            if (CurrentFlags & ITERATORFLAG_SET_INSIDE_CPPCOMMENT) {
+                // Set as ending //
+                CurrentFlags |= ITERATORFLAG_SET_CPPCOMMENT_END;
             #ifdef ALLOW_DEBUG
-                if(DebugMode){
-                    Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_CCOMMENT_END");
+                if (DebugMode) {
+                    Logger::Get()->Write(
+                        "Iterator: set flag end: ITERATORFLAG_SET_CPPCOMMENT_END");
                 }
             #endif // _DEBUG
-                // unset flag //
-                CurrentFlags &= ~ITERATORFLAG_SET_CCOMMENT_END;
-                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_CCOMMENT;
+            }
+        }
+
+        return ITERATORCALLBACK_RETURNTYPE_CONTINUE;
+    }
+
+    //! Makes flags that are due to end end
+    inline ITERATORCALLBACK_RETURNTYPE CheckActiveFlags(){
+        if(CurrentFlags & ITERATORFLAG_SET_STOP)
+            return ITERATORCALLBACK_RETURNTYPE_STOP;
+
+        // Reset 1 character long flags //
+        if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL){
+        #ifdef ALLOW_DEBUG
+            if(DebugMode){
+                Logger::Get()->Write("Iterator: flag: STRINGITERATOR_IGNORE_SPECIAL");
+            }
+        #endif // _DEBUG
+
+            // check should end now //
+            if(CurrentFlags & ITERATORFLAG_SET_IGNORE_SPECIAL_END){
+            #ifdef ALLOW_DEBUG
+                if(DebugMode){
+                    Logger::Get()->Write(
+                        "Iterator: flag ended: STRINGITERATOR_IGNORE_SPECIAL");
+                }
+            #endif // _DEBUG
+                // unset both //
+                CurrentFlags &= ~ITERATORFLAG_SET_IGNORE_SPECIAL_END;
+                CurrentFlags &= ~ITERATORFLAG_SET_IGNORE_SPECIAL;
+
+            } else {
+            #ifdef ALLOW_DEBUG
+                if(DebugMode){
+                    Logger::Get()->Write("Iterator: flag ends next character: "
+                        "ITERATORFLAG_SET_IGNORE_SPECIAL");
+                }
+            #endif // _DEBUG
+                // set to end next character //
+                CurrentFlags |= ITERATORFLAG_SET_IGNORE_SPECIAL_END;
+            }
+        }
+
+        // reset end flags before we process this cycle further //
+        if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END){
+        #ifdef ALLOW_DEBUG
+            if(DebugMode){
+                Logger::Get()->Write(
+                    "Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_DOUBLE");
+            }
+        #endif // _DEBUG
+            // unset flag //
+            CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_DOUBLE;
+            CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_DOUBLE_END;
+        }
+
+        if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END){
+        #ifdef ALLOW_DEBUG
+            if(DebugMode){
+                Logger::Get()->Write(
+                    "Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING_SINGLE");
+            }
+        #endif // _DEBUG
+            // unset flag //
+            CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_SINGLE;
+            CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING_SINGLE_END;
+        }
+
+        // Check can we unset the whole string flag //
+        if(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING){
+            if(!(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_DOUBLE) &&
+                !(CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING_SINGLE))
+            {
+            #ifdef ALLOW_DEBUG
+                if(DebugMode){
+                    Logger::Get()->Write(
+                        "Iterator: flag ends: ITERATORFLAG_SET_INSIDE_STRING");
+                }
+            #endif // _DEBUG
+                // can unset this //
+                CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_STRING;
+            }
+        }
+
+        // Unsetting comment flags //
+        if(CurrentFlags & ITERATORFLAG_SET_CPPCOMMENT_END){
+        #ifdef ALLOW_DEBUG
+            if(DebugMode){
+                Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_CPPCOMMENT_END");
+            }
+        #endif // _DEBUG
+            // unset flag //
+            CurrentFlags &= ~ITERATORFLAG_SET_CPPCOMMENT_END;
+            CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_CPPCOMMENT;
+        }
+
+        // C-style flag //
+        if(CurrentFlags & ITERATORFLAG_SET_CCOMMENT_END){
+        #ifdef ALLOW_DEBUG
+            if(DebugMode){
+                Logger::Get()->Write("Iterator: flag ends: ITERATORFLAG_SET_CCOMMENT_END");
+            }
+        #endif // _DEBUG
+            // unset flag //
+            CurrentFlags &= ~ITERATORFLAG_SET_CCOMMENT_END;
+            CurrentFlags &= ~ITERATORFLAG_SET_INSIDE_CCOMMENT;
             }
 
             // Check can we unset the whole comment flag //
@@ -1727,3 +1727,8 @@ namespace Leviathan{
 
 }
 #undef ALLOW_DEBUG
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::StringIterator;
+#endif
+

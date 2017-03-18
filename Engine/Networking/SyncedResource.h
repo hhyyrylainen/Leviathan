@@ -198,3 +198,8 @@ namespace Leviathan{
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::SyncedResource;
+using Leviathan::SyncedPrimitive;
+#endif
+

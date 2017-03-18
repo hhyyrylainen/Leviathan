@@ -3,7 +3,7 @@
 #include "@ProgramNetHeader@"
 #include "resource.h"
 
-#include "LeviathanMainDll.h"
+#include "Define.h"
 
 // Breakpad is used to detect and report crashes
 #ifdef LEVIATHAN_USING_BREAKPAD
@@ -134,10 +134,10 @@ int main(int argcount, char* args[]){
         // this is where the game should customize the engine //
         app.CustomizeEnginePostLoad();
 
-        Logger::Get()->Info(std::string("Engine successfully initialized"));
+        LOG_INFO(std::string("Engine successfully initialized"));
         Return = app.RunMessageLoop();
     } else {
-        Logger::Get()->Error("App init failed, closing");
+        LOG_ERROR("App init failed, closing");
         app.ForceRelease();
         Return = 5;
     }

@@ -61,3 +61,7 @@ namespace Leviathan{
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::GameModule;
+#endif
+

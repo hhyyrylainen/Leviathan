@@ -381,3 +381,9 @@ namespace Leviathan{
 	};
 
 }
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::NamedVars;
+using Leviathan::NamedVariableList;
+#endif
+

@@ -2,6 +2,8 @@
 // that need to be included (or forward declared)
 #pragma once
 
+#include "Include.h"
+
 #include <cstdint>
 
 // Newton things
@@ -125,6 +127,7 @@ class ConditionalTask;
 class ConditionalDelayedTask;
 class RepeatingDelayedTask;
 class RepeatCountedDelayedTask;
+class TaskThread;
 
 class NetworkCache;
 
@@ -175,8 +178,6 @@ template<class ParentType, class ChildType> class BaseNotifier;
 template<class ParentType, class ChildType> class BaseNotifiable;
 class GameConfiguration;
 class KeyConfiguration;
-class ThreadingManager;
-class TaskThread;
 class Engine;
 class LeviathanApplication;
 struct RayCastData;
@@ -198,4 +199,63 @@ class ScopeTimer;
 class GameModule;
 struct MasterServerInformation;
 }
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::Locker;
+
+using Leviathan::Logger;
+using Leviathan::FileSystem;
+using Leviathan::Engine;
+using Leviathan::Gui::GuiManager;
+using Leviathan::GameWorld;
+using Leviathan::AppDef;
+using Leviathan::MasterServerInformation;
+using Leviathan::Convert;
+using Leviathan::EventHandler;
+using Leviathan::Event;
+using Leviathan::GenericEvent;
+using Leviathan::LeviathanApplication;
+using Leviathan::StringIterator;
+using Leviathan::NetworkRequest;
+using Leviathan::NetworkResponse;
+using Leviathan::Connection;
+using Leviathan::VariableBlock;
+using Leviathan::TimingMonitor;
+using Leviathan::ScopeTimer;
+using Leviathan::GameModule;
+using Leviathan::GameConfiguration;
+using Leviathan::KeyConfiguration;
+using Leviathan::NamedVars;
+using Leviathan::NamedVariableList;
+using Leviathan::NetworkClientInterface;
+using Leviathan::SyncedValue;
+using Leviathan::GameSpecificPacketData;
+using Leviathan::SentNetworkThing;
+using Leviathan::QueuedTask;
+using Leviathan::SyncedResource;
+using Leviathan::SyncedPrimitive;
+using Leviathan::UTF8DataIterator;
+using Leviathan::BaseNotifiableAll;
+using Leviathan::BaseNotifierAll;
+using Leviathan::CommandSender;
+using Leviathan::CommandHandler;
+
+
+using Leviathan::ThreadingManager;
+using Leviathan::QueuedTask;
+using Leviathan::DelayedTask;
+using Leviathan::ConditionalTask;
+using Leviathan::ConditionalDelayedTask;
+using Leviathan::RepeatingDelayedTask;
+using Leviathan::RepeatCountedDelayedTask;
+
+
+using Leviathan::GameWorld;
+
+using Leviathan::Exception;
+using Leviathan::InvalidArgument;
+using Leviathan::InvalidType;
+using Leviathan::InvalidState;
+using Leviathan::InvalidAccess;
+#endif
 

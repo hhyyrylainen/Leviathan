@@ -1,17 +1,12 @@
 // Leviathan Game Engine
 // Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 #include "../Common/SFMLPackets.h"
 #include <memory>
 
 namespace Leviathan{
-
-
-
 
 	//! \brief Base class for all user defined request packets
 	class BaseGameSpecificRequestPacket{
@@ -119,4 +114,8 @@ namespace Leviathan{
 	};
 
 }
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::GameSpecificPacketData;
+#endif
 

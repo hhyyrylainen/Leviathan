@@ -258,3 +258,7 @@ protected:
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::MasterServerInformation;
+#endif
+

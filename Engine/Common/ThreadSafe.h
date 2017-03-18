@@ -1,3 +1,5 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,76 +9,76 @@
 namespace Leviathan{
 
 
-    // Individual lock objects //
-    using Mutex = std::mutex;
-    using RecursiveMutex = std::recursive_mutex;
-    using Lock = std::unique_lock<std::mutex>;
-    using RecursiveLock = std::lock_guard<std::recursive_mutex>;
+// Individual lock objects //
+using Mutex = std::mutex;
+using RecursiveMutex = std::recursive_mutex;
+using Lock = std::unique_lock<std::mutex>;
+using RecursiveLock = std::lock_guard<std::recursive_mutex>;
 
-    template<class LockType>
+template<class LockType>
     struct LockTypeResolver{
 
-        using LType = void;
-    };
+    using LType = void;
+};
 
-    template<> struct LockTypeResolver<Mutex>{
+template<> struct LockTypeResolver<Mutex>{
 
-        using LType = Lock;
-    };
+    using LType = Lock;
+};
 
-    template<> struct LockTypeResolver<RecursiveMutex>{
+template<> struct LockTypeResolver<RecursiveMutex>{
 
-        using LType = RecursiveLock;
-    };
+    using LType = RecursiveLock;
+};
 
-    class Locker{
+class Locker{
         
-        template<typename T>
+    template<typename T>
         static T* TurnToPointer(T &obj){
-            return &obj;
-        }
+        return &obj;
+    }
 
-        template<typename T>
+    template<typename T>
         static T* TurnToPointer(T* obj){
-            return obj;
-        }
+        return obj;
+    }
         
-    public:
+public:
 
 
-        template<typename ObjectClass>
+    template<typename ObjectClass>
         static auto Object(const ObjectClass* object){
 
-            return Unique(TurnToPointer(object)->ObjectsLock);
-        }
+        return Unique(TurnToPointer(object)->ObjectsLock);
+    }
 
-        template<typename ObjectClass>
+    template<typename ObjectClass>
         static auto Object(const ObjectClass &object){
 
-            return Unique(TurnToPointer(object)->ObjectsLock);
-        }
+        return Unique(TurnToPointer(object)->ObjectsLock);
+    }
 
-        template<typename ObjectClass>
+    template<typename ObjectClass>
         static auto Object(std::shared_ptr<ObjectClass> &object){
 
-            return Unique(object->ObjectsLock);
-        }
+        return Unique(object->ObjectsLock);
+    }
 
-        template<typename ObjectClass>
+    template<typename ObjectClass>
         static auto Object(std::unique_ptr<ObjectClass> &object){
 
-            return Unique(object->ObjectsLock);
-        }
+        return Unique(object->ObjectsLock);
+    }
 
-        template<class LockType>
+    template<class LockType>
         static auto Unique(LockType &lockref){
 
-            return typename LockTypeResolver<LockType>::LType(lockref);
-        }
-    };
+        return typename LockTypeResolver<LockType>::LType(lockref);
+    }
+};
     
 #if 0
-    // These prevent copy elision
+// These prevent copy elision
 #define GUARD_LOCK() auto guard = std::move(Leviathan::Locker::Object(this));
     
 #define GUARD_LOCK_OTHER(x) auto guard = std::move(Leviathan::Locker::Object(x));
@@ -95,40 +97,43 @@ namespace Leviathan{
 #define UNIQUE_LOCK_OBJECT_OTHER(x) auto lockit = (Leviathan::Locker::Object(x));
 #define UNIQUE_LOCK_THIS() auto lockit = (Leviathan::Locker::Object(this));
 #endif
+
+//! Asserts if lock isn't locked / doesn't own mutex
+#define REQUIRE_LOCKED(x) LEVIATHAN_ASSERT(x.owns_lock(), "Mutex doesn't own lock");
     
-	//! \brief Allows the inherited object to be locked
-    //! \note Not allowed to be used as a pointer type
-    template<class MutexType>
+//! \brief Allows the inherited object to be locked
+//! \note Not allowed to be used as a pointer type
+template<class MutexType>
 	class ThreadSafeGeneric{
-	public:
-		DLLEXPORT ThreadSafeGeneric(){}
-		DLLEXPORT ~ThreadSafeGeneric(){}
+public:
+    DLLEXPORT ThreadSafeGeneric(){}
+    DLLEXPORT ~ThreadSafeGeneric(){}
 
-		FORCE_INLINE void VerifyLock(RecursiveLock &guard) const{
-            // Apparently there is no way to verify this...
-			// if(!guard.owns_lock(&this->ObjectsLock))
-			// 	throw InvalidAccess("wrong lock owner");
-		}
+    FORCE_INLINE void VerifyLock(RecursiveLock &guard) const{
+        // Apparently there is no way to verify this...
+        // if(!guard.owns_lock(&this->ObjectsLock))
+        // 	throw InvalidAccess("wrong lock owner");
+    }
 
-        FORCE_INLINE void VerifyLock(Lock &lockit) const{
+    FORCE_INLINE void VerifyLock(Lock &lockit) const{
             
-            // Make sure that the lock is locked //
-            LEVIATHAN_ASSERT(lockit.owns_lock(), "lock not locked");
-		}
+        // Make sure that the lock is locked //
+        LEVIATHAN_ASSERT(lockit.owns_lock(), "lock not locked");
+    }
 
-		//! The main lock facility, mutable for working with const functions
-		//! \note Even though this is not protected it should not be abused
-		//! \protected
-		mutable MutexType ObjectsLock;
-	};
+    //! The main lock facility, mutable for working with const functions
+    //! \note Even though this is not protected it should not be abused
+    //! \protected
+    mutable MutexType ObjectsLock;
+};
 
-    //! \brief Simple lockable objects, no recursive locking
-    using ThreadSafe = ThreadSafeGeneric<Mutex>;
+//! \brief Simple lockable objects, no recursive locking
+using ThreadSafe = ThreadSafeGeneric<Mutex>;
     
-    //! \brief Object supports recursive locking
-    //!
-    //! Less efficient than ThreadSafe
-    using ThreadSafeRecursive = ThreadSafeGeneric<RecursiveMutex>;
+//! \brief Object supports recursive locking
+//!
+//! Less efficient than ThreadSafe
+using ThreadSafeRecursive = ThreadSafeGeneric<RecursiveMutex>;
     
 
 }
@@ -138,5 +143,7 @@ using Leviathan::Mutex;
 using Leviathan::RecursiveMutex;
 using Leviathan::Lock;
 using Leviathan::RecursiveLock;
+
+using Leviathan::ThreadSafe;
 #endif // LEAK_INTO_GLOBAL
 

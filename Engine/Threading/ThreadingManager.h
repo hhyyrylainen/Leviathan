@@ -134,3 +134,13 @@ DLLEXPORT void UnregisterOgreOnThread();
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::ThreadingManager;
+using Leviathan::QueuedTask;
+using Leviathan::DelayedTask;
+using Leviathan::ConditionalTask;
+using Leviathan::ConditionalDelayedTask;
+using Leviathan::RepeatingDelayedTask;
+using Leviathan::RepeatCountedDelayedTask;
+#endif
+

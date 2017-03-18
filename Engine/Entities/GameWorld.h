@@ -439,3 +439,8 @@ ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject);
     
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::GameWorld;
+using Leviathan::ObjectID;
+#endif
+

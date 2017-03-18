@@ -1,7 +1,5 @@
 #pragma once
 
-#include "LeviathanMainDll.h"
-
 #include <string>
 
 #define @BaseProgramName@_VERSION           @PROGRAM_VERSION@

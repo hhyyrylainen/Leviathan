@@ -67,3 +67,8 @@ namespace Leviathan{
 	};
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::TimingMonitor;
+using Leviathan::ScopeTimer;
+#endif
+

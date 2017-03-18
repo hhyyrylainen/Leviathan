@@ -174,3 +174,7 @@ public:
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::NetworkRequest;
+#endif
+

@@ -1,7 +1,8 @@
-#pragma once
 // ------------------------------------ //
+#pragma once
 #include "Define.h"
 // ------------------------------------ //
+
 #include "Common/DataStoring/NamedVars.h"
 #include "Window.h"
 #include "Networking/NetworkHandler.h"
@@ -12,149 +13,154 @@
 
 namespace Leviathan{
 
-	struct WindowDataDetails{
-		WindowDataDetails();
+struct WindowDataDetails{
+    WindowDataDetails();
 #ifdef _WIN32
-		WindowDataDetails(const std::string &title, const int &width, const int &height,
-            const bool &windowed, const bool &windowborder, HICON icon,
-            LeviathanApplication* appvirtualptr);
+    WindowDataDetails(const std::string &title, const int &width, const int &height,
+        const bool &windowed, const bool &windowborder, HICON icon,
+        LeviathanApplication* appvirtualptr);
 
-		void ApplyIconToHandle(HWND hwnd) const;
+    void ApplyIconToHandle(HWND hwnd) const;
 
 
-		HICON Icon;
+    HICON Icon;
 #else
-		WindowDataDetails(const std::string &title, const int &width, const int &height,
-            const bool &windowed, const bool &windowborder,
-			LeviathanApplication* appvirtualptr);
+    WindowDataDetails(const std::string &title, const int &width, const int &height,
+        const bool &windowed, const bool &windowborder,
+        LeviathanApplication* appvirtualptr);
 
 #endif
-        std::string Title;
-		int Height;
-		int Width;
-		bool Windowed;
-	};
+    std::string Title;
+    int Height;
+    int Width;
+    bool Windowed;
+};
 
 
-	class AppDef{
-		friend Engine;
-	public:
-		DLLEXPORT AppDef(const bool &isdef = false);
-		DLLEXPORT ~AppDef();
+class AppDef{
+    friend Engine;
+public:
+    DLLEXPORT AppDef(const bool &isdef = false);
+    DLLEXPORT ~AppDef();
 
 
-		DLLEXPORT NamedVars* GetValues();
+    DLLEXPORT NamedVars* GetValues();
 
-		// named constructor functions //
+    // named constructor functions //
 #ifdef _WIN32
-		DLLEXPORT AppDef& SetHInstance(HINSTANCE instance){
+    DLLEXPORT AppDef& SetHInstance(HINSTANCE instance){
 
-			HInstance = instance;
-			return *this;
-		}
+        HInstance = instance;
+        return *this;
+    }
 
-		DLLEXPORT HINSTANCE GetHInstance(){
+    DLLEXPORT HINSTANCE GetHInstance(){
 
-			return HInstance;
-		}
+        return HInstance;
+    }
 #else
-		// \todo linux equivalent
+    // \todo linux equivalent
 #endif
-		DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails &det){
+    DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails &det){
 
-			WDetails = det;
-			return *this;
-		}
-		DLLEXPORT AppDef& SetPacketHandler(NetworkInterface* networkhandler){
+        WDetails = det;
+        return *this;
+    }
+    DLLEXPORT AppDef& SetPacketHandler(NetworkInterface* networkhandler){
 
-			_NetworkInterface = networkhandler;
-			return *this;
-		}
+        _NetworkInterface = networkhandler;
+        return *this;
+    }
 
-		DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation &info){
+    DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation &info){
 
-			MasterServerInfo = info;
-			return *this;
-		}
-		// Sets the version information of the application, leviathan version is set automatically //
-		DLLEXPORT AppDef& SetApplicationIdentification(const std::string &userreadable,
-            const std::string &gamename, const std::string &gameversion);
+        MasterServerInfo = info;
+        return *this;
+    }
+    // Sets the version information of the application, leviathan version is set automatically //
+    DLLEXPORT AppDef& SetApplicationIdentification(const std::string &userreadable,
+        const std::string &gamename, const std::string &gameversion);
 
-		DLLEXPORT WindowDataDetails& GetWindowDetails(){
+    DLLEXPORT WindowDataDetails& GetWindowDetails(){
 
-			return WDetails;
-		}
-		DLLEXPORT MasterServerInformation& GetMasterServerInfo(){
+        return WDetails;
+    }
+    DLLEXPORT MasterServerInformation& GetMasterServerInfo(){
 
-			return MasterServerInfo;
-		}
-		DLLEXPORT inline static AppDef* GetDefault(){
-			return Defaultconf;
-		}
-		DLLEXPORT bool GetVSync();
+        return MasterServerInfo;
+    }
+    DLLEXPORT inline static AppDef* GetDefault(){
+        return Defaultconf;
+    }
+    DLLEXPORT bool GetVSync();
 
-		DLLEXPORT const std::string& GetLogFile(){
-			return LogFile;
-		}
+    DLLEXPORT const std::string& GetLogFile(){
+        return LogFile;
+    }
 
 
-		DLLEXPORT NetworkInterface* GetPacketHandler(){
-			return _NetworkInterface;
-		}
+    DLLEXPORT NetworkInterface* GetPacketHandler(){
+        return _NetworkInterface;
+    }
 
-		DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
-            const std::string &engineconfigfile, const std::string &gameconfig,
-            const std::string &keyconfig, 
-			std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
-            std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker);
+    DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
+        const std::string &engineconfigfile, const std::string &gameconfig,
+        const std::string &keyconfig, 
+        std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
+        std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker);
         
 #ifdef _WIN32
-		DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
-            HICON icon, LeviathanApplication* appvirtualptr);
+    DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
+        HICON icon, LeviathanApplication* appvirtualptr);
 #else
-		DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
-            LeviathanApplication* appvirtualptr);
+    DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
+        LeviathanApplication* appvirtualptr);
 #endif
 
 
-		DLLEXPORT void GetGameIdentificationData(std::string &userreadable, std::string &gamename,
-            std::string &gameversion);
+    DLLEXPORT void GetGameIdentificationData(std::string &userreadable, std::string &gamename,
+        std::string &gameversion);
 
-	protected:
+protected:
 
-        std::unique_ptr<NamedVars> ConfigurationValues;
+    std::unique_ptr<NamedVars> ConfigurationValues;
 #ifdef _WIN32
-		HINSTANCE HInstance;
+    HINSTANCE HInstance;
 #else
-		int HInstance;
+    int HInstance;
 #endif
-		MasterServerInformation MasterServerInfo;
+    MasterServerInformation MasterServerInfo;
 
-		NetworkInterface* _NetworkInterface = nullptr;
+    NetworkInterface* _NetworkInterface = nullptr;
 
-		// details used to create a window //
-		WindowDataDetails WDetails;
+    // details used to create a window //
+    WindowDataDetails WDetails;
 
-		// Game variables //
-		GameConfiguration* _GameConfiguration = nullptr;
-		KeyConfiguration* _KeyConfiguration = nullptr;
+    // Game variables //
+    GameConfiguration* _GameConfiguration = nullptr;
+    KeyConfiguration* _KeyConfiguration = nullptr;
 
-		std::string LogFile;
-		Logger* Mainlog = nullptr;
+    std::string LogFile;
+    Logger* Mainlog = nullptr;
 
 
-		//! Controls whether the destructor deletes Mainlog
-		//! \note Used to not delete loggers that weren't created by this instance
-		bool DeleteLog = false;
+    //! Controls whether the destructor deletes Mainlog
+    //! \note Used to not delete loggers that weren't created by this instance
+    bool DeleteLog = false;
 
-		std::string LeviathanVersion;
-		std::string GameVersion;
-		std::string Game;
-		std::string UserReadableGame;
+    std::string LeviathanVersion;
+    std::string GameVersion;
+    std::string Game;
+    std::string UserReadableGame;
 
-		// ------------------------------------ //
-		static AppDef* Defaultconf;
-	};
+    // ------------------------------------ //
+    static AppDef* Defaultconf;
+};
 }
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::AppDef;
+using Leviathan::MasterServerInformation;
+#endif
 
 

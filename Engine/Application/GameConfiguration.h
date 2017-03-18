@@ -58,3 +58,7 @@ namespace Leviathan{
 
 }
 
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::GameConfiguration;
+#endif
+

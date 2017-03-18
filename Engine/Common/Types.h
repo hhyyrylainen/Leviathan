@@ -1,7 +1,9 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
+
 #include <cmath>
 
 #ifdef LEVIATHAN_USING_OGRE
@@ -1018,5 +1020,14 @@ DLLEXPORT std::ostream& operator <<(std::ostream &stream,
 
 
 }
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::Float2;
+using Leviathan::Float3;
+using Leviathan::Float4;
+using Leviathan::Int1;
+using Leviathan::Int2;
+using Leviathan::Int3;
+#endif
 
 

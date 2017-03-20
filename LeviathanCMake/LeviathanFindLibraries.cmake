@@ -11,6 +11,10 @@ if(USE_OGRE AND UNIX)
     message(SEND_ERROR "USE_NEWTON required for Ogre")
   endif()
 
+  if(NOT USE_SDL2)
+    message(SEND_ERROR "USE_SDL2 required for Ogre")
+  endif()
+
   # locating the Ogre folder
   if(WIN32)
 	set(CMAKE_MODULE_PATH "$ENV{OGRE_HOME}/CMake/;${CMAKE_MODULE_PATH}")
@@ -34,14 +38,6 @@ if(USE_OGRE AND UNIX)
 
   find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone
     Overlay Paging RenderSystem_GL)
-
-  # OIS is required for input
-  find_package(OIS REQUIRED)
-
-  # check if it failed
-  if(NOT OIS_FOUND)
-    message(SEND_ERROR "Failed to find OIS")
-  endif(NOT OIS_FOUND)
 
   # Find CEGUI
   set(CEGUI_VERSION_MAJOR_DEFAULT 9999)
@@ -78,6 +74,12 @@ if(USE_OGRE AND UNIX)
     if(NOT cAudio_FOUND)
       message(SEND_ERROR "Failed to find cAudio")
     endif()
+  endif()
+
+  # Find SDL2
+  if(USE_SDL2)
+    find_package(SDL2 REQUIRED)
+    
   endif()
   
   
@@ -124,7 +126,7 @@ endif(USE_BOOST)
 if(WIN32)
 
   set(OGRE_LIBRARIES OgreMain.lib RenderSystem_GL.lib RenderSystem_GL3Plus.lib Plugin_ParticleFX.lib
-    OIS.lib CEGUIBase-9999.lib CEGUICommonDialogs-9999.lib CEGUICoreWindowRendererSet.lib 
+    CEGUIBase-9999.lib CEGUICommonDialogs-9999.lib CEGUICoreWindowRendererSet.lib 
     CEGUIExpatParser.lib CEGUIOgreRenderer-9999.lib CEGUISILLYImageCodec.lib
     )
   
@@ -135,7 +137,6 @@ if(WIN32)
   
   include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include")
   include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include/cAudio")
-  include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include/OIS")
   include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include/OGRE")
   link_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/lib")
   
@@ -208,6 +209,7 @@ DefinePreprocessorMacro(USE_OGRE LEVIATHAN_USING_OGRE)
 DefinePreprocessorMacro(USE_NEWTON LEVIATHAN_USING_NEWTON)
 DefinePreprocessorMacro(USE_SFML LEVIATHAN_USING_SFML)
 DefinePreprocessorMacro(USE_LEAP LEVIATHAN_USING_LEAP)
+DefinePreprocessorMacro(USE_SDL2 LEVIATHAN_USING_SDL2)
 
 DefinePreprocessorMacro(USE_BREAKPAD LEVIATHAN_USING_BREAKPAD)
 
@@ -228,9 +230,12 @@ if(NOT WIN32)
     include_directories("${LEVIATHAN_SRC}/Breakpad/include")
   endif()
 
+  if(USE_SDL2)
+    include_directories(${SDL2_INCLUDE_DIR})
+  endif()
 
   if(USE_OGRE)
-    include_directories(${OIS_INCLUDE_DIRS}	${CEGUI_INCLUDE_DIRS} ${OGRE_INCLUDE_DIRS})
+    include_directories(${CEGUI_INCLUDE_DIRS} ${OGRE_INCLUDE_DIRS})
   endif()
 endif()
 

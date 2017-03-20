@@ -110,7 +110,7 @@ void Pong::PongNetHandler::_OnDisconnectFromServer(const string &reasonstring, b
                             string("Server kicked us, reason: "+reasonstring)))))));
 
     // Enable the connection screen to display this message //
-    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState("ConnectionScreen", true);
+    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("ConnectionScreen", true);
 }
 
 

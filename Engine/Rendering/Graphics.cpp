@@ -2,27 +2,30 @@
 #include "Graphics.h"
 
 #include "Application/AppDefine.h"
-#include <OgreMeshManager.h>
-#include "GUI/FontManager.h"
-#include <OgreFrameListener.h>
-#include "FileSystem.h"
-#include <boost/assign/list_of.hpp>
+#include "Application/GameConfiguration.h"
 #include "Engine.h"
+#include "FileSystem.h"
+#include "GUI/FontManager.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 #include "OgreLogManager.h"
 #include "OgreMaterialManager.h"
 #include "OgreRoot.h"
 #include "OgreTextureManager.h"
-#include "Application/GameConfiguration.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Threading/ThreadingManager.h"
+#include <OgreFrameListener.h>
+#include <OgreMeshManager.h>
+#include <boost/assign/list_of.hpp>
 #include <regex>
+
+#include <SDL.h>
 using namespace Leviathan;
 using namespace Rendering;
 using namespace std;
 // ------------------------------------ //
 #define OGRE_ALLOW_USEFULLOUTPUT
 
-DLLEXPORT Leviathan::Graphics::Graphics()
-{
+DLLEXPORT Leviathan::Graphics::Graphics(){
+    
 	Staticaccess = this;
 }
 Graphics::~Graphics(){
@@ -35,6 +38,7 @@ Graphics* Graphics::Get(){
 Graphics* Graphics::Staticaccess = NULL;
 // ------------------------------------------- //
 bool Graphics::Init(AppDef* appdef){
+    
 	// save definition pointer //
 	AppDefinition = appdef;
 
@@ -45,21 +49,39 @@ bool Graphics::Init(AppDef* appdef){
 		return false;
 	}
 
-
 	Initialized = true;
 	return true;
 }
 
 DLLEXPORT void Leviathan::Graphics::Release(){
 
-	SAFE_DELETE(Fonts);
+	Fonts.reset();
 
 	ORoot.reset();
+
+    if(Initialized){
+
+        SDL_Quit();
+    }
 
 	Initialized = false;
 }
 // ------------------------------------------- //
 bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
+
+#ifndef LEVIATHAN_USING_SDL2
+#error SDL2 required for Graphics.h but it is disabled
+#endif
+    
+    // Startup SDL //
+    if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0){
+
+        LOG_ERROR("SDL init failed, error: " + std::string(SDL_GetError()));
+        return false;
+    }
+
+    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+    
 
 	Ogre::String ConfigFileName = "";
 	Ogre::String PluginsFileName = "";
@@ -100,7 +122,9 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// Still waiting for the GL3Plus render system to become usable... //
 	vector<Ogre::String> PluginNames = { "RenderSystem_GL"/*3Plus")*/,
 #ifdef _WIN32
+                                     #ifndef LEVIATHAN_USING_SDL2
 		("RenderSystem_Direct3D11"),
+                                     #endif
 #endif
 		("Plugin_ParticleFX")
             };
@@ -200,8 +224,45 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	//Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
-	// load fonts before overlay //
-	Fonts = new Rendering::FontManager();
+    
+	std::promise<bool> fontLoadResult;
+    
+	// Load fonts before Gui //
+    ThreadingManager::Get()->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
+                    std::promise<bool> &returnvalue, Graphics* us) -> void
+        {
+            us->Fonts = std::make_unique<Rendering::FontManager>();
+
+            returnvalue.set_value(true);
+            
+        }, std::ref(fontLoadResult), this)));
+
+    int displays = SDL_GetNumVideoDisplays();
+
+    LOG_INFO("SDL: display count: " + Convert::ToString(displays));
+    
+    // Get display positions
+    std::vector<SDL_Rect> displayBounds;
+    
+    for(int i = 0; i < displays; i++){
+        
+        displayBounds.push_back(SDL_Rect());
+        
+        SDL_GetDisplayBounds(i, &displayBounds.back());
+
+        
+        LOG_INFO("Display(" + Convert::ToString(i) + "): top left: (" +
+            Convert::ToString(displayBounds.back().x) +
+            ", " + Convert::ToString(displayBounds.back().y) + ") size: " +
+            Convert::ToString(displayBounds.back().w) + "x" +
+            Convert::ToString(displayBounds.back().h));
+    }
+    
+    if(!fontLoadResult.get_future().get()){
+
+        LOG_ERROR("Graphics: failed to load fonts");
+        return false;
+    }
 
 	// clear events that might have queued A LOT while starting up //
 	ORoot->clearEventTimes();

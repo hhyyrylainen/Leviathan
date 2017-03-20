@@ -29,8 +29,8 @@ namespace Leviathan{
 
 
 		// input receiving //
-		DLLEXPORT virtual bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down);
-		DLLEXPORT virtual void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down);
+		DLLEXPORT virtual bool ReceiveInput(int32_t key, int modifiers, bool down);
+		DLLEXPORT virtual void ReceiveBlockedInput(int32_t key, int modifiers, bool down);
 		// clears mouse movement //
 		DLLEXPORT virtual void BeginNewReceiveQueue();
 

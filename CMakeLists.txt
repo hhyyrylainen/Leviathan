@@ -42,6 +42,7 @@ option(USE_OGRE "For using Ogre and direct dependencies, required for normal bui
 option(USE_NEWTON "For using Newton, required for normal builds" ON)
 option(USE_CAUDIO "For using cAudio, required for normal builds" ON)
 option(USE_SFML "For using SFML, required for normal builds" ON)
+option(USE_SDL2 "For using SFML, required for normal builds" ON)
     
 option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
 
@@ -70,6 +71,7 @@ if(CREATE_UE4_PLUGIN)
   set(USE_BREAKPAD OFF)
   set(USE_CAUDIO OFF)
   set(USE_SFML OFF)
+  set(USE_SDL2 OFF)
   
   set(CMAKE_INSTALL_PREFIX "./UE4_Plugin")
   

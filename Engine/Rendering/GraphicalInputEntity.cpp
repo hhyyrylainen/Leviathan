@@ -8,6 +8,7 @@
 #include "Compositor/OgreCompositorWorkspaceDef.h"
 #include "Compositor/Pass/PassClear/OgreCompositorPassClearDef.h"
 #include "Compositor/Pass/PassScene/OgreCompositorPassSceneDef.h"
+#include "Handlers/IDFactory.h"
 #include "Engine.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Objects/ViewerCameraPos.h"
@@ -23,6 +24,15 @@
 #include "Rendering/Graphics.h"
 #include "Window.h"
 #include <thread>
+
+#include "OgreWindowEventUtilities.h"
+#include "OgreRenderWindow.h"
+
+#ifdef LEVIATHAN_USING_SDL2
+#include <SDL.h>
+#include <SDL_syswm.h>
+#endif
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -63,7 +73,8 @@ public:
 
 // ------------------------------------ //
 DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* windowcreater,
-    AppDef* windowproperties)
+    AppDef* windowproperties) :
+    ID(IDFactory::GetID())
 {
 	// create window //
 
@@ -87,10 +98,50 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 	WParams["vsync"] = vsync ? "true": "false";
 
 	Ogre::String wcaption = WData.Title;
+
+
+    SDL_Window* sdlWindow = SDL_CreateWindow(
+        WData.Title.c_str(), 
+        SDL_WINDOWPOS_UNDEFINED_DISPLAY(0), 
+        SDL_WINDOWPOS_UNDEFINED_DISPLAY(0), 
+        WData.Width, WData.Height,
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+    );
+
+    // SDL_WINDOW_FULLSCREEN_DESKTOP works so much better than
+    // SDL_WINDOW_FULLSCREEN so it should be always used
+
+    // SDL_WINDOW_BORDERLESS
+    // SDL_WINDOWPOS_UNDEFINED_DISPLAY(x)
+    // SDL_WINDOWPOS_CENTERED_DISPLAY(x)
+
+    if(!sdlWindow){
+        
+        LOG_FATAL("SDL Window creation failed, error: " + std::string(SDL_GetError()));
+    }
+
+    //SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindow);
     
-	// quicker access to the window //
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    SDL_GetWindowWMInfo(sdlWindow, &wmInfo);
+
+#ifdef _WIN32
+    size_t winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
+    WParams["parentWindowHandle"] = Ogre::StringConverter::toString((unsigned long)winHandle);
+    //externalWindowHandle
+#else
+    WParams["parentWindowHandle"] =
+        Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.display) + ":" +
+        Ogre::StringConverter::toString((unsigned int)XDefaultScreen(wmInfo.info.x11.display))
+        + ":" +
+        Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.window);
+
+#endif
+
 	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption,
-        WData.Width, WData.Height, !WData.Windowed, &WParams);
+        WData.Width, WData.Height, false, &WParams);
+
 
     int windowsafter = 0;
 
@@ -143,8 +194,13 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
         WindowNumber = ++TotalCreatedWindows;
     }
 
+    OWindow = tmpwindow;
+    
 	// create the actual window //
-	DisplayWindow = new Window(tmpwindow, this);
+	DisplayWindow = new Window(sdlWindow, this);
+
+    _CreateOverlayScene();
+    
 #ifdef _WIN32
 	// apply style settings (mainly ICON) //
 	WData.ApplyIconToHandle(DisplayWindow->GetHandle());
@@ -176,21 +232,28 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 }
 
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
+    
 	GUARD_LOCK();
+
+    // Do teardown //
+    // Release Ogre resources //
+    // Release the scene //
+    Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
+    OverlayScene = NULL;
 
     StopAutoClearing();
 
-	// Mark the Window as unusable //
-	DisplayWindow->InvalidateWindow();
-
-	// GUI is very picky about delete order
+    // GUI is very picky about delete order
 	SAFE_RELEASEDEL(WindowsGui);
 
-	// The window object has to be closed down to avoid errors and crashing //
-	if(DisplayWindow)
-		DisplayWindow->CloseDown();
+    // Report that the window is now closed //
+    Logger::Get()->Info("Window: closing window("+
+        Convert::ToString(GetWindowNumber())+")");
 
-	SAFE_DELETE(DisplayWindow);
+    // Close the window //
+    OWindow->destroy();
+    SAFE_DELETE(DisplayWindow);
+    
 	TertiaryReceiver.reset();
 
     int windowsafter = 0;
@@ -244,12 +307,16 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
 	WindowsGui->Render();
 
 	// update window //
-	Ogre::RenderWindow* tmpwindow = DisplayWindow->GetOgreWindow();
+	Ogre::RenderWindow* tmpwindow = GetOgreWindow();
 
 	// finish rendering the window //
 	tmpwindow->swapBuffers();
 
 	return true;
+}
+// ------------------------------------ //
+DLLEXPORT bool GraphicalInputEntity::GetVsync() const{
+    return OWindow->isVSyncEnabled();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNotAlready(){
@@ -326,7 +393,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string &sk
 	// Which will be rendered before the overlay workspace //
 	AutoClearResources->WorldWorkspace =
         ogre->getCompositorManager2()->addWorkspace(AutoClearResources->WorldsScene,
-        DisplayWindow->GetOgreWindow(), AutoClearResources->WorldSceneCamera,
+        GetOgreWindow(), AutoClearResources->WorldSceneCamera,
             CLEAR_WORKSPACE_NAME, true, 0);
 
     // Without a skybox CEGUI flickers... //
@@ -369,9 +436,54 @@ DLLEXPORT int Leviathan::GraphicalInputEntity::GetWindowNumber() const{
 	return WindowNumber;
 }
 // ------------------------------------ //
+#define COMMON_INPUT_START     if(!InputStarted){           \
+ InputStarted = true;                                       \
+ DisplayWindow->GatherInput(WindowsGui->GetContextInput()); \
+ }
+
+DLLEXPORT void GraphicalInputEntity::InjectMouseMove(int xpos, int ypos){
+
+    COMMON_INPUT_START;
+    DisplayWindow->InjectMouseMove(xpos, ypos);
+}
+
+DLLEXPORT void GraphicalInputEntity::InjectMouseWheel(int xamount, int yamount){
+        
+    COMMON_INPUT_START;
+    DisplayWindow->InjectMouseWheel(xamount, yamount);
+}
+
+DLLEXPORT void GraphicalInputEntity::InjectMouseButtonDown(int32_t whichbutton){
+
+    COMMON_INPUT_START;
+    DisplayWindow->InjectMouseButtonDown(whichbutton);
+}
+
+DLLEXPORT void GraphicalInputEntity::InjectMouseButtonUp(int32_t whichbutton){
+
+    COMMON_INPUT_START;
+    DisplayWindow->InjectMouseButtonUp(whichbutton);
+}
+
+
+DLLEXPORT void GraphicalInputEntity::InputEnd(){
+
+    // Force first mouse pos update //
+    if(!InputStarted){
+
+        DisplayWindow->ReadInitialMouse(WindowsGui->GetContextInput());
+    }
+    
+    // Everything is now processed //
+    DisplayWindow->inputreceiver = NULL;
+    InputStarted = false;
+    
+    
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &filename){
 	// uses render target's capability to save it's contents //
-	DisplayWindow->GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
+	GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
@@ -380,6 +492,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
+
 	// send to GUI //
 	WindowsGui->OnResize();
 }
@@ -425,10 +538,26 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
+
+    LOG_INFO("Focus change in Window");
+    
+    // Update mouse //
+    DisplayWindow->Focused = focused;    
+    DisplayWindow->_CheckMouseVisibilityStates();
+
 	WindowsGui->OnFocusChanged(focused);
 }
 
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){
 	return GlobalWindowCount;
+}
+
+
+void Leviathan::GraphicalInputEntity::_CreateOverlayScene(){
+    // create scene manager //
+    OverlayScene = Ogre::Root::getSingleton().createSceneManager(Ogre::ST_INTERIOR, 1,
+        Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_forWindow_"+Convert::ToString(ID));
+
+    OverLayCamera = OverlayScene->createCamera("empty camera");
 }
 

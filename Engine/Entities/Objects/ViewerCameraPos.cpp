@@ -140,32 +140,33 @@ void ViewerCameraPos::Vertical(int dir){
 	Position.Y -= zdown*DEFAULTMOVEMENTMODIFIER;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(OIS::KeyCode key, int modifiers,
+DLLEXPORT bool Leviathan::ViewerCameraPos::ReceiveInput(int32_t key, int modifiers,
     bool down)
 {
 	// reset state only if the state is the same that the key would set //
-	switch(key){
-	case OIS::KC_A:
-        if(!down && m_SideWays == -1) m_SideWays = 0; else if(down) m_SideWays = -1;
-        return true;
-	case OIS::KC_D:
-        if(!down && m_SideWays == 1) m_SideWays = 0; else if(down) m_SideWays = 1;
-        return true;
-	case OIS::KC_W:
-        if(!down && m_Forward == 1) m_Forward = 0; else if(down) m_Forward = 1;
-        return true;
-	case OIS::KC_S:
-        if(!down && m_Forward == -1) m_Forward = 0; else if(down) m_Forward = -1;
-        return true;
-	case OIS::KC_SPACE:
-        if(!down && m_Vertical == 1) m_Vertical = 0; else if(down) m_Vertical = 1;
-        return true;
-	case OIS::KC_LCONTROL:
-        if(!down && m_Vertical == -1) m_Vertical = 0; else if(down) m_Vertical = -1;
-        return true;
-        default:
-            return false;
-	}
+	// switch(key){
+	// case OIS::KC_A:
+    //     if(!down && m_SideWays == -1) m_SideWays = 0; else if(down) m_SideWays = -1;
+    //     return true;
+	// case OIS::KC_D:
+    //     if(!down && m_SideWays == 1) m_SideWays = 0; else if(down) m_SideWays = 1;
+    //     return true;
+	// case OIS::KC_W:
+    //     if(!down && m_Forward == 1) m_Forward = 0; else if(down) m_Forward = 1;
+    //     return true;
+	// case OIS::KC_S:
+    //     if(!down && m_Forward == -1) m_Forward = 0; else if(down) m_Forward = -1;
+    //     return true;
+	// case OIS::KC_SPACE:
+    //     if(!down && m_Vertical == 1) m_Vertical = 0; else if(down) m_Vertical = 1;
+    //     return true;
+	// case OIS::KC_LCONTROL:
+    //     if(!down && m_Vertical == -1) m_Vertical = 0; else if(down) m_Vertical = -1;
+    //     return true;
+    //     default:
+    //         return false;
+	// }
+    return false;
 }
 
 DLLEXPORT bool Leviathan::ViewerCameraPos::OnMouseMove(int xmove, int ymove){
@@ -181,7 +182,7 @@ DLLEXPORT void Leviathan::ViewerCameraPos::BeginNewReceiveQueue(){
 	xmoved = ymoved = 0;
 }
 
-DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(OIS::KeyCode key,
+DLLEXPORT void Leviathan::ViewerCameraPos::ReceiveBlockedInput(int32_t key,
     int modifiers, bool down)
 {
 	// Return if key is going down (since we can't process it and we cannot release the key //

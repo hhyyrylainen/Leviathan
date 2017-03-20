@@ -26,9 +26,9 @@ namespace Pong{
         ~PongNInputter();
 
 
-        bool ReceiveInput(OIS::KeyCode key, int modifiers, bool down) override;
+        bool ReceiveInput(int32_t key, int modifiers, bool down) override;
 
-        void ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down) override;
+        void ReceiveBlockedInput(int32_t key, int modifiers, bool down) override;
 
         bool OnMouseMove(int xmove, int ymove) override;
 
@@ -61,7 +61,7 @@ namespace Pong{
         virtual void _OnInputChanged();
 
 
-        bool _HandleKeyThing(OIS::KeyCode key, bool down);
+        bool _HandleKeyThing(int32_t key, bool down);
 
         // ------------------------------------ //
 
@@ -96,7 +96,7 @@ namespace Pong{
 
 
 
-        std::map<OIS::KeyCode, CONTROLKEYACTION>& MapControlsToKeyGrouping(
+        std::map<int32_t, CONTROLKEYACTION>& MapControlsToKeyGrouping(
             PLAYERCONTROLS controls);
         
     protected:
@@ -106,7 +106,7 @@ namespace Pong{
 
 
         //! Translates a control group to a map of keys that correspond to that group
-        std::map<PLAYERCONTROLS, std::map<OIS::KeyCode, CONTROLKEYACTION>> GroupToKeyMap;
+        std::map<PLAYERCONTROLS, std::map<int32_t, CONTROLKEYACTION>> GroupToKeyMap;
     };
 
 }

@@ -36,9 +36,9 @@ void TryToCrash(bool enable){
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new VariableBlock(
                             string("test")))))));
 
-    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState("ConnectionScreen", enable);
-    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState("DirectConnectScreen", enable);
-    Engine::Get()->GetWindowEntity()->GetGUI()->SetCollectionState("TopLevelMenu", enable);
+    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("ConnectionScreen", enable);
+    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("DirectConnectScreen", enable);
+    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("TopLevelMenu", enable);
 }
 
 int Pong::PongGame::OnEvent(Event** pEvent){
@@ -393,7 +393,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
     GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
 
-    GuiManagerAccess = window1->GetGUI();
+    GuiManagerAccess = window1->GetGui();
 
     if(!GuiManagerAccess->LoadGUIFile("./Data/Scripts/GUI/PongMenus.txt")){
         

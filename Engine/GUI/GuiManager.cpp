@@ -38,7 +38,10 @@ class Leviathan::Gui::GuiClipboardHandler :
     public CEGUI::NativeClipboardProvider, public ThreadSafe{
 public:
 	GuiClipboardHandler(Leviathan::Window* windprovider) :
-        HWNDSource(windprovider), OurOwnedBuffer(NULL)
+    #ifdef _WIN32
+        HWNDSource(windprovider),
+    #endif
+        OurOwnedBuffer(NULL)
     {
 #ifdef __linux
         WaitingClipboard = false;
@@ -341,9 +344,9 @@ finishprocessingthing:
 private:
 
     // Common data //
-    
+#ifdef _WIN32
     Leviathan::Window* HWNDSource;
-
+#endif
 
 	//! The owned buffer, which has to be deleted by this
 	char* OurOwnedBuffer;
@@ -787,8 +790,10 @@ void Leviathan::Gui::GuiManager::Release(){
     Logger::Get()->Info("GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int specialmodifiers){
+DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(int32_t key, int specialmodifiers){
+    
 	GUARD_LOCK();
+    
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) &&
             Collections[i]->GetAllowEnable())
@@ -799,7 +804,6 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(OIS::KeyCode key, int 
 			return true;
 		}
 	}
-
 
 	return false;
 }
@@ -947,7 +951,7 @@ void Leviathan::Gui::GuiManager::Render(){
     guard.unlock();
     
 	// Update inputs //
-	ThisWindow->GetWindow()->GatherInput(ContextInput);
+
 
 }
 // ------------------------------------ //
@@ -957,9 +961,14 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
 	// Notify the CEGUI system //
     // TODO: only to the wanted context
 	CEGUI::System* const sys = CEGUI::System::getSingletonPtr();
+
+
+    int32_t width, height;
+    ThisWindow->GetWindow()->GetSize(width, height);
+    
 	if(sys)
-		sys->notifyDisplaySizeChanged(CEGUI::Sizef((float)ThisWindow->GetWindow()->GetWidth(),
-                (float)ThisWindow->GetWindow()->GetHeight()));
+		sys->notifyDisplaySizeChanged(CEGUI::Sizef((float)width,
+                (float)height));
 }
 
 DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){

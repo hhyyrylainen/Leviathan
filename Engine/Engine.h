@@ -1,7 +1,6 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
@@ -52,6 +51,10 @@ public:
 
     DLLEXPORT static void DumpMemoryLeaks();
 
+    //! \brief Processes queued messages from Ogre, SDL and input
+    DLLEXPORT void MessagePump();
+    
+    
     DLLEXPORT void Tick();
     DLLEXPORT void RenderFrame();
     DLLEXPORT void PreFirstTick();
@@ -117,7 +120,9 @@ public:
     inline RemoteConsole* GetRemoteConsole() {
         return _RemoteConsole;
     }
-        
+
+    DLLEXPORT GraphicalInputEntity* GetWindowFromSDLID(uint32_t sdlid);
+    
 #ifdef LEVIATHAN_USES_LEAP
     inline LeapManager* GetLeapManager(){ return LeapData; };
 #endif

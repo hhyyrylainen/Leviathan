@@ -24,33 +24,33 @@ Pong::GameInputController::~GameInputController(){
 
 // ------------------------------------ //
 void Pong::GameInputController::_SetupControlGroups(){
-    typedef std::map<OIS::KeyCode, CONTROLKEYACTION> KeyMap;
+    typedef std::map<int32_t, CONTROLKEYACTION> KeyMap;
     
     // Would be nice to be able to use boost::assign here...
     
     KeyMap WASD;
-    WASD.insert(std::make_pair(Window::ConvertStringToOISKeyCode("A"), CONTROLKEYACTION_LEFT));
-    WASD.insert(std::make_pair(Window::ConvertStringToOISKeyCode("D"), CONTROLKEYACTION_RIGHT));
-    WASD.insert(std::make_pair(Window::ConvertStringToOISKeyCode("W"), CONTROLKEYACTION_POWERUPUP));
-    WASD.insert(std::make_pair(Window::ConvertStringToOISKeyCode("S"), CONTROLKEYACTION_POWERUPDOWN));
+    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("A"), CONTROLKEYACTION_LEFT));
+    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("D"), CONTROLKEYACTION_RIGHT));
+    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("W"), CONTROLKEYACTION_POWERUPUP));
+    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("S"), CONTROLKEYACTION_POWERUPDOWN));
     
     KeyMap Arrows;
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("LEFTARROW"), CONTROLKEYACTION_LEFT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("RIGHTARROW"), CONTROLKEYACTION_RIGHT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("UPARROW"), CONTROLKEYACTION_POWERUPUP));
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("LEFTARROW"), CONTROLKEYACTION_LEFT));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("RIGHTARROW"), CONTROLKEYACTION_RIGHT));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("UPARROW"), CONTROLKEYACTION_POWERUPUP));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
     
     KeyMap IJKL;
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("J"), CONTROLKEYACTION_LEFT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("L"), CONTROLKEYACTION_RIGHT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("I"), CONTROLKEYACTION_POWERUPUP));
-    Arrows.insert(std::make_pair(Window::ConvertStringToOISKeyCode("K"), CONTROLKEYACTION_POWERUPDOWN));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("J"), CONTROLKEYACTION_LEFT));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("L"), CONTROLKEYACTION_RIGHT));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("I"), CONTROLKEYACTION_POWERUPUP));
+    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("K"), CONTROLKEYACTION_POWERUPDOWN));
     
     KeyMap numpad;
-    numpad.insert(std::make_pair(Window::ConvertStringToOISKeyCode("NUMPAD4"), CONTROLKEYACTION_LEFT));
-    numpad.insert(std::make_pair(Window::ConvertStringToOISKeyCode("NUMPAD6"), CONTROLKEYACTION_RIGHT));
-    numpad.insert(std::make_pair(Window::ConvertStringToOISKeyCode("NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
-    numpad.insert(std::make_pair(Window::ConvertStringToOISKeyCode("NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
+    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD4"), CONTROLKEYACTION_LEFT));
+    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD6"), CONTROLKEYACTION_RIGHT));
+    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
+    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
     
     
     GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_WASD, WASD));
@@ -60,7 +60,7 @@ void Pong::GameInputController::_SetupControlGroups(){
     
 }
 
-std::map<OIS::KeyCode, CONTROLKEYACTION>& Pong::GameInputController::MapControlsToKeyGrouping(PLAYERCONTROLS controls)
+std::map<int32_t, CONTROLKEYACTION>& Pong::GameInputController::MapControlsToKeyGrouping(PLAYERCONTROLS controls)
     
 {
 
@@ -204,7 +204,7 @@ void Pong::PongNInputter::OnLoadCustomUpdateDataFrompacket(sf::Packet &packet){
     }
 }
 // ------------------------------------ //
-bool Pong::PongNInputter::ReceiveInput(OIS::KeyCode key, int modifiers, bool down){
+bool Pong::PongNInputter::ReceiveInput(int32_t key, int modifiers, bool down){
     // Reject if not local input //
     if(!CreatedByUs)
         return false;
@@ -212,7 +212,7 @@ bool Pong::PongNInputter::ReceiveInput(OIS::KeyCode key, int modifiers, bool dow
     return _HandleKeyThing(key, down);
 }
 
-void Pong::PongNInputter::ReceiveBlockedInput(OIS::KeyCode key, int modifiers, bool down){
+void Pong::PongNInputter::ReceiveBlockedInput(int32_t key, int modifiers, bool down){
     // Ignore if not local input also ignore if it is going down //
     if(!CreatedByUs || down)
         return;
@@ -229,7 +229,7 @@ bool Pong::PongNInputter::OnMouseMove(int xmove, int ymove){
     return false;
 }
 // ------------------------------------ //
-bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
+bool Pong::PongNInputter::_HandleKeyThing(int32_t key, bool down){
     // This might be the case if input hasn't been chosen //
     if(CtrlGroup == PLAYERCONTROLS_NONE)
         return false;
@@ -238,7 +238,7 @@ bool Pong::PongNInputter::_HandleKeyThing(OIS::KeyCode key, bool down){
     auto* owner = static_cast<GameInputController*>(ConnectedTo);
 
     // Get the map which contains the keys that we are monitoring //
-    std::map<OIS::KeyCode, CONTROLKEYACTION>& mapref = 
+    std::map<int32_t, CONTROLKEYACTION>& mapref = 
         owner->MapControlsToKeyGrouping(CtrlGroup);
     auto iter = mapref.find(key);
 

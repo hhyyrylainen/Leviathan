@@ -116,7 +116,7 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 		// Store this //
 		bool canprocess = _Engine->GetWindowOpenCount() != 0;
 
-		Ogre::WindowEventUtilities::messagePump();
+        _Engine->MessagePump();
 
 		// Set as quitting //
 		if((!canprocess || QuitSometime) && !ShouldQuit){

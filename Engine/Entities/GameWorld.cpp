@@ -23,6 +23,7 @@
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
 #include "OgreViewport.h"
+#include "OgreRenderWindow.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorManager2.h"
 
@@ -60,7 +61,7 @@ DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::
         
 		GraphicalMode = true;
 		// these are always required for worlds //
-		_CreateOgreResources(ogre, renderto->GetWindow());
+		_CreateOgreResources(ogre, renderto);
 	}
 
 	// Acquire physics engine world //
@@ -116,7 +117,9 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre, Window* rendertarget){
+void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
+    GraphicalInputEntity* rendertarget)
+{
 	// create scene manager //
 	WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2,
         Ogre::INSTANCING_CULLING_THREADED,

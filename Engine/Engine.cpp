@@ -33,8 +33,14 @@
 #include "Iterators/StringIterator.h"
 #include "Application/ConsoleInput.h"
 
+#include "OgreWindowEventUtilities.h"
+
 #ifdef LEVIATHAN_USES_LEAP
 #include "Leap/LeapManager.h"
+#endif
+
+#ifdef LEVIATHAN_USING_SDL2
+#include <SDL.h>
 #endif
 
 #include <chrono>
@@ -554,6 +560,180 @@ void Engine::Release(bool forced){
     Logger::Get()->Write("Goodbye cruel world!");
 }
 // ------------------------------------ //
+DLLEXPORT void Engine::MessagePump(){
+
+    Ogre::WindowEventUtilities::messagePump();
+
+    SDL_Event event;
+    while(SDL_PollEvent(&event)){
+        
+        switch(event.type){
+        case SDL_QUIT:
+            LOG_INFO("SDL_QUIT received, marked as closing");
+            MarkQuit();
+            break;
+
+        case SDL_KEYDOWN:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.key.windowID);
+
+            if(win){
+
+                LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
+            }
+
+            break;
+        }
+        case SDL_TEXTINPUT:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.text.windowID);
+
+            if(win){
+
+                LOG_WRITE("TextInput: " + std::string(event.text.text));
+            }
+            
+            break;
+        }
+        case SDL_MOUSEBUTTONDOWN:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);
+
+            if(win)
+                win->InjectMouseButtonDown(event.button.button);
+            
+            break;
+        }
+
+        case SDL_MOUSEBUTTONUP:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);
+
+            if(win)
+                win->InjectMouseButtonUp(event.button.button);
+
+            break;
+        }
+
+        case SDL_MOUSEMOTION:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.motion.windowID);
+
+            if(win)
+                win->InjectMouseMove(event.motion.x, event.motion.y);
+
+            break;
+        }
+
+        case SDL_MOUSEWHEEL:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.motion.windowID);
+
+            if(win)
+                win->InjectMouseWheel(event.wheel.x, event.wheel.y);
+
+            break;
+        }
+
+        case SDL_WINDOWEVENT:
+        {
+            switch(event.window.event){
+
+            case SDL_WINDOWEVENT_RESIZED:
+            {
+                LOG_INFO("SDL window resize");
+
+                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+
+                if(win){
+
+                    int32_t width, height;
+                    win->GetWindow()->GetSize(width, height);
+                    win->OnResize(width, height);
+                }
+                
+                break;
+            }
+            case SDL_WINDOWEVENT_CLOSE:
+            {
+                LOG_INFO("SDL window close");
+                
+                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+
+                GUARD_LOCK();
+                
+                // Detect closed windows //
+                if(win == GraphicalEntity1){
+                    // Window closed //
+                    ReportClosedWindow(guard, GraphicalEntity1);
+                }
+   
+                for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+                    if(AdditionalGraphicalEntities[i] == win){
+
+                        ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
+                        break;
+                    }
+                }
+
+                break;
+            }
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+            {
+                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+
+                if(win)
+                    win->OnFocusChange(true);
+                
+                break;
+            }
+            case SDL_WINDOWEVENT_FOCUS_LOST:
+            {
+                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+
+                if(win)
+                    win->OnFocusChange(false);
+                
+                break;
+            }
+            }
+        }
+        }
+    }
+
+    // Reset input states //
+    if(GraphicalEntity1){
+
+        GraphicalEntity1->InputEnd();
+    }
+
+    for(auto iter = AdditionalGraphicalEntities.begin();
+        iter != AdditionalGraphicalEntities.end(); ++iter)
+    {
+        (*iter)->InputEnd();
+    }
+}
+
+DLLEXPORT GraphicalInputEntity* Engine::GetWindowFromSDLID(uint32_t sdlid){
+
+    if(GraphicalEntity1 && GraphicalEntity1->GetWindow() &&
+        GraphicalEntity1->GetWindow()->GetSDLID() == sdlid)
+    {
+        return GraphicalEntity1;
+    }
+
+    for(auto iter = AdditionalGraphicalEntities.begin();
+        iter != AdditionalGraphicalEntities.end(); ++iter)
+    {
+        if((*iter)->GetWindow() && (*iter)->GetWindow()->GetSDLID() == sdlid){
+
+            return *iter;
+        }
+    }
+
+    return nullptr;
+}
+// ------------------------------------ //
 void Engine::Tick(){
 
     // Always try to update networking //
@@ -651,22 +831,6 @@ void Engine::Tick(){
     
     // Call the default app tick //
     Owner->Tick(TimePassed);
-
-    // Detect closed windows //
-    if(GraphicalEntity1 && !GraphicalEntity1->GetWindow()->IsOpen()){
-        // Window closed //
-        ReportClosedWindow(guard, GraphicalEntity1);
-    }
-   
-    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
-        if(!AdditionalGraphicalEntities[i]->GetWindow()->IsOpen()){
-
-            ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
-            
-            // The above call might change the vector so stop looping after it //
-            break;
-        }
-    }
     
     TickTime = (int)(Time::GetTimeMs64()-CurTime);
 }
@@ -829,12 +993,12 @@ DLLEXPORT int Engine::GetWindowOpenCount(){
     GUARD_LOCK();
     
 
-    if(GraphicalEntity1 && GraphicalEntity1->GetWindow()->IsOpen())
+    if(GraphicalEntity1 && GraphicalEntity1->GetWindow())
         openwindows++;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 
-        if(AdditionalGraphicalEntities[i]->GetWindow()->IsOpen())
+        if(AdditionalGraphicalEntities[i]->GetWindow())
             openwindows++;
     }
 

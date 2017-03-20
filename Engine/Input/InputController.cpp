@@ -29,7 +29,9 @@ DLLEXPORT void Leviathan::InputController::StartInputGather(){
     }
 }
 
-DLLEXPORT void Leviathan::InputController::OnInputGet(OIS::KeyCode key, int specialmodifiers, bool down){
+DLLEXPORT void Leviathan::InputController::OnInputGet(int32_t key, int specialmodifiers,
+    bool down)
+{
     // call on first that gets it //
     bool received = false;
 
@@ -48,7 +50,7 @@ DLLEXPORT void Leviathan::InputController::OnInputGet(OIS::KeyCode key, int spec
     }
 }
 
-DLLEXPORT void Leviathan::InputController::OnBlockedInput(OIS::KeyCode key, int specialmodifiers,
+DLLEXPORT void Leviathan::InputController::OnBlockedInput(int32_t key, int specialmodifiers,
     bool down)
 {
 

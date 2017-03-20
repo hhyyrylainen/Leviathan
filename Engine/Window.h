@@ -1,194 +1,111 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "OgreWindowEventUtilities.h"
-#include "OgreRenderWindow.h"
-#include "OIS.h"
-#include "boost/bimap.hpp"
 #include "Common/Types.h"
+#include "CEGUI/InputEvent.h"
 
-#include <OISMouse.h>
-#include <OISKeyboard.h>
-#include <OISJoyStick.h>
-#include <OISInputManager.h>
-
-#ifdef __linux
-
-// Predefine some Xlib stuff to make this header compile //
-typedef long unsigned int XID;
-typedef XID Cursor;
-struct _XDisplay;
-typedef _XDisplay Display;
-
-#endif
+struct SDL_Window;
 
 namespace Leviathan{
 
-	//! window class
-	//! \todo Implement global lock for input handling
-	class Window : public Ogre::WindowEventListener, OIS::KeyListener, OIS::MouseListener, OIS::JoyStickListener{
-	public:
-		DLLEXPORT Window(Ogre::RenderWindow* owindow, GraphicalInputEntity* owner);
-		DLLEXPORT ~Window();
+class GraphicalInputEntity;
 
-		DLLEXPORT void CloseDown();
+//! window class
+//! \todo Implement global lock for input handling
+class Window{
+    friend GraphicalInputEntity;
+public:
 
-		//! \brief Tells the Ogre window to close
-		DLLEXPORT void SendCloseMessage();
+    DLLEXPORT Window(SDL_Window* sdlwindow, GraphicalInputEntity* owner);
+    DLLEXPORT ~Window();
 
-		DLLEXPORT void ResizeWindow(const int &width, const int &height);
+    DLLEXPORT inline float GetAspectRatio() const{
 
-		DLLEXPORT inline float GetAspectRatio() const{
+        int32_t width, height;
+        GetSize(width, height);
+        
+        return (static_cast<float>(width)) / height;
+    }
 
-			return ((float)GetWidth())/GetHeight();
-		}
+    DLLEXPORT void GetSize(int32_t &width, int32_t &height) const;
 
-		DLLEXPORT void SetHideCursor(bool toset);
+    
 
-		// callback functions //
-		virtual void windowResized(Ogre::RenderWindow* rw);
-		virtual void windowFocusChange(Ogre::RenderWindow* rw);
+    DLLEXPORT void SetHideCursor(bool toset);
 
-		DLLEXPORT void GetRelativeMouse(int& x, int& y);
-		DLLEXPORT void SetMouseToCenter();
-		DLLEXPORT bool IsMouseOutsideWindowClientArea();
+    DLLEXPORT void GetRelativeMouse(int& x, int& y);
+    DLLEXPORT void SetMouseToCenter();
+    DLLEXPORT bool IsMouseOutsideWindowClientArea();
 
-		//! \brief Gets the window's rectangle in screen coordinates
-		//! \return The screen begin x and y, and z and w as the width and height all in screen pixels
-		//! \exception ExceptionNotFound If the window is not found (the internal get rect fails)
-		//! \note This doesn't "work" on linux, same as calling GetWidth and GetHeight
-		DLLEXPORT Int4 GetScreenPixelRect() const;
-		
-		//! \brief Translates a client space coordinate to screen coordinate
-		//! \exception ExceptionNotFound If the window is not found (the internal translate fails)
-		//! \note Doesn't work on linux, returns the input point
-		DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
+    //! \brief Translates a client space coordinate to screen coordinate
+    //! \exception ExceptionNotFound If the window is not found (the internal translate fails)
+    //! \note Doesn't work on linux, returns the input point
+    DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
 				
-		//! \brief Captures input for this window and passes it on
-		DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
+    //! \brief Captures input for this window and passes it on
+    DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
+
+    //! \brief Passes initial mouse position to CEGUI
+    DLLEXPORT void ReadInitialMouse(CEGUI::InputAggregator* receiver);
+
+    DLLEXPORT uint32_t GetSDLID() const;
+
+    // \todo add a way to force only one window to have mouse captured //
+    DLLEXPORT void SetCaptureMouse(bool state);
+
+    //! \brief Returns whether this window is focused
+    //! \return True when the window has focus
+    DLLEXPORT bool IsWindowFocused() const;
 
 
-		DLLEXPORT inline bool IsWindowed() const{ return !OWindow->isFullScreen();};
-#ifdef _WIN32
-		DLLEXPORT inline HWND GetHandle(){ VerifyRenderWindowHandle(); return m_hwnd; };
-#else
-		// X11 compatible handle //
-		DLLEXPORT inline XID GetX11Window(){ VerifyRenderWindowHandle(); return m_hwnd; }
-#endif
-		DLLEXPORT inline int GetWidth() const{ return OWindow->getWidth(); };
-		DLLEXPORT inline int GetHeight() const{ return OWindow->getHeight(); };
-		DLLEXPORT inline bool GetVsync() const{ return OWindow->isVSyncEnabled();};
-		DLLEXPORT inline Ogre::RenderWindow* GetOgreWindow() const{ return OWindow; };
+    // Key press callbacks
+    DLLEXPORT void InjectMouseMove(int xpos, int ypos);
 
-		DLLEXPORT inline bool IsOpen() const{
+    DLLEXPORT void InjectMouseWheel(int xamount, int yamount);
 
-			return !OWindow->isClosed();
-		}
+    DLLEXPORT void InjectMouseButtonDown(int32_t whichbutton);
 
-		// \todo add a way to force only one window to have mouse captured //
-		DLLEXPORT inline void SetCaptureMouse(bool state){
-			MouseCaptured = state;
-		}
+    DLLEXPORT void InjectMouseButtonUp(int32_t whichbutton);
+    
 
-		DLLEXPORT bool VerifyRenderWindowHandle();
+    DLLEXPORT static CEGUI::MouseButton SDLToCEGUIMouseButton(int sdlbutton);
+    
 
+    DLLEXPORT static int32_t ConvertStringToKeyCode(const std::string &str);
+    DLLEXPORT static std::string ConvertKeyCodeToString(const int32_t &code);
 
-		//! \brief Returns whether this window is focused
-		//! \return True when the window has focus
-		DLLEXPORT bool IsWindowFocused() const;
+protected:
 
+    void _CheckMouseVisibilityStates();
 
-		//! \brief Causes this window to no longer function
-		//! \note This is provided to prevent calling some platform specific methods that could
-		//! cause crashes
-		DLLEXPORT void InvalidateWindow();
+    void _FirstInputCheck();
+    
+private:
 
-		virtual bool keyPressed(const OIS::KeyEvent &arg);
-		virtual bool keyReleased(const OIS::KeyEvent &arg);
-		virtual bool mouseMoved(const OIS::MouseEvent &arg);
-		virtual bool mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
-		virtual bool mouseReleased(const OIS::MouseEvent &arg, OIS::MouseButtonID id);
-		virtual bool buttonPressed(const OIS::JoyStickEvent &arg, int button);
-		virtual bool buttonReleased(const OIS::JoyStickEvent &arg, int button);
-		virtual bool axisMoved(const OIS::JoyStickEvent &arg, int axis);
+    //! Set null when the native window is no longer valid
+    SDL_Window* SDLWindow = nullptr;
+        
+    GraphicalInputEntity* OwningWindow = nullptr;
 
-		DLLEXPORT std::string GetOISCharacterAsText(const OIS::KeyCode &code);
+    //! This is temporarily stored during input gathering
+    CEGUI::InputAggregator* inputreceiver = nullptr;
 
-		DLLEXPORT inline Ogre::SceneManager* GetOverlayScene(){
-			return OverlayScene;
-		}
-		DLLEXPORT inline Ogre::Camera* GetOverlayCamera() const{
-			return OverLayCamera;
-		}
-		// map that converts OIS::KeyCode to CEGUI key codes,
-        // not required since the codes are the same! //
-		//static std::map<OIS::KeyCode, CEGUI::Key::Scan> OISCEGUIKeyConvert;
-		static boost::bimap<std::string, OIS::KeyCode> CharacterToOISConvert;
+    bool ThisFrameHandledCreate = false;
+    int LastFrameDownMouseButtons = 0;
+    
+    // this is updated every time input is gathered //
+    int SpecialKeyModifiers = 0;
+    bool Focused = true;
+    bool ApplicationWantCursorState;
+    bool ForceMouseVisible = false;
+    bool CursorState = true;
 
-		// method for other DLLs to call the maps //
-		DLLEXPORT static OIS::KeyCode ConvertStringToOISKeyCode(const std::string &str);
-		DLLEXPORT static std::string ConvertOISKeyCodeToString(const OIS::KeyCode &code);
+    bool FirstInput = true;
 
-
-	private:
-
-		bool SetupOISForThisWindow();
-		void ReleaseOIS();
-		void UpdateOISMouseWindowSize();
-#ifdef __GNUC__
-		// X11 window focus find function //
-		XID GetForegroundWindow();
-#endif
-		void CheckInputState();
-		//! \brief Creates an Ogre scene to display GUI on this window
-		//! \todo The window requires an ID member to make this unique
-		void _CreateOverlayScene();
-		void _CheckMouseVisibilityStates();
-		// ------------------------------------ //
-#ifdef _WIN32
-		HWND m_hwnd = nullptr;
-#else
-		XID m_hwnd = 0;
-		Display* XDisplay = nullptr;
-
-		Cursor XInvCursor = 0;
-#endif
-		Ogre::RenderWindow* OWindow = nullptr;
-		Ogre::SceneManager* OverlayScene = nullptr;
-		Ogre::Camera* OverLayCamera = nullptr;
-
-        //! Like entity ID
-        //! Makes sure that created Ogre resources are unique
-        int ID;
-
-		GraphicalInputEntity* OwningWindow = nullptr;
-
-		OIS::InputManager* WindowsInputManager = nullptr;
-		OIS::Mouse* WindowMouse = nullptr;
-		OIS::Keyboard* WindowKeyboard = nullptr;
-		std::vector<OIS::JoyStick*> WindowJoysticks;
-
-		//! This is temporarily stored during input gathering
-		CEGUI::InputAggregator* inputreceiver = nullptr;
-
-		bool ThisFrameHandledCreate = false;
-		int LastFrameDownMouseButtons = 0;
-		
-		// Set when the native window is no longer valid //
-		bool IsInvalidated = false;
-
-		// this is updated every time input is gathered //
-		int SpecialKeyModifiers = 0;
-		bool Focused = true;
-		bool ApplicationWantCursorState;
-		bool ForceMouseVisible = false;
-		bool CursorState = true;
-
-		bool FirstInput = true;
-
-		bool MouseCaptured = false;
-	};
+    bool MouseCaptured = false;
+};
 
 
 }

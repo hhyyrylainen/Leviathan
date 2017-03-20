@@ -13,9 +13,9 @@ enum KEYSPECIAL {
 	KEYSPECIAL_SHIFT = 0x1,
 	KEYSPECIAL_ALT = 0x2,
 	KEYSPECIAL_CTRL = 0x4,
-	KEYSPECIAL_WIN = 0x8,
-	KEYSPECIAL_SCROLL = 0x10,
-	KEYSPECIAL_CAPS = 0x20
+	KEYSPECIAL_SUPER = 0x8,
+	KEYSPECIAL_CAPS = 0x10
+    // = 0x20
 	//0x40
 	//0x80 // first byte full
 	//0x100
@@ -159,7 +159,7 @@ namespace Leviathan{
             
             auto converted = StringOperations::ToUpperCase<std::string>(*str);
 
-			T character = Leviathan::Window::ConvertStringToOISKeyCode(converted);
+			T character = Leviathan::Window::ConvertStringToKeyCode(converted);
 			short special = 0;
 
 			while((str = itr.GetUntilNextCharacterOrAll<std::string>('+')) && (str->size() > 0)){
@@ -175,9 +175,10 @@ namespace Leviathan{
 				}
 				if(StringOperations::CompareInsensitive(*str, std::string("WIN")) ||
                     StringOperations::CompareInsensitive(*str, std::string("META")) || 
-					StringOperations::CompareInsensitive(*str, std::string("SUPER")))
+					StringOperations::CompareInsensitive(*str, std::string("SUPER")) ||
+                    StringOperations::CompareInsensitive(*str, std::string("GUI")))
 				{
-					special |= KEYSPECIAL_WIN;
+					special |= KEYSPECIAL_SUPER;
 				}
 			}
 
@@ -187,7 +188,7 @@ namespace Leviathan{
 		DLLEXPORT std::string GenerateStringFromKey(){
 
 			// First the actual key value //
-			auto resultstr = Leviathan::Window::ConvertOISKeyCodeToString(Character);
+			auto resultstr = Leviathan::Window::ConvertKeyCodeToString(Character);
 
 			// Add special modifiers //
 			if(Extras && KEYSPECIAL_ALT)
@@ -196,7 +197,7 @@ namespace Leviathan{
 				resultstr += "+CTRL";
 			if(Extras && KEYSPECIAL_SHIFT)
 				resultstr += "+SHIFT";
-			if(Extras && KEYSPECIAL_WIN)
+			if(Extras && KEYSPECIAL_SUPER)
 				resultstr += "+META";
 			// Result is done //
 			return resultstr;
@@ -208,7 +209,7 @@ namespace Leviathan{
 	};
 
 	// This is the most likely type //
-	typedef Key<OIS::KeyCode> GKey;
+	typedef Key<int32_t> GKey;
 
 }
 #endif

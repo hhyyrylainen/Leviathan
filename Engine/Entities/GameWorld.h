@@ -1,7 +1,6 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include <type_traits>
@@ -316,7 +315,7 @@ private:
     //! \brief Updates a players position info in this world
     void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer &ply);
 
-    void _CreateOgreResources(Ogre::Root* ogre, Window* rendertarget);
+    void _CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget);
     void _HandleDelayedDelete(Lock &guard);
 
     //! \brief Reports an entity deletion to clients

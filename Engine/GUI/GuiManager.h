@@ -70,7 +70,7 @@ namespace Leviathan{ namespace Gui{
 		DLLEXPORT void Render();
 
 		// key press receiving from listener //
-		DLLEXPORT bool ProcessKeyDown(OIS::KeyCode key, int specialmodifiers);
+		DLLEXPORT bool ProcessKeyDown(int32_t key, int specialmodifiers);
 
 		//! \todo Actually pass this to Views
 		DLLEXPORT inline void SetVisible(bool visible){
@@ -92,6 +92,10 @@ namespace Leviathan{ namespace Gui{
 
 		//! \brief Returns the main GUI context
 		DLLEXPORT CEGUI::GUIContext* GetMainContext(Lock &guard);
+
+        DLLEXPORT CEGUI::InputAggregator* GetContextInput(){
+            return ContextInput;
+        }
 
 		// function split into peaces //
 		DLLEXPORT bool LoadCollection(std::vector<std::shared_ptr<ObjectFileObject>> &data,

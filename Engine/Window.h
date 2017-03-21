@@ -68,6 +68,12 @@ public:
     DLLEXPORT void InjectMouseButtonDown(int32_t whichbutton);
 
     DLLEXPORT void InjectMouseButtonUp(int32_t whichbutton);
+
+    DLLEXPORT void InjectCodePoint(uint32_t utf32char);
+
+    DLLEXPORT void InjectKeyDown(int32_t sdlkey);
+
+    DLLEXPORT void InjectKeyUp(int32_t sdlkey);
     
 
     DLLEXPORT static CEGUI::MouseButton SDLToCEGUIMouseButton(int sdlbutton);

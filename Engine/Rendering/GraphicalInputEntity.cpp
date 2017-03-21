@@ -465,9 +465,27 @@ DLLEXPORT void GraphicalInputEntity::InjectMouseButtonUp(int32_t whichbutton){
     DisplayWindow->InjectMouseButtonUp(whichbutton);
 }
 
+DLLEXPORT void GraphicalInputEntity::InjectCodePoint(uint32_t utf32char){
+
+    COMMON_INPUT_START;
+    DisplayWindow->InjectCodePoint(utf32char);
+}
+
+DLLEXPORT void GraphicalInputEntity::InjectKeyDown(int32_t sdlkey){
+
+    COMMON_INPUT_START;
+    DisplayWindow->InjectKeyDown(sdlkey);
+}
+
+DLLEXPORT void GraphicalInputEntity::InjectKeyUp(int32_t sdlkey){
+
+    COMMON_INPUT_START;
+    DisplayWindow->InjectKeyUp(sdlkey);
+}
+
 
 DLLEXPORT void GraphicalInputEntity::InputEnd(){
-
+    
     // Force first mouse pos update //
     if(!InputStarted){
 
@@ -539,6 +557,9 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
 
+    if(DisplayWindow->Focused == focused)
+        return;
+
     LOG_INFO("Focus change in Window");
     
     // Update mouse //
@@ -546,6 +567,12 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
     DisplayWindow->_CheckMouseVisibilityStates();
 
 	WindowsGui->OnFocusChanged(focused);
+
+    if(!DisplayWindow->Focused && DisplayWindow->MouseCaptured){
+
+        LOG_WRITE("TODO: We need to force GUI on to stop mouse capture");
+        LOG_FATAL("Not implemented unfocus when mouse capture is on");
+    }
 }
 
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){

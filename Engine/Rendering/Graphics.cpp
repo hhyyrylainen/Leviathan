@@ -250,12 +250,40 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
         
         SDL_GetDisplayBounds(i, &displayBounds.back());
 
+        const char* nameptr = SDL_GetDisplayName(i);
         
-        LOG_INFO("Display(" + Convert::ToString(i) + "): top left: (" +
+        const auto name = nameptr ? std::string(nameptr) : std::string("unnamed");
+
+        // Video modes //
+        int videomodecount = SDL_GetNumDisplayModes(i);
+
+        std::vector<std::string> videomodes;
+
+        for(int a = 0; a < videomodecount; a++){
+
+
+            SDL_DisplayMode mode = { SDL_PIXELFORMAT_UNKNOWN, 0, 0, 0, 0 };
+
+            if(SDL_GetDisplayMode(i, a, &mode) == 0){
+            
+                videomodes.push_back(Convert::ToString(SDL_BITSPERPIXEL(mode.format)) +
+                        " bpp " + Convert::ToString(mode.w) + "x" + Convert::ToString(mode.h)
+                    + " at " + Convert::ToString(mode.refresh_rate) + "Hz");
+            }
+        }
+
+        
+        LOG_INFO("Display(" + Convert::ToString(i) + ", " + name + "): top left: (" +
             Convert::ToString(displayBounds.back().x) +
             ", " + Convert::ToString(displayBounds.back().y) + ") size: " +
             Convert::ToString(displayBounds.back().w) + "x" +
             Convert::ToString(displayBounds.back().h));
+
+        // LOG_INFO("Supported modes(" + Convert::ToString(videomodes.size()) + "): ");
+        // for(const auto& mode : videomodes){
+            
+        //     LOG_WRITE(" " + mode);
+        // }
     }
     
     if(!fontLoadResult.get_future().get()){

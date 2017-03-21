@@ -33,6 +33,8 @@
 #include "Iterators/StringIterator.h"
 #include "Application/ConsoleInput.h"
 
+#include "utf8.h"
+
 #include "OgreWindowEventUtilities.h"
 
 #ifdef LEVIATHAN_USES_LEAP
@@ -580,6 +582,19 @@ DLLEXPORT void Engine::MessagePump(){
             if(win){
 
                 LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
+                win->InjectKeyDown(event.key.keysym.sym);
+            }
+
+            break;
+        }
+        case SDL_KEYUP:
+        {
+            GraphicalInputEntity* win = GetWindowFromSDLID(event.key.windowID);
+
+            if(win){
+
+                LOG_WRITE("SDL_KEYUP: " + Convert::ToString(event.key.keysym.sym));
+                win->InjectKeyUp(event.key.keysym.sym);
             }
 
             break;
@@ -590,11 +605,28 @@ DLLEXPORT void Engine::MessagePump(){
 
             if(win){
 
-                LOG_WRITE("TextInput: " + std::string(event.text.text));
+                const auto text = std::string(event.text.text);
+
+                LOG_WRITE("TextInput: " + text);
+
+                std::vector<uint32_t> codepoints;
+
+                utf8::utf8to32(std::begin(text), std::end(text),
+                    std::back_inserter(codepoints));
+
+                // LOG_WRITE("Codepoints(" + Convert::ToString(codepoints.size()) + "): ");
+                // for(auto codepoint : codepoints)
+                //     LOG_WRITE(" " + Convert::ToString(codepoint));
+                for(auto codepoint : codepoints){
+
+                    win->InjectCodePoint(codepoint);
+                }
             }
             
             break;
         }
+        // TODO: implement this
+        //case SDL_TEXTEDITING: (https://wiki.libsdl.org/Tutorials/TextInput)
         case SDL_MOUSEBUTTONDOWN:
         {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);

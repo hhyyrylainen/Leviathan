@@ -20,15 +20,9 @@
 #include "Rendering/Graphics.h"
 #include "Script/ScriptExecutor.h"
 #include "Window.h"
-#include <boost/assign/list_of.hpp>
 #include <thread>
 
-#ifdef __linux__
-// On linux the GuiManager has to create an Xlib window which requires this include...
-#include "XLibInclude.h"
-
-#endif
-
+#include <SDL.h>
 // ------------------------------------ //
 
 // ------------------ GuiClipboardHandler ------------------ //
@@ -37,143 +31,9 @@
 class Leviathan::Gui::GuiClipboardHandler :
     public CEGUI::NativeClipboardProvider, public ThreadSafe{
 public:
-	GuiClipboardHandler(Leviathan::Window* windprovider) :
-    #ifdef _WIN32
-        HWNDSource(windprovider),
-    #endif
-        OurOwnedBuffer(NULL)
-    {
-#ifdef __linux
-        WaitingClipboard = false;
+
+	void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size) override{
         
-        // This will throw if it fails...
-        SetupClipboardWindow();
-#endif
-    }
-
-	~GuiClipboardHandler(){
-        GUARD_LOCK();
-#ifdef __linux
-        XFlush(XDisplay);
-        
-        CleanUpWindow(guard);
-#endif
-        
-		SAFE_DELETE(OurOwnedBuffer);
-	}
-
-	//! \brief Returns true when this object can manage the clipboard on this platform
-	static bool WorksOnPlatform(){
-#ifdef WIN32
-
-		return true;
-#elif __linux
-
-		// Now on linux!
-		return true;
-
-#else
-		return false;
-
-#endif // WIN32
-	}
-
-
-#ifdef WIN32
-
-	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
-        GUARD_LOCK();
-		// Ignore non-text setting //
-		if(mimeType != "text/plain"){
-
-			return;
-		}
-
-
-		if(!OpenClipboard(HWNDSource->GetHandle()))	{
-
-			Logger::Get()->Error("GuiClipboardHandler: failed to open the clipboard");
-			return;
-		}
-
-		// Clear the clipboard //
-		if(!EmptyClipboard()){
-
-			Logger::Get()->Error("GuiClipboardHandler: failed to empty the clipboard");
-			return;
-		}
-
-		// Convert the line endings //
-		std::string convertedstring = StringOperations::ChangeLineEndsToWindowsString(
-            std::string(reinterpret_cast<char*>(buffer), size));
-		
-
-		// Allocate global data for the text //
-		HGLOBAL globaldata = GlobalAlloc(GMEM_FIXED, convertedstring.size()+1);
-
-		memcpy_s(globaldata, convertedstring.size()+1, convertedstring.c_str(), convertedstring.size());
-
-		reinterpret_cast<char*>(globaldata)[convertedstring.size()] = 0;
-
-		// Set the text data //
-		if(::SetClipboardData(CF_TEXT, globaldata) == NULL){
-
-			Logger::Get()->Error("GuiClipboardHandler: failed to set the clipboard contents");
-			CloseClipboard();
-			GlobalFree(globaldata);
-			return;
-		}
-
-		// All done, close clipboard to allow others to use it, too //
-		CloseClipboard();
-	}
-
-	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
-        GUARD_LOCK();
-		// Open the clipboard first //
-		if(OpenClipboard(HWNDSource->GetHandle())){
-
-			// Only retrieve text //
-			HANDLE datahandle = GetClipboardData(CF_TEXT);
-
-			if(datahandle == INVALID_HANDLE_VALUE || datahandle == NULL){
-				return;
-			}
-
-			// Lock the data for reading //
-			char* sourcebuff = reinterpret_cast<char*>(GlobalLock(datahandle));
-			
-			std::string fromclipdata = sourcebuff;
-
-			// Unlock the global memory and clipboard //
-			GlobalUnlock(datahandle);
-			CloseClipboard();
-
-			// Convert line ends to something nice //
-			fromclipdata = StringOperations::ChangeLineEndsToUniversalString(fromclipdata);
-
-			// Clear old data //
-			SAFE_DELETE(OurOwnedBuffer);
-
-			// Create a new data buffer //
-			OurOwnedBuffer = new char[fromclipdata.size()+1];
-
-			// Return the data //
-			buffer = OurOwnedBuffer;
-
-			memcpy_s(buffer, fromclipdata.size()+1, fromclipdata.c_str(), fromclipdata.size());
-
-			// Make sure there is a null terminator //
-			reinterpret_cast<char*>(buffer)[fromclipdata.size()] = 0;
-
-			mimeType = "text/plain";
-			size = fromclipdata.size()+1;
-		}
-	}
-
-#elif __linux
-
-	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
         GUARD_LOCK();
         
         // Ignore non-text setting //
@@ -182,483 +42,50 @@ public:
 			return;
 		}
 
-        // We must stop the message loop first //
-        StopXMessageLoop(guard);
-        
-        // "Sending" to the clipboard is the easy part, responding to the requests is the harder part //
-        Atom clipboardtarget = XInternAtom(XDisplay, "CLIPBOARD", false);
-        
-        // Tell Xlib that we know own the clipboard stuff //
-        XSetSelectionOwner(XDisplay, clipboardtarget, ClipboardWindow, CurrentTime);
-        XFlush(XDisplay);
+        // Let's hope it is null terminated
+        if(SDL_SetClipboardText(reinterpret_cast<const char*>(buffer)) < 0){
 
-        Logger::Get()->Info("Copied text to the X clipboard");
-
-        // Store the text for retrieving later //
-        SAFE_DELETE(OurOwnedBuffer);
-
-        OurOwnedBuffer = new char[size];
-
-        assert(OurOwnedBuffer && "failed to allocate buffer for clipboard text");
-        
-        // Copy the data //
-        memcpy(OurOwnedBuffer, buffer, size);
-
-        // Start handling clipboard data requests //
-        StartXMessageLoop(guard);
-        
+            LOG_ERROR("Copy to clipboard failed: " + std::string(SDL_GetError()));
+        }
 	}
 
-	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
+	void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size) override{
 
-        GUARD_LOCK_NAME(lockit);
-        
-        // We need to stop the message processing here, too //
-        StopXMessageLoop(lockit);
-        
-        // Create a request //
+        GUARD_LOCK();
 
-        Atom targetproperty = XInternAtom(XDisplay, "CUT_BUFFER1", false);
+        if(SDL_HasClipboardText() == SDL_FALSE){
 
-        lockit.unlock();
-        
-        // We want the stuff in the clipboard //
-        XConvertSelection(XDisplay, XA_CLIPBOARD(XDisplay), XA_STRING, targetproperty,
-            ClipboardWindow, CurrentTime);
-        XFlush(XDisplay);
-
-        // Now we wait for the request to be completed //
-        {
-            Lock lock(ClipboardRetrieveMutex);
-
-            WaitingClipboard = true;
-
-            // We need to loop to run for it to process the response //
-            StartXMessageLoop(lockit);
-
-            while(WaitingClipboard){
-                
-                WaitForClipboard.wait_for(lock, MillisecondDuration(5));
-            }
-
-            lockit.lock();
-        
-            if(!ClipboardRequestSucceeded){
-
-                Logger::Get()->Info("The clipboard was empty");
-                size = 0;
-                mimeType = "";
-                buffer = nullptr;
-                return;
-            }
+        nothinginclipboardlabel:
+            buffer = nullptr;
+            size = 0;
+            mimeType = "";
+            return;
         }
 
-        // We probably need to stop the processing loop again //
-        StopXMessageLoop(lockit);
+        auto* text = SDL_GetClipboardText();
 
-        // First read 0 bytes, to get the total size //
-        Atom actualreturntype;
-        int receivedformat;
-        unsigned long receiveditems;
-        unsigned long totalbytes;
+        if(!text){
 
-        unsigned char* xbuffer;
+            goto nothinginclipboardlabel;
+        }
+
+        ReceivedClipboardData = std::string(text);
+
+        SDL_free(text);
+        text = nullptr;
+
         
-        XGetWindowProperty(XDisplay, ClipboardWindow, targetproperty, 0, 0, false, XA_STRING,
-            &actualreturntype, &receivedformat, &receiveditems, &totalbytes, &xbuffer);
-
-        if(xbuffer)
-            XFree(xbuffer);
-        
-        // All that is left to do is to retrieve the property text //
-        // Might as well delete the data after this get
-        XGetWindowProperty(XDisplay, ClipboardWindow, targetproperty, 0, totalbytes, true,
-            XA_STRING, &actualreturntype, &receivedformat, &receiveditems, &totalbytes, &xbuffer);
-
-        // Do last final checks on the data to make sure it is fine //
-        if(receivedformat != 8){
-
-            Logger::Get()->Warning("GuiClipboardHandler: received clipboard data is not 8 bit "
-                "(one byte) aligned chars, actual type: "+Convert::ToString(receivedformat));
-            goto finishprocessingthing;
-        }
-
-        if(!xbuffer || receiveditems < 1){
-
-            Logger::Get()->Warning("GuiClipboardHandler: received empty xbuffer from clipboard "
-                "property");
-            goto finishprocessingthing;
-        }
-
-        if(totalbytes != 0){
-
-            Logger::Get()->Warning("GuiClipboardHandler: failed to retrieve whole clipboard, "
-                "bytes left: "+Convert::ToString(totalbytes));
-        }
-
-        // Reserve space and copy the string to our place //
-        ReceivedClipboardData.resize(receiveditems);
-
-        // The receiveditems might not be in bytes if other receivedformats than 8 are accepted...
-        memcpy(const_cast<char*>(ReceivedClipboardData.c_str()), xbuffer, receiveditems);
-
-        // Successfull retrieve is always text //
-        mimeType = "text/plain";
-
+        mimeType = "text/plain";        
         size = ReceivedClipboardData.size();
 
         // Set the CEGUI data pointer to our string
         buffer = const_cast<char*>(ReceivedClipboardData.c_str());
-
-        Logger::Get()->Info("Succesfully retrieved text from clipboard, text is of length: "+
-            Convert::ToString(ReceivedClipboardData.size()));
-
-finishprocessingthing:
-        
-        // The buffer needs to be always released //
-        if(xbuffer)
-            XFree(xbuffer);
-
-        // The message loop has to start again after all the Xlib calls //
-        StartXMessageLoop(lockit);
 	}
     
-
-#else
-
-	// Nothing //
-	virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size){
-
-        
-
-        
-	}
-
-	virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size){
-	
-	}
-
-#endif // WIN32
-
-
 private:
-
-    // Common data //
-#ifdef _WIN32
-    Leviathan::Window* HWNDSource;
-#endif
-
-	//! The owned buffer, which has to be deleted by this
-	char* OurOwnedBuffer;
-
-#ifdef __linux
-private:
-    // Linux specific parts //
-
-    //! The message loop for the Xlib thread
-    void RunXMessageLoop(){
-
-        XEvent event;
-
-        while(RunMessageProcessing){
-
-            XNextEvent(XDisplay, &event);
-
-            switch(event.type){
-                case VisibilityNotify:
-                {
-                    if(event.xvisibility.state != VisibilityFullyObscured)
-                        Logger::Get()->Warning("GuiClipboardHandler: clipboard window shoulnd't "
-                            "become visible");
-                }
-                break;
-                case PropertyNotify:
-                {
-                    // Ignore removed properties //
-                    if(event.xproperty.state == PropertyDelete){
-
-                        break;
-                    }
-
-                    // Might want to get this somewhere else
-                    Atom pasteresponse = XInternAtom(XDisplay, "CUT_BUFFER1", false);
-                    
-                    // Check what changed //
-                    if(event.xproperty.atom == XA_STRING){
-
-                        // This is the stop message //
-                        Logger::Get()->Info("Received the stop property");
-
-                        
-                    } else if(event.xproperty.atom == pasteresponse){
-                        
-                        Logger::Get()->Info("Received clipboard request's property");
-                            
-                        // We received the clipboard contents //
-                        {
-                            Lock lock(ClipboardRetrieveMutex);
-
-                            ClipboardRequestSucceeded = true;
-                            WaitingClipboard = false;
-                        }
-
-                        WaitForClipboard.notify_all();
-                    }
-
-                }
-                break;
-                case SelectionRequest:
-                {
-                    // Prepare a response for the requester //
-                    XEvent response;
-                    GUARD_LOCK();
-
-                    // Ignore if we got nothing //
-                    if(OurOwnedBuffer){
-                    
-                        if((event.xselectionrequest.target == XA_STRING ||
-                                (event.xselectionrequest.target == XA_UTF8_STRING(XDisplay)))
-                            &&
-                                event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay))
-                        {
-
-                            if(response.xselection.property == None){
-
-                                Logger::Get()->Warning("Clipboard request property is None, "
-                                    "and we decided that CUT_BUFFER1 is a good choice");
-
-                                // Let's just use this property //
-                                response.xselection.property = XInternAtom(XDisplay,
-                                    "CUT_BUFFER1", false);
-                            }
-
-                            Logger::Get()->Info("Sending clipboard text to requester");
-                            
-                            // Send the text to the requester //
-                            XChangeProperty(XDisplay, event.xselectionrequest.requestor,
-                                event.xselectionrequest.property,
-                                XA_STRING, 8, PropModeReplace,
-                                reinterpret_cast<unsigned char*>(OurOwnedBuffer),
-                                static_cast<int>(strlen(OurOwnedBuffer)));
-                        
-                            response.xselection.property = event.xselectionrequest.property;
-                        
-                        } else if(event.xselectionrequest.target == XA_TARGETS(XDisplay)
-                            && event.xselectionrequest.selection == XA_CLIPBOARD(XDisplay)
-                            && OurOwnedBuffer)
-                        {
-                            Logger::Get()->Info("Sending supported formats to clipboard "
-                                "requester");
-                            
-                            // We need to tell the requester what types are supported
-                            Atom supported[] = {XA_UTF8_STRING(XDisplay), XA_STRING};
-                        
-                            XChangeProperty(XDisplay, event.xselectionrequest.requestor,
-                                event.xselectionrequest.property,
-                                XA_TARGETS(XDisplay), 32, PropModeReplace,
-                                reinterpret_cast<unsigned char*>(&supported),
-                                sizeof(supported)/sizeof(supported[0]));
-                        
-                        } else {
-
-                            Logger::Get()->Info("Don't know how to respond to clipboard request");
-                            response.xselection.property = None;
-                        }
-                    } else {
-
-                        response.xselection.property = None;
-                        Logger::Get()->Info("Clipboard is empty...");
-                    }
-                    
-                    response.xselection.type = SelectionNotify;
-                    response.xselection.display = event.xselectionrequest.display;
-                    response.xselection.requestor = event.xselectionrequest.requestor;
-                    response.xselection.selection = event.xselectionrequest.selection;
-                    response.xselection.target = event.xselectionrequest.target;
-                    response.xselection.time = event.xselectionrequest.time;
-                    
-                    XSendEvent(XDisplay, event.xselectionrequest.requestor, 0, 0, &response);
-                    XFlush(XDisplay);
-                }
-                break;
-                case SelectionClear:
-                {
-                    // We no longer hold the clipboard //
-                    Logger::Get()->Info("We now no longer own the clipboard");
-                    SAFE_DELETE(OurOwnedBuffer);
-
-                }
-                break;
-                case SelectionNotify:
-                {
-                    Lock lock(ClipboardRetrieveMutex);
-                    
-                    // We received something from the selection owner //
-                    if(event.xselection.property == None){
-
-                        Logger::Get()->Info("Nothing to paste, clipboard empty");
-                        ClipboardRequestSucceeded = false;
-                        WaitingClipboard = false;
-                        WaitForClipboard.notify_all();
-                        break;
-                    }
-
-                    // No reason that it would have failed... //
-                    ClipboardRequestSucceeded = true;
-                    WaitForClipboard.notify_all();
-                }
-                break;
-
-
-            }
-        }
-
-    }
-
-
-    //! Sets up the clipboard window for usage
-    void SetupClipboardWindow(){
-
-        GUARD_LOCK();
-        
-        // First get the default display //
-        XDisplay = XOpenDisplay(NULL);
-
-        if(!XDisplay)
-            throw InvalidState("cannot open XDisplay");
-
-        // Setup the window attributes //
-        XSetWindowAttributes properties;
-
-        properties.event_mask = VisibilityChangeMask | PropertyChangeMask;
-
-        
-        // Then we create the window //
-        ClipboardWindow = XCreateWindow(XDisplay, DefaultRootWindow(XDisplay), 0, 0, 1, 1, 0,
-            CopyFromParent, InputOutput, CopyFromParent,
-            CWEventMask, &properties);
-
-        if(!ClipboardWindow)
-            throw InvalidState("cannot create clipboard window");
-
-
-        // Hide the window //
-        XEvent xev;
-        Atom wm_state = XInternAtom(XDisplay, "_NET_WM_STATE", false);
-        Atom statehidden = XInternAtom(XDisplay, "_NET_WM_STATE_HIDDEN", false);
-        Atom skiptaskbar = XInternAtom(XDisplay, "_NET_WM_STATE_SKIP_TASKBAR", false);
-        Atom nopager = XInternAtom(XDisplay, "_NET_WM_STATE_SKIP_PAGER", false);
-
-        Atom addstate = XInternAtom(XDisplay, "_NET_WM_STATE_ADD", false);
-
-        memset(&xev, 0, sizeof(xev));
-        xev.type = ClientMessage;
-        xev.xclient.window = ClipboardWindow;
-        xev.xclient.message_type = wm_state;
-        xev.xclient.format = 32;
-        xev.xclient.data.l[0] = addstate;
-        xev.xclient.data.l[1] = statehidden;
-        xev.xclient.data.l[2] = skiptaskbar;
-
-        XSendEvent(XDisplay, DefaultRootWindow(XDisplay), false, SubstructureNotifyMask, &xev);
-
-        // We need to set more properties... //
-        memset(&xev, 0, sizeof(xev));
-        xev.type = ClientMessage;
-        xev.xclient.window = ClipboardWindow;
-        xev.xclient.message_type = wm_state;
-        xev.xclient.format = 32;
-        xev.xclient.data.l[0] = addstate;
-        xev.xclient.data.l[1] = nopager;
-
-        
-        XSendEvent(XDisplay, DefaultRootWindow(XDisplay), false, SubstructureNotifyMask, &xev);
-        
-        // The loop should run //
-        StartXMessageLoop(guard);
-    }
-
-    //! Cleans up the window
-    void CleanUpWindow(Lock &guard){
-        
-        // First stop the message loop //
-        StopXMessageLoop(guard);
-        
-        Logger::Get()->Info("GUI clipboard is ready to be destroyed");
-
-        // Now the window is ready for closing //
-        XDestroyWindow(XDisplay, ClipboardWindow);
-        
-        // And then the connection //
-        XCloseDisplay(XDisplay);
-
-        XDisplay = 0;
-        ClipboardWindow = 0;
-    }
-
-    //! \brief Starts the Xlib message loop for responding to requests
-    //!
-    //! For use after stopping the loop
-    void StartXMessageLoop(Lock &guard){
-
-        RunMessageProcessing = true;
-        
-        XMessageThread = std::thread(&GuiClipboardHandler::RunXMessageLoop, this);
-    }
-
-    //! \brief Stops the message processing
-    void StopXMessageLoop(Lock &guard){
-
-        // First signal the loop to stop //
-        RunMessageProcessing = false;
-
-        // Then send an event for it to process... //
-        unsigned char stopproperty[] = "stop";
-
-        XChangeProperty(XDisplay, ClipboardWindow, XA_STRING, XA_STRING, 8,
-            PropModeReplace, stopproperty, 5);
-
-        XFlush(XDisplay);
-
-        // Then wait for the message loop to end //
-        XMessageThread.join();
-    }
     
-    // These are used for clipboard access //
-
-
-    //! Holds the received text from the clipboard
     std::string ReceivedClipboardData;
-
-    //! The current XDisplay
-    Display* XDisplay;
-
-    //! Our hidden clipboard window
-    ::Window ClipboardWindow;
-        
-    std::thread XMessageThread;
-
-    //! Denotes whether the window loop should run
-    bool RunMessageProcessing;
-
-    //! This is waited for while the clipboard is accessed
-    std::condition_variable_any WaitForClipboard;
-
-    //! Set to true while waiting for clipboard thread to do something
-    bool WaitingClipboard;
-
-    //! This is a lock for clipboard content retrieve
-    Mutex ClipboardRetrieveMutex;
-
-    //! Denotes whether clipboard grap failed or succeeded
-    bool ClipboardRequestSucceeded;
-        
-#endif
-
-    
-
 };
-
 
 
 using namespace Leviathan;
@@ -683,24 +110,6 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
 	ThisWindow = window;
     MainGuiManager = ismain;
 	
-	// Create the clipboard handler for this window (only one is required,
-    // so only create if this is the main window's gui
-    if(MainGuiManager){
-        
-        try{
-            _GuiClipboardHandler = new GuiClipboardHandler(window->GetWindow());
-            
-        } catch(const Exception &e){
-
-            // Clipboard isn't usable... //
-            Logger::Get()->Warning("GuiManager: failed to create a ClipboardHandler: "
-                "cannot copy or paste text, exception:");
-            e.PrintToLog();
-            
-            _GuiClipboardHandler = NULL;
-        }
-    }
-    
 	// Setup this window's context //
 	GuiContext = &CEGUI::System::getSingleton().createGUIContext(
         ThisWindow->GetCEGUIRenderer()->getDefaultRenderTarget());
@@ -719,12 +128,13 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
 
 
 	// Make the clipboard play nice //
+    // Only one clipboard is needed //
 	if(MainGuiManager == 1){
 
-		// Only one clipboard is needed //
-		if(_GuiClipboardHandler && _GuiClipboardHandler->WorksOnPlatform())
-			CEGUI::System::getSingleton().getClipboard()->setNativeProvider(
-                _GuiClipboardHandler);
+        _GuiClipboardHandler = std::make_unique<GuiClipboardHandler>();
+        
+        CEGUI::System::getSingleton().getClipboard()->setNativeProvider(
+            _GuiClipboardHandler.get());
 	}
 
 	// Store the initial time //
@@ -782,11 +192,10 @@ void Leviathan::Gui::GuiManager::Release(){
     if(_GuiClipboardHandler && MainGuiManager){
 
         CEGUI::System::getSingleton().getClipboard()->setNativeProvider(NULL);
-        Logger::Get()->Info("GuiManager: main manager has detached the clipboard successfully");
+        Logger::Get()->Info("GuiManager: main manager has detached the "
+            "clipboard successfully");
     }
     
-	SAFE_DELETE(_GuiClipboardHandler);
-
     Logger::Get()->Info("GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //

@@ -673,14 +673,16 @@ DLLEXPORT void Engine::MessagePump(){
 
             case SDL_WINDOWEVENT_RESIZED:
             {
-                LOG_INFO("SDL window resize");
-
                 GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
 
                 if(win){
 
                     int32_t width, height;
                     win->GetWindow()->GetSize(width, height);
+
+                    LOG_INFO("SDL window resize: " + Convert::ToString(width) + "x" +
+                        Convert::ToString(height));
+                    
                     win->OnResize(width, height);
                 }
                 

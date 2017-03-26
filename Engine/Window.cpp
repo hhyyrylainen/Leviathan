@@ -363,7 +363,8 @@ DLLEXPORT void Leviathan::Window::InjectKeyDown(int32_t sdlkey){
 DLLEXPORT void Leviathan::Window::InjectKeyUp(int32_t sdlkey){
     
     // CEGUI doesn't need this as it handles things on key down
-    //inputreceiver->injectKeyUp(SDLKeyToCEGUIKey(sdlkey));
+    // But it actually might so let's pass it
+    inputreceiver->injectKeyUp(SDLKeyToCEGUIKey(sdlkey));
 
     // This should always be passed here //
     OwningWindow->GetInputController()->OnInputGet(sdlkey, SpecialKeyModifiers, false);
@@ -374,22 +375,22 @@ DLLEXPORT void Leviathan::Window::InjectKeyUp(int32_t sdlkey){
 DLLEXPORT CEGUI::MouseButton Leviathan::Window::SDLToCEGUIMouseButton(int sdlbutton){
 
     if(sdlbutton & SDL_BUTTON_LEFT)
-        return CEGUI::LeftButton;
+        return CEGUI::MouseButton::Left;
 
     if(sdlbutton & SDL_BUTTON_RIGHT)
-        return CEGUI::RightButton;
+        return CEGUI::MouseButton::Right;
 
     if(sdlbutton & SDL_BUTTON_MIDDLE)
-        return CEGUI::MiddleButton;
+        return CEGUI::MouseButton::Middle;
 
     if(sdlbutton & SDL_BUTTON_X1)
-        return CEGUI::X1Button;
+        return CEGUI::MouseButton::X1;
 
     if(sdlbutton & SDL_BUTTON_X2)
-        return CEGUI::X2Button;
+        return CEGUI::MouseButton::X2;
 
     LOG_WARNING("SDLToCEGUIMouseButton: unknown sdl button: " + Convert::ToString(sdlbutton));
-    return CEGUI::NoButton;
+    return CEGUI::MouseButton::Invalid;
 }
 
 // bool Leviathan::Window::mousePressed(const OIS::MouseEvent &arg, OIS::MouseButtonID id){
@@ -502,7 +503,7 @@ DLLEXPORT int32_t Leviathan::Window::ConvertStringToKeyCode(const string &str){
 
     if(key == SDLK_UNKNOWN){
 
-        LOG_ERROR("Invalid SDL key name: " + std::string(SDL_GetError()));
+        LOG_ERROR("Invalid SDL key name('" + str + "'): " + std::string(SDL_GetError()));
         return key;
     }
 
@@ -528,12 +529,12 @@ CEGUI::Key::Scan SDLKeyToCEGUIKey(int32_t key)
     case SDLK_TAB:          return CEGUI::Key::Scan::Tab;
     case SDLK_RETURN:       return CEGUI::Key::Scan::Return;
     case SDLK_PAUSE:        return CEGUI::Key::Scan::Pause;
-    case SDLK_ESCAPE:       return CEGUI::Key::Scan::Escape;
+    case SDLK_ESCAPE:       return CEGUI::Key::Scan::Esc;
     case SDLK_SPACE:        return CEGUI::Key::Scan::Space;
     case SDLK_COMMA:        return CEGUI::Key::Scan::Comma;
     case SDLK_MINUS:        return CEGUI::Key::Scan::Minus;
     case SDLK_PERIOD:       return CEGUI::Key::Scan::Period;
-    case SDLK_SLASH:        return CEGUI::Key::Scan::Slash;
+    case SDLK_SLASH:        return CEGUI::Key::Scan::ForwardSlash;
     case SDLK_0:            return CEGUI::Key::Scan::Zero;
     case SDLK_1:            return CEGUI::Key::Scan::One;
     case SDLK_2:            return CEGUI::Key::Scan::Two;
@@ -576,17 +577,17 @@ CEGUI::Key::Scan SDLKeyToCEGUIKey(int32_t key)
     case SDLK_x:            return CEGUI::Key::Scan::X;
     case SDLK_y:            return CEGUI::Key::Scan::Y;
     case SDLK_z:            return CEGUI::Key::Scan::Z;
-    case SDLK_DELETE:       return CEGUI::Key::Scan::Delete;
-    case SDLK_KP_0:         return CEGUI::Key::Scan::Numpad0;
-    case SDLK_KP_1:         return CEGUI::Key::Scan::Numpad1;
-    case SDLK_KP_2:         return CEGUI::Key::Scan::Numpad2;
-    case SDLK_KP_3:         return CEGUI::Key::Scan::Numpad3;
-    case SDLK_KP_4:         return CEGUI::Key::Scan::Numpad4;
-    case SDLK_KP_5:         return CEGUI::Key::Scan::Numpad5;
-    case SDLK_KP_6:         return CEGUI::Key::Scan::Numpad6;
-    case SDLK_KP_7:         return CEGUI::Key::Scan::Numpad7;
-    case SDLK_KP_8:         return CEGUI::Key::Scan::Numpad8;
-    case SDLK_KP_9:         return CEGUI::Key::Scan::Numpad9;
+    case SDLK_DELETE:       return CEGUI::Key::Scan::DeleteKey;
+    case SDLK_KP_0:         return CEGUI::Key::Scan::Numpad_0;
+    case SDLK_KP_1:         return CEGUI::Key::Scan::Numpad_1;
+    case SDLK_KP_2:         return CEGUI::Key::Scan::Numpad_2;
+    case SDLK_KP_3:         return CEGUI::Key::Scan::Numpad_3;
+    case SDLK_KP_4:         return CEGUI::Key::Scan::Numpad_4;
+    case SDLK_KP_5:         return CEGUI::Key::Scan::Numpad_5;
+    case SDLK_KP_6:         return CEGUI::Key::Scan::Numpad_6;
+    case SDLK_KP_7:         return CEGUI::Key::Scan::Numpad_7;
+    case SDLK_KP_8:         return CEGUI::Key::Scan::Numpad_8;
+    case SDLK_KP_9:         return CEGUI::Key::Scan::Numpad_9;
     case SDLK_KP_PERIOD:    return CEGUI::Key::Scan::Decimal;
     case SDLK_KP_DIVIDE:    return CEGUI::Key::Scan::Divide;
     case SDLK_KP_MULTIPLY:  return CEGUI::Key::Scan::Multiply;

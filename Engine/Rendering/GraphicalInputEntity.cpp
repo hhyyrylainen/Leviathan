@@ -244,7 +244,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
     StopAutoClearing();
 
     // GUI is very picky about delete order
-	SAFE_RELEASEDEL(WindowsGui);
+    SAFE_RELEASEDEL(WindowsGui);
 
     // Report that the window is now closed //
     Logger::Get()->Info("Window: closing window("+
@@ -254,7 +254,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
     OWindow->destroy();
     SAFE_DELETE(DisplayWindow);
     
-	TertiaryReceiver.reset();
+    TertiaryReceiver.reset();
 
     int windowsafter = 0;
 
@@ -293,26 +293,26 @@ bool Leviathan::GraphicalInputEntity::AutoClearResourcesCreated = false;
 Mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
-	// release world and object references //
-	LinkedWorld.reset();
-	LinkedCamera.reset();
+    // release world and object references //
+    LinkedWorld.reset();
+    LinkedCamera.reset();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
-	GUARD_LOCK();
-	if(LinkedWorld)
-		LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
+    GUARD_LOCK();
+    if(LinkedWorld)
+        LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
 
-	// update input before each frame //
-	WindowsGui->Render();
+    // update input before each frame //
+    WindowsGui->Render();
 
-	// update window //
-	Ogre::RenderWindow* tmpwindow = GetOgreWindow();
+    // update window //
+    Ogre::RenderWindow* tmpwindow = GetOgreWindow();
 
-	// finish rendering the window //
-	tmpwindow->swapBuffers();
+    // finish rendering the window //
+    tmpwindow->swapBuffers();
 
-	return true;
+    return true;
 }
 // ------------------------------------ //
 DLLEXPORT bool GraphicalInputEntity::GetVsync() const{
@@ -380,18 +380,18 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string &sk
 
     AutoClearResources = std::make_unique<GEntityAutoClearResources>(ogre);
     
-	// create scene manager //
+    // create scene manager //
     AutoClearResources->WorldsScene = ogre->createSceneManager(Ogre::ST_GENERIC, 1,
         Ogre::INSTANCING_CULLING_SINGLETHREAD,
         "GraphicalInputEntity_clear_scene_"+Convert::ToString(WindowNumber));
 
-	// create camera //
-	AutoClearResources->WorldSceneCamera =
+    // create camera //
+    AutoClearResources->WorldSceneCamera =
         AutoClearResources->WorldsScene->createCamera("Cam");
 
-	// Create the workspace for this scene //
-	// Which will be rendered before the overlay workspace //
-	AutoClearResources->WorldWorkspace =
+    // Create the workspace for this scene //
+    // Which will be rendered before the overlay workspace //
+    AutoClearResources->WorldWorkspace =
         ogre->getCompositorManager2()->addWorkspace(AutoClearResources->WorldsScene,
         GetOgreWindow(), AutoClearResources->WorldSceneCamera,
             CLEAR_WORKSPACE_NAME, true, 0);
@@ -404,11 +404,11 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string &sk
         
         AutoClearResources->WorldsScene->setSkyBox(true, skyboxmaterial);
         
-	} catch(const Ogre::InvalidParametersException &e){
+    } catch(const Ogre::InvalidParametersException &e){
 
-		Logger::Get()->Error("GraphicalInputEntity: setting auto clear skybox " +
+        Logger::Get()->Error("GraphicalInputEntity: setting auto clear skybox " +
             e.getFullDescription());
-	}
+    }
 
 }
 
@@ -420,20 +420,20 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing(){
 DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera,
     std::shared_ptr<GameWorld> world)
 {
-	LinkedCamera = camera;
-	LinkedWorld = world;
+    LinkedCamera = camera;
+    LinkedWorld = world;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(shared_ptr<InputController> controller){
 
-	GUARD_LOCK();
-	
-	TertiaryReceiver = controller;
+    GUARD_LOCK();
+    
+    TertiaryReceiver = controller;
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetWindowNumber() const{
 
-	return WindowNumber;
+    return WindowNumber;
 }
 // ------------------------------------ //
 #define COMMON_INPUT_START     if(!InputStarted){           \
@@ -500,18 +500,22 @@ DLLEXPORT void GraphicalInputEntity::InputEnd(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string &filename){
-	// uses render target's capability to save it's contents //
-	GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
+    // uses render target's capability to save it's contents //
+    GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
-	// pass to GUI //
+    // pass to GUI //
     WindowsGui->GuiTick(mspassed);
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
 
-	// send to GUI //
+    // Notify Ogre //
+    GetOgreWindow()->resize(width, height);
+    GetOgreWindow()->windowMovedOrResized();
+
+    // send to GUI //
 	WindowsGui->OnResize();
 }
 

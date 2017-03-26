@@ -26,8 +26,6 @@
 // ------------------------------------ //
 
 // ------------------ GuiClipboardHandler ------------------ //
-//! \brief Platform dependent clipboard handler
-//! \todo Add support for linux
 class Leviathan::Gui::GuiClipboardHandler :
     public CEGUI::NativeClipboardProvider, public ThreadSafe{
 public:

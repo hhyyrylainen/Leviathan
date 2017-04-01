@@ -5,35 +5,13 @@
 #include "PartialEngine.h"
 #include "../DummyLog.h"
 
+#include "NetworkTestHelpers.h"
+
 #include "catch.hpp"
 
-using namespace std;
 using namespace Leviathan;
 
-class TestClientInterface : public NetworkClientInterface {
-public:
-    
-    virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
-        Connection &connection, bool &dontmarkasreceived) override 
-    {
-    }
 
-protected:
-    virtual void _OnStartApplicationConnect() override {
-    }
-
-};
-
-class TestServerInterface : public NetworkServerInterface {
-public:
-
-    TestServerInterface() : NetworkServerInterface(1, "TestServer"){ }
-    
-    virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
-        Connection &connection, bool &dontmarkasreceived) override 
-    {
-    }
-};
 
 TEST_CASE("Ack field filling", "networking") {
 

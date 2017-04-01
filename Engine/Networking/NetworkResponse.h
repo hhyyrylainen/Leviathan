@@ -1,7 +1,6 @@
 // Leviathan Game Engine
 // Copyright (c) 2012-2016 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/SFMLPackets.h"
@@ -16,7 +15,7 @@
 
 namespace Leviathan{
 
-//! Defines the type of response that the packet contains
+//! \brief Defines the type of response that the packet contains
 enum class NETWORK_RESPONSE_TYPE : uint16_t {
 
     //! Sent in response to a NETWORK_REQUEST_TYPE::Connect
@@ -172,6 +171,7 @@ protected:
     //! \brief Base classes serialize their data
     DLLEXPORT virtual void _SerializeCustom(sf::Packet &packet) const = 0;
 
+    //! \brief Type of response. Specifies which subclass this object is
     const NETWORK_RESPONSE_TYPE Type;
 
     const uint32_t ResponseID = 0;

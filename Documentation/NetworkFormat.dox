@@ -1,0 +1,61 @@
+/*! \page networkformat Format of Leviathan packets
+
+    Main packet format
+    ==================
+
+    This is the format of the packets that are received from the UDP
+    socket and unpacked into objects.
+
+    <table>
+    <caption id="main_packet_table">Packet Format</caption>
+    <tr><th>Type <th>PKT_ID <th>Start Ack <th>[Ack count] <th>[Packed acks] <th>Message count
+    <tr><td>uint16_t <td>uint32_t <td>uint32_t <td>uint8_t <td>uint8_t * `Ack count` <td>uint8_t
+    <tr><td>Defines packet type \ref packet_type_values
+    <td>ID number of packet. First is 1. 0 is invalid
+    <td>The PKT_ID of the first ack. Or 0 if no acks.
+    If there are no acks the next 2 fields are missing.
+    <td>The number of bytes (uint8_t's) that are in `Packed acks`.
+    <td>Packed acks where each set bit specifies that `Start ack + index inside acks + 1`
+    PKT_ID has been received by the sender of this packet.
+    <td>Number of messages that follow. 0 means that there is no more data.
+    </table>
+
+    \section packet_message Message format
+
+    After the main packet format there is a specified number of
+    messages (`Message count`). Messages can be in one of these valid formats:
+
+    <table>
+    <caption id="message_response_packet_table">Normal Response Message Format</caption>
+    <tr><th>Type <th>ResponseType <th>Response to <th>Data 
+    <tr><td>uint8_t <td>uint32_t <td>uint32_t <td>variable size
+    <tr><td>0x12 <td>Type of response from \ref Leviathan::NETWORK_RESPONSE_TYPE
+    <td>RequestNumber or 0 if not in response to anything
+    <td>Data that the Leviathan::NetworkResponse class will handle
+    </table>
+
+    \n
+
+    <table>
+    <caption id="message_request_packet_table">Normal Request Message Format</caption>
+    <tr><th>Type <th>RequestType <th>RequestNumber <th>Data 
+    <tr><td>uint8_t <td>uint32_t <td>uint32_t <td>variable size
+    <tr><td>0x28 <td>Type of request from \ref Leviathan::NETWORK_REQUEST_TYPE
+    <td>Sequence number of this request. First is 1. May NOT be 0
+    <td>Data that the Leviathan::NetworkRequest class will handle
+    </table>
+
+    \see Leviathan::NetworkResponse Leviathan::NetworkRequest
+
+    \section packet_type_values Packet types
+    <table>
+    <caption id="packet_type_values_table">Packet Types</caption>
+    <tr><th>Type / Description <th>HEX Code
+    <tr><td>Normal packet. Follows the rules in the packet format <td>0x4C6E (Ln)
+    </table>
+
+    New types for encrypted packets may be added later. Some message
+    types (like login) will probably force the type to be encrypted.
+
+
+*/

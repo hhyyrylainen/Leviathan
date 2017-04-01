@@ -6,6 +6,18 @@
     \see Leviathan::ThreadSafeGeneric
     - Some static methods that have their own internal mutexes
 
+    \section locking_invoking Invoking 
+
+    If you want to call a function or a method that is not
+    thread safe you must invoke the method. Invoking works by calling
+    Leviathan::Engine::Invoke with a lambda to be ran once the main
+    loop checks for ticking again.
+
+    The recommended way to use this is to run expensive calculations
+    in small pieces or in a QueuedTask and then invoke with the result
+    and apply it in the invoke callback which can access all
+    resources.
+
     \section locking_deadlocking Deadlocking
 
     Once an object is locked the lock needs to be passed to all other method calls that

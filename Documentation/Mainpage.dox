@@ -10,6 +10,8 @@
 
     \ref object_locking How Leviathan handless thread-safety
 
+    \ref networkformat Leviathan packet format
+
     \section references_list References
 
     \ref angelscript_main AngelScript scripting reference

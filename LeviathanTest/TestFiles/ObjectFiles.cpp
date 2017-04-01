@@ -9,8 +9,9 @@
 #include "../DummyLog.h"
 #include "Logger.h"
 
+#include <regex>
+
 using namespace Leviathan;
-using namespace std;
 
 constexpr auto BasicTestStr = "FirstVariable = 42;\n"
     "Use-Something = true;\n"
@@ -88,7 +89,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
     PartialEngine<false> engine;
     
     // First test the minimal file //
-    string minfile = "Data/Scripts/tests/SimpleTest.levof";
+    std::string minfile = "Data/Scripts/tests/SimpleTest.levof";
 
     // Try to parse it //
     auto ofile = ObjectFileProcessor::ProcessObjectFile(minfile, &reporter);
@@ -100,7 +101,7 @@ TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
     // Validate the output //
     CHECK(HeaderVars.GetVariableCount() == 4);
 
-    string TestFile = "Data/Scripts/tests/TestObjectFile.levof";
+    std::string TestFile = "Data/Scripts/tests/TestObjectFile.levof";
     
     // Make sure the loading is correct //
     auto rofile = ObjectFileProcessor::ProcessObjectFile(TestFile, &reporter);
@@ -269,7 +270,7 @@ TEST_CASE("Object file saving", "[objectfile]") {
         REQUIRE(vars);
         CHECK(vars->GetVariableCount() == 2);
 
-        string testvalue;
+        std::string testvalue;
 
         REQUIRE(vars->GetValueAndConvertTo("Var2", testvalue));
         CHECK(testvalue == "things");
@@ -422,21 +423,158 @@ TEST_CASE("Example file segments that cause errors", "[objectfile]") {
 
     SECTION("Last line commented in text block") {
 
+        SECTION("minimum sample"){
+            
+            constexpr auto File = "o \"A\"{\n"
+                "    t plugins {\n"
+                "    First\n"
+                "    //Commented thing causes errors\n"
+                "    }\n"
+                "}";
+            
+            auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+                "text_bl_comment1", &reporter);
+
+            REQUIRE(ofile != nullptr);
+        }
+
+        SECTION("Full sample"){
+            
+            constexpr auto File = "o \"Plugins\"{\n"
+                "    l settings {\n"
+                "    PluginsFolder = \"plugins/\";\n"
+                "    } // End settings\n"
+                "\n"
+                "    t load_plugins {\n"
+                "    Plugin_Imgur\n"
+                "    //Commented thing causes errors\n"
+                "    } // End load_plugins\n"
+                "\n"
+                "    } // End Object Plugins";
+            
+            auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
+                "issue_example1", &reporter);
+
+            REQUIRE(ofile != nullptr);
+        }
+    }
+}
+
+//! \brief Matches line numbers for ReporterLineNumberChecker
+//!
+//! First capture group is the line number
+static const std::regex LineNumRegex {R"(\S:(\d+)\s*$)"};
+
+class ReporterLineNumberChecker : public LErrorReporter{
+public:
+    
+    virtual void Write(const std::string &text) override{
+    }
+
+    virtual void WriteLine(const std::string &text) override{
+    }
+
+    virtual void Info(const std::string &text) override{
+            
+        INFO(text);
+    }
+
+    virtual void Warning(const std::string &text) override{
+            
+        INFO(text);
+        
+        if(AlsoWarnings)
+            GetLine(text);
+    }
+
+    virtual void Error(const std::string &text) override{
+            
+        INFO(text);
+        GetLine(text);
+    }
+
+    virtual void Fatal(const std::string &text) override{
+            
+        INFO(text);
+    }
+
+    //! Captures error line number and saves it in ErrorLines
+    void GetLine(const std::string &text){
+
+        std::smatch lineMatch;
+
+        if(std::regex_search(text, lineMatch, LineNumRegex)){
+
+            if(lineMatch.size() == 2){
+
+                ErrorLines.push_back(Convert::StringTo<int>(lineMatch[1]));
+            }
+        }
+    }
+
+    bool AlsoWarnings {false};
+
+    //! \see GetLine
+    std::vector<int> ErrorLines;
+};
+
+TEST_CASE("ReporterLineNumberChecker test"){
+
+    SECTION("Can read 'missing the closing '}', file: issue:6'"){
+
+        ReporterLineNumberChecker reporter;
+
+        reporter.GetLine("missing the closing '}', file: issue:6");
+
+        REQUIRE(reporter.ErrorLines.size() == 1);
+        CHECK(reporter.ErrorLines[0] == 6);
+    }
+}
+
+TEST_CASE("Objectfile line error numbers are correct", "[objectfile]"){
+
+    ReporterLineNumberChecker reporter;
+
+    SECTION("Inmemory string"){
+
         constexpr auto File = "o \"Plugins\"{\n"
             "    l settings {\n"
             "    PluginsFolder = \"plugins/\";\n"
             "    } // End settings\n"
             "\n"
-            "    t load_plugins {\n"
-            "    Plugin_Imgur\n"
-            "    //Commented thing causes errors\n"
+            "    l load_plugins {\n" // 6th line
+            "    Plugin_Imgur\n" // 7th line
+            "    \n"
             "    } // End load_plugins\n"
             "\n"
             "    } // End Object Plugins";
-
+        
         auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(File,
             "issue_example1", &reporter);
 
-        REQUIRE(ofile != nullptr);
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        // At least 1 error
+        REQUIRE(reporter.ErrorLines.size() > 0);
+
+        CHECK(reporter.ErrorLines[0] == 7);
+    }
+
+
+
+    SECTION("File ErrorLines.levof"){
+
+        constexpr auto errorTestObj = "Data/Scripts/tests/ErrorLines.levof";
+
+        // Try to parse it //
+        auto ofile = ObjectFileProcessor::ProcessObjectFile(errorTestObj, &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        REQUIRE(reporter.ErrorLines.size() > 0);
+
+        CHECK(reporter.ErrorLines[0] == 9);
     }
 }

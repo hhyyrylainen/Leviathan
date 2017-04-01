@@ -1,0 +1,11 @@
+FileType: LineTest;
+Var = yes;
+
+// Parse test for line number errors
+
+o "Obj1" {
+    list {
+        // Error is on line 9
+        invalid var
+    }
+}

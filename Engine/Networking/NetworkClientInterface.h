@@ -1,5 +1,6 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "TimeIncludes.h"
@@ -9,6 +10,8 @@
 #include <vector>
 
 namespace Leviathan{
+
+class SentRequest;
 
 
 //! \brief Class that encapsulates common networking functionality required by
@@ -141,13 +144,13 @@ protected:
 private:
         
     //! \brief Handles succeeded requests, removes clutter from other places
-    void _ProcessCompletedRequest(Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing,
+    void _ProcessCompletedRequest(Lock &guard, std::shared_ptr<SentRequest> tmpsendthing,
         std::shared_ptr<NetworkResponse> response);
 
     //! \brief Handles failed requests, removes clutter from other places
     //! Only requests that aren't always sent as RECEIVE_GUARANTEE::Critical are handled here.
     //! That's because those will immediately drop the connection if they fail.
-    void _ProcessFailedRequest(Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing, 
+    void _ProcessFailedRequest(Lock &guard, std::shared_ptr<SentRequest> tmpsendthing, 
         std::shared_ptr<NetworkResponse> response);
 
     //! \brief Internally called when server has accepted us
@@ -168,7 +171,7 @@ private:
 protected:
 
     //! This vector holds the made requests to allow using the response to do stuff
-    std::vector<std::shared_ptr<SentNetworkThing>> OurSentRequests;
+    std::vector<std::shared_ptr<SentRequest>> OurSentRequests;
 
     CLIENT_CONNECTION_STATE ConnectState = CLIENT_CONNECTION_STATE::None;
     std::shared_ptr<Connection> ServerConnection;

@@ -47,8 +47,9 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
         }
     }
 
-    for(auto iter = RemoteConsoleConnections.begin(); iter != RemoteConsoleConnections.end(); ){
-        if((*iter)->TerminateSession && !(*iter)->GetConnection()->IsOpen()){
+    for(auto iter = RemoteConsoleConnections.begin(); iter != RemoteConsoleConnections.end(); )
+    {
+        if((*iter)->TerminateSession && !(*iter)->GetConnection()->IsValidForSend()){
 
             Logger::Get()->Info("RemoteConsole: removing kill-queued session, token: "+
                 Convert::ToString((*iter)->SessionToken));
@@ -64,12 +65,14 @@ DLLEXPORT bool Leviathan::RemoteConsole::IsAwaitingConnections(){
     return AwaitingConnections.size() != 0;
 }
 
-DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken, const std::string &assignname /*= L""*/,
-    bool onlylocalhost /*= false*/, const MillisecondDuration &timeout /*= boost::chrono::seconds(30)*/)
+DLLEXPORT void Leviathan::RemoteConsole::ExpectNewConnection(int SessionToken,
+    const std::string &assignname /*= ""*/, bool onlylocalhost /*= false*/,
+    const MillisecondDuration &timeout /*= std::chrono::seconds(30)*/)
 {
     GUARD_LOCK();
 
-    AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(new RemoteConsoleExpect(assignname, SessionToken,
+    AwaitingConnections.push_back(shared_ptr<RemoteConsoleExpect>(
+            new RemoteConsoleExpect(assignname, SessionToken,
                 onlylocalhost, timeout)));
 }
 // ------------------------------------ //
@@ -107,10 +110,9 @@ DLLEXPORT bool Leviathan::RemoteConsole::CanOpenNewConnection(
                         connection, AwaitingConnections[i]->SessionToken));
 
                     // Open new, send succeed packet back //
-                    ResponseNone response(NETWORK_RESPONSE_TYPE::RemoteConsoleOpened,
-                        request->GetIDForResponse());
-
-                    connection->SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
+                    connection->SendPacketToConnection(std::make_shared<ResponseNone>(
+                            NETWORK_RESPONSE_TYPE::RemoteConsoleOpened,
+                            request->GetIDForResponse()), RECEIVE_GUARANTEE::Critical);
 
                     AwaitingConnections.erase(AwaitingConnections.begin() + i);
                     return true;
@@ -135,9 +137,8 @@ DLLEXPORT void Leviathan::RemoteConsole::OfferConnectionTo(
                 connectiontouse->IsTargetHostLocalhost(), std::chrono::seconds(15))));
 
     // Send a request that the target connects to us //
-    RequestDoRemoteConsoleOpen request(token);
-
-    connectiontouse->SendPacketToConnection(request, RECEIVE_GUARANTEE::Critical);
+    connectiontouse->SendPacketToConnection(std::make_shared<RequestDoRemoteConsoleOpen>(
+            token), RECEIVE_GUARANTEE::Critical);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(
@@ -163,10 +164,9 @@ DLLEXPORT void Leviathan::RemoteConsole::HandleRemoteConsoleRequestPacket(
             GetRemoteConsoleSessionForConnection(guard, *connection)->KillConnection();
             Logger::Get()->Info("RemoteConsole: closing connection due to close request");
 
-            ResponseNone response(NETWORK_RESPONSE_TYPE::RemoteConsoleClosed,
-                request->GetIDForResponse());
-
-            connection->SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
+            connection->SendPacketToConnection(std::make_shared<ResponseNone>(
+                    NETWORK_RESPONSE_TYPE::RemoteConsoleClosed,
+                    request->GetIDForResponse()), RECEIVE_GUARANTEE::Critical);
             return;
         }
     default:
@@ -248,11 +248,10 @@ Leviathan::RemoteConsole::RemoteConsoleExpect::RemoteConsoleExpect(const std::st
 // ------------------ RemoteConsoleSession ------------------ //
 Leviathan::RemoteConsoleSession::~RemoteConsoleSession(){
     // Send close request //
-    if(CorrespondingConnection->IsOpen()){
+    if(CorrespondingConnection->IsValidForSend()){
 
-        RequestEcho tmprequest(NETWORK_REQUEST_TYPE::CloseRemoteConsole);
-
-        CorrespondingConnection->SendPacketToConnection(tmprequest, 
+        CorrespondingConnection->SendPacketToConnection(std::make_shared<RequestNone>(
+                NETWORK_REQUEST_TYPE::CloseRemoteConsole), 
             RECEIVE_GUARANTEE::Critical);
     }
 }

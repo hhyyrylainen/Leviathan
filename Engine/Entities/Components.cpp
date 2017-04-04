@@ -5,6 +5,7 @@
 
 #include "GameWorld.h"
 #include "Networking/Connection.h"
+#include "Networking/SentNetworkThing.h"
 
 #include "OgreSceneManager.h"
 #include "OgreBillboardChain.h"

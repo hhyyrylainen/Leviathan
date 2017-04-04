@@ -110,6 +110,7 @@ else()
   
   set(GroupNetworking
     "Networking/Connection.cpp" "Networking/Connection.h"
+    "Networking/SentNetworkThing.cpp" "Networking/SentNetworkThing.h"
     "Networking/GameSpecificPacketHandler.cpp" "Networking/GameSpecificPacketHandler.h"
     "Networking/MasterServer.cpp" "Networking/MasterServer.h"
     "Networking/NetworkCache.cpp" "Networking/NetworkCache.h"

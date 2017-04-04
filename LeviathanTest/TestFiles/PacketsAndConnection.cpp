@@ -19,7 +19,7 @@ TEST_CASE("Ack field filling", "networking") {
 
         SECTION("Single Byte") {
 
-            ReceivedPacketField packetsreceived;
+            NetworkAckField::PacketReceiveStatus packetsreceived;
             packetsreceived[1] = RECEIVED_STATE::StateReceived;
             packetsreceived[2] = RECEIVED_STATE::StateReceived;
             packetsreceived[3] = RECEIVED_STATE::StateReceived;
@@ -43,7 +43,7 @@ TEST_CASE("Ack field filling", "networking") {
 
         SECTION("Multiple Bytes") {
 
-            ReceivedPacketField packetsreceived;
+            NetworkAckField::PacketReceiveStatus packetsreceived;
             packetsreceived[1] = RECEIVED_STATE::StateReceived;
             packetsreceived[2] = RECEIVED_STATE::StateReceived;
             packetsreceived[3] = RECEIVED_STATE::StateReceived;
@@ -77,7 +77,7 @@ TEST_CASE("Ack field filling", "networking") {
 
     SECTION("Empty field to packet has no length value") {
 
-        ReceivedPacketField first;
+        NetworkAckField::PacketReceiveStatus first;
         first[1] = RECEIVED_STATE::NotReceived;
 
         NetworkAckField tosend(1, 32, first);
@@ -104,7 +104,7 @@ TEST_CASE("Ack field filling", "networking") {
     SECTION("Direct manipulation") {
 
 
-        ReceivedPacketField first;
+        NetworkAckField::PacketReceiveStatus first;
         first[1] = RECEIVED_STATE::StateReceived;
         first[2] = RECEIVED_STATE::StateReceived;
         first[3] = RECEIVED_STATE::StateReceived;
@@ -325,8 +325,8 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
     CHECK(ClientConnection->GetState() != CONNECTION_STATE::NothingReceived);
     CHECK(ServerConnection->GetState() != CONNECTION_STATE::NothingReceived);
 
-    CHECK(ClientConnection->IsOpen());
-    CHECK(ServerConnection->IsOpen());
+    CHECK(ClientConnection->IsValidForSend());
+    CHECK(ServerConnection->IsValidForSend());
 
     // Should have been enough time to move to CONNECTION_STATE::Authenticated
     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);

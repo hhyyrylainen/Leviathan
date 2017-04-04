@@ -138,7 +138,8 @@ public:
     NetworkResponse(NETWORK_RESPONSE_TYPE type, uint32_t responseid) :
         Type(type), ResponseID(responseid)
     {
-        
+        LEVIATHAN_ASSERT(responseid != static_cast<uint32_t>(-1),
+            "Response should use 0 if in response to anything");
     }
     
     virtual ~NetworkResponse(){};

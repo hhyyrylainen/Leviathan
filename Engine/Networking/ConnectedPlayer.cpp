@@ -23,7 +23,7 @@ DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(Connection* checkco
 }
 // ------------------------------------ //
 DLLEXPORT bool ConnectedPlayer::IsConnectionClosed() const{
-	return CorrespondingConnection ? !CorrespondingConnection->IsOpen() : true;
+	return CorrespondingConnection ? !CorrespondingConnection->IsValidForSend() : true;
 }
 // ------------------------------------ //
 DLLEXPORT void ConnectedPlayer::OnKicked(const std::string &reason){

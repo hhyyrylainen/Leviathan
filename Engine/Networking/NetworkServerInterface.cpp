@@ -43,7 +43,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleRequestPacket(
 {
     LEVIATHAN_ASSERT(request, "request is null");
 
-    if (_HandleDefaultRequest(request, connection))
+    if(_HandleDefaultRequest(request, connection))
         return;
 
     switch (request->GetType()) {
@@ -53,14 +53,12 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleRequestPacket(
         auto ply = GetPlayerForConnection(connection);
 
         // Drop it if no matching players //
-        if (!ply)
+        if(!ply)
             return;
 
         // Send a response to the sender //
-        ResponseNone response(NETWORK_RESPONSE_TYPE::None);
-
-        connection.SendPacketToConnection(response,
-            RECEIVE_GUARANTEE::Critical);
+        connection.SendPacketToConnection(std::make_shared<ResponseNone>(
+                NETWORK_RESPONSE_TYPE::None), RECEIVE_GUARANTEE::Critical);
 
         // Extract the command //
         auto* data = static_cast<RequestRequestCommandExecution*>(request.get());
@@ -91,7 +89,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleRequestPacket(
         break;
     }
 
-    if (_CustomHandleRequestPacket(request, connection))
+    if(_CustomHandleRequestPacket(request, connection))
         return;
 
     LOG_ERROR("NetworkServerInterface: failed to handle request of type: " +
@@ -104,7 +102,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleResponseOnlyPacket(
 {
     LEVIATHAN_ASSERT(message, "message is null");
 
-    if (_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
+    if(_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
         return;
 
     switch (message->GetType()) {
@@ -113,7 +111,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleResponseOnlyPacket(
         // Notify the matching player object about a heartbeat //
         auto ply = GetPlayerForConnection(connection);
 
-        if (!ply) {
+        if(!ply) {
 
             Logger::Get()->Warning("NetworkServerInterface: received a heartbeat packet "
                 "from a non-existing player");
@@ -131,7 +129,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::HandleResponseOnlyPacket(
         break;
     }
 
-    if (_CustomHandleResponseOnlyPacket(message, connection, dontmarkasreceived))
+    if(_CustomHandleResponseOnlyPacket(message, connection, dontmarkasreceived))
         return;
 
     LOG_ERROR("NetworkServerInterface: failed to handle response of type: " +
@@ -196,7 +194,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::RespondToServerStatusRequest(
         static_cast<int32_t>(ActiveBots.size()), ExtraServerFlags);
 
     // Send it //
-    connectiontouse.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+    connectiontouse.SendPacketToConnection(response);
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::SetServerStatus(SERVER_STATUS newstatus){
@@ -219,18 +217,18 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
             "Server is not accepting any players at this time",
             NETWORK_RESPONSE_INVALIDREASON::ServerNotAcceptingPlayers);
 
-        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+        connection.SendPacketToConnection(response);
         return;
     }
 
     // Check is the player already connected //
-    if (GetPlayerForConnection(connection)) {
+    if(GetPlayerForConnection(connection)) {
 
         ResponseServerDisallow response(request->GetIDForResponse(),
             "You are already connected to this server, disconnect first",
             NETWORK_RESPONSE_INVALIDREASON::ServerAlreadyConnectedToYou);
 
-        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+        connection.SendPacketToConnection(response);
         return;
     }
 
@@ -250,19 +248,19 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
                 "Server is at maximum capacity, " + plys + "/" + plys,
                 NETWORK_RESPONSE_INVALIDREASON::ServerFull);
 
-            connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+            connection.SendPacketToConnection(response);
             return;
         }
 
     }
     // Connection security check //
-    if (connection.GetState() != CONNECTION_STATE::Authenticated) {
+    if(connection.GetState() != CONNECTION_STATE::Authenticated) {
 
         ResponseServerDisallow response(request->GetIDForResponse(),
             "Connection state is invalid",
             NETWORK_RESPONSE_INVALIDREASON::Unauthenticated);
 
-        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+        connection.SendPacketToConnection(response);
         return;
     }
 
@@ -278,7 +276,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
             disallowmessage,
             NETWORK_RESPONSE_INVALIDREASON::ServerCustom);
 
-        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+        connection.SendPacketToConnection(response);
         return;
     }
 
@@ -302,7 +300,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::_HandleServerJoinRequest(
         SERVER_ACCEPTED_TYPE::ConnectAccepted, "Allowed, ID: " +
         Convert::ToString(newid));
 
-    connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
+    connection.SendPacketToConnection(response);
 }
 // ------------------ Default callbacks ------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::_OnPlayerConnected(Lock &guard,
@@ -334,7 +332,9 @@ DLLEXPORT void Leviathan::NetworkServerInterface::PlayerPreconnect(Connection &c
 
 }
 
-DLLEXPORT void Leviathan::NetworkServerInterface::RegisterCustomCommandHandlers(CommandHandler* addhere){
+DLLEXPORT void Leviathan::NetworkServerInterface::RegisterCustomCommandHandlers(
+    CommandHandler* addhere)
+{
 
 }
 // ------------------------------------ //
@@ -347,7 +347,7 @@ void Leviathan::NetworkServerInterface::_OnReportCloseConnection(
     for (auto iter = ServerPlayersConnections.begin(); iter != ServerPlayersConnections.end();
         ++iter)
     {
-        if ((*iter) == plyptr->GetConnection()) {
+        if((*iter) == plyptr->GetConnection()) {
 
             ServerPlayersConnections.erase(iter);
             break;
@@ -404,7 +404,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::TickIt(){
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(
-    NetworkResponse &response,
+    const std::shared_ptr<NetworkResponse> &response,
     Connection* skipme, RECEIVE_GUARANTEE guarantee)
 {
     Lock plylock(PlayerListLocked);
@@ -422,7 +422,7 @@ DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllButOnePlayer(
 }
 
 DLLEXPORT void Leviathan::NetworkServerInterface::SendToAllPlayers(
-    NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
+    const std::shared_ptr<NetworkResponse> &response, RECEIVE_GUARANTEE guarantee)
 {
     Lock plylock(PlayerListLocked);
 

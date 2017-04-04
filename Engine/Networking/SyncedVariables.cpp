@@ -8,6 +8,7 @@
 #include "Engine.h"
 #include "Common/BaseNotifiable.h"
 #include "NetworkClientInterface.h"
+#include "Networking/SentNetworkThing.h"
 #include "Threading/ThreadingManager.h"
 using namespace Leviathan;
 using namespace std;
@@ -45,8 +46,75 @@ DLLEXPORT bool Leviathan::SyncedVariables::AddNewVariable(shared_ptr<SyncedValue
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<NetworkRequest> request,
-    Connection* connection)
+struct SyncedVariables::SendDataSyncAllStruct{
+    
+    std::vector<shared_ptr<SentNetworkThing>> SentThings;
+    bool SentAll {false};
+};
+
+void SyncedVariables::_RunSendAllVariablesTask(Connection* connection,
+    SyncedVariables* instance, std::shared_ptr<SendDataSyncAllStruct> data)
+{
+    // Get the loop count //
+    // Fetch our object //
+    std::shared_ptr<QueuedTask> threadspecific =
+        TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
+                        
+    auto tmpptr =
+        dynamic_cast<RepeatCountedDelayedTask*>(
+            threadspecific.get());
+                                
+    LEVIATHAN_ASSERT(tmpptr != NULL,
+        "this is not what I wanted, passed wrong task "
+        "object to task");
+
+    // Get the value //
+    size_t curpos = tmpptr->GetRepeatCount();
+
+    GUARD_LOCK_OTHER(instance);
+
+    if(curpos >= instance->ToSyncValues.size() && curpos >=
+        instance->ConnectedChildren.size())
+    {
+
+        Logger::Get()->Error("SyncedVariables: queued task "
+            "trying to sync variable that is out of vector range");
+        return;
+    }
+
+    // Sync the value //
+    if(curpos < instance->ToSyncValues.size()){
+        const SyncedValue* valtosend =
+            instance->ToSyncValues[curpos].get();
+
+        // Send it //
+        data->SentThings.push_back(
+            instance->_SendValueToSingleReceiver(connection,
+                valtosend));
+    }
+
+    // Sync the resource //
+    if(curpos < instance->ConnectedChildren.size()){
+
+        auto tmpvar = static_cast<SyncedResource*>(
+            instance->ConnectedChildren[curpos]->
+            GetActualPointerToNotifiableObject());
+
+        // Send it //
+        data->SentThings.push_back(
+            instance->_SendValueToSingleReceiver(
+                connection, tmpvar));
+    }
+
+    // Check is this the last one //
+    if(tmpptr->IsThisLastRepeat()){
+        // Set as done //
+        data->SentAll = true;
+    }
+}
+
+DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(
+    shared_ptr<NetworkRequest> request, Connection* connection)
 {
     // Switch on the type and see if we can do something with it //
     switch(request->GetType()){
@@ -54,125 +122,71 @@ DLLEXPORT bool Leviathan::SyncedVariables::HandleSyncRequests(shared_ptr<Network
         {
             // Notify that we accepted this //
             // Send the number of values as the string parameter //
+            connection->SendPacketToConnection(
+                std::make_shared<ResponseServerAllow>(request->GetIDForResponse(), 
+                    SERVER_ACCEPTED_TYPE::RequestQueued, Convert::ToString(
+                        ToSyncValues.size() + ConnectedChildren.size())),
+                RECEIVE_GUARANTEE::Critical);
 
-            ResponseServerAllow response(request->GetIDForResponse(), 
-                SERVER_ACCEPTED_TYPE::RequestQueued, Convert::ToString(ToSyncValues.size() + ConnectedChildren.size()));
-
-            connection->SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
-
-            struct SendDataSyncAllStruct{
-                SendDataSyncAllStruct() : SentAll(false){};
-
-                std::vector<shared_ptr<SentNetworkThing>> SentThings;
-                bool SentAll;
-
-            };
-
-            shared_ptr<SendDataSyncAllStruct> taskdata(new SendDataSyncAllStruct());
+            auto taskdata = std::make_shared<SendDataSyncAllStruct>();
 
             // Prepare a task that sends all of the values //
-            Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(new RepeatCountedDelayedTask(
-                        std::bind<void>([](Connection* connection, SyncedVariables* instance,
-                                std::shared_ptr<SendDataSyncAllStruct> data) -> void 
-                            {
-                                // Get the loop count //
-                                // Fetch our object //
-                                std::shared_ptr<QueuedTask> threadspecific =
-                                    TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
-                
-                                auto tmpptr = dynamic_cast<RepeatCountedDelayedTask*>(threadspecific.get());
-                                assert(tmpptr != NULL && "this is not what I wanted, passed wrong task object to task");
-
-                                // Get the value //
-                                size_t curpos = tmpptr->GetRepeatCount();
-
-                                GUARD_LOCK_OTHER(instance);
-
-                                if(curpos >= instance->ToSyncValues.size() && curpos >=
-                                    instance->ConnectedChildren.size())
-                                {
-
-                                    Logger::Get()->Error("SyncedVariables: queued task trying to sync variable that is out of vector range");
-                                    return;
-                                }
-
-                                // Sync the value //
-                                if(curpos < instance->ToSyncValues.size()){
-                                    const SyncedValue* valtosend = instance->ToSyncValues[curpos].get();
-
-                                    // Send it //
-                                    data->SentThings.push_back(instance->_SendValueToSingleReceiver(connection,
-                                            valtosend));
-                                }
-
-                                // Sync the resource //
-                                if(curpos < instance->ConnectedChildren.size()){
-
-                                    auto tmpvar = static_cast<SyncedResource*>(instance->ConnectedChildren[curpos]->
-                                        GetActualPointerToNotifiableObject());
-
-                                    // Send it //
-                                    data->SentThings.push_back(instance->_SendValueToSingleReceiver(
-                                            connection, tmpvar));
-                                }
-
-                                // Check is this the last one //
-                                if(tmpptr->IsThisLastRepeat()){
-                                    // Set as done //
-                                    data->SentAll = true;
-                                }
-
-
-                            }, connection, this, taskdata), MillisecondDuration(50),
-                        MillisecondDuration(10), (int)max(ToSyncValues.size(), ConnectedChildren.size()))));
-
+            Engine::Get()->GetThreadingManager()->QueueTask(std::make_shared<
+                RepeatCountedDelayedTask>(
+                    [=]() -> void 
+                    {
+                        _RunSendAllVariablesTask(connection, this, taskdata);
+                        
+                        
+                        
+                    }, MillisecondDuration(50),
+                    MillisecondDuration(10), (int)max(ToSyncValues.size(),
+                        ConnectedChildren.size())));
+            
             // Queue a finish checking task //
-            Engine::Get()->GetThreadingManager()->QueueTask(shared_ptr<QueuedTask>(
-                    new RepeatingDelayedTask(std::bind<void>([](Connection* connection,
-                                SyncedVariables* instance,
-                                std::shared_ptr<SendDataSyncAllStruct> data) -> void
-                        {
-                            // Check is it done //
-                            if(!data->SentAll)
-                                return;
+            Engine::Get()->GetThreadingManager()->QueueTask(
+                std::make_shared<RepeatingDelayedTask>(
+                    [=]() -> void {
+                        
+                        // Check is it done //
+                        if(!taskdata->SentAll)
+                            return;
 
                             // See if all have been sent //
-                            for(size_t i = 0; i < data->SentThings.size(); i++){
+                        for(size_t i = 0; i < taskdata->SentThings.size(); i++){
 
-                                if(!data->SentThings[i]->IsFinalized())
+                            if(!taskdata->SentThings[i]->IsFinalized())
                                     return;
+                        }
+
+                        // Stop after this loop //
+                        // Fetch our object //
+                        std::shared_ptr<QueuedTask> threadspecific =
+                            TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
+                        auto tmpptr =
+                            dynamic_cast<RepeatingDelayedTask*>(threadspecific.get());
+
+                        // Disable the repeating //
+                        tmpptr->SetRepeatStatus(false);
+
+                        bool succeeded = true;
+
+                        // Check did some fail //
+                        for(size_t i = 0; i < taskdata->SentThings.size(); i++){
+
+                            if(!taskdata->SentThings[i]->GetStatus()){
+                                // Failed to send it //
+
+                                succeeded = false;
+                                break;
                             }
+                        }
 
-                            // Stop after this loop //
-                            // Fetch our object //
-                            std::shared_ptr<QueuedTask> threadspecific =
-                                TaskThread::GetThreadSpecificThreadObject()->QuickTaskAccess;
-                            auto tmpptr =
-                                dynamic_cast<RepeatingDelayedTask*>(threadspecific.get());
-
-                            // Disable the repeating //
-                            tmpptr->SetRepeatStatus(false);
-
-                            bool succeeded = true;
-
-                            // Check did some fail //
-                            for(size_t i = 0; i < data->SentThings.size(); i++){
-
-                                if(!data->SentThings[i]->GetStatus()){
-                                    // Failed to send it //
-
-                                    succeeded = false;
-                                    break;
-                                }
-                            }
-
-                            ResponseSyncDataEnd tmpresponddata(0, succeeded);
-
-                            connection->SendPacketToConnection(tmpresponddata, 
+                        connection->SendPacketToConnection(
+                                std::make_shared<ResponseSyncDataEnd>(0, succeeded), 
                                 RECEIVE_GUARANTEE::Critical);
 
-                        }, connection, this, taskdata), MillisecondDuration(100),
-                        MillisecondDuration(50))));
+                        }, MillisecondDuration(100), MillisecondDuration(50)));
             
             return true;
         }
@@ -289,7 +303,8 @@ void SyncedVariables::_NotifyUpdatedValue(Lock &guard, const SyncedValue* const 
 {
     // Create an update packet //
 
-    ResponseSyncValData tmpresponse(useid, *valtosync->GetVariableAccess());
+    auto tmpresponse = std::make_shared<ResponseSyncValData>(useid,
+        *valtosync->GetVariableAccess());
 
     const auto& connections = Owner->GetInterface()->GetClientConnections();
 
@@ -313,7 +328,7 @@ void Leviathan::SyncedVariables::_NotifyUpdatedValue(Lock &guard, SyncedResource
 
     valtosync->AddDataToPacket(guard, packet);
 
-    ResponseSyncResourceData tmpresponse(0, 
+    auto tmpresponse = std::make_shared<ResponseSyncResourceData>(0, 
         std::string(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize()));
 
     const auto& connections = Owner->GetInterface()->GetClientConnections();
@@ -330,10 +345,8 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
     Connection* unsafeptr, const SyncedValue* const valtosync)
 {
     // Create an update packet //
-    ResponseSyncValData tmpresponse(0, *valtosync->GetVariableAccess());
-
-    // Send to connection //
-    return unsafeptr->SendPacketToConnection(tmpresponse, RECEIVE_GUARANTEE::Critical);
+    return unsafeptr->SendPacketToConnection(std::make_shared<ResponseSyncValData>(
+            0, *valtosync->GetVariableAccess()), RECEIVE_GUARANTEE::Critical);
 }
 
 shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleReceiver(
@@ -343,11 +356,9 @@ shared_ptr<SentNetworkThing> Leviathan::SyncedVariables::_SendValueToSingleRecei
 
     valtosync->AddDataToPacket(packet);
 
-    ResponseSyncResourceData tmpresponse(0,
-        std::string(reinterpret_cast<const char*>(packet.getData()), packet.getDataSize()));
-
-    // Send to connection //
-    return unsafeptr->SendPacketToConnection(tmpresponse, RECEIVE_GUARANTEE::Critical);
+    return unsafeptr->SendPacketToConnection(std::make_shared<ResponseSyncResourceData>(0,
+            std::string(reinterpret_cast<const char*>(packet.getData()),
+                packet.getDataSize())), RECEIVE_GUARANTEE::Critical);
 }
 // ------------------------------------ //
 void Leviathan::SyncedVariables::_OnSyncedResourceReceived(const std::string &name,

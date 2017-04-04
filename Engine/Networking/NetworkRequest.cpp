@@ -24,7 +24,7 @@ DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Pac
     // Try to create the additional data if required for this type //
     switch(requesttype){
     case NETWORK_REQUEST_TYPE::Echo:
-        return std::make_shared<RequestEcho>(requesttype, packetid, packet);
+        return std::make_shared<RequestNone>(requesttype, packetid, packet);
     case NETWORK_REQUEST_TYPE::Connect:
         return std::make_shared<RequestConnect>(packetid, packet);
     case NETWORK_REQUEST_TYPE::Security:

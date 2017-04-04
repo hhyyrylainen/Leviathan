@@ -150,16 +150,16 @@ class RequestCustom : public NetworkRequest{
 //! \brief Empty request for ones that require no data
 //!
 //! Also used for all other request that don't need any data members
-class RequestEcho : public NetworkRequest {
+class RequestNone : public NetworkRequest {
 public:
-    RequestEcho(NETWORK_REQUEST_TYPE actualtype) :
+    RequestNone(NETWORK_REQUEST_TYPE actualtype) :
         NetworkRequest(actualtype)
     {}
 
     void _SerializeCustom(sf::Packet &packet) const override{
     }
 
-    RequestEcho(NETWORK_REQUEST_TYPE actualtype, uint32_t idforresponse, sf::Packet &packet) :
+    RequestNone(NETWORK_REQUEST_TYPE actualtype, uint32_t idforresponse, sf::Packet &packet) :
         NetworkRequest(actualtype, idforresponse)
     {
     }

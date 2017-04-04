@@ -77,11 +77,12 @@ public:
 
     //! \brief Sends a response packet to all players except for the player(s)
     //! whose connection matches skipme
-    DLLEXPORT void SendToAllButOnePlayer(NetworkResponse &response,
+    DLLEXPORT void SendToAllButOnePlayer(const std::shared_ptr<NetworkResponse> &response,
         Connection* skipme, RECEIVE_GUARANTEE guarantee);
 
     //! \brief Sends a response packet to all of the players
-    DLLEXPORT void SendToAllPlayers(NetworkResponse &response, RECEIVE_GUARANTEE guarantee);
+    DLLEXPORT void SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
+        RECEIVE_GUARANTEE guarantee);
 
     //! \brief Verifies that all current players are receiving world updates
     //! \note Prior to calling this (if your players will move)

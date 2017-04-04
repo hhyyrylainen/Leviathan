@@ -5,6 +5,7 @@
 #include "Networking/Connection.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkRequest.h"
+#include "Networking/SentNetworkThing.h"
 #include "CommonStateObjects.h"
 #include "GameWorld.h"
 using namespace Leviathan;
@@ -34,7 +35,7 @@ DLLEXPORT void HandleNode(ObjectID id, Sendable &obj, GameWorld &world){
         
         // Find the receiver from the world //
         // And fail if not found or the connection is not open
-        if(!world.IsConnectionInWorld(*connection) || !connection->IsOpen()){
+        if(!world.IsConnectionInWorld(*connection) || !connection->IsValidForSend()){
 
             // Connection no longer updated for world //
             iter = obj.UpdateReceivers.erase(iter);
@@ -73,10 +74,10 @@ DLLEXPORT void HandleNode(ObjectID id, Sendable &obj, GameWorld &world){
         }
 
         // Create the final update packet //
-        ResponseEntityUpdate updatemesg(0, world.GetID(), ticknumber, referencetick, id,
-            std::move(updatedata));
-
-        auto sentthing = connection->SendPacketToConnection(updatemesg,
+        auto sentthing = connection->SendPacketToConnection(
+            std::make_shared<ResponseEntityUpdate>(0, world.GetID(), ticknumber,
+                referencetick, id,
+                std::move(updatedata)),
             RECEIVE_GUARANTEE::None);
 
         // Add a callback for success //

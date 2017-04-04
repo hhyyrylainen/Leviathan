@@ -15,6 +15,8 @@
 #include "Engine.h"
 #include "Application/GameConfiguration.h"
 
+#include "SentNetworkThing.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -78,7 +80,7 @@ DLLEXPORT bool Connection::Init(NetworkHandler* owninghandler){
         GUARD_LOCK();
 
         // This might do something //
-        if (!AddressGot) {
+        if(!AddressGot){
             TargetHost = sf::IpAddress(HostName);
         }
     }
@@ -98,8 +100,9 @@ DLLEXPORT bool Connection::Init(NetworkHandler* owninghandler){
     LastSentPacketTime = LastReceivedPacketTime = Time::GetTimeMs64();
 
     // Send hello message //
-    if (!SendPacketToConnection(RequestConnect(), RECEIVE_GUARANTEE::Critical)) {
-
+    if(!SendPacketToConnection(std::make_shared<RequestConnect>(),
+            RECEIVE_GUARANTEE::Critical))
+    {
         LEVIATHAN_ASSERT(0, "Connection Init cannot send packet");
     }
     
@@ -116,181 +119,172 @@ DLLEXPORT void Connection::Release(){
     // This will mark this as closed
     SendCloseConnectionPacket(guard);
 
+
     // Make sure that all our remaining packets fail //
-    auto end = WaitingRequests.end();
-    for (auto iter = WaitingRequests.begin(); iter != end; ++iter) {
+    for(auto& packet : PendingRequests)
+        packet->SetWaitStatus(false);
 
-        // Mark as failed //
-        (*iter)->SetWaitStatus(false);
-    }
+    PendingRequests.clear();
 
+    for(auto& packet : ResponsesNeedingConfirmation)
+        packet->SetWaitStatus(false);
+
+    ResponsesNeedingConfirmation.clear();
+    
     // All are now properly closed //
-    WaitingRequests.clear();
 
     // Destroy some of our stuff //
     TargetHost = sf::IpAddress::None;
 }
 // ------------------------------------ //
-#ifdef LEVIATHAN_DEBUG
-void VerifyTypeHadData(sf::Packet &packet, const NetworkRequest &request) {
-
-    if (packet.getDataSize() > 0)
-        return;
-
-    switch (request.GetType()) {
-    case NETWORK_REQUEST_TYPE::Echo:
-        return;
-    default:
-        break;
-    }
-
-
-    LOG_ERROR("Connection: sending packet that needs data without data, type request: " +
-        Convert::ToString(static_cast<int>(request.GetType())));
-    DEBUG_BREAK;
-}
-
-void VerifyTypeHadData(sf::Packet &packet, const NetworkResponse &response) {
-
-    if (packet.getDataSize() > 0)
-        return;
-
-    switch (response.GetType())
-    {
-    case NETWORK_RESPONSE_TYPE::CloseConnection:
-        return;
-    default:
-        break;
-    }
-
-    LOG_ERROR("Connection: sending packet that needs data without data, type response: " +
-        Convert::ToString(static_cast<int>(response.GetType())));
-    DEBUG_BREAK;
-}
-#endif // LEVIATHAN_DEBUG
-
-DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(Lock &guard,
-    const NetworkRequest &request, RECEIVE_GUARANTEE guarantee)
+DLLEXPORT std::shared_ptr<SentRequest> Connection::SendPacketToConnection(Lock &guard,
+    const std::shared_ptr<NetworkRequest> &request, RECEIVE_GUARANTEE guarantee)
 {
-    if (!IsValidForSend())
+    if(!IsValidForSend() || !request)
         return nullptr;
 
     // Generate a packet from the request //
     sf::Packet actualpackettosend;
+
+    std::array<uint32_t, 1> messages;
+    // Requests don't use this marking mechanism
+    messages[0] = ++LastUsedMessageNumber;
     
     // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, actualpackettosend);
+    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
+        actualpackettosend);
 
-    // Generate packet object for the request //
-    sf::Packet messagedata;
-
-    request.AddDataToPacket(messagedata);
-
-#ifdef LEVIATHAN_DEBUG
-    VerifyTypeHadData(messagedata, request);
-#endif // LEVIATHAN_DEBUG
-
-    // Add the data to the actual packet //
-    actualpackettosend.append(messagedata.getData(), messagedata.getDataSize());
+    // Pack the message data in //
+    request->AddDataToPacket(actualpackettosend);
 
     _SendPacketToSocket(actualpackettosend);
 
     // Add to the sent packets //
-    auto sentthing = std::make_shared<SentNetworkThing>(LastUsedLocalID, guarantee,
-        std::move(messagedata), true);
+    auto sentthing = std::make_shared<SentRequest>(LastUsedLocalID, LastUsedMessageNumber,
+        guarantee, request);
 
-    WaitingRequests.push_back(sentthing);
+    PendingRequests.push_back(sentthing);
 
     return sentthing;
 }
 
-DLLEXPORT std::shared_ptr<SentNetworkThing> Connection::SendPacketToConnection(Lock &guard,
-    const NetworkResponse &response, RECEIVE_GUARANTEE guarantee)
+DLLEXPORT bool Connection::SendPacketToConnection(Lock &guard,
+    const NetworkResponse &response)
 {
     if(!IsValidForSend())
+        return false;
+
+    // Generate a packet from the request //
+    sf::Packet actualpackettosend;
+
+    std::array<uint32_t, 1> messages;
+    messages[0] = ++LastUsedMessageNumber;
+    
+    // We need a complete header with acks and stuff //
+    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
+        actualpackettosend);
+
+    // Pack the message data in //
+    response.AddDataToPacket(actualpackettosend);
+    
+    _SendPacketToSocket(actualpackettosend);
+
+    return true;
+}
+
+DLLEXPORT std::shared_ptr<SentResponse> Connection::SendPacketToConnection(Lock &guard,
+    const std::shared_ptr<NetworkResponse> &response, RECEIVE_GUARANTEE guarantee)
+{
+    if(!IsValidForSend() || !response)
         return nullptr;
 
     // Generate a packet from the request //
     sf::Packet actualpackettosend;
 
-    // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, actualpackettosend);
-
-    // Generate packet object for the request //
-    sf::Packet messagedata;
-
-    response.AddDataToPacket(messagedata);
+    std::array<uint32_t, 1> messages;
+    messages[0] = ++LastUsedMessageNumber;
     
-#ifdef LEVIATHAN_DEBUG
-    VerifyTypeHadData(messagedata, response);
-#endif // LEVIATHAN_DEBUG
+    // We need a complete header with acks and stuff //
+    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
+        actualpackettosend);
 
-    // Add the data to the actual packet //
-    actualpackettosend.append(messagedata.getData(), messagedata.getDataSize());
-
+    // Pack the message data in //
+    response->AddDataToPacket(actualpackettosend);
+    
     _SendPacketToSocket(actualpackettosend);
 
     // Add to the sent packets //
-    auto sentthing = std::make_shared<SentNetworkThing>(LastUsedLocalID, guarantee,
-        std::move(messagedata), false);
+    if(guarantee != RECEIVE_GUARANTEE::None){
+        
+        auto sentthing = std::make_shared<SentResponse>(LastUsedLocalID, LastUsedMessageNumber,
+            guarantee, response);
 
-    WaitingRequests.push_back(sentthing);
+        ResponsesNeedingConfirmation.push_back(sentthing);
 
-    return sentthing;
+        return sentthing;
+    }
+
+    return nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT void Connection::SendKeepAlivePacket(Lock &guard){
     
-    if (State == CONNECTION_STATE::Closed)
-        return;
-
-    // Generate a packet //
-    sf::Packet actualpackettosend;
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, actualpackettosend, false);
-
-    AddDataForResponseWithoutData(actualpackettosend, NETWORK_RESPONSE_TYPE::Keepalive);
-
-    _SendPacketToSocket(actualpackettosend);
-
-    // TODO: add to WaitingRequests if we want to time all the packets
+    SendPacketToConnection(guard, ResponseNone(NETWORK_RESPONSE_TYPE::Keepalive));
 }
 
 DLLEXPORT void Connection::SendCloseConnectionPacket(Lock &guard){
 
     State = CONNECTION_STATE::Closed;
 
-    // Generate a packet //
-    sf::Packet actualpackettosend;
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, actualpackettosend, true);
-
-    // Only type is required //
-    AddDataForResponseWithoutData(actualpackettosend, NETWORK_RESPONSE_TYPE::CloseConnection);
-
-    _SendPacketToSocket(actualpackettosend);
+    SendPacketToConnection(guard, ResponseNone(NETWORK_RESPONSE_TYPE::CloseConnection));
 }
 // ------------------------------------ //
-void Leviathan::Connection::_Resend(Lock &guard, SentNetworkThing &toresend){
+void Connection::_Resend(Lock &guard, SentRequest &toresend){
 
-    if (!IsValidForSend())
-        return;
+    // Generate a packet from the request //
+    sf::Packet actualpackettosend;
 
-    if (toresend.Resend == RECEIVE_GUARANTEE::None) {
-        LOG_ERROR("Connection: Trying to Resend non-guaranteed packet");
-        return;
-    }
+    std::array<uint32_t, 1> messages;
+    // Requests don't use this marking mechanism
+    messages[0] = toresend.MessageNumber;
+    
+    // We need a complete header with acks and stuff //
+    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
+        actualpackettosend);
 
-    // Generate a packet from the existing data //
-    sf::Packet tosend;
-    _PreparePacketHeaderForPacket(guard, toresend.PacketNumber, tosend);
+    // Pack the message data in //
+    toresend.SentRequestData->AddDataToPacket(actualpackettosend);
 
-    // Add the packet data //
-    tosend.append(toresend.AlmostCompleteData.getData(), 
-        toresend.AlmostCompleteData.getDataSize());
+    _SendPacketToSocket(actualpackettosend);
 
-    _SendPacketToSocket(tosend);
+    toresend.ResetStartTime();
 
-    // Reset time so that timeout works again later //
-    toresend.RequestStartTime = Time::GetTimeMs64();
+    // Increase attempt number
+    ++toresend.AttemptNumber;
+}
+
+void Connection::_Resend(Lock &guard, SentResponse &toresend){
+
+    // Generate a packet from the request //
+    sf::Packet actualpackettosend;
+
+    std::array<uint32_t, 1> messages;
+    // Requests don't use this marking mechanism
+    messages[0] = toresend.MessageNumber;
+    
+    // We need a complete header with acks and stuff //
+    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
+        actualpackettosend);
+
+    // Pack the message data in //
+    toresend.SentResponseData->AddDataToPacket(actualpackettosend);
+
+    _SendPacketToSocket(actualpackettosend);
+
+    toresend.ResetStartTime();
+
+    // Increase attempt number
+    ++toresend.AttemptNumber;
 }
 // ------------------------------------ //
 DLLEXPORT inline void Connection::HandleRemoteAck(Lock &guard, 
@@ -299,22 +293,20 @@ DLLEXPORT inline void Connection::HandleRemoteAck(Lock &guard,
     if(localidconfirmedassent > LastConfirmedSent)
         LastConfirmedSent = localidconfirmedassent;
 
-    for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
-
-        if((*iter)->IsRequest)
-            continue;
-
+    for(auto iter = ResponsesNeedingConfirmation.begin();
+        iter != ResponsesNeedingConfirmation.end(); ++iter)
+    {
         if(localidconfirmedassent == (*iter)->PacketNumber){
 
             (*iter)->OnFinalized(true);
 
-            WaitingRequests.erase(iter);
+            ResponsesNeedingConfirmation.erase(iter);
             break;
         }
     }
 
     // Check which ack packets have been received //
-    for (auto iter = SentAckPackets.begin(); iter != SentAckPackets.end(); ++iter) {
+    for (auto iter = SentAckPackets.begin(); iter != SentAckPackets.end(); ++iter){
 
         if(localidconfirmedassent == (*iter)->InsidePacket){
 
@@ -330,34 +322,20 @@ DLLEXPORT inline void Connection::HandleRemoteAck(Lock &guard,
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Connection::UpdateListening(){
-
-    // Timeout stuff (if possible) //
-    int64_t timems = Time::GetTimeMs64();
-
-    // Check for connection close //
-    if (timems > LastReceivedPacketTime + KEEPALIVE_TIME*1.5f) {
-        // We could timeout the connection //
-        Logger::Get()->Info("Connection: timing out connection to " +
-            GenerateFormatedAddressString());
-
-        // Mark us as closing //
-        Owner->CloseConnection(*this);
-        return;
-    }
-
-    GUARD_LOCK();
-
-    for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ){
+template<class TSentType>
+    void Leviathan::Connection::_HandleTimeouts(Lock &guard, int64_t timems,
+        std::vector<std::shared_ptr<TSentType>> sentthing)
+{
+    for(auto iter = sentthing.begin(); iter != sentthing.end(); ){
 
         // Second timeout //
-        if ((timems - (*iter)->RequestStartTime > PACKET_LOST_AFTER_MILLISECONDS) ||
+        if((timems - (*iter)->RequestStartTime > PACKET_LOST_AFTER_MILLISECONDS) ||
             (LastConfirmedSent > (*iter)->PacketNumber + PACKET_LOST_AFTER_RECEIVED_NEWER))
         {
             // The current attempt is lost //
-            if ((*iter)->Resend == RECEIVE_GUARANTEE::ResendOnce) {
+            if((*iter)->Resend == RECEIVE_GUARANTEE::ResendOnce){
 
-                if (++(*iter)->AttempNumber <= 2) {
+                if(++(*iter)->AttemptNumber <= 2){
 
                     // Resend //
                     _Resend(guard, **iter);
@@ -365,10 +343,10 @@ DLLEXPORT void Connection::UpdateListening(){
                     continue;
                 }
 
-            } else if ((*iter)->Resend == RECEIVE_GUARANTEE::Critical) {
+            } else if((*iter)->Resend == RECEIVE_GUARANTEE::Critical){
 
                 // If a critical one fails the connection must be closed //
-                if (++(*iter)->AttempNumber > CRITICAL_PACKET_MAX_TRIES) {
+                if(++(*iter)->AttemptNumber > CRITICAL_PACKET_MAX_TRIES){
 
                     LOG_INFO("Connection: Lost critical packet too many times, "
                         "closing connection to: " + GenerateFormatedAddressString());
@@ -389,13 +367,37 @@ DLLEXPORT void Connection::UpdateListening(){
             // Failed //
             (*iter)->OnFinalized(false);
             _FailPacketAcks((*iter)->PacketNumber);
-            iter = WaitingRequests.erase(iter);
+            iter = sentthing.erase(iter);
 
         } else {
 
             ++iter;
         }
     }
+}
+
+DLLEXPORT void Connection::UpdateListening(){
+
+    // Timeout stuff (if possible) //
+    int64_t timems = Time::GetTimeMs64();
+
+    // Check for connection close //
+    if(timems > LastReceivedPacketTime + KEEPALIVE_TIME*1.5f){
+        // We could timeout the connection //
+        Logger::Get()->Info("Connection: timing out connection to " +
+            GenerateFormatedAddressString());
+
+        // Mark us as closing //
+        Owner->CloseConnection(*this);
+        return;
+    }
+
+    GUARD_LOCK();
+
+    _HandleTimeouts(guard, timems, PendingRequests);
+
+    _HandleTimeouts(guard, timems, ResponsesNeedingConfirmation);
+
 
     bool AcksCouldBeSent = false;
 
@@ -425,21 +427,7 @@ DLLEXPORT void Connection::UpdateListening(){
 
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Connection::IsThisYours(const sf::IpAddress &sender,
-    unsigned short sentport)
-{
-    // Check for matching sender with our target //
-    if(sentport != TargetPortNumber || sender != TargetHost){
-        
-        // Not mine //
-        return false;
-    }
-    
-    // It is mine //
-    return true;
-}
-
-DLLEXPORT void Connection::HandlePacket(sf::Packet &packet) {
+DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
     
     // Handle incoming packet //
 
@@ -499,7 +487,7 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet) {
 
     LastReceivedPacketTime = Time::GetTimeMs64();
 
-    if (State == CONNECTION_STATE::NothingReceived) {
+    if(State == CONNECTION_STATE::NothingReceived){
 
         State = CONNECTION_STATE::Initial;
     }
@@ -522,11 +510,11 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(Lock &guard, sf::Pac
 
         response = NetworkResponse::LoadFromPacket(packet);
 
-        if (!response)
+        if(!response)
             throw InvalidArgument("response is null");
 
     }
-    catch (const InvalidArgument& e) {
+    catch (const InvalidArgument& e){
 
         LOG_ERROR("Connection: received an invalid response packet, exception: ");
         e.PrintToLog();
@@ -540,10 +528,10 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(Lock &guard, sf::Pac
     if(possiblerequest)
         possiblerequest->GotResponse = response;
 
-    if (_HandleInternalResponse(guard, response))
+    if(_HandleInternalResponse(guard, response))
         return;
 
-    if (RestrictType != CONNECTION_RESTRICTION::None) {
+    if(RestrictType != CONNECTION_RESTRICTION::None){
 
         // Restrict mode checking //
 
@@ -553,34 +541,35 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(Lock &guard, sf::Pac
     }
 
     // See if interface wants to drop it //
-    if (!Owner->GetInterface()->PreHandleResponse(response, possiblerequest.get(), *this))
+    if(!Owner->GetInterface()->PreHandleResponse(response, possiblerequest.get(), *this))
     {
 
         LOG_WARNING("Connection: dropping packet due to interface not accepting response");
         return;
     }
 
-    if (!possiblerequest) {
+    if(!possiblerequest){
 
         // Just discard if it is an empty response //
-        if (response->GetType() == NETWORK_RESPONSE_TYPE::None)
+        if(response->GetType() == NETWORK_RESPONSE_TYPE::None)
             return;
 
         // Handle the response only packet //
         Owner->GetInterface()->HandleResponseOnlyPacket(response, *this,
             ShouldNotBeMarkedAsReceived);
-        return;
-    }
+        
+    } else {
 
-    // Remove the request //
-    for (auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter) {
+        // Remove the request //
+        for(auto iter = PendingRequests.begin(); iter != PendingRequests.end(); ++iter){
 
-        if ((*iter).get() == possiblerequest.get()) {
+            if((*iter).get() == possiblerequest.get()){
 
-            // Notify that the request is done /
-            possiblerequest->OnFinalized(true);
-            WaitingRequests.erase(iter);
-            break;
+                // Notify that the request is done /
+                possiblerequest->OnFinalized(true);
+                PendingRequests.erase(iter);
+                break;
+            }
         }
     }
 }
@@ -594,28 +583,28 @@ DLLEXPORT void Leviathan::Connection::_HandleRequestPacket(Lock &guard, sf::Pack
 
         request = NetworkRequest::LoadFromPacket(packet, packetnumber);
 
-        if (!request)
+        if(!request)
             throw InvalidArgument("request is null");
 
     }
-    catch (const InvalidArgument& e) {
+    catch (const InvalidArgument& e){
 
         LOG_ERROR("Connection: received an invalid request packet, exception: ");
         e.PrintToLog();
         return;
     }
 
-    if (_HandleInternalRequest(guard, request))
+    if(_HandleInternalRequest(guard, request))
         return;
 
-    if (RestrictType != CONNECTION_RESTRICTION::None) {
+    if(RestrictType != CONNECTION_RESTRICTION::None){
 
         // Restrict mode checking //
 
         // We can possibly drop the connection or perform other extra tasks //
-        if (RestrictType == CONNECTION_RESTRICTION::ReceiveRemoteConsole) {
+        if(RestrictType == CONNECTION_RESTRICTION::ReceiveRemoteConsole){
             // Check type //
-            if (!Engine::Get()->GetRemoteConsole()->CanOpenNewConnection(
+            if(!Engine::Get()->GetRemoteConsole()->CanOpenNewConnection(
                 Owner->GetConnection(this), request))
             {
                 _OnRestrictFail(static_cast<uint16_t>(request->GetType()));
@@ -629,10 +618,11 @@ DLLEXPORT void Leviathan::Connection::_HandleRequestPacket(Lock &guard, sf::Pack
         }
     }
 
-    try {
+    try{
+        
         Owner->GetInterface()->HandleRequestPacket(request, *this);
-    }
-    catch (const InvalidArgument &e) {
+        
+    } catch(const InvalidArgument &e){
         // We couldn't handle this packet //
         Logger::Get()->Error("Connection: couldn't handle request packet! :");
         e.PrintToLog();
@@ -643,32 +633,35 @@ DLLEXPORT void Leviathan::Connection::_HandleRequestPacket(Lock &guard, sf::Pack
 DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard, 
     std::shared_ptr<NetworkRequest> request) 
 {
-    switch (request->GetType()) {
+    switch (request->GetType()){
     case NETWORK_REQUEST_TYPE::Connect:
     {
-        SendPacketToConnection(guard, ResponseConnect(request->GetIDForResponse()), 
+        SendPacketToConnection(guard, std::make_shared<ResponseConnect>(
+                request->GetIDForResponse()), 
             RECEIVE_GUARANTEE::Critical);
+
         return true;
     }
     case NETWORK_REQUEST_TYPE::Security:
     {
         // CONNECTION_STATE::Initial is allowed here because the client might send a security
         // request before sending us a response to our connect request
-        if (State != CONNECTION_STATE::Connected && State != CONNECTION_STATE::Initial) {
+        if(State != CONNECTION_STATE::Connected && State != CONNECTION_STATE::Initial){
 
             return true;
         }
 
         // Security has been set up for this connection //
-        ResponseSecurity response(request->GetIDForResponse(), CONNECTION_ENCRYPTION::None);
-
-        SendPacketToConnection(guard, response, RECEIVE_GUARANTEE::Critical);
+        SendPacketToConnection(guard, std::make_shared<ResponseSecurity>(
+                request->GetIDForResponse(), CONNECTION_ENCRYPTION::None),
+            RECEIVE_GUARANTEE::Critical);
+        
         return true;
     }
     case NETWORK_REQUEST_TYPE::Authenticate:
     {
         // Client is not allowed to respond to this //
-        if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+        if(Owner->GetNetworkType() == NETWORKED_TYPE::Client){
 
             LOG_ERROR("Connection: Client received NETWORK_REQUEST_TYPE::Authenticate");
             return true;
@@ -683,9 +676,10 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard,
         int32_t ConnectedPlayerID = 0;
         uint64_t token = 0;
 
-        ResponseAuthenticate response(request->GetIDForResponse(), ConnectedPlayerID, token);
+        SendPacketToConnection(guard, std::make_shared<ResponseAuthenticate>(
+                request->GetIDForResponse(), ConnectedPlayerID, token),
+            RECEIVE_GUARANTEE::Critical);
 
-        SendPacketToConnection(guard, response, RECEIVE_GUARANTEE::Critical);
         return true;
     }
     default:
@@ -693,7 +687,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard,
     }
 
     // Eat up all the packets if not properly opened yet
-    if (State != CONNECTION_STATE::Authenticated) {
+    if(State != CONNECTION_STATE::Authenticated){
 
         LOG_WARNING("Connection: not yet properly open, ignoring packet from: " +
             GenerateFormatedAddressString());
@@ -707,7 +701,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard,
 DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard, 
     std::shared_ptr<NetworkResponse> response) 
 {
-    switch (response->GetType()) {
+    switch (response->GetType()){
     case NETWORK_RESPONSE_TYPE::CloseConnection:
     {
         // Forced disconnect //
@@ -720,15 +714,16 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
     {
         // The first packet of this type that is in response to our initial request
         // moves this connection to Connected on our side
-        if (State == CONNECTION_STATE::NothingReceived || State == CONNECTION_STATE::Initial) {
+        if(State == CONNECTION_STATE::NothingReceived || State == CONNECTION_STATE::Initial){
 
             State = CONNECTION_STATE::Connected;
 
             // Client will do security setup here //
             // TODO: figure out how master server connections should work
-            if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+            if(Owner->GetNetworkType() == NETWORKED_TYPE::Client){
 
-                SendPacketToConnection(guard, RequestSecurity(CONNECTION_ENCRYPTION::None),
+                SendPacketToConnection(guard, std::make_shared<RequestSecurity>(
+                        CONNECTION_ENCRYPTION::None),
                     RECEIVE_GUARANTEE::Critical);
             }
         }
@@ -736,7 +731,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
     }
     case NETWORK_RESPONSE_TYPE::Security:
     {
-        if (State != CONNECTION_STATE::Connected) {
+        if(State != CONNECTION_STATE::Connected){
 
             return true;
         }
@@ -744,7 +739,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
         // Verify security type is what we wanted //
         auto* securityresponse = static_cast<ResponseSecurity*>(response.get());
 
-        if (securityresponse->SecureType != CONNECTION_ENCRYPTION::None) {
+        if(securityresponse->SecureType != CONNECTION_ENCRYPTION::None){
 
             LOG_ERROR("Connection: mismatch security, disconnecting");
             SendCloseConnectionPacket(guard);
@@ -754,11 +749,9 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
         State = CONNECTION_STATE::Secured;
 
         // TODO: send an empty authentication request if this is a master server connection
-        if (Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+        if(Owner->GetNetworkType() == NETWORKED_TYPE::Client){
 
-            RequestAuthenticate authrequest("player");
-
-            SendPacketToConnection(guard, authrequest,
+            SendPacketToConnection(guard, std::make_shared<RequestAuthenticate>("player"),
                 RECEIVE_GUARANTEE::Critical);
         }
 
@@ -784,7 +777,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
     }
 
     // Eat up all the packets if not properly opened yet
-    if (State != CONNECTION_STATE::Authenticated) {
+    if(State != CONNECTION_STATE::Authenticated){
 
         LOG_WARNING("Connection: not yet properly open, ignoring packet from: " + 
             GenerateFormatedAddressString());
@@ -795,16 +788,20 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
     return false;
 }
 // ------------------------------------ //
-void Leviathan::Connection::_PreparePacketHeaderForPacket(Lock &guard,
-    uint32_t localpacketid, sf::Packet &tofill, bool dontsendacks /*= false*/)
+void Leviathan::Connection::_PreparePacketHeaderForPacket(Lock &guard, uint32_t localpacketid,
+    uint32_t* firstmessagenumber, size_t messagenumbercount,
+    sf::Packet &tofill, bool dontsendacks /*= false*/)
 {
     LEVIATHAN_ASSERT(localpacketid > 0, "Trying to fill packet with packetid == 0");
 
-    // First thing is the packet number //
-    tofill << localpacketid;
+    // See the doxygen page networkformat for the header format //
 
-    // We have now made a new packet //
-    LastSentPacketTime = Time::GetTimeMs64();
+
+    // Type //
+    tofill << uint16_t(0x4C6E);
+
+    // PKT ID //
+    tofill << localpacketid;
 
     if(dontsendacks || ReceivedRemotePackets.empty()){
 
@@ -863,7 +860,7 @@ copyacksfromtheendlabel:
 
             firstselected = ReceivedRemotePackets.rbegin()->first;
 
-            if (couldbesent > DEFAULT_ACKCOUNT) {
+            if(couldbesent > DEFAULT_ACKCOUNT){
                 count = DEFAULT_ACKCOUNT * 2;
             } else {
                 count = DEFAULT_ACKCOUNT;
@@ -888,8 +885,8 @@ copyacksfromtheendlabel:
     }
 }
 
-std::shared_ptr<SentNetworkThing> Connection::_GetPossibleRequestForResponse(
-    Lock &guard, std::shared_ptr<NetworkResponse> response)
+std::shared_ptr<SentRequest> Connection::_GetPossibleRequestForResponse(
+    Lock &guard, const std::shared_ptr<NetworkResponse> &response)
 {
     // Return if it doesn't have a proper matching expected response id //
     const auto lookingforid = response->GetResponseID();
@@ -897,12 +894,12 @@ std::shared_ptr<SentNetworkThing> Connection::_GetPossibleRequestForResponse(
     if(lookingforid == 0)
         return nullptr;
 
-    for(auto iter = WaitingRequests.begin(); iter != WaitingRequests.end(); ++iter){
+    for(auto& packet : PendingRequests){
 
-        if((*iter)->PacketNumber == lookingforid){
+        if(packet->MessageNumber == lookingforid){
             
             // Found matching object //
-            return *iter;
+            return packet;
         }
     }
 
@@ -935,9 +932,10 @@ DLLEXPORT void Connection::CalculateNetworkPing(int packets, int allowedfails,
             "one");
     }
     
-    // The finishing check task needs to store this. Using a smart pointer avoids copying this around
-    std::shared_ptr<std::vector<std::shared_ptr<SentNetworkThing>>> sentechos = std::make_shared<
-        std::vector<std::shared_ptr<SentNetworkThing>>>();
+    // The finishing check task needs to store this. Using a smart
+    // pointer avoids copying this around
+    std::shared_ptr<std::vector<std::shared_ptr<SentNetworkThing>>> sentechos =
+        std::make_shared<std::vector<std::shared_ptr<SentNetworkThing>>>();
     
     sentechos->reserve(packets);
 
@@ -950,12 +948,11 @@ DLLEXPORT void Connection::CalculateNetworkPing(int packets, int allowedfails,
     // Send the packet count of echo requests //
     for(int i = 0; i < packets; i++){
         
-        // Create a suitable echo request //
-        // This needs to be regenerated for each loop as each need to have unique id for responses
-        // to be registered properly
-        RequestEcho echorequest(NETWORK_REQUEST_TYPE::Echo);
-        
-        auto cursent = SendPacketToConnection(echorequest, RECEIVE_GUARANTEE::Critical);
+        // Create a suitable echo request This needs to be
+        // regenerated for each loop as each need to have unique id
+        // for responses to be registered properly
+        auto cursent = SendPacketToConnection(std::make_shared<RequestNone>(
+                NETWORK_REQUEST_TYPE::Echo), RECEIVE_GUARANTEE::Critical);
         cursent->SetAsTimed();
 
         sentechos->push_back(cursent);
@@ -976,7 +973,7 @@ DLLEXPORT void Connection::CalculateNetworkPing(int packets, int allowedfails,
             auto end = requests->end();
             for(auto iter = requests->begin(); iter != end; ++iter){
 
-                if(!(*iter)->Succeeded ||
+                if((*iter)->IsDone != SentNetworkThing::DONE_STATUS::DONE ||
                     (*iter)->ConfirmReceiveTime.load(std::memory_order_acquire) < 2)
                 {
                     // This one has failed //
@@ -987,8 +984,7 @@ DLLEXPORT void Connection::CalculateNetworkPing(int packets, int allowedfails,
 
                 // Store the time //
                 packagetimes.push_back((*iter)->ConfirmReceiveTime.load(
-                    std::memory_order_acquire) -
-                    (*iter)->RequestStartTime);
+                    std::memory_order_acquire));
             }
             
             
@@ -1053,18 +1049,6 @@ DLLEXPORT void Connection::CalculateNetworkPing(int packets, int allowedfails,
     
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Connection::BlockUntilFinished(
-    std::shared_ptr<SentNetworkThing> packet) 
-{
-    if (!packet)
-        throw InvalidArgument("packet is null");
-
-    // Now we wait //
-    packet->GetStatus();
-
-    return packet->Succeeded;
-}
-
 DLLEXPORT void Leviathan::Connection::AddDataForResponseWithoutData(sf::Packet &packet,
     NETWORK_RESPONSE_TYPE type) 
 {
@@ -1075,13 +1059,13 @@ DLLEXPORT void Leviathan::Connection::SetPacketsReceivedIfNotSet(Lock &guard,
     NetworkAckField &acks) 
 {
     // We need to loop through all our acks and set them in the map //
-    for (uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++){
 
         // Loop the individual bits //
-        for (int bit = 0; bit < 8; bit++) {
+        for (int bit = 0; bit < 8; bit++){
 
             // Check is it set //
-            if (acks.Acks[i] & (1 << bit)) {
+            if(acks.Acks[i] & (1 << bit)){
 
                 // Set as received //
                 HandleRemoteAck(guard, acks.FirstPacketID + i * 8 + bit);
@@ -1091,15 +1075,15 @@ DLLEXPORT void Leviathan::Connection::SetPacketsReceivedIfNotSet(Lock &guard,
 }
 
 
-DLLEXPORT void Leviathan::Connection::RemoveSucceededAcks(Lock &guard, NetworkAckField &acks) {
+DLLEXPORT void Leviathan::Connection::RemoveSucceededAcks(Lock &guard, NetworkAckField &acks){
 
     // We need to loop through all our acks and erase them from the map (if set) //
-    for (uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++){
         // Loop the individual bits //
-        for (int bit = 0; bit < 8; bit++) {
+        for (int bit = 0; bit < 8; bit++){
 
             // Check is it set //
-            if (acks.Acks[i] & (1 << bit)) {
+            if(acks.Acks[i] & (1 << bit)){
 
                 // Remove it //
                 ReceivedRemotePackets.erase(acks.FirstPacketID + i * 8 + bit);
@@ -1109,9 +1093,13 @@ DLLEXPORT void Leviathan::Connection::RemoveSucceededAcks(Lock &guard, NetworkAc
 }
 
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Connection::_SendPacketToSocket(sf::Packet actualpackettosend) {
-
+DLLEXPORT void Leviathan::Connection::_SendPacketToSocket(
+    sf::Packet &actualpackettosend)
+{
     LEVIATHAN_ASSERT(Owner, "Connection no owner");
+
+    // We have now sent a packet //
+    LastSentPacketTime = Time::GetTimeMs64();
 
 #ifdef OUTPUT_PACKET_BITS
 
@@ -1148,11 +1136,11 @@ bool Connection::_IsAlreadyReceived(uint32_t packetid){
 
 
 
-DLLEXPORT void Leviathan::Connection::_FailPacketAcks(uint32_t packetid) {
+DLLEXPORT void Leviathan::Connection::_FailPacketAcks(uint32_t packetid){
 
-    for (auto iter = SentAckPackets.begin(); iter != SentAckPackets.end(); ++iter) {
+    for (auto iter = SentAckPackets.begin(); iter != SentAckPackets.end(); ++iter){
 
-        if ((*iter)->InsidePacket == packetid) {
+        if((*iter)->InsidePacket == packetid){
 
             SentAckPackets.erase(iter);
             return;
@@ -1160,7 +1148,7 @@ DLLEXPORT void Leviathan::Connection::_FailPacketAcks(uint32_t packetid) {
     }
 }
 
-DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type) {
+DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type){
 
     LOG_ERROR("Connection: received a non-valid packet "
         "in restrict mode(" + Convert::ToString(static_cast<int>(RestrictType)) + ") type: " +
@@ -1171,89 +1159,29 @@ DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type) {
 }
 
 // ------------------ SentNetworkThing ------------------ //
-DLLEXPORT Leviathan::SentNetworkThing::SentNetworkThing(uint32_t packetid, 
-    RECEIVE_GUARANTEE guarantee, sf::Packet&& packetsdata, bool isrequest)  :
-    PacketNumber(packetid), Resend(guarantee), 
-    RequestStartTime(Time::GetTimeMs64()),
-    AlmostCompleteData(std::move(packetsdata)),
-    IsRequest(isrequest)
-{
 
-}
-
-DLLEXPORT void SentNetworkThing::SetWaitStatus(bool status){
-    
-    Succeeded = status;
-    IsDone.store(true, std::memory_order_release);
-
-    if (Callback)
-        (*Callback)(status, *this);
-}
-
-DLLEXPORT void Leviathan::SentNetworkThing::OnFinalized(bool succeeded) {
-
-    if (!succeeded) {
-
-        SetWaitStatus(false);
-        return;
-    }
-
-    if (ConfirmReceiveTime.load(std::memory_order_consume) == 1) {
-
-        ConfirmReceiveTime.store(Time::GetTimeMs64(),
-            std::memory_order_release);
-    }
-
-    // We want to notify all waiters that it has been received //
-    SetWaitStatus(true);
-}
-
-DLLEXPORT bool SentNetworkThing::GetStatus() {
-
-    while(!IsDone.load(std::memory_order_acquire)){
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-
-    return Succeeded;
-}
-
-DLLEXPORT void SentNetworkThing::SetAsTimed(){
-    
-    ConfirmReceiveTime.store(1, std::memory_order_release);
-}
-
-DLLEXPORT void SentNetworkThing::SetCallback(std::shared_ptr<CallbackType> func)
-{
-    Callback = func;
-}
-
-DLLEXPORT void Leviathan::SentNetworkThing::SetCallbackFunc(CallbackType func) {
-
-    Callback = std::make_shared<CallbackType>(std::move(func));
-}
 // ------------------ NetworkAckField ------------------ //
 DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid, 
-    uint8_t maxacks, ReceivedPacketField &copyfrom) :
+    uint8_t maxacks, PacketReceiveStatus &copyfrom) :
     FirstPacketID(firstpacketid)
 {
 
     // Id is 0 nothing should be copied //
-    if (FirstPacketID == 0)
+    if(FirstPacketID == 0)
         return;
 
     // Before we reach the first packet id we will want to skip stuff //
     bool foundstart = false;
 
-    for (auto iter = copyfrom.begin(); iter != copyfrom.end(); ++iter) {
+    for (auto iter = copyfrom.begin(); iter != copyfrom.end(); ++iter){
 
         // Skip current if not received //
-        if (iter->second == RECEIVED_STATE::NotReceived)
+        if(iter->second == RECEIVED_STATE::NotReceived)
             continue;
 
-        if (!foundstart) {
+        if(!foundstart){
 
-            if (iter->first >= FirstPacketID) {
+            if(iter->first >= FirstPacketID){
 
 
                 // Adjust the starting index, if it is an exact match for firstpacketid
@@ -1261,7 +1189,7 @@ DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid,
                 auto startindex = iter->first - FirstPacketID;
 
                 // Check that the index is within the size of the field, otherwise fail
-                if (startindex >= maxacks)
+                if(startindex >= maxacks)
                     break;
 
                 foundstart = true;
@@ -1275,13 +1203,13 @@ DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid,
 
         size_t currentindex = iter->first - FirstPacketID;
 
-        if (currentindex >= maxacks)
+        if(currentindex >= maxacks)
             break;
 
         // Copy current ack //
         const auto vecelement = currentindex / 8;
 
-        while (Acks.size() <= vecelement) {
+        while (Acks.size() <= vecelement){
 
             Acks.push_back(0);
         }
@@ -1290,11 +1218,11 @@ DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid,
 
         // Stop copying once enough acks have been set. The loop can end before this, but
         // that just leaves the rest of the acks as 0
-        if (currentindex + 1 >= maxacks)
+        if(currentindex + 1 >= maxacks)
             break;
     }
 
-    if (!foundstart) {
+    if(!foundstart){
 
         // No acks to send //
         FirstPacketID = 0;
@@ -1308,7 +1236,7 @@ DLLEXPORT NetworkAckField::NetworkAckField(sf::Packet &packet){
     packet >> FirstPacketID;
 
     // Empty ack fields //
-    if (FirstPacketID == 0)
+    if(FirstPacketID == 0)
         return;
     
     uint8_t tmpsize = 0;
@@ -1330,7 +1258,7 @@ DLLEXPORT void NetworkAckField::AddDataToPacket(sf::Packet &packet){
 
     packet << FirstPacketID;
     
-    if (FirstPacketID == 0)
+    if(FirstPacketID == 0)
         return;
 
     uint8_t tmpsize = static_cast<uint8_t>(Acks.size());

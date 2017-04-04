@@ -271,7 +271,7 @@ public:
     DLLEXPORT void SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply);
 
     //! \brief Sends a packet to all connected players
-    DLLEXPORT void SendToAllPlayers(NetworkResponse&& response,
+    DLLEXPORT void SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
         RECEIVE_GUARANTEE guarantee) const;
 
     //! \brief Sends an object to a connection and sets everything up

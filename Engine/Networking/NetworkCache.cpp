@@ -128,10 +128,10 @@ DLLEXPORT NamedVariableList* NetworkCache::GetVariable(const std::string &name) 
 DLLEXPORT void Leviathan::NetworkCache::_OnNewConnection(
     std::shared_ptr<Connection> connection) 
 {
-    if (!IsServer)
+    if(!IsServer)
         return;
 
-    if (!connection->IsOpen())
+    if(!connection->IsValidForSend())
         return;
 
     // TODO: make sure this doesn't use a deleted object
@@ -153,18 +153,17 @@ DLLEXPORT void Leviathan::NetworkCache::_OnNewConnection(
 
             {
                 GUARD_LOCK_OTHER(cache);
-                if (index >= cache->CurrentVariables.size())
+                if(index >= cache->CurrentVariables.size())
                     return;
 
                 target = cache->CurrentVariables[index];
             }
 
-            if (!target)
+            if(!target)
                 continue;
 
-            ResponseCacheUpdated update(0, *target);
-
-            connection->SendPacketToConnection(update, RECEIVE_GUARANTEE::Critical);
+            connection->SendPacketToConnection(std::make_shared<ResponseCacheUpdated>(0,
+                    *target), RECEIVE_GUARANTEE::Critical);
         }
 
     }, this, connection)));
@@ -177,9 +176,8 @@ void Leviathan::NetworkCache::_OnVariableUpdated(Lock &guard,
 
     for (auto& connection : connections) {
 
-        ResponseCacheUpdated update(0, variable);
-
-        connection->SendPacketToConnection(update, RECEIVE_GUARANTEE::Critical);
+        connection->SendPacketToConnection(std::make_shared<ResponseCacheUpdated>(0, variable),
+            RECEIVE_GUARANTEE::Critical);
     }
 }
 // ------------------------------------ //

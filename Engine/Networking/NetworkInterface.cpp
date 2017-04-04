@@ -61,23 +61,21 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
             AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, 
                 gameversion);
 
-            ResponseIdentification response(0, 
-                    userreadable, gamename, gameversion, LEVIATHAN_VERSION_ANSIS);
-
-
+            auto response = ResponseIdentification(0, userreadable, gamename,
+                gameversion, LEVIATHAN_VERSION_ANSIS);
+            
             NetworkResponse::LimitResponseSize(response, maxlength);
 
-            connection.SendPacketToConnection(response, 
-                RECEIVE_GUARANTEE::ResendOnce);
+            // Should be critical, but it is not to avoid DDoS amplification
+            connection.SendPacketToConnection(response);
 
             return true;
         }
     case NETWORK_REQUEST_TYPE::Echo:
         {
             // Send an empty response back //
-            ResponseNone response(NETWORK_RESPONSE_TYPE::None);
-
-            connection.SendPacketToConnection(response,
+            connection.SendPacketToConnection(std::make_shared<ResponseNone>(
+                    NETWORK_RESPONSE_TYPE::None),
                 RECEIVE_GUARANTEE::None);
             
             return true;

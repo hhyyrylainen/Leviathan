@@ -12,6 +12,7 @@
 namespace Leviathan{
 
 
+
 //! \brief Class that encapsulates a value that can be used for syncing
 //! \see SyncedVariables
 class SyncedValue{
@@ -66,6 +67,9 @@ protected:
 class SyncedVariables : public BaseNotifierAll{
     friend SyncedValue;
     friend SyncedResource;
+
+    struct SendDataSyncAllStruct;
+    
 public:
     //! \brief Construct an instance that must be owned by a NetworkHandler
     DLLEXPORT SyncedVariables(NetworkHandler* owner, NETWORKED_TYPE type,
@@ -148,6 +152,10 @@ protected:
     //! \brief Updates the number of synced values received during SyncDone
     void _UpdateReceiveCount(const std::string &nameofthing);
 
+
+    static void _RunSendAllVariablesTask(Connection* connection,
+        SyncedVariables* instance, std::shared_ptr<SendDataSyncAllStruct> data);
+    
     // ------------------------------------ //
 
     //! Interface used to ask for permission to do many things

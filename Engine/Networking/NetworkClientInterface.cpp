@@ -14,6 +14,7 @@
 #include "Threading/ThreadingManager.h"
 #include "Networking/NetworkCache.h"
 #include "../Utility/Convert.h"
+#include "Networking/SentNetworkThing.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
@@ -227,7 +228,7 @@ checksentrequestsbeginlabel:
                     "possibly retrying:");
 
                 // Store a copy and delete from the vector //
-                shared_ptr<SentNetworkThing> tmpsendthing = (*iter);
+                auto& tmpsendthing = *iter;
                 iter = OurSentRequests.erase(iter);
 
                 _ProcessFailedRequest(guard, tmpsendthing, tmpsendthing->GotResponse);
@@ -257,14 +258,14 @@ checksentrequestsbeginlabel:
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
-    Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing, 
+    Lock &guard, std::shared_ptr<SentRequest> tmpsendthing, 
     std::shared_ptr<NetworkResponse> response)
 {
-    LEVIATHAN_ASSERT(tmpsendthing->UserCodeRequestStore,
-        "ClientInterface processing request with no UserCodeRequestStore");
+    LEVIATHAN_ASSERT(tmpsendthing->SentRequestData,
+        "ClientInterface processing request with no SentRequestData");
 
     // Handle it //
-    switch(tmpsendthing->UserCodeRequestStore->GetType()){
+    switch(tmpsendthing->SentRequestData->GetType()){
     case NETWORK_REQUEST_TYPE::JoinServer:
         {
             // Check what we got back //
@@ -328,20 +329,20 @@ networkresponseserverallowinvalidreponseformatthinglabel:
 }
 
 void Leviathan::NetworkClientInterface::_ProcessFailedRequest(
-    Lock &guard, std::shared_ptr<SentNetworkThing> tmpsendthing, 
+    Lock &guard, std::shared_ptr<SentRequest> tmpsendthing, 
     std::shared_ptr<NetworkResponse> response)
 {
-    LEVIATHAN_ASSERT(tmpsendthing->UserCodeRequestStore,
-        "ClientInterface processing request with no UserCodeRequestStore");
+    LEVIATHAN_ASSERT(tmpsendthing->SentRequestData,
+        "ClientInterface processing request with no SentRequestData");
 
-    if(!ServerConnection || !ServerConnection->IsOpen()){
+    if(!ServerConnection || !ServerConnection->IsValidForSend()){
 
         LOG_WRITE("\t> Connection has been closed (Perhaps the request was Critical)");
         return;
     }
 
     // First do some checks based on the request type //
-    switch(tmpsendthing->UserCodeRequestStore->GetType()){
+    switch(tmpsendthing->SentRequestData->GetType()){
     
     default:
         LOG_WRITE("\t> Unknown request type, probably not important, "
@@ -472,11 +473,9 @@ DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(
         throw InvalidArgument("server command is too long");
     }
 
-    // Create a packet //
-    RequestRequestCommandExecution request(messagestr);
-
     // Send it //
-    auto sendthing = ServerConnection->SendPacketToConnection(request, 
+    auto sendthing = ServerConnection->SendPacketToConnection(
+        std::make_shared<RequestRequestCommandExecution>(messagestr),
         RECEIVE_GUARANTEE::Critical);
 
     // The packet may not fail so we need to monitor the response //
@@ -526,9 +525,8 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats(Lock &guard){
     if(timenow >= LastSentHeartbeat+MillisecondDuration(HEARTBEATS_MILLISECOND)){
 
         // Send one //
-        ResponseNone response(NETWORK_RESPONSE_TYPE::ServerHeartbeat);
-
-        ServerConnection->SendPacketToConnection(response, RECEIVE_GUARANTEE::None);
+        ServerConnection->SendPacketToConnection(std::make_shared<ResponseNone>(
+                NETWORK_RESPONSE_TYPE::ServerHeartbeat), RECEIVE_GUARANTEE::None);
 
         LastSentHeartbeat = timenow;
     }

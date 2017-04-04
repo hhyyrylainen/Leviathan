@@ -273,7 +273,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
     // Add them to the list of receiving players //
     ReceivingPlayers.push_back(ply);
     
-    if(!ply->GetConnection()->IsOpen()){
+    if(!ply->GetConnection()->IsValidForSend()){
 
         // The closing should be handled by somebody else
         Logger::Get()->Error("GameWorld: requested to sync with a player who has closed their "
@@ -350,7 +350,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
         }, ply->GetConnection(), ply, this, WorldDestroyed), Objects.size()));
 }
 
-DLLEXPORT void GameWorld::SendToAllPlayers(NetworkResponse&& response,
+DLLEXPORT void GameWorld::SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
     RECEIVE_GUARANTEE guarantee) const
 {
     // Notify everybody that an entity has been destroyed //
@@ -358,7 +358,7 @@ DLLEXPORT void GameWorld::SendToAllPlayers(NetworkResponse&& response,
 
         auto safe = (*iter)->GetConnection();
 
-        if(!safe->IsOpen()){
+        if(!safe->IsValidForSend()){
             // Player has probably closed their connection //
             continue;
         }
@@ -391,7 +391,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
 
     for(auto iter = ReceivingPlayers.begin(); iter != ReceivingPlayers.end(); ++iter){
 
-        if(!(*iter)->GetConnection()->IsOpen()){
+        if(!(*iter)->GetConnection()->IsValidForSend()){
 
             DEBUG_BREAK;
 
@@ -540,7 +540,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
 
             auto safe = (*iter)->GetConnection();
 
-            if(!safe->IsOpen()){
+            if(!safe->IsValidForSend()){
                 // Player has probably closed their connection //
                 continue;
             }
@@ -585,7 +585,7 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
 
         auto safe = (*iter)->GetConnection();
 
-        if(!safe->IsOpen()){
+        if(!safe->IsValidForSend()){
             // Player has probably closed their connection //
             continue;
         }
@@ -706,9 +706,8 @@ void GameWorld::_DoDestroy(Lock &guard, ObjectID id){
 
 void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID id){
 
-    ResponseEntityDestruction response(-1, this->ID, id);
-
-    SendToAllPlayers(std::move(response), RECEIVE_GUARANTEE::Critical);
+     SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
+         RECEIVE_GUARANTEE::Critical);
 }
 
 // ------------------------------------ //
@@ -724,9 +723,8 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(Lock &guard, boo
         return;
 
     // Should be safe to create the packet now and send it to all the connections //
-    ResponseWorldFrozen response(-1, ID, WorldFrozen, TickNumber);
-
-    SendToAllPlayers(std::move(response), RECEIVE_GUARANTEE::Critical);
+    SendToAllPlayers(std::make_shared<ResponseWorldFrozen>(0, ID, WorldFrozen, TickNumber),
+        RECEIVE_GUARANTEE::Critical);
 }
 
 DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from,
@@ -828,10 +826,8 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
     }
 
     // Then gather all sorts of other stuff to make an response //
-    ResponseEntityCreation response(-1, id, std::move(packet));
-    
-    return connection->SendPacketToConnection(std::move(response),
-        RECEIVE_GUARANTEE::Critical).get() ? true: false;
+    return connection->SendPacketToConnection(std::make_shared<ResponseEntityCreation>(
+            0, id, std::move(packet)), RECEIVE_GUARANTEE::Critical).get() ? true: false;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleEntityInitialPacket(

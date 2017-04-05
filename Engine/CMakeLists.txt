@@ -116,6 +116,7 @@ else()
     "Networking/NetworkCache.cpp" "Networking/NetworkCache.h"
     "Networking/NetworkClientInterface.cpp" "Networking/NetworkClientInterface.h"
     "Networking/NetworkHandler.cpp" "Networking/NetworkHandler.h"
+    "Networking/MasterServerInfo.h"
     "Networking/NetworkInterface.cpp" "Networking/NetworkInterface.h"
     "Networking/NetworkRequest.cpp" "Networking/NetworkRequest.h"
     "Networking/NetworkResponse.cpp" "Networking/NetworkResponse.h"

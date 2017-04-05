@@ -9,6 +9,7 @@
 #include "Application/AppDefine.h"
 #include "SyncedVariables.h"
 #include "../Utility/Convert.h"
+#include "NetworkHandler.h"
 #include "Engine.h"
 using namespace Leviathan;
 using namespace std;
@@ -107,7 +108,7 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
 }
 // ------------------------------------ //
 bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, 
-    Connection &connection, bool &dontmarkasreceived)
+    Connection &connection)
 {
 
     // See if it is a sync packet //

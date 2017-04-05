@@ -25,11 +25,10 @@ public:
     DLLEXPORT ~NetworkMasterServerInterface();
    
     DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
-        Connection &connection);
+        Connection &connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection &connection,
-        bool &dontmarkasreceived);
+        std::shared_ptr<NetworkResponse> message, Connection &connection) override;
 
     DLLEXPORT void TickIt() override;
 

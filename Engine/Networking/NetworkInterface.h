@@ -57,8 +57,7 @@ public:
     //! by setting dontmarkasreceived as true.
     //! This function shouldn't throw any exceptions.
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection &connection,
-        bool &dontmarkasreceived) = 0;
+        std::shared_ptr<NetworkResponse> message, Connection &connection) = 0;
 
         
     //! \brief Called by Connection just before terminating an inactive connection
@@ -97,8 +96,7 @@ protected:
     }
 
     virtual bool _CustomHandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection &connection,
-        bool &dontmarkasreceived) 
+        std::shared_ptr<NetworkResponse> message, Connection &connection) 
     {
         return false;
     }
@@ -114,7 +112,7 @@ protected:
     //!
     //! Handles default types of response packages and returns true if processed.
     DLLEXPORT bool _HandleDefaultResponseOnly(std::shared_ptr<NetworkResponse> message,
-        Connection &connection, bool &dontmarkasreceived);
+        Connection &connection);
 
     DLLEXPORT void SetOwner(NetworkHandler* owner);
         

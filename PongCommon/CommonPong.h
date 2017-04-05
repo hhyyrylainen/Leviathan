@@ -12,6 +12,8 @@
 #include "Events/EventHandler.h"
 #include "GameInputController.h"
 #include "Networking/SyncedResource.h"
+#include "Networking/NetworkInterface.h"
+#include "Networking/NetworkHandler.h"
 #include "Newton/PhysicalMaterial.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "PlayerSlot.h"

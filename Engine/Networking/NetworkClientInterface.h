@@ -47,8 +47,7 @@ public:
         Connection &connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection &connection,
-        bool &dontmarkasreceived) override;
+        std::shared_ptr<NetworkResponse> message, Connection &connection) override;
 
     //! \brief Connects the client to a server
     //! \return Returns true when successfully started the join process,

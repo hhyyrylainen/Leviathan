@@ -21,8 +21,8 @@ set(TestSources
   TestFiles/NamedVars.cpp
   TestFiles/Components.cpp
   TestFiles/StdBehaviour.cpp
-  TestFiles/PacketsAndConnection.cpp
   TestFiles/PacketFormat.cpp
+  TestFiles/PacketsAndConnection.cpp
   TestFiles/NetworkTestHelpers.h
   )
 else()

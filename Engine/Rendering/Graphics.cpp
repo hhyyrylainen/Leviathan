@@ -16,6 +16,7 @@
 #include <OgreMeshManager.h>
 #include <boost/assign/list_of.hpp>
 #include <regex>
+#include <future>
 
 #include <SDL.h>
 using namespace Leviathan;

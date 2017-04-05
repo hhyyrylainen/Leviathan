@@ -6,6 +6,7 @@
 #include "Exceptions.h"
 #include "PlayerSlot.h"
 #include "Networking/NetworkServerInterface.h"
+#include "Window.h"
 #include "CommonPong.h"
 
 using namespace Pong;

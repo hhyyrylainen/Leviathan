@@ -37,6 +37,14 @@ constexpr auto DEFAULT_PACKET_FILL_AMOUNT = 1200;
 //! these ids are used to discard duplicate packets
 constexpr auto KEEP_IDS_FOR_DISCARD	= 40;
 
+// magic numbers
+constexpr uint16_t LEVIATHAN_NORMAL_PACKET = 0x4C6E;
+
+constexpr uint8_t NORMAL_RESPONSE_TYPE = 0x12;
+
+constexpr uint8_t NORMAL_REQUEST_TYPE = 0x28;
+
+
 //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
 enum class PING_FAIL_REASON {
     
@@ -110,6 +118,9 @@ public:
 
     using PacketReceiveStatus = std::map<uint32_t, RECEIVED_STATE>;
 
+    //! \brief Copies acts from copyfrom starting with the number firstpacketid
+    //!
+    //! Marks them as RECEIVED_STATE::AcksSent
     DLLEXPORT NetworkAckField(uint32_t firstpacketid, uint8_t maxacks,
         PacketReceiveStatus &copyfrom);
 
@@ -281,13 +292,21 @@ public:
         return RawAddress;
     }
 
+    //! \brief Returns a reference to a list of received packets that haven't been
+    //! acknowledged successfully to the other side
+    const auto& GetReceivedPackets() const{
+        return ReceivedRemotePackets;
+    }
+
 protected:
 
+    //! \param alreadyreceived If true only the message is unpacked and discarded
     DLLEXPORT void _HandleRequestPacket(Lock &guard, sf::Packet &packet, 
-        uint32_t packetnumber);
+        uint32_t messagenumber, bool alreadyreceived);
 
+    //! \param alreadyreceived If true only the message is unpacked and discarded
     DLLEXPORT void _HandleResponsePacket(Lock &guard, sf::Packet &packet, 
-        bool &ShouldNotBeMarkedAsReceived);
+        bool alreadyreceived);
 
     
     //! \brief Sets acks in a packet as properly sent in this
@@ -308,16 +327,18 @@ protected:
     //! Marks acks depending on packet to be lost
     DLLEXPORT void _FailPacketAcks(uint32_t packetid);
 
-    //! \brief Returns true if we have already received packet with id
-    //! \note Will also store the packet number for future look ups
-    bool _IsAlreadyReceived(uint32_t packetid);
+    //! \brief Returns true if we have already received message with number
+    //! \note Will also store it for future lookups
+    bool _IsAlreadyReceived(uint32_t messagenumber);
 
     //! \brief Closes the connection and reports an error
     DLLEXPORT void _OnRestrictFail(uint16_t type);
     
-private:
+protected:
 
-    DLLEXPORT bool _HandleInternalRequest(Lock &guard, std::shared_ptr<NetworkRequest> request);
+    DLLEXPORT bool _HandleInternalRequest(Lock &guard,
+        std::shared_ptr<NetworkRequest> request);
+    
     DLLEXPORT bool _HandleInternalResponse(Lock &guard, 
         std::shared_ptr<NetworkResponse> response);
 
@@ -336,7 +357,10 @@ private:
     //! \param dontsendacks If true first ack will be set to 0
     void _PreparePacketHeaderForPacket(Lock &guard, uint32_t localpacketid,
         uint32_t* firstmessagenumber, size_t messagenumbercount,
-        sf::Packet &tofill, bool dontsendacks = false);
+        sf::Packet &tofill);
+
+    //! \brief Fills Ack part of header
+    void _FillHeaderAcks(Lock &guard, uint32_t localpacketid, sf::Packet &tofill);
 
     //! \brief Returns a request matching the response's reference ID or NULL
     std::shared_ptr<SentRequest> _GetPossibleRequestForResponse(Lock &guard,
@@ -348,8 +372,8 @@ private:
     //! \returns True If already received a packet with the id
     bool _MarkNewAsReceived(uint32_t remotepacketid);
 
-    // ------------------------------------ //
-
+protected:
+    
     //! The main state of connection
     CONNECTION_STATE State = CONNECTION_STATE::NothingReceived;
 
@@ -381,7 +405,7 @@ private:
     //! In normal operation doesn't matter but in exceptional circumstances
     //! allows more acks to be sent by sending 2 group of acks for each round while
     //! waiting for confirmation of ack receive
-    bool FrontAcks = true;
+    bool FrontAcks = false;
 
     //! When acks pile up increase this value to send more acks
     //! \todo Implement this
@@ -402,9 +426,9 @@ private:
     //! other side as successfully sent
     std::vector<std::shared_ptr<SentAcks>> SentAckPackets;
 
-    //! IDs of packets used to drop same packets
+    //! Numbers of messages that have been received before, used to skip processing duplicates
     //! \todo Implement a lower bound (under which everything is dropped) and make this smaller
-    boost::circular_buffer<uint32_t> LastReceivedPacketIDs;
+    boost::circular_buffer<uint32_t> LastReceivedMessageNumbers;
 
     //! The remote port
     uint16_t TargetPortNumber;

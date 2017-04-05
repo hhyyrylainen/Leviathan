@@ -27,10 +27,11 @@
 
     <table>
     <caption id="message_response_packet_table">Normal Response Message Format</caption>
-    <tr><th>Type <th>ResponseType <th>Response to <th>Data 
-    <tr><td>uint8_t <td>uint16_t <td>uint32_t <td>variable size
-    <tr><td>0x12 <td>Type of response from \ref Leviathan::NETWORK_RESPONSE_TYPE
-    <td>RequestNumber or 0 if not in response to anything
+    <tr><th>Type <th>MessageNumber <th>ResponseType <th>Response to <th>Data 
+    <tr><td>uint8_t <td>uint32_t <td>uint16_t <td>uint32_t <td>variable size
+    <tr><td>0x12 <td>Identifier of this message. Starts at 1
+    <td>Type of response from \ref Leviathan::NETWORK_RESPONSE_TYPE
+    <td>MessageNumber of the request or 0 if not in response to anything
     <td>Data that the Leviathan::NetworkResponse class will handle
     </table>
 
@@ -38,10 +39,10 @@
 
     <table>
     <caption id="message_request_packet_table">Normal Request Message Format</caption>
-    <tr><th>Type <th>RequestType <th>RequestNumber <th>Data 
-    <tr><td>uint8_t <td>uint16_t <td>uint32_t <td>variable size
-    <tr><td>0x28 <td>Type of request from \ref Leviathan::NETWORK_REQUEST_TYPE
-    <td>Sequence number of this request. First is 1. May NOT be 0
+    <tr><th>Type <th>MessageNumber <th>RequestType <th>Data 
+    <tr><td>uint8_t <td>uint32_t <td>uint16_t <td>variable size
+    <tr><td>0x28 <td>Identifier of this message. Starts at 1
+    <td>Type of request from \ref Leviathan::NETWORK_REQUEST_TYPE
     <td>Data that the Leviathan::NetworkRequest class will handle
     </table>
 

@@ -9,7 +9,7 @@ class TestClientInterface : public NetworkClientInterface {
 public:
     
     virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
-        Connection &connection, bool &dontmarkasreceived) override 
+        Connection &connection) override 
     {
     }
 
@@ -25,7 +25,7 @@ public:
     TestServerInterface() : NetworkServerInterface(1, "TestServer"){ }
     
     virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
-        Connection &connection, bool &dontmarkasreceived) override 
+        Connection &connection) override 
     {
     }
 };

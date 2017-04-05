@@ -37,18 +37,17 @@ DLLEXPORT void Leviathan::NetworkMasterServerInterface::HandleRequestPacket(
 }
 
 DLLEXPORT void Leviathan::NetworkMasterServerInterface::HandleResponseOnlyPacket(
-    std::shared_ptr<NetworkResponse> message, Connection &connection, 
-    bool &dontmarkasreceived) 
+    std::shared_ptr<NetworkResponse> message, Connection &connection) 
 {
     LEVIATHAN_ASSERT(message, "message is null");
 
-    if (_HandleDefaultResponseOnly(message, connection, dontmarkasreceived))
+    if (_HandleDefaultResponseOnly(message, connection))
         return;
 
     // switch (message->GetType()) {
     // }
 
-    if (_CustomHandleResponseOnlyPacket(message, connection, dontmarkasreceived))
+    if (_CustomHandleResponseOnlyPacket(message, connection))
         return;
 
     LOG_ERROR("NetworkMasterServerInterface: failed to handle response of type: " +

@@ -6,6 +6,7 @@
 #include "Events/EventHandler.h"
 #include "TimeIncludes.h"
 #include "Networking/NetworkClientInterface.h"
+#include "Networking/NetworkHandler.h"
 #include <string>
 
 #include "../catch/catch.hpp"
@@ -37,19 +38,19 @@ public:
     void Error(const std::string &data) override {
 
         Logger::Error(data);
-        REQUIRE(false);
+        FAIL(data);
     }
 
     void Warning(const std::string &data) override {
 
         Logger::Warning(data);
-        REQUIRE(false);
+        FAIL(data);
     }
 
-    void Fatal(const std::string &Text) override {
+    void Fatal(const std::string &text) override {
 
-        Logger::Fatal(Text);
-        REQUIRE(false);
+        Logger::Fatal(text);
+        FAIL(text);
     }
 };
 

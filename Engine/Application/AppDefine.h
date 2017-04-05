@@ -3,15 +3,19 @@
 #include "Define.h"
 // ------------------------------------ //
 
-#include "Common/DataStoring/NamedVars.h"
-#include "Window.h"
-#include "Networking/NetworkHandler.h"
+#include "Networking/MasterServerInfo.h"
+
+#include "Common/ThreadSafe.h"
+
+#include <functional>
 
 #ifdef _WIN32
 #include "WindowsInclude.h"
 #endif // _WIN32
 
 namespace Leviathan{
+
+class NamedVars;
 
 struct WindowDataDetails{
     WindowDataDetails();

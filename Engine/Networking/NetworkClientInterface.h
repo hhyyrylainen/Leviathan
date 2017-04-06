@@ -21,7 +21,8 @@ class SentRequest;
 //! additionally in client network interface classes.
 //! \see NetworkInterface
 class NetworkClientInterface : public NetworkInterface{
-
+public:
+    
     enum class CLIENT_CONNECTION_STATE {
 
         //! Not connected to a server
@@ -112,6 +113,11 @@ public:
     //! \note Should be called by NetworkInterface::TickIt
     DLLEXPORT void TickIt() override;
 
+    auto GetServerConnectionState() const{
+
+        return ConnectState;
+    }
+
 protected:
 
     // Callbacks for child classes to implement //
@@ -139,6 +145,7 @@ protected:
     //! \note Here the application's connect data should be sent. The application
     //! specific connection routine should be done here
     DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
+    
 
 private:
         

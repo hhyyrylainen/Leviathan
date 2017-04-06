@@ -44,16 +44,6 @@ public:
     int ReceivedCount = 0;
 };
 
-class GapingConnectionTest : public Connection{
-public:
-
-    GapingConnectionTest(unsigned int port) : Connection(sf::IpAddress::LocalHost, port)
-    {
-        State = CONNECTION_STATE::Authenticated;
-    }
-
-};
-
 
 TEST_CASE("Connection correctly decodes ServerAllow and passes to ClientInterface",
     "[networking]")
@@ -162,7 +152,7 @@ protected:
     std::shared_ptr<Connection> ServerConnection;
 };
 
-TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[networking]") {
+TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[networking]"){
 
     RunListeningLoop(6);
 
@@ -177,6 +167,41 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
     CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
 
+}
+
+// TEST_CASE_METHOD(ConnectionTestFixture, "No infinite acks", "[networking]"){
+
+//     RunListeningLoop(6);
+
+//     // Should have been enough time to move to CONNECTION_STATE::Authenticated
+//     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
+//     CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+
+//     // Acks should quiet down after a while
+
+//     // I have no clue how to test this without making the Timer class
+//     // have a possibility for a dummy time variable
+//     RunListeningLoop(6);
+// }
+
+
+TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
+
+    RunListeningLoop(6);
+
+    // Should have been enough time to move to CONNECTION_STATE::Authenticated
+    CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
+    CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+
+    // Client requests to join game //
+    REQUIRE(ClientInterface.JoinServer(ClientConnection));
+
+    RunListeningLoop(6);
+
+    // CHECK(ClientInterface.GetServerConnectionState() ==
+    //     NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
+    
+    
 }
 
 

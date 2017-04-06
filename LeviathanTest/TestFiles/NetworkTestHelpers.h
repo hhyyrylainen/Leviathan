@@ -2,6 +2,7 @@
 
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/NetworkServerInterface.h"
+#include "Networking/Connection.h"
 
 namespace Leviathan{
 
@@ -28,6 +29,16 @@ public:
         Connection &connection) override 
     {
     }
+};
+
+class GapingConnectionTest : public Connection{
+public:
+
+    GapingConnectionTest(unsigned int port) : Connection(sf::IpAddress::LocalHost, port)
+    {
+        State = CONNECTION_STATE::Authenticated;
+    }
+
 };
 
 }

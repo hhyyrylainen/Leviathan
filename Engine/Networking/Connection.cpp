@@ -928,14 +928,8 @@ void Connection::_FillHeaderAcks(Lock &guard, uint32_t localpacketid, sf::Packet
             }
         }
 
-        if(firstselected == 0 || count == 0){
+        if(firstselected != 0 && count != 0){
 
-            LOG_WARNING("Connection: _FillHeaderAcks: there should have been acks to "
-                "send but none were found");
-            tofill << uint32_t(0);
-
-        } else {
-            
             // Create the ack field //
             auto tmpacks = std::make_shared<SentAcks>(localpacketid,
                 std::make_shared<NetworkAckField>(firstselected, count, 
@@ -947,6 +941,11 @@ void Connection::_FillHeaderAcks(Lock &guard, uint32_t localpacketid, sf::Packet
 
             // Put into the packet //
             tmpacks->AcksInThePacket->AddDataToPacket(tofill);
+            
+        } else {
+
+            // None were found //
+            tofill << uint32_t(0);
         }
     }
 }
@@ -1146,17 +1145,32 @@ DLLEXPORT void Leviathan::Connection::RemoveSucceededAcks(Lock &guard, NetworkAc
 
     // We need to loop through all our acks and erase them from the map (if set) //
     for (uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++){
-        // Loop the individual bits //
-        for (int bit = 0; bit < 8; bit++){
 
-            // Check is it set //
+        for(uint8_t bit = 0; bit < 8; ++bit){
+        
+            const auto id = (i * 8) + bit + acks.FirstPacketID;
+
             if(acks.Acks[i] & (1 << bit)){
 
-                // Remove it //
-                ReceivedRemotePackets.erase(acks.FirstPacketID + i * 8 + bit);
+                ReceivedRemotePackets.erase(id);
             }
         }
     }
+}
+
+DLLEXPORT std::vector<uint32_t> Connection::GetCurrentlySentAcks(){
+
+    std::vector<uint32_t> ids;
+
+    for(const auto& acks : SentAckPackets){
+
+        acks->AcksInThePacket->InvokeForEachAck([&](uint32_t id){
+
+                ids.push_back(id);
+            });
+    }
+
+    return ids;
 }
 
 // ------------------------------------ //
@@ -1280,14 +1294,6 @@ DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid,
 
         Acks[vecelement] |= (1 << (currentindex % 8));
 
-        // TODO: check does this actually need to be done
-        // It might be enough to just have single values in this map and mark them
-        // as sent by erasing them
-        if(iter->second == RECEIVED_STATE::StateReceived){
-
-            iter->second = RECEIVED_STATE::AcksSent;
-        }
-
         // Stop copying once enough acks have been set. The loop can end before this, but
         // that just leaves the rest of the acks as 0
         if(currentindex + 1 >= maxacks)
@@ -1343,4 +1349,17 @@ DLLEXPORT void NetworkAckField::AddDataToPacket(sf::Packet &packet){
     }
 }
 
+DLLEXPORT void NetworkAckField::InvokeForEachAck(std::function<void (uint32_t)> func){
+
+    for(size_t i = 0; i < Acks.size(); ++i){
+
+        for(uint8_t bit = 0; bit < 8; ++bit){
+        
+            const auto id = (i * 8) + bit + FirstPacketID;
+
+            if(Acks[i] & (1 << bit))
+                func(id);
+        }
+    }
+}
 

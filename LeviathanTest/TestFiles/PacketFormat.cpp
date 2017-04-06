@@ -1,6 +1,7 @@
 #include "Networking/Connection.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkRequest.h"
+#include "Networking/SentNetworkThing.h"
 
 #include "PartialEngine.h"
 //#include "../DummyLog.h"
@@ -15,27 +16,41 @@
 
 using namespace Leviathan;
 
-TEST_CASE("Packet header bytes test", "[networking]"){
+class UDPSocketAndClientFixture {
+protected:
 
-    // Receiver socket //
-    sf::UdpSocket socket;
-    socket.setBlocking(false);
-    REQUIRE(socket.bind(sf::Socket::AnyPort) == sf::Socket::Done);
+    UDPSocketAndClientFixture() : 
+        Client(NETWORKED_TYPE::Client, &ClientInterface)
+    {
+        socket.setBlocking(false);
+        REQUIRE(socket.bind(sf::Socket::AnyPort) == sf::Socket::Done);
+
+        REQUIRE(Client.Init(sf::Socket::AnyPort));
+
+        ClientConnection = std::make_shared<GapingConnectionTest>(socket.getLocalPort());
+
+        REQUIRE(ClientConnection);
+
+        Client._RegisterConnection(ClientConnection);
+
+        ClientConnection->Init(&Client);
+    }
+
+protected:
 
     PartialEngine<false> engine;
 
+    // Receiver socket //
+    sf::UdpSocket socket;
+
     TestClientInterface ClientInterface;
+    NetworkHandler Client;
 
-    NetworkHandler Client(NETWORKED_TYPE::Client, &ClientInterface);
+    std::shared_ptr<Connection> ClientConnection;
+};
 
-    REQUIRE(Client.Init(sf::Socket::AnyPort));
-
-    Connection ClientConnection(sf::IpAddress::LocalHost, socket.getLocalPort());
-
-    ClientConnection.Init(&Client);
-
-    CHECK(ClientConnection.GetState() == CONNECTION_STATE::NothingReceived);
-
+TEST_CASE_METHOD(UDPSocketAndClientFixture, "Packet header bytes test", "[networking]"){
+    
     SECTION("Header format"){
 
         // Test size of Connection request
@@ -268,6 +283,28 @@ TEST_CASE("Packet serialization and deserialization", "[networking]"){
 }
 
 TEST_CASE("Ack field filling", "[networking]") {
+
+    SECTION("Invoking on each set"){
+
+        std::vector<uint32_t> ids {1, 5, 6, 7, 12 };
+
+        NetworkAckField::PacketReceiveStatus packetsreceived;
+
+        for(auto id : ids)
+            packetsreceived[id] = RECEIVED_STATE::StateReceived;
+        
+        NetworkAckField acks(1, 32, packetsreceived);
+
+        std::vector<uint32_t> invoked;
+
+        acks.InvokeForEachAck([&](uint32_t id){
+
+                invoked.push_back(id);
+                
+            });
+
+        CHECK(ids == invoked);
+    }
 
     SECTION("Basic construction") {
 
@@ -513,11 +550,10 @@ TEST_CASE("Creating Acks in headers", "[networking]"){
         CHECK(count == 1);
 
         SECTION("Ack is marked as sent"){
-            
-            auto iter = packetlist.find(1);
-            REQUIRE(iter != packetlist.end());
-            const RECEIVED_STATE state = iter->second;
-            CHECK(state == RECEIVED_STATE::AcksSent);
+
+            const auto sentstuff = connection.GetCurrentlySentAcks();
+
+            CHECK(std::find(sentstuff.begin(), sentstuff.end(), 1) != sentstuff.end());
         }
         
     }
@@ -547,16 +583,11 @@ TEST_CASE("Creating Acks in headers", "[networking]"){
 
         SECTION("Ack is marked as sent"){
             
-            auto iter = packetlist.find(1);
-            REQUIRE(iter != packetlist.end());
-            CHECK(iter->second == RECEIVED_STATE::AcksSent);
+            const auto sentstuff = connection.GetCurrentlySentAcks();
 
-            iter = packetlist.find(2);
-            REQUIRE(iter != packetlist.end());
-            CHECK(iter->second == RECEIVED_STATE::AcksSent);
-
-            iter = packetlist.find(3);
-            CHECK(iter == packetlist.end());
+            CHECK(std::find(sentstuff.begin(), sentstuff.end(), 1) != sentstuff.end());
+            CHECK(std::find(sentstuff.begin(), sentstuff.end(), 2) != sentstuff.end());
+            CHECK(std::find(sentstuff.begin(), sentstuff.end(), 3) == sentstuff.end());
         }
     }
 
@@ -639,25 +670,10 @@ TEST_CASE("Creating Acks in headers", "[networking]"){
     }
 }
 
-TEST_CASE("Manually constructed packet decoding", "[networking]"){
 
-    // Sender socket //
-    sf::UdpSocket socket;
-    socket.setBlocking(false);
-    REQUIRE(socket.bind(sf::Socket::AnyPort) == sf::Socket::Done);
-
-    PartialEngine<false> engine;
-
-    TestClientInterface ClientInterface;
-
-    NetworkHandler Client(NETWORKED_TYPE::Client, &ClientInterface);
-
-    REQUIRE(Client.Init(sf::Socket::AnyPort));
-
-    Connection ClientConnection(sf::IpAddress::LocalHost, socket.getLocalPort());
-
-    ClientConnection.Init(&Client);
-
+TEST_CASE_METHOD(UDPSocketAndClientFixture, "Manually constructed packet decoding",
+    "[networking]")
+{
     // Throw away the first packet
     sf::Packet received;
     sf::IpAddress sender;
@@ -676,16 +692,18 @@ TEST_CASE("Manually constructed packet decoding", "[networking]"){
         requestConnect.AddDataToPacket(requestPacket);
     }
 
-    ClientConnection.HandlePacket(requestPacket);
+    ClientConnection->HandlePacket(requestPacket);
 
-    auto& packetlist = ClientConnection.GetReceivedPackets();
+    auto& packetlist = ClientConnection->GetReceivedPackets();
 
     {
-        REQUIRE(!packetlist.empty());
         auto iter = packetlist.find(1);
         REQUIRE(iter != packetlist.end());
-        const RECEIVED_STATE state = iter->second;
-        CHECK(state == RECEIVED_STATE::AcksSent);
+        CHECK(iter->second == RECEIVED_STATE::StateReceived);
+
+        const auto sentstuff = ClientConnection->GetCurrentlySentAcks();
+
+        CHECK(std::find(sentstuff.begin(), sentstuff.end(), 1) != sentstuff.end());
     }
 
     // We should have gotten a response ResponseConnect //
@@ -700,7 +718,7 @@ TEST_CASE("Manually constructed packet decoding", "[networking]"){
         CHECK(socket.receive(received, sender, sentport) != sf::Socket::Done);
     }
 
-    CHECK(ClientConnection.GetState() != CONNECTION_STATE::NothingReceived);
+    CHECK(ClientConnection->GetState() != CONNECTION_STATE::NothingReceived);
 
     SECTION("Received Response correct format"){
 
@@ -791,6 +809,124 @@ TEST_CASE("Manually constructed packet decoding", "[networking]"){
         }
     }
     
+}
+
+
+TEST_CASE("Finalize callback works", "[networking]"){
+
+    auto response = std::make_shared<SentResponse>(1, 1, RECEIVE_GUARANTEE::Critical,
+        std::make_shared<ResponseConnect>(0));
+
+    bool successSet = false;
+    bool callbackCalled = false;
+
+    response->SetCallbackFunc([&](bool success, SentNetworkThing &thing){
+
+            callbackCalled = true;
+            successSet = success;
+                
+        });
+
+    SECTION("Success"){
+
+        response->OnFinalized(true);
+        CHECK(callbackCalled);
+        CHECK(successSet);
+    }
+
+    SECTION("Failure"){
+
+        response->OnFinalized(false);
+        CHECK(callbackCalled);
+        CHECK(!successSet);
+    }
+}
+
+TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Requests get completed", "[networking]"){
+
+    auto request = std::make_shared<RequestNone>(NETWORK_REQUEST_TYPE::Echo);
+    
+    auto sent = ClientConnection->SendPacketToConnection(request, RECEIVE_GUARANTEE::Critical);
+
+    bool successSet = false;
+    bool callbackCalled = false;
+
+    sent->SetCallbackFunc([&](bool success, SentNetworkThing &thing){
+
+            callbackCalled = true;
+            successSet = success;
+        });
+    
+    // Create packet //
+    sf::Packet response;
+
+    response << LEVIATHAN_NORMAL_PACKET << uint32_t(1) << uint32_t(0) << uint8_t(1) <<
+        NORMAL_RESPONSE_TYPE << uint32_t(1);
+
+    {
+        ResponseServerAllow responseAllow(sent->PacketNumber,
+            SERVER_ACCEPTED_TYPE::RequestQueued, "response");
+        responseAllow.AddDataToPacket(response);
+    }
+
+    REQUIRE(socket.send(response, sf::IpAddress::LocalHost, Client.GetOurPort()) ==
+        sf::Socket::Done);
+
+    Client.UpdateAllConnections();
+
+    CHECK(callbackCalled);
+    CHECK(successSet);
+    
+}
+
+TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[networking]"){
+
+    auto response = std::make_shared<ResponseNone>(NETWORK_RESPONSE_TYPE::Keepalive);
+    
+    auto sent = ClientConnection->SendPacketToConnection(response,
+        RECEIVE_GUARANTEE::Critical);
+
+    bool successSet = false;
+    bool callbackCalled = false;
+
+    sent->SetCallbackFunc([&](bool success, SentNetworkThing &thing){
+
+            callbackCalled = true;
+            successSet = success;
+        });
+    
+    // Create packet //
+    sf::Packet ackPacket;
+
+    SECTION("From normal packet"){
+
+        NetworkAckField::PacketReceiveStatus fakeReceived;
+        fakeReceived[1] = RECEIVED_STATE::StateReceived;
+
+        NetworkAckField tosend(1, 32, fakeReceived);
+
+        ackPacket << LEVIATHAN_NORMAL_PACKET << uint32_t(1);
+        // Ack header start
+        tosend.AddDataToPacket(ackPacket);
+
+        // No messages
+        ackPacket << uint8_t(0);
+
+        REQUIRE(socket.send(ackPacket, sf::IpAddress::LocalHost, Client.GetOurPort()) ==
+            sf::Socket::Done);
+
+        Client.UpdateAllConnections();
+
+        CHECK(callbackCalled);
+        CHECK(successSet);
+    }
+
+    SECTION("Ack only packet"){
+
+        INFO("Testing with ack only packet");
+    }
+
+
 }
 
 

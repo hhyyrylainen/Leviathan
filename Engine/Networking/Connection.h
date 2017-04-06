@@ -31,7 +31,8 @@ constexpr auto ACKKEEPALIVE = 200;
 
 //! Number of bytes that should be in each packet for it to be considered full
 //! Could probably be set to 1452 and still be fine on most connections
-constexpr auto DEFAULT_PACKET_FILL_AMOUNT = 1200;
+//! But ipv4 promises that at least 512 byte payload should work
+constexpr auto DEFAULT_PACKET_FILL_AMOUNT = 512;
 
 //! \brief The amount of received packet ids to keep in memory,
 //! these ids are used to discard duplicate packets
@@ -104,6 +105,7 @@ enum class RECEIVED_STATE{
     StateReceived,
 
     //! Packet is received and an ack has been sent
+    //! This is basically the same as ReceivedAckSucceeded
     AcksSent,
 
     //! Packet is received and the ack is also received
@@ -139,6 +141,9 @@ public:
 
         return (Acks[vecelement] & (1 << (ackindex % 8))) != 0;
     }
+
+    //! \brief Calls func with each set ack
+    DLLEXPORT void InvokeForEachAck(std::function<void (uint32_t)> func);
 
     // Data //
     uint32_t FirstPacketID;
@@ -287,6 +292,10 @@ public:
     //!
     //! Used to mark our packets as sent
     DLLEXPORT void HandleRemoteAck(Lock &guard, uint32_t localidconfirmedassent);
+
+
+    //! \brief Basically a debug method (this is very slow)
+    DLLEXPORT std::vector<uint32_t> GetCurrentlySentAcks();
 
     inline std::string GetRawAddress() const {
         return RawAddress;

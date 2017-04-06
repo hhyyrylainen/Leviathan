@@ -879,12 +879,52 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Requests get completed", "[n
     
 }
 
+TEST_CASE_METHOD(UDPSocketAndClientFixture, "Resend shouldn't happen inside a test",
+    "[networking]")
+{
+
+    auto response = std::make_shared<ResponseNone>(NETWORK_RESPONSE_TYPE::Keepalive);
+    
+    auto sent = ClientConnection->SendPacketToConnection(response,
+        RECEIVE_GUARANTEE::Critical);
+
+    const auto inPacket = sent->PacketNumber;
+
+    CHECK(inPacket == 2);
+    
+    sf::Packet received;
+
+    sf::IpAddress sender;
+    unsigned short sentport;
+
+    // Connect request
+    REQUIRE(socket.receive(received, sender, sentport) == sf::Socket::Done);
+
+    // Response
+    REQUIRE(socket.receive(received, sender, sentport) == sf::Socket::Done);
+
+    // Shouldn't be a resend
+    REQUIRE(socket.receive(received, sender, sentport) != sf::Socket::Done);
+
+    // Even after running update once
+    Client.UpdateAllConnections();
+
+    REQUIRE(socket.receive(received, sender, sentport) != sf::Socket::Done);
+
+    CHECK(inPacket == sent->PacketNumber);
+
+}
+
 TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[networking]"){
 
     auto response = std::make_shared<ResponseNone>(NETWORK_RESPONSE_TYPE::Keepalive);
     
     auto sent = ClientConnection->SendPacketToConnection(response,
         RECEIVE_GUARANTEE::Critical);
+
+    const auto inPacket = sent->PacketNumber;
+
+    CHECK(inPacket == 2);
 
     bool successSet = false;
     bool callbackCalled = false;
@@ -900,31 +940,53 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
 
     SECTION("From normal packet"){
 
-        NetworkAckField::PacketReceiveStatus fakeReceived;
-        fakeReceived[1] = RECEIVED_STATE::StateReceived;
+        SECTION("Packet object"){
+            
+            NetworkAckField::PacketReceiveStatus fakeReceived;
+            fakeReceived[inPacket] = RECEIVED_STATE::StateReceived;
 
-        NetworkAckField tosend(1, 32, fakeReceived);
+            NetworkAckField tosend(1, 32, fakeReceived);
 
-        ackPacket << LEVIATHAN_NORMAL_PACKET << uint32_t(1);
-        // Ack header start
-        tosend.AddDataToPacket(ackPacket);
+            ackPacket << LEVIATHAN_NORMAL_PACKET << uint32_t(1);
+            // Ack header start
+            tosend.AddDataToPacket(ackPacket);
 
-        // No messages
-        ackPacket << uint8_t(0);
+            // No messages
+            ackPacket << uint8_t(0);
+        }
 
-        REQUIRE(socket.send(ackPacket, sf::IpAddress::LocalHost, Client.GetOurPort()) ==
-            sf::Socket::Done);
+        SECTION("Manual bytes"){
 
-        Client.UpdateAllConnections();
+            NetworkAckField::PacketReceiveStatus fakeReceived;
+            fakeReceived[inPacket] = RECEIVED_STATE::StateReceived;
 
-        CHECK(callbackCalled);
-        CHECK(successSet);
+            NetworkAckField tosend(1, 32, fakeReceived);
+
+            ackPacket << LEVIATHAN_NORMAL_PACKET << uint32_t(1)
+                // Ack header start
+                << uint32_t(2) << uint8_t(1) << uint8_t(0x1) << 
+                // No messages
+                ackPacket << uint8_t(0);
+        }
     }
 
     SECTION("Ack only packet"){
 
         INFO("Testing with ack only packet");
+
+        ackPacket << LEVIATHAN_ACK_PACKET << uint8_t(1) << inPacket;
     }
+
+
+    REQUIRE(socket.send(ackPacket, sf::IpAddress::LocalHost, Client.GetOurPort()) ==
+        sf::Socket::Done);
+
+    Client.UpdateAllConnections();
+
+    CHECK(inPacket == sent->PacketNumber);
+        
+    CHECK(callbackCalled);
+    CHECK(successSet);
 
 
 }

@@ -479,7 +479,7 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
 
     if(!packet){
 
-        Logger::Get()->Error("Received package has invalid format");
+        Logger::Get()->Error("Received packet has invalid format");
     }
 
 #ifdef OUTPUT_PACKET_BITS
@@ -495,7 +495,7 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
     
     if(!(packet >> messageCount)){
 
-        Logger::Get()->Error("Received package has invalid format, missing Message Count");
+        Logger::Get()->Error("Received packet has invalid format, missing Message Count");
     }
 
     // Marks things as successfully sent //
@@ -1127,14 +1127,13 @@ DLLEXPORT void Leviathan::Connection::SetPacketsReceivedIfNotSet(Lock &guard,
     // We need to loop through all our acks and set them in the map //
     for (uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++){
 
-        // Loop the individual bits //
-        for (int bit = 0; bit < 8; bit++){
+        for(uint8_t bit = 0; bit < 8; ++bit){
+        
+            const auto id = (i * 8) + bit + acks.FirstPacketID;
 
-            // Check is it set //
             if(acks.Acks[i] & (1 << bit)){
 
-                // Set as received //
-                HandleRemoteAck(guard, acks.FirstPacketID + i * 8 + bit);
+                HandleRemoteAck(guard, id);
             }
         }
     }

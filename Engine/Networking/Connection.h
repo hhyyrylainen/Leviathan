@@ -41,6 +41,8 @@ constexpr auto KEEP_IDS_FOR_DISCARD	= 40;
 // magic numbers
 constexpr uint16_t LEVIATHAN_NORMAL_PACKET = 0x4C6E;
 
+constexpr uint16_t LEVIATHAN_ACK_PACKET = 0x4C61;
+
 constexpr uint8_t NORMAL_RESPONSE_TYPE = 0x12;
 
 constexpr uint8_t NORMAL_REQUEST_TYPE = 0x28;

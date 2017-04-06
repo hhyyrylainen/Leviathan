@@ -53,10 +53,21 @@
     <caption id="packet_type_values_table">Packet Types</caption>
     <tr><th>Type / Description <th>HEX Code
     <tr><td>Normal packet. Follows the rules in the packet format <td>0x4C6E (Ln)
+    <tr><td>Ack only packet. \ref ack_only_packet_table "Ack Only Special Packet" <td>0x4C61 (La)
+    
     </table>
 
     New types for encrypted packets may be added later. Some message
     types (like login) will probably force the type to be encrypted.
 
-
+    <table>
+    <caption id="ack_only_packet_table">Ack Only Special Packet</caption>
+    <tr><th>Type <th>Ack Count <th>Acks 
+    <tr><td>uint16_t <td>uint8_t <td>uint32_t * Ack Count
+    <tr><td>0x4C61
+    <td>Number of acks in this packet. Should always be > 0.<br>
+    And less than 5 because at that point it would be better to send a full packet
+    <td>The IDs of the packets that are being acknowledged
+    </table>
+    
 */

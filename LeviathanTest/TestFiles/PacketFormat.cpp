@@ -972,8 +972,6 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
 
     SECTION("Ack only packet"){
 
-        INFO("Testing with ack only packet");
-
         ackPacket << LEVIATHAN_ACK_PACKET << uint8_t(1) << inPacket;
     }
 

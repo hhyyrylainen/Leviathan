@@ -429,7 +429,21 @@ DLLEXPORT void Connection::UpdateListening(){
     _HandleTimeouts(guard, timems, ResponsesNeedingConfirmation);
 
 
-    bool AcksCouldBeSent = false;
+    // Send keep alive packet if it has been a while //
+    if(timems > LastSentPacketTime+KEEPALIVE_TIME){
+        
+        // Send a keep alive packet //
+        // Which must reach the other side or the connection is considered lost
+        auto response = std::make_shared<ResponseNone>(NETWORK_RESPONSE_TYPE::Keepalive);
+        
+        SendPacketToConnection(guard, response, RECEIVE_GUARANTEE::Critical);
+        return;
+    }
+
+    bool acksCouldBeSent = false;
+    
+    // Determines which packet type to send
+    int ackCount = 0;
 
     // Check if we have acks that haven't been sent //
     for(auto iter = ReceivedRemotePackets.begin(); iter != ReceivedRemotePackets.end(); 
@@ -438,23 +452,57 @@ DLLEXPORT void Connection::UpdateListening(){
         if(iter->second == RECEIVED_STATE::StateReceived){
 
             // Waiting to be sent //
-            AcksCouldBeSent = true;
-            break;
+            acksCouldBeSent = true;
+            ++ackCount;
+
+            if(ackCount > ACK_ONLY_DEFAULT_MAX)
+                break;
         }
     }
 
-    // Send keep alive packet if it has been a while //
-    if(timems > LastSentPacketTime+KEEPALIVE_TIME){
-        
-        // Send a keep alive packet //
-        SendKeepAlivePacket(guard);
+    if(acksCouldBeSent && timems > LastSentPacketTime + ACKKEEPALIVE){
 
-    } else if(AcksCouldBeSent && timems > LastSentPacketTime+ACKKEEPALIVE){
+        if(ackCount < ACK_ONLY_DEFAULT_MAX){
 
-        // Send some acks //
-        SendKeepAlivePacket(guard);
+            // Send acks only //
+            std::vector<uint32_t> ackNumbers;
+            ackNumbers.reserve(ACK_ONLY_DEFAULT_MAX);
+            
+            for(auto iter = ReceivedRemotePackets.begin(); iter != ReceivedRemotePackets.end();
+                )
+            {
+                if(iter->second == RECEIVED_STATE::StateReceived){
+
+                    ackNumbers.push_back(iter->first);
+
+                    // These are deleted because there is no other way to mark them as sent
+                    // In case this is lost and the received doesn't get the acks they should
+                    // resend all the things and combined with the previous message ids
+                    iter = ReceivedRemotePackets.erase(iter);
+                    
+                } else {
+
+                    ++iter;
+                }
+            }
+
+            sf::Packet ackPacket;
+
+            CreateAckOnlyPacket(ackPacket, ackNumbers);
+
+            _SendPacketToSocket(ackPacket);
+
+            if(DOUBLE_SEND_FOR_ACK_ONLY){
+                
+                _SendPacketToSocket(ackPacket);
+            }
+            
+        } else {
+
+            // Send some acks //
+            SendKeepAlivePacket(guard);
+        }
     }
-
 }
 // ------------------------------------ //
 DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
@@ -465,21 +513,10 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
     uint16_t leviathanMagic = 0;
     packet >> leviathanMagic;
     
-    uint32_t packetnumber = 0;
-    packet >> packetnumber;
-
     if(!packet){
 
         Logger::Get()->Error("Received packet has invalid (header) format");
-    }
-
-    GUARD_LOCK();
-
-    NetworkAckField otherreceivedpackages(packet);
-
-    if(!packet){
-
-        Logger::Get()->Error("Received packet has invalid format");
+        return;
     }
 
 #ifdef OUTPUT_PACKET_BITS
@@ -490,71 +527,127 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
 
 #endif // OUTPUT_PACKET_BITS
 
-    // Messages //
-    uint8_t messageCount = 0;
-    
-    if(!(packet >> messageCount)){
+    GUARD_LOCK();
 
-        Logger::Get()->Error("Received packet has invalid format, missing Message Count");
-    }
+    switch(leviathanMagic){
+    case LEVIATHAN_NORMAL_PACKET:
+    {
+        uint32_t packetnumber = 0;
+        packet >> packetnumber;
 
-    // Marks things as successfully sent //
-    SetPacketsReceivedIfNotSet(guard, otherreceivedpackages);
-
-    // Report the packet as received //
-    ReceivedRemotePackets[packetnumber] = RECEIVED_STATE::StateReceived;
-
-    for(int i = 0; i < messageCount; ++i){
-
-        uint8_t messageType = 0;
-        packet >> messageType;
-
-        uint32_t messageNumber = 0;
-        packet >> messageNumber;
-        
         if(!packet){
 
-            LOG_ERROR("Connection: received packet has an invalid message "
-                "(some may have been processed already)");
+            Logger::Get()->Error("Received packet has invalid (packet number) format");
             return;
         }
 
-        // We can discard this here if this is message is already received //
-        bool alreadyReceived = false;
-        
-        if(_IsAlreadyReceived(messageNumber)){
+        NetworkAckField otherreceivedpackages(packet);
 
-            alreadyReceived = true;
+        if(!packet){
+
+            Logger::Get()->Error("Received packet has invalid format");
         }
 
-        switch(messageType){
-        case NORMAL_RESPONSE_TYPE:
-        {
-            _HandleResponsePacket(guard, packet, 
-                alreadyReceived);
-
-            break;
-        }
-        case NORMAL_REQUEST_TYPE:
-        {
-            _HandleRequestPacket(guard, packet, messageNumber, alreadyReceived);
-            break;
-        }
-        default:
-        {
-            LOG_ERROR("Connection: received packet has unknown message type (" +
-                Convert::ToString(messageType) + "(some may have been processed already)");
-            return;
-        }
-            
-        }
-    }
-
-    LastReceivedPacketTime = Time::GetTimeMs64();
-
-    if(State == CONNECTION_STATE::NothingReceived){
+        // Messages //
+        uint8_t messageCount = 0;
     
-        State = CONNECTION_STATE::Initial;
+        if(!(packet >> messageCount)){
+
+            Logger::Get()->Error("Received packet has invalid format, missing Message Count");
+        }
+
+        // Marks things as successfully sent //
+        SetPacketsReceivedIfNotSet(guard, otherreceivedpackages);
+
+        // Report the packet as received //
+        ReceivedRemotePackets[packetnumber] = RECEIVED_STATE::StateReceived;
+
+        for(int i = 0; i < messageCount; ++i){
+
+            uint8_t messageType = 0;
+            packet >> messageType;
+
+            uint32_t messageNumber = 0;
+            packet >> messageNumber;
+        
+            if(!packet){
+
+                LOG_ERROR("Connection: received packet has an invalid message "
+                    "(some may have been processed already)");
+                return;
+            }
+
+            // We can discard this here if this is message is already received //
+            bool alreadyReceived = false;
+        
+            if(_IsAlreadyReceived(messageNumber)){
+
+                alreadyReceived = true;
+            }
+
+            switch(messageType){
+            case NORMAL_RESPONSE_TYPE:
+            {
+                _HandleResponsePacket(guard, packet, 
+                    alreadyReceived);
+
+                break;
+            }
+            case NORMAL_REQUEST_TYPE:
+            {
+                _HandleRequestPacket(guard, packet, messageNumber, alreadyReceived);
+                break;
+            }
+            default:
+            {
+                LOG_ERROR("Connection: received packet has unknown message type (" +
+                    Convert::ToString(messageType) + "(some may have been processed already)");
+                return;
+            }
+            
+            }
+        }
+
+        LastReceivedPacketTime = Time::GetTimeMs64();
+
+        if(State == CONNECTION_STATE::NothingReceived){
+    
+            State = CONNECTION_STATE::Initial;
+        }
+        
+        return;
+    }
+    case LEVIATHAN_ACK_PACKET:
+    {
+        uint8_t ackCount = 0;
+
+        if(!(packet >> ackCount)){
+
+            LOG_ERROR("Received packet has invalid (ack number) format");
+            return;
+        }
+
+        for(uint8_t i = 0; i < ackCount; ++i){
+
+            uint32_t ack = 0;
+
+            if(!(packet >> ack)){
+
+                LOG_ERROR("Received packet ended while acks were being unpacked, "
+                    "some were applied");
+                return;
+            }
+            
+            HandleRemoteAck(guard, ack);
+        }
+        
+        return;
+    }
+    default:
+    {
+        LOG_ERROR("Received packet has an unknown type: " + Convert::ToString(leviathanMagic));
+        return;
+    }
     }
 }
 
@@ -1235,6 +1328,24 @@ DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type){
         GenerateFormatedAddressString());
 
     Owner->CloseConnection(*this);
+}
+// ------------------------------------ //
+DLLEXPORT void Connection::CreateAckOnlyPacket(sf::Packet &packet,
+    const std::vector<uint32_t> &packetstoack)
+{
+    packet << LEVIATHAN_ACK_PACKET;
+
+    LEVIATHAN_ASSERT(packetstoack.size() < std::numeric_limits<uint8_t>::max(),
+        "CreateAckOnlyPacket too many packetstoack provided, can't fit in uint8");
+
+    const uint8_t count = static_cast<uint8_t>(packetstoack.size());
+
+    packet << count;
+
+    for(uint8_t i = 0; i < count; ++i){
+
+        packet << packetstoack[i];
+    }
 }
 
 // ------------------ NetworkAckField ------------------ //

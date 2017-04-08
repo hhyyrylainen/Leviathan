@@ -29,14 +29,22 @@ constexpr auto DEFAULT_ACKCOUNT = 32;
 constexpr auto KEEPALIVE_TIME = 120000;
 constexpr auto ACKKEEPALIVE = 200;
 
+constexpr auto ACK_ONLY_DEFAULT_MAX = 4;
+
+//! If true 2 ack only packets are created each time one is sent
+constexpr auto DOUBLE_SEND_FOR_ACK_ONLY = true;
+
 //! Number of bytes that should be in each packet for it to be considered full
 //! Could probably be set to 1452 and still be fine on most connections
 //! But ipv4 promises that at least 512 byte payload should work
 constexpr auto DEFAULT_PACKET_FILL_AMOUNT = 512;
 
-//! \brief The amount of received packet ids to keep in memory,
-//! these ids are used to discard duplicate packets
-constexpr auto KEEP_IDS_FOR_DISCARD	= 40;
+//! \brief The amount of received message numbers to keep in memory,
+//! these numbers are used to discard duplicates
+//!
+//! This is required for ack only packets to work correctly (as they
+//! rely on getting a resend if the acks are lost)
+constexpr auto KEEP_IDS_FOR_DISCARD	= 50;
 
 // magic numbers
 constexpr uint16_t LEVIATHAN_NORMAL_PACKET = 0x4C6E;
@@ -308,6 +316,9 @@ public:
     const auto& GetReceivedPackets() const{
         return ReceivedRemotePackets;
     }
+
+    DLLEXPORT static void CreateAckOnlyPacket(sf::Packet &packet,
+        const std::vector<uint32_t> &packetstoack);
 
 protected:
 

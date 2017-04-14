@@ -198,8 +198,8 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
 
     RunListeningLoop(6);
 
-    // CHECK(ClientInterface.GetServerConnectionState() ==
-    //     NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
+    CHECK(ClientInterface.GetServerConnectionState() ==
+        NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
     
     
 }

@@ -71,6 +71,8 @@
             <Property name="SizingBorderThickness" value="3.0"/>
             <Property name="AlwaysOnTop" value="True"/>
             <Property name="DragMovingEnabled" value="False"/>
+
+            <Property name="Font" value="Simonetta-Regular"/>
             
             
             <Property name="Text" value="Main Menu"/>
@@ -149,6 +151,8 @@
             <Property name="SizingBorderThickness" value="3.0"/>
             <Property name="AlwaysOnTop" value="True"/>
             <Property name="DragMovingEnabled" value="False"/>
+
+            <Property name="Font" value="Simonetta-Regular"/>
             
             
             <Property name="Text" value="Start a local server"/>
@@ -182,7 +186,8 @@
             <Property name="SizingBorderThickness" value="3.0"/>
             <Property name="AlwaysOnTop" value="True"/>
             <Property name="DragMovingEnabled" value="False"/>
-            
+
+            <Property name="Font" value="Simonetta-Regular"/>
             
             <Property name="Text" value="Available servers"/>
             
@@ -221,7 +226,8 @@
             <Property name="SizingEnabled" value="True"/>
             <Property name="SizingBorderThickness" value="3.0"/>
             <Property name="AlwaysOnTop" value="True"/>
-            
+
+            <Property name="Font" value="Simonetta-Regular"/>
             
             <Property name="Text" value="Connect to an address"/>
             
@@ -380,6 +386,7 @@
         <Property name="Area" value="{{0.02, 0}, {0.70, 0}, {0.76, 0}, {1, 0}}"/>
         
         <Property name="Text" value="Chat"/>
+
         <Property name="Font" value="Simonetta-Regular"/>
         
         <Property name="CloseButtonEnabled" value="False"/>

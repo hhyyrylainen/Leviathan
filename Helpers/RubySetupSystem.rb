@@ -844,7 +844,7 @@ end
 class AngelScript < BaseDep
   def initialize
     super("AngelScript", "angelscript")
-    @WantedURL = "http://svn.code.sf.net/p/angelscript/code/tags/2.31.0"
+    @WantedURL = "http://svn.code.sf.net/p/angelscript/code/tags/2.31.2"
 
     if @WantedURL[-1, 1] == '/'
       abort "Invalid configuraion in Setup.rb AngelScript tag has an ending '/'. Remove it!"

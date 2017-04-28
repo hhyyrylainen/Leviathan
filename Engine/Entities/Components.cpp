@@ -122,8 +122,9 @@ DLLEXPORT void Physics::GiveImpulse(const Float3 &deltaspeed, const Float3 &poin
 {
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
-    
-    NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X);
+
+    // No clue what the delta step should be
+    NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X, 0.1f);
 }
 
 DLLEXPORT void Physics::SetVelocity(const Float3 &velocities){

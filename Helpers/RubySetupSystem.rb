@@ -1328,7 +1328,7 @@ class CEGUI < BaseDep
     #system "hg update default"
 
     # TODO: allow configuring this commit
-    system "hg update TODO:MYFIXEDCOMMITHERE"
+    system "hg update 6510156"
     
     $?.exitstatus == 0
   end

@@ -1,0 +1,4 @@
+[submodule "RubySetupSystem"]
+	path = RubySetupSystem
+	url = git@github.com:hhyyrylainen/RubySetupSystem.git
+	branch = master

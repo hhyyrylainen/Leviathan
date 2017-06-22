@@ -4,6 +4,10 @@
 # Downloads the assets and dependencies and then builds and installs them
 # NOTE: sudo is required on linux
 
+# TODO: update the things
+# Ogre required libs: rapidjson-devel
+# compile flags: OGRE_CONFIG_THREADS=2 (background resources) OGRE_CONFIG_THREAD_PROVIDER=std
+
 require 'fileutils'
 
 require_relative 'Helpers/RubyCommon.rb'
@@ -34,14 +38,8 @@ FetchAssets = true
 
 
 # All the objects
-if BuildPlatform == "windows"
-
-  installer = Installer.new(Array[Newton.new, AngelScript.new, OpenAL.new, CAudio.new,
-                                  SFML.new, Ogre.new, CEGUIDependencies.new, CEGUI.new])
-else
-  installer = Installer.new(Array[Newton.new, AngelScript.new, CAudio.new, SFML.new, Ogre.new,
-                                  CEGUI.new])
-end
+installer = Installer.new(Array[Newton.new, AngelScript.new, SFML.new, Ogre.new,
+                                CEGUIDependencies.new, CEGUI.new])
 
 if GetBreakpad
 

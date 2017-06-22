@@ -482,7 +482,7 @@ playrscorelistupdateendlabel:
 
     GameArena->LetGoOfBall();
 
-    Leviathan::ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([](
+    Leviathan::ThreadingManager::Get()->QueueTask(new QueuedTask(std::bind<void>([](
                     int LastPlayerHitBallID, PongServer* instance) -> void
         {
 

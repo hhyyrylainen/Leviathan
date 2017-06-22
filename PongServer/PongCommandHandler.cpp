@@ -222,7 +222,7 @@ void Pong::PongCommandHandler::ExecuteCommand(const string &wholecommand, Comman
 
     } else if(*cmd == "start"){
 
-        ThreadingManager::Get()->QueueTask(new QueuedTask(boost::bind<void>([]() -> void
+        ThreadingManager::Get()->QueueTask(new QueuedTask(std::bind<void>([]() -> void
             {
 
                 Logger::Get()->Info("TODO: check permissions");

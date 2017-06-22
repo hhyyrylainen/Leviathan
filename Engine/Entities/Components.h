@@ -172,7 +172,7 @@ public:
     std::string Material;
 
     //! Entity created from a box mesh
-    Ogre::Entity* GraphicalObject = nullptr;
+    Ogre::Item* GraphicalObject = nullptr;
 };
 
 //! \brief Entity has a model
@@ -187,7 +187,7 @@ public:
     std::string ModelFile;
 
     //! The entity that has this model's mesh loaded
-    Ogre::Entity* GraphicalObject = nullptr;
+    Ogre::Item* GraphicalObject = nullptr;
 };
 
 

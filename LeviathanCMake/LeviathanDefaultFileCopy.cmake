@@ -111,7 +111,7 @@ if(USE_OGRE AND NOT WIN32)
     ${OGRE_Plugin_CgProgramManager_LIBRARIES} 
     ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
     ${OGRE_RenderSystem_GL_LIBRARIES} ${OGRE_RenderSystem_GL3_LIBRARIES}
-    ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${cAudio_LIBRARIES})
+    ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${SDL_LIBRARIES})
   
   MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
   list(APPEND ALL_DYNAMIC_LIBRARIES ${RawFilesToMove})
@@ -126,9 +126,11 @@ endif()
 
 
 if(WIN32)
-  # To be able to debug move all the dlls to the bin folder 
+  # To be able to debug move all the dlls to the bin folder
+  file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
   file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 else()
+  file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/lib")
   file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
 endif()
 file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")

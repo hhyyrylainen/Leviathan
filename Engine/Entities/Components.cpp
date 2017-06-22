@@ -396,7 +396,7 @@ DLLEXPORT void Model::Release(Ogre::SceneManager* scene){
 
     if(GraphicalObject){
 
-        scene->destroyEntity(GraphicalObject);
+        scene->destroyItem(GraphicalObject);
         GraphicalObject = nullptr;
     }
 }

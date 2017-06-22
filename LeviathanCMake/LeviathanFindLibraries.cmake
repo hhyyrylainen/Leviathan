@@ -36,8 +36,8 @@ if(USE_OGRE AND UNIX)
   # Components that need linking (NB does not include header-only components like bind)
   set(OGRE_BOOST_COMPONENTS thread date_time)
 
-  find_package(OGRE REQUIRED Plugin_ParticleFX Plugin_CgProgramManager Plugin_OctreeZone
-    Overlay Paging RenderSystem_GL)
+  find_package(OGRE REQUIRED Plugin_ParticleFX)
+  # RenderSystem_GL3
 
   # Find CEGUI
   set(CEGUI_VERSION_MAJOR_DEFAULT 9999)
@@ -59,20 +59,10 @@ if(USE_OGRE AND UNIX)
 
   # Find sfml
   if(USE_SFML)
-    find_package(SFML 2 COMPONENTS network system)
+    find_package(SFML 2 COMPONENTS network system audio)
 
     if(NOT SFML_FOUND)
       message(SEND_ERROR "Failed to find SFML 2")
-    endif()
-  endif()
-
-  # Find cAudio
-  if(USE_CAUDIO)
-
-    find_package(cAudio)
-    
-    if(NOT cAudio_FOUND)
-      message(SEND_ERROR "Failed to find cAudio")
     endif()
   endif()
 
@@ -123,6 +113,7 @@ endif(USE_BOOST)
 # Worlds dirtiest hacks for windows
 #
 # This is because it is such a pain
+# TODO: replace this mess with hint paths for different libraries
 if(WIN32)
 
   set(OGRE_LIBRARIES OgreMain.lib RenderSystem_GL.lib RenderSystem_GL3Plus.lib Plugin_ParticleFX.lib
@@ -133,10 +124,8 @@ if(WIN32)
   set(SFML_LIBRARIES optimized sfml-network.lib optimized sfml-system.lib
     debug sfml-network-d.lib debug sfml-system-d.lib
     )
-  set(cAudio_LIBRARIES cAudio.lib)
   
   include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include")
-  include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include/cAudio")
   include_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/include/OGRE")
   link_directories("${LEVIATHAN_SRC}/Windows/ThirdParty/lib")
   
@@ -219,10 +208,6 @@ DefinePreprocessorMacro(CREATE_SHIPPING LEVIATHAN_NO_DEBUG)
 DefinePreprocessorMacro(CREATE_UE4_PLUGIN LEVIATHAN_CREATE_UE4_PLUGIN)
 
 if(NOT WIN32)
-
-  if(USE_CAUDIO)
-    include_directories(${cAudio_INCLUDE_DIRS})
-  endif()
 
   include_directories(${SFML_INCLUDE_DIR})
 

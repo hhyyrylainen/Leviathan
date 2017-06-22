@@ -2,6 +2,8 @@
 #include "GraphicalInputEntity.h"
 // ------------------------------------ //
 #include "../CEGUIInclude.h"
+
+#include "OgreVector4.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNodeDef.h"
 #include "Compositor/OgreCompositorWorkspace.h"
@@ -357,13 +359,9 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     Ogre::CompositorPassSceneDef* scenepass =
         static_cast<Ogre::CompositorPassSceneDef*>(targetpasses->
             addPass(Ogre::PASS_SCENE));
-
-    scenepass->mFirstRQ = Ogre::RENDER_QUEUE_BACKGROUND;
-    scenepass->mLastRQ = Ogre::RENDER_QUEUE_MAX;
-
     
     // Connect the main render target to the node
-    templatedworkspace->connectOutput("GraphicalInputEntity_clear_node", 0);
+    templatedworkspace->connectExternal(0, "GraphicalInputEntity_clear_node", 0);
 
     AutoClearResourcesCreated = true;
 }

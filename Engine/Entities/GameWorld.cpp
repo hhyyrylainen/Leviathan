@@ -145,7 +145,9 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
 	}
 
 	// set scene ambient colour //
-	WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f));
+    // TODO: update this to the PBR HLMS system
+	WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
+        Ogre::ColourValue(0.2f, 0.2f, 0.2f), Ogre::Vector3(0.1f, 1.f, 0.085f));
 
 	// default sun //
 	SetSunlight();

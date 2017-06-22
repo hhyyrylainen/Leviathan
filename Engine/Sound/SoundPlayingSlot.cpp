@@ -1,7 +1,7 @@
 // ------------------------------------ //
 #include "SoundPlayingSlot.h"
 
-#include "cAudio.h"
+#include <SFML/Audio.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::SoundPlayingSlot::SoundPlayingSlot() 

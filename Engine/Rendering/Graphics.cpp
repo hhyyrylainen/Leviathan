@@ -220,8 +220,9 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// register listener //
 	ORoot->addFrameListener(this);
 
-	Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(Ogre::TFO_ANISOTROPIC);
-	Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(7);
+    // TODO: Ogre HLMS needs these probably per material or something
+	// Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(Ogre::TFO_ANISOTROPIC);
+	// Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(7);
 
 	//Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 

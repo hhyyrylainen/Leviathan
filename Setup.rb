@@ -27,7 +27,7 @@ def checkRunFolder(suggested)
 
     onError("Not ran from Leviathan base directory!") if not File.exist?(doxyFile)
 
-    thirdPartyFolder = suggested, "ThirdParty"
+    thirdPartyFolder = File.join suggested, "ThirdParty"
 
     FileUtils.mkdir_p thirdPartyFolder
     FileUtils.mkdir_p File.join suggested, "build", "ThirdParty"
@@ -47,9 +47,15 @@ def parseExtraArgs
 end
 
 require_relative 'RubySetupSystem/RubySetupSystem.rb'
+require_relative 'RubySetupSystem/Libraries/SetupNewton.rb'
+require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
+require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
+require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
+require_relative 'RubySetupSystem/Libraries/SetupCEGUI.rb'
 
 # If false won't get breakpad
-GetBreakpad = true
+# TODO: fix
+GetBreakpad = false
 
 # Doesn't get the resources for samples into leviathan/bin if set to false
 FetchAssets = true
@@ -61,7 +67,8 @@ THIRD_PARTY_INSTALL = File.join(ProjectDir, "build", "ThirdParty")
 newton = Newton.new(
   version: "master",
   installPath: THIRD_PARTY_INSTALL,
-  noInstallSudo: true
+  noInstallSudo: true,
+  disableDemos: true
 )
 
 angelscript = AngelScript.new(
@@ -77,7 +84,7 @@ sfml = SFML.new(
 )
 
 ogre = Ogre.new(
-  version: "2.4.x",
+  version: "v2-1",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true
 )

@@ -91,7 +91,7 @@ ogre = Ogre.new(
 
 cegui = CEGUI.new(
   # TODO: once my pull request is accepted put it here
-  version: "master",
+  version: "default",
   installPath: THIRD_PARTY_INSTALL,
   extraSearchPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true

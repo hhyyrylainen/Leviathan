@@ -15,6 +15,7 @@ SFML/
 *.dia
 *.dia~
 *.*~
+/ThirdParty
 /libraries
 /AngelScript/add_on
 /AngelScript/include

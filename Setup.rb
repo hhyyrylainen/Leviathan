@@ -9,12 +9,15 @@
 # compile flags: OGRE_CONFIG_THREADS=2 (background resources) OGRE_CONFIG_THREAD_PROVIDER=std
 
 # RubySetupSystem Bootstrap
-system "git submodule init && git submodule update"
+if not File.exists? "RubySetupSystem/RubySetupSystem.rb"
+  puts "Initializing RubySetupSystem"
+  system "git submodule init && git submodule update"
 
-if $?.exitstatus != 0
-  abort("Failed to initialize or update git submodules. " +
-        "Please make sure git is in path and " +
-        "you have an ssh key setup for your github account")
+  if $?.exitstatus != 0
+    abort("Failed to initialize or update git submodules. " +
+          "Please make sure git is in path and " +
+          "you have an ssh key setup for your github account")
+  end
 end
 
 require 'fileutils'
@@ -93,7 +96,8 @@ cegui = CEGUI.new(
   # TODO: once my pull request is accepted put it here
   version: "default",
   installPath: THIRD_PARTY_INSTALL,
-  extraSearchPath: THIRD_PARTY_INSTALL,
+  # Find Ogre in our search path
+  extraOptions: ["-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"],
   noInstallSudo: true
 )
 

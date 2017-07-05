@@ -7,7 +7,7 @@ require 'colorize'
 require 'optparse'
 require 'pathname'
 
-require_relative 'Helpers/RubyCommon.rb'
+require_relative 'RubySetupSystem/RubyCommon.rb'
 
 # Abort if not in leviathan/ folder
 doxyFile = "LeviathanDoxy.in"

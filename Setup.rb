@@ -168,28 +168,32 @@ info "Compiling Leviathan"
 
 Dir.chdir(File.join(ProjectDir, "build")) do
 
-  runCMakeConfigure "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_BREAKPAD=OFF"
-  
-  if $?.exitstatus > 0
+  if !runCMakeConfigure [
+       "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+       "-DOGRE_HOME=#{THIRD_PARTY_INSTALL}",
+       "-DUSE_BREAKPAD=OFF"
+     ]
     onError "Failed to configure Leviathan"
   end
-
-  runCompiler CompileThreads
-  onError "Failed to compile Leviathan " if $?.exitstatus > 0
+  
+  if !runCompiler CompileThreads
+    onError "Failed to compile Leviathan"
+  end
   
 end
 
 success "Done compiling Leviathan"
 
-if BuildPlatform == "linux"
+if OS.linux?
   
   info "Indexing with cscope"
   Dir.chdir(ProjectDir) do
-    systemChecked "RubySetupSystem/RunCodeIndexing.sh"
+    runOpen3Checked File.join(ProjectDir, "RubySetupSystem/RunCodeIndexing.rb")
   end
   
   success "All done."
-  info "To compile run 'make' in ./build"
+  info "To compile again just run 'make' in ./build"
+  puts "You may need to run this setup again from time to time"
   
 else
   

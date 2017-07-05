@@ -15,6 +15,9 @@ set(LEVIATHAN_VERSION ${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}${LE
 set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 file(TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_NATIVE_BINARY_DIR)
 
+# Leviathan base folder which is required for many folders to be correctly found
+set(LEVIATHAN_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
 
@@ -165,11 +168,14 @@ include_directories("${PROJECT_SOURCE_DIR}/Engine/")
 
 
 # engine linking
-link_directories("${PROJECT_BINARY_DIR}")
+# link_directories("${PROJECT_BINARY_DIR}")
 # these two might not be necessary anymore
-link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")
-link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
-link_directories("${PROJECT_BINARY_DIR}/bin")
+# link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")
+# link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
+# link_directories("${PROJECT_BINARY_DIR}/bin")
+
+link_directories("${PROJECT_BINARY_DIR}/ThirdParty/lib")
+include_directories("${PROJECT_BINARY_DIR}/ThirdParty/include")
 
 # Controls how LeviathanCoreProject.cmake works
 set(CREATE_CONSOLE_APP OFF)

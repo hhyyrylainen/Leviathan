@@ -192,8 +192,8 @@ set(GroupGeneratedFiles)
 
 # AngelScript addon sources
 if(USE_ANGELSCRIPT)
-  file(GLOB_RECURSE GroupScriptAddons "${LEVIATHAN_DIR}/build/ThirdParty/include/add_on/*.cpp"
-    "${LEVIATHAN_DIR}/build/ThirdParty/include/add_on/*.h")
+  file(GLOB_RECURSE GroupScriptAddons "${LEVIATHAN_SRC}/build/ThirdParty/include/add_on/*.cpp"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/add_on/*.h")
 
   if(NOT GroupScriptAddons)
 
@@ -277,27 +277,20 @@ add_definitions(-DLEVIATHAN_BUILD)
 
 # create library with all the files
 if(CREATE_STATIC)
-    add_library(Engine ${EngineFiles})
+  add_library(Engine ${EngineFiles})
 else()
-    add_library(Engine SHARED ${EngineFiles})
+  add_library(Engine SHARED ${EngineFiles})
 endif()
 
-
-set(FinalEngineLinkLibraries ${Boost_LIBRARIES} ${OGRE_LIBRARIES} ${OIS_LIBRARIES}
-  ${ADDITIONAL_OGRE} ${ALL_CEGUI_LIBRARIES} ${SFML_LIBRARIES} ${cAudio_LIBRARIES}
-  ${SDL2_LIBRARY})
+# Link the engine against dependencies
+target_link_libraries(Engine ${LEVIATHAN_ENGINE_LIBRARIES})
 
 if(NOT WIN32)
   # Link with X11 and threads
-  set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${X11_LIBRARIES} ${X11_Xmu_LIB}
+  target_link_libraries(Engine ${X11_LIBRARIES} ${X11_Xmu_LIB}
     ${CMAKE_THREAD_LIBS_INIT})
-
+  
 endif(NOT WIN32)
-
-# Add the final libraries that have different debug and optimized values
-set(FinalEngineLinkLibraries ${FinalEngineLinkLibraries} ${LINK_LIBS_ENGINE_DEBUG} ${LINK_LIBS_ENGINE_RELEASE})
-
-target_link_libraries(Engine ${FinalEngineLinkLibraries})
 
 # Avoid Xlib headers and windows header in the precompiled header to avoid macros destroying everything
 set_target_properties(Engine PROPERTIES 
@@ -307,10 +300,9 @@ set_target_properties(Engine PROPERTIES
 
 # Allow adding in folder contained libraries to be cotired
 # And add the Include.h as a precompiled header file
+# TODO: update this if using cotire
 set_target_properties(Engine PROPERTIES 
-  COTIRE_PREFIX_HEADER_INCLUDE_PATH 
-  "${PROJECT_SOURCE_DIR}/AngelScript;${PROJECT_SOURCE_DIR}/Newton;${PROJECT_SOURCE_DIR}/Leap;${CMAKE_SOURCE_DIR}/Engine/Include.h")
-
+  COTIRE_PREFIX_HEADER_INCLUDE_PATH  "${PROJECT_SOURCE_DIR}/AngelScript;${PROJECT_SOURCE_DIR}/Newton;${PROJECT_SOURCE_DIR}/Leap;${CMAKE_SOURCE_DIR}/Engine/Include.h")
 
 # speed up build
 #cotire(Engine)

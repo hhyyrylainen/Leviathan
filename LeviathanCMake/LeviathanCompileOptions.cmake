@@ -41,7 +41,7 @@ if(WIN32)
   
 else(WIN32)
 
-  add_definitions(-fextended-identifiers)
+  # add_definitions(-fextended-identifiers)
 
   # Has to be on one line or else ';'s will be included
   # C++14
@@ -49,12 +49,8 @@ else(WIN32)
   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
   
   # We need X11 on linux for window class to work
-  find_package(X11)
-  find_package(Threads)
-
-  if(NOT X11_FOUND)
-    message(SEND_ERROR "Failed to find X11")
-  endif()
+  find_package(X11 REQUIRED)
+  find_package(Threads REQUIRED)
 
   # We need XMU X11 extension for clipboard
   if(NOT X11_Xmu_FOUND)
@@ -70,4 +66,9 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 
 # Tests can crash if this folder doesn't exist
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
+
+# Leviathan include directories
+
+# additional include directories
+include_directories("${PROJECT_SOURCE_DIR}/Engine/")
 

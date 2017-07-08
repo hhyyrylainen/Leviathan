@@ -16,15 +16,10 @@ set(WORK_DIR "${PROJECT_BINARY_DIR}/bin")
 file(TO_NATIVE_PATH ${PROJECT_BINARY_DIR} PROJECT_NATIVE_BINARY_DIR)
 
 # Leviathan base folder which is required for many folders to be correctly found
-set(LEVIATHAN_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(LEVIATHAN_SRC "${CMAKE_CURRENT_LIST_DIR}")
 
 # modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMake" "${PROJECT_SOURCE_DIR}/LeviathanCMake")
-
-# Windows find modules
-if(WIN32)
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/Windows/CMake" )
-endif()
 
 # load cotire
 include(cotire)
@@ -38,14 +33,9 @@ include(LeviathanUtility)
 ######### Options
     
 option(CREATE_UE4_PLUGIN "If set to ON creates a static version without any external libraries" OFF)
-    
-option(USE_ANGELSCRIPT "For using AngelScript, required for normal builds" ON)
-option(USE_BOOST "For using AngelScript, required for normal builds" ON)
-option(USE_OGRE "For using Ogre and direct dependencies, required for normal builds" ON)
-option(USE_NEWTON "For using Newton, required for normal builds" ON)
-option(USE_SFML "For using SFML, required for normal builds" ON)
-option(USE_SDL2 "For using SFML, required for normal builds" ON)
-    
+
+set(LEVIATHAN_FULL_BUILD NOT CREATE_UE4_PLUGIN)
+
 option(CREATE_STATIC "Set to ON to create static libraries instead of shared" OFF)
 
 option(CREATE_SHIPPING "SET THIS ON WHEN BUILDING END USER BINARIES. Will disable some expensive checks" OFF)
@@ -59,10 +49,44 @@ option(USE_BREAKPAD "For enabling google breakpad crash handling, set off for lo
 # Copies boost libraries to distributions
 option(COPY_BOOST_TO_PACKAGE "For copying all boost libraries to run on system that don't have it" OFF)
 
-set(CMAKE_INSTALL_PREFIX "./Install" CACHE FILEPATH "Install path")
+# Whether to use Javascript or php search in doxygen
+option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 
-if(CREATE_UE4_PLUGIN)
+# Strip symbols from install
+option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" OFF)
+
+
+# Check is leap motion used
+option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
+
+
+# Build configuration
+if(LEVIATHAN_FULL_BUILD)
+  set(USE_ANGELSCRIPT ON)
+  set(USE_BOOST ON)
+  set(USE_OGRE ON)
+  set(USE_NEWTON ON)
+  set(USE_SFML ON)
+  set(USE_SDL2 ON)
+
+  set(CMAKE_INSTALL_PREFIX "./Install")
+
+  if(CREATE_SDK)
+
+    set(CMAKE_INSTALL_PREFIX "../SDK")
   
+  endif()
+
+  if(USE_BREAKPAD)
+
+    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Breakpad/include")
+      message(SEND_ERROR "Breakpad include dir is missing")
+    endif()
+    
+  endif()
+  
+else()
+
   message(STATUS "Creating UE4 Compatible Static Library")
   set(USE_ANGELSCRIPT OFF)
   set(USE_BOOST OFF)
@@ -76,32 +100,12 @@ if(CREATE_UE4_PLUGIN)
   
   set(CMAKE_INSTALL_PREFIX "./UE4_Plugin")
   
-elseif(CREATE_SDK)
-
-  set(CMAKE_INSTALL_PREFIX "../SDK")
-  
 endif()
 
 
-if(USE_BREAKPAD)
 
-  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Breakpad/include")
-    message(SEND_ERROR "Breakpad include dir is missing")
-  endif()
-
-endif()
-
-# Whether to use Javascript or php search in doxygen
-option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
-
-# Strip symbols from install
-option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" OFF)
-
-
-# Check is leap motion used
-option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
-
-if(EXISTS "${PROJECT_SOURCE_DIR}/Leap/include/Leap.h")
+# Check that leap motion can be enabled
+if(EXISTS "${LEVIATHAN_SRC}/Leap/include/Leap.h")
 
   message(STATUS "Leap motion includes found")
   set(CAN_USE_LEAP ON)
@@ -124,7 +128,7 @@ else()
   set(USING_LEAP OFF)
 endif()
 
-set(LEVIATHAN_SRC "${PROJECT_SOURCE_DIR}")
+
 include(LeviathanCompileOptions)
 include(LeviathanSetRPath)
 
@@ -163,20 +167,6 @@ endif(DOXYGEN_FOUND)
 
 include(LeviathanDefaultFileCopy)
 
-# additional include directories
-include_directories("${PROJECT_SOURCE_DIR}/Engine/")
-
-
-# engine linking
-# link_directories("${PROJECT_BINARY_DIR}")
-# these two might not be necessary anymore
-# link_directories("${PROJECT_BINARY_DIR}/Engine/Debug")
-# link_directories("${PROJECT_BINARY_DIR}/Engine/Release")
-# link_directories("${PROJECT_BINARY_DIR}/bin")
-
-link_directories("${PROJECT_BINARY_DIR}/ThirdParty/lib")
-include_directories("${PROJECT_BINARY_DIR}/ThirdParty/include")
-
 # Controls how LeviathanCoreProject.cmake works
 set(CREATE_CONSOLE_APP OFF)
 
@@ -206,7 +196,7 @@ if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
 endif()
 
 ##### All symbol creating target
-if(${USE_BREAKPAD})
+if(USE_BREAKPAD)
   add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 else()
   add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
@@ -244,6 +234,7 @@ endif()
 
 # CPack support
 if(NOT CREATE_UE4_PLUGIN)
+  # TODO: fix this
     include(InstallRequiredSystemLibraries)
 
     SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan Game Engine")

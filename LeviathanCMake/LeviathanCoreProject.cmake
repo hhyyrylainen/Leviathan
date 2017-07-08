@@ -26,9 +26,7 @@ endif()
 # linking to engine
 target_link_libraries(${CurrentProjectName} Engine)
 
-set(FinalTargetLinkLibraries ${LINK_LIBS_TOENGINE_RELEASE} ${LINK_LIBS_TOENGINE_DEBUG})
-
-target_link_libraries(${CurrentProjectName} ${FinalTargetLinkLibraries})
+target_link_libraries(${CurrentProjectName} ${LEVIATHAN_APPLICATION_LIBRARIES})
 
 # speed up build
 #cotire(${CurrentProjectName})

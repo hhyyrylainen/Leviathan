@@ -27,8 +27,12 @@ file(COPY "${LEVIATHAN_SRC}/MoveSymbolFile.sh"
 
 # copy data from bin directory
 # This will be all the binaries that need to be copied to bin/lib and installed to bin/lib
-set(ALL_DYNAMIC_LIBRARIES)
-
+# Glob them all
+if(WIN32)
+  file(GLOB ALL_DYNAMIC_LIBRARIES "${LEVIATHAN_SRC}/build/ThirdParty/lib/*.dll")
+else()
+  file(GLOB ALL_DYNAMIC_LIBRARIES "${LEVIATHAN_SRC}/build/ThirdParty/lib/*.so*")
+endif()
 
 # The bin-folder files
 file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
@@ -76,13 +80,8 @@ if(WIN32)
   if(USING_LEAP)
     list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll")
   endif()
-    
-  if(USE_NEWTON)
-    list(APPEND ALL_DYNAMIC_LIBRARIES
-      "Newton/bin/Newton.dll" "Newton/bin/Newton.dll")
-  endif()
   
-  file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/Windows/ThirdParty/bin/*")
+  file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/build/ThirdParty/lib/**/*.dll")
   list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
   
 else()
@@ -92,31 +91,10 @@ else()
     list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/libLeap.so")
   endif()
   
-  # newton
-  if(USE_NEWTON)
-    list(APPEND ALL_DYNAMIC_LIBRARIES "Newton/bin/libNewton.so")
-  endif()
+  file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/build/ThirdParty/lib/**/*.so*")
+  list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
   
 endif(WIN32)
-
-if(USE_OGRE AND NOT WIN32)
-
-  set(NewtonMoveFiles "${LEVIATHAN_SRC}/Newton/bin/libNewton.so")
-
-  set(RawFilesToMove ${CEGUI_LIBRARIES} ${CEGUI_OgreRenderer_LIBRARIES}
-    ${CEGUI_CoreWindowRendererSet_LIBRARIES} 
-    ${CEGUI_ExpatParser_LIBRARIES} ${CEGUI_FreeImageImageCodec_LIBRARIES}
-    ${CEGUI_OgreRenderer_LIBRARIES} ${NewtonMoveFiles} ${LeapMoveFiles} 
-    ${OGRE_LIBRARIES} ${OGRE_Plugin_ParticleFX_LIBRARIES}
-    ${OGRE_Plugin_CgProgramManager_LIBRARIES} 
-    ${OGRE_Plugin_OctreeZone_LIBRARIES} ${OGRE_Overlay_LIBRARIES} ${OGRE_Paging_LIBRARIES}
-    ${OGRE_RenderSystem_GL_LIBRARIES} ${OGRE_RenderSystem_GL3_LIBRARIES}
-    ${SFML_LIBRARIES} ${OIS_LIBRARIES} ${SDL_LIBRARIES})
-  
-  MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
-  list(APPEND ALL_DYNAMIC_LIBRARIES ${RawFilesToMove})
-endif()
-
 
 if(UNIX)
   # Go through all the libraries and add all name variants to the moved files
@@ -124,22 +102,24 @@ if(UNIX)
   set(ALL_DYNAMIC_LIBRARIES ${SanitizedList})
 endif()
 
+set(RawFilesToMove ${ALL_DYNAMIC_LIBRARIES} ${SDL_LIBRARIES})
+  
+MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
+
+#message(STATUS "Required library list is: ${RawFilesToMove}")
 
 if(WIN32)
   # To be able to debug move all the dlls to the bin folder
   file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
-  file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+  file(COPY ${RawFilesToMove} DESTINATION "${PROJECT_BINARY_DIR}/bin")
 else()
   file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/lib")
-  file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
+  file(COPY ${RawFilesToMove} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
 endif()
-file(COPY ${ALL_DYNAMIC_LIBRARIES} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
-install(FILES ${ALL_DYNAMIC_LIBRARIES} DESTINATION "bin/lib")
 
-if(WIN32)
+# Tools
+file(GLOB AllTools "${LEVIATHAN_SRC}/build/ThirdParty/bin/*")
 
-    # ogre tools
-    file(GLOB OgreTools "${OGRE_BASEDIR}/bin/Release/*.exe")
-    install(FILES ${OgreTools} DESTINATION tools)
-    
-endif(WIN32)
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/tools")
+file(COPY ${AllTools} DESTINATION "${PROJECT_BINARY_DIR}/tools")
+  

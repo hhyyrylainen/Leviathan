@@ -755,16 +755,47 @@ namespace Leviathan{
     public:
         // constructors that accept any type of DataBlock //
         template<class DBRType>
-        NamedVariableBlock(DataBlock<DBRType>* block, const std::string &name):
+        NamedVariableBlock(DataBlock<DBRType>* block, const std::string &name) :
             VariableBlock(block), Name(name)
         {
 
         }
+        
         // non template constructor //
         NamedVariableBlock(DataBlockAll* block, const std::string &name) :
             VariableBlock(block), Name(name)
         {
 
+        }
+
+        // constructors that accept basic types //
+        NamedVariableBlock(const int &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }
+        NamedVariableBlock(const bool &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }
+        NamedVariableBlock(const std::string &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }
+        NamedVariableBlock(const std::wstring &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }
+        NamedVariableBlock(const double &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }
+        NamedVariableBlock(const float &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }
+        NamedVariableBlock(const char &var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
         }
 
         inline std::string GetName() const{

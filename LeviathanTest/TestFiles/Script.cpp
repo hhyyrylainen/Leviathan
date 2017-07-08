@@ -6,23 +6,20 @@
 
 #include "catch.hpp"
 
-#include <boost/assign.hpp>
-
 using namespace Leviathan;
-using namespace std;
 
 TEST_CASE("Basic script running", "[script]"){
 
     PartialEngine<false> engine;
     
     IDFactory ids;
-    auto exec(move(unique_ptr<ScriptExecutor>(new ScriptExecutor())));
+    ScriptExecutor exec;
 
 	// setup the script //
-	auto mod = exec->CreateNewModule("TestScrpt", "ScriptGenerator").lock();
+	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
-    auto sourcecode = make_shared<ScriptSourceFileData>("memory_test_script", 1,
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("memory_test_script", 1,
         "int TestFunction(int Val1, int Val2){\n"
 		"// do some time consuming stuff //\n"
 		"Val1 *= Val1+Val2 % 15;\n"
@@ -36,16 +33,17 @@ TEST_CASE("Basic script running", "[script]"){
 
     REQUIRE(module != nullptr);
 
-	vector<shared_ptr<NamedVariableBlock>> Params = boost::assign::list_of(new NamedVariableBlock(
-            new IntBlock(252134), "Val1"))
-		(new NamedVariableBlock(new IntBlock(25552), "Val2"));
+    std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
+        std::make_shared<NamedVariableBlock>(252134, "Val1"),
+        std::make_shared<NamedVariableBlock>(25552, "Val2")
+    };
 
     ScriptRunningSetup ssetup;
     ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
         //.SetPrintErrors(false)
         ;
 
-    shared_ptr<VariableBlock> returned = exec->RunSetUp(mod.get(), &ssetup);
+    std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
 
     CHECK(ssetup.ScriptExisted == true);
 
@@ -53,7 +51,6 @@ TEST_CASE("Basic script running", "[script]"){
     int Value = *returned;
 
     CHECK(Value == 42);
-        
 
 	mod->DeleteThisModule();
 }

@@ -954,7 +954,7 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	
 	// initialize the groups //
-	manager.initialiseAllResourceGroups();
+	manager.initialiseAllResourceGroups(true);
 
 	// load the groups //
 	manager.loadResourceGroup("MainModelsFolder");
@@ -978,7 +978,7 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 
 	manager.addResourceLocation(location, "FileSystem", groupname, true);
 
-	manager.initialiseResourceGroup(groupname);
+	manager.initialiseResourceGroup(groupname, true);
 }
 #endif // LEVIATHAN_USING_OGRE
 // ------------------ FileDefinitionType ------------------ //

@@ -3,10 +3,9 @@
 #include "Networking/NetworkRequest.h"
 #include "Networking/SentNetworkThing.h"
 
-#include "PartialEngine.h"
-//#include "../DummyLog.h"
+#include "../PartialEngine.h"
 
-#include "NetworkTestHelpers.h"
+#include "../NetworkTestHelpers.h"
 
 #include "catch.hpp"
 
@@ -15,6 +14,7 @@
 */
 
 using namespace Leviathan;
+using namespace Leviathan::Test;
 
 class UDPSocketAndClientFixture {
 protected:

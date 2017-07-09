@@ -1,4 +1,4 @@
-#include "PartialEngine.h"
+#include "../PartialEngine.h"
 
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptModule.h"
@@ -7,6 +7,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
+using namespace Leviathan::Test;
 
 TEST_CASE("Basic script running", "[script]"){
 

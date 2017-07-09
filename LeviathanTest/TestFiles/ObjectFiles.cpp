@@ -2,7 +2,8 @@
 
 #ifndef LEVIATHAN_UE_PLUGIN
 #include "Script/ScriptExecutor.h"
-#include "PartialEngine.h"
+#include "../PartialEngine.h"
+using namespace Leviathan::Test;
 #endif //LEVIATHAN_UE_PLUGIN
 
 #include "catch.hpp"

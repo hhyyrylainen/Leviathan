@@ -6,24 +6,24 @@
 #include "../DummyLog.h"
 
 using namespace Leviathan;
-using namespace std;
+using namespace Leviathan::Test;
 
 TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
 
-    vector<shared_ptr<NamedVariableList>> Variables;
-    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var1",
+    std::vector<std::shared_ptr<NamedVariableList>> Variables;
+    Variables.push_back(std::shared_ptr<NamedVariableList>(new NamedVariableList("varone",
                 new VariableBlock(1))));
     
-    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var2",
+    Variables.push_back(std::shared_ptr<NamedVariableList>(new NamedVariableList("var two",
                 new VariableBlock(2))));
     
-    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var3",
+    Variables.push_back(std::shared_ptr<NamedVariableList>(new NamedVariableList("var",
                 new VariableBlock(3))));
     
-    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var4",
+    Variables.push_back(std::shared_ptr<NamedVariableList>(new NamedVariableList("var4",
                 new VariableBlock(4))));
     
-    Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList("var5",
+    Variables.push_back(std::shared_ptr<NamedVariableList>(new NamedVariableList("var5",
                 new VariableBlock(5))));
 
     // create holder //
@@ -31,18 +31,28 @@ TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
 
     holder.SetVec(Variables);
 
+    REQUIRE(holder.GetValue("var5"));
+
     // add some more values //
-    holder.AddVar("var66", new VariableBlock(25));
-    holder.Remove(holder.Find("var2"));
+    SECTION("Adding and removing"){
+        holder.AddVar("var66", new VariableBlock(25));
+        holder.Remove(holder.Find("var two"));
 
-    CHECK(holder.Find("var66") < holder.GetVariableCount());
-    CHECK(holder.Find("var2") >= holder.GetVariableCount());
+        CHECK(holder.Find("var66") < holder.GetVariableCount());
+        CHECK(holder.Find("var two") >= holder.GetVariableCount());
+    }
 
-    int checkval;
+    SECTION("Variable types"){
+        CHECK(holder.GetValue("var5")->GetBlockConst()->Type ==  DATABLOCK_TYPE_INT);
+    }
+
+    SECTION("Value retrieve"){
+        int checkval;
     
-    REQUIRE(holder.GetValueAndConvertTo<int>("var3", checkval) == true);
+        REQUIRE(holder.GetValueAndConvertTo<int>("var", checkval) == true);
 
-    CHECK(checkval == 3);
+        CHECK(checkval == 3);
+    }
 }
 
 TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
@@ -51,23 +61,25 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
 
     SECTION("Line 'this= not this'"){
         
-        string typelinething = "this= not this";
+        std::string typelinething = "this= not this";
 
         // creation testing //
-        auto ptry = make_shared<NamedVariableList>(typelinething, &reporter);
+        auto ptry = std::make_shared<NamedVariableList>(typelinething, &reporter);
 
-        wstring emptystr;
+        std::wstring emptystr;
         
-        REQUIRE(ptry->GetValueDirect()->ConvertAndAssingToVariable<wstring>(emptystr) == true);
+        REQUIRE(ptry->GetValueDirect()->ConvertAndAssingToVariable<std::wstring>(emptystr)
+            == true);
 
         CHECK(emptystr == L"not this");
     }
 
     SECTION("Line 'this=2'"){
         
-        string typelinething = "this=2";
+        std::string typelinething = "this=2";
 
-        auto result = shared_ptr<NamedVariableList>(new NamedVariableList(typelinething, &reporter));
+        auto result = std::shared_ptr<NamedVariableList>(new NamedVariableList(
+                typelinething, &reporter));
 
         int checkval;
 
@@ -78,9 +90,9 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
 
     SECTION("Line 'oh=2;'"){
         
-        string line = "oh=2;";
+        std::string line = "oh=2;";
     
-        auto result = make_shared<NamedVariableList>(line, &reporter);
+        auto result = std::make_shared<NamedVariableList>(line, &reporter);
 
         REQUIRE(result);
 
@@ -101,7 +113,7 @@ TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
 
     SECTION("Advanced line 'Color = [[0.1], [4], [true], [\"lol\"]]'"){
 
-        string linething = "Color = [[0.1], [4], [true], [\"lol\"]]";
+        std::string linething = "Color = [[0.1], [4], [true], [\"lol\"]]";
         NamedVariableList advlist(linething, &reporter);
 
         REQUIRE(advlist.GetVariableCount() == 4);
@@ -121,7 +133,7 @@ TEST_CASE("NamedVars packet serialization", "[variable]"){
 
     NamedVars packettestorig;
 
-    packettestorig.AddVar("MyVar1", new VariableBlock((string)"string_block"));
+    packettestorig.AddVar("MyVar1", new VariableBlock((std::string)"std::string_block"));
     packettestorig.AddVar("Secy", new VariableBlock(true));
 
     // Add to packet //
@@ -160,13 +172,13 @@ TEST_CASE("Specific value parsing", "[variable]"){
         CHECK(var.GetCommonType() == DATABLOCK_TYPE_INT);
         CHECK(var.GetValue(0).operator int() == 1280);
 
-        SECTION("Stringification"){
+        SECTION("Std::Stringification"){
             
             CHECK(var.ToText(0, true) == "Width = [[1280]];");
             CHECK(var.ToText(1, true) == "Width: [[1280]];");
 
 
-            SECTION("Parsing back from string"){
+            SECTION("Parsing back from std::string"){
 
                 NamedVariableList var2(var.ToText(0), &reporter);
 
@@ -188,7 +200,7 @@ TEST_CASE("Specific value parsing", "[variable]"){
         int width;
         int height;
         bool window;
-        string rendersystemname;
+        std::string rendersystemname;
 
         ObjectFileProcessor::LoadValueFromNamedVars(values, "Width", width, 0);
 
@@ -205,7 +217,7 @@ TEST_CASE("Specific value parsing", "[variable]"){
         CHECK(window == true);
 
         ObjectFileProcessor::LoadValueFromNamedVars(values,
-            "RenderSystemName", rendersystemname, string(""));
+            "RenderSystemName", rendersystemname, std::string(""));
 
         CHECK(rendersystemname == "Open.*GL");
     }
@@ -239,17 +251,17 @@ TEST_CASE("Specific value parsing", "[variable]"){
     }
 }
 
-TEST_CASE("Converting empty string blocks", "[variable, datablock]"){
+TEST_CASE("Converting empty std::string blocks", "[variable, datablock]"){
 
 
-    NamedVariableList empty("name", new StringBlock(new string()));
+    NamedVariableList empty("name", new StringBlock(new std::string()));
 
     CHECK(empty.GetValue(0).operator int() == 0);
     CHECK(empty.GetValue(0).operator char() == 0);
     CHECK(empty.GetValue(0).operator float() == 0.f);
     CHECK(empty.GetValue(0).operator double() == 0.0);
-    CHECK(empty.GetValue(0).operator string() == "");
-    CHECK(empty.GetValue(0).operator wstring() == L"");
+    CHECK(empty.GetValue(0).operator std::string() == "");
+    CHECK(empty.GetValue(0).operator std::wstring() == L"");
     CHECK(empty.GetValue(0).operator bool() == false);
     
 }
@@ -313,7 +325,7 @@ TEST_CASE("Parsing values back from ToText", "[variable, datablock]") {
 
     DummyReporter dummy;
 
-    SECTION("Empty value into empty string") {
+    SECTION("Empty value into empty std::string") {
 
         NamedVariableList original("val");
 
@@ -328,7 +340,7 @@ TEST_CASE("Parsing values back from ToText", "[variable, datablock]") {
         CHECK(returned.GetValueDirect());
     }
 
-    SECTION("empty string") {
+    SECTION("empty std::string") {
 
         NamedVariableList original("val", new VariableBlock(std::string("")));
 
@@ -344,7 +356,7 @@ TEST_CASE("Parsing values back from ToText", "[variable, datablock]") {
         CHECK(returned.GetValue() == original.GetValue());
     }
 
-    SECTION("a simple string") {
+    SECTION("a simple std::string") {
 
         NamedVariableList original("val", new VariableBlock(std::string("arc")));
 

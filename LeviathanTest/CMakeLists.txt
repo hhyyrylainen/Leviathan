@@ -1,10 +1,11 @@
 # LeviathanTest application CMake
 
-if(NOT CREATE_UE4_PLUGIN)
+if(LEVIATHAN_FULL_BUILD)
 set(TestSources
   resource.h
   TestMain.cpp
-  TestFiles/PartialEngine.h TestFiles/PartialEngine.cpp
+  PartialEngine.h PartialEngine.cpp
+  NetworkTestHelpers.h
 
   TestFiles/StringIterator.cpp
   TestFiles/StringOperations.cpp
@@ -23,7 +24,6 @@ set(TestSources
   TestFiles/StdBehaviour.cpp
   TestFiles/PacketFormat.cpp
   TestFiles/PacketsAndConnection.cpp
-  TestFiles/NetworkTestHelpers.h
   )
 else()
   # Just a few tests required

@@ -1,4 +1,4 @@
-#include "PartialEngine.h"
+#include "../PartialEngine.h"
 
 #include "Entities/GameWorld.h"
 #include "Entities/Components.h"
@@ -7,7 +7,7 @@
 #include "catch.hpp"
 
 using namespace Leviathan;
-using namespace std;
+using namespace Leviathan::Test;
 
 TEST_CASE("Manual component add and remove", "[entity]"){
 

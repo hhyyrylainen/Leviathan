@@ -1,6 +1,8 @@
 /**
    \file Utility to create many partially initialized Engine objects
 */
+#pragma once
+
 #include "Application/Application.h"
 #include "Engine.h"
 #include "Events/EventHandler.h"
@@ -9,9 +11,12 @@
 #include "Networking/NetworkHandler.h"
 #include <string>
 
-#include "../catch/catch.hpp"
+#include "catch/catch.hpp"
 
-using namespace Leviathan;
+#include "DummyLog.h"
+
+namespace Leviathan{
+namespace Test{
 
 //! \brief Implementation for application for tests
 class PartialApplication : public LeviathanApplication{
@@ -113,3 +118,6 @@ public:
     TestLogger Log;
     AppDef Def;
 };
+
+}
+}

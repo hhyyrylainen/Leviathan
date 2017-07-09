@@ -4,12 +4,12 @@
 #include "Common/SFMLPackets.h"
 #include "Entities/Components.h"
 
-#include "PartialEngine.h"
+#include "../PartialEngine.h"
 
 #include "catch.hpp"
 
 using namespace Leviathan;
-using namespace std;
+using namespace Leviathan::Test;
 
 
 TEST_CASE("Positionable delta state interpolation", "[networking, entity]"){

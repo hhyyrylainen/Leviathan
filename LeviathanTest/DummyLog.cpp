@@ -2,6 +2,8 @@
 
 #include "catch.hpp"
 
+using namespace Leviathan::Test;
+
 void DummyReporter::Write(const std::string &text) {
 }
 

@@ -2,6 +2,9 @@
 
 #include "ErrorReporter.h"
 
+namespace Leviathan{
+namespace Test{
+
 class DummyReporter : public LErrorReporter {
 public:
     virtual void Write(const std::string &text) override;
@@ -47,3 +50,6 @@ public:
 
     bool ErrorOccured = false;
 };
+
+}
+}

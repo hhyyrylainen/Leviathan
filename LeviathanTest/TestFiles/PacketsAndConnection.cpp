@@ -2,15 +2,14 @@
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkRequest.h"
 
-#include "PartialEngine.h"
 #include "../DummyLog.h"
 
-#include "NetworkTestHelpers.h"
+#include "../NetworkTestHelpers.h"
 
 #include "catch.hpp"
 
 using namespace Leviathan;
-
+using namespace Leviathan::Test;
 
 
 class TestClientGetSpecificPacket : public NetworkClientInterface{
@@ -97,61 +96,20 @@ TEST_CASE("Connection correctly decodes ServerAllow and passes to ClientInterfac
 
 
 
+// ------------------------------------ //
+TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message when joining",
+    "[networking]")
+{
+    DoConnectionOpening();
+
+    REQUIRE(ClientInterface.JoinServer(ClientConnection));
+
+    
+}
 
 
 
-
-class ConnectionTestFixture {
-protected:
-
-    ConnectionTestFixture() : 
-        Client(NETWORKED_TYPE::Client, &ClientInterface),
-        Server(NETWORKED_TYPE::Server, &ServerInterface)
-    {
-
-        REQUIRE(Client.Init(sf::Socket::AnyPort));
-        REQUIRE(Server.Init(sf::Socket::AnyPort));
-
-        ClientConnection = std::make_shared<Connection>(
-            sf::IpAddress::LocalHost, Server.GetOurPort());
-
-        ServerConnection = std::make_shared<Connection>(
-            sf::IpAddress::LocalHost, Client.GetOurPort());
-
-        Server._RegisterConnection(ServerConnection);
-        Client._RegisterConnection(ClientConnection);
-
-        ClientConnection->Init(&Client);
-        ServerConnection->Init(&Server);
-
-        CHECK(ClientConnection->GetState() == CONNECTION_STATE::NothingReceived);
-        CHECK(ServerConnection->GetState() == CONNECTION_STATE::NothingReceived);
-    }
-
-    void RunListeningLoop(int times = 3) {
-        
-        for (int i = 0; i < times; ++i) {
-
-            Server.UpdateAllConnections();
-            Client.UpdateAllConnections();
-        }
-    }
-
-protected:
-
-    PartialEngine<false> engine;
-
-    TestClientInterface ClientInterface;
-    NetworkHandler Client;
-
-
-    TestServerInterface ServerInterface;
-    NetworkHandler Server;
-
-    std::shared_ptr<Connection> ClientConnection;
-    std::shared_ptr<Connection> ServerConnection;
-};
-
+// ------------------------------------ //
 TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[networking]"){
 
     RunListeningLoop(6);
@@ -185,24 +143,24 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
 // }
 
 
-TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
+// TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
 
-    RunListeningLoop(6);
+//     RunListeningLoop(6);
 
-    // Should have been enough time to move to CONNECTION_STATE::Authenticated
-    CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
-    CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+//     // Should have been enough time to move to CONNECTION_STATE::Authenticated
+//     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
+//     CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
 
-    // Client requests to join game //
-    REQUIRE(ClientInterface.JoinServer(ClientConnection));
+//     // Client requests to join game //
+//     REQUIRE(ClientInterface.JoinServer(ClientConnection));
 
-    RunListeningLoop(6);
+//     RunListeningLoop(6);
 
-    CHECK(ClientInterface.GetServerConnectionState() ==
-        NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
+//     CHECK(ClientInterface.GetServerConnectionState() ==
+//         NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
     
     
-}
+// }
 
 
 

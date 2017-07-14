@@ -25,8 +25,11 @@ TEST_CASE("IDFactory no repeats", "[ID]"){
 
             if(i == a)
                 continue;
-            
-            CHECK(ids[i] != ids[a]);
+
+            // Only do check when this fails to keep the
+            // reported assertion count down
+            if(ids[i] == ids[a])
+                CHECK(ids[i] != ids[a]);
         }
     }
 }

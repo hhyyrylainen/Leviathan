@@ -1,0 +1,29 @@
+/*! \page networkconnection Leviathan Connections
+
+    Establishing a Connection
+    =========================
+
+    \ref Leviathan::Connection sends automatically a
+    \ref Leviathan::NETWORK_REQUEST_TYPE::Connect to open the connection.
+
+    Both sides may send the Connection request but the client is the
+    one who sends the following messages.
+
+    \todo Add a test that verifies that the server can be the one to
+    call Leviathan::Connection::Init first
+
+    \todo Add data to the Connect request / response to allow
+    connections with the master server.
+
+    \ref Leviathan::NETWORK_REQUEST_TYPE::Security is sent next
+    once the server responds with a Leviathan::NETWORK_RESPONSE_TYPE::Security
+    the connection switches to being encrypted (if enabled by the settings).
+
+    Now the client can safely send a
+    Leviathan::NETWORK_REQUEST_TYPE::Authenticate which finishes
+    (along with the response from the server) the connection
+    establishing procedure and now both sides start accepting normal
+    packets.
+
+    
+*/

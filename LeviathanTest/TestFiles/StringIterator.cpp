@@ -1,18 +1,18 @@
 #include "Iterators/StringIterator.h"
+#include "../PartialEngine.h"
 #include "utf8.h"
 
 #include "catch.hpp"
-#include "Logger.h"
 
 using namespace Leviathan;
-using namespace std;
+using namespace Leviathan::Test;
 
 TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
     // For outputting debug info //
-    Logger log("Test/ExtraTest.txt");
+    TestLogger log("Test/StringIteratorTest.txt");
 
-	StringIterator itr((string*)NULL);
+	StringIterator itr((std::string*)NULL);
 
     //itr.SetDebugMode(true);
 
@@ -20,7 +20,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
      	itr.ReInit(L" get \" this stuff in here\\\" which has 'stuff' \"_ and not this");
 
-        auto results = itr.GetStringInQuotes<wstring>(QUOTETYPE_DOUBLEQUOTES);
+        auto results = itr.GetStringInQuotes<std::wstring>(QUOTETYPE_DOUBLEQUOTES);
 
         CHECK(*results == L" this stuff in here\\\" which has 'stuff' ");
 
@@ -32,7 +32,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit(";quick testcase for \\;not getting anything!");
 
-        auto results = itr.GetUntilNextCharacterOrNothing<string>(L';');
+        auto results = itr.GetUntilNextCharacterOrNothing<std::string>(L';');
 
         REQUIRE(results == nullptr);
     }
@@ -41,8 +41,8 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit("		teesti_ess y");
 
-        auto results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_LOWCODES |
-            UNNORMALCHARACTER_TYPE_WHITESPACE);
+        auto results = itr.GetNextCharacterSequence<std::string>(
+            UNNORMALCHARACTER_TYPE_LOWCODES | UNNORMALCHARACTER_TYPE_WHITESPACE);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "teesti_ess");
@@ -53,8 +53,8 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
         SECTION("String"){
             itr.ReInit(" o object type");
 
-            auto results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
-                UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+            auto results = itr.GetNextCharacterSequence<std::string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
         
             REQUIRE(results != nullptr);
             CHECK(*results == "o");
@@ -64,7 +64,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
             
             itr.ReInit(L" o object type");
 
-            auto results = itr.GetNextCharacterSequence<wstring>(
+            auto results = itr.GetNextCharacterSequence<std::wstring>(
                 UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
         
             REQUIRE(results != nullptr);
@@ -78,14 +78,14 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
         
             itr.ReInit("get-this nice_prefix[but not this!");
 
-            auto results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
-                UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+            auto results = itr.GetNextCharacterSequence<std::string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
             REQUIRE(results != nullptr);
             CHECK(*results == "get-this");
 
-            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE |
-                UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
+            results = itr.GetNextCharacterSequence<std::string>(
+                UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
             REQUIRE(results != nullptr);
             CHECK(*results == "nice_prefix");
@@ -95,13 +95,13 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit("cmd=\"stuff\"");
 
-            auto results = itr.GetNextCharacterSequence<string>(
+            auto results = itr.GetNextCharacterSequence<std::string>(
                 UNNORMALCHARACTER_TYPE_WHITESPACE | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
             REQUIRE(results != nullptr);
             CHECK(*results == "cmd");
 
-            results = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH);
+            results = itr.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
 
             REQUIRE(results != nullptr);
             CHECK(*results == "stuff");
@@ -112,17 +112,17 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit("aib val: = 243.12al toi() a 2456,12.5");
 
-        auto results = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+        auto results = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_DOT);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "243.12");
 
-        results = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+        results = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_DOT);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "2456");
 
-        results = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT);
+        results = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_DOT);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "12.5");
@@ -134,7 +134,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit("	aib val: = 243.12al toi() a 2456,12.5");
 
-            auto results = itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_EQUALITY);
+            auto results = itr.GetUntilEqualityAssignment<std::string>(EQUALITYCHARACTER_TYPE_EQUALITY);
 
             REQUIRE(results != nullptr);
             CHECK(*results == "aib val:");
@@ -144,7 +144,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit(L"StartCount = [[245]];");
 
-            auto results = itr.GetUntilEqualityAssignment<wstring>(
+            auto results = itr.GetUntilEqualityAssignment<std::wstring>(
                 EQUALITYCHARACTER_TYPE_EQUALITY);
 
             REQUIRE(results != nullptr);
@@ -152,7 +152,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.SkipWhiteSpace();
 
-            results = itr.GetUntilNextCharacterOrAll<wstring>(L';');
+            results = itr.GetUntilNextCharacterOrAll<std::wstring>(L';');
 
             REQUIRE(results != nullptr);
             CHECK(*results == L"[[245]]");
@@ -162,14 +162,14 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit(L"oh=2;");
 
-            auto results = itr.GetUntilEqualityAssignment<wstring>(EQUALITYCHARACTER_TYPE_ALL);
+            auto results = itr.GetUntilEqualityAssignment<std::wstring>(EQUALITYCHARACTER_TYPE_ALL);
 
             REQUIRE(results != nullptr);
             CHECK(*results == L"oh");
 
             itr.SkipWhiteSpace(SPECIAL_ITERATOR_FILEHANDLING);
 
-            results = itr.GetUntilNextCharacterOrNothing<wstring>(';');
+            results = itr.GetUntilNextCharacterOrNothing<std::wstring>(';');
 
             REQUIRE(results != nullptr);
             CHECK(*results == L"2");
@@ -180,7 +180,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit(" adis told as\\; this still ; and no this");
 
-        auto results = itr.GetUntilNextCharacterOrNothing<string>(';');
+        auto results = itr.GetUntilNextCharacterOrNothing<std::string>(';');
 
         REQUIRE(results != nullptr);
         CHECK(*results == " adis told as\\; this still ");
@@ -190,13 +190,13 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit("not][ this<out>");
 
-        auto results = itr.GetNextCharacterSequence<string>(
+        auto results = itr.GetNextCharacterSequence<std::string>(
             UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "not");
 
-        results = itr.GetNextCharacterSequence<string>(
+        results = itr.GetNextCharacterSequence<std::string>(
             UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
         REQUIRE(results != nullptr);
@@ -207,7 +207,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit("\"JellyCube\";");
             
-        auto results = itr.GetUntilNextCharacterOrAll<string>(';');
+        auto results = itr.GetUntilNextCharacterOrAll<std::string>(';');
 
         REQUIRE(results != nullptr);
         CHECK(*results == "\"JellyCube\"");
@@ -218,19 +218,19 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
         itr.ReInit("asdf // This is a comment! //\n 25.44 /*2 .*/\n12\n\n"
             "// 1\n  a /*42.1*/12");
 
-        auto results = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT,
+        auto results = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_DOT,
             SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "25.44");
 
-        results = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT,
+        results = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_DOT,
             SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
         REQUIRE(results != nullptr);
         CHECK(*results == "12");
             
-        results = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_DOT,
+        results = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_DOT,
             SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
         REQUIRE(results != nullptr);
@@ -242,38 +242,38 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
         itr.ReInit(L"Don\\'t get anything from here\n42, but here it is1\n"
             "4 get until this\n and not this[as\n;] \"how it cu\nts\"");
 
-        auto results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE,
+        auto results = itr.GetNextNumber<std::wstring>(DECIMALSEPARATORTYPE_NONE,
             SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         CHECK(results == nullptr);
 
-        results = itr.GetUntilNextCharacterOrNothing<wstring>(',');
+        results = itr.GetUntilNextCharacterOrNothing<std::wstring>(',');
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"42");
             
-        results = itr.GetNextNumber<wstring>(DECIMALSEPARATORTYPE_NONE,
+        results = itr.GetNextNumber<std::wstring>(DECIMALSEPARATORTYPE_NONE,
             SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"1");
 
-        results = itr.GetNextCharacterSequence<wstring>(
+        results = itr.GetNextCharacterSequence<std::wstring>(
             UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS, SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"4 get until this");
 
-        results = itr.GetUntilNextCharacterOrNothing<wstring>('[');
+        results = itr.GetUntilNextCharacterOrNothing<std::wstring>('[');
 
         CHECK(results != nullptr);
 
-        results = itr.GetUntilNextCharacterOrNothing<wstring>(';',
+        results = itr.GetUntilNextCharacterOrNothing<std::wstring>(';',
             SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         CHECK(results == nullptr);
 
-        results = itr.GetStringInQuotes<wstring>(QUOTETYPE_BOTH,
+        results = itr.GetStringInQuotes<std::wstring>(QUOTETYPE_BOTH,
             SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         REQUIRE(results != nullptr);
@@ -284,7 +284,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit(L"This is my line \\\r that has some things\r\n that are cut off");
 
-        auto results = itr.GetUntilLineEnd<wstring>();
+        auto results = itr.GetUntilLineEnd<std::wstring>();
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"This is my line \\\r that has some things");
@@ -294,17 +294,17 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit(L"This is another line\nwith the right separator\nlast thing...");
 
-        auto results = itr.GetUntilLineEnd<wstring>();
+        auto results = itr.GetUntilLineEnd<std::wstring>();
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"This is another line");
 
-        results = itr.GetUntilLineEnd<wstring>();
+        results = itr.GetUntilLineEnd<std::wstring>();
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"with the right separator");
 
-        results = itr.GetUntilLineEnd<wstring>();
+        results = itr.GetUntilLineEnd<std::wstring>();
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"last thing...");
@@ -314,14 +314,14 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
         itr.ReInit(L"Get until ('bird') the word bird to remove junkwords");
 
-        auto results = itr.GetUntilCharacterSequence<wstring>(L"bird");
+        auto results = itr.GetUntilCharacterSequence<std::wstring>(L"bird");
 
         REQUIRE(results != nullptr);
         CHECK(*results == L"Get until ('bird') the word ");
 
         itr.MoveToNext();
 
-        results = itr.GetUntilCharacterSequence<wstring>(L"word");
+        results = itr.GetUntilCharacterSequence<std::wstring>(L"word");
 
         REQUIRE(results != nullptr);
         CHECK(*results == L" to remove junk");
@@ -345,7 +345,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit("--cmd=Print(string(1)); --other-stuff");
 
-            auto results = itr.GetNextCharacterSequence<string>(
+            auto results = itr.GetNextCharacterSequence<std::string>(
                 UNNORMALCHARACTER_TYPE_WHITESPACE
                 | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
@@ -355,7 +355,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
             if(itr.GetCharacter() == '=')
                 itr.MoveToNext();
 
-            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+            results = itr.GetNextCharacterSequence<std::string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
             REQUIRE(results);
             CHECK(*results == "Print(string(1));");
@@ -365,7 +365,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit("--cmd='Print(string(1)); Print(string(2)); ' --other-stuff");
 
-            auto results = itr.GetNextCharacterSequence<string>(
+            auto results = itr.GetNextCharacterSequence<std::string>(
                 UNNORMALCHARACTER_TYPE_WHITESPACE
                 | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
@@ -375,7 +375,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
             if(itr.GetCharacter() == '=')
                 itr.MoveToNext();
 
-            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+            results = itr.GetNextCharacterSequence<std::string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
             REQUIRE(results);
             CHECK(*results == "'Print(string(1)); Print(string(2)); '");
@@ -393,7 +393,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
             itr.ReInit("--cmd Print(string(1)); --other-stuff");
 
-            auto results = itr.GetNextCharacterSequence<string>(
+            auto results = itr.GetNextCharacterSequence<std::string>(
                 UNNORMALCHARACTER_TYPE_WHITESPACE
                 | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
@@ -403,7 +403,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
             if(itr.GetCharacter() == '=')
                 itr.MoveToNext();
 
-            results = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+            results = itr.GetNextCharacterSequence<std::string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
             REQUIRE(results);
             CHECK(*results == "Print(string(1));");
@@ -419,7 +419,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
 
                 itr.ReInit("--cmd= Print(string(1)); --other-stuff");
 
-                auto results = itr.GetNextCharacterSequence<string>(
+                auto results = itr.GetNextCharacterSequence<std::string>(
                     UNNORMALCHARACTER_TYPE_WHITESPACE
                     | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS);
 
@@ -429,7 +429,7 @@ TEST_CASE("StringIterator get functions", "[string, objectfile]"){
                 if(itr.GetCharacter() == '=')
                     itr.MoveToNext();
 
-                results = itr.GetNextCharacterSequence<string>(
+                results = itr.GetNextCharacterSequence<std::string>(
                     UNNORMALCHARACTER_TYPE_WHITESPACE);
 
                 REQUIRE(results);
@@ -443,33 +443,34 @@ TEST_CASE("StringIterator UTF8 correctness", "[string, objectfile, utf8]"){
 
     // Test UTF8 string handling //
 
-    std::vector<int> unicodeholder = { 0x00E4, '_', 0x0503, 0x04E8, 0x0A06, 0x1304, 0xAC93, 0x299D };
+    std::vector<int> unicodeholder = { 0x00E4, '_', 0x0503, 0x04E8, 0x0A06, 0x1304, 0xAC93,
+                                       0x299D };
 
-	string toutf8;
+    std::string toutf8;
 
 	utf8::utf32to8(unicodeholder.begin(), unicodeholder.end(), back_inserter(toutf8));
 
-	wstring resultuni16;
+    std::wstring resultuni16;
 
 	utf8::utf8to16(toutf8.begin(), toutf8.end(), back_inserter(resultuni16));
 
 	
 	StringIterator itr(new UTF8DataIterator(toutf8), true);
 
-	auto shouldbethesame = itr.GetUntilNextCharacterOrAll<string>('a');
+	auto shouldbethesame = itr.GetUntilNextCharacterOrAll<std::string>('a');
 
     CHECK(*shouldbethesame == toutf8);
 	
 	itr.ReInit(new UTF8DataIterator("My Super nice \\= unicode is this : \""+toutf8+"\""), true);
-	itr.GetUntilEqualityAssignment<string>(EQUALITYCHARACTER_TYPE_ALL);
+	itr.GetUntilEqualityAssignment<std::string>(EQUALITYCHARACTER_TYPE_ALL);
 
 	// Now get the UTF8 sequence //
-	auto utf8encoded = itr.GetStringInQuotes<string>(QUOTETYPE_DOUBLEQUOTES);
+	auto utf8encoded = itr.GetStringInQuotes<std::string>(QUOTETYPE_DOUBLEQUOTES);
 
 	// Convert to utf 16 and compare //
     REQUIRE(utf8encoded != nullptr);
 
-    wstring cvrtsy;
+    std::wstring cvrtsy;
     
     utf8::utf8to16(utf8encoded->begin(), utf8encoded->end(), back_inserter(cvrtsy));
 
@@ -484,14 +485,14 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
     SECTION("Basic string"){
         
         itr.ReInit("my first [bracket value test] that is]] nice");
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "bracket value test");
 
         itr.ReInit("[Another test]");
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "Another test");
@@ -501,7 +502,7 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
         
         itr.ReInit("[Another test");
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE_FALSE(result);
     }
@@ -510,7 +511,7 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
 
         itr.ReInit("[[[Nice deeply ] nested] brackets]");
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "[[Nice deeply ] nested] brackets");
@@ -520,7 +521,7 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
         
         itr.ReInit("[[[Nice deeply ]\n nested] brackets]");
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "[[Nice deeply ]\n nested] brackets");
@@ -530,7 +531,7 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
         
         itr.ReInit("[[[Nice deeply ]\n nested] brackets]");
 
-        result = itr.GetStringInBracketsRecursive<string>(SPECIAL_ITERATOR_ONNEWLINE_STOP);
+        result = itr.GetStringInBracketsRecursive<std::string>(SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         REQUIRE_FALSE(result);
     }
@@ -539,21 +540,21 @@ TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
         
         itr.ReInit("[[actual, usecases, [[things, other], final], last]]");
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "[actual, usecases, [[things, other], final], last]");
 
         itr.ReInit(*result);
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "actual, usecases, [[things, other], final], last");
 
         itr.ReInit(*result);
 
-        result = itr.GetStringInBracketsRecursive<string>();
+        result = itr.GetStringInBracketsRecursive<std::string>();
 
         REQUIRE(result);
         CHECK(*result == "[things, other], final");
@@ -569,19 +570,19 @@ TEST_CASE("StringIterator new line handling", "[string]") {
     SECTION("Until windows multiline line separator") {
 
         itr.ReInit("Just a normal test string coming through");
-        result = itr.GetUntilCharacterSequence<string>("str", SPECIAL_ITERATOR_ONNEWLINE_STOP);
+        result = itr.GetUntilCharacterSequence<std::string>("str", SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         REQUIRE(result);
         CHECK(*result == "Just a normal test ");
 
         itr.ReInit("Just a normal \r\ntest string coming through");
-        result = itr.GetUntilCharacterSequence<string>("str", SPECIAL_ITERATOR_ONNEWLINE_STOP);
+        result = itr.GetUntilCharacterSequence<std::string>("str", SPECIAL_ITERATOR_ONNEWLINE_STOP);
 
         REQUIRE(result);
         CHECK(*result == "Just a normal ");
 
         CHECK(itr.GetCharacter() == 't');
-        result = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+        result = itr.GetNextCharacterSequence<std::string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
         REQUIRE(result);
         CHECK(*result == "test");
@@ -591,7 +592,7 @@ TEST_CASE("StringIterator new line handling", "[string]") {
 
         itr.ReInit("true\n  another = thing\n   final = true;");
 
-        result = itr.GetUntilNextCharacterOrAll<string>(';',
+        result = itr.GetUntilNextCharacterOrAll<std::string>(';',
             SPECIAL_ITERATOR_ONNEWLINE_STOP | SPECIAL_ITERATOR_HANDLECOMMENTS_ASSTRING);
 
         REQUIRE(result);

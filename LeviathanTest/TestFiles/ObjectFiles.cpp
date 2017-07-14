@@ -8,7 +8,6 @@ using namespace Leviathan::Test;
 
 #include "catch.hpp"
 #include "../DummyLog.h"
-#include "Logger.h"
 
 #include <regex>
 
@@ -30,7 +29,7 @@ constexpr auto BasicTestStr = "FirstVariable = 42;\n"
 TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
 
     DummyReporter reporter;
-    Logger log("Test/ExtraTest.txt");
+    TestLogger log("Test/ObjectFileTestLog.txt");
 
     SECTION("minimal syntax string") {
 

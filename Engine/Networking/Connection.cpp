@@ -1,21 +1,24 @@
 // ------------------------------------ //
 #include "Connection.h"
 
+#include "WireData.h"
 #include "NetworkResponse.h"
 #include "NetworkRequest.h"
-#include "Iterators/StringIterator.h"
-#include "SFML/Network/IpAddress.hpp"
-#include "SFML/Network/Packet.hpp"
-#include "NetworkHandler.h"
+#include "SentNetworkThing.h"
+
+#include "Application/GameConfiguration.h"
+#include "Engine.h"
 #include "Exceptions.h"
+#include "Iterators/StringIterator.h"
+#include "NetworkHandler.h"
 #include "RemoteConsole.h"
 #include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
 #include "Utility/Convert.h"
-#include "Engine.h"
-#include "Application/GameConfiguration.h"
 
-#include "SentNetworkThing.h"
+#include "SFML/Network/IpAddress.hpp"
+#include "SFML/Network/Packet.hpp"
+
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -99,8 +102,13 @@ DLLEXPORT bool Connection::Init(NetworkHandler* owninghandler){
     // Reset various timers //
     LastSentPacketTime = LastReceivedPacketTime = Time::GetTimeMs64();
 
+    // We probably don't need to lock earlier (this can't be used
+    // before the Init method finishes), but SendPacketToConnection
+    // takes a lock so we need to lock here
+    GUARD_LOCK();
+    
     // Send hello message //
-    if(!SendPacketToConnection(std::make_shared<RequestConnect>(),
+    if(!SendPacketToConnection(guard, std::make_shared<RequestConnect>(),
             RECEIVE_GUARANTEE::Critical))
     {
         LEVIATHAN_ASSERT(0, "Connection Init cannot send packet");
@@ -143,34 +151,18 @@ DLLEXPORT std::shared_ptr<SentRequest> Connection::SendPacketToConnection(Lock &
     if(!IsValidForSend() || !request)
         return nullptr;
 
+    // Find acks to send //
+    const auto fullpacketid = ++LastUsedLocalID;
+    auto acks = _GetAcksToSend(guard, fullpacketid);
+    
     // Generate a packet from the request //
-    sf::Packet actualpackettosend;
+    auto sentthing = WireData::FormatRequestBytes(request, guarantee,
+        ++LastUsedMessageNumber, fullpacketid, acks.get(), StoredWireData);
 
-    std::array<uint32_t, 1> messages;
-    // Requests don't use this marking mechanism
-    messages[0] = ++LastUsedMessageNumber;
-    
-    // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
-        actualpackettosend);
-
-    // Request type //
-    actualpackettosend << NORMAL_REQUEST_TYPE;
-    
-    // Message number //
-    actualpackettosend << LastUsedMessageNumber;
-
-    // Pack the message data in //
-    request->AddDataToPacket(actualpackettosend);
-
-    _SendPacketToSocket(actualpackettosend);
+    _SendPacketToSocket(StoredWireData);
 
     // Add to the sent packets //
-    auto sentthing = std::make_shared<SentRequest>(LastUsedLocalID, LastUsedMessageNumber,
-        guarantee, request);
-
     PendingRequests.push_back(sentthing);
-
     return sentthing;
 }
 
@@ -180,26 +172,15 @@ DLLEXPORT bool Connection::SendPacketToConnection(Lock &guard,
     if(!IsValidForSend())
         return false;
 
+    // Find acks to send //
+    const auto fullpacketid = ++LastUsedLocalID;
+    auto acks = _GetAcksToSend(guard, fullpacketid);
+    
     // Generate a packet from the request //
-    sf::Packet actualpackettosend;
+    WireData::FormatResponseBytes(response, ++LastUsedMessageNumber,
+        fullpacketid, acks.get(), StoredWireData);
 
-    std::array<uint32_t, 1> messages;
-    messages[0] = ++LastUsedMessageNumber;
-    
-    // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
-        actualpackettosend);
-
-    // Request type //
-    actualpackettosend << NORMAL_RESPONSE_TYPE;
-    
-    // Message number //
-    actualpackettosend << LastUsedMessageNumber;
-
-    // Pack the message data in //
-    response.AddDataToPacket(actualpackettosend);
-    
-    _SendPacketToSocket(actualpackettosend);
+    _SendPacketToSocket(StoredWireData);
 
     return true;
 }
@@ -210,39 +191,28 @@ DLLEXPORT std::shared_ptr<SentResponse> Connection::SendPacketToConnection(Lock 
     if(!IsValidForSend() || !response)
         return nullptr;
 
-    // Generate a packet from the request //
-    sf::Packet actualpackettosend;
+    if(guarantee == RECEIVE_GUARANTEE::None){
 
-    std::array<uint32_t, 1> messages;
-    messages[0] = ++LastUsedMessageNumber;
-    
-    // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
-        actualpackettosend);
+        LOG_WARNING("Connection: SendPacketToConnection: wrong send response called "
+            "with none guarantee");
 
-    // Request type //
-    actualpackettosend << NORMAL_RESPONSE_TYPE;
-    
-    // Message number //
-    actualpackettosend << LastUsedMessageNumber;
-
-    // Pack the message data in //
-    response->AddDataToPacket(actualpackettosend);
-    
-    _SendPacketToSocket(actualpackettosend);
-
-    // Add to the sent packets //
-    if(guarantee != RECEIVE_GUARANTEE::None){
-        
-        auto sentthing = std::make_shared<SentResponse>(LastUsedLocalID, LastUsedMessageNumber,
-            guarantee, response);
-
-        ResponsesNeedingConfirmation.push_back(sentthing);
-
-        return sentthing;
+        SendPacketToConnection(guard, *response);
+        return nullptr;
     }
 
-    return nullptr;
+    // Find acks to send //
+    const auto fullpacketid = ++LastUsedLocalID;
+    auto acks = _GetAcksToSend(guard, fullpacketid);
+    
+    // Generate a packet from the request //
+    auto sentthing = WireData::FormatResponseBytes(response, guarantee,
+        ++LastUsedMessageNumber, fullpacketid, acks.get(), StoredWireData);
+
+    _SendPacketToSocket(StoredWireData);
+
+    // Add to the sent packets //
+    ResponsesNeedingConfirmation.push_back(sentthing);
+    return sentthing;
 }
 // ------------------------------------ //
 DLLEXPORT void Connection::SendKeepAlivePacket(Lock &guard){
@@ -259,28 +229,16 @@ DLLEXPORT void Connection::SendCloseConnectionPacket(Lock &guard){
 // ------------------------------------ //
 void Connection::_Resend(Lock &guard, SentRequest &toresend){
 
-    // Generate a packet from the request //
-    sf::Packet actualpackettosend;
+    // Find acks to send //
+    const auto fullpacketid = ++LastUsedLocalID;
+    auto acks = _GetAcksToSend(guard, fullpacketid);
 
-    std::array<uint32_t, 1> messages;
-    // Requests don't use this marking mechanism
-    messages[0] = toresend.MessageNumber;
+    // Resend it
+    WireData::FormatRequestBytes(*toresend.SentRequestData, toresend.MessageNumber,
+        fullpacketid, acks.get(), StoredWireData);
+
+    _SendPacketToSocket(StoredWireData);
     
-    // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
-        actualpackettosend);
-
-    // Request type //
-    actualpackettosend << NORMAL_REQUEST_TYPE;
-    
-    // Message number //
-    actualpackettosend << LastUsedMessageNumber;
-
-    // Pack the message data in //
-    toresend.SentRequestData->AddDataToPacket(actualpackettosend);
-
-    _SendPacketToSocket(actualpackettosend);
-
     toresend.ResetStartTime();
 
     // Increase attempt number
@@ -289,28 +247,16 @@ void Connection::_Resend(Lock &guard, SentRequest &toresend){
 
 void Connection::_Resend(Lock &guard, SentResponse &toresend){
 
-    // Generate a packet from the request //
-    sf::Packet actualpackettosend;
+    // Find acks to send //
+    const auto fullpacketid = ++LastUsedLocalID;
+    auto acks = _GetAcksToSend(guard, fullpacketid);
 
-    std::array<uint32_t, 1> messages;
-    // Requests don't use this marking mechanism
-    messages[0] = toresend.MessageNumber;
+    // Resend it
+    WireData::FormatResponseBytes(*toresend.SentResponseData, toresend.MessageNumber,
+        fullpacketid, acks.get(), StoredWireData);
+
+    _SendPacketToSocket(StoredWireData);
     
-    // We need a complete header with acks and stuff //
-    _PreparePacketHeaderForPacket(guard, ++LastUsedLocalID, &messages[0], 1,
-        actualpackettosend);
-
-    // Request type //
-    actualpackettosend << NORMAL_RESPONSE_TYPE;
-    
-    // Message number //
-    actualpackettosend << LastUsedMessageNumber;
-
-    // Pack the message data in //
-    toresend.SentResponseData->AddDataToPacket(actualpackettosend);
-
-    _SendPacketToSocket(actualpackettosend);
-
     toresend.ResetStartTime();
 
     // Increase attempt number
@@ -486,15 +432,13 @@ DLLEXPORT void Connection::UpdateListening(){
                 }
             }
 
-            sf::Packet ackPacket;
+            WireData::FormatAckOnlyPacket(ackNumbers, StoredWireData);
 
-            CreateAckOnlyPacket(ackPacket, ackNumbers);
-
-            _SendPacketToSocket(ackPacket);
+            _SendPacketToSocket(StoredWireData);
 
             if(DOUBLE_SEND_FOR_ACK_ONLY){
                 
-                _SendPacketToSocket(ackPacket);
+                _SendPacketToSocket(StoredWireData);
             }
             
         } else {
@@ -506,18 +450,6 @@ DLLEXPORT void Connection::UpdateListening(){
 }
 // ------------------------------------ //
 DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
-    
-    // Handle incoming packet //
-
-    // Header //
-    uint16_t leviathanMagic = 0;
-    packet >> leviathanMagic;
-    
-    if(!packet){
-
-        Logger::Get()->Error("Received packet has invalid (header) format");
-        return;
-    }
 
 #ifdef OUTPUT_PACKET_BITS
 
@@ -525,130 +457,72 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet &packet){
         Convert::HexDump(reinterpret_cast<const uint8_t*>(packet.getData()),
             packet.getDataSize()));
 
-#endif // OUTPUT_PACKET_BITS
+#endif // OUTPUT_PACKET_BITS    
 
     GUARD_LOCK();
-
-    switch(leviathanMagic){
-    case LEVIATHAN_NORMAL_PACKET:
-    {
-        uint32_t packetnumber = 0;
-        packet >> packetnumber;
-
-        if(!packet){
-
-            Logger::Get()->Error("Received packet has invalid (packet number) format");
-            return;
-        }
-
-        NetworkAckField otherreceivedpackages(packet);
-
-        if(!packet){
-
-            Logger::Get()->Error("Received packet has invalid format");
-        }
-
-        // Messages //
-        uint8_t messageCount = 0;
     
-        if(!(packet >> messageCount)){
+    // Handle incoming packet //
+    WireData::DecodeIncomingData(packet,
+        [&](NetworkAckField& acks) -> WireData::DECODE_CALLBACK_RESULT
+        {
+            SetPacketsReceivedIfNotSet(guard, acks);
+            return WireData::DECODE_CALLBACK_RESULT::Continue;
+        },
+        [&](uint32_t ack) -> void
+        {
+            HandleRemoteAck(guard, ack);
+        },
+        [&](uint32_t packetnumber) -> WireData::DECODE_CALLBACK_RESULT
+        {
+            // Report the packet as received //
+            ReceivedRemotePackets[packetnumber] = RECEIVED_STATE::StateReceived;
 
-            Logger::Get()->Error("Received packet has invalid format, missing Message Count");
-        }
+            // Update receive time
+            LastReceivedPacketTime = Time::GetTimeMs64();
 
-        // Marks things as successfully sent //
-        SetPacketsReceivedIfNotSet(guard, otherreceivedpackages);
-
-        // Report the packet as received //
-        ReceivedRemotePackets[packetnumber] = RECEIVED_STATE::StateReceived;
-
-        for(int i = 0; i < messageCount; ++i){
-
-            uint8_t messageType = 0;
-            packet >> messageType;
-
-            uint32_t messageNumber = 0;
-            packet >> messageNumber;
-        
-            if(!packet){
-
-                LOG_ERROR("Connection: received packet has an invalid message "
-                    "(some may have been processed already)");
-                return;
+            // And the state
+            if(State == CONNECTION_STATE::NothingReceived){
+    
+                State = CONNECTION_STATE::Initial;
             }
-
+            
+            return WireData::DECODE_CALLBACK_RESULT::Continue;
+        },
+        [&](uint8_t messagetype, uint32_t messagenumber, sf::Packet &packet)
+        -> WireData::DECODE_CALLBACK_RESULT
+        {
             // We can discard this here if this is message is already received //
             bool alreadyReceived = false;
-        
-            if(_IsAlreadyReceived(messageNumber)){
-
+            
+            if(_IsAlreadyReceived(messagenumber)){
+                
                 alreadyReceived = true;
             }
-
-            switch(messageType){
+            
+            switch(messagetype){
             case NORMAL_RESPONSE_TYPE:
             {
                 _HandleResponsePacket(guard, packet, 
                     alreadyReceived);
-
+                
                 break;
             }
             case NORMAL_REQUEST_TYPE:
             {
-                _HandleRequestPacket(guard, packet, messageNumber, alreadyReceived);
+                _HandleRequestPacket(guard, packet, messagenumber, alreadyReceived);
                 break;
             }
             default:
             {
                 LOG_ERROR("Connection: received packet has unknown message type (" +
-                    Convert::ToString(messageType) + "(some may have been processed already)");
-                return;
+                    Convert::ToString(messagetype) + "(some may have been processed already)");
+                return WireData::DECODE_CALLBACK_RESULT::Error;
             }
-            
             }
+
+            return WireData::DECODE_CALLBACK_RESULT::Continue;
         }
-
-        LastReceivedPacketTime = Time::GetTimeMs64();
-
-        if(State == CONNECTION_STATE::NothingReceived){
-    
-            State = CONNECTION_STATE::Initial;
-        }
-        
-        return;
-    }
-    case LEVIATHAN_ACK_PACKET:
-    {
-        uint8_t ackCount = 0;
-
-        if(!(packet >> ackCount)){
-
-            LOG_ERROR("Received packet has invalid (ack number) format");
-            return;
-        }
-
-        for(uint8_t i = 0; i < ackCount; ++i){
-
-            uint32_t ack = 0;
-
-            if(!(packet >> ack)){
-
-                LOG_ERROR("Received packet ended while acks were being unpacked, "
-                    "some were applied");
-                return;
-            }
-            
-            HandleRemoteAck(guard, ack);
-        }
-        
-        return;
-    }
-    default:
-    {
-        LOG_ERROR("Received packet has an unknown type: " + Convert::ToString(leviathanMagic));
-        return;
-    }
-    }
+    );
 }
 
 DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(Lock &guard, sf::Packet &packet, 
@@ -799,6 +673,16 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(Lock &guard,
                 request->GetIDForResponse()), 
             RECEIVE_GUARANTEE::Critical);
 
+        // Client should also make sure that a request is sent //
+        if(Owner->GetNetworkType() == NETWORKED_TYPE::Client &&
+            (State == CONNECTION_STATE::NothingReceived ||
+                State == CONNECTION_STATE::Initial))
+        {
+            // TODO: test that this is sent
+            SendPacketToConnection(guard, std::make_shared<RequestConnect>(),
+                RECEIVE_GUARANTEE::Critical);
+        }
+
         return true;
     }
     case NETWORK_REQUEST_TYPE::Security:
@@ -947,36 +831,12 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(Lock &guard,
     return false;
 }
 // ------------------------------------ //
-void Leviathan::Connection::_PreparePacketHeaderForPacket(Lock &guard, uint32_t localpacketid,
-    uint32_t* firstmessagenumber, size_t messagenumbercount,
-    sf::Packet &tofill)
+std::shared_ptr<NetworkAckField> Connection::_GetAcksToSend(Lock &guard,
+    uint32_t localpacketid, bool autoaddtosent /*= true*/)
 {
-    LEVIATHAN_ASSERT(localpacketid > 0, "Trying to fill packet with packetid == 0");
-    
-    // See the doxygen page networkformat for the header format //
-    
-    // Type //
-    tofill << LEVIATHAN_NORMAL_PACKET;
-    
-    // PKT ID //
-    tofill << localpacketid;
-
-    // Acks
-    _FillHeaderAcks(guard, localpacketid, tofill);
-        
-    // Message count
-    LEVIATHAN_ASSERT(messagenumbercount <= std::numeric_limits<uint8_t>::max(),
-        "too many messages in _PreparePacketHeader");
-
-    tofill << static_cast<uint8_t>(messagenumbercount);
-}
-
-void Connection::_FillHeaderAcks(Lock &guard, uint32_t localpacketid, sf::Packet &tofill){
-
     if(ReceivedRemotePackets.empty()){
 
-        // Set first to be zero which assumes that no data follows
-        tofill << uint32_t(0);
+        return nullptr;
 
     } else {
 
@@ -1028,19 +888,25 @@ void Connection::_FillHeaderAcks(Lock &guard, uint32_t localpacketid, sf::Packet
                 std::make_shared<NetworkAckField>(firstselected, count, 
                     ReceivedRemotePackets));
 
-            // Add to acks that actually matter if it has anything //
-            if(tmpacks->AcksInThePacket->Acks.size() > 0)
+            // Still skip if there is nothing in it //
+            if(tmpacks->AcksInThePacket->Acks.size() < 1){
+                // It was still empty
+                LOG_WARNING("Generated NetworkAckField was empty even though "
+                    "count wasn't zero");
+                return nullptr;
+            }
+
+            if(autoaddtosent)
                 SentAckPackets.push_back(tmpacks);
 
-            // Put into the packet //
-            tmpacks->AcksInThePacket->AddDataToPacket(tofill);
+            return tmpacks->AcksInThePacket;
             
         } else {
 
             // None were found //
-            tofill << uint32_t(0);
+            return nullptr;
         }
-    }
+    }    
 }
 
 // ------------------------------------ //
@@ -1208,12 +1074,6 @@ DLLEXPORT void Connection::CalculateNetworkPing(int packets, int allowedfails,
     
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Connection::AddDataForResponseWithoutData(sf::Packet &packet,
-    NETWORK_RESPONSE_TYPE type) 
-{
-    packet << false << static_cast<uint16_t>(type) << static_cast<uint32_t>(0);
-}
-// ------------------------------------ //
 DLLEXPORT void Leviathan::Connection::SetPacketsReceivedIfNotSet(Lock &guard, 
     NetworkAckField &acks) 
 {
@@ -1330,146 +1190,6 @@ DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type){
     Owner->CloseConnection(*this);
 }
 // ------------------------------------ //
-DLLEXPORT void Connection::CreateAckOnlyPacket(sf::Packet &packet,
-    const std::vector<uint32_t> &packetstoack)
-{
-    packet << LEVIATHAN_ACK_PACKET;
-
-    LEVIATHAN_ASSERT(packetstoack.size() < std::numeric_limits<uint8_t>::max(),
-        "CreateAckOnlyPacket too many packetstoack provided, can't fit in uint8");
-
-    const uint8_t count = static_cast<uint8_t>(packetstoack.size());
-
-    packet << count;
-
-    for(uint8_t i = 0; i < count; ++i){
-
-        packet << packetstoack[i];
-    }
-}
-
-// ------------------ NetworkAckField ------------------ //
-DLLEXPORT Leviathan::NetworkAckField::NetworkAckField(uint32_t firstpacketid, 
-    uint8_t maxacks, PacketReceiveStatus &copyfrom) :
-    FirstPacketID(firstpacketid)
-{
-
-    // Id is 0 nothing should be copied //
-    if(FirstPacketID == 0)
-        return;
-
-    // Before we reach the first packet id we will want to skip stuff //
-    bool foundstart = false;
-
-    for (auto iter = copyfrom.begin(); iter != copyfrom.end(); ++iter){
-
-        // Skip current if not received //
-        if(iter->second == RECEIVED_STATE::NotReceived)
-            continue;
-
-        if(!foundstart){
-
-            if(iter->first >= FirstPacketID){
 
 
-                // Adjust the starting index, if it is an exact match for firstpacketid
-                // this should be 0
-                auto startindex = iter->first - FirstPacketID;
-
-                // Check that the index is within the size of the field, otherwise fail
-                if(startindex >= maxacks)
-                    break;
-
-                foundstart = true;
-
-            } else {
-
-                continue;
-            }
-
-        }
-
-        size_t currentindex = iter->first - FirstPacketID;
-
-        if(currentindex >= maxacks)
-            break;
-
-        // Copy current ack //
-        const auto vecelement = currentindex / 8;
-
-        while (Acks.size() <= vecelement){
-
-            Acks.push_back(0);
-        }
-
-        Acks[vecelement] |= (1 << (currentindex % 8));
-
-        // Stop copying once enough acks have been set. The loop can end before this, but
-        // that just leaves the rest of the acks as 0
-        if(currentindex + 1 >= maxacks)
-            break;
-    }
-
-    if(!foundstart){
-
-        // No acks to send //
-        FirstPacketID = 0;
-        return;
-    }
-}
-
-DLLEXPORT NetworkAckField::NetworkAckField(sf::Packet &packet){
-
-    // Get data //
-    packet >> FirstPacketID;
-
-    // Empty ack fields //
-    if(FirstPacketID == 0)
-        return;
-    
-    uint8_t tmpsize = 0;
-    
-    packet >> tmpsize;
-
-    if(!packet)
-        return;
-    
-    // Fill in the acks from the packet //
-    Acks.resize(tmpsize);
-    
-    for(char i = 0; i < tmpsize; i++){
-        packet >> Acks[i];
-    }
-}
-
-DLLEXPORT void NetworkAckField::AddDataToPacket(sf::Packet &packet){
-
-    packet << FirstPacketID;
-    
-    if(FirstPacketID == 0)
-        return;
-
-    uint8_t tmpsize = static_cast<uint8_t>(Acks.size());
-    packet << tmpsize;
-    
-    // fill in the ack data //
-    for(uint8_t i = 0; i < tmpsize; i++){
-        
-        packet << Acks[i];
-    }
-}
-
-DLLEXPORT void NetworkAckField::InvokeForEachAck(std::function<void (uint32_t)> func){
-
-    for(size_t i = 0; i < Acks.size(); ++i){
-
-        for(uint8_t bit = 0; bit < 8; ++bit){
-        
-            const auto id = (i * 8) + bit + FirstPacketID;
-
-            if(Acks[i] & (1 << bit))
-                func(id);
-        }
-    }
-}
 

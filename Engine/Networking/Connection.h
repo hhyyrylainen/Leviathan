@@ -6,7 +6,10 @@
 #include "../Common/ThreadSafe.h"
 #include "CommonNetwork.h"
 
+#include "NetworkAckField.h"
+
 #include "SFML/Network/IpAddress.hpp"
+#include "SFML/Network/Packet.hpp"
 
 #include "boost/circular_buffer.hpp"
 
@@ -45,16 +48,6 @@ constexpr auto DEFAULT_PACKET_FILL_AMOUNT = 512;
 //! This is required for ack only packets to work correctly (as they
 //! rely on getting a resend if the acks are lost)
 constexpr auto KEEP_IDS_FOR_DISCARD	= 50;
-
-// magic numbers
-constexpr uint16_t LEVIATHAN_NORMAL_PACKET = 0x4C6E;
-
-constexpr uint16_t LEVIATHAN_ACK_PACKET = 0x4C61;
-
-constexpr uint8_t NORMAL_RESPONSE_TYPE = 0x12;
-
-constexpr uint8_t NORMAL_REQUEST_TYPE = 0x28;
-
 
 //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
 enum class PING_FAIL_REASON {
@@ -103,78 +96,6 @@ enum class CONNECTION_STATE {
     Punchthrough
 };
 
-//! \brief For keeping track of received remote packets.
-//!
-//! These are used to populate ack fields for outgoing packets
-enum class RECEIVED_STATE{
-
-    //! Packet hasn't been received
-    NotReceived = 0,
-
-    //! Packet is received but no acks have been sent
-    StateReceived,
-
-    //! Packet is received and an ack has been sent
-    //! This is basically the same as ReceivedAckSucceeded
-    AcksSent,
-
-    //! Packet is received and the ack is also received
-    //! At this point we no longer need to think about this packet
-    ReceivedAckSucceeded
-};
-
-
-
-class NetworkAckField{
-public:
-
-    using PacketReceiveStatus = std::map<uint32_t, RECEIVED_STATE>;
-
-    //! \brief Copies acts from copyfrom starting with the number firstpacketid
-    //!
-    //! Marks them as RECEIVED_STATE::AcksSent
-    DLLEXPORT NetworkAckField(uint32_t firstpacketid, uint8_t maxacks,
-        PacketReceiveStatus &copyfrom);
-
-    DLLEXPORT void AddDataToPacket(sf::Packet &packet);
-
-    DLLEXPORT NetworkAckField(sf::Packet &packet);
-
-    //! \returns True if an ack number FirstPacketID + ackindex is set
-    inline bool IsAckSet(uint8_t ackindex){
-        
-        // We can use division to find out which vector element is wanted //
-        size_t vecelement = ackindex / 8;
-
-        if (vecelement >= Acks.size())
-            return false;
-
-        return (Acks[vecelement] & (1 << (ackindex % 8))) != 0;
-    }
-
-    //! \brief Calls func with each set ack
-    DLLEXPORT void InvokeForEachAck(std::function<void (uint32_t)> func);
-
-    // Data //
-    uint32_t FirstPacketID;
-    std::vector<uint8_t> Acks;
-};
-
-//! \brief Holds sent ack packets in order to mark the acks as properly sent
-struct SentAcks{
-
-    SentAcks(uint32_t localpacketid, std::shared_ptr<NetworkAckField> acks) :
-        InsidePacket(localpacketid), AcksInThePacket(acks)
-    {}
-
-    //! The packet (SentNetworkThing) in which these acks were sent //
-    uint32_t InsidePacket;
-
-    std::shared_ptr<NetworkAckField> AcksInThePacket;
-        
-    //! Marks when the remote host tells us that any packet in which bunch is in is received
-    bool Received = false;
-};
 
 //! \brief Class that handles a single connection to another instance
 //!
@@ -265,10 +186,6 @@ public:
         SendKeepAlivePacket(guard);
     }
 
-    //! Adds required data for a response packet that has no data
-    DLLEXPORT void AddDataForResponseWithoutData(sf::Packet &packet, 
-        NETWORK_RESPONSE_TYPE type);
-
     //! \brief Sends a packet that tells the other side to disconnect
     //! \todo Add a message parameter for the reason
     DLLEXPORT void SendCloseConnectionPacket(Lock &guard);
@@ -316,9 +233,6 @@ public:
     const auto& GetReceivedPackets() const{
         return ReceivedRemotePackets;
     }
-
-    DLLEXPORT static void CreateAckOnlyPacket(sf::Packet &packet,
-        const std::vector<uint32_t> &packetstoack);
 
 protected:
 
@@ -373,20 +287,16 @@ protected:
     template<class TSentType>
         void _HandleTimeouts(Lock &guard, int64_t timems,
             std::vector<std::shared_ptr<TSentType>> sentthing);
-
-    //! \brief Creates a standard header and ack field for outgoing packet
-    //! \param tofill An empty packet where the packet header can be added
-    //! \param dontsendacks If true first ack will be set to 0
-    void _PreparePacketHeaderForPacket(Lock &guard, uint32_t localpacketid,
-        uint32_t* firstmessagenumber, size_t messagenumbercount,
-        sf::Packet &tofill);
-
-    //! \brief Fills Ack part of header
-    void _FillHeaderAcks(Lock &guard, uint32_t localpacketid, sf::Packet &tofill);
+    
 
     //! \brief Returns a request matching the response's reference ID or NULL
     std::shared_ptr<SentRequest> _GetPossibleRequestForResponse(Lock &guard,
         const std::shared_ptr<NetworkResponse> &response);
+
+    //! \brief Returns acks to be sent with a normal packet, or null if no acks to send
+    //! \param autoaddtosent If true the generated ack field is added to SentAckPackets
+    std::shared_ptr<NetworkAckField> _GetAcksToSend(Lock &guard, uint32_t localpacketid,
+        bool autoaddtosent = true);
 
     //! \brief Marks a remote id as received
     //!
@@ -469,6 +379,13 @@ protected:
     //! True when TargetHost has been retrieved from HostName or TargetHost is
     //! made valid some other way
     bool AddressGot = false;
+
+private:
+
+    //! This holds the final packet data when sending. This is kept
+    //! around to not need to allocate memory again for each sent
+    //! packet
+    sf::Packet StoredWireData;
 };
 
 }

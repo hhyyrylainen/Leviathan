@@ -36,9 +36,17 @@ public:
     }
 };
 
+
+//! \version Now puts all output to the catch framework which only
+//! prints it if a test fails
 class TestLogger : public Logger {
 public:
     TestLogger(const std::string &file) : Logger(file){ }
+
+    void Info(const std::string &data) override {
+
+        INFO(data);
+    }
 
     void Error(const std::string &data) override {
 

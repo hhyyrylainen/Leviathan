@@ -102,7 +102,7 @@ public:
     }
 
     DLLEXPORT static std::shared_ptr<NetworkRequest> LoadFromPacket(sf::Packet &packet, 
-        uint32_t packetid);
+        uint32_t messagenumber);
 
 protected:
 

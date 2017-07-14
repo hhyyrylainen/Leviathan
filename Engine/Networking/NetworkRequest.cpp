@@ -10,7 +10,7 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Packet &packet,
-    uint32_t packetid)
+    uint32_t messagenumber)
 {
     // Get the heading data //
     uint16_t tmpval;
@@ -24,13 +24,13 @@ DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Pac
     // Try to create the additional data if required for this type //
     switch(requesttype){
     case NETWORK_REQUEST_TYPE::Echo:
-        return std::make_shared<RequestNone>(requesttype, packetid, packet);
+        return std::make_shared<RequestNone>(requesttype, messagenumber, packet);
     case NETWORK_REQUEST_TYPE::Connect:
-        return std::make_shared<RequestConnect>(packetid, packet);
+        return std::make_shared<RequestConnect>(messagenumber, packet);
     case NETWORK_REQUEST_TYPE::Security:
-        return std::make_shared<RequestSecurity>(packetid, packet);
+        return std::make_shared<RequestSecurity>(messagenumber, packet);
     case NETWORK_REQUEST_TYPE::Authenticate:
-        return std::make_shared<RequestAuthenticate>(packetid, packet);
+        return std::make_shared<RequestAuthenticate>(messagenumber, packet);
     default:
         {
             Logger::Get()->Warning("NetworkRequest: unused type: "+

@@ -2,6 +2,7 @@
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkRequest.h"
 #include "Networking/SentNetworkThing.h"
+#include "Networking/WireData.h"
 
 #include "../PartialEngine.h"
 
@@ -16,38 +17,150 @@
 using namespace Leviathan;
 using namespace Leviathan::Test;
 
-class UDPSocketAndClientFixture {
-protected:
 
-    UDPSocketAndClientFixture() : 
-        Client(NETWORKED_TYPE::Client, &ClientInterface)
-    {
-        socket.setBlocking(false);
-        REQUIRE(socket.bind(sf::Socket::AnyPort) == sf::Socket::Done);
+// This is sort of unnecessary with the test "Packet header bytes test"
+// But I guess it's fine to test the same thing but directly with WireData...
+TEST_CASE("Normal message format directly with WireData", "[networking]"){
 
-        REQUIRE(Client.Init(sf::Socket::AnyPort));
+    sf::Packet packet;
+    
+    SECTION("Keepalive response"){
 
-        ClientConnection = std::make_shared<GapingConnectionTest>(socket.getLocalPort());
+        WireData::FormatResponseBytes(ResponseNone(NETWORK_RESPONSE_TYPE::Keepalive, 0),
+            11, 1, nullptr, packet);
 
-        REQUIRE(ClientConnection);
+        SECTION("Response header"){
 
-        Client._RegisterConnection(ClientConnection);
+            // First needs to be leviathan identification //
+            uint16_t leviathanMagic = 0;
 
-        ClientConnection->Init(&Client);
+            packet >> leviathanMagic;
+            REQUIRE(packet);
+
+            // Normal packet check 0x4C6E (Ln)
+            CHECK(0x6E == 'n');
+            CHECK(static_cast<int>(leviathanMagic & 0xFF) == 'n');
+
+            CHECK(0x4C == 'L');
+            CHECK(static_cast<int>((leviathanMagic & 0xFF00) >> 8) == 'L');
+
+            // ID number. Must be 1
+            uint32_t packetID = 5;
+
+            packet >> packetID;
+            REQUIRE(packet);
+
+            CHECK(packetID == 1);
+
+            // Acks. Needs to be 0 and the next fields need to be missing
+            uint32_t startAck = 5;
+
+            packet >> startAck;
+            REQUIRE(packet);
+
+            CHECK(startAck == 0);
+
+            // And then message count which should be 1
+            uint8_t messageCount = 0;
+
+            packet >> messageCount;
+            REQUIRE(packet);
+
+            CHECK(messageCount == 1);            
+        }
+
+        uint8_t messageType = 1;
+        
+        packet >> messageType;
+        REQUIRE(packet);
+
+        CHECK(messageType == NORMAL_RESPONSE_TYPE);
+
+        uint32_t messageNumber = 656;
+
+        packet >> messageNumber;
+        REQUIRE(packet);
+
+        CHECK(messageNumber == 11);
+
+        uint16_t responseTypeRaw = 500;
+
+        packet >> responseTypeRaw;
+        REQUIRE(packet);
+
+        CHECK(static_cast<NETWORK_RESPONSE_TYPE>(responseTypeRaw) ==
+            NETWORK_RESPONSE_TYPE::Keepalive);
     }
 
-protected:
+    SECTION("Echo request"){
 
-    PartialEngine<false> engine;
+        WireData::FormatRequestBytes(RequestNone(NETWORK_REQUEST_TYPE::Echo),
+            12, 1, nullptr, packet);
 
-    // Receiver socket //
-    sf::UdpSocket socket;
+        SECTION("Request header"){
 
-    TestClientInterface ClientInterface;
-    NetworkHandler Client;
+            // First needs to be leviathan identification //
+            uint16_t leviathanMagic = 0;
 
-    std::shared_ptr<Connection> ClientConnection;
-};
+            packet >> leviathanMagic;
+            REQUIRE(packet);
+
+            // Normal packet check 0x4C6E (Ln)
+            CHECK(0x6E == 'n');
+            CHECK(static_cast<int>(leviathanMagic & 0xFF) == 'n');
+
+            CHECK(0x4C == 'L');
+            CHECK(static_cast<int>((leviathanMagic & 0xFF00) >> 8) == 'L');
+
+            // ID number. Must be 1
+            uint32_t packetID = 5;
+
+            packet >> packetID;
+            REQUIRE(packet);
+
+            CHECK(packetID == 1);
+
+            // Acks. Needs to be 0 and the next fields need to be missing
+            uint32_t startAck = 5;
+
+            packet >> startAck;
+            REQUIRE(packet);
+
+            CHECK(startAck == 0);
+
+            // And then message count which should be 1
+            uint8_t messageCount = 0;
+
+            packet >> messageCount;
+            REQUIRE(packet);
+
+            CHECK(messageCount == 1);
+        }
+
+        uint8_t messageType = 1;
+        
+        packet >> messageType;
+        REQUIRE(packet);
+
+        CHECK(messageType == NORMAL_REQUEST_TYPE);
+
+        uint32_t messageNumber = 656;
+
+        packet >> messageNumber;
+        REQUIRE(packet);
+
+        CHECK(messageNumber == 12);
+
+        uint16_t responseTypeRaw = 500;
+
+        packet >> responseTypeRaw;
+        REQUIRE(packet);
+
+        CHECK(static_cast<NETWORK_REQUEST_TYPE>(responseTypeRaw) ==
+            NETWORK_REQUEST_TYPE::Echo);
+    }
+}
+
 
 TEST_CASE_METHOD(UDPSocketAndClientFixture, "Packet header bytes test", "[networking]"){
     
@@ -479,7 +592,11 @@ public:
     void FillJustAcks(sf::Packet &tofill){
 
         GUARD_LOCK();
-        _FillHeaderAcks(guard, ++LastUsedLocalID, tofill);
+
+        const auto fullpacketid = ++LastUsedLocalID;
+        auto acks = _GetAcksToSend(guard, fullpacketid);
+        
+        WireData::FillHeaderAckData(acks.get(), tofill);
     }
 
     void SetPacketReceived(uint32_t packetid, RECEIVED_STATE state){

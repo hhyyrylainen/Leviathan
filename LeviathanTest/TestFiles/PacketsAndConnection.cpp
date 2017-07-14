@@ -12,38 +12,6 @@ using namespace Leviathan;
 using namespace Leviathan::Test;
 
 
-class TestClientGetSpecificPacket : public NetworkClientInterface{
-public:
-
-    TestClientGetSpecificPacket(NETWORK_RESPONSE_TYPE typetocheckfor) :
-        CheckForType(typetocheckfor)
-    {
-    }
-    
-    virtual void HandleResponseOnlyPacket(std::shared_ptr<NetworkResponse> message, 
-        Connection &connection) override 
-    {
-        if(message->GetType() == CheckForType){
-
-            ++ReceivedCount;
-            
-        } else {
-
-            WARN("TestClientGetSpecificPacket: got something else than CheckForType");
-        }
-    }
-
-    virtual void _OnStartApplicationConnect() override {
-    }
-
-
-    NETWORK_RESPONSE_TYPE CheckForType;
-
-    //! How many packets of CheckForType type has been received
-    int ReceivedCount = 0;
-};
-
-
 TEST_CASE("Connection correctly decodes ServerAllow and passes to ClientInterface",
     "[networking]")
 {
@@ -94,7 +62,13 @@ TEST_CASE("Connection correctly decodes ServerAllow and passes to ClientInterfac
     CHECK(ClientInterface.ReceivedCount == 1);
 }
 
+// ------------------------------------ //
 
+TEST_CASE_METHOD(ClientConnectionTestFixture, "ClientConnectionTestFixture can manually open "
+    "a connection to a client", "[networking]")
+{
+    DoConnectionOpening();
+}
 
 // ------------------------------------ //
 TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message when joining",
@@ -103,8 +77,6 @@ TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message w
     DoConnectionOpening();
 
     REQUIRE(ClientInterface.JoinServer(ClientConnection));
-
-    
 }
 
 

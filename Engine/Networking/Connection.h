@@ -3,7 +3,6 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "../Common/ThreadSafe.h"
 #include "CommonNetwork.h"
 
 #include "NetworkAckField.h"
@@ -99,8 +98,10 @@ enum class CONNECTION_STATE {
 
 //! \brief Class that handles a single connection to another instance
 //!
+//! This is not thread safe so only one thread at a time may handle this connection.
+//! this means that all worker threads must use Engine::Invoke to send packets
 //! \note this class does not use reference counting 
-class Connection : public ThreadSafe{
+class Connection{
 public:
     //! \brief Creates a new connection to hostname
     //! \todo Add a option to game configuration for default port
@@ -146,53 +147,23 @@ public:
 
     //! Send a request packet to this connection
     //! \returns nullptr If this connection is closed
-    DLLEXPORT std::shared_ptr<SentRequest> SendPacketToConnection(Lock &guard, 
+    DLLEXPORT std::shared_ptr<SentRequest> SendPacketToConnection(
         const std::shared_ptr<NetworkRequest> &request, RECEIVE_GUARANTEE guarantee);
 
-    inline std::shared_ptr<SentRequest> SendPacketToConnection(
-        const std::shared_ptr<NetworkRequest> &request, RECEIVE_GUARANTEE guarantee)
-    {
-        GUARD_LOCK();
-        return SendPacketToConnection(guard, request, guarantee);
-    }
-
     //! \Send a response that doesn't need to be confirmed to be received
-    DLLEXPORT bool SendPacketToConnection(Lock &guard, 
-        const NetworkResponse &response);
-
-    inline bool SendPacketToConnection(
-        const NetworkResponse &response)
-    {
-        GUARD_LOCK();
-        return SendPacketToConnection(guard, response);
-    }
+    DLLEXPORT bool SendPacketToConnection(const NetworkResponse &response);
     
     //! Sends a response packet to this connection
     //! \returns nullptr If this connection is closed
-    DLLEXPORT std::shared_ptr<SentResponse> SendPacketToConnection(Lock &guard, 
+    DLLEXPORT std::shared_ptr<SentResponse> SendPacketToConnection( 
         const std::shared_ptr<NetworkResponse> &response, RECEIVE_GUARANTEE guarantee);
 
-    inline std::shared_ptr<SentResponse> SendPacketToConnection(
-        const std::shared_ptr<NetworkResponse> &response, RECEIVE_GUARANTEE guarantee)
-    {
-        GUARD_LOCK();
-        return SendPacketToConnection(guard, response, guarantee);
-    }
-
     //! \brief Sends a keep alive packet if enough time has passed
-    DLLEXPORT void SendKeepAlivePacket(Lock &guard);
-    DLLEXPORT FORCE_INLINE void SendKeepAlivePacket(){
-        GUARD_LOCK();
-        SendKeepAlivePacket(guard);
-    }
+    DLLEXPORT void SendKeepAlivePacket();
 
     //! \brief Sends a packet that tells the other side to disconnect
     //! \todo Add a message parameter for the reason
-    DLLEXPORT void SendCloseConnectionPacket(Lock &guard);
-    DLLEXPORT FORCE_INLINE void SendCloseConnectionPacket(){
-        GUARD_LOCK();
-        SendCloseConnectionPacket(guard);
-    }
+    DLLEXPORT void SendCloseConnectionPacket();
 
     //! \brief Returns a nicely formated address string for this connection
     //!
@@ -218,7 +189,7 @@ public:
     //! \brief Called when the other side sends us an ack
     //!
     //! Used to mark our packets as sent
-    DLLEXPORT void HandleRemoteAck(Lock &guard, uint32_t localidconfirmedassent);
+    DLLEXPORT void HandleRemoteAck(uint32_t localidconfirmedassent);
 
 
     //! \brief Basically a debug method (this is very slow)
@@ -237,24 +208,23 @@ public:
 protected:
 
     //! \param alreadyreceived If true only the message is unpacked and discarded
-    DLLEXPORT void _HandleRequestPacket(Lock &guard, sf::Packet &packet, 
-        uint32_t messagenumber, bool alreadyreceived);
+    DLLEXPORT void _HandleRequestPacket(sf::Packet &packet, uint32_t messagenumber,
+        bool alreadyreceived);
 
     //! \param alreadyreceived If true only the message is unpacked and discarded
-    DLLEXPORT void _HandleResponsePacket(Lock &guard, sf::Packet &packet, 
-        bool alreadyreceived);
+    DLLEXPORT void _HandleResponsePacket(sf::Packet &packet, bool alreadyreceived);
 
     
     //! \brief Sets acks in a packet as properly sent in this
     //!
     //! Acks that were false in the packet are untouched
-    DLLEXPORT void SetPacketsReceivedIfNotSet(Lock &guard, NetworkAckField &acks);
+    DLLEXPORT void SetPacketsReceivedIfNotSet(NetworkAckField &acks);
 
     //! \brief Removes acks that were successful in the packet from target
     //!
     //! \note Should be called after the packet containing these acks is marked as
     //! successful
-    DLLEXPORT void RemoveSucceededAcks(Lock &guard, NetworkAckField &acks);
+    DLLEXPORT void RemoveSucceededAcks(NetworkAckField &acks);
 
     //! \brief Sends actualpackettosend to our Owner's socket
     DLLEXPORT void _SendPacketToSocket(sf::Packet &actualpackettosend);
@@ -272,30 +242,28 @@ protected:
     
 protected:
 
-    DLLEXPORT bool _HandleInternalRequest(Lock &guard,
-        std::shared_ptr<NetworkRequest> request);
+    DLLEXPORT bool _HandleInternalRequest(const std::shared_ptr<NetworkRequest> &request);
     
-    DLLEXPORT bool _HandleInternalResponse(Lock &guard, 
-        std::shared_ptr<NetworkResponse> response);
+    DLLEXPORT bool _HandleInternalResponse(const std::shared_ptr<NetworkResponse> &response);
 
     //! \brief Sends a message again. Preserves message number but changes packet id
     //! \todo Create Resend method that pools together many failed messages
-    void _Resend(Lock &guard, SentRequest &toresend);
+    void _Resend(SentRequest &toresend);
 
-    void _Resend(Lock &guard, SentResponse &toresend);
+    void _Resend(SentResponse &toresend);
 
     template<class TSentType>
-        void _HandleTimeouts(Lock &guard, int64_t timems,
+        void _HandleTimeouts(int64_t timems,
             std::vector<std::shared_ptr<TSentType>> sentthing);
     
 
     //! \brief Returns a request matching the response's reference ID or NULL
-    std::shared_ptr<SentRequest> _GetPossibleRequestForResponse(Lock &guard,
+    std::shared_ptr<SentRequest> _GetPossibleRequestForResponse(
         const std::shared_ptr<NetworkResponse> &response);
 
     //! \brief Returns acks to be sent with a normal packet, or null if no acks to send
     //! \param autoaddtosent If true the generated ack field is added to SentAckPackets
-    std::shared_ptr<NetworkAckField> _GetAcksToSend(Lock &guard, uint32_t localpacketid,
+    std::shared_ptr<NetworkAckField> _GetAcksToSend(uint32_t localpacketid,
         bool autoaddtosent = true);
 
     //! \brief Marks a remote id as received

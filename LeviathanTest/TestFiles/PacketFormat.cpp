@@ -591,10 +591,8 @@ public:
 
     void FillJustAcks(sf::Packet &tofill){
 
-        GUARD_LOCK();
-
         const auto fullpacketid = ++LastUsedLocalID;
-        auto acks = _GetAcksToSend(guard, fullpacketid);
+        auto acks = _GetAcksToSend(fullpacketid);
         
         WireData::FillHeaderAckData(acks.get(), tofill);
     }

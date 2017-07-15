@@ -149,24 +149,18 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
 // }
 
 
-// TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
+TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
 
-//     RunListeningLoop(6);
+    VerifyEstablishConnection();
 
-//     // Should have been enough time to move to CONNECTION_STATE::Authenticated
-//     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
-//     CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+    // Client requests to join game //
+    REQUIRE(ClientInterface.JoinServer(ClientConnection));
 
-//     // Client requests to join game //
-//     REQUIRE(ClientInterface.JoinServer(ClientConnection));
+    RunListeningLoop(6);
 
-//     RunListeningLoop(6);
-
-//     CHECK(ClientInterface.GetServerConnectionState() ==
-//         NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
-    
-    
-// }
+    CHECK(ClientInterface.GetServerConnectionState() ==
+        NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
+}
 
 
 

@@ -68,6 +68,26 @@ public:
     DLLEXPORT void MarkQuit();
 
     // ------------------------------------ //
+    // Threading support
+
+    //! \brief Runs function on the main thread before the next tick
+    //!
+    //! This is provided to be able to 
+    DLLEXPORT void Invoke(const std::function<void(Engine&)> &function){}
+
+    DLLEXPORT void Invoke(const std::function<void()> &function){}
+
+    //! \brief Runs the function now if on the main thread otherwise calls Invoke
+    DLLEXPORT void RunOnMainThread(const std::function<void()> &function){}
+
+    //! \brief Returns true if called on the main thread
+    DLLEXPORT bool IsOnMainThread() const{LEVIATHAN_ASSERT(false, "TODO");}
+
+    //! \brief Asserts if not called on the main thread
+    DLLEXPORT inline void AssertIfNotMainThread() const{};
+    
+
+    // ------------------------------------ //
     //! Passes the commands and preprocesses them
     //!
     //! Also interprets commands like --nogui

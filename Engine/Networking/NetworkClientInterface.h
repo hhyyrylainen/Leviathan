@@ -148,6 +148,10 @@ protected:
     
 
 private:
+
+    //! \brief Helper for TickIt to handle server connection state
+    //! \todo Why are both heartbeats and keepalives used?
+    void _TickServerConnectionState(Lock &guard);
         
     //! \brief Handles succeeded requests, removes clutter from other places
     void _ProcessCompletedRequest(Lock &guard, std::shared_ptr<SentRequest> tmpsendthing,

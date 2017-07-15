@@ -100,7 +100,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
     // Fail if already connected //
     if(ServerConnection){
 
-        Logger::Get()->Error("NetworkClientInterface: JoinServer: trying to join a server "
+        LOG_ERROR("NetworkClientInterface: JoinServer: trying to join a server "
             "while connected to another");
         DisconnectFromServer(guard, "Trying to connect to another server");
         return false;
@@ -118,6 +118,12 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
     _OnNewConnectionStatusMessage("Trying to connect to a server on "+ServerConnection->
         GenerateFormatedAddressString());
 
+    auto sentthing = ServerConnection->SendPacketToConnection(
+        std::make_shared<RequestJoinServer>(-1), RECEIVE_GUARANTEE::Critical);
+
+    // Monitor result
+    OurSentRequests.push_back(sentthing);
+    
     return true;
 }
 
@@ -162,9 +168,7 @@ Leviathan::NetworkClientInterface::GetClientConnections()
     throw Exception("Calling GetClientConnections on a client interface");
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
-    
-    GUARD_LOCK();
+void NetworkClientInterface::_TickServerConnectionState(Lock &guard){
 
     switch(ConnectState){
     case CLIENT_CONNECTION_STATE::None:
@@ -181,9 +185,10 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
 
             LOG_WARNING("Connection to server failed");
             DisconnectFromServer(guard, "Server Refused Connection", true);
+            LEVIATHAN_ASSERT(ConnectState != CLIENT_CONNECTION_STATE::WaitingForOpening,
+                "DisconnectFromServer didn't reset client connect state");
             return;
         }
-
         
         return;
     }
@@ -198,21 +203,22 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
     if(KeepAliveQueued){
 
         // Send a keep alive //
-        if(ServerConnection){
-
-            ServerConnection->SendKeepAlivePacket();
-            
-        } else {
-
-            LOG_WARNING("NetworkClientInterface: cannot send keep alive because "
-                "ServerConnection is empty");
-        }
+        ServerConnection->SendKeepAlivePacket();
         
         KeepAliveQueued = false;
     }
 
-checksentrequestsbeginlabel:
+    // Send heartbeats //
+    _UpdateHeartbeats(guard);
+}
 
+DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
+    
+    GUARD_LOCK();
+
+    _TickServerConnectionState(guard);
+
+ sentrequestloopbegin:
 
     // Check status of requests //
     for(auto iter = OurSentRequests.begin(); iter != OurSentRequests.end(); ){
@@ -234,7 +240,7 @@ checksentrequestsbeginlabel:
 
                 // We need to loop again, because our iterator is now invalid, because
                 // quite often failed things are retried
-                goto checksentrequestsbeginlabel;
+                goto sentrequestloopbegin;
             }
 
             Logger::Get()->Info("Received a response to client request");
@@ -250,10 +256,6 @@ checksentrequestsbeginlabel:
         // Can't handle, continue looping //
         ++iter;
     }
-
-    // Send heartbeats //
-    _UpdateHeartbeats(guard);
-
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(

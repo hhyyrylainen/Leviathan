@@ -77,14 +77,48 @@ TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message w
     DoConnectionOpening();
 
     REQUIRE(ClientInterface.JoinServer(ClientConnection));
+
+    // Read the message
+    sf::Packet packet;
+    REQUIRE(ReadPacket(packet));
+    REQUIRE(packet.getDataSize() > 0);
+
+    std::shared_ptr<NetworkRequest> joinrequest;
+
+    WireData::DecodeIncomingData(packet,
+        nullptr, nullptr, nullptr,
+        [&](uint8_t messagetype, uint32_t messagenumber, sf::Packet &packet)
+        -> WireData::DECODE_CALLBACK_RESULT
+        {
+            switch(messagetype){
+            case NORMAL_REQUEST_TYPE:
+            {
+                REQUIRE_NOTHROW(joinrequest = NetworkRequest::LoadFromPacket(packet,
+                        messagenumber));
+                REQUIRE(joinrequest);
+                CHECK(joinrequest->GetType() == NETWORK_REQUEST_TYPE::JoinServer);
+                break;
+            }
+            default:
+            {
+                CHECK(false);
+                return WireData::DECODE_CALLBACK_RESULT::Error;
+            }
+            }
+
+            return WireData::DECODE_CALLBACK_RESULT::Continue;
+        });
+
+    REQUIRE(joinrequest);
+    CHECK(joinrequest->GetType() == NETWORK_REQUEST_TYPE::JoinServer);
 }
 
 
 
 // ------------------------------------ //
 TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[networking]"){
-
-    RunListeningLoop(6);
+    
+    VerifyEstablishConnection();
 
     // Should no longer be in initial state //
     CHECK(ClientConnection->GetState() != CONNECTION_STATE::NothingReceived);

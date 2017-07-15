@@ -85,6 +85,16 @@ protected:
         }
     }
 
+    //! Makes sure the connection is established
+    void VerifyEstablishConnection(){
+
+        RunListeningLoop(6);
+
+        // Should have been enough time to move to CONNECTION_STATE::Authenticated
+        CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
+        CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+    }
+
 protected:
 
     PartialEngine<false> engine;

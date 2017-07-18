@@ -196,6 +196,7 @@ void NetworkClientInterface::_TickServerConnectionState(Lock &guard){
         break;
     }
 
+    // TODO: cause a disconnect if no server connection
     LEVIATHAN_ASSERT(ServerConnection, "ServerConnection null when ConnectState isn't None");
 
     // Check did The connection close //
@@ -275,7 +276,17 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
             case NETWORK_RESPONSE_TYPE::ServerDisallow:
                 {
                     // We need to do something to fix this
-                    DEBUG_BREAK;
+                    auto resdata = static_cast<ResponseServerDisallow*>(response.get());
+                    
+                    LOG_ERROR("NetworkClientInterface: Server didn't allow our request "
+                        ", code: " + //std::to_string(resdata->Reason) +
+                        std::to_string(static_cast<int>(resdata->Reason)) +
+                        " message: " + resdata->Message);
+
+                    LOG_INFO("TODO: check can we recover from that failure");
+
+                    // Fallback to the generic failure handling
+                    _ProcessFailedRequest(guard, tmpsendthing, response);
                 }
                 break;
             case NETWORK_RESPONSE_TYPE::ServerAllow:
@@ -346,8 +357,11 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(
     switch(tmpsendthing->SentRequestData->GetType()){
     
     default:
-        LOG_WRITE("\t> Unknown request type, probably not important, "
-            "not doing anything about it failing");
+    {
+        LOG_ERROR("\t> Unknown request type; can't recover. Closing connection");
+        DisconnectFromServer(guard, "A critical request to the server failed.");
+        break;
+    }
     }
 }
 // ------------------------------------ //

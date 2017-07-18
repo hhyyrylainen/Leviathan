@@ -27,8 +27,7 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
     switch(responsetype){
     case NETWORK_RESPONSE_TYPE::CloseConnection:
     case NETWORK_RESPONSE_TYPE::Keepalive:
-    case NETWORK_RESPONSE_TYPE::None:
-        return std::make_shared<ResponseNone>(responsetype, responseid, packet);
+
     case NETWORK_RESPONSE_TYPE::Connect:
         return std::make_shared<ResponseConnect>(responseid, packet);
     case NETWORK_RESPONSE_TYPE::Authenticate:
@@ -37,6 +36,12 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
         return std::make_shared<ResponseSecurity>(responseid, packet);
     case NETWORK_RESPONSE_TYPE::ServerAllow:
         return std::make_shared<ResponseServerAllow>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::ServerDisallow:
+        return std::make_shared<ResponseServerDisallow>(responseid, packet);        
+    // None based types
+    case NETWORK_RESPONSE_TYPE::None:
+        return std::make_shared<ResponseNone>(responsetype, responseid, packet);
+        
     default:
         {
             Logger::Get()->Warning("NetworkResponse: unused type: "+

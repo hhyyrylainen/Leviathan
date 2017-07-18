@@ -153,6 +153,8 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
 
     VerifyEstablishConnection();
 
+    VerifyServerStarted();
+
     // Client requests to join game //
     REQUIRE(ClientInterface.JoinServer(ClientConnection));
 

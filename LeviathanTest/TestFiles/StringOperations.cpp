@@ -124,6 +124,24 @@ TEST_CASE("String whitespace trimming", "[string]"){
     REQUIRE(result == correctresult);
 }
 
+TEST_CASE("String whitespace trimming without any whitespace", "[string]"){
+
+    SECTION("Single letter"){
+        string result = "s";
+        StringOperations::RemovePreceedingTrailingSpaces(result);
+
+        CHECK(result == "s");
+    }
+
+    SECTION("Short word"){
+
+        string result = "sam";
+        StringOperations::RemovePreceedingTrailingSpaces(result);
+
+        CHECK(result == "sam");
+    }
+}
+
 #define TESTPATHPLAIN	"My/super/path/filesthis.extsuper"
 
 #define TESTPATHSTR			"My/super/path/filesthis.extsuper"

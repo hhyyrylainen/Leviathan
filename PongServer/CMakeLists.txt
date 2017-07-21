@@ -19,12 +19,10 @@ set(BaseSubFolder "PongServer")
 # Set all the settings
 set(ProgramIncludesHeader "${BaseIncludeFileName}")
 set(ProgramAppHeader "PongServer.h")
-set(ProgramNetHeader "PongServerNetworking.h")
 set(ProgramNamespace Pong)
 
 # ------------------ ProgramConfiguration ------------------ #
 set(PROGRAMCLASSNAME				PongServer)
-set(PROGRAMNETWORKINGNAME			PongServerNetworking)
 set(PROGRAMLOG						PongServer)
 set(ENGINECONFIGURATION				"./EngineConf.conf")
 set(PROGRAMCONFIGURATION			"./PongServer.conf")
@@ -37,12 +35,6 @@ set(WINDOWTITLEGENFUNCTION			"PongServer::GenerateWindowTitle()")
 set(USERREADABLEIDENTIFICATION		"\"Pong server version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
-
-# We don't use a custom JS interface
-set(PROGRAMUSE_CUSTOMJS             0)
-set(PROGRAMCUSTOMJS_INCLUDE         ".h")
-set(PROGRAMCUSTOMJS_CLASS           )
-set(PROGRAMCUSTOMJS_EXTFILE         ".js")
 
 
 # Configure the includes file

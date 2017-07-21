@@ -785,12 +785,7 @@ DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
 void Leviathan::GameWorld::UpdatePlayersPositionData(Lock &guard, ConnectedPlayer &ply)
 {
 	// Get the position for this player in this world //
-    ObjectID id = 0;
-
-    {
-        GUARD_LOCK_OTHER(ply);
-        auto id = ply.GetPositionInWorld(this, guard);
-    }
+    ObjectID id = ply.GetPositionInWorld(this);
 
     // Player is using a static position at (0, 0, 0) //
     if(id == 0)

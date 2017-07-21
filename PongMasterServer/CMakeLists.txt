@@ -20,12 +20,10 @@ set(BaseSubFolder "PongMasterServer")
 # Set all the settings
 set(ProgramIncludesHeader "${BaseIncludeFileName}")
 set(ProgramAppHeader "PongMasterServer.h")
-set(ProgramNetHeader "PongMasterNetworking.h")
 set(ProgramNamespace Pong)
 
 # ------------------ ProgramConfiguration ------------------ #
 set(PROGRAMCLASSNAME				PongMasterServer)
-set(PROGRAMNETWORKINGNAME			PongMasterNetworking)
 set(PROGRAMLOG						PongMaster)
 set(ENGINECONFIGURATION				"./EngineConf.conf")
 set(PROGRAMCONFIGURATION			"./PongMaster.conf")
@@ -38,12 +36,6 @@ set(WINDOWTITLEGENFUNCTION			"PongMasterServer::GenerateWindowTitle()")
 set(USERREADABLEIDENTIFICATION		"\"Pong master version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
-
-# We don't use a custom JS interface
-set(PROGRAMUSE_CUSTOMJS             0)
-set(PROGRAMCUSTOMJS_INCLUDE         ".h")
-set(PROGRAMCUSTOMJS_CLASS           )
-set(PROGRAMCUSTOMJS_EXTFILE         ".js")
 
 # Configure the includes file
 configure_file("${PROJECT_SOURCE_DIR}/File Templates/BaseLeviathanProjectIncludes.h.in" 

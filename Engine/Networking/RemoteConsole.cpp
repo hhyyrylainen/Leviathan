@@ -43,7 +43,7 @@ DLLEXPORT void Leviathan::RemoteConsole::UpdateStatus(){
 
             Logger::Get()->Info("RemoteConsole: closing the program because "
                 "CloseIfNoRemoteConsole, and no active connections");
-            LeviathanApplication::GetApp()->MarkAsClosing();
+            LeviathanApplication::Get()->MarkAsClosing();
         }
     }
 

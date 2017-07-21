@@ -27,6 +27,16 @@ public:
         // Don't want to mimic either client or server to make testing easier
         return NETWORKED_TYPE::Master;
     }
+
+    //! Not used
+    NetworkInterface* _GetApplicationPacketHandler() override{
+
+        return nullptr;
+    }
+
+    void _ShutdownApplicationPacketHandler() override{
+
+    }
 };
 
 class PartialClient : public NetworkClientInterface{
@@ -83,7 +93,7 @@ public:
         if(UseActualInit){
 
             REQUIRE(handler);
-            bool succeeded = Init(&Def, handler->GetNetworkType());
+            bool succeeded = Init(&Def, handler->GetNetworkType(), nullptr);
 
             REQUIRE(succeeded);
             

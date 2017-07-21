@@ -59,20 +59,11 @@ public:
 
     //! \brief Disconnects the client from the server or does nothing
     //! \todo Add a check to not close the connection if it is used by RemoteConsole
-    DLLEXPORT FORCE_INLINE void DisconnectFromServer(const std::string &reason,
-        bool connectiontimedout = false)
-    {
-        GUARD_LOCK();
-        DisconnectFromServer(guard, reason, connectiontimedout);
-    }
+    DLLEXPORT void DisconnectFromServer(const std::string &reason,
+        bool connectiontimedout = false);
 
     DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>& GetClientConnections() 
         override;
-
-    //! \brief Actual implementation of DisconnectFromServer
-    DLLEXPORT void DisconnectFromServer(Lock &guard, const std::string &reason,
-        bool connectiontimedout = false);
-
 
     //! \brief Called directly by SyncedVariables to update the status string
     DLLEXPORT void OnUpdateFullSynchronizationState(size_t variablesgot,
@@ -95,8 +86,9 @@ public:
 
     //! \brief Returns true if the client is connected to a server
     //!
-    //! This will be true when the server has responded to our join request and allowed us to join,
-    //! we aren't actually yet playing on the server
+    //! This will be true when the server has responded to our join
+    //! request and allowed us to join, we aren't actually yet playing
+    //! on the server
     DLLEXPORT bool IsConnected() const;
 
     //! \brief Returns the ID that the server has assigned to us
@@ -151,21 +143,21 @@ private:
 
     //! \brief Helper for TickIt to handle server connection state
     //! \todo Why are both heartbeats and keepalives used?
-    void _TickServerConnectionState(Lock &guard);
+    void _TickServerConnectionState();
         
     //! \brief Handles succeeded requests, removes clutter from other places
-    void _ProcessCompletedRequest(Lock &guard, std::shared_ptr<SentRequest> tmpsendthing,
+    void _ProcessCompletedRequest(std::shared_ptr<SentRequest> tmpsendthing,
         std::shared_ptr<NetworkResponse> response);
 
     //! \brief Handles failed requests, removes clutter from other places
     //! Only requests that aren't always sent as RECEIVE_GUARANTEE::Critical are handled here.
     //! That's because those will immediately drop the connection if they fail.
-    void _ProcessFailedRequest(Lock &guard, std::shared_ptr<SentRequest> tmpsendthing, 
+    void _ProcessFailedRequest(std::shared_ptr<SentRequest> tmpsendthing, 
         std::shared_ptr<NetworkResponse> response);
 
     //! \brief Internally called when server has accepted us
     //! \todo Call variable syncing from here
-    void _ProperlyConnectedToServer(Lock &guard);
+    void _ProperlyConnectedToServer();
 
     //! \brief Called when we receive a start heartbeat packet
     void _OnStartHeartbeats();
@@ -176,7 +168,7 @@ private:
 
 
     //! \brief Updates the heartbeat states
-    void _UpdateHeartbeats(Lock &guard);
+    void _UpdateHeartbeats();
 
 protected:
 

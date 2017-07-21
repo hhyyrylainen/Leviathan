@@ -20,7 +20,7 @@ namespace Pong{
                        public Leviathan::CallableObject
     {
     public:
-        PongGame(PongNetHandler &network);
+        PongGame();
         ~PongGame();
 
         int StartServer();
@@ -63,7 +63,7 @@ namespace Pong{
 
         PongNetHandler& GetInterface() const{
 
-            return ClientInterface;
+            return *ClientInterface;
         }
 
         static string GenerateWindowTitle();
@@ -90,7 +90,9 @@ namespace Pong{
 
         }
         
-        static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep, int threadIndex){
+        static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
+            int threadIndex)
+        {
 
             // The ball will always go through it... //
             NewtonJointSetCollisionState(contact, 0);
@@ -98,33 +100,37 @@ namespace Pong{
 
 
 
-        virtual PhysicsMaterialContactCallback GetBallPaddleCallback(){
+        virtual PhysicsMaterialContactCallback GetBallPaddleCallback() override{
 
             return BallContactCallbackPaddle;
         }
 
-        virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback(){
+        virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback() override{
 
             return BallContactCallbackGoalArea;
         }
         
     protected:
 
-        virtual void DoSpecialPostLoad();
-        virtual void CustomizedGameEnd();
-        virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
-        virtual void MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, string> &typeids);
+        Leviathan::NetworkInterface* _GetApplicationPacketHandler() override;
+        void _ShutdownApplicationPacketHandler() override;        
+
+        virtual void DoSpecialPostLoad() override;
+        virtual void CustomizedGameEnd() override;
+        virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) override;
+        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
+            std::map<int, string> &typeids) override;
 
 
         //! \brief Sends updates to the GUI
         //! \todo Implement this
-        virtual void OnPlayerStatsUpdated(PlayerList* list);
+        virtual void OnPlayerStatsUpdated(PlayerList* list) override;
 
         // ------------------------------------ //
         Leviathan::Gui::GuiManager* GuiManagerAccess;
         shared_ptr<GameInputController> GameInputHandler;
 
-        PongNetHandler& ClientInterface;
+        std::unique_ptr<PongNetHandler> ClientInterface;
 
 #ifdef _WIN32
 

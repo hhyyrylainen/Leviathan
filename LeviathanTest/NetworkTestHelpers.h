@@ -98,8 +98,8 @@ protected:
     //! Makes sure that the server is started and clients can join (localhost only)
     void VerifyServerStarted(){
 
-        CHECK(false);
-        
+        ServerInterface.SetServerAllowPlayers(true);
+        ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
     }
 
 protected:

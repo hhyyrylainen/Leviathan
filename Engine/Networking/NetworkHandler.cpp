@@ -189,6 +189,12 @@ DLLEXPORT void Leviathan::NetworkHandler::Release() {
     }
 }
 
+DLLEXPORT void NetworkHandler::DisconnectInterface(){
+
+    ServerInterface = nullptr;
+    ClientInterface = nullptr;
+}
+
 void Leviathan::NetworkHandler::_ReleaseSocket(){
     // This might cause the game to hang... //
 

@@ -8,42 +8,39 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::LeviathanApplication::LeviathanApplication() :
+DLLEXPORT LeviathanApplication::LeviathanApplication() :
     _Engine(new Engine(this))
 {
 	Curapp = this;
 }
 
-DLLEXPORT Leviathan::LeviathanApplication::~LeviathanApplication(){
+DLLEXPORT LeviathanApplication::~LeviathanApplication(){
 	Curapp = nullptr;
 }
 
-DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::GetApp(){
-    
-	return Curapp;
-}
-
-DLLEXPORT LeviathanApplication* Leviathan::LeviathanApplication::Get(){
+DLLEXPORT LeviathanApplication* LeviathanApplication::Get(){
     
 	return Curapp;
 }
 
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::LeviathanApplication::Initialize(AppDef* configuration){
+DLLEXPORT bool LeviathanApplication::Initialize(AppDef* configuration){
 	GUARD_LOCK();
-	// store configuration //
+    
+	// Store configuration //
 	ApplicationConfiguration = configuration;
 
-	// init engine //
-	if(!_Engine->Init(ApplicationConfiguration, GetProgramNetType()))
+	// Init engine //
+	if(!_Engine->Init(ApplicationConfiguration, GetProgramNetType(),
+            _GetApplicationPacketHandler()))
 		return false;
     
 	_InternalInit();
 	return true;
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::Release(){
+DLLEXPORT void LeviathanApplication::Release(){
 	{
 		GUARD_LOCK();
 		// set as quitting //
@@ -52,6 +49,10 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 		// Nothing else to do if no engine //
 		if(!_Engine)
 			return;
+
+        // Shutdown the packet handler
+        _Engine->_DisconnectPacketHandler();
+        _ShutdownApplicationPacketHandler();
 	}
 
 	// This avoids deadlocking //
@@ -65,7 +66,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::Release(){
 	}
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
+DLLEXPORT void LeviathanApplication::StartRelease(){
 	GUARD_LOCK();
 	ShouldQuit = true;
 
@@ -73,7 +74,7 @@ DLLEXPORT void Leviathan::LeviathanApplication::StartRelease(){
 	_Engine->PreRelease();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
+DLLEXPORT void LeviathanApplication::ForceRelease(){
 	GUARD_LOCK();
 	ShouldQuit = true;
 	Quit = true;
@@ -88,23 +89,23 @@ DLLEXPORT void Leviathan::LeviathanApplication::ForceRelease(){
 	SAFE_DELETE(_Engine);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::LeviathanApplication::PassCommandLine(int argcount, char* args[]){
+DLLEXPORT bool LeviathanApplication::PassCommandLine(int argcount, char* args[]){
 	return _Engine->PassCommandLine(argcount, args);
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::_InternalInit(){
+DLLEXPORT void LeviathanApplication::_InternalInit(){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::Render(){
+DLLEXPORT void LeviathanApplication::Render(){
 	_Engine->RenderFrame();
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::PreFirstTick(){
+DLLEXPORT void LeviathanApplication::PreFirstTick(){
 
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
+DLLEXPORT int LeviathanApplication::RunMessageLoop(){
 	// This is almost at tick so call this outside the loop for performance //
     _Engine->PreFirstTick();
 	PreFirstTick();
@@ -154,59 +155,59 @@ DLLEXPORT int Leviathan::LeviathanApplication::RunMessageLoop(){
 	return 0; 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::ClearTimers(){
+DLLEXPORT void LeviathanApplication::ClearTimers(){
 
     _Engine->ClearTimers();
 }
 // ------------------ Default callbacks that do nothing ------------------ //
-DLLEXPORT bool Leviathan::LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
+DLLEXPORT bool LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
     return true;
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::RegisterCustomScriptTypes(asIScriptEngine* engine,
-    std::map<int, std::string> &typeids)
+DLLEXPORT void LeviathanApplication::RegisterCustomScriptTypes(
+    asIScriptEngine* engine, std::map<int, std::string> &typeids)
 {
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::RegisterApplicationPhysicalMaterials(PhysicsMaterialManager*
-    manager)
+DLLEXPORT void LeviathanApplication::RegisterApplicationPhysicalMaterials(
+    PhysicsMaterialManager* manager)
 {
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::Tick(int mspassed){
+DLLEXPORT void LeviathanApplication::Tick(int mspassed){
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::EnginePreShutdown(){
+DLLEXPORT void LeviathanApplication::EnginePreShutdown(){
 
 }
 
-DLLEXPORT std::shared_ptr<GameWorld> Leviathan::LeviathanApplication::GetGameWorld(int id){
+DLLEXPORT std::shared_ptr<GameWorld> LeviathanApplication::GetGameWorld(int id){
 
     return nullptr;
 }
 
 
-DLLEXPORT void Leviathan::LeviathanApplication::DummyGameConfigurationVariables(
+DLLEXPORT void LeviathanApplication::DummyGameConfigurationVariables(
     GameConfiguration* configobj)
 {
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::DummyGameKeyConfigVariables(
+DLLEXPORT void LeviathanApplication::DummyGameKeyConfigVariables(
     KeyConfiguration* keyconfigobj)
 {
 
 }
 
-DLLEXPORT void Leviathan::LeviathanApplication::MarkAsClosing(){
+DLLEXPORT void LeviathanApplication::MarkAsClosing(){
 	QuitSometime = true;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::LeviathanApplication::StartServerProcess(
+DLLEXPORT void LeviathanApplication::StartServerProcess(
     const std::string &processname, const std::string &commandline)
 {
 

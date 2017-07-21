@@ -108,7 +108,7 @@ namespace Pong{
         //! \brief posts a quit message to quit after script has returned
         void ScriptCloseGame(){
 
-            Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+            Leviathan::LeviathanApplication::Get()->MarkAsClosing();
         }
 
 

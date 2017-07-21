@@ -103,7 +103,7 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(std::string cmd){
     } else if(cmd == "exit" || cmd == "quit" || cmd == "q"){
 
         ConsoleOutput("Marking the program as closing");
-        Leviathan::LeviathanApplication::GetApp()->MarkAsClosing();
+        Leviathan::LeviathanApplication::Get()->MarkAsClosing();
         return CONSOLECOMMANDRESULTSTATE_SUCCEEDED;
     }
 

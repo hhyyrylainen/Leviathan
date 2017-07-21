@@ -10,6 +10,9 @@
 
 namespace Leviathan{
 
+class NetworkInterface;
+
+//! \brief Base class for all leviathan programs
 class LeviathanApplication : public ThreadSafe{
 public:
     // creation and initialization //
@@ -66,7 +69,6 @@ public:
 
         
     // static access method for getting instance of this class //
-    DLLEXPORT static LeviathanApplication* GetApp();
     DLLEXPORT static LeviathanApplication* Get();
         
     // Some dummy functions for ease of use //
@@ -89,6 +91,16 @@ protected:
     //! called just before returning from initialization,
     //! and can be used setting start time etc.
     DLLEXPORT virtual void _InternalInit();
+
+
+    //! Called in Initialize to get the derived packet handler type
+    virtual NetworkInterface* _GetApplicationPacketHandler() = 0;
+
+    //! Called to destroy the custom packet handler. This is called
+    //! just before the engine is released and the main loop exited
+    virtual void _ShutdownApplicationPacketHandler() = 0; 
+
+protected:
     // ------------------------------------ //
 
     bool Quit = false;

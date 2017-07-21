@@ -9,7 +9,7 @@ namespace Pong{
 
 	class PongMasterServer : public Leviathan::MasterServerApplication{
 	public:
-		PongMasterServer(PongMasterNetworking &network);
+		PongMasterServer();
 		~PongMasterServer();
 
 		void Tick(int mspassed) override;
@@ -20,11 +20,11 @@ namespace Pong{
 		static std::string GenerateWindowTitle();
 
 		// customized callbacks //
-		virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
-		virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
-            std::map<int, std::string> &typeids);
-		virtual void RegisterApplicationPhysicalMaterials(
-            Leviathan::PhysicsMaterialManager* manager);
+		bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override;
+		void RegisterCustomScriptTypes(asIScriptEngine* engine,
+            std::map<int, std::string> &typeids) override;
+		void RegisterApplicationPhysicalMaterials(
+            Leviathan::PhysicsMaterialManager* manager) override;
 
 		// Game configuration checkers //
 		static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
@@ -32,7 +32,12 @@ namespace Pong{
 
 	protected:
 
-        PongMasterNetworking& MasterInterface;
+        Leviathan::NetworkInterface* _GetApplicationPacketHandler() override;
+        void _ShutdownApplicationPacketHandler() override;
+        
+    protected:
+
+        std::unique_ptr<PongMasterNetworking> MasterInterface;
 	};
 
 }

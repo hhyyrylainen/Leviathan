@@ -95,14 +95,12 @@ DLLEXPORT void Leviathan::NetworkClientInterface::HandleResponseOnlyPacket(
 DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
     shared_ptr<Connection> connectiontouse)
 {
-    GUARD_LOCK();
-
     // Fail if already connected //
     if(ServerConnection){
 
         LOG_ERROR("NetworkClientInterface: JoinServer: trying to join a server "
             "while connected to another");
-        DisconnectFromServer(guard, "Trying to connect to another server");
+        DisconnectFromServer("Trying to connect to another server");
         return false;
     }
 
@@ -127,7 +125,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
     return true;
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(Lock &guard,
+DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(
     const std::string &reason, bool connectiontimedout)
 {
     // Return if no connection //
@@ -168,7 +166,7 @@ Leviathan::NetworkClientInterface::GetClientConnections()
     throw Exception("Calling GetClientConnections on a client interface");
 }
 // ------------------------------------ //
-void NetworkClientInterface::_TickServerConnectionState(Lock &guard){
+void NetworkClientInterface::_TickServerConnectionState(){
 
     switch(ConnectState){
     case CLIENT_CONNECTION_STATE::None:
@@ -184,7 +182,7 @@ void NetworkClientInterface::_TickServerConnectionState(Lock &guard){
         if(!Owner->IsConnectionValid(*ServerConnection)){
 
             LOG_WARNING("Connection to server failed");
-            DisconnectFromServer(guard, "Server Refused Connection", true);
+            DisconnectFromServer("Server Refused Connection", true);
             LEVIATHAN_ASSERT(ConnectState != CLIENT_CONNECTION_STATE::WaitingForOpening,
                 "DisconnectFromServer didn't reset client connect state");
             return;
@@ -210,14 +208,12 @@ void NetworkClientInterface::_TickServerConnectionState(Lock &guard){
     }
 
     // Send heartbeats //
-    _UpdateHeartbeats(guard);
+    _UpdateHeartbeats();
 }
 
 DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
     
-    GUARD_LOCK();
-
-    _TickServerConnectionState(guard);
+    _TickServerConnectionState();
 
  sentrequestloopbegin:
 
@@ -237,7 +233,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
                 auto& tmpsendthing = *iter;
                 iter = OurSentRequests.erase(iter);
 
-                _ProcessFailedRequest(guard, tmpsendthing, tmpsendthing->GotResponse);
+                _ProcessFailedRequest(tmpsendthing, tmpsendthing->GotResponse);
 
                 // We need to loop again, because our iterator is now invalid, because
                 // quite often failed things are retried
@@ -247,7 +243,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
             Logger::Get()->Info("Received a response to client request");
 
             // Handle it //
-            _ProcessCompletedRequest(guard, *iter, (*iter)->GotResponse);
+            _ProcessCompletedRequest(*iter, (*iter)->GotResponse);
 
             // This is now received/handled //
             iter = OurSentRequests.erase(iter);
@@ -260,7 +256,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::TickIt(){
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
-    Lock &guard, std::shared_ptr<SentRequest> tmpsendthing, 
+    std::shared_ptr<SentRequest> tmpsendthing, 
     std::shared_ptr<NetworkResponse> response)
 {
     LEVIATHAN_ASSERT(tmpsendthing->SentRequestData,
@@ -286,7 +282,7 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
                     LOG_INFO("TODO: check can we recover from that failure");
 
                     // Fallback to the generic failure handling
-                    _ProcessFailedRequest(guard, tmpsendthing, response);
+                    _ProcessFailedRequest(tmpsendthing, response);
                 }
                 break;
             case NETWORK_RESPONSE_TYPE::ServerAllow:
@@ -314,14 +310,14 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
                         Logger::Get()->Info("NetworkClientInterface: our player ID is now: "+
                             Convert::ToString(OurPlayerID));
 
-                        _ProperlyConnectedToServer(guard);
+                        _ProperlyConnectedToServer();
                         return;
                     }
 networkresponseserverallowinvalidreponseformatthinglabel:
 
                     Logger::Get()->Error("NetworkClientInterface: server join response has "
                         "invalid format, disconnecting");
-                    DisconnectFromServer(guard, "Server sent an invalid response to join "
+                    DisconnectFromServer("Server sent an invalid response to join "
                         "request", true);
                 }
                 break;
@@ -341,8 +337,7 @@ networkresponseserverallowinvalidreponseformatthinglabel:
 }
 
 void Leviathan::NetworkClientInterface::_ProcessFailedRequest(
-    Lock &guard, std::shared_ptr<SentRequest> tmpsendthing, 
-    std::shared_ptr<NetworkResponse> response)
+    std::shared_ptr<SentRequest> tmpsendthing, std::shared_ptr<NetworkResponse> response)
 {
     LEVIATHAN_ASSERT(tmpsendthing->SentRequestData,
         "ClientInterface processing request with no SentRequestData");
@@ -359,14 +354,13 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(
     default:
     {
         LOG_ERROR("\t> Unknown request type; can't recover. Closing connection");
-        DisconnectFromServer(guard, "A critical request to the server failed.");
+        DisconnectFromServer("A critical request to the server failed.");
         break;
     }
     }
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(Lock &guard){
-    VerifyLock(guard);
+void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(){
 
     // Set the variables //
     ConnectState = CLIENT_CONNECTION_STATE::Connected;
@@ -465,11 +459,9 @@ DLLEXPORT void Leviathan::NetworkClientInterface::CloseDown(){
 
     _OnCloseDown();
 
-    GUARD_LOCK();
-
     if(ServerConnection){
 
-        DisconnectFromServer(guard, "Game closing");
+        DisconnectFromServer("Game closing");
     }
 }
 // ------------------------------------ //
@@ -503,7 +495,6 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::IsConnected() const{
 }
 // ------------------------------------ //
 void Leviathan::NetworkClientInterface::_OnStartHeartbeats(){
-    GUARD_LOCK();
 
     // Ignore if already started /
     if(UsingHeartbeats)
@@ -520,13 +511,13 @@ void Leviathan::NetworkClientInterface::_OnStartHeartbeats(){
 }
 
 void Leviathan::NetworkClientInterface::_OnHeartbeat(){
-    GUARD_LOCK();
+
     // Reset the times //
     LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
     SecondsWithoutConnection = 0.f;
 }
 
-void Leviathan::NetworkClientInterface::_UpdateHeartbeats(Lock &guard){
+void Leviathan::NetworkClientInterface::_UpdateHeartbeats(){
     // Skip if not in use //
     if(!UsingHeartbeats)
         return;
@@ -569,7 +560,6 @@ DLLEXPORT std::shared_ptr<Connection>
 // ------------------------------------ //
 DLLEXPORT void NetworkClientInterface::MarkForNotifyReceivedStates(){
 
-    GUARD_LOCK();
     KeepAliveQueued = true;
 }
 // ------------------------------------ //

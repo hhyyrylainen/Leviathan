@@ -46,7 +46,6 @@ void Pong::PongServerNetworking::_OnPlayerDisconnect(Leviathan::ConnectedPlayer*
 }
 // ------------------------------------ //
 void Pong::PongServerNetworking::SetStatus(PONG_JOINGAMERESPONSE_TYPE status){
-    GUARD_LOCK();
 
     ServerStatusIs = status;
 

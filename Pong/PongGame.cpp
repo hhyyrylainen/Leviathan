@@ -47,14 +47,13 @@ int Pong::PongGame::OnEvent(Event** pEvent){
     return 0;
 }
 
-Pong::PongGame::PongGame(PongNetHandler &network) : 
-    GuiManagerAccess(NULL), GameInputHandler(NULL), ClientInterface(network)
+Pong::PongGame::PongGame() : 
+    GuiManagerAccess(NULL), GameInputHandler(NULL)
 #ifdef _WIN32
     , ServerProcessHandle(NULL)
 #endif // _WIN32
 
 {
-    SetInterface(&ClientInterface);
     StaticGame = this;
 }
 
@@ -84,6 +83,21 @@ PongGame* Pong::PongGame::Get(){
 }
 
 PongGame* Pong::PongGame::StaticGame = NULL;
+
+Leviathan::NetworkInterface* PongGame::_GetApplicationPacketHandler(){
+
+    if(!ClientInterface){
+        ClientInterface = std::make_unique<PongNetHandler>();
+        SetInterface(ClientInterface.get());
+    }
+    return ClientInterface.get();
+}
+
+void PongGame::_ShutdownApplicationPacketHandler(){
+
+    ClientInterface.reset();
+}
+
 // ------------------------------------ //
 std::string Pong::PongGame::GenerateWindowTitle(){
     return string("Pong version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
@@ -110,7 +124,7 @@ int Pong::PongGame::StartServer(){
 
     // Create proper arguments for the program //
     string args = "--nogui -RemoteConsole:CloseIfNone -RemoteConsole:OpenTo:\"localhost:"+
-        Convert::ToString(ClientInterface.GetOwner()->GetOurPort())+"\":Token:" + 
+        Convert::ToString(ClientInterface->GetOwner()->GetOurPort())+"\":Token:" + 
         Convert::ToString(Tokennmbr);
 
     // We need to expect this connection //
@@ -343,7 +357,7 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
     GUARD_LOCK();
      
     // Disconnect from active servers //
-    ClientInterface.DisconnectFromServer(reasonstring);
+    ClientInterface->DisconnectFromServer(reasonstring);
     
     // Disable lobby screen //
     EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
@@ -398,7 +412,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
     if(!GuiManagerAccess->LoadGUIFile("./Data/Scripts/GUI/PongMenus.txt")){
         
         Logger::Get()->Error("Pong: failed to load the GuiFile, quitting");
-        LeviathanApplication::GetApp()->StartRelease();
+        LeviathanApplication::Get()->StartRelease();
     }
 
     // set skybox to have some sort of visuals //
@@ -425,7 +439,7 @@ string GetPongVersionProxy(){
 // ------------------------------------ //
 int Pong::PongGame::GetOurPlayerID(){
 
-    return ClientInterface.GetOurID();
+    return ClientInterface->GetOurID();
 }
 // ------------------------------------ //
 bool Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
@@ -498,7 +512,7 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
 
 
     // Get a connection to use //
-    auto tmpconnection = ClientInterface.GetOwner()->OpenConnectionTo(address);
+    auto tmpconnection = ClientInterface->GetOwner()->OpenConnectionTo(address);
 
     if(!tmpconnection){
 
@@ -516,7 +530,7 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
 
     // We are a client and we can use our interface to handle the server connection functions //
 
-    ClientInterface.JoinServer(tmpconnection);
+    ClientInterface->JoinServer(tmpconnection);
     // The function automatically reports any errors //
 
 
@@ -533,11 +547,11 @@ void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
 
 bool Pong::PongGame::SendServerCommand(const string &command){
 
-    if(!ClientInterface.IsConnected())
+    if(!ClientInterface->IsConnected())
         return false;
 
     try{
-        ClientInterface.SendCommandStringToServer(command);
+        ClientInterface->SendCommandStringToServer(command);
 
     } catch(const Exception &e){
 

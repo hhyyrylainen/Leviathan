@@ -13,8 +13,8 @@ ConnectedPlayer::ConnectedPlayer(std::shared_ptr<Connection> connection,
 }
 
 DLLEXPORT ConnectedPlayer::~ConnectedPlayer(){
-	GUARD_LOCK();
-	_OnReleaseParentCommanders(guard);
+
+	_OnReleaseParentCommanders();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ConnectedPlayer::IsConnectionYours(Connection* checkconnection) {
@@ -27,23 +27,21 @@ DLLEXPORT bool ConnectedPlayer::IsConnectionClosed() const{
 }
 // ------------------------------------ //
 DLLEXPORT void ConnectedPlayer::OnKicked(const std::string &reason){
-	{
-		// Send a close connection packet //
-		GUARD_LOCK();
 
-		if(CorrespondingConnection){
+    // Send a close connection packet //
 
-			// \todo Add the reason here
-            CorrespondingConnection->SendCloseConnectionPacket();
-		}
-	}
+    if(CorrespondingConnection){
+
+        // \todo Add the reason here
+        CorrespondingConnection->SendCloseConnectionPacket();
+    }
+
 
 	// Broadcast a kick message on the server here //
 
 }
 // ------------------------------------ //
 DLLEXPORT void ConnectedPlayer::StartHeartbeats(){
-	GUARD_LOCK();
 
 	// Send a start packet //
 
@@ -60,7 +58,6 @@ DLLEXPORT void ConnectedPlayer::StartHeartbeats(){
 
 DLLEXPORT void ConnectedPlayer::HeartbeatReceived(){
 	// Reset all timers //
-	GUARD_LOCK();
 
 	LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
 
@@ -77,8 +74,6 @@ DLLEXPORT void ConnectedPlayer::UpdateHeartbeats(){
 	// Skip if not used //
 	if(!UsingHeartbeats)
 		return;
-
-	GUARD_LOCK();
 
 	// Check do we need to send one //
 	auto timenow = Time::GetThreadSafeSteadyTimePoint();
@@ -113,7 +108,7 @@ DLLEXPORT bool ConnectedPlayer::_OnSendPrivateMessage(const std::string &message
 	return false;
 }
 // ------------------------------------ //
-DLLEXPORT ObjectID ConnectedPlayer::GetPositionInWorld(GameWorld* world, Lock &guard)
+DLLEXPORT ObjectID ConnectedPlayer::GetPositionInWorld(GameWorld* world)
     const
 {
 	// Not found for that world //

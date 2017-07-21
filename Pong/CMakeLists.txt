@@ -19,12 +19,10 @@ set(BaseSubFolder "Pong")
 # Set all the settings
 set(ProgramIncludesHeader "${BaseIncludeFileName}")
 set(ProgramAppHeader "PongGame.h")
-set(ProgramNetHeader "PongNetHandler.h")
 set(ProgramNamespace Pong)
 
 # ------------------ ProgramConfiguration ------------------ #
 set(PROGRAMCLASSNAME				PongGame)
-set(PROGRAMNETWORKINGNAME			PongNetHandler)
 set(PROGRAMLOG						Pong)
 set(ENGINECONFIGURATION				"./EngineConf.conf")
 set(PROGRAMCONFIGURATION			"./Pong.conf")

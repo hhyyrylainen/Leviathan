@@ -70,11 +70,6 @@ public:
         WDetails = det;
         return *this;
     }
-    DLLEXPORT AppDef& SetPacketHandler(NetworkInterface* networkhandler){
-
-        _NetworkInterface = networkhandler;
-        return *this;
-    }
 
     DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation &info){
 
@@ -100,11 +95,6 @@ public:
 
     DLLEXPORT const std::string& GetLogFile(){
         return LogFile;
-    }
-
-
-    DLLEXPORT NetworkInterface* GetPacketHandler(){
-        return _NetworkInterface;
     }
 
     DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
@@ -135,7 +125,7 @@ protected:
 #endif
     MasterServerInformation MasterServerInfo;
 
-    NetworkInterface* _NetworkInterface = nullptr;
+    std::shared_ptr<NetworkInterface> _NetworkInterface;
 
     // details used to create a window //
     WindowDataDetails WDetails;

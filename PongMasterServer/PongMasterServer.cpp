@@ -7,8 +7,7 @@
 using namespace Pong;
 using namespace std;
 // ------------------------------------ //
-Pong::PongMasterServer::PongMasterServer(PongMasterNetworking &network) :
-    MasterInterface(network)
+Pong::PongMasterServer::PongMasterServer()
 {
 
 }
@@ -20,6 +19,18 @@ Pong::PongMasterServer::~PongMasterServer(){
 std::string Pong::PongMasterServer::GenerateWindowTitle(){
 	return string("PongMasterServer for version " GAME_VERSIONS_ANSI " Leviathan "
         LEVIATHAN_VERSION_ANSIS);
+}
+
+Leviathan::NetworkInterface* PongMasterServer::_GetApplicationPacketHandler(){
+
+    if(!MasterInterface)
+        MasterInterface = std::make_unique<PongMasterNetworking>();
+    return MasterInterface.get();
+}
+
+void PongMasterServer::_ShutdownApplicationPacketHandler(){
+
+    MasterInterface.reset();
 }
 // ------------------------------------ //
 void Pong::PongMasterServer::Tick(int mspassed){

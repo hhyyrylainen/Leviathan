@@ -78,7 +78,9 @@ DLLEXPORT Engine* Engine::Get(){
 	return instance;
 }
 // ------------------------------------ //
-DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
+DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
+    NetworkInterface* packethandler)
+{
     
 	GUARD_LOCK();
     
@@ -137,7 +139,7 @@ DLLEXPORT bool Engine::Init(AppDef*  definition, NETWORKED_TYPE ntype){
     {
         Lock lock(NetworkHandlerLock);
         
-        _NetworkHandler = new NetworkHandler(ntype, Define->GetPacketHandler());
+        _NetworkHandler = new NetworkHandler(ntype, packethandler);
 
         _NetworkHandler->Init(Define->GetMasterServerInfo());
     }
@@ -466,6 +468,64 @@ void Engine::PostLoad(){
     // Run startup command line //
     _RunQueuedConsoleCommands();
 }
+// ------------------------------------ //
+DLLEXPORT void Engine::PreRelease(){
+    GUARD_LOCK();
+    if(PreReleaseWaiting || PreReleaseCompleted)
+        return;
+    
+    PreReleaseWaiting = true;
+    // This will stay true until the end of times //
+    PreReleaseCompleted = true;
+
+    // Stop command handling first //
+    if(_ConsoleInput){
+
+        _ConsoleInput->Release(false);
+        Logger::Get()->Info("Successfully stopped command handling");
+    }
+
+    // Automatically destroy input sources //
+    _NetworkHandler->ReleaseInputHandler();
+
+    // Then kill the network //
+    {
+        Lock lock(NetworkHandlerLock);
+        
+        _NetworkHandler->GetInterface()->CloseDown();
+    }
+
+    // Let the game release it's resources //
+    Owner->EnginePreShutdown();
+
+    // Close remote console //
+    SAFE_DELETE(_RemoteConsole);
+
+    // Close all connections //
+    {
+        Lock lock(NetworkHandlerLock);
+        
+        SAFE_RELEASEDEL(_NetworkHandler);
+    }
+
+    SAFE_RELEASEDEL(_ResourceRefreshHandler);
+
+    // Set worlds to empty //
+    {
+        Lock lock(GameWorldsLock);
+        
+        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
+            // Set all objects to release //
+            (*iter)->MarkForClear();
+        }
+    }
+
+    // Set tasks to a proper state //
+    _ThreadingManager->SetDiscardConditionalTasks(true);
+    _ThreadingManager->SetDisallowRepeatingTasks(true);
+
+    Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
+}
 
 void Engine::Release(bool forced){
 	GUARD_LOCK();
@@ -561,6 +621,14 @@ void Engine::Release(bool forced){
 
     Logger::Get()->Write("Goodbye cruel world!");
 }
+
+DLLEXPORT void Engine::_DisconnectPacketHandler(){
+
+    Lock lock(NetworkHandlerLock);
+    
+    _NetworkHandler->DisconnectInterface();
+}
+
 // ------------------------------------ //
 DLLEXPORT void Engine::MessagePump(){
 
@@ -948,64 +1016,6 @@ void Engine::RenderFrame(){
 
     // advanced statistics frame has ended //
     RenderTimer->RenderingEnd();
-}
-// ------------------------------------ //
-DLLEXPORT void Engine::PreRelease(){
-    GUARD_LOCK();
-    if(PreReleaseWaiting || PreReleaseCompleted)
-        return;
-    
-    PreReleaseWaiting = true;
-    // This will stay true until the end of times //
-    PreReleaseCompleted = true;
-
-    // Stop command handling first //
-    if(_ConsoleInput){
-
-        _ConsoleInput->Release(false);
-        Logger::Get()->Info("Successfully stopped command handling");
-    }
-
-    // Automatically destroy input sources //
-    _NetworkHandler->ReleaseInputHandler();
-
-    // Then kill the network //
-    {
-        Lock lock(NetworkHandlerLock);
-        
-        _NetworkHandler->GetInterface()->CloseDown();
-    }
-
-    // Let the game release it's resources //
-    Owner->EnginePreShutdown();
-
-    // Close remote console //
-    SAFE_DELETE(_RemoteConsole);
-
-    // Close all connections //
-    {
-        Lock lock(NetworkHandlerLock);
-        
-        SAFE_RELEASEDEL(_NetworkHandler);
-    }
-
-    SAFE_RELEASEDEL(_ResourceRefreshHandler);
-
-    // Set worlds to empty //
-    {
-        Lock lock(GameWorldsLock);
-        
-        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
-            // Set all objects to release //
-            (*iter)->MarkForClear();
-        }
-    }
-
-    // Set tasks to a proper state //
-    _ThreadingManager->SetDiscardConditionalTasks(true);
-    _ThreadingManager->SetDisallowRepeatingTasks(true);
-
-    Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::SaveScreenShot(){

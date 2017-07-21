@@ -1,18 +1,17 @@
 // ------------------------------------ //
 #include "NetworkInterface.h"
 
+#include "../Utility/Convert.h"
+#include "Application/AppDefine.h"
+#include "Connection.h"
+#include "Engine.h"
 #include "Exceptions.h"
+#include "NetworkHandler.h"
 #include "NetworkRequest.h"
 #include "NetworkResponse.h"
-#include "Connection.h"
 #include "RemoteConsole.h"
-#include "Application/AppDefine.h"
 #include "SyncedVariables.h"
-#include "../Utility/Convert.h"
-#include "NetworkHandler.h"
-#include "Engine.h"
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT NetworkInterface::NetworkInterface(NETWORKED_TYPE type) :
     OurNetworkType(type)
@@ -30,7 +29,7 @@ DLLEXPORT bool NetworkInterface::PreHandleResponse(std::shared_ptr<NetworkRespon
 }
 // ------------------------------------ //
 DLLEXPORT void NetworkInterface::HandleRequestPacket(
-    shared_ptr<NetworkRequest> request, Connection &connection) 
+    std::shared_ptr<NetworkRequest> request, Connection &connection) 
 {
     // We can only try the default handle function //
     if(!_HandleDefaultRequest(request, connection)){
@@ -40,7 +39,7 @@ DLLEXPORT void NetworkInterface::HandleRequestPacket(
     }
 }
 // ------------------------------------ //
-bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
+bool NetworkInterface::_HandleDefaultRequest(std::shared_ptr<NetworkRequest> request,
     Connection &connection)
 {
     // Switch based on type //
@@ -57,7 +56,7 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
                 static_cast<RequestIdentification*>(request.get())->DDOSBlock.size());
 
             // Fetch the data from the configuration object //
-            string userreadable, gamename, gameversion;
+            std::string userreadable, gamename, gameversion;
 
             AppDef::GetDefault()->GetGameIdentificationData(userreadable, gamename, 
                 gameversion);
@@ -107,10 +106,9 @@ bool NetworkInterface::_HandleDefaultRequest(shared_ptr<NetworkRequest> request,
     return false;
 }
 // ------------------------------------ //
-bool NetworkInterface::_HandleDefaultResponseOnly(shared_ptr<NetworkResponse> message, 
+bool NetworkInterface::_HandleDefaultResponseOnly(std::shared_ptr<NetworkResponse> message, 
     Connection &connection)
 {
-
     // See if it is a sync packet //
     if(Owner->GetSyncedVariables()->HandleResponseOnlySync(message, &connection))
         return true;

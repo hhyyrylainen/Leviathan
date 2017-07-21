@@ -14,7 +14,7 @@ namespace Pong{
 
     class PongServer : public CommonPongParts<Leviathan::ServerApplication, true>{
     public:
-        PongServer(PongServerNetworking &network);
+        PongServer();
         ~PongServer();
         
 
@@ -32,18 +32,18 @@ namespace Pong{
         static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
 
         //! Used to set the server status as joinable (it has started)
-        virtual void PreFirstTick();
+        virtual void PreFirstTick() override;
 
         //! This doesn't need any handling
-        virtual void OnPlayerStatsUpdated(PlayerList* list){}
+        virtual void OnPlayerStatsUpdated(PlayerList* list) override{}
 
         //! Changes the server to preparing screen
         void OnStartPreMatch();
 
-        PongServerNetworking& GetServerNetworkInterface() {
+        // PongServerNetworking& GetServerNetworkInterface() {
 
-            return ServerInterface;
-        }
+        //     return *ServerInterface;
+        // }
 
         
         void SetScoreLimit(int scorelimit);
@@ -76,24 +76,30 @@ namespace Pong{
         PhysicsMaterialContactCallback GetBallPaddleCallback() override;
 
         PhysicsMaterialContactCallback GetBallGoalAreaCallback() override;
-        
-    protected:
+
+	protected:
+
+        Leviathan::NetworkInterface* _GetApplicationPacketHandler() override;
+        void _ShutdownApplicationPacketHandler() override;
         
         virtual void ServerCheckEnd();
-        virtual void DoSpecialPostLoad();
-        virtual void CustomizedGameEnd();
+        
+        void DoSpecialPostLoad() override;
+        void CustomizedGameEnd() override;
 
-        virtual bool MoreCustomScriptTypes(asIScriptEngine* engine);
-        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
-            std::map<int, string> &typeids);
+        bool MoreCustomScriptTypes(asIScriptEngine* engine) override;
+        void MoreCustomScriptRegister(asIScriptEngine* engine,
+            std::map<int, string> &typeids) override;
 
         //! \brief For testing AI with valgrind
         //! \todo Add a score limit and a way to go back to default state afterwards
         void RunAITestMatch();
 
+    protected:
+
         // Server specific connection handling //
 
-        PongServerNetworking& ServerInterface;
+        std::unique_ptr<PongServerNetworking> ServerInterface;
 
         shared_ptr<GameInputController> ServerInputHandler;
 

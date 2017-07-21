@@ -23,6 +23,8 @@
 
 namespace Leviathan{
 
+class Engine;
+
 void RunGetResponseFromMaster(NetworkHandler* instance,
     std::shared_ptr<std::promise<std::string>> resultvar);
 
@@ -32,6 +34,7 @@ class NetworkHandler : public ThreadSafe {
         std::shared_ptr<std::promise<std::string>> resultvar);
 
     friend Connection;
+    friend Engine;
 public:
     // Either a client or a server handler //
     DLLEXPORT NetworkHandler(NETWORKED_TYPE ntype, NetworkInterface* packethandler);
@@ -154,6 +157,13 @@ public:
 
 
 protected:
+
+    //! \brief Unhooks the NetworkInterfaces from this object.
+    //!
+    //! This uses locking but the reading methods don't use locks. So this should only
+    //! be called from the main thread
+    DLLEXPORT void DisconnectInterface();
+
     
     Lock LockSocketForUse();
     

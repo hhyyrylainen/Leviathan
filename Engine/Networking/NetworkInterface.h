@@ -3,7 +3,6 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "CommonNetwork.h"
-#include "Common/ThreadSafe.h"
 
 #include <memory>
 #include <vector>
@@ -11,10 +10,11 @@
 namespace Leviathan{
 
 
-    //! \brief Class that encapsulates common networking functionality that is required by
+//! \brief Class that encapsulates common networking functionality that is required by
 //! all networked programs
+//!
 //! \see NetworkServerInterface NetworkClientInterface
-class NetworkInterface : public virtual ThreadSafe{
+class NetworkInterface{
     friend NetworkHandler;
 public:
     DLLEXPORT NetworkInterface(NETWORKED_TYPE type);

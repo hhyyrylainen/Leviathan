@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
@@ -102,10 +102,8 @@ protected:
     //! \brief Called when a player is about to connect
     DLLEXPORT virtual void PlayerPreconnect(Connection &connection,
         std::shared_ptr<NetworkRequest> joinrequest);
-    DLLEXPORT virtual void _OnPlayerConnected(Lock &guard, 
-        std::shared_ptr<ConnectedPlayer> newplayer);
-    DLLEXPORT virtual void _OnPlayerDisconnect(Lock &guard, 
-        std::shared_ptr<ConnectedPlayer> newplayer);
+    DLLEXPORT virtual void _OnPlayerConnected(std::shared_ptr<ConnectedPlayer> newplayer);
+    DLLEXPORT virtual void _OnPlayerDisconnect(std::shared_ptr<ConnectedPlayer> newplayer);
     DLLEXPORT virtual bool PlayerPotentiallyKicked(ConnectedPlayer* player);
 
     DLLEXPORT virtual void _OnCloseDown(){}
@@ -125,14 +123,13 @@ protected:
     //! Internally called when a player is about to be deleted
     //!
     //! Will call virtual notify functions
-    void _OnReportCloseConnection(std::shared_ptr<ConnectedPlayer> plyptr, Lock &guard);
+    void _OnReportCloseConnection(std::shared_ptr<ConnectedPlayer> plyptr);
 
     //! Internally used to detect when a new player has connected
-    void _OnReportPlayerConnected(std::shared_ptr<ConnectedPlayer> plyptr, Connection &connection,
-        Lock &guard);
+    void _OnReportPlayerConnected(std::shared_ptr<ConnectedPlayer> plyptr,
+        Connection &connection);
 
-    // ------------------------------------ //
-
+protected:
 
     // Server variables //
 
@@ -154,9 +151,6 @@ protected:
     //! Used to prevent players joining during start up
     bool AllowJoin = false;
 
-    //! Lock this when changing the player list
-    Mutex PlayerListLocked;
-    
     //! Type of join restriction, defaults to NETWORKRESPONSE_SERVERJOINRESTRICT_NONE
     SERVER_JOIN_RESTRICT JoinRestrict = SERVER_JOIN_RESTRICT::Localhost;
     

@@ -15,6 +15,8 @@
 
 namespace Leviathan{
 
+class LeviathanApplication;
+
 //! \brief The main class of the Leviathan Game Engine
 //!
 //! Allocates a lot of classes and performs almost all startup operations.
@@ -24,11 +26,14 @@ class Engine : public ThreadSafe{
     friend GraphicalInputEntity;
     friend Gui::GuiManager;
     friend GameWorld;
+    friend LeviathanApplication;
 public:
     DLLEXPORT Engine(LeviathanApplication* owner);
     DLLEXPORT ~Engine();
 
-    DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype);
+    DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype,
+        NetworkInterface* packethandler);
+    
     //! \todo Add a thread that monitors if the thing gets stuck on a task
     DLLEXPORT void Release(bool forced = false);
 
@@ -162,6 +167,11 @@ public:
 protected:
     // after load function //
     void PostLoad();
+
+
+    //! Unhooks the packet handler from the network
+    //! handler. PreRelease should have been done before this
+    DLLEXPORT void _DisconnectPacketHandler();
 
     //! Runs the normal commands passed by the PassCommandLine function //
     //! Ran automatically after Init

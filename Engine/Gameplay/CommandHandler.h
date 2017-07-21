@@ -1,9 +1,11 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "Common/ThreadSafe.h"
 #include "CustomCommandHandler.h"
+
 #include <list>
 #include <memory>
 #include <vector>
@@ -19,7 +21,7 @@ enum COMMANDSENDER_PERMISSIONMODE {
 //! \brief Represents an entity that can execute commands
 //!
 //! All player objects, console etc. should implement this
-class CommandSender : public virtual ThreadSafe{
+class CommandSender{
 public:
 
     //! \brief Returns the unique name of this entity, this can be something like a steam id
@@ -34,24 +36,29 @@ public:
     //! \brief Returns the permissions model used by this object
     DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode() = 0;
 
-    //! \brief This should send a message to this entity for them to see what happened when they executed a command
+    //! \brief This should send a message to this entity for them to
+    //! see what happened when they executed a command
     DLLEXPORT virtual void SendPrivateMessage(const std::string &message);
 
 
-    //! \brief Marks the start of a time period during which this object needs to report if it is released
+    //! \brief Marks the start of a time period during which this object needs to report
+    //! if it is released
+    //! 
     //! \warning It needs to be notified that calls with the same commander may NOT be
     //! ignored as the EndOwnership call of first would end the
     //! ownership when in reality the single command handler still wants this object
-    DLLEXPORT virtual void StartOwnership(Lock &guard, CommandHandler* commander);
+    DLLEXPORT virtual void StartOwnership(CommandHandler* commander);
 
 
-    //! \brief Marks the end of ownership, it is no longer required to report that this object is released
-    DLLEXPORT virtual void EndOwnership(Lock &guard, CommandHandler* which);
+    //! \brief Marks the end of ownership, it is no longer required to
+    //! report that this object is released
+    DLLEXPORT virtual void EndOwnership(CommandHandler* which);
 
 protected:
 
-    //! \brief Call when releasing, this is only required if StartOwnership and EndOwnership aren't overloaded
-    DLLEXPORT virtual void _OnReleaseParentCommanders(Lock &guard);
+    //! \brief Call when releasing, this is only required if
+    //! StartOwnership and EndOwnership aren't overloaded
+    DLLEXPORT virtual void _OnReleaseParentCommanders();
 
 
     //! \brief Should be the actual implementation of SendPrivateMessage
@@ -67,7 +74,7 @@ protected:
 
 
 //! \brief Handles all commands sent by the players on the server
-class CommandHandler : public ThreadSafe{
+class CommandHandler{
 public:
     //! \brief Constructs a CommandHandler for use by a single server network interface
     DLLEXPORT CommandHandler(NetworkServerInterface* owneraccess);
@@ -76,9 +83,7 @@ public:
 
 
     //! \brief Queues a command to be executed
-    //! \note The object should be locked during this time to avoid it calling into us and causing a deadlock
-    DLLEXPORT virtual void QueueCommand(const std::string &command, CommandSender* issuer,
-        Lock &issuerlock);
+    DLLEXPORT virtual void QueueCommand(const std::string &command, CommandSender* issuer);
 
 
     //! \brief Call this periodically to perform cleanup tasks 
@@ -97,14 +102,12 @@ public:
     //! is still active
     //! \param retlock Will contain a lock for the object so hold onto it while
     //! using the object
-    DLLEXPORT virtual bool IsSenderStillValid(Lock &guard, CommandSender* checkthis,
-        Lock &retlock);
+    DLLEXPORT virtual bool IsSenderStillValid(CommandSender* checkthis);
 
 
     //! \brief Called by a command handler when a CommandSender is no longer needed
     //! \param stillgotthis Is the lock received from IsSenderStillValid
-    DLLEXPORT virtual void SenderNoLongerRequired(Lock &guard, CommandSender* checkthis,
-        Lock &stillgotthis);
+    DLLEXPORT virtual void SenderNoLongerRequired(CommandSender* checkthis);
 
 
     //! \brief Registers a new custom command handler
@@ -121,15 +124,15 @@ public:
     DLLEXPORT virtual bool IsThisDefaultCommand(const std::string &firstword) const;
 
 
-    DLLEXPORT static CommandHandler* Get(Lock &lockereceiver);
+    DLLEXPORT static CommandHandler* Get();
 
 protected:
 
     //! \brief Lets go of all the CommandSenders
-    void _LetGoOfAll(Lock &guard);
+    void _LetGoOfAll();
 
     //! \brief Adds a CommandSender to the list of active ones
-    void _AddSender(CommandSender* object, Lock &guard, Lock &objectlock);
+    void _AddSender(CommandSender* object);
 
     // ------------------------------------ //
 
@@ -148,10 +151,6 @@ protected:
 
     //! A static access member for command executing functions
     static CommandHandler* Staticaccess;
-
-    //! A static deletion mutex
-    static Mutex StaticDeleteMutex;
-
 };
 
 }

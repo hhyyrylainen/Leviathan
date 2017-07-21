@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
@@ -51,24 +51,24 @@ public:
         return ID;
     }
 
-    //! \brief Returns the object that contains this players position in a certain world or NULL
-    //! \note THe lock should be valid while using the returned pointer
-    DLLEXPORT ObjectID GetPositionInWorld(GameWorld* world, Lock &guard) const;
+    //! \brief Returns the object that contains this players position in a certain world or
+    //! 0
+    DLLEXPORT ObjectID GetPositionInWorld(GameWorld* world) const;
 
 
-    virtual const std::string& GetUniqueName() {
+    const std::string& GetUniqueName() override{
         return UniqueName;
     }
 
-    virtual const std::string& GetNickname() {
+    const std::string& GetNickname() override{
         return DisplayName;
     }
 
-    DLLEXPORT virtual COMMANDSENDER_PERMISSIONMODE GetPermissionMode();
+    DLLEXPORT COMMANDSENDER_PERMISSIONMODE GetPermissionMode() override;
 
 protected:
 
-    DLLEXPORT virtual bool _OnSendPrivateMessage(const std::string &message);
+    DLLEXPORT bool _OnSendPrivateMessage(const std::string &message) override;
     // ------------------------------------ //
 
     std::shared_ptr<Connection> CorrespondingConnection;

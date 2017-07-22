@@ -93,8 +93,7 @@ ogre = Ogre.new(
 )
 
 cegui = CEGUI.new(
-  # TODO: once my pull request is accepted put it here
-  version: "default",
+  version: "75906a4cdfc2",
   installPath: THIRD_PARTY_INSTALL,
   # Find Ogre in our search path
   extraOptions: ["-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"],

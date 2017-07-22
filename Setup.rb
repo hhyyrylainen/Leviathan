@@ -113,7 +113,7 @@ if GetBreakpad
     noInstallSudo: true
   )
   
-  installer.addLibrary 
+  installer.addLibrary breakpad
 
 end
 

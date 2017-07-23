@@ -2,33 +2,54 @@
 compositor_node_shadow WorldNiceShadows
 {
     technique pssm
-    // This should reduce visual artifacts
-    //optimal_adjust_factor -1
-    //optimal_adjust_factor 5
+
+    // Textures
+	texture pssm0 2048 2048 PF_D32_FLOAT
+	texture pssm1 1024 1024 PF_D32_FLOAT
+	texture pssm2 1024 1024 PF_D32_FLOAT
+
+	texture spot0 2048 2048 PF_D32_FLOAT
+	texture spot1 2048 2048 PF_D32_FLOAT
     
-    // Render the closest light with this nice thing
-    shadow_map MainShadowMap 2048 2048 PF_FLOAT16_R light 0 split 0
-    shadow_map 1 1024 1024 PF_FLOAT16_R light 0 split 1
-    shadow_map 2 1024 1024 PF_FLOAT16_R light 0 split 2
+	num_splits		3
+	pssm_lambda		0.95
     
-    // Render the remaining lights with less quality
-    shadow_map 3 1024 1024 PF_FLOAT16_R light 1
-    shadow_map 4 1024 1024 PF_FLOAT16_R light 2
-    shadow_map 5 512 512 PF_FLOAT16_R light 3
+    // Render the closest light with this nice thing    
+	shadow_map 0 pssm0 light 0 split 0
+	shadow_map 1 pssm1 light 0 split 1
+	shadow_map 2 pssm2 light 0 split 2
     
-    // Render all the shadow maps //
-    shadow_map MainShadowMap 1 2 3 4 5
-    {
-        pass clear
-        {
-            colour_value 1 1 1 1
-        }
-        pass render_scene
-        {
-            rq_first 0
-            rq_last max
-        }
-    }   
+	technique focused
+	shadow_map 3 spot0 light 1
+	shadow_map 4 spot1 light 2
+    
+	shadow_map_target_type directional
+	{
+		shadow_map 0 1 2
+		{
+			pass clear
+			{
+				colour_value 1 1 1 1
+			}
+			pass render_scene
+			{
+			}
+		}
+	}
+
+	shadow_map_target_type directional spot
+	{
+		shadow_map 3 4
+		{
+			pass clear
+			{
+				colour_value 1 1 1 1
+			}
+			pass render_scene
+			{
+			}
+		}
+	}
 }
 
 

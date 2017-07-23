@@ -380,6 +380,12 @@ void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer(){
 DLLEXPORT void Leviathan::NetworkClientInterface::_OnProperlyConnected(){
 
     // Send the request //
+    LOG_WRITE("TODO: rewrite how _OnProperlyConnected works");
+    // We are now completely connected from the engine's point of view so let the
+    // application know
+    _OnStartApplicationConnect();
+    return;
+    
     DEBUG_BREAK;
     //shared_ptr<NetworkRequest> tmprequest(
     //    new NetworkRequest(NETWORKREQUESTTYPE_GETALLSYNCVALUES));

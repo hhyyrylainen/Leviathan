@@ -102,6 +102,12 @@ protected:
         ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
     }
 
+    //! If VerifyServerStarted this should be called to make sure the server is closed properly
+    void CloseServerProperly(){
+
+        ServerInterface.CloseDown();
+    }
+
 protected:
 
     PartialEngine<false> engine;

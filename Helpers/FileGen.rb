@@ -30,10 +30,11 @@ class Generator
         file.write obj.toText
 
       end
-    end
 
-    # Prevent editing
-    FileUtils.chmod 'a-w', file
+      # Prevent editing
+      FileUtils.chmod 'a-w', file
+      
+    end
   end
 end
 

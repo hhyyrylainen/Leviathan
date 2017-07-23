@@ -1,8 +1,8 @@
 #!/bin/ruby
 # Generates classes for all the different responses
 
-require_relative '../../Helpers/CommonCode'
-require_relative '../../Helpers/FileGen'
+require_relative '../../RubySetupSystem/RubyCommon.rb'
+require_relative '../../Helpers/FileGen.rb'
 
 abort "no target file provided" if ARGV.count < 1
 

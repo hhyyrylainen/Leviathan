@@ -121,7 +121,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	ORoot = std::unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
 
 	// Still waiting for the GL3Plus render system to become usable... //
-	vector<Ogre::String> PluginNames = { "RenderSystem_GL"/*3Plus")*/,
+	vector<Ogre::String> PluginNames = { "RenderSystem_GL3Plus",
 #ifdef _WIN32
                                      #ifndef LEVIATHAN_USING_SDL2
 		("RenderSystem_Direct3D11"),
@@ -133,27 +133,32 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 		/*("Plugin_CgProgramManager")*/
 		/*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
-	Ogre::String currentplugin = "";
+	Ogre::String currentPlugin = "";
 
 	try{
 
         for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++){
 
-            currentplugin = *Iter;
+            currentPlugin = *Iter;
 
             // append "_d" if in debug mode //
-#ifdef _DEBUG
-            Iter->append("_d");
-#endif // _DEBUG
+        #ifdef _DEBUG
+            currentPlugin->append("_d");
+        #endif // _DEBUG
+            // On platforms where rpath works plugins are in the lib subdirectory
+            currentPlugin = "lib/" + currentPlugin; 
+        #ifndef _WIN32
+            
+        #endif
             // load //
-            ORoot->loadPlugin(*Iter);
+            ORoot->loadPlugin(currentPlugin);
 		}
 
 	}
 	catch (const Ogre::InternalErrorException &e){
 
-		Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\""+currentplugin+
-            "\"), exception: "+string(e.what()));
+		Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\"" +
+            currentPlugin + "\"), exception: " + std::string(e.what()));
 		return false;
 	}
 

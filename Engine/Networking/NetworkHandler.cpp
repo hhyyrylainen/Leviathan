@@ -254,7 +254,10 @@ bool Leviathan::NetworkHandler::_RunUpdateOnce(Lock &guard)
 
                 auto curconnection = OpenConnections[i];
 
+                // Prevent deaclocks, TODO: make NetworkHandler only usable by the main thread
+                guard.unlock();
                 curconnection->HandlePacket(receivedpacket);
+                guard.lock();                
 
                 Passed = true;
                 break;

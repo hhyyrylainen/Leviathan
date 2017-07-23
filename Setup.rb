@@ -2,7 +2,7 @@
 # coding: utf-8
 # Setup script for Leviathan
 # Downloads the assets and dependencies and then builds and installs them
-# NOTE: sudo is required on linux
+# NOTE: sudo is required on linux (unless skipping package manager installs)
 
 # TODO: update the things
 # Ogre required libs: rapidjson-devel

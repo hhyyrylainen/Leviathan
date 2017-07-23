@@ -168,11 +168,6 @@ protected:
     // after load function //
     void PostLoad();
 
-
-    //! Unhooks the packet handler from the network
-    //! handler. PreRelease should have been done before this
-    DLLEXPORT void _DisconnectPacketHandler();
-
     //! Runs the normal commands passed by the PassCommandLine function //
     //! Ran automatically after Init
     DLLEXPORT void ExecuteCommandLine();

@@ -51,7 +51,8 @@ DLLEXPORT void LeviathanApplication::Release(){
 			return;
 
         // Shutdown the packet handler
-        _Engine->_DisconnectPacketHandler();
+        // PreRelease should have been done at this point and the NetworkHandler
+        // should have been released so this can no longer be in use
         _ShutdownApplicationPacketHandler();
 	}
 

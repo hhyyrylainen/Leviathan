@@ -621,14 +621,6 @@ void Engine::Release(bool forced){
 
     Logger::Get()->Write("Goodbye cruel world!");
 }
-
-DLLEXPORT void Engine::_DisconnectPacketHandler(){
-
-    Lock lock(NetworkHandlerLock);
-    
-    _NetworkHandler->DisconnectInterface();
-}
-
 // ------------------------------------ //
 DLLEXPORT void Engine::MessagePump(){
 

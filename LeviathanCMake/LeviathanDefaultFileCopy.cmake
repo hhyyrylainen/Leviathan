@@ -8,14 +8,15 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols/Dumps")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data")
 
 
 # Copy the tools
 # Set the symbol tool name
 if(UNIX)
-  set(SYMBOL_EXTRACTOR "./CreateSymbolsForTarget.sh")
+  set(SYMBOL_EXTRACTOR "${LEVIATHAN_SRC}/CreateSymbolsForTarget.sh")
 elseif(WIN32)
-  set(SYMBOL_EXTRACTOR "./CreateSymbolsForTarget.bat")
+  set(SYMBOL_EXTRACTOR "${LEVIATHAN_SRC}/CreateSymbolsForTarget.bat")
 endif()
 
 file(COPY "${LEVIATHAN_SRC}/MoveSymbolFile.sh"
@@ -34,34 +35,39 @@ else()
   file(GLOB ALL_DYNAMIC_LIBRARIES "${LEVIATHAN_SRC}/build/ThirdParty/lib/*.so*")
 endif()
 
-# The bin-folder files
-file(GLOB RootFolderFiles "bin/*.conf" "bin/*.txt")
-
-file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-install(FILES ${RootFolderFiles} DESTINATION bin)
-
 
 # copy data directory
-file(GLOB DataMoveFiles "bin/Data/*")
-file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
+if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
 
-# The script files folder
-install(DIRECTORY "Scripts" DESTINATION bin/Data)
-install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
-# we need to specifically install the directories
-install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
-install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
+  # The bin-folder files
+  file(GLOB RootFolderFiles "${LEVIATHAN_SRC}/bin/*.conf" "${LEVIATHAN_SRC}/bin/*.txt")
+  
+  file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+  install(FILES ${RootFolderFiles} DESTINATION bin)  
+  
+  file(GLOB DataMoveFiles "${LEVIATHAN_SRC}/bin/Data/*")
+  file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
 
-# Copy data from the scripts folder to the bin folder
-file(GLOB ScriptsMoveFiles "Scripts/*")
-file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
+  # The script files folder
+  install(DIRECTORY "Scripts" DESTINATION bin/Data)
+  install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
+  # we need to specifically install the directories
+  install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
+  install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
+  install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
+  install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
+  install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
+  install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
+
+  # Copy data from the scripts folder to the bin folder
+  file(GLOB ScriptsMoveFiles "${LEVIATHAN_SRC}/Scripts/*")
+  file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
+  
+endif()
+
 
 # Copy the crucial Ogre scripts
-file(GLOB CoreOgreScriptsMoveFiles "CoreOgreScripts/*")
+file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/CoreOgreScripts/*")
 file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
 install(FILES ${CoreOgreScriptsMoveFiles} DESTINATION "bin/CoreOgreScripts")
 
@@ -118,8 +124,8 @@ else()
 endif()
 
 # Tools
-file(GLOB AllTools "${LEVIATHAN_SRC}/build/ThirdParty/bin/*")
+# file(GLOB AllTools "${LEVIATHAN_SRC}/build/ThirdParty/bin/*")
 
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/tools")
-file(COPY ${AllTools} DESTINATION "${PROJECT_BINARY_DIR}/tools")
+# file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/tools")
+# file(COPY ${AllTools} DESTINATION "${PROJECT_BINARY_DIR}/tools")
   

@@ -262,7 +262,7 @@ namespace Pong{
         }
 
         // These handle the common code between the server and client //
-        virtual void CustomizeEnginePostLoad(){
+        virtual void CustomizeEnginePostLoad() override{
 
             LEVIATHAN_ASSERT(_NetworkInterface, "SetInterface not called!");
             LEVIATHAN_ASSERT(_NetworkInterface->GetOwner(), "_NetworkInterface has no owner!");

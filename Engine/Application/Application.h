@@ -60,6 +60,8 @@ public:
         
     DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(
         PhysicsMaterialManager* manager);
+
+    DLLEXPORT virtual void CustomizeEnginePostLoad();
     DLLEXPORT virtual void EnginePreShutdown();
 
     //! \brief Used to query a world for specific id

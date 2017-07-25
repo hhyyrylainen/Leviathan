@@ -182,6 +182,10 @@ DLLEXPORT void LeviathanApplication::Tick(int mspassed){
 
 }
 
+DLLEXPORT void LeviathanApplication::CustomizeEnginePostLoad(){
+    
+}
+
 DLLEXPORT void LeviathanApplication::EnginePreShutdown(){
 
 }

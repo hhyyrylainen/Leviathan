@@ -14,7 +14,7 @@ namespace Pong{
 
 		void Tick(int mspassed) override;
 
-		void CustomizeEnginePostLoad();
+		void CustomizeEnginePostLoad() override;
 		void EnginePreShutdown() override;
 
 		static std::string GenerateWindowTitle();

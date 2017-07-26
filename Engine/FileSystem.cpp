@@ -15,6 +15,8 @@
 #include <ostream>
 #include <fstream>
 
+#include <boost/filesystem.hpp>
+
 #ifdef __linux__
 #include <dirent.h>
 #include <sys/stat.h>
@@ -881,75 +883,77 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
 }
 
 #ifdef LEVIATHAN_USING_OGRE
+
+//! Ogre recursive resource groups don't work so we hack around it with this
+void RegisterSubFolders(Ogre::ResourceGroupManager& manager, const std::string &groupname,
+    const Ogre::String &basefolder)
+{
+    if(!boost::filesystem::is_directory(basefolder)){
+        LOG_ERROR("FileSystem: register folder doesn't exist: " + basefolder);
+        return;
+    }
+
+    manager.addResourceLocation(basefolder, "FileSystem", "LeviathanInternal");
+        
+    boost::filesystem::recursive_directory_iterator dir{boost::filesystem::path(basefolder)};
+    
+    for(const auto& i : dir) {
+        if (boost::filesystem::is_directory(i)) {
+
+            manager.addResourceLocation(i.path().string(), "FileSystem", "LeviathanInternal");
+        }
+    }
+}
+
 DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	// get the resource managing singleton //
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
 
 	// Internal resources
 	manager.createResourceGroup("LeviathanInternal");
-
-	Ogre::String folder = "CoreOgreScripts";
-
-	manager.addResourceLocation(folder, "FileSystem", "LeviathanInternal");
+    RegisterSubFolders(manager, "LeviathanInternal", "CoreOgreScripts");
+    
 
 	// Models folder //
 	manager.createResourceGroup("MainModelsFolder");
-
-	folder = DataFolder+ModelsFolder;
-
-	manager.addResourceLocation(folder, "FileSystem", "MainModelsFolder", true);
-
-
+    RegisterSubFolders(manager, "MainModelsFolder", DataFolder + ModelsFolder);
+    
 	// Textures folder //
 	manager.createResourceGroup("MainTexturesFolder");
+    RegisterSubFolders(manager, "MainTexturesFolder", DataFolder + TextureFolder);
 
-	folder = DataFolder+TextureFolder;
+    // Scripts folder //
+    manager.createResourceGroup("GuiScripts");
+    if(boost::filesystem::exists(DataFolder + ScriptsFolder + "GUI")){
+        // Uppercase
+        RegisterSubFolders(manager, "GuiScripts", DataFolder + ScriptsFolder + "GUI");
+    } else {
 
-	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
+        // Lowercase
+        RegisterSubFolders(manager, "GuiScripts", DataFolder + ScriptsFolder + "gui");
+    }
 
-	folder = DataFolder+ScriptsFolder;
-
-	manager.addResourceLocation(folder, "FileSystem", "MainTexturesFolder", true);
-
+   
 	// shaders //
 	manager.createResourceGroup("ShadersFolder");
+    RegisterSubFolders(manager, "ShadersFolder", DataFolder + ShaderFolder);
+    
+	// // Terrain group //
+	// manager.createResourceGroup("Terrain");
 
-	folder = DataFolder+ShaderFolder;
+	// folder = DataFolder+"Cache/Terrain/";
 
-	manager.addResourceLocation(folder, "FileSystem", "ShadersFolder", true);
+	// manager.addResourceLocation(folder, "FileSystem", "Terrain", true, false);
 
-	// Terrain group //
-	manager.createResourceGroup("Terrain");
+	// // add cache to general //
+	// folder = DataFolder+"Cache/";
+	// manager.addResourceLocation(folder, "FileSystem", "General");
 
-	folder = DataFolder+"Cache/Terrain/";
-
-	manager.addResourceLocation(folder, "FileSystem", "Terrain", true, false);
-
-	// add cache to general //
-	folder = DataFolder+"Cache/";
-	manager.addResourceLocation(folder, "FileSystem", "General");
-
-
-	// Script group //
-	manager.createResourceGroup("Scripts");
-
-	folder = DataFolder+ScriptsFolder;
-
-	manager.addResourceLocation(folder, "FileSystem", "Scripts", true);
-	folder += "GUI/";
-
-	manager.addResourceLocation(folder, "FileSystem", "Scripts", true);
 
 	// Fonts group //
-	manager.createResourceGroup("Fonts");
-
-	folder = DataFolder+FontFolder;
-
-	manager.addResourceLocation(folder, "FileSystem", "Fonts", true);
-	folder += "Simonetta/";
-
-	manager.addResourceLocation(folder, "FileSystem", "Fonts", true);
-
+    manager.createResourceGroup("Fonts");
+    RegisterSubFolders(manager, "Fonts", DataFolder + FontFolder);
+    
 	// possibly register addon folders //
 
 	
@@ -957,7 +961,7 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 	manager.initialiseAllResourceGroups(true);
 
 	// load the groups //
-	manager.loadResourceGroup("MainModelsFolder");
+	//manager.loadResourceGroup("MainModelsFolder");
 }
 
 DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string &location){

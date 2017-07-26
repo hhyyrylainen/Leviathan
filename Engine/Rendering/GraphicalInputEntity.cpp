@@ -170,9 +170,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		Logger::Get()->Info(string("GUI using CEGUI renderer: ")+
             guirenderer.getIdentifierString().c_str());
 
-		// Load the taharez look //
-		CEGUI::SchemeManager::getSingleton().createFromFile("TaharezLook.scheme");
-
 		// Load the GUI fonts //
 		windowcreater->GetFontManager()->LoadAllFonts();
         

@@ -66,6 +66,8 @@ public:
     //! \brief Sets up leviathan default GUI style and font.
     //!
     //! Call in LeviathanApplication::CustomizeEnginePostLoad if desired
+    //! \note If this is to be called on any window. It must be called with
+    //! the main window first. See: GuiManager::MainGuiManager
     DLLEXPORT void EnableStandardGUIThemes();
 
     //! \brief Called by Engine during Release to destroy static variables
@@ -208,6 +210,10 @@ public:
     //! \brief Tries to inject a cut request to CEGUI
     DLLEXPORT bool InjectCutRequest();
 
+    //! \brief Loads a GUI scheme file
+    //! \exception If can't load
+    DLLEXPORT static void LoadGUITheme(const std::string &filename); 
+    
 protected:
 
     //! Is called by folder listeners to notify of Gui file changes

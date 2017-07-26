@@ -193,6 +193,11 @@ void Leviathan::Gui::GuiManager::Release(){
 
 DLLEXPORT void GuiManager::EnableStandardGUIThemes(){
 
+    if(MainGuiManager){
+        // Load the taharez look //
+        LoadGUITheme("TaharezLook.scheme");
+    }
+
     GUARD_LOCK();
 
     // Set Simonetta as the default font //
@@ -752,41 +757,6 @@ void Leviathan::Gui::GuiManager::_FileChanged(const string &file,
 	// Mark everything as non-updated //
 	caller.MarkAllAsNotUpdated();
 }
-// ------------------ Static part ------------------ //
-std::vector<string> Leviathan::Gui::GuiManager::LoadedAnimationFiles;
-
-Mutex Leviathan::Gui::GuiManager::GlobalGUIMutex;
-
-bool Leviathan::Gui::GuiManager::IsAnimationFileLoaded(Lock &lock, const string &file){
-    
-	for(size_t i = 0; i < LoadedAnimationFiles.size(); i++){
-
-		if(LoadedAnimationFiles[i] == file){
-
-			return true;
-		}
-	}
-
-	// Not found, must not be loaded then //
-	return false;
-}
-
-void Leviathan::Gui::GuiManager::SetAnimationFileLoaded(Lock &lock, const string &file){
-
-	LoadedAnimationFiles.push_back(file);
-}
-
-DLLEXPORT void Leviathan::Gui::GuiManager::KillGlobalCache(){
-	Lock guard(GlobalGUIMutex);
-
-	// Release the memory to not look like a leak //
-	LoadedAnimationFiles.clear();
-
-	auto single = CEGUI::AnimationManager::getSingletonPtr();
-
-	if(single)
-		single->destroyAllAnimations();
-}
 // ------------------------------------ //
 DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(Lock &guard,
     const string &namepath)
@@ -871,7 +841,9 @@ void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(Lock &guard,
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGuiStates(Lock &guard) const{
+DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGuiStates(
+    Lock &guard) const
+{
     
 	// Create the result object using the size of Collections as all of them are added there //
 	unique_ptr<GuiCollectionStates> result(new GuiCollectionStates(Collections.size()));
@@ -885,7 +857,9 @@ DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGu
 	return result;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(Lock &guard, const GuiCollectionStates* states){
+DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(Lock &guard,
+    const GuiCollectionStates* states)
+{
 
 	// Apply all the states from the object //
 	for(size_t i = 0; i < states->CollectionNames.size(); i++){
@@ -912,3 +886,45 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::InjectCopyRequest(){
 DLLEXPORT bool Leviathan::Gui::GuiManager::InjectCutRequest(){
 	return ContextInput->injectCutRequest();
 }
+// ------------------ Static part ------------------ //
+std::vector<string> Leviathan::Gui::GuiManager::LoadedAnimationFiles;
+
+Mutex Leviathan::Gui::GuiManager::GlobalGUIMutex;
+
+bool Leviathan::Gui::GuiManager::IsAnimationFileLoaded(Lock &lock, const string &file){
+    
+	for(size_t i = 0; i < LoadedAnimationFiles.size(); i++){
+
+		if(LoadedAnimationFiles[i] == file){
+
+			return true;
+		}
+	}
+
+	// Not found, must not be loaded then //
+	return false;
+}
+
+void Leviathan::Gui::GuiManager::SetAnimationFileLoaded(Lock &lock, const string &file){
+
+	LoadedAnimationFiles.push_back(file);
+}
+
+DLLEXPORT void Leviathan::Gui::GuiManager::KillGlobalCache(){
+	Lock guard(GlobalGUIMutex);
+
+	// Release the memory to not look like a leak //
+	LoadedAnimationFiles.clear();
+
+	auto single = CEGUI::AnimationManager::getSingletonPtr();
+
+	if(single)
+		single->destroyAllAnimations();
+}
+
+DLLEXPORT void GuiManager::LoadGUITheme(const std::string &filename){
+
+    LOG_INFO("GuiManager: loading gui theme: " + filename);
+    CEGUI::SchemeManager::getSingleton().createFromFile(filename);
+}
+// ------------------------------------ //

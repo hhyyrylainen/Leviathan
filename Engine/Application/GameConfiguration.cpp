@@ -2,10 +2,11 @@
 #include "GameConfiguration.h"
 
 #include "FileSystem.h"
+
+#include <boost/filesystem.hpp>
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const string &configfile) :
+DLLEXPORT Leviathan::GameConfiguration::GameConfiguration(const std::string &configfile) :
     GameConfigFile(configfile)
 {
 	staticaccess = this;
@@ -29,9 +30,13 @@ DLLEXPORT bool Leviathan::GameConfiguration::Init(
 	GameVars = new NamedVars();
 
 	if(!GameVars->LoadVarsFromFile(GameConfigFile, Logger::Get())){
-		// Unknown error //
-		Logger::Get()->Error("GameConfiguration: Unknown error from LoadVarsFromFile");
-		return false;
+
+        if(boost::filesystem::exists(GameConfigFile)){
+            // Unknown error //
+            Logger::Get()->Error("GameConfiguration: Unknown error from LoadVarsFromFile");
+            return false;
+        }
+        // Ignore missing file
 	}
 
 	// First verify the global variables //
@@ -52,7 +57,7 @@ DLLEXPORT void Leviathan::GameConfiguration::Release(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameConfiguration::SaveCheck(){
 
-	string newfilecontents = "";
+    std::string newfilecontents = "";
 	// Writing to file doesn't need locking //
 	{
 		GUARD_LOCK();

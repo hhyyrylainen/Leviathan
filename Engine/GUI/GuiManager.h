@@ -63,6 +63,11 @@ public:
     DLLEXPORT bool Init(Graphics* graph, GraphicalInputEntity* window, bool ismain);
     DLLEXPORT void Release();
 
+    //! \brief Sets up leviathan default GUI style and font.
+    //!
+    //! Call in LeviathanApplication::CustomizeEnginePostLoad if desired
+    DLLEXPORT void EnableStandardGUIThemes();
+
     //! \brief Called by Engine during Release to destroy static variables
     DLLEXPORT static void KillGlobalCache();
 

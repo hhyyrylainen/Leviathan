@@ -11,18 +11,21 @@
 #include "Entities/Objects/ViewerCameraPos.h"
 #include "Events/EventHandler.h"
 #include "GameInputController.h"
-#include "Networking/SyncedResource.h"
-#include "Networking/NetworkInterface.h"
+#include "GUI/GuiManager.h"
 #include "Networking/NetworkHandler.h"
+#include "Networking/NetworkInterface.h"
+#include "Networking/SyncedResource.h"
 #include "Newton/PhysicalMaterial.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "PlayerSlot.h"
 #include "PongPackets.h"
+#include "Rendering/GraphicalInputEntity.h"
 #include "Script/ScriptExecutor.h"
 #include "Statistics/TimingMonitor.h"
 #include "Threading/QueuedTask.h"
 #include "Threading/ThreadingManager.h"
 #include "add_on/autowrapper/aswrappedcall.h"
+
 #include <functional>
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(\
@@ -270,6 +273,9 @@ namespace Pong{
             using namespace Leviathan;
 
             QUICKTIME_THISSCOPE;
+
+            // Setup GUI style //
+            Engine::Get()->GetWindowEntity()->GetGui()->EnableStandardGUIThemes();
 
             // Load the game AI //
             GameAI = new GameModule("PongAIModule", "PongGameCore");

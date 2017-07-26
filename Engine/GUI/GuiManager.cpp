@@ -116,14 +116,8 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
 	ContextInput = new CEGUI::InputAggregator(GuiContext);
 	ContextInput->initialise(false);
 
-	// Set Simonetta as the default font //
-    GuiContext->setDefaultFont("Simonetta-Regular");
-
-
-	// Set the taharez looks active //
-	SetMouseTheme(guard, "TaharezLook/MouseArrow");
-	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
-
+    
+   
 
 	// Make the clipboard play nice //
     // Only one clipboard is needed //
@@ -195,6 +189,19 @@ void Leviathan::Gui::GuiManager::Release(){
     }
     
     Logger::Get()->Info("GuiManager: Gui successfully closed on window");
+}
+
+DLLEXPORT void GuiManager::EnableStandardGUIThemes(){
+
+    GUARD_LOCK();
+
+    // Set Simonetta as the default font //
+    GuiContext->setDefaultFont("Simonetta-Regular");
+
+
+	// Set the taharez looks active //
+	SetMouseTheme(guard, "TaharezLook/MouseArrow");
+	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(int32_t key, int specialmodifiers){

@@ -95,11 +95,10 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const std::string &title,
 	int width;
 	int height;
 	bool window;
-
-	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Width", width, 800,
-        Logger::Get(), "Create window: ");
-	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Height", height, 600,
-        Logger::Get(), "Create window: ");
+	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Width", width,
+        1280, Logger::Get(), "Create window: ");
+	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Height", height,
+        720, Logger::Get(), "Create window: ");
 	ObjectFileProcessor::LoadValueFromNamedVars(ConfigurationValues.get(), "Windowed", window,
         true, Logger::Get(), "Create window: ");
     

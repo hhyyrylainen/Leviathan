@@ -2,11 +2,15 @@
 //! try any rendering or anything like that
 
 #include "GUI/AlphaHitCache.h"
+#include "FileSystem.h"
+
+#include "../PartialEngine.h"
 
 #include "catch.hpp"
 
 using namespace Leviathan;
-using namespace GUI;
+using namespace Leviathan::Test;
+using namespace Leviathan::GUI;
 
 
 TEST_CASE("CEGUI Image property is correctly parsed", "[gui]"){
@@ -36,6 +40,18 @@ TEST_CASE("CEGUI Image property is correctly parsed", "[gui]"){
 
     SECTION("Taharezlook imageset can be properly read"){
 
+        FileSystem filesystem;
+        TestLogger reporter("Test/gui_imageset_test.txt");
         
+        REQUIRE(filesystem.Init(&reporter));
+
+        AlphaHitCache cache;
+
+        auto imageData = cache.GetDataForImageProperty("TaharezLook/ButtonMiddleNormal");
+
+        REQUIRE(imageData);
+
+        // This pixel shouldn't be fully transparent
+        CHECK(imageData->GetPixel(30, 30) != 0);
     }
 }

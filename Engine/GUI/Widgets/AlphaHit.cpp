@@ -38,7 +38,7 @@ bool AlphaHitButton::isHit(const glm::vec2 &position, const bool allow_disabled 
             return true;
         }
     
-        HitTestTexture = getTextureFromCEGUIImageName(imageProperty);
+        HitTestTexture = AlphaHitCache::Get()->GetDataForImageProperty(imageProperty.c_str());
 
         if(!HitTestTexture){
 

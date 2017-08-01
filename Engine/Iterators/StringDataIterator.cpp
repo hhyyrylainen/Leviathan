@@ -63,18 +63,19 @@ void Leviathan::StringDataIterator::CheckLineChange() {
     }
 }
 
-// ------------------ UTF8DataIterator ------------------ //
-Leviathan::UTF8DataIterator::UTF8DataIterator(const std::string &str) : OurString(str){
-    Current = OurString.begin();
-    End = OurString.end();
-    BeginPos = OurString.begin();
-
-    // If the first character is a newline the line number needs to be
-    // incremented immediately
-    CheckLineChange();
-}
 // ------------------------------------ //
-bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
+// UTF8PointerDataIterator
+UTF8PointerDataIterator::UTF8PointerDataIterator(const char* begin, const char* end) :
+    Current(begin), End(end), BeginPos(Current)
+{
+    // If the first character is a newline the line number needs to be
+    // incremented immediately    
+    if(Current)
+        CheckLineChange();
+}
+
+
+bool UTF8PointerDataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
 
     // Check is it out of range
     if(Current + forward >= End)
@@ -121,7 +122,7 @@ bool Leviathan::UTF8DataIterator::GetNextCharCode(int &codepointreceiver, size_t
     return true;
 }
 
-bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
+bool UTF8PointerDataIterator::GetPreviousCharacter(int &receiver){
     
     // Try to get the prior code point //
     auto shouldbepos = Current;
@@ -151,7 +152,7 @@ bool Leviathan::UTF8DataIterator::GetPreviousCharacter(int &receiver){
     return true;
 }
 // ------------------------------------ //
-void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
+void UTF8PointerDataIterator::MoveToNextCharacter(){
 
     if (!IsPositionValid())
         return;
@@ -177,25 +178,45 @@ void Leviathan::UTF8DataIterator::MoveToNextCharacter(){
     CheckLineChange();
 }
 // ------------------------------------ //
-size_t Leviathan::UTF8DataIterator::CurrentIteratorPosition() const{
+size_t UTF8PointerDataIterator::CurrentIteratorPosition() const{
     return std::distance(BeginPos, Current);
 }
 
-bool Leviathan::UTF8DataIterator::IsPositionValid() const{
+bool UTF8PointerDataIterator::IsPositionValid() const{
     return Current != End;
 }
 // ------------------------------------ //
-size_t Leviathan::UTF8DataIterator::GetLastValidIteratorPosition() const{
-    return OurString.size()-1;
+size_t UTF8PointerDataIterator::GetLastValidIteratorPosition() const{
+    return static_cast<size_t>((End - 1) - BeginPos);
 }
 // ------------------------------------ //
-bool Leviathan::UTF8DataIterator::ReturnSubString(size_t startpos, size_t endpos,
+bool UTF8PointerDataIterator::ReturnSubString(size_t startpos, size_t endpos,
     std::string &receiver)
 {
-
-    if(startpos >= OurString.size() || endpos >= OurString.size() || startpos > endpos)
+    if(startpos >= static_cast<size_t>(End - BeginPos) ||
+        endpos >= static_cast<size_t>(End - BeginPos) || startpos > endpos)
+    {
         return false;
-
-    receiver = OurString.substr(startpos, endpos - startpos + 1);
+    }
+    
+    receiver = std::string(BeginPos + startpos, (endpos - startpos) + 1);
     return true;
+}
+
+    
+
+// ------------------------------------ //
+// UTF8DataIterator
+UTF8DataIterator::UTF8DataIterator(const std::string &str) :
+    UTF8PointerDataIterator(nullptr, nullptr), OurString(str)
+{
+    // This is a bit hacky
+    Current = OurString.c_str();
+    End = Current + OurString.size();
+    BeginPos = Current;
+    
+
+    // If the first character is a newline the line number needs to be
+    // incremented immediately
+    CheckLineChange();
 }

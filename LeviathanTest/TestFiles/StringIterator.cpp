@@ -7,7 +7,52 @@
 using namespace Leviathan;
 using namespace Leviathan::Test;
 
-TEST_CASE("StringIterator get functions", "[string, objectfile]"){
+TEST_CASE("StringIterator basic utf8 pointer", "[string]"){
+
+    constexpr auto* testdata = "my first test string";
+
+    SECTION("Direct use"){
+
+        UTF8PointerDataIterator data{testdata,
+                testdata + std::char_traits<char>::length(testdata)};
+
+        CHECK(data.CurrentIteratorPosition() == 0);
+        CHECK(data.GetCurrentLineNumber() == 1);
+        CHECK(data.GetLastValidIteratorPosition() == std::char_traits<char>::length(testdata)
+            - 1);
+
+        data.MoveToNextCharacter();
+        CHECK(data.CurrentIteratorPosition() == 1);
+        CHECK(data.GetLastValidIteratorPosition() == std::char_traits<char>::length(testdata)
+            - 1);
+        CHECK(data.IsPositionValid());
+
+        while(data.IsPositionValid()){
+
+            REQUIRE_NOTHROW(data.MoveToNextCharacter());
+        }
+    }
+
+    SECTION("In iterator"){
+
+        StringIterator itr(new UTF8PointerDataIterator(testdata,
+                testdata + std::char_traits<char>::length(testdata)));
+
+        SECTION("Entire string"){
+
+            auto str = itr.GetUntilEnd<std::string>();
+            CHECK(*str == testdata);
+        }
+
+        SECTION("Until some character"){
+
+            auto str = itr.GetUntilNextCharacterOrAll<std::string>('t');
+            CHECK(*str == "my firs");
+        }
+    }
+}
+
+TEST_CASE("StringIterator get functions", "[string][objectfile]"){
 
     // For outputting debug info //
     TestLogger log("Test/StringIteratorTest.txt");

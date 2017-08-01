@@ -236,15 +236,18 @@ protected:
     ITType End;
 };
 
-
-//! Unicode iterator for utf8 on top of string
-class UTF8DataIterator : public StringDataIterator{
-    typedef std::string::iterator ITType;
+//! Raw pointer utf8 iterator
+class UTF8PointerDataIterator : public StringDataIterator{
 public:
 
-    //! Wraps an utf8 encoded string for StringIterator
-    DLLEXPORT UTF8DataIterator(const std::string &str);
-
+    //! end points 1 past the end of the data
+    //! "this is my string\0"
+    //!  ^-begin          ^-end
+    //! meaning the null terminator is optional
+    //! \note Child classes may pass null pointers here as long as they call CheckLineChange
+    // in their constructors
+    UTF8PointerDataIterator(const char* begin, const char* end);
+    
     virtual bool GetNextCharCode(int &codepointreceiver, size_t forward);
 
     virtual bool GetPreviousCharacter(int &receiver);
@@ -261,17 +264,28 @@ public:
 
 protected:
 
-    std::string OurString;
-
     //! The current position of the iterator
-    ITType Current;
+    const char* Current;
     //! The end of the string
-    ITType End;
+    const char* End;
 
     //! The starting point for distance checking
-    ITType BeginPos;
+    const char* BeginPos;
+    
+};
 
 
+//! Unicode iterator for utf8 on top of string
+class UTF8DataIterator : public UTF8PointerDataIterator{
+    typedef std::string::iterator ITType;
+public:
+
+    //! Wraps an utf8 encoded string for StringIterator
+    DLLEXPORT UTF8DataIterator(const std::string &str);
+
+protected:
+
+    std::string OurString;
 };
 
 

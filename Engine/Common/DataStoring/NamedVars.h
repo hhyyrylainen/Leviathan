@@ -249,8 +249,14 @@ namespace Leviathan{
 		template<class T>
 		bool GetValueAndConvertTo(const std::string &name, T &receiver) const{
 			// use try block to catch all exceptions (not found and conversion fail //
+            GUARD_LOCK();
 			try{
-				const VariableBlock* tmpblock = this->GetValue(name);
+                auto index = Find(guard, name);
+
+                if(index >= Variables.size())
+                    return false;
+                
+				const VariableBlock* tmpblock = Variables[index]->GetValueDirect();
 				if(tmpblock == NULL){
 					return false;
 				}

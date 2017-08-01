@@ -95,7 +95,8 @@ DLLEXPORT std::unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObj
 
     if (!FileSystem::ReadFileEntirely(file, filecontents)) {
 
-        reporterror->Error("ObjectFileProcessor: ProcessObjectFile: file could not be read");
+        reporterror->Error("ObjectFileProcessor: ProcessObjectFile: file could not be read: " +
+            file);
         return nullptr;
     }
 	

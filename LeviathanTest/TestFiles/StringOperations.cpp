@@ -101,14 +101,24 @@ TEST_CASE("String cutting", "[string]"){
 
 TEST_CASE("String text replacing ", "[string]"){
 
-	const string teststring = "hey nice string -ql-you have -qlhere or -ql-mql-yaybe-ql- oh no! -qltest -ql-over "
-        "or not-ql?";
-	const string correctresult = "hey nice string hey_whatsthis?you have -qlhere or hey_whatsthis?mql-yaybehey_"
-        "whatsthis? oh no! -qltest hey_whatsthis?over or not-ql?";
+    SECTION("Nice spaced out delimiters"){
+        const string teststring = "hey nice string -ql-you have -qlhere or -ql-mql-yaybe-ql- oh no! -qltest -ql-over "
+            "or not-ql?";
+        const string correctresult = "hey nice string hey_whatsthis?you have -qlhere or hey_whatsthis?mql-yaybehey_"
+            "whatsthis? oh no! -qltest hey_whatsthis?over or not-ql?";
 
-	string result = StringOperations::Replace<string>(teststring, "-ql-", "hey_whatsthis?");
+        string result = StringOperations::Replace<string>(teststring, "-ql-", "hey_whatsthis?");
 
-    REQUIRE(result == correctresult);
+        REQUIRE(result == correctresult);
+
+    }
+
+    SECTION("Replace after first character"){
+
+        CHECK(StringOperations::Replace<std::string>("u%2FCute%20L%2F66%2F153370%2F01.jpg",
+                "%2F", "/") == "u/Cute%20L/66/153370/01.jpg");
+    }
+    
 }
 
 
@@ -394,6 +404,10 @@ TEST_CASE("StringOperations URL combine", "[string][url]"){
 
         CHECK(StringOperations::BaseHostName("http://google.fi/") == "http://google.fi/");
 
+
+        CHECK(StringOperations::BaseHostName(
+                "http://a.content.com/b/Word Space/664/10232/01.jpg") ==
+            "http://a.content.com/");
     }
 
     SECTION("Get protocol"){
@@ -426,4 +440,15 @@ TEST_CASE("StringOperations URL combine", "[string][url]"){
         CHECK(StringOperations::CombineURL("http://google.fi/index.html", "/other/img.jpg") ==
             "http://google.fi/other/img.jpg");
     }
+}
+
+TEST_CASE("StringOperations URL cut to path", "[string][url]"){
+
+    CHECK(StringOperations::URLPath("http://google.fi/index.html") == "index.html");
+
+
+    CHECK(StringOperations::URLPath("http://a.content.com/b/Word Space/664/10232/01.jpg") ==
+        "b/Word Space/664/10232/01.jpg");
+
+ 
 }

@@ -229,6 +229,12 @@ public:
     //! \example BaseHostName("http://google.fi/index.html") = "http://google.fi/"
     static std::string BaseHostName(const std::string &url);
 
+    //! \brief Returns the path of an url
+    //!
+    //! This returns everything after what BaseHostName would have returned
+    //! \example URLPath("http://google.fi/index.html") = "index.html"
+    static std::string URLPath(const std::string &url);
+
     //! \brief Combines a URL with another (relative) URL
     //! \example CombineURL("http://google.fi/index.html", "img.jpg") =
     //! "http://google.fi/img.jpg"
@@ -541,6 +547,10 @@ public:
                 }
                     
                 if(IsMatch || toreplace.size() == 1){
+
+                    if(copystart && !copyend)
+                        copyend = copystart;
+                    
                     // First add proper characters //
                     if(copystart && copyend)
                         out += data.substr(copystart, 

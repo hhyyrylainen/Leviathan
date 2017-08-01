@@ -30,7 +30,7 @@ std::string StringOperations::BaseHostName(const std::string &url){
     if(url.empty())
         return "";
 
-    // Start scanning until a '/' is found that is not preceeded by
+    // Start scanning until a '/' is found that is not preceeded by ':' or '/'
     size_t length = 0;
 
     for(size_t i = 0; i < url.size(); ++i){
@@ -55,6 +55,37 @@ std::string StringOperations::BaseHostName(const std::string &url){
         return url + "/";
 
     return url.substr(0, length);
+}
+
+std::string StringOperations::URLPath(const std::string &url){
+
+    if(url.empty())
+        return "";
+
+    // Start scanning until a '/' is found that is not preceeded by ':' or '/'
+    size_t startCopy = 0;
+
+    for(size_t i = 0; i < url.size(); ++i){
+
+        if(url[i] == '/'){
+
+            if(i < 1)
+                continue;
+
+            if(url[i - 1] == ':' || url[i - 1] == '/')
+                continue;
+
+            // found it //
+            startCopy = i + 1;
+            break;
+        }
+    }
+
+    // Make sure the string doesn't end there
+    if(startCopy >= url.size())
+        return "";
+    
+    return url.substr(startCopy, url.size() - startCopy);
 }
 
 std::string StringOperations::CombineURL(const std::string &first, const std::string &second){

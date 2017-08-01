@@ -1,43 +1,44 @@
 # LeviathanTest application CMake
 
 if(LEVIATHAN_FULL_BUILD)
-set(TestSources
-  resource.h
-  TestMain.cpp
-  PartialEngine.h PartialEngine.cpp
-  NetworkTestHelpers.h
+  set(TestSources
+    resource.h
+    TestMain.cpp
+    PartialEngine.h PartialEngine.cpp
+    NetworkTestHelpers.h
 
-  TestFiles/StringIterator.cpp
-  TestFiles/StringOperations.cpp
-  TestFiles/ExtraAlgorithms.cpp
-  TestFiles/IDFactory.cpp
-  TestFiles/Script.cpp
-  TestFiles/HashTesting.cpp
-  TestFiles/ObjectFiles.cpp
-  TestFiles/Floats.cpp
-  TestFiles/Regex.cpp
-  TestFiles/DataBlock.cpp
-  TestFiles/DeltaStates.cpp
-  TestFiles/Sendable.cpp
-  TestFiles/NamedVars.cpp
-  TestFiles/Components.cpp
-  TestFiles/StdBehaviour.cpp
-  TestFiles/PacketFormat.cpp
-  TestFiles/PacketsAndConnection.cpp
-  )
+    TestFiles/StringIterator.cpp
+    TestFiles/StringOperations.cpp
+    TestFiles/ExtraAlgorithms.cpp
+    TestFiles/IDFactory.cpp
+    TestFiles/Script.cpp
+    TestFiles/HashTesting.cpp
+    TestFiles/ObjectFiles.cpp
+    TestFiles/Floats.cpp
+    TestFiles/Regex.cpp
+    TestFiles/DataBlock.cpp
+    TestFiles/DeltaStates.cpp
+    TestFiles/Sendable.cpp
+    TestFiles/NamedVars.cpp
+    TestFiles/Components.cpp
+    TestFiles/StdBehaviour.cpp
+    TestFiles/PacketFormat.cpp
+    TestFiles/PacketsAndConnection.cpp
+    TestFiles/GuiTests.cpp
+    )
 else()
   # Just a few tests required
-set(TestSources
-  resource.h
-  TestMain.cpp
-  TestFiles/StringIterator.cpp
-  TestFiles/StringOperations.cpp
-  TestFiles/ObjectFiles.cpp
-  TestFiles/Floats.cpp
-  TestFiles/Regex.cpp
-  TestFiles/NamedVars.cpp
-  TestFiles/StdBehaviour.cpp
-  )
+  set(TestSources
+    resource.h
+    TestMain.cpp
+    TestFiles/StringIterator.cpp
+    TestFiles/StringOperations.cpp
+    TestFiles/ObjectFiles.cpp
+    TestFiles/Floats.cpp
+    TestFiles/Regex.cpp
+    TestFiles/NamedVars.cpp
+    TestFiles/StdBehaviour.cpp
+    )
 endif()
 
 set(ExtraFiles "DummyLog.cpp" "DummyLog.h")
@@ -67,4 +68,4 @@ else()
 endif()
 
 
-  
+

@@ -6,6 +6,10 @@
 #define GLM_FORCE_RADIANS
 #endif
 
+#include "CEGUI/Window.h"
+#include "CEGUI/UDim.h"
+
+// TODO: move these includes out of here to individual files that need them
 #include "CEGUI/AnimationInstance.h"
 #include "CEGUI/AnimationManager.h"
 #include "CEGUI/Clipboard.h"
@@ -17,7 +21,6 @@
 #include "CEGUI/RendererModules/Ogre/Renderer.h"
 #include "CEGUI/SchemeManager.h"
 #include "CEGUI/System.h"
-#include "CEGUI/Window.h"
 #include "CEGUI/WindowManager.h"
 #include "CEGUI/widgets/Combobox.h"
 #include "CEGUI/widgets/FrameWindow.h"

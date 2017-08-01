@@ -137,7 +137,23 @@ else()
   file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
   file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
   file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
-  file(GLOB GroupGUI "GUI/*.cpp" "GUI/*.h")
+
+
+  set(GroupGUI 
+    "GUI/BaseGuiObject.cpp" "GUI/BaseGuiObject.h"
+    "GUI/GuiCollection.cpp" "GUI/GuiCollection.h"
+    "GUI/GuiManager.cpp" "GUI/GuiManager.h"
+    "GUI/GuiScriptBind.h"
+    "GUI/GuiScriptInterface.cpp" "GUI/GuiScriptInterface.h"
+    "GUI/AlphaHitCache.cpp" "GUI/AlphaHitCache.h"
+    )
+
+  set(GroupGUIWidgets
+    "GUI/Widgets/AlphaHit.h" "GUI/Widgets/AlphaHit.cpp"
+    )  
+
+
+  
   file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
 
 
@@ -231,6 +247,7 @@ source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
 source_group("Utility\\DataHandling" FILES ${GroupUtilityData})
 
 source_group("GUI" FILES ${GroupGUI})
+source_group("GUI\\Widgets" FILES ${GroupGUIWidgets})
 
 source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})
@@ -257,7 +274,7 @@ endif()
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupMath} ${GroupSound}
-    ${GroupScript} ${GroupGUI}  ${GroupEvents}
+    ${GroupScript} ${GroupGUI} ${GroupGUI} ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
     ${GroupUtilityFile}

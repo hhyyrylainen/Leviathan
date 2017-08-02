@@ -29,8 +29,19 @@ protected:
 
 //! \brief Region inside a GUI region
 struct ImageSetSubImage{
+    //! \brief Invalid state constructor
+    ImageSetSubImage() :
+        ImageFile(""), X(0), Y(0), Width(0), Height(0)
+    {
+    }
 
-    const std::string SetName;
+    ImageSetSubImage(const std::string &imagefile, uint32_t x, uint32_t y, uint32_t width,
+        uint32_t height) : 
+        ImageFile(imagefile), X(x), Y(y), Width(width), Height(height)
+    {
+    }
+
+    const std::string ImageFile;
     const uint32_t X;
     const uint32_t Y;
     const uint32_t Width;
@@ -56,6 +67,8 @@ public:
 
     //! \brief Helper for finding images matching parsed CEGUI names
     //! \returns The image area. Name and sizes will be empty if it wasn't found
+    //! \todo Parse imagefile="TaharezLook.png" in case the iamge is not the same name
+    //! as the imageset
     static ImageSetSubImage LoadImageAreaFromImageSet(
         const std::tuple<std::string, std::string> &schemaandname);
 

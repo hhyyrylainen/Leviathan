@@ -115,7 +115,8 @@ namespace Leviathan{
 		DLLEXPORT static std::string GetSoundFolder();
 
     #ifdef LEVIATHAN_USING_OGRE
-		DLLEXPORT static void RegisterOGREResourceGroups();
+        //! \param testload If true skips parsing scripts. Use only when unittesting
+		DLLEXPORT static void RegisterOGREResourceGroups(bool testload = false);
 		DLLEXPORT static void RegisterOGREResourceLocation(const std::string &location);
     #endif // LEVIATHAN_USING_OGRE
 

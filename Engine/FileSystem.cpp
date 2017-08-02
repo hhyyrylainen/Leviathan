@@ -905,7 +905,7 @@ void RegisterSubFolders(Ogre::ResourceGroupManager& manager, const std::string &
     }
 }
 
-DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
+DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /*= false*/){
 	// get the resource managing singleton //
 	Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
 
@@ -958,7 +958,10 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(){
 
 	
 	// initialize the groups //
-	manager.initialiseAllResourceGroups(true);
+    if(!testload){
+        LOG_INFO("FileSystem: RegisterOGREResourceGroups: doing test load, skipping parsing");
+        manager.initialiseAllResourceGroups(true);
+    }
 
 	// load the groups //
 	//manager.loadResourceGroup("MainModelsFolder");

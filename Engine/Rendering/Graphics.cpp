@@ -87,6 +87,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	Ogre::String ConfigFileName = "";
 	Ogre::String PluginsFileName = "";
 
+    // Is this leaked?
 	Ogre::LogManager* logMgr = new Ogre::LogManager();
 
 	// Could also use the singleton access method here //
@@ -145,10 +146,10 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
         #ifdef _DEBUG
             currentPlugin->append("_d");
         #endif // _DEBUG
+
+        #ifndef _WIN32            
             // On platforms where rpath works plugins are in the lib subdirectory
             currentPlugin = "lib/" + currentPlugin; 
-        #ifndef _WIN32
-            
         #endif
             // load //
             ORoot->loadPlugin(currentPlugin);

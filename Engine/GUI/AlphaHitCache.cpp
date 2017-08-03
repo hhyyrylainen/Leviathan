@@ -157,8 +157,43 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
 
             // Parse the data //
             // We could use an xml parser, but meh...
-            
-            
+            StringIterator itr;
+
+            // Height
+            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.GetUntilCharacterSequence<std::string>("height");
+
+            auto str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
+
+            if(str)
+                height = Convert::StringTo<uint32_t>(*str);
+
+            // Width
+            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.GetUntilCharacterSequence<std::string>("width");
+
+            str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
+
+            if(str)
+                width = Convert::StringTo<uint32_t>(*str);
+
+            // X
+            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.GetUntilCharacterSequence<std::string>("xPos");
+
+            str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
+
+            if(str)
+                x = Convert::StringTo<uint32_t>(*str);
+
+            // Y
+            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.GetUntilCharacterSequence<std::string>("yPos");
+
+            str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
+
+            if(str)
+                y = Convert::StringTo<uint32_t>(*str);
 
             std::stringstream message;
             message << "AlphaHitCache: LoadImageAreaFromImageSet: parsed '" <<
@@ -166,8 +201,15 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 "' image data(" << file << " line " << lineNumber <<
                 "): x = " << x << " y = " << y << " width = " << width << " height = " <<
                 height;
-            
             LOG_INFO(message.str());
+
+            if(x == static_cast<uint32_t>(-1) || y == static_cast<uint32_t>(-1) ||
+                width == static_cast<uint32_t>(-1) || height == static_cast<uint32_t>(-1))
+            {
+                LOG_ERROR("AlphaHitCache: LoadImageAreaFromImageSet data is invalid!");
+                return ImageSetSubImage();
+            }
+            
             return ImageSetSubImage(imageFile, x, y, width, height);
         }
         

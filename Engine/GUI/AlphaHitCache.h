@@ -11,13 +11,22 @@
 namespace Leviathan{
 namespace GUI{
 
+class AlphaHitCache;
+
 //! \brief Data holder for AlphaHitCache
 class AlpaHitStoredTextureData{
+    friend AlphaHitCache;
 public:
+    //! \brief Initializes AlphaValues with the correct size for width and height
+    //! \protected
+    AlpaHitStoredTextureData(uint32_t width, uint32_t height);
 
     //! \returns The alpha value of pixel at x, y. 0 means fully transparent
     //! \exception InvalidArgument if x or y out of range
     uint8_t GetPixel(uint32_t x, uint32_t y) const;
+
+    //! \brief Verifies that at least one alpha pixel is > 0
+    bool HasNonZeroPixels() const;
 
 protected:
 

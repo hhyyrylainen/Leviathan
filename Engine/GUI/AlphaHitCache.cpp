@@ -8,6 +8,8 @@
 
 #include "OgreImage.h"
 #include "OgreException.h"
+#include "OgrePixelBox.h"
+#include "OgrePixelFormat.h"
 
 #include <iostream>
 
@@ -59,22 +61,39 @@ std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty
             return nullptr;            
         }
 
-        const auto format = img.getFormat();
+        // Convert to only alpha channel //
+        newImage = std::make_shared<AlpaHitStoredTextureData>(regionData.Width,
+            regionData.Height);
 
-        switch(format){
-        case Ogre::PixelFormat::PF_R8G8B8A8:
-        {
-            
-            
+        Ogre::PixelBox dest(regionData.Width, regionData.Height, 0, Ogre::PF_A8,
+            newImage->AlphaValues.data());
+
+        Ogre::PixelBox source;
+
+        try{
+            source = img.getPixelBox().getSubVolume(Ogre::Box(regionData.X, regionData.Y,
+                    regionData.X + regionData.Width, regionData.Y + regionData.Height));
+        } catch(const Ogre::Exception &e){
+
+            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: image set coordinates are out "
+                "of range for the image: " +
+                StringOperations::RemovePath<std::string>(regionData.ImageFile) +
+                ", exception: " + std::string(e.what()));
+            return nullptr; 
         }
-        default:
-        {
-            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: unknown Ogre image format "
-                "for: " + StringOperations::RemovePath<std::string>(regionData.ImageFile) +
-                ", format: " + Convert::ToString<int>(format));
-            break;
+        
+        try{
+            Ogre::PixelUtil::bulkPixelConversion(source, dest);
+        } catch(const Ogre::Exception &e){
+
+            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: failed to convert Ogre image "
+                "to alpha only: " +
+                StringOperations::RemovePath<std::string>(regionData.ImageFile) +
+                ", exception: " + std::string(e.what()));
+            return nullptr; 
         }
-        }
+
+        // newImage->AlphaValues should now have the alpha values of the image
     }
 
     if(!newImage){
@@ -222,9 +241,27 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
 
 // ------------------------------------ //
 // AlpaHitStoredTextureData
+AlpaHitStoredTextureData::AlpaHitStoredTextureData(uint32_t width, uint32_t height) :
+    Width(width), Height(height)
+{
+    // sizeof(uint8_t) == 1
+    AlphaValues.resize(width * height * 1);
+}
+// ------------------------------------ //
 uint8_t AlpaHitStoredTextureData::GetPixel(uint32_t x, uint32_t y) const{
 
     DEBUG_BREAK;
     return 0;
+}
+// ------------------------------------ //
+bool AlpaHitStoredTextureData::HasNonZeroPixels() const{
+
+    for(const auto &pixel : AlphaValues){
+
+        if(pixel > 0)
+            return true;
+    }
+    
+    return false;
 }
 

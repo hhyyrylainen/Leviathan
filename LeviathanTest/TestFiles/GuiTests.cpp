@@ -84,6 +84,7 @@ TEST_CASE("CEGUI Image property is correctly parsed", "[gui]"){
         auto imageData = cache.GetDataForImageProperty("TaharezLook/ButtonMiddleNormal");
 
         REQUIRE(imageData);
+        CHECK(imageData->HasNonZeroPixels());
 
         // This pixel shouldn't be fully transparent
         CHECK(imageData->GetPixel(30, 30) != 0);

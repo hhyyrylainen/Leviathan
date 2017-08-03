@@ -74,6 +74,12 @@ UTF8PointerDataIterator::UTF8PointerDataIterator(const char* begin, const char* 
         CheckLineChange();
 }
 
+UTF8PointerDataIterator::UTF8PointerDataIterator(const std::string &fromstr) :
+    UTF8PointerDataIterator(fromstr.c_str(), fromstr.c_str() + fromstr.size())
+{
+
+}
+
 
 bool UTF8PointerDataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
 

@@ -247,6 +247,9 @@ public:
     //! \note Child classes may pass null pointers here as long as they call CheckLineChange
     // in their constructors
     UTF8PointerDataIterator(const char* begin, const char* end);
+
+    //! Helper for creating from strings
+    UTF8PointerDataIterator(const std::string &fromstr);
     
     virtual bool GetNextCharCode(int &codepointreceiver, size_t forward);
 

@@ -87,6 +87,14 @@ TEST_CASE("CEGUI Image property is correctly parsed", "[gui]"){
         CHECK(imageData->HasNonZeroPixels());
 
         // This pixel shouldn't be fully transparent
-        CHECK(imageData->GetPixel(30, 30) != 0);
+        CHECK(imageData->GetPixel(6, 8) != 0);
+
+        imageData = cache.GetDataForImageProperty("TaharezLook/ButtonRightNormal");
+
+        REQUIRE(imageData);
+        CHECK(imageData->HasNonZeroPixels());
+        
+        // This pixel should be transparent
+        CHECK(imageData->GetPixel(11, 0) == 0);
     }
 }

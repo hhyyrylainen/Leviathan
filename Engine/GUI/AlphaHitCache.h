@@ -58,6 +58,7 @@ struct ImageSetSubImage{
 };
 
 //! \brief Stores data for use by widgets that do hit detection based on their image
+//! \todo Make sure that each Ogre image would be loaded only once
 class AlphaHitCache{
 public:
 

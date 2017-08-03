@@ -250,8 +250,12 @@ AlpaHitStoredTextureData::AlpaHitStoredTextureData(uint32_t width, uint32_t heig
 // ------------------------------------ //
 uint8_t AlpaHitStoredTextureData::GetPixel(uint32_t x, uint32_t y) const{
 
-    DEBUG_BREAK;
-    return 0;
+    const auto arrayIndex = (y* Width) + x;
+
+    if(arrayIndex >= AlphaValues.size())
+        throw InvalidArgument("AlpaHitStoredTextureData: GetPixel: x or y out of range");
+
+    return AlphaValues[arrayIndex];
 }
 // ------------------------------------ //
 bool AlpaHitStoredTextureData::HasNonZeroPixels() const{

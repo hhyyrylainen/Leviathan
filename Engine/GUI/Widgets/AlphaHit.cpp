@@ -19,6 +19,8 @@ AlphaHitButton::AlphaHitButton(const CEGUI::String& type, const CEGUI::String& n
 AlphaHitButton::~AlphaHitButton(){
 
 }
+
+const CEGUI::String AlphaHitButton::WidgetTypeName = "Leviathan/AlphaHitButton";
 // ------------------------------------ //
 bool AlphaHitButton::isHit(const glm::vec2 &position, const bool allow_disabled /*= false*/)
     const
@@ -51,22 +53,13 @@ bool AlphaHitButton::isHit(const glm::vec2 &position, const bool allow_disabled 
     if(!HitTestTexture)
         return true;
 
-    assert(HitTestTexture);
-
     // Read the pixel under mouse pos //
     const auto relativePos = CEGUI::CoordConverter::screenToWindow(*this, position); 
 
     const auto pixel = HitTestTexture->GetPixel(relativePos.x, relativePos.y);
         
     // If it isn't completely transparent, hit //
-    return pixel.a > 0.01f;
-}
-
-// ------------------------------------ //
-std::shared_ptr<AlpaHitStoredTextureData> AlphaHitButton::getTextureFromCEGUIImageName(
-    const CEGUI::String& name)
-{
-    DEBUG_BREAK;
-
+    // Range is 0-255. 0 is fully transparent
+    return pixel > 5;
 }
 

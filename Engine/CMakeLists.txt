@@ -274,7 +274,7 @@ endif()
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupMath} ${GroupSound}
-    ${GroupScript} ${GroupGUI} ${GroupGUI} ${GroupEvents}
+    ${GroupScript} ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
     ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
     ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
     ${GroupUtilityFile}

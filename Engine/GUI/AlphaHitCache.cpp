@@ -28,6 +28,10 @@ AlphaHitCache::~AlphaHitCache(){
     StaticInstance = nullptr;
 }
 
+AlphaHitCache* AlphaHitCache::Get(){
+    return StaticInstance;
+}
+
 AlphaHitCache* AlphaHitCache::StaticInstance = nullptr;
 // ------------------------------------ //
 std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty(

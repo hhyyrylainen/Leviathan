@@ -22,11 +22,16 @@
 #include "Window.h"
 #include <thread>
 
+#include "CEGUI/WindowFactoryManager.h"
+
+// Widgets for registering
+#include "Widgets/AlphaHit.h"
+
 #include <SDL.h>
 // ------------------------------------ //
 
 // ------------------ GuiClipboardHandler ------------------ //
-class Leviathan::Gui::GuiClipboardHandler :
+class Leviathan::GUI::GuiClipboardHandler :
     public CEGUI::NativeClipboardProvider, public ThreadSafe{
 public:
 
@@ -127,6 +132,10 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
         
         CEGUI::System::getSingleton().getClipboard()->setNativeProvider(
             _GuiClipboardHandler.get());
+
+        // Register custom widget types
+        // this is probably early enough for this to work correctly
+        CEGUI::WindowFactoryManager::addFactory<CEGUI::TplWindowFactory<AlphaHitButton> >();
 	}
 
 	// Store the initial time //

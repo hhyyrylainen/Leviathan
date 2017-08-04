@@ -30,12 +30,9 @@ public:
     //! The one overridden method that makes this work
     bool isHit(const glm::vec2 &position, const bool allow_disabled = false) const override;
 
-    //! Handles finding a texture and the position in it for an image name
-    //! \todo This could be cached (or processed at start up) to
-    //! improve performance
-    static std::shared_ptr<AlpaHitStoredTextureData> getTextureFromCEGUIImageName(
-        const CEGUI::String& name);
-
+    //! Window factory name.
+    static const CEGUI::String WidgetTypeName;
+    
 protected:
     
     //! Once the texture and position in it has been determine it is stored here

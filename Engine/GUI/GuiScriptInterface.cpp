@@ -6,7 +6,7 @@
 #include "GuiManager.h"
 using namespace Leviathan;
 // ------------------------------------ //
-namespace Leviathan { namespace Gui{
+namespace Leviathan { namespace GUI{
 
 
 // ------------------------------------ //

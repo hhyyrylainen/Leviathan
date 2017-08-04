@@ -24,7 +24,7 @@ class LeviathanApplication;
 class Engine : public ThreadSafe{
 		
     friend GraphicalInputEntity;
-    friend Gui::GuiManager;
+    friend GUI::GuiManager;
     friend GameWorld;
     friend LeviathanApplication;
 public:

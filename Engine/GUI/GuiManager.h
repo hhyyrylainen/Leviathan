@@ -9,9 +9,8 @@
 
 #include "OgreRenderQueueListener.h"
 
-
-
-namespace Leviathan{ namespace Gui{
+namespace Leviathan{
+namespace GUI{
 
 
 //! \brief A class for handling system clipboard interaction

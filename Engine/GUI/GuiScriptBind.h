@@ -192,15 +192,15 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	}
 
 	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_ADDREF, "void f()",
-            asMETHOD(Gui::GuiCollection, AddRefProxy), asCALL_THISCALL) < 0){
+            asMETHOD(GUI::GuiCollection, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("GuiCollection", asBEHAVE_RELEASE, "void f()",
-            asMETHOD(Gui::GuiCollection, ReleaseProxy), asCALL_THISCALL) < 0){
+            asMETHOD(GUI::GuiCollection, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectMethod("GuiCollection", "string GetName()",
-            asMETHOD(Gui::GuiCollection, GetNameProxy), asCALL_THISCALL) < 0)
+            asMETHOD(GUI::GuiCollection, GetNameProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -212,7 +212,7 @@ bool BindGUIObjects(asIScriptEngine* engine){
 
 	if(engine->RegisterObjectMethod("GuiManager",
             "bool SetCollectionState(const string &in name, bool state = false)",
-            asMETHOD(Gui::GuiManager, SetCollectionState), asCALL_THISCALL) < 0)
+            asMETHOD(GUI::GuiManager, SetCollectionState), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
@@ -225,39 +225,39 @@ bool BindGUIObjects(asIScriptEngine* engine){
 	// no factory function to prevent scripts from creating these functions //
 
 	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_ADDREF, "void f()",
-            asMETHOD(Gui::BaseGuiObject, AddRefProxy), asCALL_THISCALL) < 0){
+            asMETHOD(GUI::BaseGuiObject, AddRefProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	if(engine->RegisterObjectBehaviour("GuiObject", asBEHAVE_RELEASE, "void f()",
-            asMETHOD(Gui::BaseGuiObject, ReleaseProxy), asCALL_THISCALL) < 0){
+            asMETHOD(GUI::BaseGuiObject, ReleaseProxy), asCALL_THISCALL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", asMETHOD(Gui::BaseGuiObject,
+	if(engine->RegisterObjectMethod("GuiObject", "int GetID()", asMETHOD(GUI::BaseGuiObject,
                 GetID), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 	if(engine->RegisterObjectMethod("GuiObject", "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(
-                Gui::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
+                GUI::BaseGuiObject, GetAndPopFirstUpdated), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", asMETHOD(Gui::BaseGuiObject,
+	if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()", asMETHOD(GUI::BaseGuiObject,
                 GetOwningManager), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
-	if(engine->RegisterObjectMethod("GuiObject", "string GetName()", asMETHOD(Gui::BaseGuiObject,
+	if(engine->RegisterObjectMethod("GuiObject", "string GetName()", asMETHOD(GUI::BaseGuiObject,
                 GetName), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 	
-	if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive()", asMETHOD(Gui::BaseGuiObject,
+	if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive()", asMETHOD(GUI::BaseGuiObject,
                 PrintWindowsRecursiveProxy), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
@@ -352,17 +352,17 @@ bool BindGUIObjects(asIScriptEngine* engine){
 
 	if(engine->RegisterObjectMethod("GuiManager",
             "CEGUI::Window& GetWindowByName(const string &in namepath)",
-            asMETHODPR(Gui::GuiManager, GetWindowByStringName, (const string&), CEGUI::Window*),
+            asMETHODPR(GUI::GuiManager, GetWindowByStringName, (const string&), CEGUI::Window*),
             asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
     
-	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetElement()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetElement()", asMETHOD(GUI::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetWindow()", asMETHOD(Gui::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
+	if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetWindow()", asMETHOD(GUI::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}

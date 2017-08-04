@@ -53,7 +53,7 @@ class Visitable;
 class InputReceiver;
 class InputController;
 
-namespace Gui{
+namespace GUI{
         
 class GuiManager;
 }
@@ -206,7 +206,7 @@ using Leviathan::Locker;
 using Leviathan::Logger;
 using Leviathan::FileSystem;
 using Leviathan::Engine;
-using Leviathan::Gui::GuiManager;
+using Leviathan::GUI::GuiManager;
 using Leviathan::GameWorld;
 using Leviathan::AppDef;
 using Leviathan::MasterServerInformation;

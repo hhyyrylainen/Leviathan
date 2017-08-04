@@ -92,20 +92,20 @@ private:
 
 
 using namespace Leviathan;
-using namespace Gui;
+using namespace Leviathan::GUI;
 using namespace std;
 // ------------------ GuiManager ------------------ //
-Leviathan::Gui::GuiManager::GuiManager() :
+GuiManager::GuiManager() :
     ID(IDFactory::GetID())
 {
 	
 }
-Leviathan::Gui::GuiManager::~GuiManager(){
+GuiManager::~GuiManager(){
 
 	
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* window,
+bool GuiManager::Init(Graphics* graph, GraphicalInputEntity* window,
     bool ismain)
 {
 	GUARD_LOCK();
@@ -144,7 +144,7 @@ bool Leviathan::Gui::GuiManager::Init(Graphics* graph, GraphicalInputEntity* win
 	return true;
 }
 
-void Leviathan::Gui::GuiManager::Release(){
+void GuiManager::Release(){
 	GUARD_LOCK();
 	
 
@@ -218,7 +218,7 @@ DLLEXPORT void GuiManager::EnableStandardGUIThemes(){
 	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(int32_t key, int specialmodifiers){
+DLLEXPORT bool GuiManager::ProcessKeyDown(int32_t key, int specialmodifiers){
     
 	GUARD_LOCK();
     
@@ -236,7 +236,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::ProcessKeyDown(int32_t key, int speci
 	return false;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const string &name, bool state){
+DLLEXPORT void GuiManager::SetCollectionState(const string &name, bool state){
 	GUARD_LOCK();
 	// find collection with name and set it's state //
 	for(size_t i = 0; i < Collections.size(); i++){
@@ -254,7 +254,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionState(const string &name
         "with name: " + name);
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const string &name,
+DLLEXPORT void GuiManager::SetCollectionAllowEnableState(const string &name,
     bool allow /*= true*/)
 {
 	GUARD_LOCK();
@@ -272,7 +272,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetCollectionAllowEnableState(const s
 	}
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
+void GuiManager::GuiTick(int mspassed){
 	GUARD_LOCK();
 
     if(ReloadQueued){
@@ -344,11 +344,11 @@ void Leviathan::Gui::GuiManager::GuiTick(int mspassed){
 	}
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::OnForceGUIOn(){
+DLLEXPORT void GuiManager::OnForceGUIOn(){
 	DEBUG_BREAK;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiManager::SetDisableMouseCapture(bool newvalue){
+DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue){
 
     DisableGuiMouseCapture = newvalue;
     // This will cause the capture state to be checked next tick
@@ -356,7 +356,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetDisableMouseCapture(bool newvalue)
 }
 
 // ------------------------------------ //
-void Leviathan::Gui::GuiManager::Render(){
+void GuiManager::Render(){
 	GUARD_LOCK();
 
 	// Pass time //
@@ -383,7 +383,7 @@ void Leviathan::Gui::GuiManager::Render(){
 
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
+DLLEXPORT void GuiManager::OnResize(){
 	GUARD_LOCK();
 
 	// Notify the CEGUI system //
@@ -399,7 +399,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnResize(){
                 (float)height));
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
+DLLEXPORT void GuiManager::OnFocusChanged(bool focused){
 	GUARD_LOCK();
 	
 	// Notify our context //
@@ -408,12 +408,12 @@ DLLEXPORT void Leviathan::Gui::GuiManager::OnFocusChanged(bool focused){
 
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiManager::AddGuiObject(Lock &guard, BaseGuiObject* obj){
+bool GuiManager::AddGuiObject(Lock &guard, BaseGuiObject* obj){
 	Objects.push_back(obj);
 	return true;
 }
 
-void Leviathan::Gui::GuiManager::DeleteObject(int id){
+void GuiManager::DeleteObject(int id){
 	GUARD_LOCK();
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id){
@@ -426,7 +426,7 @@ void Leviathan::Gui::GuiManager::DeleteObject(int id){
 	}
 }
 
-int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
+int GuiManager::GetObjectIndexFromId(int id){
 	GUARD_LOCK();
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id)
@@ -435,7 +435,7 @@ int Leviathan::Gui::GuiManager::GetObjectIndexFromId(int id){
 	return -1;
 }
 
-BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
+BaseGuiObject* GuiManager::GetObject(unsigned int index){
 	GUARD_LOCK();
 	if(index < Objects.size()){
         
@@ -444,7 +444,7 @@ BaseGuiObject* Leviathan::Gui::GuiManager::GetObject(unsigned int index){
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(Lock &guard, const string &file,
+DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
     bool nochangelistener, int iteration /*= 0*/)
 {
     if(iteration > 10){
@@ -680,7 +680,7 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::LoadGUIFile(Lock &guard, const string
 	return true;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(Lock &guard){
+DLLEXPORT void GuiManager::UnLoadGUIFile(Lock &guard){
 
 	// Unload all objects //
 	for(size_t i = 0; i < Objects.size(); i++){
@@ -707,7 +707,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::UnLoadGUIFile(Lock &guard){
 	GuiContext->setRootWindow(NULL);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(Lock &guard, const string &tname){
+DLLEXPORT void GuiManager::SetMouseTheme(Lock &guard, const string &tname){
 
 	if(tname == "none"){
 
@@ -723,7 +723,7 @@ DLLEXPORT void Leviathan::Gui::GuiManager::SetMouseTheme(Lock &guard, const stri
 	ThisWindow->GetWindow()->SetHideCursor(true);
 }
 // ------------------------------------ //
-DLLEXPORT CEGUI::GUIContext* Leviathan::Gui::GuiManager::GetMainContext(Lock &guard){
+DLLEXPORT CEGUI::GUIContext* GuiManager::GetMainContext(Lock &guard){
 	return GuiContext;
 }
 // ----------------- collection managing --------------------- //
@@ -732,7 +732,7 @@ void GuiManager::AddCollection(Lock &guard, GuiCollection* add){
 	Collections.push_back(add);
 }
 
-GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const string &name){
+GuiCollection* GuiManager::GetCollection(const int &id, const string &name){
 	GUARD_LOCK();
 	// look for collection based on id or name //
 	for(size_t i = 0; i < Collections.size(); i++){
@@ -755,7 +755,7 @@ GuiCollection* Leviathan::Gui::GuiManager::GetCollection(const int &id, const st
 	return NULL;
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiManager::_FileChanged(const string &file,
+void GuiManager::_FileChanged(const string &file,
     ResourceFolderListener &caller)
 {
 	// Any updated file will cause whole reload //
@@ -767,7 +767,7 @@ void Leviathan::Gui::GuiManager::_FileChanged(const string &file,
 	caller.MarkAllAsNotUpdated();
 }
 // ------------------------------------ //
-DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(Lock &guard,
+DLLEXPORT CEGUI::Window* GuiManager::GetWindowByStringName(Lock &guard,
     const string &namepath)
 {
 	try{
@@ -781,7 +781,7 @@ DLLEXPORT CEGUI::Window* Leviathan::Gui::GuiManager::GetWindowByStringName(Lock 
 	}
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(Lock &guard,
+DLLEXPORT bool GuiManager::PlayAnimationOnWindow(Lock &guard,
     const string &windowname, const string &animationname, bool applyrecursively,
     const string &ignoretypenames)
 {
@@ -812,14 +812,14 @@ DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindow(Lock &guard,
 	return true;
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::PlayAnimationOnWindowProxy(const string &windowname,
+DLLEXPORT bool GuiManager::PlayAnimationOnWindowProxy(const string &windowname,
     const string &animationname)
 {
     GUARD_LOCK();
 	return PlayAnimationOnWindow(guard, windowname, animationname);
 }
 
-void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(Lock &guard,
+void GuiManager::_PlayAnimationOnWindow(Lock &guard,
     CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse,
     const string &ignoretypenames)
 {
@@ -850,7 +850,7 @@ void Leviathan::Gui::GuiManager::_PlayAnimationOnWindow(Lock &guard,
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGuiStates(
+DLLEXPORT std::unique_ptr<GuiCollectionStates> GuiManager::GetGuiStates(
     Lock &guard) const
 {
     
@@ -866,7 +866,7 @@ DLLEXPORT std::unique_ptr<GuiCollectionStates> Leviathan::Gui::GuiManager::GetGu
 	return result;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(Lock &guard,
+DLLEXPORT void GuiManager::ApplyGuiStates(Lock &guard,
     const GuiCollectionStates* states)
 {
 
@@ -884,23 +884,23 @@ DLLEXPORT void Leviathan::Gui::GuiManager::ApplyGuiStates(Lock &guard,
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::GuiManager::InjectPasteRequest(){
+DLLEXPORT bool GuiManager::InjectPasteRequest(){
 	return ContextInput->injectPasteRequest();
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::InjectCopyRequest(){
+DLLEXPORT bool GuiManager::InjectCopyRequest(){
 	return ContextInput->injectCopyRequest();
 }
 
-DLLEXPORT bool Leviathan::Gui::GuiManager::InjectCutRequest(){
+DLLEXPORT bool GuiManager::InjectCutRequest(){
 	return ContextInput->injectCutRequest();
 }
 // ------------------ Static part ------------------ //
-std::vector<string> Leviathan::Gui::GuiManager::LoadedAnimationFiles;
+std::vector<string> GuiManager::LoadedAnimationFiles;
 
-Mutex Leviathan::Gui::GuiManager::GlobalGUIMutex;
+Mutex GuiManager::GlobalGUIMutex;
 
-bool Leviathan::Gui::GuiManager::IsAnimationFileLoaded(Lock &lock, const string &file){
+bool GuiManager::IsAnimationFileLoaded(Lock &lock, const string &file){
     
 	for(size_t i = 0; i < LoadedAnimationFiles.size(); i++){
 
@@ -914,12 +914,12 @@ bool Leviathan::Gui::GuiManager::IsAnimationFileLoaded(Lock &lock, const string 
 	return false;
 }
 
-void Leviathan::Gui::GuiManager::SetAnimationFileLoaded(Lock &lock, const string &file){
+void GuiManager::SetAnimationFileLoaded(Lock &lock, const string &file){
 
 	LoadedAnimationFiles.push_back(file);
 }
 
-DLLEXPORT void Leviathan::Gui::GuiManager::KillGlobalCache(){
+DLLEXPORT void GuiManager::KillGlobalCache(){
 	Lock guard(GlobalGUIMutex);
 
 	// Release the memory to not look like a leak //

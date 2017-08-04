@@ -93,7 +93,7 @@ public:
     DLLEXPORT inline Window* GetWindow(){
         return DisplayWindow;
     }
-    DLLEXPORT inline Gui::GuiManager* GetGui(){
+    DLLEXPORT inline GUI::GuiManager* GetGui(){
         return WindowsGui;
     }
     DLLEXPORT inline InputController* GetInputController(){
@@ -141,7 +141,7 @@ protected:
 
     Window* DisplayWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;
-    Gui::GuiManager* WindowsGui = nullptr;
+    GUI::GuiManager* WindowsGui = nullptr;
     CEGUI::OgreRenderer* CEGUIRenderer = nullptr;
 
 

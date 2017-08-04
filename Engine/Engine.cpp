@@ -606,7 +606,7 @@ void Engine::Release(bool forced){
     // delete randomizer last, for obvious reasons //
     SAFE_DELETE(MainRandom);
 
-    Gui::GuiManager::KillGlobalCache();
+    GUI::GuiManager::KillGlobalCache();
 
     ObjectFileProcessor::Release();
     SAFE_DELETE(MainFileHandler);

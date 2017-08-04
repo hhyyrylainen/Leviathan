@@ -1,3 +1,5 @@
+TODO: update these
+
 cppppppp
 
 // ------------------ aaaa ------------------ //
@@ -6,7 +8,6 @@ cppppppp
 // ------------------------------------ //
 #include "FILEREPLACENAME.h"
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 
 // ------------------------------------ //
@@ -48,7 +49,7 @@ cppppppp
 #include "FILEREPLACENAME.h"
 #endif
 using namespace Leviathan;
-using namespace Leviathan::Gui;
+using namespace Leviathan::GUI;
 // ------------------------------------ //
 
 // ------------------------------------ //
@@ -75,7 +76,7 @@ hddddd
 // ---- includes ---- //
 
 
-namespace Leviathan{ namespace Gui{
+namespace Leviathan{ namespace GUI{
 
 	class FILEREPLACENAME : public Object{
 	public:

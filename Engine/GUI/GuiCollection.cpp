@@ -8,10 +8,10 @@
 #include "../CEGUIInclude.h"
 #include "../Common/ThreadSafe.h"
 using namespace Leviathan;
-using namespace Gui;
+using namespace GUI;
 using namespace std;
 // ------------------------------------ //
-Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name,
+GuiCollection::GuiCollection(const std::string &name,
     GuiManager* manager, int id, const std::string &toggle,
     std::vector<unique_ptr<std::string>> &inanimations,
     std::vector<unique_ptr<std::string>> &outanimations, bool strict /*= false*/, 
@@ -41,13 +41,13 @@ Leviathan::Gui::GuiCollection::GuiCollection(const std::string &name,
     }
 }
 
-Leviathan::Gui::GuiCollection::~GuiCollection(){
+GuiCollection::~GuiCollection(){
 	// release script //
 
 	// release reference //
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(Lock &managerlock, bool newstate){
+DLLEXPORT void GuiCollection::UpdateState(Lock &managerlock, bool newstate){
 	// Don't do anything if the state didn't actually change //
 	if(Enabled == newstate)
 		return;
@@ -139,7 +139,7 @@ DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateState(Lock &managerlock, boo
 	}
 }
 // ------------------------------------ //
-bool Leviathan::Gui::GuiCollection::LoadCollection(Lock &guilock, GuiManager* gui,
+bool GuiCollection::LoadCollection(Lock &guilock, GuiManager* gui,
     const ObjectFileObject &data)
 {
 	// load a GuiCollection from the structure //
@@ -205,11 +205,11 @@ bool Leviathan::Gui::GuiCollection::LoadCollection(Lock &guilock, GuiManager* gu
 	return true;
 }
 
-DLLEXPORT void Leviathan::Gui::GuiCollection::UpdateAllowEnable(bool newstate){
+DLLEXPORT void GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 // ------------------------------------ //
-void Leviathan::Gui::GuiCollection::_PlayAnimations(Lock &lock,
+void GuiCollection::_PlayAnimations(Lock &lock,
     const std::vector<unique_ptr<std::string>> &anims)
 {
 	LEVIATHAN_ASSERT((anims.size() % 2) == 0,

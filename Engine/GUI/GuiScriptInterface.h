@@ -7,7 +7,7 @@
 // ------------------------------------ //
 // ---- includes ---- //
 
-namespace Leviathan{ namespace Gui{
+namespace Leviathan{ namespace GUI{
 
 
 }}

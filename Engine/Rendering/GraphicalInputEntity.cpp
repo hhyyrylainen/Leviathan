@@ -214,7 +214,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 
 	// create GUI //
-	WindowsGui = new Gui::GuiManager();
+	WindowsGui = new GUI::GuiManager();
 	if(!WindowsGui){
 		throw NULLPtr("cannot create GUI manager instance");
 	}

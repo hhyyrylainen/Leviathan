@@ -127,7 +127,7 @@ namespace Pong{
         virtual void OnPlayerStatsUpdated(PlayerList* list) override;
 
         // ------------------------------------ //
-        Leviathan::Gui::GuiManager* GuiManagerAccess;
+        Leviathan::GUI::GuiManager* GuiManagerAccess;
         shared_ptr<GameInputController> GameInputHandler;
 
         std::unique_ptr<PongNetHandler> ClientInterface;

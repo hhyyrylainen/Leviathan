@@ -12,9 +12,9 @@
 #include "../CEGUIInclude.h"
 #include "../Handlers/IDFactory.h"
 using namespace Leviathan;
-using namespace Gui;
+using namespace GUI;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner,
+DLLEXPORT BaseGuiObject::BaseGuiObject(GuiManager* owner,
     const std::string &name, int fakeid, std::shared_ptr<ScriptScript> script /*= NULL*/) :
     EventableScriptObject(script), 
     ID(IDFactory::GetID()), FileID(fakeid), Name(name), OwningInstance(owner)
@@ -22,12 +22,12 @@ DLLEXPORT Leviathan::Gui::BaseGuiObject::BaseGuiObject(GuiManager* owner,
 	
 }
 
-DLLEXPORT Leviathan::Gui::BaseGuiObject::~BaseGuiObject(){
+DLLEXPORT BaseGuiObject::~BaseGuiObject(){
 
 
 }
 
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::ReleaseData(){
+DLLEXPORT void BaseGuiObject::ReleaseData(){
 
 	// Unregister events to avoid access violations //
 	_UnsubscribeAllEvents();
@@ -58,16 +58,16 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::ReleaseData(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::string Leviathan::Gui::BaseGuiObject::GetName(){
+DLLEXPORT std::string BaseGuiObject::GetName(){
 
 	return Name;
 }
 
-DLLEXPORT CEGUI::Window* Leviathan::Gui::BaseGuiObject::GetTargetWindow() const{
+DLLEXPORT CEGUI::Window* BaseGuiObject::GetTargetWindow() const{
 	return TargetElement;
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
+DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
     GuiManager* owner, std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
 {
 	// parse fake id from prefixes //
@@ -153,7 +153,7 @@ DLLEXPORT bool Leviathan::Gui::BaseGuiObject::LoadFromFileStructure(Lock &ownerl
 	return true;
 }
 // ------------------------------------ //
-void Leviathan::Gui::BaseGuiObject::_HookListeners(){
+void BaseGuiObject::_HookListeners(){
 	// first we need to get probably right listeners and register with them //
 	if(!Scripting)
 		return;
@@ -196,13 +196,13 @@ void Leviathan::Gui::BaseGuiObject::_HookListeners(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::Gui::BaseGuiObject::IsCEGUIEventHooked() const{
+DLLEXPORT bool BaseGuiObject::IsCEGUIEventHooked() const{
     
     GUARD_LOCK();
     return !CEGUIRegisteredEvents.empty();
 }
 // ------------------------------------ //
-void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
+void BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
 	if(!Scripting)
 		return;
 	ScriptModule* mod = Scripting->GetModule();
@@ -253,15 +253,15 @@ void Leviathan::Gui::BaseGuiObject::_CallScriptListener(Event** pEvent, GenericE
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::unique_ptr<ScriptRunningSetup> Gui::BaseGuiObject::GetParametersForInit(){
+DLLEXPORT std::unique_ptr<ScriptRunningSetup> BaseGuiObject::GetParametersForInit(){
 	return _GetArgsForAutoFunc();
 }
 
-DLLEXPORT std::unique_ptr<ScriptRunningSetup> Gui::BaseGuiObject::GetParametersForRelease(){
+DLLEXPORT std::unique_ptr<ScriptRunningSetup> BaseGuiObject::GetParametersForRelease(){
 	return _GetArgsForAutoFunc();
 }
 
-std::unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::_GetArgsForAutoFunc(){
+std::unique_ptr<ScriptRunningSetup> BaseGuiObject::_GetArgsForAutoFunc(){
 	// Setup the parameters //
     std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
         std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GuiObject"),
@@ -276,16 +276,16 @@ std::unique_ptr<ScriptRunningSetup> Leviathan::Gui::BaseGuiObject::_GetArgsForAu
 	return sargs;
 }
 // ------------------------------------ //
-std::map<std::string, const CEGUI::String*> Leviathan::Gui::BaseGuiObject::CEGUIEventNames;
+std::map<std::string, const CEGUI::String*> BaseGuiObject::CEGUIEventNames;
 
-void Leviathan::Gui::BaseGuiObject::ReleaseCEGUIEventNames(){
+void BaseGuiObject::ReleaseCEGUIEventNames(){
 
 	Lock lockthis(CEGUIEventMutex);
 
 	CEGUIEventNames.clear();
 }
 
-void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(Lock &locked){
+void BaseGuiObject::MakeSureCEGUIEventsAreFine(Lock &locked){
 	// Return if it already has data //
 	if(!CEGUIEventNames.empty())
 		return;
@@ -302,9 +302,9 @@ void Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine(Lock &locked){
 
 }
 
-Mutex Leviathan::Gui::BaseGuiObject::CEGUIEventMutex;
+Mutex BaseGuiObject::CEGUIEventMutex;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(Lock &guard,
+DLLEXPORT void BaseGuiObject::PrintWindowsRecursive(Lock &guard,
     CEGUI::Window* target /*= NULL*/, size_t level /*= 0*/) const
 {
 
@@ -336,12 +336,12 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursive(Lock &guard,
 	}
 }
 
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::PrintWindowsRecursiveProxy(){
+DLLEXPORT void BaseGuiObject::PrintWindowsRecursiveProxy(){
 	GUARD_LOCK();
 	PrintWindowsRecursive(guard);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Gui::BaseGuiObject::ConnectElement(CEGUI::Window* windojb){
+DLLEXPORT void BaseGuiObject::ConnectElement(CEGUI::Window* windojb){
 	GUARD_LOCK();
 	// Unconnect from previous ones //
 	if(TargetElement){
@@ -360,7 +360,7 @@ DLLEXPORT void Leviathan::Gui::BaseGuiObject::ConnectElement(CEGUI::Window* wind
 	CEGUIRegisteredEvents.push_back(unhookevent);
 }
 
-bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const std::string &listenername){
+bool BaseGuiObject::_HookCEGUIEvent(const std::string &listenername){
 
     {
         // This should be fine to be only locked during the next call as
@@ -424,7 +424,7 @@ bool Leviathan::Gui::BaseGuiObject::_HookCEGUIEvent(const std::string &listenern
 	return true;
 }
 
-void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
+void BaseGuiObject::_UnsubscribeAllEvents(){
 	GUARD_LOCK();
 	// Loop an disconnect them all //
 	for(auto iter = CEGUIRegisteredEvents.begin(); iter != CEGUIRegisteredEvents.end();
@@ -436,7 +436,7 @@ void Leviathan::Gui::BaseGuiObject::_UnsubscribeAllEvents(){
 	CEGUIRegisteredEvents.clear();
 }
 // ------------------------------------ //
-bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const std::string &name,
+bool BaseGuiObject::_CallCEGUIListener(const std::string &name,
     std::function<void (std::vector<std::shared_ptr<NamedVariableBlock>>&)> extraparam
     /*= NULL*/)
 {
@@ -479,7 +479,7 @@ bool Leviathan::Gui::BaseGuiObject::_CallCEGUIListener(const std::string &name,
 	return result->ConvertAndReturnVariable<bool>();
 }
 // ------------------------------------ //
-bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
+bool BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
 	GUARD_LOCK();
 
 	// This should be safe //
@@ -496,19 +496,19 @@ bool Leviathan::Gui::BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &a
 	return false;
 }
 
-bool Leviathan::Gui::BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
+bool BaseGuiObject::EventOnClick(const CEGUI::EventArgs &args){
 	// Pass the click event to the script //
 
 	return _CallCEGUIListener(LISTENERNAME_ONCLICK);
 }
 
-bool Leviathan::Gui::BaseGuiObject::EventOnCloseClicked(const CEGUI::EventArgs &args){
+bool BaseGuiObject::EventOnCloseClicked(const CEGUI::EventArgs &args){
 	// Pass the event to the script //
 
 	return _CallCEGUIListener(LISTENERNAME_ONCLOSECLICKED);
 }
 
-bool Leviathan::Gui::BaseGuiObject::EventOnListSelectionAccepted(const CEGUI::EventArgs &args){
+bool BaseGuiObject::EventOnListSelectionAccepted(const CEGUI::EventArgs &args){
 
     auto res = static_cast<const CEGUI::WindowEventArgs&>(args);
 

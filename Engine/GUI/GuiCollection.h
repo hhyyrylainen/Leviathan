@@ -7,90 +7,91 @@
 #include "../ObjectFiles/ObjectFile.h"
 #include "../Common/ReferenceCounted.h"
 
-namespace Leviathan{ namespace Gui{
+namespace Leviathan{
+namespace GUI{
 
 
-	class GuiCollection : public ReferenceCounted{
-	public:
-		GuiCollection(const std::string &name, GuiManager* manager, int id,
-            const std::string &toggle, std::vector<std::unique_ptr<std::string>> &inanimations, 
-			std::vector<std::unique_ptr<std::string>> &outanimations,bool strict = false,
-            bool enabled = true, bool keepgui = false, bool allowenable = true,
-            const std::string &autotarget = "", bool applyanimstochildren = false);
+class GuiCollection : public ReferenceCounted{
+public:
+    GuiCollection(const std::string &name, GuiManager* manager, int id,
+        const std::string &toggle, std::vector<std::unique_ptr<std::string>> &inanimations, 
+        std::vector<std::unique_ptr<std::string>> &outanimations,bool strict = false,
+        bool enabled = true, bool keepgui = false, bool allowenable = true,
+        const std::string &autotarget = "", bool applyanimstochildren = false);
         
-		~GuiCollection();
+    ~GuiCollection();
 
-		//! \todo Allow script listeners to be executed even if custom animations are used
-		DLLEXPORT void UpdateState(Lock &managerlock, bool newstate);
-		DLLEXPORT inline bool GetState(){
-			return Enabled;
-		}
-		DLLEXPORT inline void ToggleState(Lock &managerlock){
-			UpdateState(managerlock, !Enabled);
-		}
+    //! \todo Allow script listeners to be executed even if custom animations are used
+    DLLEXPORT void UpdateState(Lock &managerlock, bool newstate);
+    DLLEXPORT inline bool GetState(){
+        return Enabled;
+    }
+    DLLEXPORT inline void ToggleState(Lock &managerlock){
+        UpdateState(managerlock, !Enabled);
+    }
 
-		DLLEXPORT void UpdateAllowEnable(bool newstate);
-		DLLEXPORT inline bool GetAllowEnable(){
-			return AllowEnable;
-		}
-		DLLEXPORT inline void ToggleAllowEnable(){
-			UpdateAllowEnable(!AllowEnable);
-		}
-
-
-		DLLEXPORT inline bool KeepsGUIActive(){
-			return Enabled && KeepsGuiOn;
-		}
-
-		DLLEXPORT inline const GKey& GetTogglingKey(){
-			return Toggle;
-		}
-		DLLEXPORT inline int GetID(){
-			return ID;
-		}
-		DLLEXPORT inline const std::string& GetName(){
-			return Name;
-		}
-
-        std::string GetNameProxy(){
-			return Name;
-		}
+    DLLEXPORT void UpdateAllowEnable(bool newstate);
+    DLLEXPORT inline bool GetAllowEnable(){
+        return AllowEnable;
+    }
+    DLLEXPORT inline void ToggleAllowEnable(){
+        UpdateAllowEnable(!AllowEnable);
+    }
 
 
-		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
+    DLLEXPORT inline bool KeepsGUIActive(){
+        return Enabled && KeepsGuiOn;
+    }
 
-		DLLEXPORT static bool LoadCollection(Lock &guilock, GuiManager* gui,
-            const ObjectFileObject &data);
-	private:
+    DLLEXPORT inline const GKey& GetTogglingKey(){
+        return Toggle;
+    }
+    DLLEXPORT inline int GetID(){
+        return ID;
+    }
+    DLLEXPORT inline const std::string& GetName(){
+        return Name;
+    }
 
-		void _PlayAnimations(Lock &managerlock,
-            const std::vector<std::unique_ptr<std::string>> &anims);
+    std::string GetNameProxy(){
+        return Name;
+    }
 
-		// ------------------------------------ //
 
-		std::string Name;
-		int ID;
-		bool Enabled;
-		bool Strict;
-		bool KeepsGuiOn;
-		bool AllowEnable;
+    REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
 
-		//! The CEGUI window that is automatically controlled
-		//! \todo Allow script to be called after this
-		std::string AutoTarget;
+    DLLEXPORT static bool LoadCollection(Lock &guilock, GuiManager* gui,
+        const ObjectFileObject &data);
+private:
 
-		//! The CEGUI animations that are automatically used
-		std::vector<std::unique_ptr<std::string>> AutoAnimationOnEnable;
-		std::vector<std::unique_ptr<std::string>> AutoAnimationOnDisable;
+    void _PlayAnimations(Lock &managerlock,
+        const std::vector<std::unique_ptr<std::string>> &anims);
 
-		//! Flag for using the same animations in AutoAnimationOnEnable for their child windows
-		bool ApplyAnimationsToChildren;
+    // ------------------------------------ //
 
-		GKey Toggle;
-		GuiManager* OwningManager;
+    std::string Name;
+    int ID;
+    bool Enabled;
+    bool Strict;
+    bool KeepsGuiOn;
+    bool AllowEnable;
 
-        std::shared_ptr<ScriptScript> Scripting;
-	};
+    //! The CEGUI window that is automatically controlled
+    //! \todo Allow script to be called after this
+    std::string AutoTarget;
+
+    //! The CEGUI animations that are automatically used
+    std::vector<std::unique_ptr<std::string>> AutoAnimationOnEnable;
+    std::vector<std::unique_ptr<std::string>> AutoAnimationOnDisable;
+
+    //! Flag for using the same animations in AutoAnimationOnEnable for their child windows
+    bool ApplyAnimationsToChildren;
+
+    GKey Toggle;
+    GuiManager* OwningManager;
+
+    std::shared_ptr<ScriptScript> Scripting;
+};
 
 }}
 

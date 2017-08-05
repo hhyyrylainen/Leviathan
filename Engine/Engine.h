@@ -17,6 +17,10 @@ namespace Leviathan{
 
 class LeviathanApplication;
 
+namespace GUI{
+class AlphaHitCache;
+}
+
 //! \brief The main class of the Leviathan Game Engine
 //!
 //! Allocates a lot of classes and performs almost all startup operations.
@@ -145,6 +149,9 @@ public:
     inline RemoteConsole* GetRemoteConsole() {
         return _RemoteConsole;
     }
+    inline GUI::AlphaHitCache* GetAlphaHitCache(){
+        return _AlphaHitCache.get();
+    }
 
     DLLEXPORT GraphicalInputEntity* GetWindowFromSDLID(uint32_t sdlid);
     
@@ -224,6 +231,7 @@ protected:
         
     std::unique_ptr<ConsoleInput> _ConsoleInput;
     std::unique_ptr<EntitySerializer> _EntitySerializer;
+    std::unique_ptr<GUI::AlphaHitCache> _AlphaHitCache;
 
 #ifdef LEVIATHAN_USES_LEAP
     LeapManager* LeapData = nullptr;

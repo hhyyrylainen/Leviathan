@@ -30,6 +30,7 @@
 #include "TimeIncludes.h"
 #include "FileSystem.h"
 #include "GUI/GuiManager.h"
+#include "GUI/AlphaHitCache.h"
 #include "Iterators/StringIterator.h"
 #include "Application/ConsoleInput.h"
 
@@ -399,6 +400,8 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 			return false;
 		}
 
+        _AlphaHitCache = std::make_unique<GUI::AlphaHitCache>();
+
 		// create window //
 		GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
 	}
@@ -607,6 +610,7 @@ void Engine::Release(bool forced){
     SAFE_DELETE(MainRandom);
 
     GUI::GuiManager::KillGlobalCache();
+    _AlphaHitCache.reset();
 
     ObjectFileProcessor::Release();
     SAFE_DELETE(MainFileHandler);

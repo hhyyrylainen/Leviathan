@@ -9,6 +9,11 @@
 #include "TimeIncludes.h"
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/NetworkHandler.h"
+
+#include "FileSystem.h"
+#include "OgreRoot.h"
+#include "OgreLogManager.h"
+
 #include <string>
 
 #include "catch/catch.hpp"
@@ -135,6 +140,56 @@ public:
     PartialApplication App;
     TestLogger Log;
     AppDef Def;
+};
+
+//! Partial Engine with window-less Ogre for GUI and other tests that need Ogre components
+class PartialEngineWithOgre : public PartialEngine<false>{
+public:
+    PartialEngineWithOgre(NetworkHandler* handler = nullptr) : PartialEngine(handler){
+
+        // TODO: allow the Graphics object to be used here
+        // Suppress log
+        Ogre::Log* ogreLog = OgreLogManager.createLog("Test/TestOgreLog.txt", true, false,
+            false);
+
+        REQUIRE(ogreLog == OgreLogManager.getDefaultLog());
+        
+        root = new Ogre::Root("", "", "");
+
+        Ogre::String renderSystemName = "RenderSystem_GL3Plus";
+
+    #ifdef _DEBUG
+        renderSystemName->append("_d");
+    #endif // _DEBUG
+
+    #ifndef _WIN32            
+        // On platforms where rpath works plugins are in the lib subdirectory
+        renderSystemName = "lib/" + renderSystemName; 
+    #endif
+        
+        root->loadPlugin(renderSystemName);
+        const auto& renderers = root->getAvailableRenderers();
+        REQUIRE(renderers.size() > 0);
+        REQUIRE(renderers[0]);
+        root->setRenderSystem(renderers[0]);
+        root->initialise(false, "", "");
+
+        MainFileHandler = new FileSystem();
+
+        REQUIRE(MainFileHandler->Init(&Log));
+
+        // Register resources to Ogre //
+        MainFileHandler->RegisterOGREResourceGroups(true);
+    }
+
+    ~PartialEngineWithOgre(){
+
+        SAFE_DELETE(MainFileHandler);
+        SAFE_DELETE(root);
+    }
+
+    Ogre::LogManager OgreLogManager;
+    Ogre::Root* root;
 };
 
 }

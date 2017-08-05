@@ -146,6 +146,7 @@ else()
     "GUI/GuiScriptBind.h"
     "GUI/GuiScriptInterface.cpp" "GUI/GuiScriptInterface.h"
     "GUI/AlphaHitCache.cpp" "GUI/AlphaHitCache.h"
+    "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     )
 
   set(GroupGUIWidgets

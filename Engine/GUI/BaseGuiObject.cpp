@@ -67,8 +67,8 @@ DLLEXPORT CEGUI::Window* BaseGuiObject::GetTargetWindow() const{
 	return TargetElement;
 }
 // ------------------------------------ //
-DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
-    GuiManager* owner, std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
+DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(GuiManager* owner,
+    std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject& dataforthis)
 {
 	// parse fake id from prefixes //
 	int fakeid = 0;
@@ -118,8 +118,7 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
 	try{
 		// Names starting with '_' are not considered to be targeting specific CEGUI windows //
 		if(tmpptr->Name.find_first_of(L'_') != 0)
-			foundobject = owner->GetMainContext(ownerlock)
-                ->getRootWindow()->getChild(tmpptr->Name);
+			foundobject = owner->GetMainContext()->getRootWindow()->getChild(tmpptr->Name);
 
 	} catch(const CEGUI::UnknownObjectException &e){
 
@@ -141,13 +140,7 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(Lock &ownerlock,
 	Event initevent(EVENT_TYPE_INIT, NULL);
 	Event* eptr = &initevent;
 
-    {
-        ownerlock.unlock();
-        
-        tmpptr->OnEvent(&eptr);
-
-        ownerlock.lock();
-    }
+    tmpptr->OnEvent(&eptr);
 
 	tempobjects.push_back(tmpptr.release());
 	return true;

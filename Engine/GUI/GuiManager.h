@@ -1,5 +1,6 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "../Application/AppDefine.h"
@@ -12,10 +13,8 @@
 namespace Leviathan{
 namespace GUI{
 
-
 //! \brief A class for handling system clipboard interaction
 class GuiClipboardHandler;
-	
 
 //! \brief Holds the state of some collections stored by name
 struct GuiCollectionStates{
@@ -53,7 +52,7 @@ public:
 
 //! \brief Main GUI controller
 //! \todo Add GUI window objects to this which are associated with different windows
-class GuiManager : public ThreadSafe{
+class GuiManager{
 public:
     DLLEXPORT GuiManager();
     DLLEXPORT ~GuiManager();
@@ -90,14 +89,14 @@ public:
     DLLEXPORT void OnFocusChanged(bool focused);
 
     // Internal Gui element managing //
-    DLLEXPORT bool AddGuiObject(Lock &guard, BaseGuiObject* obj);
+    DLLEXPORT bool AddGuiObject(BaseGuiObject* obj);
     DLLEXPORT void DeleteObject(int id);
     DLLEXPORT int GetObjectIndexFromId(int id);
     DLLEXPORT BaseGuiObject* GetObject(unsigned int index);
 
 
     //! \brief Returns the main GUI context
-    DLLEXPORT CEGUI::GUIContext* GetMainContext(Lock &guard);
+    DLLEXPORT CEGUI::GUIContext* GetMainContext();
 
     DLLEXPORT CEGUI::InputAggregator* GetContextInput(){
         return ContextInput;
@@ -110,47 +109,30 @@ public:
     // file loading //
 
     //! \brief Loads a GUI file
-    //! \todo Add a separate lock for this. Needed because Gui objects will unlock the lock
-    //! while loading
-    DLLEXPORT bool LoadGUIFile(Lock &guard, const std::string &file,
-        bool nochangelistener = false, int iteration = 0);
-
-    DLLEXPORT inline bool LoadGUIFile(const std::string &file, bool nochangelistener = false){
-
-        GUARD_LOCK();
-        return LoadGUIFile(guard, file, nochangelistener);
-    }
+    DLLEXPORT bool LoadGUIFile(const std::string &file, bool nochangelistener = false,
+        int iteration = 0);
 
     //! \brief Unloads the currently loaded file
-    DLLEXPORT void UnLoadGUIFile(Lock &guard);
-
-    DLLEXPORT inline void UnLoadGUIFile(){
-
-        GUARD_LOCK();
-        UnLoadGUIFile(guard);
-    }
+    DLLEXPORT void UnLoadGUIFile();
 
     //! \brief Creates an object representing the state of all GuiCollections
-    DLLEXPORT std::unique_ptr<GuiCollectionStates> GetGuiStates(Lock &guard) const;
+    DLLEXPORT std::unique_ptr<GuiCollectionStates> GetGuiStates() const;
 
     //! \brief Applies a stored set of states to the GUI
     //! \param states A pointer to an object holding the state,
     //! the object should be obtained by calling GetGuiStates
     //! \see GetGuiStates
-    DLLEXPORT void ApplyGuiStates(Lock &guard, const GuiCollectionStates* states);
+    DLLEXPORT void ApplyGuiStates(const GuiCollectionStates* states);
 
 
-    // set to "none" to use default //
-    DLLEXPORT void SetMouseTheme(Lock &guard, const std::string &tname);
+    //! set to "none" to use default
+    DLLEXPORT void SetMouseTheme(const std::string &tname);
 
-    DLLEXPORT inline void SetMouseTheme(const std::string &tname){
-
-        GUARD_LOCK();
-        SetMouseTheme(guard, tname);
-    }
+    //! Sets the tooltip type to use
+    DLLEXPORT void SetTooltipType(const std::string &type);
 
     // collection managing //
-    DLLEXPORT void AddCollection(Lock &guard, GuiCollection* add);
+    DLLEXPORT void AddCollection(GuiCollection* add);
         
     DLLEXPORT GuiCollection* GetCollection(const int &id, const std::string &name = "");
 
@@ -165,13 +147,7 @@ public:
 
     //! \brief Returns a single CEGUI::Window matching the name
     //! \todo Allow error reporting
-    DLLEXPORT CEGUI::Window* GetWindowByStringName(Lock &guard, const std::string &namepath);
-
-    DLLEXPORT inline CEGUI::Window* GetWindowByStringName(const std::string &namepath){
-
-        GUARD_LOCK();
-        return GetWindowByStringName(guard, namepath);
-    }
+    DLLEXPORT CEGUI::Window* GetWindowByStringName(const std::string &namepath);
 
 
     //! \brief Returns a string containing names of types that don't look good/break
@@ -186,7 +162,7 @@ public:
 
     //! \brief Creates and plays an animation on a CEGUI Window
     //! \param applyrecursively Applies the same animation to the child windows
-    DLLEXPORT bool PlayAnimationOnWindow(Lock &guard, const std::string &windowname,
+    DLLEXPORT bool PlayAnimationOnWindow(const std::string &windowname,
         const std::string &animationname, bool applyrecursively = false,
         const std::string &ignoretypenames = "");
 
@@ -222,11 +198,18 @@ protected:
 private:
 
     //! The implementation of PlayAnimationOnWindow
-    void _PlayAnimationOnWindow(Lock &guard, CEGUI::Window* targetwind,
+    void _PlayAnimationOnWindow(CEGUI::Window* targetwind,
         CEGUI::Animation* animdefinition, bool recurse,
         const std::string &ignoretypenames);
 
-    // ------------------------------------ //
+    // Static animation files //
+    static bool IsAnimationFileLoaded(const std::string &file);
+
+    //! \warning Won't check if the file is already in the vector,
+    //! use IsAnimationFileLoaded
+    static void SetAnimationFileLoaded(const std::string &file);
+    
+private:
 
     bool Visible = true;
 
@@ -236,9 +219,7 @@ private:
     //! Set when containing window of the GUI shouldn't be allowed to capture mouse
     bool GuiDisallowMouseCapture = true;
 
-
     GraphicalInputEntity* ThisWindow = nullptr;
-
         
     //! Gui elements
     std::vector<BaseGuiObject*> Objects;
@@ -277,20 +258,10 @@ private:
     //! Disables the GUI trying to capture the mouse when no collection is active
     bool DisableGuiMouseCapture = false;
 
-    // ------------------------------------ //
-    // Static animation files //
+private:
     //! Holds the loaded animation files, used to prevent loading a single file
     //! multiple times
     static std::vector<std::string> LoadedAnimationFiles;
-
-    static Mutex GlobalGUIMutex;
-
-    static bool IsAnimationFileLoaded(Lock &lock, const std::string &file);
-
-    //! \warning Won't check if the file is already in the vector,
-    //! use IsAnimationFileLoaded
-    static void SetAnimationFileLoaded(Lock &lock, const std::string &file);
-
         
 };
 

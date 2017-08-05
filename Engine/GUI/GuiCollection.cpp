@@ -47,7 +47,7 @@ GuiCollection::~GuiCollection(){
 	// release reference //
 }
 // ------------------------------------ //
-DLLEXPORT void GuiCollection::UpdateState(Lock &managerlock, bool newstate){
+DLLEXPORT void GuiCollection::UpdateState(bool newstate){
 	// Don't do anything if the state didn't actually change //
 	if(Enabled == newstate)
 		return;
@@ -63,13 +63,13 @@ DLLEXPORT void GuiCollection::UpdateState(Lock &managerlock, bool newstate){
 	if(Enabled && !AutoAnimationOnEnable.empty()){
 
 		// Play the animations //
-		_PlayAnimations(managerlock, AutoAnimationOnEnable);
+		_PlayAnimations(AutoAnimationOnEnable);
 		return;
 
 	} else if(!Enabled && !AutoAnimationOnDisable.empty()){
 		
 		// Play the animations //
-		_PlayAnimations(managerlock, AutoAnimationOnDisable);
+		_PlayAnimations(AutoAnimationOnDisable);
 		return;
 	}
 
@@ -81,16 +81,16 @@ DLLEXPORT void GuiCollection::UpdateState(Lock &managerlock, bool newstate){
 		CEGUI::Window* foundobject = NULL;
 		try{
 
-			foundobject = OwningManager->GetMainContext(managerlock)
-                ->getRootWindow()->getChild(AutoTarget);
+			foundobject = OwningManager->GetMainContext()->getRootWindow()->
+                getChild(AutoTarget);
 
 		} catch(const CEGUI::UnknownObjectException &e){
 
 			// Not found //
-			Logger::Get()->Error("GuiCollection: couldn't find an AutoTarget CEGUI window with "
+			LOG_ERROR("GuiCollection: couldn't find an AutoTarget CEGUI window with "
                 " name: "+AutoTarget+":");
             
-			Logger::Get()->Write("\t> "+string(e.what()));
+			LOG_WRITE("\t> "+string(e.what()));
 		}
 
 		if(foundobject){
@@ -139,10 +139,9 @@ DLLEXPORT void GuiCollection::UpdateState(Lock &managerlock, bool newstate){
 	}
 }
 // ------------------------------------ //
-bool GuiCollection::LoadCollection(Lock &guilock, GuiManager* gui,
-    const ObjectFileObject &data)
-{
-	// load a GuiCollection from the structure //
+bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject &data){
+    
+	// Load a GuiCollection from the structure //
 
 	std::string Toggle = "";
 	bool Enabled = true;
@@ -199,7 +198,7 @@ bool GuiCollection::LoadCollection(Lock &guilock, GuiManager* gui,
 	cobj->Scripting = data.GetScript();
 
 	// Add to the collection list //
-	gui->AddCollection(guilock, cobj);
+	gui->AddCollection(cobj);
 
 	// loading succeeded //
 	return true;
@@ -209,9 +208,8 @@ DLLEXPORT void GuiCollection::UpdateAllowEnable(bool newstate){
 	AllowEnable = newstate;
 }
 // ------------------------------------ //
-void GuiCollection::_PlayAnimations(Lock &lock,
-    const std::vector<unique_ptr<std::string>> &anims)
-{
+void GuiCollection::_PlayAnimations(const std::vector<unique_ptr<std::string>> &anims){
+    
 	LEVIATHAN_ASSERT((anims.size() % 2) == 0,
         "_PlayAnimations has invalid vector, size non divisable by 2");
 
@@ -222,21 +220,21 @@ void GuiCollection::_PlayAnimations(Lock &lock,
 
 		if(targetanim == "AutoTarget"){
 
-			if(!OwningManager->PlayAnimationOnWindow(lock, AutoTarget, *anims[i+1],
+			if(!OwningManager->PlayAnimationOnWindow(AutoTarget, *anims[i+1],
                     ApplyAnimationsToChildren, GuiManager::GetCEGUITypesWithBadAnimations()))
 			{
 
-				Logger::Get()->Error("GuiCollection: _PlayAnimations: failed to play animation("+
+				LOG_ERROR("GuiCollection: _PlayAnimations: failed to play animation("+
                     *anims[i+1]+") on window "+AutoTarget);
 			}
 
 		} else {
 
-			if(!OwningManager->PlayAnimationOnWindow(lock, targetanim, *anims[i+1],
+			if(!OwningManager->PlayAnimationOnWindow(targetanim, *anims[i+1],
                     ApplyAnimationsToChildren, GuiManager::GetCEGUITypesWithBadAnimations()))
 			{
 
-				Logger::Get()->Error("GuiCollection: _PlayAnimations: failed to play animation("+
+				LOG_ERROR("GuiCollection: _PlayAnimations: failed to play animation("+
                     *anims[i+1]+") on window "+targetanim);
 			}
 		}

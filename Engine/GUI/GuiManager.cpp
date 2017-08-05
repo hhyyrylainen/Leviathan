@@ -37,7 +37,7 @@ public:
 
 	void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size) override{
         
-        GUARD_LOCK();
+        
         
         // Ignore non-text setting //
 		if(mimeType != "text/plain"){
@@ -54,7 +54,7 @@ public:
 
 	void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size) override{
 
-        GUARD_LOCK();
+        
 
         if(SDL_HasClipboardText() == SDL_FALSE){
 
@@ -108,7 +108,7 @@ GuiManager::~GuiManager(){
 bool GuiManager::Init(Graphics* graph, GraphicalInputEntity* window,
     bool ismain)
 {
-	GUARD_LOCK();
+	
 
 	ThisWindow = window;
     MainGuiManager = ismain;
@@ -145,9 +145,7 @@ bool GuiManager::Init(Graphics* graph, GraphicalInputEntity* window,
 }
 
 void GuiManager::Release(){
-	GUARD_LOCK();
 	
-
 	// Stop with the file updates //
 	if(FileChangeID){
 
@@ -163,7 +161,7 @@ void GuiManager::Release(){
 	}
 
 	// Default mouse back //
-	SetMouseTheme(guard, "none");
+	SetMouseTheme("none");
 
 	// Release objects first //
 
@@ -207,28 +205,23 @@ DLLEXPORT void GuiManager::EnableStandardGUIThemes(){
         LoadGUITheme("TaharezLook.scheme");
     }
 
-    GUARD_LOCK();
-
     // Set Simonetta as the default font //
     GuiContext->setDefaultFont("Simonetta-Regular");
 
 
 	// Set the taharez looks active //
-	SetMouseTheme(guard, "TaharezLook/MouseArrow");
-	GuiContext->setDefaultTooltipType("TaharezLook/Tooltip");
+	SetMouseTheme("TaharezLook/MouseArrow");
+	SetTooltipType("TaharezLook/Tooltip");
 }
 // ------------------------------------ //
 DLLEXPORT bool GuiManager::ProcessKeyDown(int32_t key, int specialmodifiers){
-    
-	GUARD_LOCK();
     
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetTogglingKey().Match(key, specialmodifiers, false) &&
             Collections[i]->GetAllowEnable())
         {
 			// Is a match, toggle //
-			Collections[i]->ToggleState(guard);
-
+			Collections[i]->ToggleState();
 			return true;
 		}
 	}
@@ -237,14 +230,14 @@ DLLEXPORT bool GuiManager::ProcessKeyDown(int32_t key, int specialmodifiers){
 }
 
 DLLEXPORT void GuiManager::SetCollectionState(const string &name, bool state){
-	GUARD_LOCK();
+	
 	// find collection with name and set it's state //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetName() == name){
 			// set state //
 			if(Collections[i]->GetState() != state){
                 
-				Collections[i]->ToggleState(guard);
+				Collections[i]->ToggleState();
 			}
 			return;
 		}
@@ -257,7 +250,7 @@ DLLEXPORT void GuiManager::SetCollectionState(const string &name, bool state){
 DLLEXPORT void GuiManager::SetCollectionAllowEnableState(const string &name,
     bool allow /*= true*/)
 {
-	GUARD_LOCK();
+	
 	// find collection with name and set it's allow enable state //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(Collections[i]->GetName() == name){
@@ -273,7 +266,7 @@ DLLEXPORT void GuiManager::SetCollectionAllowEnableState(const string &name,
 }
 // ------------------------------------ //
 void GuiManager::GuiTick(int mspassed){
-	GUARD_LOCK();
+	
 
     if(ReloadQueued){
 
@@ -283,19 +276,19 @@ void GuiManager::GuiTick(int mspassed){
         LOG_INFO("GuiManager: reloading file: " + MainGUIFile);
         
         // Store the current state //
-        auto currentstate = GetGuiStates(guard);
+        auto currentstate = GetGuiStates();
 
-        UnLoadGUIFile(guard);
+        UnLoadGUIFile();
 
         // Now load it //
-        if(!LoadGUIFile(guard, MainGUIFile, true)){
+        if(!LoadGUIFile(MainGUIFile, true)){
 
             Logger::Get()->Error("GuiManager: file changed: couldn't load updated file: "+
                 MainGUIFile);
         }
 
         // Apply back the old states //
-        ApplyGuiStates(guard, currentstate.get());
+        ApplyGuiStates(currentstate.get());
     }
 
 	// check if we want mouse //
@@ -357,7 +350,7 @@ DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue){
 
 // ------------------------------------ //
 void GuiManager::Render(){
-	GUARD_LOCK();
+	
 
 	// Pass time //
 	auto newtime = Time::GetThreadSafeSteadyTimePoint();
@@ -376,15 +369,12 @@ void GuiManager::Render(){
 
 	LastTimePulseTime = newtime;
 
-    guard.unlock();
-    
 	// Update inputs //
-
 
 }
 // ------------------------------------ //
 DLLEXPORT void GuiManager::OnResize(){
-	GUARD_LOCK();
+	
 
 	// Notify the CEGUI system //
     // TODO: only to the wanted context
@@ -400,7 +390,7 @@ DLLEXPORT void GuiManager::OnResize(){
 }
 
 DLLEXPORT void GuiManager::OnFocusChanged(bool focused){
-	GUARD_LOCK();
+	
 	
 	// Notify our context //
 	if(!focused)
@@ -408,13 +398,13 @@ DLLEXPORT void GuiManager::OnFocusChanged(bool focused){
 
 }
 // ------------------------------------ //
-bool GuiManager::AddGuiObject(Lock &guard, BaseGuiObject* obj){
+bool GuiManager::AddGuiObject(BaseGuiObject* obj){
 	Objects.push_back(obj);
 	return true;
 }
 
 void GuiManager::DeleteObject(int id){
-	GUARD_LOCK();
+	
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id){
 
@@ -427,7 +417,7 @@ void GuiManager::DeleteObject(int id){
 }
 
 int GuiManager::GetObjectIndexFromId(int id){
-	GUARD_LOCK();
+	
 	for(size_t i = 0; i < Objects.size(); i++){
 		if(Objects[i]->GetID() == id)
 			return static_cast<int>(i);
@@ -436,7 +426,7 @@ int GuiManager::GetObjectIndexFromId(int id){
 }
 
 BaseGuiObject* GuiManager::GetObject(unsigned int index){
-	GUARD_LOCK();
+	
 	if(index < Objects.size()){
         
 		return Objects[index];
@@ -444,8 +434,8 @@ BaseGuiObject* GuiManager::GetObject(unsigned int index){
 	return NULL;
 }
 // ------------------------------------ //
-DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
-    bool nochangelistener, int iteration /*= 0*/)
+DLLEXPORT bool GuiManager::LoadGUIFile(const string &file, bool nochangelistener,
+    int iteration /*= 0*/)
 {
     if(iteration > 10){
 
@@ -535,18 +525,14 @@ DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
 				animslist->GetValue(i).ConvertAndAssingToVariable<string>(curfile);
 
 				// Check is the file already loaded //
-				{
-					Lock gguard(GlobalGUIMutex);
+                if(IsAnimationFileLoaded(curfile)){
 
-					if(IsAnimationFileLoaded(gguard, curfile)){
+                    // Don't load again //
+                    continue;
+                }
 
-						// Don't load again //
-						continue;
-					}
-
-					// Set as loaded //
-					SetAnimationFileLoaded(gguard, curfile);
-				}
+                // Set as loaded //
+                SetAnimationFileLoaded(curfile);
 
 				try{
 
@@ -588,7 +574,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
 		// Check what type the of the object is //
 		if(objecto->GetTypeName() == "GuiCollection"){
 
-			if(!GuiCollection::LoadCollection(guard, this, *objecto)){
+			if(!GuiCollection::LoadCollection(this, *objecto)){
 
 				// report error //
 				Logger::Get()->Error("GuiManager: ExecuteGuiScript: failed to load collection, "
@@ -601,7 +587,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
 		} else if(objecto->GetTypeName() == "GuiObject"){
 
 			// try to load //
-			if(!BaseGuiObject::LoadFromFileStructure(guard, this, TempOs, *objecto)){
+			if(!BaseGuiObject::LoadFromFileStructure(this, TempOs, *objecto)){
 
 				// report error //
 				Logger::Get()->Error("GuiManager: ExecuteGuiScript: failed to load GuiObject, "
@@ -649,7 +635,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
 
             Logger::Get()->Write("\t> Doing iteration "+Convert::ToString(iteration+1));
 
-            return LoadGUIFile(guard, file, nochangelistener, iteration+1);
+            return LoadGUIFile(file, nochangelistener, iteration+1);
         }
     }
 	
@@ -657,7 +643,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
 	for(size_t i = 0; i < TempOs.size(); i++){
 
 		// add to real objects //
-		AddGuiObject(guard, TempOs[i]);
+		AddGuiObject(TempOs[i]);
 	}
 
 	// This avoids having more and more change listeners each reload //
@@ -680,7 +666,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(Lock &guard, const string &file,
 	return true;
 }
 
-DLLEXPORT void GuiManager::UnLoadGUIFile(Lock &guard){
+DLLEXPORT void GuiManager::UnLoadGUIFile(){
 
 	// Unload all objects //
 	for(size_t i = 0; i < Objects.size(); i++){
@@ -707,7 +693,7 @@ DLLEXPORT void GuiManager::UnLoadGUIFile(Lock &guard){
 	GuiContext->setRootWindow(NULL);
 }
 // ------------------------------------ //
-DLLEXPORT void GuiManager::SetMouseTheme(Lock &guard, const string &tname){
+DLLEXPORT void GuiManager::SetMouseTheme(const string &tname){
 
 	if(tname == "none"){
 
@@ -722,18 +708,23 @@ DLLEXPORT void GuiManager::SetMouseTheme(Lock &guard, const string &tname){
 	// hide window cursor //
 	ThisWindow->GetWindow()->SetHideCursor(true);
 }
+
+DLLEXPORT void GuiManager::SetTooltipType(const std::string &type){
+
+    GuiContext->setDefaultTooltipType(type);
+}
 // ------------------------------------ //
-DLLEXPORT CEGUI::GUIContext* GuiManager::GetMainContext(Lock &guard){
+DLLEXPORT CEGUI::GUIContext* GuiManager::GetMainContext(){
 	return GuiContext;
 }
 // ----------------- collection managing --------------------- //
-void GuiManager::AddCollection(Lock &guard, GuiCollection* add){
+void GuiManager::AddCollection(GuiCollection* add){
     
 	Collections.push_back(add);
 }
 
 GuiCollection* GuiManager::GetCollection(const int &id, const string &name){
-	GUARD_LOCK();
+	
 	// look for collection based on id or name //
 	for(size_t i = 0; i < Collections.size(); i++){
 		if(id >= 0){
@@ -759,17 +750,16 @@ void GuiManager::_FileChanged(const string &file,
     ResourceFolderListener &caller)
 {
 	// Any updated file will cause whole reload //
-	GUARD_LOCK();
+    LOG_WRITE("TODO: invoke file reload on main thread");
+	// 
 
-    ReloadQueued = true;
+    // ReloadQueued = true;
 
-	// Mark everything as non-updated //
-	caller.MarkAllAsNotUpdated();
+	// // Mark everything as non-updated //
+	// caller.MarkAllAsNotUpdated();
 }
 // ------------------------------------ //
-DLLEXPORT CEGUI::Window* GuiManager::GetWindowByStringName(Lock &guard,
-    const string &namepath)
-{
+DLLEXPORT CEGUI::Window* GuiManager::GetWindowByStringName(const string &namepath){
 	try{
 
 		return GuiContext->getRootWindow()->getChild(namepath);
@@ -781,12 +771,11 @@ DLLEXPORT CEGUI::Window* GuiManager::GetWindowByStringName(Lock &guard,
 	}
 }
 
-DLLEXPORT bool GuiManager::PlayAnimationOnWindow(Lock &guard,
-    const string &windowname, const string &animationname, bool applyrecursively,
-    const string &ignoretypenames)
+DLLEXPORT bool GuiManager::PlayAnimationOnWindow(const string &windowname,
+    const string &animationname, bool applyrecursively, const string &ignoretypenames)
 {
 	// First get the window //
-	auto wind = GetWindowByStringName(guard, windowname);
+	auto wind = GetWindowByStringName(windowname);
 
 	if(!wind)
 		return false;
@@ -808,20 +797,18 @@ DLLEXPORT bool GuiManager::PlayAnimationOnWindow(Lock &guard,
 		return false;
 
 
-	_PlayAnimationOnWindow(guard, wind, animdefinition, applyrecursively, ignoretypenames);
+	_PlayAnimationOnWindow(wind, animdefinition, applyrecursively, ignoretypenames);
 	return true;
 }
 
 DLLEXPORT bool GuiManager::PlayAnimationOnWindowProxy(const string &windowname,
     const string &animationname)
 {
-    GUARD_LOCK();
-	return PlayAnimationOnWindow(guard, windowname, animationname);
+	return PlayAnimationOnWindow(windowname, animationname);
 }
 
-void GuiManager::_PlayAnimationOnWindow(Lock &guard,
-    CEGUI::Window* targetwind, CEGUI::Animation* animdefinition, bool recurse,
-    const string &ignoretypenames)
+void GuiManager::_PlayAnimationOnWindow(CEGUI::Window* targetwind,
+    CEGUI::Animation* animdefinition, bool recurse, const string &ignoretypenames)
 {
 	// Apply only if the typename doesn't match ignored names //
 	if(ignoretypenames.find(targetwind->getType().c_str()) == string::npos &&
@@ -845,14 +832,12 @@ void GuiManager::_PlayAnimationOnWindow(Lock &guard,
 		for(size_t i = 0; i < targetwind->getChildCount(); i++){
 			auto newtarget = targetwind->getChildAtIdx(i);
 
-			_PlayAnimationOnWindow(guard, newtarget, animdefinition, recurse, ignoretypenames);
+			_PlayAnimationOnWindow(newtarget, animdefinition, recurse, ignoretypenames);
 		}
 	}
 }
 // ------------------------------------ //
-DLLEXPORT std::unique_ptr<GuiCollectionStates> GuiManager::GetGuiStates(
-    Lock &guard) const
-{
+DLLEXPORT std::unique_ptr<GuiCollectionStates> GuiManager::GetGuiStates() const{
     
 	// Create the result object using the size of Collections as all of them are added there //
 	unique_ptr<GuiCollectionStates> result(new GuiCollectionStates(Collections.size()));
@@ -866,9 +851,7 @@ DLLEXPORT std::unique_ptr<GuiCollectionStates> GuiManager::GetGuiStates(
 	return result;
 }
 
-DLLEXPORT void GuiManager::ApplyGuiStates(Lock &guard,
-    const GuiCollectionStates* states)
-{
+DLLEXPORT void GuiManager::ApplyGuiStates(const GuiCollectionStates* states){
 
 	// Apply all the states from the object //
 	for(size_t i = 0; i < states->CollectionNames.size(); i++){
@@ -879,7 +862,7 @@ DLLEXPORT void GuiManager::ApplyGuiStates(Lock &guard,
 		if(foundcollect && foundcollect->GetState() != states->CollectionNames[i]->IsEnabled){
 
 			// Change the state //
-			foundcollect->UpdateState(guard, states->CollectionNames[i]->IsEnabled);
+			foundcollect->UpdateState(states->CollectionNames[i]->IsEnabled);
 		}
 	}
 }
@@ -898,9 +881,7 @@ DLLEXPORT bool GuiManager::InjectCutRequest(){
 // ------------------ Static part ------------------ //
 std::vector<string> GuiManager::LoadedAnimationFiles;
 
-Mutex GuiManager::GlobalGUIMutex;
-
-bool GuiManager::IsAnimationFileLoaded(Lock &lock, const string &file){
+bool GuiManager::IsAnimationFileLoaded(const string &file){
     
 	for(size_t i = 0; i < LoadedAnimationFiles.size(); i++){
 
@@ -914,13 +895,13 @@ bool GuiManager::IsAnimationFileLoaded(Lock &lock, const string &file){
 	return false;
 }
 
-void GuiManager::SetAnimationFileLoaded(Lock &lock, const string &file){
+void GuiManager::SetAnimationFileLoaded(const string &file){
 
 	LoadedAnimationFiles.push_back(file);
 }
 
 DLLEXPORT void GuiManager::KillGlobalCache(){
-	Lock guard(GlobalGUIMutex);
+
 
 	// Release the memory to not look like a leak //
 	LoadedAnimationFiles.clear();

@@ -49,7 +49,7 @@ public:
         return OwningInstance;
     }
 		
-    DLLEXPORT static bool LoadFromFileStructure(Lock &ownerlock, GuiManager* owner,
+    DLLEXPORT static bool LoadFromFileStructure(GuiManager* owner,
         std::vector<BaseGuiObject*> &tempobjects, ObjectFileObject &dataforthis);
 
 

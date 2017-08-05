@@ -3,6 +3,19 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/ThreadSafe.h"
+
+#include <chrono>
+#include <vector>
+
+extern "C"{
+// FFMPEG includes
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
+#include <libswresample/swresample.h>
+}
 
 namespace Leviathan{
 namespace GUI{
@@ -14,6 +27,45 @@ namespace GUI{
 //! ogre-ffmpeg-videoplayer, but all original ogre-ffmpeg-videoplayer
 //! code has been removed in course of all the rewrites.
 class VideoPlayer{
+protected:
+
+    using ClockType = std::chrono::steady_clock;
+
+    enum class PacketReadResult{
+
+        Ended,
+        Ok,
+        QueueFull
+    };
+
+    enum class DecodePriority{
+
+        Video,
+        Audio
+    };
+
+    //! Holds converted audio data that could not be immediately returned by ReadAudioData
+    struct ReadAudioPacket{
+
+        std::vector<uint8_t> DecodedData;
+    };
+
+    //! Holds raw packets before sending
+    struct ReadPacket{
+
+        ReadPacket(AVPacket* src){
+
+            av_packet_move_ref(&packet, src);
+        }
+
+        ~ReadPacket(){
+
+            av_packet_unref(&packet);
+        }
+
+        AVPacket packet;
+    };
+    
 public:
 
     VideoPlayer();
@@ -24,6 +76,8 @@ public:
     //! \brief Acquires the Ogre texture, a sound player and ffmpeg resources
     //! \returns True if succeeded. False if something went wrong
     bool Init(const std::string &targetTextureName);
+
+    // When playing should listen for frame start events
 
     
     //! \brief Shuts down playback and releases all objects

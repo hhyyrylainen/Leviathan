@@ -69,7 +69,7 @@ FetchAssets = true
 THIRD_PARTY_INSTALL = File.join(ProjectDir, "build", "ThirdParty")
 
 newton = Newton.new(
-  version: "master",
+  version: "7c5970ccda537dea134e0443d702ef9f5ce81a38",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   disableDemos: true

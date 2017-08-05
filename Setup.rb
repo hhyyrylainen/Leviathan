@@ -87,6 +87,56 @@ sfml = SFML.new(
   noInstallSudo: true
 )
 
+ffmpeg = FFMPEG.new(
+  version: "release/3.3",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  enablePIC: true,
+  buildShared: true,
+  enableSmall: true,
+  # noStrip: true,
+  extraOptions: [
+    "--disable-postproc", "--disable-avdevice",
+    "--disable-avfilter",
+    if !OS.windows? then 
+      "--enable-rpath"
+    else
+      ""
+    end,
+    
+    "--disable-network",
+
+    # Can't be bothered to check which specific things we need so some of these disables
+    # are disabled
+    #"--disable-everything",
+    #"--disable-demuxers",
+    "--disable-encoders",
+    "--disable-decoders",
+    "--disable-hwaccels",
+    "--disable-muxers",
+    #"--disable-parsers",
+    #"--disable-protocols",
+    "--disable-indevs",
+    "--disable-outdevs",
+    "--disable-filters",
+
+    # Wanted things
+    # These aren't enough so all the demuxers protocols and parsers are enabled
+    "--enable-decoder=aac", "--enable-decoder=mpeg4", "--enable-decoder=h264",
+    "--enable-parser=h264", "--enable-parser=aac", "--enable-parser=mpeg4video",
+    "--enable-demuxer=h264", "--enable-demuxer=aac", "--enable-demuxer=m4v",
+
+    
+    # Disable all the external libraries
+    "--disable-bzlib", "--disable-iconv",
+    "--disable-libxcb",
+    "--disable-lzma", "--disable-sdl2", "--disable-xlib", "--disable-zlib",
+    "--disable-audiotoolbox", "--disable-cuda", "--disable-cuvid",
+    "--disable-nvenc", "--disable-vaapi", "--disable-vdpau",
+    "--disable-videotoolbox"
+  ].flatten
+)
+
 ogre = Ogre.new(
   version: "v2-1",
   installPath: THIRD_PARTY_INSTALL,
@@ -103,78 +153,8 @@ cegui = CEGUI.new(
 
 # All the objects
 installer = Installer.new(
-  [newton, angelscript, sfml, ogre, cegui]
+  [newton, angelscript, sfml, ffmpeg, ogre, cegui]
 )
-
-# For video playing add ffmpeg:
-# # Use clang when not on windows to compile ffmpeg (we could probably 
-# # skip this and use the system default just fine, and portaudio doesn't use clang)
-# if !OS.windows?
-#   clangPath = which("clang")
-
-#   if clangPath == nil
-
-#     onError("Clang is not installed, or in path")
-#   end
-# end
-
-# # FFMPEG setup
-# # TODO: disable unused codecs to save space
-# ffmpeg = FFMPEG.new(
-#   :version => "release/3.3",
-#   :installPath => File.join(ProjectDir, "ThirdParty/ffmpeg"),
-#   :noInstallSudo => true,
-#   # :enablePIC => true,
-#   :buildShared => true,
-#   :enableSmall => true,
-#   # :noStrip => true,
-#   :extraOptions => [
-#     "--disable-postproc", "--disable-avdevice",
-#     "--disable-avfilter",
-#     if !OS.windows? then 
-#       "--enable-rpath"
-#     else
-#       ""
-#     end,
-    
-#     # Same compiler as ue4 (if not on windows)
-#     if !OS.windows? then 
-#       ["--cc=clang", "--cxx=clang"]
-#     else
-#       ""
-#     end,
-#     "--disable-network",
-
-#     # Can't be bothered to check which specific things we need so some of these disables
-#     # are disabled
-#     #"--disable-everything",
-#     #"--disable-demuxers",
-#     "--disable-encoders",
-#     "--disable-decoders",
-#     "--disable-hwaccels",
-#     "--disable-muxers",
-#     #"--disable-parsers",
-#     #"--disable-protocols",
-#     "--disable-indevs",
-#     "--disable-outdevs",
-#     "--disable-filters",
-
-#     # Wanted things
-#     # These aren't enough so all the demuxers protocols and parsers are enabled
-#     "--enable-decoder=aac", "--enable-decoder=mpeg4", "--enable-decoder=h264",
-#     "--enable-parser=h264", "--enable-parser=aac", "--enable-parser=mpeg4video",
-#     "--enable-demuxer=h264", "--enable-demuxer=aac", "--enable-demuxer=m4v",
-
-    
-#     # Disable all the external libraries
-#     "--disable-bzlib", "--disable-iconv",
-#     "--disable-libxcb",
-#     "--disable-lzma", "--disable-sdl2", "--disable-xlib", "--disable-zlib",
-#     "--disable-audiotoolbox", "--disable-cuda", "--disable-cuvid",
-#     "--disable-nvenc", "--disable-vaapi", "--disable-vdpau",
-#     "--disable-videotoolbox"
-#   ].flatten
-# )
 
 if GetBreakpad
 

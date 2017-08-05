@@ -34,6 +34,71 @@ AlphaHitCache* AlphaHitCache::Get(){
 
 AlphaHitCache* AlphaHitCache::StaticInstance = nullptr;
 // ------------------------------------ //
+bool AlphaHitCache::PreLoadImage(const std::string &imageproperty){
+
+    auto loaded = GetDataForImageProperty(imageproperty);
+
+    return loaded.operator bool();
+}
+// ------------------------------------ //
+std::shared_ptr<AlphaHitLoadedTexture> AlphaHitCache::GetImageData(const std::string &name){
+
+    const auto existing = LoadedFullImages.find(name);
+
+    if(existing != LoadedFullImages.end()){
+
+        return existing->second;
+    }
+
+    const auto actualFile = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE,
+        name, "png|jpg|dds");
+
+    if(actualFile.empty() || !FileSystem::FileExists(actualFile)){
+
+        LOG_ERROR("AlphaHitCache: GetImageData: failed to find matching texture "
+            "file for: " + name);
+        return nullptr;
+    }
+
+    Ogre::Image img;
+    try{
+        img.load(StringOperations::RemovePath<std::string>(actualFile),
+            "MainTexturesFolder");
+    } catch(const Ogre::Exception &e){
+
+        LOG_ERROR("AlpaHitCache: GetDataForImageProperty: failed to load image file "
+            "to Ogre::Image: " +
+            StringOperations::RemovePath<std::string>(actualFile) +
+            ", exception: " + std::string(e.what()));
+        return nullptr;            
+    }
+
+    // Convert to only alpha channel //
+    auto newImage = std::make_shared<AlphaHitLoadedTexture>(img.getWidth(),
+        img.getHeight());
+
+    Ogre::PixelBox dest(newImage->Width, newImage->Height, 0, Ogre::PF_A8,
+        newImage->AlphaValues.data());
+
+    try{
+        Ogre::PixelUtil::bulkPixelConversion(img.getPixelBox(), dest);
+    } catch(const Ogre::Exception &e){
+
+        LOG_ERROR("AlpaHitCache: GetDataForImageProperty: failed to convert Ogre image "
+            "to alpha only: " +
+            StringOperations::RemovePath<std::string>(actualFile) +
+            ", exception: " + std::string(e.what()));
+        return nullptr; 
+    }
+
+    // newImage->AlphaValues should now have the alpha values of the image
+
+    // Store it for future calls //
+    LoadedFullImages.insert(std::make_pair(name, newImage));
+    LOG_INFO("AlphaHitCache: GetImageData: loaded new lookup texture: " + actualFile);
+    return newImage;
+}
+// ------------------------------------ //
 std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty(
     const std::string &str)
 {
@@ -51,53 +116,26 @@ std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty
 
     if(!regionData.ImageFile.empty()){
 
-        // The file should have been confirmed to exist, so read it and extract the wanted area
-        Ogre::Image img;
-        try{
-            img.load(StringOperations::RemovePath<std::string>(regionData.ImageFile),
-                "MainTexturesFolder");
-        } catch(const Ogre::Exception &e){
+        const auto imageObject = GetImageData(regionData.ImageFile);
 
-            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: failed to load image file "
-                "to Ogre::Image: " +
-                StringOperations::RemovePath<std::string>(regionData.ImageFile) +
-                ", exception: " + std::string(e.what()));
-            return nullptr;            
+        if(!imageObject){
+
+            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: failed to load image file: " +
+                regionData.ImageFile);
+            return nullptr;
         }
 
-        // Convert to only alpha channel //
-        newImage = std::make_shared<AlpaHitStoredTextureData>(regionData.Width,
-            regionData.Height);
-
-        Ogre::PixelBox dest(regionData.Width, regionData.Height, 0, Ogre::PF_A8,
-            newImage->AlphaValues.data());
-
-        Ogre::PixelBox source;
 
         try{
-            source = img.getPixelBox().getSubVolume(Ogre::Box(regionData.X, regionData.Y,
-                    regionData.X + regionData.Width, regionData.Y + regionData.Height));
-        } catch(const Ogre::Exception &e){
+            newImage = std::make_shared<AlpaHitStoredTextureData>(regionData.X, regionData.Y,
+                regionData.Width, regionData.Height, imageObject);
+        } catch(const InvalidArgument &e){
 
-            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: image set coordinates are out "
-                "of range for the image: " +
-                StringOperations::RemovePath<std::string>(regionData.ImageFile) +
-                ", exception: " + std::string(e.what()));
-            return nullptr; 
+            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: image region is invalid. "
+                "Exception: ");
+            e.PrintToLog();
+            return nullptr;
         }
-        
-        try{
-            Ogre::PixelUtil::bulkPixelConversion(source, dest);
-        } catch(const Ogre::Exception &e){
-
-            LOG_ERROR("AlpaHitCache: GetDataForImageProperty: failed to convert Ogre image "
-                "to alpha only: " +
-                StringOperations::RemovePath<std::string>(regionData.ImageFile) +
-                ", exception: " + std::string(e.what()));
-            return nullptr; 
-        }
-
-        // newImage->AlphaValues should now have the alpha values of the image
     }
 
     if(!newImage){
@@ -106,7 +144,6 @@ std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty
             "property: '" + str + "'");
         return nullptr;
     }
-
 
     // Store it for future calls //
     LoadedImageData.insert(std::make_pair(str, newImage));
@@ -149,16 +186,8 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
         return ImageSetSubImage();
     }
 
-    const auto imageFile = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE,
-        std::get<0>(schemaandname), "png|jpg|dds");
-
-    if(imageFile.empty() || !FileSystem::FileExists(imageFile)){
-
-        LOG_ERROR("AlphaHitCache: LoadImageAreaFromImageSet: failed to find matching texture "
-            "file for: " + file);
-        return ImageSetSubImage();
-    }
-
+    const auto imageFile = std::get<0>(schemaandname);
+    
     uint32_t lineNumber = 0;
 
     while(reader.good()){
@@ -242,32 +271,56 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
         "' in file: " + file);
     return ImageSetSubImage();
 }
-
 // ------------------------------------ //
-// AlpaHitStoredTextureData
-AlpaHitStoredTextureData::AlpaHitStoredTextureData(uint32_t width, uint32_t height) :
+// AlphaHitLoadedTexture
+AlphaHitLoadedTexture::AlphaHitLoadedTexture(uint32_t width, uint32_t height)  :
     Width(width), Height(height)
 {
     // sizeof(uint8_t) == 1
     AlphaValues.resize(width * height * 1);
 }
+
+// ------------------------------------ //
+// AlpaHitStoredTextureData
+AlpaHitStoredTextureData::AlpaHitStoredTextureData(uint32_t xoffset, uint32_t yoffset,
+    uint32_t width, uint32_t height, const std::shared_ptr<AlphaHitLoadedTexture> &data) :
+    Width(width), Height(height), XOffset(xoffset), YOffset(yoffset), TextureData(data)
+{
+    LEVIATHAN_ASSERT(data, "Null AlphaHitLoadedTexture passed to AlpaHitStoredTextureData");
+
+    if(xoffset + width > data->Width || yoffset + height > data->Height)
+        throw InvalidArgument("AlpaHitStoredTextureData subregion is out of range for "
+            "the data");
+}
 // ------------------------------------ //
 uint8_t AlpaHitStoredTextureData::GetPixel(uint32_t x, uint32_t y) const{
 
-    const auto arrayIndex = (y* Width) + x;
+    if(x >= Width || y >= Height)
+        throw InvalidArgument("AlpaHitStoredTextureData: GetPixel: x or y out of range");    
 
-    if(arrayIndex >= AlphaValues.size())
-        throw InvalidArgument("AlpaHitStoredTextureData: GetPixel: x or y out of range");
+    const auto arrayIndex = ((y + YOffset) * TextureData->Width) + (x + XOffset);
 
-    return AlphaValues[arrayIndex];
+    const auto& values = TextureData->AlphaValues;
+
+    if(arrayIndex >= values.size())
+        throw InvalidArgument("AlpaHitStoredTextureData: GetPixel: parent "
+            "texture out of range?");
+
+    return values[arrayIndex];
 }
 // ------------------------------------ //
 bool AlpaHitStoredTextureData::HasNonZeroPixels() const{
 
-    for(const auto &pixel : AlphaValues){
+    const auto& values = TextureData->AlphaValues;
+    
+    for(uint32_t x = 0; x < Width; ++x){
+        for(uint32_t y = 0; y < Height; ++y){
 
-        if(pixel > 0)
-            return true;
+            const auto arrayIndex = ((y + YOffset) * Width) + (x + XOffset);
+
+            if(values[arrayIndex] > 0)
+                return true;            
+        }
     }
     
     return false;

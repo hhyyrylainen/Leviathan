@@ -13,13 +13,28 @@ namespace GUI{
 
 class AlphaHitCache;
 
+//! \brief Loaded alpha channel for image
+class AlphaHitLoadedTexture{
+    friend AlphaHitCache;
+public:
+
+    AlphaHitLoadedTexture(uint32_t width, uint32_t height);
+
+    const uint32_t Width;
+    const uint32_t Height;
+
+    std::vector<uint8_t> AlphaValues;    
+};
+
 //! \brief Data holder for AlphaHitCache
 class AlpaHitStoredTextureData{
     friend AlphaHitCache;
 public:
     //! \brief Initializes AlphaValues with the correct size for width and height
     //! \protected
-    AlpaHitStoredTextureData(uint32_t width, uint32_t height);
+    //! \exception InvalidArgument if the specified region is out of range for data
+    AlpaHitStoredTextureData(uint32_t xoffset, uint32_t yoffset,
+        uint32_t width, uint32_t height, const std::shared_ptr<AlphaHitLoadedTexture> &data);
 
     //! \returns The alpha value of pixel at x, y. 0 means fully transparent
     //! \exception InvalidArgument if x or y out of range
@@ -32,8 +47,10 @@ protected:
 
     uint32_t Width;
     uint32_t Height;
+    uint32_t XOffset;
+    uint32_t YOffset;
 
-    std::vector<uint8_t> AlphaValues;
+    std::shared_ptr<AlphaHitLoadedTexture> TextureData;
 };
 
 //! \brief Region inside a GUI region
@@ -58,13 +75,29 @@ struct ImageSetSubImage{
 };
 
 //! \brief Stores data for use by widgets that do hit detection based on their image
-//! \todo Make sure that each Ogre image would be loaded only once
+//! \todo Make sure that each Ogre image would be loaded only once.
+//! \todo Switch the AlpaHitStoredTextureData reference a single loaded array of pixels
+//! for each texture.
 class AlphaHitCache{
 public:
 
     AlphaHitCache();
     ~AlphaHitCache();
 
+    //! \brief 
+    //! \note This is recommended to be called before the game is
+    //! started to reduce stuttering when hovering over buttons for
+    //! the first time. 
+    //! \example PreLoadImage("TaharezLook/ButtonMiddleNormal");
+    //! \note This image is kept loaded until this cache is destroyed. Currently this behaves
+    //! like calling GetDataForImageProperty but that might change in the future so using this
+    //! is recommended.
+    //! \returns True if loading was successful. False if imageproperty couldn't be loaded
+    bool PreLoadImage(const std::string &imageproperty);
+
+    //! \brief Loads the image data from image name
+    //! \param image The name of the image. For example "TaharezLook"
+    std::shared_ptr<AlphaHitLoadedTexture> GetImageData(const std::string &name);
 
     //! \brief Handles loading image data for the specific Image property
     std::shared_ptr<AlpaHitStoredTextureData> GetDataForImageProperty(const std::string &str);
@@ -89,6 +122,11 @@ protected:
     //! Holds all the loaded images. The key is the CEGUI "Image" property,
     //! for example: TaharezLook/ButtonMiddleNormal
     std::map<std::string, std::shared_ptr<AlpaHitStoredTextureData>> LoadedImageData;
+
+    //! Holds data for all read Ogre textures. Used to quickly load
+    //! additional image properties from the same files
+    //! Key is the file name of the image set, for example: TaharezLook.png
+    std::map<std::string, std::shared_ptr<AlphaHitLoadedTexture>> LoadedFullImages;
 
     static AlphaHitCache* StaticInstance;
 };

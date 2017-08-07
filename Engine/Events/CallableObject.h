@@ -6,6 +6,7 @@
 
 namespace Leviathan{
 
+    //! \todo Rewrite this to be cleaner with the event return codes and pointers
 	class CallableObject{
 	public:
 		DLLEXPORT CallableObject();

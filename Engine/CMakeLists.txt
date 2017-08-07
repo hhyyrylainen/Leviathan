@@ -163,7 +163,11 @@ else()
 
   file(GLOB GroupEvents "Events/*.cpp" "Events/*.h")
   file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
-  file(GLOB GroupSound "Sound/*.cpp" "Sound/*.h")
+  file(GLOB GroupSound
+    "Sound/SoundDevice.cpp" "Sound/SoundDevice.h"
+    "Sound/SoundPlayingSlot.cpp" "Sound/SoundPlayingSlot.h"
+    "Sound/SoundStream.h" "Sound/SoundStream.cpp"
+    )
 
   file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
   file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")

@@ -11,6 +11,7 @@
 #include <thread>
 #include <vector>
 #include <memory>
+#include <functional>
 
 
 namespace Leviathan{

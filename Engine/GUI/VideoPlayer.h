@@ -81,7 +81,7 @@ public:
     //! \brief Starts playing the video file
     //! \returns True if successfully started
     //! \note Acquires the Ogre texture, a sound player and ffmpeg resources
-    DLLEXPORT bool Play(const std::string &targetTextureName, const std::string &videofile);
+    DLLEXPORT bool Play(const std::string &targettexturename, const std::string &videofile);
 
     //! \brief Stops playing and unloads the current playback objects
     DLLEXPORT void Stop();
@@ -90,31 +90,46 @@ public:
     // Stream info
     
     //! \returns True if currently loaded file has an audio stream
-    DLLEXPORT bool HasAudio() const;
+    DLLEXPORT bool HasAudio() const{
+        return AudioCodec != nullptr;
+    }
 
     //! \returns Current playback position, in seconds
     //! The return value is directly read from the last decoded frame timestamp
-    DLLEXPORT float GetCurrentTime() const;
+    DLLEXPORT float GetCurrentTime() const{
+        return CurrentlyDecodedTimeStamp;
+    }
 
     //! \returns Width of the current video
-    DLLEXPORT int32_t GetVideoWidth() const;
+    DLLEXPORT int32_t GetVideoWidth() const{
+        return FrameWidth;
+    }
 
     //! \returns Height of the current video
-    DLLEXPORT int32_t GetVideoHeight() const;
+    DLLEXPORT int32_t GetVideoHeight() const{
+        return FrameHeight;
+    }
 
 
     //! \returns The number of audio channels
-    DLLEXPORT int GetAudioChannelCount() const;
+    DLLEXPORT int GetAudioChannelCount() const{
+        return ChannelCount;
+    }
 
     //! \returns The number of samples per second of the audio stream
     //! or -1 if no audio streams exist
-    DLLEXPORT int GetAudioSampleRate() const;
+    DLLEXPORT int GetAudioSampleRate() const{
+        return SampleRate;
+    }
+
+    //! \returns true if all the ffmpeg stream objects are valid for playback
+    DLLEXPORT bool IsStreamValid() const{
+
+        return StreamValid && VideoCodec && ConvertedFrameBuffer;
+    }
 
     //! \brief Dumps info about loaded ffmpeg streams
     DLLEXPORT void DumpInfo() const;
-
-    //! \returns true if all the ffmpeg stream objects are valid for playback
-    DLLEXPORT bool IsStreamValid() const;
 
     //! \brief Tries to call ffmpeg initialization once
     DLLEXPORT static void LoadFFMPEG();
@@ -124,13 +139,15 @@ public:
     //! \brief Reads audio data to the buffer
     //! \returns The number of bytes read
     //! \param amount The maximum number of bytes to read
+    //! \param ended True if stream has ended
     //! \protected
-    size_t ReadAudioData(uint8_t* output, size_t amount);
+    size_t ReadAudioData(uint8_t* output, size_t amount, bool &ended);
 
 protected:
 
     //! After loading the video this creates the output texture + material for it
     //! \returns false if the setup fails
+    //! \todo Rename to CreateOutputTexture
     bool OnVideoDataLoaded();
 
 
@@ -234,7 +251,7 @@ protected:
     bool IsPlayingAudio = false;
 
     //! Audio output
-    SoundStream* AudioStream = nullptr;
+    std::unique_ptr<SoundStream> AudioStream = nullptr;
 
     // Timing control
     float PassedTimeSeconds = 0.f;
@@ -250,6 +267,9 @@ protected:
     Mutex ReadPacketMutex;
     std::list<std::unique_ptr<ReadPacket>> WaitingVideoPackets;
     std::list<std::unique_ptr<ReadPacket>> WaitingAudioPackets;
+
+    //! Sequence number for video textures
+    static std::atomic<int> TextureSequenceNumber;
 };
 
 }

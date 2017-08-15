@@ -144,7 +144,7 @@ ogre = Ogre.new(
 )
 
 cegui = CEGUI.new(
-  version: "75906a4cdfc2",
+  version: "0555c53769264bd9bfd61a094a7dafe59bb2192c",
   installPath: THIRD_PARTY_INSTALL,
   # Find Ogre in our search path
   extraOptions: ["-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"],

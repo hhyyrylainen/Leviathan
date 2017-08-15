@@ -57,6 +57,8 @@ require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEGUI.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 
+abort('todo: direct Leviathan deps: cscope')
+
 # If false won't get breakpad
 # TODO: fix
 GetBreakpad = false

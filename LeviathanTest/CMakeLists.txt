@@ -25,6 +25,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/PacketFormat.cpp
     TestFiles/PacketsAndConnection.cpp
     TestFiles/GuiTests.cpp
+    TestFiles/Delegate.cpp
     )
 else()
   # Just a few tests required

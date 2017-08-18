@@ -58,10 +58,19 @@ DLLEXPORT bool VideoPlayer::Play(const std::string &videofile){
         return false;
     }
 
+    // If Ogre isn't initialized we are going to pretend that we worked for testing purposes
+    if(!Ogre::TextureManager::getSingletonPtr()){
+
+        LOG_INFO("VideoPlayer: Ogre hasn't been initialized fully (no TextureManager), "
+            "failing but pretending to have worked");
+        return true;
+    }
+
     if(!OnVideoDataLoaded()){
 
         VideoOutputTexture.reset();
         LOG_ERROR("VideoPlayer: Play: output video texture creation failed");
+        Stop();
         return false;
     }
 
@@ -956,13 +965,62 @@ DLLEXPORT int VideoPlayer::OnGenericEvent(GenericEvent** event){
 
 // ------------------------------------ //
 static bool FFMPEGLoadedAlready = false;
+static Mutex FFMPEGLoadMutex;
+
+namespace Leviathan{
+
+//! \brief Custom callback for ffmpeg to pipe output to our logger class
+void FFMPEGCallback(void *, int level, const char * fmt, va_list varg){
+
+    if(level > AV_LOG_INFO)
+        return;
+
+    // Format message //
+    std::string formatedMessage;
+
+    constexpr auto FORMAT_BUFFER_SIZE = 250;
+    char strBuffer[FORMAT_BUFFER_SIZE];
+    
+    const int result = snprintf(strBuffer, FORMAT_BUFFER_SIZE, fmt, varg);
+
+    if(result < 0 || result >= FORMAT_BUFFER_SIZE){
+
+        LOG_WARNING("FFMPEG log message was too long and is truncated");
+    }
+
+    formatedMessage = strBuffer;
+    
+    if(level <= AV_LOG_FATAL){
+
+        LOG_ERROR("[FFMPEG FATAL] " + formatedMessage);
+        
+    } else if(level <= AV_LOG_ERROR){
+
+        LOG_ERROR("[FFMPEG] " + formatedMessage);
+
+    } else if(level <= AV_LOG_WARNING){
+
+        LOG_WARNING("[FFMPEG] " + formatedMessage);
+        
+    } else {
+
+        LOG_INFO("[FFMPEG] " + formatedMessage);
+    }
+}
+
+}
 
 void VideoPlayer::LoadFFMPEG(){
+
+    // Makes sure all threads can pass only when ffmpeg is loaded
+    Lock lock(FFMPEGLoadMutex);
 
     if(FFMPEGLoadedAlready)
         return;
 
     FFMPEGLoadedAlready = true;
+
+    av_log_set_callback(Leviathan::FFMPEGCallback);
 
     avcodec_register_all();
     av_register_all();

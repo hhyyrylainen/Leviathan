@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "VideoPlayer.h"
 
+#include "Common/DataStoring/DataBlock.h"
+
 #include "OgrePixelFormat.h"
 #include "OgreTextureManager.h"
 #include "OgrePixelBox.h"
@@ -32,16 +34,10 @@ DLLEXPORT VideoPlayer::~VideoPlayer(){
 
 std::atomic<int> VideoPlayer::TextureSequenceNumber = {0};
 // ------------------------------------ //
-DLLEXPORT bool VideoPlayer::Play(const std::string &targettexturename,
-    const std::string &videofile)
-{
+DLLEXPORT bool VideoPlayer::Play(const std::string &videofile){
+    
     // Make sure nothing is playing currently //
     Stop();
-    
-    TextureName = targettexturename;
-
-    if(TextureName.empty())
-        return false;
     
     // Make sure ffmpeg is loaded //
     LoadFFMPEG();
@@ -304,7 +300,7 @@ bool VideoPlayer::FFMPEGLoadFile(){
         return false;
     }
 
-    if(ConvertedBufferSize != FrameWidth * FrameHeight * 4){
+    if(ConvertedBufferSize != static_cast<size_t>(FrameWidth * FrameHeight * 4)){
 
         LOG_ERROR("VideoPlayer: FFMPEG: FFMPEG and Ogre image data sizes don't match! "
             "Check selected formats");
@@ -796,36 +792,36 @@ size_t VideoPlayer::ReadDataFromAudioQueue(Lock &audiolocked,
     if(ReadAudioDataBuffer.empty())
         return 0;
     
-    auto& DataVector = ReadAudioDataBuffer.front()->DecodedData;
+    auto& dataVector = ReadAudioDataBuffer.front()->DecodedData;
 
-    if(amount >= DataVector.size()){
+    if(amount >= dataVector.size()){
 
         // Can move an entire packet //
-        const auto MovedDataCount = DataVector.size();
+        const auto movedDataCount = dataVector.size();
 
-        memcpy(output, &DataVector[0], MovedDataCount);
+        memcpy(output, &dataVector[0], movedDataCount);
 
         ReadAudioDataBuffer.pop_front();
 
-        return MovedDataCount;
+        return movedDataCount;
     }
 
     // Need to return a partial packet //
-    const auto MovedDataCount = amount;
-    const auto LeftSize = DataVector.size() - MovedDataCount;
+    const auto movedDataCount = amount;
+    const auto leftSize = dataVector.size() - movedDataCount;
 
-    memcpy(output, &DataVector[0], MovedDataCount);
+    memcpy(output, &dataVector[0], movedDataCount);
 
     std::vector<uint8_t> newData;
-    newData.resize(DataVector.size() - LeftSize);
+    newData.resize(dataVector.size() - leftSize);
 
-    LEVIATHAN_ASSERT((newData.size() == LeftSize + MovedDataCount), "Math assumption failed");
+    LEVIATHAN_ASSERT((newData.size() == leftSize + movedDataCount), "Math assumption failed");
 
-    std::copy(DataVector.begin() + DataVector.size() - LeftSize, DataVector.end(),
+    std::copy(dataVector.begin() + leftSize, dataVector.end(),
         newData.begin());
     
-    DataVector = newData;
-    return MovedDataCount;
+    dataVector = newData;
+    return movedDataCount;
 }
 
 // ------------------------------------ //
@@ -836,9 +832,12 @@ void VideoPlayer::ResetClock(){
 
 void VideoPlayer::OnStreamEndReached(){
 
-    const auto oldVideo = VideoFile;
+    auto vars = NamedVars::MakeShared(new NamedVars());
+    
+    vars->AddVar(std::make_shared<NamedVariableList>("oldvideo", new StringBlock(VideoFile)));
+    
     Stop();
-    OnPlayBackEnded.Broadcast(oldVideo);
+    OnPlayBackEnded.Call(vars);
 }
 
 void VideoPlayer::SeekVideo(float time){

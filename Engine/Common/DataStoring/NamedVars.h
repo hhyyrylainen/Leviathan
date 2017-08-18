@@ -176,6 +176,8 @@ namespace Leviathan{
     //! \todo Make all methods throw exceptions on invalid operations
 	class NamedVars : public ReferenceCounted, public ThreadSafe{
 	public:
+        REFERENCE_COUNTED_PTR_TYPE(NamedVars);
+        
 		DLLEXPORT NamedVars();
 
 		//! \brief Constructs a NamedVars by stealing variables from another

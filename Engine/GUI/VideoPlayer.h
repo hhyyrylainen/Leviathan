@@ -5,6 +5,7 @@
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
 #include "Events/CallableObject.h"
+#include "Events/DelegateSlot.h"
 #include "Sound/SoundStream.h"
 
 #include "OgreTexture.h"
@@ -81,7 +82,7 @@ public:
     //! \brief Starts playing the video file
     //! \returns True if successfully started
     //! \note Acquires the Ogre texture, a sound player and ffmpeg resources
-    DLLEXPORT bool Play(const std::string &targettexturename, const std::string &videofile);
+    DLLEXPORT bool Play(const std::string &videofile);
 
     //! \brief Stops playing and unloads the current playback objects
     DLLEXPORT void Stop();
@@ -267,6 +268,13 @@ protected:
     Mutex ReadPacketMutex;
     std::list<std::unique_ptr<ReadPacket>> WaitingVideoPackets;
     std::list<std::unique_ptr<ReadPacket>> WaitingAudioPackets;
+
+public:
+
+    //! Called when current video stops player
+    Delegate OnPlayBackEnded;
+    
+protected:
 
     //! Sequence number for video textures
     static std::atomic<int> TextureSequenceNumber;

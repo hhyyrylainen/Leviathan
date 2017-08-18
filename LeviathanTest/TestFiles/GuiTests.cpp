@@ -71,7 +71,7 @@ TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video]"){
     
     VideoPlayer player;
 
-    REQUIRE(player.Init("VideoTexture1"));
+    REQUIRE(player.Play("Data/Videos/SampleVideo.mp4"));
 
-    player.Release();
+    player.Stop();
 }

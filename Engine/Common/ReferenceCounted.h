@@ -16,6 +16,13 @@ namespace Leviathan{
 #define REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(classname) void AddRefProxy(){ \
  this->AddRef(); }; void ReleaseProxy(){ this->Release(); };
 
+#ifdef LEVIATHAN_USING_BOOST
+#define REFERENCE_COUNTED_PTR_TYPE(x) using pointer = boost::intrusive_ptr<x>;
+#else
+#define REFERENCE_COUNTED_PTR_TYPE(x) 
+#endif // LEVIATHAN_USING_BOOST
+
+
 //! Reference counted object which will be deleted when all references are gone
 //! \note Pointers can be used with ReferenceCounted::pointer ptr = new Object();
 //! \todo Make sure that all functions using intrusive pointers use the MakeIntrusive function
@@ -23,7 +30,8 @@ class ReferenceCounted{
 public:
 
 #ifdef LEVIATHAN_USING_BOOST
-    typedef boost::intrusive_ptr<ReferenceCounted> pointer;
+    using pointer = boost::intrusive_ptr<ReferenceCounted>;
+    using basepointer = boost::intrusive_ptr<ReferenceCounted>;
 #endif // LEVIATHAN_USING_BOOST
 
     DLLEXPORT inline ReferenceCounted() : RefCount(1){}

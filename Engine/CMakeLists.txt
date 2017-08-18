@@ -161,9 +161,20 @@ else()
   file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
   file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
 
-  file(GLOB GroupEvents "Events/*.cpp" "Events/*.h")
+
+  
+  
+  set(GroupEvents
+    "Events/AutoUpdateable.cpp" "Events/AutoUpdateable.h"
+    "Events/CallableObject.cpp" "Events/CallableObject.h"
+    "Events/DelegateSlot.cpp" "Events/DelegateSlot.h"
+    "Events/EventableScriptObject.cpp" "Events/EventableScriptObject.h"
+    "Events/Event.cpp" "Events/Event.h"
+    "Events/EventHandler.cpp" "Events/EventHandler.h"
+    )
+  
   file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
-  file(GLOB GroupSound
+  set(GroupSound
     "Sound/SoundDevice.cpp" "Sound/SoundDevice.h"
     "Sound/SoundPlayingSlot.cpp" "Sound/SoundPlayingSlot.h"
     "Sound/SoundStream.h" "Sound/SoundStream.cpp"

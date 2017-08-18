@@ -58,6 +58,8 @@ if(LEVIATHAN_FULL_BUILD)
     CEGUICommonDialogs-9999
     # CEGUICoreWindowRendererSet CEGUIExpatParser CEGUISILLYImageCodec
     CEGUIOgreRenderer-9999 sfml-system sfml-audio sfml-network
+    # ffmpeg
+    avcodec avformat avutil swresample swscale
     ${Boost_LIBRARIES} ${SDL2_LIBRARY})
 
   if(WIN32)

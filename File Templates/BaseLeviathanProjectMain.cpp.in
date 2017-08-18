@@ -4,6 +4,8 @@
 
 #include "Define.h"
 
+#include <iostream>
+
 // Breakpad is used to detect and report crashes
 #ifdef LEVIATHAN_USING_BREAKPAD
 #ifdef __linux

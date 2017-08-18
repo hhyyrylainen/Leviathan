@@ -25,6 +25,8 @@ void Delegate::Call(NamedVars::pointer values) const{
 void Delegate::Register(BaseDelegateSlot::pointer callback){
 
     GUARD_LOCK();
+
+    AttachedCallbacks.push_back(std::move(callback));
 }
 
 void Delegate::Register(BaseDelegateSlot* callback){

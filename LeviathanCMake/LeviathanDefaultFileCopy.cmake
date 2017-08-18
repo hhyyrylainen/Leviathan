@@ -58,6 +58,7 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
   install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
   install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
+  install(DIRECTORY "bin/Data/Videos" DESTINATION bin/Videos)
 
   # Copy data from the scripts folder to the bin folder
   file(GLOB ScriptsMoveFiles "${LEVIATHAN_SRC}/Scripts/*")

@@ -191,13 +191,13 @@ namespace Leviathan{
 			auto resultstr = Leviathan::Window::ConvertKeyCodeToString(Character);
 
 			// Add special modifiers //
-			if(Extras && KEYSPECIAL_ALT)
+			if(Extras & KEYSPECIAL_ALT)
 				resultstr += "+ALT";
-			if(Extras && KEYSPECIAL_CTRL)
+			if(Extras & KEYSPECIAL_CTRL)
 				resultstr += "+CTRL";
-			if(Extras && KEYSPECIAL_SHIFT)
+			if(Extras & KEYSPECIAL_SHIFT)
 				resultstr += "+SHIFT";
-			if(Extras && KEYSPECIAL_SUPER)
+			if(Extras & KEYSPECIAL_SUPER)
 				resultstr += "+META";
 			// Result is done //
 			return resultstr;

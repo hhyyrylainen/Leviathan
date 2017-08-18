@@ -9,7 +9,7 @@
 using namespace Leviathan;
 using namespace std;
 
-TEST_CASE("StringOperations::MakeString", "[string]") {
+TEST_CASE("StringOperations::MakeString", "[string]"){
 
     REQUIRE(sizeof(WINDOWS_LINE_SEPARATOR) - 1 == 2);
     REQUIRE(sizeof(UNIVERSAL_LINE_SEPARATOR) - 1 == 1);

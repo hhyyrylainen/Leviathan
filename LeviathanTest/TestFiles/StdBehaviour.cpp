@@ -1,5 +1,6 @@
 #include <thread>
 #include <mutex>
+#include <functional>
 
 #include "catch.hpp"
 
@@ -111,5 +112,24 @@ TEST_CASE("Modulo '%' operator expected results", "[std]") {
     CHECK(8 % 8 == 0);
     CHECK(9 % 8 == 1);
 
+}
+
+TEST_CASE("std::copy with vectors", "[std]"){
+
+    std::vector<uint8_t> dataVector = {1, 2, 3, 4, 5, 6, 7, 8};
+
+    constexpr size_t leftSize = 2;
+
+    std::vector<uint8_t> newData;
+    newData.resize(dataVector.size() - leftSize);
+
+    CHECK(newData.size() == dataVector.size() - leftSize);    
+
+    std::copy(dataVector.begin() + leftSize, dataVector.end(),
+        newData.begin());
+
+    CHECK(newData.size() == dataVector.size() - leftSize);
+
+    CHECK(newData == std::vector<uint8_t>({3, 4, 5, 6, 7, 8}));
 }
 

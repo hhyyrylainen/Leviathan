@@ -100,18 +100,11 @@ TEST_CASE("String cutting", "[string]"){
 
     SECTION("Single character line cutting"){
 
-        vector<string> result;
+        std::vector<std::string> result;
 
         StringOperations::CutLines<std::string>("victory sign\npeace sign\nv", result);
 
-        REQUIRE(result.size() > 0);
-        CHECK(result[0] == "victory sign");
-        
-        REQUIRE(result.size() > 1);
-        CHECK(result[1] == "peace sign"); 
-        
-        REQUIRE(result.size() > 2);
-        CHECK(result[2] == "v");
+        CHECK(result == std::vector<std::string>({"victory sign", "peace sign", "v"}));
     }
 }
 

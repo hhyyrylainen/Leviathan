@@ -1,8 +1,11 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
+#include "../Utility/Convert.h"
+
 #include <string>
 #include <vector>
-#include "../Utility/Convert.h"
 #include <memory>
 
 namespace Leviathan{
@@ -338,6 +341,9 @@ public:
     template<class StringTypeN>
         static size_t CutLines(const StringTypeN &input, std::vector<StringTypeN> &output)
     {
+        if(input.empty())
+            return 0;
+        
         size_t copystart = 0;
         size_t copyend = 0;
 
@@ -377,7 +383,7 @@ public:
             copyend = i;
         }
 
-        if(copyend >= copystart && copystart-copyend > 1)
+        if(copyend >= copystart)
             output.push_back(input.substr(copystart, copyend - copystart + 1));
         
         return output.size();

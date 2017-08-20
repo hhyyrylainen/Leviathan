@@ -101,6 +101,9 @@ public:
         return CurrentlyDecodedTimeStamp;
     }
 
+    //! \returns The total length of the video is seconds
+    DLLEXPORT float GetDuration() const;
+
     //! \returns Width of the current video
     DLLEXPORT int32_t GetVideoWidth() const{
         return FrameWidth;

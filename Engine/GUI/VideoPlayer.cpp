@@ -183,7 +183,14 @@ DLLEXPORT void VideoPlayer::Stop(){
     
     IsPlaying = false;
 }
+// ------------------------------------ //
+DLLEXPORT float VideoPlayer::GetDuration() const{
 
+    if(!FormatContext)
+        return 0;
+
+    return static_cast<float>(FormatContext->duration) / AV_TIME_BASE;
+}
 // ------------------------------------ //
 bool VideoPlayer::OnVideoDataLoaded(){
 

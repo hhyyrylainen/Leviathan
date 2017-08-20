@@ -73,5 +73,11 @@ TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video]"){
 
     REQUIRE(player.Play("Data/Videos/SampleVideo.mp4"));
 
+    CHECK(player.GetDuration() == 10.334f);
+
+    CHECK(player.GetVideoWidth() == 1920);
+    CHECK(player.GetVideoHeight() == 1080);
+    CHECK(player.IsStreamValid());
+
     player.Stop();
 }

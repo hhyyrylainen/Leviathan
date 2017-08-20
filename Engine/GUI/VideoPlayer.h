@@ -132,6 +132,11 @@ public:
         return StreamValid && VideoCodec && ConvertedFrameBuffer;
     }
 
+    DLLEXPORT auto GetTextureName() const{
+
+        return TextureName;
+    }
+
     //! \brief Dumps info about loaded ffmpeg streams
     DLLEXPORT void DumpInfo() const;
 

@@ -206,7 +206,7 @@ protected:
     //! True when playing back something and frame start events do something
     bool IsPlaying = false;
 
-    AVIOContext* ResourceReader = nullptr;
+    // AVIOContext* ResourceReader = nullptr;
 
     // This seems to be not be used anymore
     //AVCodecContext* Context = nullptr;

@@ -140,17 +140,17 @@ DLLEXPORT void VideoPlayer::Stop(){
     if(ConvertedFrame)
         av_frame_free(&ConvertedFrame);
 
-    if(ResourceReader){
+    // if(ResourceReader){
 
-        if(ResourceReader->buffer){
+    //     if(ResourceReader->buffer){
 
-            av_free(ResourceReader->buffer);
-            ResourceReader->buffer = nullptr;
-        }
+    //         av_free(ResourceReader->buffer);
+    //         ResourceReader->buffer = nullptr;
+    //     }
 
-        av_free(ResourceReader);
-        ResourceReader = nullptr;
-    }
+    //     av_free(ResourceReader);
+    //     ResourceReader = nullptr;
+    // }
 
     if(FormatContext){
         // The doc says this is the right method to close it after

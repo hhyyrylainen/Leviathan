@@ -151,6 +151,7 @@ else()
 
   set(GroupGUIWidgets
     "GUI/Widgets/AlphaHit.h" "GUI/Widgets/AlphaHit.cpp"
+    "GUI/Widgets/CEGUIVideoPlayer.h" "GUI/Widgets/CEGUIVideoPlayer.cpp"    
     )  
 
 

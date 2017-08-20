@@ -26,6 +26,7 @@
 
 // Widgets for registering
 #include "Widgets/AlphaHit.h"
+#include "Widgets/CEGUIVideoPlayer.h"
 
 #include <SDL.h>
 // ------------------------------------ //
@@ -135,7 +136,8 @@ bool GuiManager::Init(Graphics* graph, GraphicalInputEntity* window,
 
         // Register custom widget types
         // this is probably early enough for this to work correctly
-        CEGUI::WindowFactoryManager::addFactory<CEGUI::TplWindowFactory<AlphaHitButton> >();
+        CEGUI::WindowFactoryManager::addFactory<CEGUI::TplWindowFactory<AlphaHitButton>>(); 
+        CEGUI::WindowFactoryManager::addFactory<CEGUI::TplWindowFactory<CEGUIVideoPlayer>>();
 	}
 
 	// Store the initial time //

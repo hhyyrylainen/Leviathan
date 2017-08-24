@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "ScriptNotifiers.h"
 
+#include "Bindings/BindHelpers.h"
+
 #include "ScriptExecutor.h"
 using namespace Leviathan;
 using namespace std;

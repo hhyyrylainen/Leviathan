@@ -136,15 +136,34 @@ else()
   
   file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
   file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
-  file(GLOB GroupScript "Script/*.cpp" "Script/*.h")
+  set(GroupScript
+    "Script/Console.cpp" "Script/Console.h"
+    "Script/ScriptArgumentsProvider.cpp" "Script/ScriptArgumentsProvider.h"
+    "Script/ScriptExecutor.cpp" "Script/ScriptExecutor.h"
+    "Script/ScriptModule.cpp" "Script/ScriptModule.h"
+    "Script/ScriptNotifiers.cpp" "Script/ScriptNotifiers.h"
+    "Script/ScriptRunningSetup.cpp" "Script/ScriptRunningSetup.h"
+    "Script/ScriptScript.cpp" "Script/ScriptScript.h"
+    )
+
+  set(GroupScriptInterface
+    "Script/Interface/ScriptEventListener.h" "Script/Interface/ScriptLock.h"
+    )
+
+  set(GroupScriptBindings  
+    "Script/Bindings/BindHelpers.h"
+    "Script/Bindings/CommonEngineBind.h" "Script/Bindings/CommonEngineBind.cpp"
+    "Script/Bindings/GuiScriptBind.h" "Script/Bindings/GuiScriptBind.cpp"
+    "Script/Bindings/TypesBind.h" "Script/Bindings/TypesBind.cpp"
+    "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"    
+    )
+  
 
 
   set(GroupGUI 
     "GUI/BaseGuiObject.cpp" "GUI/BaseGuiObject.h"
     "GUI/GuiCollection.cpp" "GUI/GuiCollection.h"
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
-    "GUI/GuiScriptBind.h"
-    "GUI/GuiScriptInterface.cpp" "GUI/GuiScriptInterface.h"
     "GUI/AlphaHitCache.cpp" "GUI/AlphaHitCache.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     )
@@ -242,6 +261,9 @@ source_group("Math" FILES ${GroupMath})
 source_group("Sound" FILES ${GroupSound})
 source_group("Scripting" FILES ${GroupScript})
 source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
+source_group("Scripting\\Interface" FILES ${GroupScriptInterface})
+source_group("Scripting\\Bindings" FILES ${GroupScriptBindings})
+
 source_group("Addons" FILES ${GroupAddons})
 source_group("Networking" FILES ${GroupNetworking})
 source_group("Threading" FILES ${GroupThreading})
@@ -291,17 +313,19 @@ endif()
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupMath} ${GroupSound}
-    ${GroupScript} ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
-    ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
-    ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
-    ${GroupUtilityFile}
-    ${GroupScriptAddons} ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
-    ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
-    ${GroupGameplay} 
-    ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
-    ${GeneratorInput} ${GroupGeneratedFiles}
-    ${Grouputf8})
-    
+  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}  ${GroupScriptAddons} 
+  ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
+  ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
+  ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
+  ${GroupUtilityFile}
+  ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
+  ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
+  ${GroupGameplay} 
+  ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
+  ${GeneratorInput} ${GroupGeneratedFiles}
+  ${Grouputf8}
+  )
+
 if(USE_LEAP)
   set(EngineFiles ${EngineFiles} ${GroupLeap})
 endif()

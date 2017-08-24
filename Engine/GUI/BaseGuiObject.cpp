@@ -117,7 +117,7 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(GuiManager* owner,
 	CEGUI::Window* foundobject = NULL;
 	try{
 		// Names starting with '_' are not considered to be targeting specific CEGUI windows //
-		if(tmpptr->Name.find_first_of(L'_') != 0)
+		if(tmpptr->Name.find_first_of('_') != 0)
 			foundobject = owner->GetMainContext()->getRootWindow()->getChild(tmpptr->Name);
 
 	} catch(const CEGUI::UnknownObjectException &e){

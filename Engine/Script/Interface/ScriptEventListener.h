@@ -1,6 +1,8 @@
 #pragma once
 #include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
+#include "Events/EventHandler.h"
+
 #include "Exceptions.h"
 #include "Common/ThreadSafe.h"
 #include "Script/ScriptExecutor.h"
@@ -53,8 +55,9 @@ namespace Leviathan{ namespace Script{
                 if(OnEventScript){
 
                     // Setup the parameters //
-                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
-                        new NamedVariableBlock(new VoidPtrBlock(*event), "Event"));
+                    std::vector<std::shared_ptr<NamedVariableBlock>> Args =
+                        boost::assign::list_of(new NamedVariableBlock(
+                                new VoidPtrBlock(*event), "Event"));
 
                     (*event)->AddRef();
 
@@ -85,8 +88,9 @@ namespace Leviathan{ namespace Script{
                 if(OnGenericScript){
 
                     // Setup the parameters //
-                    vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(
-                        new NamedVariableBlock(new VoidPtrBlock(*event), "GenericEvent"));
+                    std::vector<std::shared_ptr<NamedVariableBlock>> Args =
+                        boost::assign::list_of(new NamedVariableBlock(
+                                new VoidPtrBlock(*event), "GenericEvent"));
 
                     (*event)->AddRef();
 
@@ -125,7 +129,7 @@ namespace Leviathan{ namespace Script{
             }
 
             //! \brief Registers for a generic event if OnGeneric is not NULL
-            bool RegisterForEventGeneric(const string &name){
+            bool RegisterForEventGeneric(const std::string &name){
                 
                 {
                     GUARD_LOCK();
@@ -147,7 +151,9 @@ namespace Leviathan{ namespace Script{
             asIScriptFunction* OnGenericScript;
         };
         
-        EventListener* EventListenerFactory(asIScriptFunction* onevent, asIScriptFunction* ongeneric){
+        EventListener* EventListenerFactory(asIScriptFunction* onevent,
+            asIScriptFunction* ongeneric)
+        {
 
             EventListener* listener = NULL;
             

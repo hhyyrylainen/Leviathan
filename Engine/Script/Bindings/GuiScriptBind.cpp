@@ -170,8 +170,9 @@ namespace Leviathan{
 bool BindGuiCollection(asIScriptEngine* engine){
 
     ANGELSCRIPT_REGISTER_REF_TYPE("GuiCollection", GUI::GuiCollection);
-    
-    if(engine->RegisterObjectMethod("GuiCollection", "out& string GetName()",
+
+    // TODO: verify that this works because this actually returns a string reference
+    if(engine->RegisterObjectMethod("GuiCollection", "string GetName()",
             asMETHOD(GUI::GuiCollection, GetName), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
@@ -204,7 +205,7 @@ bool BindGuiObject(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
     
-    if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive()",
+    if(engine->RegisterObjectMethod("GuiObject", "void PrintWindowsRecursive() const",
             asMETHOD(GUI::BaseGuiObject, PrintWindowsRecursiveProxy), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
@@ -353,7 +354,7 @@ bool Leviathan::BindGUI(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
     
-    if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetWindow()",
+    if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetWindow() const",
             asMETHOD(GUI::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;

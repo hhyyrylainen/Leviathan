@@ -142,8 +142,6 @@ namespace Leviathan{ namespace Script{
                 return true;
             }
 
-            REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(EventListener);
-
         protected:
 
             // The AngelScript functions to be called //

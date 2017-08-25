@@ -838,9 +838,6 @@ namespace Leviathan{
         DLLEXPORT ScriptSafeVariableBlock(VariableBlock* copyfrom, const std::string &name);
 
 
-        REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptSafeVariableBlock);
-
-
         bool IsValidType(){
             return ASTypeID > 0 ? true: false;
         }

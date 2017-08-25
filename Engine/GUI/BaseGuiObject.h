@@ -27,8 +27,6 @@ public:
         std::shared_ptr<ScriptScript> script = NULL);
     DLLEXPORT virtual ~BaseGuiObject();
 
-    REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(BaseGuiObject);
-
     DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated(){
         if(UpdatedValues.empty())
             return NULL;

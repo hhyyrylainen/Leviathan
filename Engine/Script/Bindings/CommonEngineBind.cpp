@@ -404,7 +404,7 @@ bool BindApplication(asIScriptEngine* engine){
     }
 
     if(engine->RegisterObjectMethod("LeviathanApplication",
-            "NETWORKED_TYPE GetProgramNetType()",
+            "NETWORKED_TYPE GetProgramNetType() const",
             asMETHOD(LeviathanApplication, GetProgramNetType), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
@@ -454,25 +454,25 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction("void LOG_WRITE(const &in string)",
+    if(engine->RegisterGlobalFunction("void LOG_WRITE(const string &in message)",
             asFUNCTION(LOG_WRITEProxy), asCALL_CDECL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction("void LOG_INFO(const &in string)",
+    if(engine->RegisterGlobalFunction("void LOG_INFO(const string &in message)",
             asFUNCTION(LOG_INFOProxy), asCALL_CDECL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction("void LOG_WARNING(const &in string)",
+    if(engine->RegisterGlobalFunction("void LOG_WARNING(const string &in message)",
             asFUNCTION(LOG_WARNINGProxy), asCALL_CDECL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction("void LOG_ERROR(const &in string)",
+    if(engine->RegisterGlobalFunction("void LOG_ERROR(const string &in message)",
             asFUNCTION(LOG_ERRORProxy), asCALL_CDECL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;

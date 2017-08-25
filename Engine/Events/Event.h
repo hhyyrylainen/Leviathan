@@ -160,7 +160,6 @@ public:
     //! \brief Gets the data if this is an event that has only one integer data member
     DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;
 
-    REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(Event);
 protected:
 
     //! Events type
@@ -185,8 +184,6 @@ public:
     //! \brief Constructor that takes the pointers as it's own
     DLLEXPORT GenericEvent(std::string* takeownershipstr, NamedVars* takeownershipvars);
     DLLEXPORT ~GenericEvent();
-
-    REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GenericEvent);
 
     //! \brief Serializes this event to a packet
     DLLEXPORT void AddDataToPacket(sf::Packet &packet) const;

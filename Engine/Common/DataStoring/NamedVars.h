@@ -284,7 +284,6 @@ namespace Leviathan{
 
     #ifdef LEVIATHAN_USING_ANGELSCRIPT
         // Script accessible functions //
-        REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(NamedVars);
 
         //! \brief Finds and returns the first value in a list matching name
         //! \warning For use from scripts

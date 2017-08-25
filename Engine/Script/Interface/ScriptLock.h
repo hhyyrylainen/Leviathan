@@ -49,8 +49,6 @@ namespace Leviathan{
             OurLockPtr = nullptr;
         }
 
-        REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptLockPasser);
-
     private:
 
         //! Our pointer to the lock that is upper in the callstack 
@@ -103,8 +101,6 @@ namespace Leviathan{
 
             return obj.release();
         }
-
-        REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptLockHolder);
 
     private:
 

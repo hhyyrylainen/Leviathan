@@ -35,19 +35,8 @@ bool BindRayCast(asIScriptEngine* engine){
         return false;
 
     // Result class for ray cast //
-    if(engine->RegisterObjectType("RayCastHitEntity", 0, asOBJ_REF) < 0){
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-    if(engine->RegisterObjectBehaviour("RayCastHitEntity", asBEHAVE_ADDREF, "void f()",
-            asMETHOD(RayCastHitEntity, AddRefProxy), asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-    if(engine->RegisterObjectBehaviour("RayCastHitEntity", asBEHAVE_RELEASE, "void f()",
-            asMETHOD(RayCastHitEntity, ReleaseProxy), asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    ANGELSCRIPT_REGISTER_REF_TYPE("RayCastHitEntity", RayCastHitEntity);
+    
     if(engine->RegisterObjectMethod("RayCastHitEntity", "Float3 GetPosition()",
             asMETHOD(RayCastHitEntity, GetPosition), asCALL_THISCALL) < 0)
     {

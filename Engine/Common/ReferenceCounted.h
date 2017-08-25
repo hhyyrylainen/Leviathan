@@ -11,11 +11,6 @@
 
 namespace Leviathan{
 
-// macro for adding proxies to hopefully work with scripts //
-//! \todo Remove this and use specific overloaded versions of AddRef
-#define REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(classname) void AddRefProxy(){ \
- this->AddRef(); }; void ReleaseProxy(){ this->Release(); };
-
 #ifdef LEVIATHAN_USING_BOOST
 #define REFERENCE_COUNTED_PTR_TYPE(x) using pointer = boost::intrusive_ptr<x>;
 #else

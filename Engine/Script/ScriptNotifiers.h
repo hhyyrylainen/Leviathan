@@ -22,9 +22,6 @@ namespace Leviathan{
 		DLLEXPORT virtual ~ScriptNotifier();
 
 
-
-		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptNotifier);
-
 	protected:
 
 		//! \brief Calls into the script engine
@@ -43,9 +40,6 @@ namespace Leviathan{
 	public:
 		DLLEXPORT ScriptNotifiable(asIScriptFunction* functiontocall);
 		DLLEXPORT virtual ~ScriptNotifiable();
-
-
-		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(ScriptNotifiable);
 
 
 	protected:

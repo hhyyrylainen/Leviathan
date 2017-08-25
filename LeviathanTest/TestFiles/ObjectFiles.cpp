@@ -84,6 +84,7 @@ TEST_CASE("ObjectFiles parser basic in-memory test", "[objectfile]") {
 #ifndef LEVIATHAN_UE_PLUGIN
 TEST_CASE("ObjectFiles parser read test file", "[objectfile]"){
 
+    TestLogger Log("Test/TestLog.txt");
     DummyReporter reporter;
     ScriptExecutor exec;
     PartialEngine<false> engine;

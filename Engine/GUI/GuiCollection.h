@@ -58,8 +58,6 @@ public:
     }
 
 
-    REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GuiCollection);
-
     DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data);
 private:
 

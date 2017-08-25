@@ -42,8 +42,6 @@ public:
 
     DLLEXPORT Float3 GetPosition();
 
-    REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(RayCastHitEntity);
-
     DLLEXPORT bool DoesBodyMatchThisHit(NewtonBody* other);
 
     //! Stores the entity, typed as NewtonBody to make sure that user knows

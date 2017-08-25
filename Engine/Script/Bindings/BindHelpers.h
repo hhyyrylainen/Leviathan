@@ -78,14 +78,14 @@ if(engine->RegisterObjectType(RegisterName, 0, asOBJ_REF) < 0){         \
  }                                                                      \
                                                                         \
  if(engine->RegisterObjectBehaviour(RegisterName, asBEHAVE_ADDREF,      \
-         "void f()", asMETHOD(ClassName, AddRefProxy),                  \
+         "void f()", asMETHOD(ClassName, AddRef),                       \
          asCALL_THISCALL) < 0)                                          \
  {                                                                      \
      ANGELSCRIPT_REGISTERFAIL;                                          \
  }                                                                      \
                                                                         \
  if(engine->RegisterObjectBehaviour(RegisterName, asBEHAVE_RELEASE,     \
-         "void f()", asMETHOD(ClassName, ReleaseProxy),                 \
+         "void f()", asMETHOD(ClassName, Release),                      \
          asCALL_THISCALL) < 0)                                          \
  {                                                                      \
      ANGELSCRIPT_REGISTERFAIL;                                          \
@@ -94,5 +94,69 @@ if(engine->RegisterObjectType(RegisterName, 0, asOBJ_REF) < 0){         \
 #define ANGELSCRIPT_REGISTER_ENUM_VALUE(enum, x) {if(engine->RegisterEnumValue( \
         #enum, #x, static_cast<int>(enum :: x)) < 0){ANGELSCRIPT_REGISTERFAIL;}}
 }
+
+#define ANGLESCRIPT_BASE_CLASS_CASTS(base, base_as, derived, derived_as) \
+if(engine->RegisterObjectMethod(base_as, derived_as "@ opCast()",       \
+        asFUNCTION((Leviathan::DoReferenceCastDynamic<base, derived>)), \
+        asCALL_CDECL_OBJFIRST) < 1)                                     \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(                                       \
+         derived_as, base_as "@ opImplCast()",                          \
+         asFUNCTION((Leviathan::DoReferenceCastStatic<derived, base>)), \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(base_as,                               \
+         "const " derived_as "@ opCast() const",                        \
+         asFUNCTION((Leviathan::DoReferenceCastDynamic<base,            \
+             derived>)),                                                \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(derived_as,                            \
+         "const " base_as "@ opImplCast() const",                       \
+         asFUNCTION((Leviathan::DoReferenceCastStatic<derived, base>)), \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }
+
+
+#define ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(base, base_as, derived, derived_as) \
+if(engine->RegisterObjectMethod(base_as, derived_as "@ opCast()",       \
+        asFUNCTION((Leviathan::DoReferenceCastDynamicNoRef<base,        \
+                derived>)),                                             \
+        asCALL_CDECL_OBJFIRST) < 1)                                     \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(                                       \
+         derived_as, base_as "@ opImplCast()",                          \
+         asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
+                 base>)),                                               \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(base_as,                               \
+         "const " derived_as "@ opCast() const",                        \
+         asFUNCTION((Leviathan::DoReferenceCastDynamicNoRef<base,       \
+                 derived>)),                                            \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(derived_as,                            \
+         "const " base_as "@ opImplCast() const",                       \
+         asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
+                 base>)),                                               \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }
 
 

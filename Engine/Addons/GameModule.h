@@ -39,9 +39,6 @@ namespace Leviathan{
         //! \brief Returns a string describing this module
 		DLLEXPORT std::string GetDescription(bool full);
 
-
-		REFERENCECOUNTED_ADD_PROXIESFORANGELSCRIPT_DEFINITIONS(GameModule);
-
 	private:
 
 		void _CallScriptListener(Event** pEvent, GenericEvent** event2);

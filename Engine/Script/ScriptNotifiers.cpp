@@ -78,35 +78,6 @@ ScriptNotifiable* ScriptNotifiableFactory(asIScriptFunction* cb){
 	return new ScriptNotifiable(cb);
 }
 
-template<class From, class To>
-To* DoReferenceCastDynamic(From* ptr){
-	// If already invalid just return it //
-	if(!ptr)
-		return NULL;
-
-	To* newptr = dynamic_cast<To*>(ptr);
-	if(newptr){
-		// Add reference so script doesn't screw up with the handles //
-		newptr->AddRef();
-	}
-
-	// Return the ptr (which might be invalid) //
-	return newptr;
-}
-
-template<class From, class To>
-To* DoReferenceCastStaticNoAdd(From* ptr){
-	// If already invalid just return it //
-	if(!ptr)
-		return NULL;
-
-	To* newptr = static_cast<To*>(ptr);
-
-	// Return the ptr (which might be invalid) //
-	return newptr;
-}
-
-
 void NotifiableConnectProxy(BaseNotifiableAll* obj, ScriptNotifier* target){
 	obj->ConnectToNotifier(target);
 
@@ -142,30 +113,15 @@ bool Leviathan::RegisterNotifiersWithAngelScript(asIScriptEngine* engine){
 
 
 	// ScriptNotifier //
-	if(engine->RegisterObjectType("ScriptNotifier", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptNotifier", asBEHAVE_ADDREF, "void f()", asMETHOD(ScriptNotifier, AddRefProxy), asCALL_THISCALL) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptNotifier", asBEHAVE_RELEASE, "void f()", asMETHOD(ScriptNotifier, ReleaseProxy), asCALL_THISCALL) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
+    ANGELSCRIPT_REGISTER_REF_TYPE("ScriptNotifier", ScriptNotifier);
+    
 	if(engine->RegisterObjectBehaviour("ScriptNotifier", asBEHAVE_FACTORY, "ScriptNotifier@ f(NotifierCallback @cb)", asFUNCTION(ScriptNotifierFactory), asCALL_CDECL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}
 
 
 	// ScriptNotifiable //
-	if(engine->RegisterObjectType("ScriptNotifiable", 0, asOBJ_REF) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptNotifiable", asBEHAVE_ADDREF, "void f()", asMETHOD(ScriptNotifiable, AddRefProxy), asCALL_THISCALL) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
-	if(engine->RegisterObjectBehaviour("ScriptNotifiable", asBEHAVE_RELEASE, "void f()", asMETHOD(ScriptNotifiable, ReleaseProxy), asCALL_THISCALL) < 0){
-		ANGELSCRIPT_REGISTERFAIL;
-	}
+    ANGELSCRIPT_REGISTER_REF_TYPE("ScriptNotifiable", ScriptNotifiable);
 	if(engine->RegisterObjectBehaviour("ScriptNotifiable", asBEHAVE_FACTORY, "ScriptNotifiable@ f(NotifierCallback @cb)", asFUNCTION(ScriptNotifiableFactory), asCALL_CDECL) < 0){
 		ANGELSCRIPT_REGISTERFAIL;
 	}

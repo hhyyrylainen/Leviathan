@@ -171,8 +171,7 @@ bool BindGuiCollection(asIScriptEngine* engine){
 
     ANGELSCRIPT_REGISTER_REF_TYPE("GuiCollection", GUI::GuiCollection);
 
-    // TODO: verify that this works because this actually returns a string reference
-    if(engine->RegisterObjectMethod("GuiCollection", "string GetName()",
+    if(engine->RegisterObjectMethod("GuiCollection", "const string& GetName()",
             asMETHOD(GUI::GuiCollection, GetName), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;

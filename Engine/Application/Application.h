@@ -69,7 +69,7 @@ public:
     //! This is called when the world holder couldn't find a world with the id
     DLLEXPORT virtual std::shared_ptr<GameWorld> GetGameWorld(int id);
 
-        
+    
     // static access method for getting instance of this class //
     DLLEXPORT static LeviathanApplication* Get();
         

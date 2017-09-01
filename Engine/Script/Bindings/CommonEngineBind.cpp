@@ -378,7 +378,7 @@ bool BindApplication(asIScriptEngine* engine){
     ANGELSCRIPT_REGISTER_ENUM_VALUE(NETWORKED_TYPE, Master);
     ANGELSCRIPT_REGISTER_ENUM_VALUE(NETWORKED_TYPE, Error);
 
-    if(engine->RegisterObjectType("LeviathanApplication", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+    if(engine->RegisterObjectType("LeviathanApplication", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
         ANGELSCRIPT_REGISTERFAIL;
     }
 

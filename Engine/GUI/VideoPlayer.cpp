@@ -17,9 +17,15 @@ using namespace Leviathan::GUI;
 //! Sizeof the buffer audio is read to and passed to SoundStream
 constexpr auto WANTED_MAX_AUDIO = 4096;
 
-constexpr Ogre::PixelFormat OGRE_IMAGE_FORMAT = Ogre::PF_R8G8B8A8;
+// Ogre::PF_R8G8B8A8 results in incorrect images, for some reason
+constexpr Ogre::PixelFormat OGRE_IMAGE_FORMAT = Ogre::PF_BYTE_RGBA;
 // This must match the above definition
 constexpr AVPixelFormat FFMPEG_DECODE_TARGET = AV_PIX_FMT_RGBA;
+
+// TODO: add support for disabling alpha if not needed
+// constexpr Ogre::PixelFormat OGRE_IMAGE_FORMAT_NO_ALPHA = Ogre::PF_BYTE_RGB;
+// // This must match the above definition
+// constexpr AVPixelFormat FFMPEG_DECODE_TARGET_NO_ALPHA = AV_PIX_FMT_RGB24;
 
 
 DLLEXPORT VideoPlayer::VideoPlayer(){
@@ -687,8 +693,7 @@ VideoPlayer::PacketReadResult VideoPlayer::ReadOnePacket(
 }
 // ------------------------------------ //
 void VideoPlayer::UpdateTexture(){
-
-    // Make sure if the 
+    
     Ogre::PixelBox pixelView(FrameWidth, FrameHeight, 1,
         OGRE_IMAGE_FORMAT,
         // The data[0] buffer has some junk before the actual data so don't use that

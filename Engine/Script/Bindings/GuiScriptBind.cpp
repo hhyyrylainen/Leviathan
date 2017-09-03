@@ -8,6 +8,8 @@
 #include "CEGUIInclude.h"
 #include "FileSystem.h"
 
+#include "GUI/Widgets/CEGUIVideoPlayer.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -163,6 +165,26 @@ bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const std::string &filen
     return true;
 }
 
+CEGUI::Window* CEGUIWindowCreateAndAddChild(CEGUI::Window* parent,
+    const std::string &widgettype, const std::string &widgetname)
+{
+    if(!parent)
+        return nullptr;
+    
+    CEGUI::Window* newWindow = CEGUI::WindowManager::getSingleton().createWindow(
+        widgettype.c_str(), widgetname.c_str());
+
+    if(!newWindow){
+
+        LOG_ERROR("CreateAndAddChild: failed to create widget of type: " + widgettype);
+        return nullptr;
+    }
+
+    parent->addChild(newWindow);
+
+    return newWindow;
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan{
@@ -190,6 +212,26 @@ bool BindGuiObject(asIScriptEngine* engine){
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectMethod("GuiObject",
+            "void ConnectElement(CEGUI::Window@ windowobj)",
+            asMETHOD(GUI::BaseGuiObject, ConnectElement), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window@ GetTargetWindow() const",
+            asMETHOD(GUI::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
+
+    if(engine->RegisterObjectMethod("GuiObject",
+            "bool IsCEGUIEventHooked()",
+            asMETHOD(GUI::BaseGuiObject, IsCEGUIEventHooked), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
 
     if(engine->RegisterObjectMethod("GuiObject",
             "ScriptSafeVariableBlock@ GetAndPopFirstUpdated()", asMETHOD(
@@ -222,7 +264,7 @@ bool BindCEGUI(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectType("Window", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+    if(engine->RegisterObjectType("Window", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -240,11 +282,19 @@ bool BindCEGUI(asIScriptEngine* engine){
     }
 
     if(engine->RegisterObjectMethod("Window",
-            "Window& GetChildWindow(const string &in namepath)",
+            "Window@ GetChildWindow(const string &in namepath)",
             asFUNCTION(CEGUIWindowGetChildWindowProxy), asCALL_CDECL_OBJFIRST) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectMethod("Window",
+            "Window@ CreateAndAddChild(const string &in widgettype, "
+            "const string &in name = \"\")",
+            asFUNCTION(CEGUIWindowCreateAndAddChild), asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
 
     if(engine->RegisterObjectMethod("Window",
             "void SetSize(float width, float widthpixels, float height, float heightpixels)", 
@@ -259,19 +309,20 @@ bool BindCEGUI(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Window", "void SetDisabledState(bool disabled)",
+            asFUNCTION(CEGUIWindowSetDisabledState), asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
+
+    // Tab stuff which should be in a derived class
     if(engine->RegisterObjectMethod("Window", "bool SetSelectedTabIndex(int index)",
             asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    
-    if(engine->RegisterObjectMethod("Window", "void SetDisabledState(bool disabled)",
-            asFUNCTION(CEGUIWindowSetDisabledState), asCALL_CDECL_OBJFIRST) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
 
-    
+    // Combobox stuff
     if(engine->RegisterObjectMethod("Window", "bool AddItem(const string &in text)",
             asFUNCTION(CEGUIComboboxAddItem),
             asCALL_CDECL_OBJFIRST) < 0)
@@ -311,9 +362,48 @@ bool BindCEGUI(asIScriptEngine* engine){
     return true;
 }
 
+//! Binds specialised widget types
+bool BindWidgetTypes(asIScriptEngine* engine){
+
+    if(engine->RegisterObjectType("CEGUIVideoPlayer", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(CEGUI::Window, "CEGUI::Window",
+        GUI::CEGUIVideoPlayer, "CEGUIVideoPlayer");
+
+
+    if(engine->RegisterObjectMethod("CEGUIVideoPlayer",
+            "bool Play(const string &in videofile)",
+            asMETHOD(GUI::CEGUIVideoPlayer, Play), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("CEGUIVideoPlayer",
+            "void Stop()",
+            asMETHOD(GUI::CEGUIVideoPlayer, Stop), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("CEGUIVideoPlayer",
+            "float GetCurrentTime() const",
+            asMETHOD(GUI::CEGUIVideoPlayer, GetCurrentTime), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
+    
+    return true;
+}
+
 }
 
 bool Leviathan::BindGUI(asIScriptEngine* engine){
+
+    // Needed by base gui object and widget types
+    if(!BindCEGUI(engine))
+        return false;    
 
     // bind GuiCollection action, this is released by gui object //
     if(!BindGuiCollection(engine))
@@ -322,8 +412,8 @@ bool Leviathan::BindGUI(asIScriptEngine* engine){
     if(!BindGuiObject(engine))
         return false;
 
-    if(!BindCEGUI(engine))
-        return false;
+    if(!BindWidgetTypes(engine))
+        return false;    
 
     // GuiManager needed to use some functionality, registered so that it cannot be stored //
     if(engine->RegisterObjectType("GuiManager", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
@@ -345,16 +435,18 @@ bool Leviathan::BindGUI(asIScriptEngine* engine){
     }
 
     if(engine->RegisterObjectMethod("GuiManager",
-            "CEGUI::Window& GetWindowByName(const string &in namepath)",
+            "CEGUI::Window@ GetWindowByName(const string &in namepath)",
             asMETHODPR(GUI::GuiManager, GetWindowByStringName, (const std::string&),
                 CEGUI::Window*),
             asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    
-    if(engine->RegisterObjectMethod("GuiObject", "CEGUI::Window& GetTargetWindow() const",
-            asMETHOD(GUI::BaseGuiObject, GetTargetWindow), asCALL_THISCALL) < 0)
+
+    if(engine->RegisterObjectMethod("GuiManager",
+            "CEGUI::Window@ GetRootWindow()",
+            asMETHOD(GUI::GuiManager, GetRootWindow),
+            asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }

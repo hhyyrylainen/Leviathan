@@ -761,6 +761,11 @@ void GuiManager::_FileChanged(const string &file,
 	// caller.MarkAllAsNotUpdated();
 }
 // ------------------------------------ //
+DLLEXPORT CEGUI::Window* GuiManager::GetRootWindow(){
+
+    return GuiContext->getRootWindow();
+}
+
 DLLEXPORT CEGUI::Window* GuiManager::GetWindowByStringName(const string &namepath){
 	try{
 

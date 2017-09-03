@@ -976,8 +976,12 @@ static Mutex FFMPEGLoadMutex;
 
 namespace Leviathan{
 
+//! This is for storing the ffmpeg output lines until a full line is outputted
+static std::string FFMPEGOutBuffer = "";
+static Mutex FFMPEGOutBufferMutex;
+
 //! \brief Custom callback for ffmpeg to pipe output to our logger class
-void FFMPEGCallback(void *, int level, const char * fmt, va_list varg){
+void FFMPEGCallback(void* ptr, int level, const char * fmt, va_list varg){
 
     if(level > AV_LOG_INFO)
         return;
@@ -985,34 +989,48 @@ void FFMPEGCallback(void *, int level, const char * fmt, va_list varg){
     // Format message //
     std::string formatedMessage;
 
-    constexpr auto FORMAT_BUFFER_SIZE = 250;
+    constexpr auto FORMAT_BUFFER_SIZE = 1024;
     char strBuffer[FORMAT_BUFFER_SIZE];
-    
-    const int result = snprintf(strBuffer, FORMAT_BUFFER_SIZE, fmt, varg);
+    static int print_prefix = 1;
 
+    int result = av_log_format_line2(ptr, level, fmt, varg, strBuffer, sizeof(strBuffer),
+        &print_prefix);
+    
     if(result < 0 || result >= FORMAT_BUFFER_SIZE){
 
         LOG_WARNING("FFMPEG log message was too long and is truncated");
     }
 
     formatedMessage = strBuffer;
-    
+
+    // Store the output until it ends with a newline, then output it //
+    Lock lock(FFMPEGOutBufferMutex);
+
+    FFMPEGOutBuffer += formatedMessage;
+
+    if(FFMPEGOutBuffer.empty() || FFMPEGOutBuffer.back() != '\n')
+        return;
+
+    FFMPEGOutBuffer.pop_back();
+
     if(level <= AV_LOG_FATAL){
 
-        LOG_ERROR("[FFMPEG FATAL] " + formatedMessage);
+        LOG_ERROR("[FFMPEG FATAL] " + FFMPEGOutBuffer);
         
     } else if(level <= AV_LOG_ERROR){
 
-        LOG_ERROR("[FFMPEG] " + formatedMessage);
+        LOG_ERROR("[FFMPEG] " + FFMPEGOutBuffer);
 
     } else if(level <= AV_LOG_WARNING){
 
-        LOG_WARNING("[FFMPEG] " + formatedMessage);
+        LOG_WARNING("[FFMPEG] " + FFMPEGOutBuffer);
         
     } else {
 
-        LOG_INFO("[FFMPEG] " + formatedMessage);
+        LOG_INFO("[FFMPEG] " + FFMPEGOutBuffer);
     }
+
+    FFMPEGOutBuffer.clear();
 }
 
 }

@@ -20,6 +20,11 @@ public:
     DLLEXPORT void WriteLine(const std::string &Text) override;
     DLLEXPORT void Fatal(const std::string &Text) override;
 
+    //! \brief Prints output without extra newlines (make sure to add them manually)
+    //!
+    //! This doesn't play nice with tests so use sparingly
+    DLLEXPORT void WriteRaw(const std::string &data);
+    
         
     DLLEXPORT static void SendDebugMessage(const std::string &str);
 

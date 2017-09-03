@@ -28,7 +28,7 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
+DLLEXPORT Logger::Logger(const std::string &file):
     Path(file)
 {
 
@@ -75,7 +75,7 @@ DLLEXPORT Leviathan::Logger::Logger(const std::string &file):
 //! \brief Lock when using the logger singleton
 static Mutex LoggerWriteMutex;
 
-Leviathan::Logger::~Logger(){
+Logger::~Logger(){
 	// Save if unsaved //
     Lock lock(LoggerWriteMutex);
     
@@ -88,9 +88,9 @@ Leviathan::Logger::~Logger(){
         LatestLogger = nullptr;
 }
 
-Logger* Leviathan::Logger::LatestLogger = NULL;
+Logger* Logger::LatestLogger = NULL;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::Write(const std::string &data){
+DLLEXPORT void Logger::Write(const std::string &data){
 
     const auto message = data+"\n";
 
@@ -102,12 +102,24 @@ DLLEXPORT void Leviathan::Logger::Write(const std::string &data){
 
     _LogUpdateEndPart();
 }
-void Leviathan::Logger::WriteLine(const std::string &Text) {
+
+DLLEXPORT void Logger::WriteRaw(const std::string &data){
+
+    Lock lock(LoggerWriteMutex);
+
+    SendDebugMessage(data);
+    
+    PendingLog += data;
+
+    _LogUpdateEndPart();
+}
+
+void Logger::WriteLine(const std::string &Text) {
 
     Write(Text);
 }
 
-void Leviathan::Logger::Fatal(const std::string &data) {
+void Logger::Fatal(const std::string &data) {
 
     const auto message = "[FATAL] " + data + "\n";
 
@@ -125,7 +137,7 @@ void Leviathan::Logger::Fatal(const std::string &data) {
     abort();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::Info(const std::string &data){
+DLLEXPORT void Logger::Info(const std::string &data){
     
     const auto message = "[INFO] " + data + "\n";
 
@@ -164,7 +176,7 @@ DLLEXPORT void Logger::Warning(const std::string &data){
 	_LogUpdateEndPart();
 }
 // ------------------------------------ //
-void Leviathan::Logger::Save(){
+void Logger::Save(){
 
     Lock lock(LoggerWriteMutex);
 
@@ -184,11 +196,11 @@ void Logger::_Save(){
     PendingLog.clear();
 }
 // -------------------------------- //
-void Leviathan::Logger::Print(const string &message){
+void Logger::Print(const string &message){
 	Get()->Write(message);
 }
 
-DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
+DLLEXPORT void Logger::SendDebugMessage(const string &str){
 #ifdef _WIN32
 	const wstring converted = Convert::Utf8ToUtf16(str);
 	OutputDebugString(&*converted.begin());
@@ -198,19 +210,19 @@ DLLEXPORT void Leviathan::Logger::SendDebugMessage(const string &str){
 	std::cout << str;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Logger::DirectWriteBuffer(const std::string &data){
+DLLEXPORT void Logger::DirectWriteBuffer(const std::string &data){
 
     Lock guard(LoggerWriteMutex);
 
 	PendingLog += data;
 }
 // ------------------------------------ //
-void Leviathan::Logger::_LogUpdateEndPart(){
+void Logger::_LogUpdateEndPart(){
 
     _Save();
 }
 // ------------------------------------ //
-DLLEXPORT Logger* Leviathan::Logger::Get(){
+DLLEXPORT Logger* Logger::Get(){
 
     return LatestLogger;
 }

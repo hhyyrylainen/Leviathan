@@ -461,3 +461,15 @@ TEST_CASE("StringOperations URL cut to path", "[string][url]"){
 
  
 }
+
+TEST_CASE("StringOperations RepeatCharacter", "[string]"){
+
+    SECTION("Basic one byte characters"){
+
+        CHECK(StringOperations::RepeatCharacter<std::string>('a', 4) == "aaaa");
+        CHECK(StringOperations::RepeatCharacter<std::string>('a', 0) == "");
+        CHECK(StringOperations::RepeatCharacter<std::string>('a', 3) == "aaa");
+        CHECK(StringOperations::RepeatCharacter<std::string>(' ', 4) == "    ");
+    }
+}
+

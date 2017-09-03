@@ -61,6 +61,19 @@ public:
         str = StringTypeN(characters, count - 1);
     }
 
+    template<class StringTypeN>
+        static StringTypeN RepeatCharacter(int character, size_t count){
+
+        StringTypeN result;
+
+        result.resize(count);
+
+        for(size_t i = 0; i < count; ++i)
+            result[i] = character;
+        
+        return result;
+    }
+
     // ------------------ Path related operations ------------------ //
     template<class StringTypeN>
 		static const StringTypeN RemoveExtension(const StringTypeN &filepath,

@@ -1,8 +1,10 @@
 version: 2
 jobs:
    build:
+     working_directory: ~/leviathan
      docker:
        - image: fedora:latest
      steps:
        - checkout
-       - run: echo "hello world"
+       - run: ruby gem install os colorize rubyzip
+       - run: ./Setup.rb --no-packagemanager

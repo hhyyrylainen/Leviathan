@@ -78,7 +78,7 @@ if GetBreakpad
 end
 
 # register us for the dependencies runs
-install.registerSelfAsLibrary $leviathanSelfLib
+installer.registerSelfAsLibrary $leviathanSelfLib
 
 installer.run
 

@@ -6,5 +6,4 @@ jobs:
        - image: fedora:latest
      steps:
        - checkout
-       - run: ruby gem install os colorize rubyzip
        - run: ./Setup.rb --no-packagemanager

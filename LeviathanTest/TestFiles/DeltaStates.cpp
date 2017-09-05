@@ -12,16 +12,16 @@ using namespace Leviathan;
 using namespace Leviathan::Test;
 
 
-TEST_CASE("Positionable delta state interpolation", "[networking, entity]"){
+TEST_CASE("Positionable delta state interpolation", "[networking][entity]"){
 
 }
 
-TEST_CASE("Position state through packet and interpolate", "[networking, entity]")
+TEST_CASE("Position state through packet and interpolate", "[networking][entity]")
 {
 
 }
 
-TEST_CASE("Position state fill missing data", "[networking, entity"){
+TEST_CASE("Position state fill missing data", "[networking][entity"){
 
 }
 

@@ -12,7 +12,7 @@
 using namespace Leviathan;
 using namespace Leviathan::Test;
 
-TEST_CASE("Sendable get correct server states", "[entity, networking]"){
+TEST_CASE("Sendable get correct server states", "[entity][networking]"){
 
     PartialEngine<false> engine;
 
@@ -27,11 +27,11 @@ TEST_CASE("Sendable get correct server states", "[entity, networking]"){
 }
 
 
-TEST_CASE("World interpolation system works with Brush", "[entity, networking]"){
+TEST_CASE("World interpolation system works with Brush", "[entity][networking]"){
 
 }
 
-TEST_CASE("GameWorld properly loads and applies state packets", "[networking, entity]"){
+TEST_CASE("GameWorld properly loads and applies state packets", "[networking][entity]"){
 
     
 }

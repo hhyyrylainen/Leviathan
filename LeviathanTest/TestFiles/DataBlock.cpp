@@ -11,7 +11,7 @@ using namespace std;
 
 #define TEST_IVALUE_INDBLOCKS 254676
 
-TEST_CASE("DataBlock value casts", "[datablock, script, networking]"){
+TEST_CASE("DataBlock value casts", "[datablock][script][networking]"){
 
 
     IntBlock iblock(TEST_IVALUE_INDBLOCKS);

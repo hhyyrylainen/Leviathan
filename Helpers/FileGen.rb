@@ -19,6 +19,8 @@ class Generator
 
     FileUtils.mkdir_p File.dirname(@outputFile)
 
+    FileUtils.rm_f @outputFile
+
     File.open(@outputFile, 'w') do |file|
       
       file.write "// Automatically Generated File Do not edit! //\n"

@@ -56,10 +56,10 @@ DLLEXPORT Logger::Logger(const std::string &file):
     if (!writer.is_open()) {
 
     #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
-        DEBUG_BREAK;
         throw Exception("Cannot open log file");
     #else
-        LEVIATHAN_ASSERT(0, "Cannot open log file");
+        SendDebugMessage("Cannot open log file, quitting");
+        abort(6);
     #endif //ALTERNATIVE_EXCEPTIONS_FATAL
     }
 

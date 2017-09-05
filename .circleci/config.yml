@@ -3,7 +3,7 @@ jobs:
    build:
      working_directory: ~/leviathan
      docker:
-       - image: fedora:latest
+       - image: hhyyrylainen/leviathan-deps:latest
      steps:
        - checkout
        - run: ./Setup.rb --no-packagemanager

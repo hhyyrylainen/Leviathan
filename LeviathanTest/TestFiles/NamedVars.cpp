@@ -55,7 +55,7 @@ TEST_CASE("NamedVars creation and value retrieve", "[variable]"){
     }
 }
 
-TEST_CASE("NamedVars line parsing", "[variable, objectfiles]"){
+TEST_CASE("NamedVars line parsing", "[variable][objectfiles]"){
 
     DummyReporter reporter;
 
@@ -251,7 +251,7 @@ TEST_CASE("Specific value parsing", "[variable]"){
     }
 }
 
-TEST_CASE("Converting empty std::string blocks", "[variable, datablock]"){
+TEST_CASE("Converting empty std::string blocks", "[variable][datablock]"){
 
 
     NamedVariableList empty("name", new StringBlock(new std::string()));
@@ -266,7 +266,7 @@ TEST_CASE("Converting empty std::string blocks", "[variable, datablock]"){
     
 }
 
-TEST_CASE("Allow missing ending';'", "[variable, datablock]") {
+TEST_CASE("Allow missing ending';'", "[variable][datablock]") {
 
     DummyReporter dummy;
     NamedVariableList testlist("name = 13.5", &dummy);
@@ -279,7 +279,7 @@ TEST_CASE("Allow missing ending';'", "[variable, datablock]") {
     CHECK(static_cast<float>(testlist.GetValue()) == 13.5f);
 }
 
-TEST_CASE("Verify equals operator works", "[variable, datablock]") {
+TEST_CASE("Verify equals operator works", "[variable][datablock]") {
 
     SECTION("Directly with VariableBlocks") {
 
@@ -321,7 +321,7 @@ TEST_CASE("Verify equals operator works", "[variable, datablock]") {
 
 }
 
-TEST_CASE("Parsing values back from ToText", "[variable, datablock]") {
+TEST_CASE("Parsing values back from ToText", "[variable][datablock]") {
 
     DummyReporter dummy;
 

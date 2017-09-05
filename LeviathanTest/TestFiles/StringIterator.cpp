@@ -484,7 +484,7 @@ TEST_CASE("StringIterator get functions", "[string][objectfile]"){
     }
 }
 
-TEST_CASE("StringIterator UTF8 correctness", "[string, objectfile, utf8]"){
+TEST_CASE("StringIterator UTF8 correctness", "[string][objectfile][utf8]"){
 
     // Test UTF8 string handling //
 
@@ -522,7 +522,7 @@ TEST_CASE("StringIterator UTF8 correctness", "[string, objectfile, utf8]"){
     CHECK(cvrtsy == resultuni16);
 }
 
-TEST_CASE("StringIterator bracket handling", "[string, objectfile]"){
+TEST_CASE("StringIterator bracket handling", "[string][objectfile]"){
     
     StringIterator itr;
     std::unique_ptr<std::string> result;

@@ -26,6 +26,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/PacketsAndConnection.cpp
     TestFiles/GuiTests.cpp
     TestFiles/Delegate.cpp
+    TestFiles/Task.cpp
     )
 else()
   # Just a few tests required

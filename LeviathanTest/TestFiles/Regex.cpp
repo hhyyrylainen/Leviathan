@@ -4,7 +4,7 @@
 
 using namespace std;
 
-TEST_CASE("Regex basic operation", "[regex, std]"){
+TEST_CASE("Regex basic operation", "[regex][std]"){
 
     regex first("abd.*thing", regex_constants::ECMAScript | regex_constants::icase);
 

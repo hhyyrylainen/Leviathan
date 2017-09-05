@@ -362,7 +362,7 @@ TEST_CASE("Fabricators permissions parse test", "[objectfile]") {
 
 }
 
-TEST_CASE("Floats don't have culture specific ',' in them", "[objectfile, variable]"){
+TEST_CASE("Floats don't have culture specific ',' in them", "[objectfile][variable]"){
 
     DummyReporter reporter;
 

@@ -19,28 +19,23 @@ jobs:
              - v1-build-{{ .Branch }}
        - run: ./Setup.rb --no-packagemanager -j 1
        - save_cache:
-           key:
-             - v1-assets-{{ .Branch }}
+           key: v1-assets-{{ .Branch }}
            paths:
              - bin/Data
        - save_cache:
-           key:
-             - v1-assets
+           key: v1-assets
            paths:
              - bin/Data
        - save_cache:
-           key:
-             - v1-deps-{{ checksum "Setup.rb" }}
+           key: v1-deps-{{ checksum "Setup.rb" }}
            paths:
              - ThirdParty
        - save_cache:
-           key:
-             - v1-deps
+           key: v1-deps
            paths:
              - ThirdParty
        - save_cache:
-           key:
-             - v1-build-{{ .Branch }}
+           key: v1-build-{{ .Branch }}
            paths:
              - build/Engine
              - build/LeviathanTest

@@ -1,16 +1,10 @@
-Leviathan game engine repository
-See: TODO: new web page
+Leviathan Game Engine
+=====================
 
+### Build Status
 
+Master:
+[![CircleCI](https://circleci.com/bb/hhyyrylainen/leviathan/tree/master.svg?style=svg)](https://circleci.com/bb/hhyyrylainen/leviathan/tree/master)
+Develop:
+[![CircleCI](https://circleci.com/bb/hhyyrylainen/leviathan/tree/develop.svg?style=svg)](https://circleci.com/bb/hhyyrylainen/leviathan/tree/develop)
 
--- Content For games --
-opengameart.org
-game-icons.net
-
-
-
-Doxygen improvements / What could be done:
-
-    line 914 REFERENCED_BY_RELATION = NO to true
-    
-    line 1500 has SERVER_BASED_SEARCH which should be off for local viewing

@@ -17,7 +17,7 @@ jobs:
        - restore_cache:
            keys:
              - v2-build-{{ .Branch }}
-       - run: ./Setup.rb --no-packagemanager -j 1 --fully-parallel-project-compile
+       - run: ./Setup.rb --no-packagemanager -j 1 --fully-parallel-project-compile --project-parallel 4
        - save_cache:
            key: v1-assets-{{ .Branch }}
            paths:

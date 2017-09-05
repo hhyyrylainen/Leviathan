@@ -6,4 +6,44 @@ jobs:
        - image: hhyyrylainen/leviathan-deps:latest
      steps:
        - checkout
-       - run: ./Setup.rb --no-packagemanager
+       - restore_cache:
+           keys:
+             - v1-deps-{{ checksum "Setup.rb" }}
+             - v1-deps
+       - restore_cache:
+           keys:
+             - v1-assets-{{ .Branch }}
+             - v1-assets
+       - restore_cache:
+           keys:
+             - v1-build-{{ .Branch }}
+       - run: ./Setup.rb --no-packagemanager -j 1
+       - save_cache:
+           key:
+             - v1-assets-{{ .Branch }}
+           paths:
+             - bin/Data
+       - save_cache:
+           key:
+             - v1-assets
+           paths:
+             - bin/Data
+       - save_cache:
+           key:
+             - v1-deps-{{ checksum "Setup.rb" }}
+           paths:
+             - ThirdParty
+       - save_cache:
+           key:
+             - v1-deps
+           paths:
+             - ThirdParty
+       - save_cache:
+           key:
+             - v1-build-{{ .Branch }}
+           paths:
+             - build/Engine
+             - build/LeviathanTest
+             - build/Pong
+             - build/PongMasterServer
+             - build/PongServer

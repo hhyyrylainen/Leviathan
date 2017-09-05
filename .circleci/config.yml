@@ -43,7 +43,7 @@ jobs:
              - build/PongMasterServer
              - build/PongServer
        - run:
-           command: ./LeviathanTest --reporter junit --out test_run.xml
+           command: ./LeviathanTest --reporter junit --out test_run.xml "~[xrequired]"
            working_directory: ~/leviathan/build/bin
        - store_test_results:
            path: ~/leviathan/build/bin/test_run.xml

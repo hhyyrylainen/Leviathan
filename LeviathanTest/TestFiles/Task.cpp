@@ -75,7 +75,7 @@ TEST_CASE("Tasks run", "[task][threading]"){
     REQUIRE(initresult == true);
     
     // Check that certain tasks actually run //
-    int repeatcountedruncount = 0;
+    std::atomic<int> repeatcountedruncount = {0};
     
     manager.QueueTask(new RepeatCountedTask([&]() -> void
         {

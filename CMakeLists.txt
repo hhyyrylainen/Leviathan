@@ -59,8 +59,18 @@ option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" OFF)
 # Check is leap motion used
 option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
 
+# Option for only building the documentation (for lighter jenkins)
+option(ONLY_DOCUMENTATION "If true only documentation can be built correctly" OFF)
+
 
 # Build configuration
+
+if(ONLY_DOCUMENTATION)
+
+  set(USE_BREAKPAD OFF)
+  
+endif()
+
 if(LEVIATHAN_FULL_BUILD)
   set(USE_ANGELSCRIPT ON)
   set(USE_BOOST ON)
@@ -132,8 +142,10 @@ endif()
 include(LeviathanCompileOptions)
 include(LeviathanSetRPath)
 
-# Find required libraries
-include(LeviathanFindLibraries)
+if(NOT ONLY_DOCUMENTATION)
+  # Find required libraries
+  include(LeviathanFindLibraries)
+endif()
 
 # Configure engine include file
 configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
@@ -162,7 +174,12 @@ if(DOXYGEN_FOUND)
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating API documentation with Doxygen" VERBATIM
     )
-endif(DOXYGEN_FOUND)
+
+else()
+  if(ONLY_DOCUMENTATION)
+    message(SEND_ERROR "Documentation only build is missing doxygen")
+  endif()
+endif()
 
 
 include(LeviathanDefaultFileCopy)

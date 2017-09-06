@@ -181,35 +181,36 @@ else()
   endif()
 endif()
 
+if(NOT ONLY_DOCUMENTATION)
+  include(LeviathanDefaultFileCopy)
 
-include(LeviathanDefaultFileCopy)
-
-# Controls how LeviathanCoreProject.cmake works
-set(CREATE_CONSOLE_APP OFF)
-
-# engine project 
-add_subdirectory(Engine)
-
-# test project
-add_subdirectory(LeviathanTest)
-
-if(NOT CREATE_UE4_PLUGIN)
-  # example pong master server
-  add_subdirectory(PongMasterServer)
-
-  # example pong server
-  add_subdirectory(PongServer)
-
-  # pong example game
-  add_subdirectory(Pong)
-endif()
-
-# Strip symbols
-if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
+  # Controls how LeviathanCoreProject.cmake works
+  set(CREATE_CONSOLE_APP OFF)
   
-  # Install code that strips the symbols
-  install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
+  # engine project 
+  add_subdirectory(Engine)
+  
+  # test project
+  add_subdirectory(LeviathanTest)
+  
+  if(NOT CREATE_UE4_PLUGIN)
+    # example pong master server
+    add_subdirectory(PongMasterServer)
+    
+    # example pong server
+    add_subdirectory(PongServer)
 
+    # pong example game
+    add_subdirectory(Pong)
+  endif()
+  
+  # Strip symbols
+  if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
+    
+    # Install code that strips the symbols
+    install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
+    
+  endif()
 endif()
 
 ##### All symbol creating target

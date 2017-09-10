@@ -418,6 +418,10 @@ namespace Leviathan{
     
 
     //! \brief Non-template class for working with all types of DataBlocks
+    //!
+    //! If you want a VariableBlock with no value use:
+    //! VariableBlock(static_cast<DataBlockAll*>(nullptr)) and a cast to void if you want
+    //! a VoidPtrBlock with no value
     class VariableBlock{
     public:
 
@@ -436,7 +440,7 @@ namespace Leviathan{
         VariableBlock(const int &var){
             BlockData = static_cast<DataBlockAll*>(new IntBlock(var));
         }
-        VariableBlock(const bool &var){
+        VariableBlock(const bool &var, bool isactuallybooltype){
             BlockData = static_cast<DataBlockAll*>(new BoolBlock(var));
         }
         VariableBlock(const std::string &var){
@@ -454,6 +458,10 @@ namespace Leviathan{
         VariableBlock(const char &var){
             BlockData = static_cast<DataBlockAll*>(new CharBlock(var));
         }
+        VariableBlock(void* var){
+            BlockData = static_cast<DataBlockAll*>(new VoidPtrBlock(var));
+        }
+        
 
     #ifdef SFML_PACKETS
 
@@ -773,8 +781,8 @@ namespace Leviathan{
             VariableBlock(var), Name(name)
         {
         }
-        NamedVariableBlock(const bool &var, const std::string &name) :
-            VariableBlock(var), Name(name)
+        NamedVariableBlock(const bool &var, bool isactuallybooltype, const std::string &name) :
+            VariableBlock(var, isactuallybooltype), Name(name)
         {
         }
         NamedVariableBlock(const std::string &var, const std::string &name) :
@@ -797,6 +805,10 @@ namespace Leviathan{
             VariableBlock(var), Name(name)
         {
         }
+        NamedVariableBlock(void* var, const std::string &name) :
+            VariableBlock(var), Name(name)
+        {
+        }        
 
         inline std::string GetName() const{
             return Name;

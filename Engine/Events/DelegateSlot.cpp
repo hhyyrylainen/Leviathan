@@ -14,27 +14,29 @@ Delegate::~Delegate(){
 
 }
 // ------------------------------------ //
-void Delegate::Call(NamedVars::pointer values) const{
+void Delegate::Call(const NamedVars::pointer &values) const{
 
     GUARD_LOCK();
 
     for(const auto& callback : AttachedCallbacks)
         callback->OnCalled(values);
 }
-// ------------------------------------ //
-void Delegate::Register(BaseDelegateSlot::pointer callback){
+
+void Delegate::Call(NamedVars* values) const{
 
     GUARD_LOCK();
 
-    AttachedCallbacks.push_back(std::move(callback));
+    for(const auto& callback : AttachedCallbacks)
+        callback->OnCalled(values);
+
+    values->Release();
 }
+// ------------------------------------ //
+void Delegate::Register(const BaseDelegateSlot::pointer &callback){
 
-void Delegate::Register(BaseDelegateSlot* callback){
+    GUARD_LOCK();
 
-    if(!callback)
-        return;
-
-    Register(BaseDelegateSlot::pointer(callback));
+    AttachedCallbacks.push_back(callback);
 }
 // ------------------------------------ //
 // LambdaDelegateSlot

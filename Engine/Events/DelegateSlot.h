@@ -38,26 +38,29 @@ private:
 //! can be called when the event represented by this delegate is
 //! called
 //! \todo Allow unregistering callbacks
-class Delegate : public ThreadSafe{
+//! \note Many objects will have Delegates as their members without pointers so scripts really
+//! shouldn't try to store these. unless the specific object supports storing them
+class Delegate : public ThreadSafe, public ReferenceCounted{
 public:
 
     Delegate();
     ~Delegate();
 
+    REFERENCE_COUNTED_PTR_TYPE(Delegate);
+
     //! \brief Calls all the attached delegates
     //!
-    //! \param values The data for the callbacks to receive. This
-    //! method expects the caller to have increased the refcount
+    //! \param values The data for the callbacks to receive. 
     //! \todo Find a way to more efficiently pass known types or
     //! data that may not be stored (only copied)
-    void Call(NamedVars::pointer values) const;
+    void Call(const NamedVars::pointer &values) const;
 
     //! \brief Registers a new callback
-    void Register(BaseDelegateSlot::pointer callback);
+    void Register(const BaseDelegateSlot::pointer &callback);
 
-    //! \brief AngelScript wrapper for Register
-    //! \note This increases the reference count
-    void Register(BaseDelegateSlot* callback);
+    //! \brief Angelscript wrapper for Call
+    //! \note Decreases reference count
+    void Call(NamedVars* variables) const;
 
 
 private:

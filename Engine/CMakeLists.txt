@@ -147,7 +147,9 @@ else()
     )
 
   set(GroupScriptInterface
-    "Script/Interface/ScriptEventListener.h" "Script/Interface/ScriptLock.h"
+    "Script/Interface/ScriptEventListener.h"
+    "Script/Interface/ScriptLock.h"
+    "Script/Interface/ScriptDelegateSlot.h"
     )
 
   set(GroupScriptBindings  

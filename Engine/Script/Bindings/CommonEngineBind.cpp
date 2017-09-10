@@ -6,6 +6,7 @@
 #include "Events/EventHandler.h"
 #include "Events/CallableObject.h"
 #include "Events/Event.h"
+#include "Events/DelegateSlot.h"
 #include "Utility/DataHandling/SimpleDatabase.h"
 #include "Addons/GameModule.h"
 #include "Entities/Components.h"
@@ -17,6 +18,7 @@
 
 #include "Script/Interface/ScriptEventListener.h"
 #include "Script/Interface/ScriptLock.h"
+#include "Script/Interface/ScriptDelegateSlot.h"
 
 #include "Engine.h"
 
@@ -84,6 +86,19 @@ static void LOG_ERRORProxy(const std::string &str){
     LOG_ERROR(str);
 }
 
+static void DelegateRegisterProxy(Delegate* obj, asIScriptFunction* callback){
+
+    if(!callback)
+        return;
+
+    obj->Register(Script::ScriptDelegateSlot::MakeShared(
+            new Script::ScriptDelegateSlot(callback)));
+}
+
+static NamedVars* NamedVarsFactory(){
+
+    return new NamedVars();
+}
 
 
 // ------------------------------------ //
@@ -99,6 +114,13 @@ bool BindNamedVars(asIScriptEngine* engine){
 
     if(!BindDataBlock(engine))
         return false;
+
+    if(engine->RegisterObjectBehaviour("NamedVars", asBEHAVE_FACTORY,
+            "NamedVars@ f()", 
+            asFUNCTION(NamedVarsFactory), asCALL_CDECL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     if(engine->RegisterObjectMethod("NamedVars",
             "ScriptSafeVariableBlock@ GetSingleValueByName(const string &in name)",
@@ -427,6 +449,33 @@ bool BindGameModule(asIScriptEngine* engine){
     
     return true;
 }
+
+
+bool BindDelegates(asIScriptEngine* engine){
+
+    if(engine->RegisterFuncdef("void DelegateCallbackFunc(NamedVars@ values)") < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGELSCRIPT_REGISTER_REF_TYPE("Delegate", Delegate);
+
+    if(engine->RegisterObjectMethod("Delegate", "void Call(NamedVars@ values) const",
+            asMETHODPR(Delegate, Call, (NamedVars*) const, void), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Delegate",
+            "void Register(DelegateCallbackFunc@ callback)",
+            asFUNCTION(DelegateRegisterProxy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
+    
+    
+    return true;
+}
+
 }
 
 bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
@@ -444,6 +493,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
         return false;
 
     if(!BindGameModule(engine))
+        return false;
+
+    if(!BindDelegates(engine))
         return false;
     
 

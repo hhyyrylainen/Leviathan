@@ -283,9 +283,11 @@ TEST_CASE("Verify equals operator works", "[variable][datablock]") {
 
     SECTION("Directly with VariableBlocks") {
 
-        CHECK(VariableBlock(nullptr) != VariableBlock(nullptr));
+        CHECK(VariableBlock(static_cast<DataBlockAll*>(nullptr)) !=
+            VariableBlock(static_cast<DataBlockAll*>(nullptr)));
 
-        CHECK(VariableBlock(new IntBlock(2)) != VariableBlock(nullptr));
+        CHECK(VariableBlock(new IntBlock(2)) !=
+            VariableBlock(static_cast<DataBlockAll*>(nullptr)));
         CHECK(VariableBlock(new IntBlock(2)) != VariableBlock(new IntBlock(3)));
         CHECK(VariableBlock(new IntBlock(2)) != VariableBlock(new StringBlock("3")));
 
@@ -302,8 +304,9 @@ TEST_CASE("Verify equals operator works", "[variable][datablock]") {
         CHECK(NamedVariableList("val") == NamedVariableList("val"));
         CHECK(!(NamedVariableList("val") != NamedVariableList("val")));
 
-        CHECK(NamedVariableList("val", new VariableBlock(nullptr)) != 
-            NamedVariableList("val", new VariableBlock(nullptr)));
+        CHECK(NamedVariableList("val", new VariableBlock(static_cast<DataBlockAll*>(nullptr)))
+            != NamedVariableList("val", new VariableBlock(
+                    static_cast<DataBlockAll*>(nullptr))));
 
         CHECK(NamedVariableList("val", new VariableBlock(2)) !=
             NamedVariableList("val", new VariableBlock(1)));

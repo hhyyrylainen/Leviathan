@@ -411,6 +411,15 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
                         parameters->Parameters[i]->GetName());
                     
                 } else {
+
+                    // Sanity helpers
+                    if(parameters->Parameters[i]->GetBlockConst()->Type ==
+                        DATABLOCK_TYPE_BOOL)
+                    {
+                        LOG_FATAL("ScriptExecutor: parameter should be of type void* but it "
+                            "is bool. Did you forget to specifically construct a pointer "
+                            "block type?");
+                    }
                     
                     // types match, we can pass in the raw pointer //
                     void* ptrtostuff = static_cast<void*>(*parameters->Parameters[i]);

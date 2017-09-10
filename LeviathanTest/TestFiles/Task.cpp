@@ -66,6 +66,8 @@ TEST_CASE("Task timing test", "[task][timing][threading][.slow]"){
     manager.Release();
 }
 
+#include <iostream>
+
 TEST_CASE("Tasks run", "[task][threading]"){
 
     ThreadingManager manager;
@@ -76,14 +78,21 @@ TEST_CASE("Tasks run", "[task][threading]"){
     
     // Check that certain tasks actually run //
     std::atomic<int> repeatcountedruncount = {0};
-    
+
+    // Repeated tasks don't work correctly with wait for all tasks to finish
     manager.QueueTask(new RepeatCountedTask([&]() -> void
         {
             repeatcountedruncount++;
+            // std::cout << "Ran increment: " << repeatcountedruncount << std::endl;
             
         }, 6));
 
     manager.WaitForAllTasksToFinish();
+
+    // So we loop here to wait for all the tasks
+    while(repeatcountedruncount != 6){
+
+    }
 
     CHECK(repeatcountedruncount == 6);
 

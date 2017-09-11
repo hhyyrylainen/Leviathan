@@ -50,8 +50,7 @@ TEST_CASE("Script can register and call delegate", "[delegate][script]"){
 	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
-    auto sourcecode = std::make_shared<ScriptSourceFileData>("Delegate.cpp", 55,
-
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Delegate.cpp", __LINE__ + 1,
         "int ReadValue = 0;\n"
         "\n"
         "void Callback(NamedVars@ variables){\n"

@@ -31,7 +31,11 @@ public:
 
     //! \see Leviathan::GUI::VideoPlayer::GetCurrentTime
     float GetCurrentTime() const;
-    
+
+    //! \brief Returns the video playback ended delegate from the underlying videoplayer
+    //! \note increases refcount. But the refcount won't be used to release the delegate
+    //! (it's a member in VideoPlayer)
+    Delegate* GetOnPlaybackEnded();
     
     //! Window factory name.
     static const CEGUI::String WidgetTypeName;

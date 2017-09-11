@@ -392,6 +392,13 @@ bool BindWidgetTypes(asIScriptEngine* engine){
             asMETHOD(GUI::CEGUIVideoPlayer, GetCurrentTime), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("CEGUIVideoPlayer",
+            "Delegate@ get_OnPlaybackEnded()",
+            asMETHOD(GUI::CEGUIVideoPlayer, GetOnPlaybackEnded), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
     }    
     
     return true;

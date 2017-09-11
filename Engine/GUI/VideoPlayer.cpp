@@ -235,8 +235,6 @@ bool VideoPlayer::FFMPEGLoadFile(){
     // Not using custom reader
     // FormatContext->pb = ResourceReader;
 
-    // We use a custom io object so we probably can pass null to the url parameter
-    // instead of TCHAR_TO_ANSI(*VideoFile)
     if(avformat_open_input(&FormatContext, VideoFile.c_str(), nullptr, nullptr) < 0){
 
         // Context was freed automatically
@@ -337,7 +335,7 @@ bool VideoPlayer::FFMPEGLoadFile(){
         return false;
     }
 
-    // Converting images to be ue4 compatible is done by this
+    // Converting images to be ogre compatible is done by this
     // TODO: allow controlling how good conversion is done
     // SWS_FAST_BILINEAR is the fastest
     ImageConverter = sws_getContext(FrameWidth, FrameHeight,
@@ -403,12 +401,12 @@ bool VideoPlayer::FFMPEGLoadFile(){
         AudioStream = std::make_unique<SoundStream>(
             [=](std::vector<int16_t> &samplereceiver) -> bool{
 
-                // 2 bytes per sample
-                samplereceiver.resize(WANTED_MAX_AUDIO * 2 * ChannelCount);
+                samplereceiver.resize(WANTED_MAX_AUDIO * ChannelCount);
 
                 bool ended = false;
                 const auto read = this->ReadAudioData(reinterpret_cast<uint8_t*>(
-                        samplereceiver.data()), samplereceiver.size(), ended);
+                        samplereceiver.data()), samplereceiver.size() * sizeof(int16_t),
+                    ended);
 
                 samplereceiver.resize(read);
                 return ended != true;
@@ -781,7 +779,7 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount, bool &ended){
 
             return TotalSize;
         }
-            
+        
         // We need a temporary buffer //
         auto NewBuffer = std::unique_ptr<ReadAudioPacket>(new ReadAudioPacket());
 
@@ -796,7 +794,7 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount, bool &ended){
         {
             LOG_ERROR("Invalid audio stream, converting failed");
             StreamValid = false;
-            ended = true;            
+            ended = true;
             return 0;
         }
                     
@@ -924,21 +922,7 @@ DLLEXPORT int VideoPlayer::OnEvent(Event** event){
 
             LOG_INFO("VideoPlayer: Starting audio playback from the video...");
 
-            // auto err = Pa_StartStream(AudioStream);
-
-            // if(err != paNoError){
-
-            //     UE_LOG(ThriveLog, Error, TEXT("Error starting PortAudio audio stream: %s"),
-            //         ANSI_TO_TCHAR(Pa_GetErrorText(err)));
-
-            //     IsPlayingAudio = true;
-            
-            // } else {
-
-            //     IsPlayingAudio = true;
-
-            //     LOG_LOG("Audio playback started");
-            // }
+            AudioStream->play();
             IsPlayingAudio = true;
         }
 

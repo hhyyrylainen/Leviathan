@@ -20,7 +20,7 @@ bool SoundStream::onGetData(Chunk& data){
     if(!keepPlaying)
         return false;
     
-    data.sampleCount = PlayingAudioData.size();
+    data.sampleCount = PlayingAudioData.size() / 2;
     data.samples = PlayingAudioData.data();
     return true;
 }

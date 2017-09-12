@@ -13,6 +13,13 @@
     Leviathan::Engine::Invoke with a lambda to be ran once the main
     loop checks for ticking again.
 
+    This is also available for scripts and other operations that
+    cannot be called from some method. For example deleting a GUI
+    element from a click handler doesn't work so invoking needs to be
+    done to queue the delete for later.
+
+    \see \ref angelscript_reference_invoking
+
     The recommended way to use this is to run expensive calculations
     in small pieces or in a QueuedTask and then invoke with the result
     and apply it in the invoke callback which can access all

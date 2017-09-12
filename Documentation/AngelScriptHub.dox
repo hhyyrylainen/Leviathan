@@ -1,9 +1,14 @@
 /*! \page angelscript_main AngelScript reference index
     \tableofcontents
 
+    \todo Split these classes to their own documentation pages
+
     Put a link to AngelScript tutorials here.
 
     Also see the manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
+
+    \section angelscript_common_tasks AngelScript common tasks
+    \subpage eventinscripts Adding a new event type to AngelScript
 
     \section angelscript_reference_list Script class references
     \subsection angelscript_events Events
@@ -15,7 +20,7 @@
         
         int OnChangedControlScheme(GenericEvent@ event){
 
-            NamedVars@ tempvalues = @event.GetNamedVars();
+            NamedVars@ tempvalues = event.GetNamedVars();
             string player = string(tempvalues.GetSingleValueByName("Player"));
             string controlsname = string(tempvalues.GetSingleValueByName("ControlsName"));
         
@@ -29,7 +34,7 @@
         }
         // Could be defined and the following null replaced with it to listen for predefined events
 
-        EventListener@ OnChangedEvents = @EventListener(null, OnChangedControlScheme);
+        EventListener@ OnChangedEvents = EventListener(null, OnChangedControlScheme);
 
         // The only parameter is the name of the GenericEvent to listen for
         OnChangedEvents.RegisterForEvent("GuiChangePLayerControls");
@@ -64,7 +69,7 @@
         int OnChangedControlScheme(GenericEvent@ event){
 
             // Getting the NamedVars //
-            NamedVars@ tempvalues = @event.GetNamedVars();
+            NamedVars@ tempvalues = event.GetNamedVars();
 
             // Getting a value and casting it to a type and assignong it to a variable //
             string player = string(tempvalues.GetSingleValueByName("Player"));
@@ -81,11 +86,11 @@
     To fire an event from AngelScript you first need to create an event object
     \code
         // Create a GenericEvent like this //
-        GenericEvent@ generic = @GenericEvent("NameOfEvent");
+        GenericEvent@ generic = GenericEvent("NameOfEvent");
 
         // Create an Event like this //
         // Note: only events which don't take additional data parameters can be created like this
-        Event@ event = @Event(EVENT_TYPE_INIT);
+        Event@ event = Event(EVENT_TYPE_INIT);
 
     \endcode
     \see Leviathan::EVENT_TYPE for possible types
@@ -101,7 +106,7 @@
     To set the data contained within a GenericEvent, you first need to access the event's Leviathan::NamedVars
 
     \code
-        NamedVars@ vars = @generic.GetNamedVars();
+        NamedVars@ vars = generic.GetNamedVars();
     \endcode
 
     And add variables there.
@@ -114,7 +119,7 @@
     Single values (nonlist values) can be accessed with `GetSingleValueByName`
 
     \code
-        ScriptSafeVariableBlock@ var = @vars.GetSingleValueByName("PlayerName");
+        ScriptSafeVariableBlock@ var = vars.GetSingleValueByName("PlayerName");
     \endcode
     \see Leviathan::NamedVars::GetScriptCompatibleValue
 
@@ -129,7 +134,7 @@
     To add values first create a ScriptSafeVariableBlock.
 
     \code
-        ScriptSafeVariableBlock@ block = @ScriptSafeVariableBlock("PlayerName", "Boost");
+        ScriptSafeVariableBlock@ block = ScriptSafeVariableBlock("PlayerName", "Boost");
     \endcode
     \see \ref angelscript_scriptsafevariableblock
 
@@ -149,7 +154,7 @@
     First parameter is the name and the second is the value. Supported types are: string, int, float, double, int8, bool.
 
     \code
-        ScriptSafeVariableBlock@ var = @ScriptSafeVariableBlock("My value!", 2.5f);
+        ScriptSafeVariableBlock@ var = ScriptSafeVariableBlock("My value!", 2.5f);
     \endcode
 
     \subsubsection angelscript_scriptsafevariableblock_getting_primites Getting primitive values
@@ -162,7 +167,52 @@
         int8 initial = int8(var);        
     \endcode
 
+
+    \subsection angelscript_reference_invoking Invoking From Scripts
+    
+    Invoking is used to queue some function or method to be ran
+    later. This can be done from scripts like this:
+    \code
+        void Callback(){
+
+             LOG_INFO("In callback");
+        }
+
+        GetEngine().Invoke(@Callback);
+    \endcode
+
+    \subsection angelscript_reference_delegate Delegates in scripts
+
+    Registering to a delegate and firing it works like this:
+
+    \code
+        // Receive this Delegate from somewhere
+        Delegate@ delegate;
+
+        void Callback(NamedVars@ variables){
+             // Read provided values from variables and do something
+             LOG_INFO("Delegate fired");
+        }
+
+        // Registering
+        delegate.Register(@Callback);
+
+        // Firing the delegate
+        NamedVars@ variables = NamedVars();
+        // Add parameters to variables if needed
+        // variables.AddValue(ScriptSafeVariableBlock("param1", 1));
+        delegate.Call(variables);
+    \endcode
+
+    \note Some C++ classes directly own a Leviathan::Delegate. This
+    means that handles to delegates are not safe to store. So register
+    your callback and let go of the handle.
+
     \subsection angelscript_ainetworkcache AINetworkCache in scripts
+    
+    \deprecated This is not the recommended way to do things.
+    Use Leviathan::SyncedVariables instead and run the AI only on the server.
+    
     \subsubsection angelscript_ainetworkcache_setting_values Setting and reading values
     Getting a variable with a name is done by calling `GetVariable` on the global instance of Leviathan::AINetworkCache.
     \code
@@ -178,10 +228,6 @@
         GetAINetworkCache().SetVariable(ScriptSafeVariableBlock("Name of value", "COMMAND_SHOOT"));
     \endcode
     
-
     \see Leviathan::AINetworkCache \ref angelscript_scriptsafevariableblock
-
-    \section angelscript_common_tasks AngelScript common tasks
-    \ref eventinscripts Adding a new event type to AngelScript
     
 */

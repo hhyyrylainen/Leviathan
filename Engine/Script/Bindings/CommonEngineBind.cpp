@@ -100,6 +100,23 @@ static NamedVars* NamedVarsFactory(){
     return new NamedVars();
 }
 
+static void InvokeProxy(Engine* obj, asIScriptFunction* callback){
+
+    obj->Invoke([=](){
+
+            try{
+                ScriptRunningSetup ssetup;
+                ScriptExecutor::Get()->RunSetUp(callback, &ssetup);
+            } catch(...){
+
+                LOG_ERROR("Invoke proxy passing exception up the call chain");
+                callback->Release();
+                throw;
+            }
+            callback->Release();
+        });
+}
+
 
 // ------------------------------------ //
 // Start of the actual bind
@@ -382,9 +399,18 @@ bool BindEngine(asIScriptEngine* engine){
             asMETHOD(Engine, IsOnMainThread), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
-    }    
+    }
 
-    // TODO: bind Invoke
+    if(engine->RegisterFuncdef("void InvokeCallbackFunc()") < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Engine",
+            "void Invoke(InvokeCallbackFunc@ callback)",
+            asFUNCTION(InvokeProxy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
     
     return true;
 }

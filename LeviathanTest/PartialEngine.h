@@ -112,6 +112,8 @@ public:
 
             IDDefaultInstance = new IDFactory();
         }
+
+        instance = this;
     }
 
     ~PartialEngine(){

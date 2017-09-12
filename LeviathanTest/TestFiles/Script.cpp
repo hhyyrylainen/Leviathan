@@ -20,7 +20,7 @@ TEST_CASE("Basic script running", "[script]"){
 	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
-    auto sourcecode = std::make_shared<ScriptSourceFileData>("memory_test_script", 1,
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
         "int TestFunction(int Val1, int Val2){\n"
 		"// do some time consuming stuff //\n"
 		"Val1 *= Val1+Val2 % 15;\n"
@@ -54,4 +54,45 @@ TEST_CASE("Basic script running", "[script]"){
     CHECK(Value == 42);
 
 	mod->DeleteThisModule();
+}
+
+TEST_CASE("Creating events in scripts", "[script][event]"){
+
+    PartialEngine<false> engine;
+    
+    IDFactory ids;
+    ScriptExecutor exec;
+
+	// setup the script //
+	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "int TestFunction(){\n"
+        "    GenericEvent@ event = GenericEvent(\"TestEvent\");\n"
+        "\n"
+        "    NamedVars@ tempvalues = event.GetNamedVars();\n"
+        "    NamedVars@ otherVals = @event.GetNamedVars();\n"        
+        "\n"
+        "    return 12;\n"
+        "}"
+    );
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup;
+    ssetup.SetEntrypoint("TestFunction").SetUseFullDeclaration(false);
+
+    std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+
+    CHECK(ssetup.ScriptExisted == true);
+
+    // check did it exist //
+    int Value = *returned;
+
+    CHECK(Value == 12);
 }

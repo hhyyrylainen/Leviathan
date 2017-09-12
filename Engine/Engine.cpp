@@ -842,6 +842,9 @@ void Engine::Tick(){
             _NetworkHandler->UpdateAllConnections();
         
     }
+
+    // And handle invokes //
+    ProcessInvokes();
     
     GUARD_LOCK();
 

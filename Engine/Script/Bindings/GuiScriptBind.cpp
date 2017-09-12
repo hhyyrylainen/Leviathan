@@ -185,6 +185,13 @@ CEGUI::Window* CEGUIWindowCreateAndAddChild(CEGUI::Window* parent,
     return newWindow;
 }
 
+void CEGUIWindowDestroyChild(CEGUI::Window* parent, const std::string &widgetname){
+    if(!parent)
+        return;
+
+    parent->destroyChild(widgetname);
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan{
@@ -294,7 +301,14 @@ bool BindCEGUI(asIScriptEngine* engine){
             asFUNCTION(CEGUIWindowCreateAndAddChild), asCALL_CDECL_OBJFIRST) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
-    }    
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+            "void DestroyChild(const string &in name)",
+            asFUNCTION(CEGUIWindowDestroyChild), asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     if(engine->RegisterObjectMethod("Window",
             "void SetSize(float width, float widthpixels, float height, float heightpixels)", 

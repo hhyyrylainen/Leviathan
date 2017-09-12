@@ -1,0 +1,98 @@
+/*! \page angelscript_tutorial_handles AngelScript Handles Tutorial
+    
+    This is a quick reference to how to use AngelScript handles. For a
+    more indepth tutorial see the official AngelScript manual.
+
+    \section angelscript_tutorial_handles_what What Are Handles?
+
+    Handles in AngelScript are like pointers in C++. This means that
+    class types can be value types `MyClass` or handles to the class
+    `MyClass@`, just like in C++. Some languages implicitly have
+    handles like Java and C#, but in AngelScript they need to be
+    explicitly defined by adding `@` to the declaration.
+
+    Comparing handles is done with the `is` operator like this:
+    `if(value is other)`
+
+    Assigning handles is done by prefixing the variable with `@`, like
+    this: `@value = @newValue` or `@value = MethodThatReturnsHandle()`.
+
+    Checking for an empty handle is done like this: `if(value is null)`.
+
+    This allows calling the assignment operator on object
+    handles. `value = newValue` calls the assignment operator, even if
+    both value and newValue are handles. See above for how to actually
+    change the handle values.
+
+    \section angelscript_tutorial_handles_when When To Use Handles
+
+    Basically handles are used with C++ classes that aren't registered
+    as value types (only math types like Leviathan::Float3 are
+    registered as value types).
+
+    In AngelScript code they are used whenever pointers or smart
+    pointers would be used in C++. Ie whenever a reference to a class
+    needs to be shared or the variable should be able to be `null`.
+    
+    \section angelscript_tutorial_handles_style Style Choices
+
+    In many parts of code the `@` symbol isn't required, so it should
+    not be written then because the context of the statement provides
+    enough information to recognize it as a handle operation.
+
+    For example this is good style:
+
+    \code
+
+        NamedVars@ values = NamedVars();
+
+        if(values is null)
+             return;
+
+        NamedVars@ other;
+
+        if(values is other)
+             return;
+
+        @other = @values;
+
+        NamedVars@ GetVars(){
+
+             return values;
+        }
+
+        NamedVars@ thirdVariable = GetVars();
+
+        @other = null;
+
+    \endcode
+
+    And this is *bad* style, DON'T DO THIS:
+    
+    \code
+
+        NamedVars@ values = @NamedVars();
+
+        if(@values is null)
+             return;
+
+        NamedVars@ other;
+
+        if(@values is @other)
+             return;
+
+        @other = @values;
+
+        NamedVars@ GetVars(){
+
+             return @values;
+        }
+
+        NamedVars@ thirdVariable = GetVars();
+
+        @other = null;
+
+    \endcode
+
+
+*/

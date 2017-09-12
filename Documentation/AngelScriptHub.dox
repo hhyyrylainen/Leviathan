@@ -1,16 +1,17 @@
 /*! \page angelscript_main AngelScript reference index
     \tableofcontents
 
-    \todo Split these classes to their own documentation pages
+    \section angelscript_tutorials AngelScript Tutorials
 
-    Put a link to AngelScript tutorials here.
+    \subpage angelscript_tutorial_handles
 
-    Also see the manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
+    Also see the official  manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
 
     \section angelscript_common_tasks AngelScript common tasks
     \subpage eventinscripts Adding a new event type to AngelScript
 
     \section angelscript_reference_list Script class references
+    \todo Split these classes to their own documentation pages
     \subsection angelscript_events Events
 
     \subsubsection angelscript_event_listening Listening for events in scripts

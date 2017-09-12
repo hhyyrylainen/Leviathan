@@ -1092,6 +1092,50 @@ DLLEXPORT void Engine::ReportClosedWindow(Lock &guard,
     // Didn't find the target //
     Logger::Get()->Error("Engine: couldn't find closing GraphicalInputEntity");
 }
+
+DLLEXPORT void Engine::MarkQuit(){
+
+    if(Owner)
+        Owner->MarkAsClosing();
+}
+// ------------------------------------ //
+DLLEXPORT void Engine::Invoke(const std::function<void()> &function){
+
+    RecursiveLock lock(InvokeLock);
+    InvokeQueue.push_back(function);
+}
+
+void Engine::ProcessInvokes(){
+
+    RecursiveLock lock(InvokeLock);
+
+    while(!InvokeQueue.empty()){
+
+        const auto& func = InvokeQueue.front();
+
+        // Recursive mutex allows the invoke to call extra invokes
+        func();
+
+        InvokeQueue.pop_front();
+    }
+}
+
+DLLEXPORT void Engine::RunOnMainThread(const std::function<void()> &function){
+
+    if(!IsOnMainThread()){
+
+        Invoke(function);
+    } else {
+
+        function();
+    }
+}
+
+DLLEXPORT inline void Engine::AssertIfNotMainThread() const{
+
+    LEVIATHAN_ASSERT(IsOnMainThread(), "AssertIfNotMainThread: not on main thread");
+};
+
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow,
     std::shared_ptr<ViewerCameraPos> worldscamera)
@@ -1212,11 +1256,6 @@ void Engine::_AdjustTickNumber(int tickamount, bool absolute){
     TickCount = tickamount;
 
     Logger::Get()->Info("Engine: tick set to "+Convert::ToString(TickCount));
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::Engine::DumpMemoryLeaks() {
-
-    LOG_INFO("TODO: memory leak detection, or remove this function");
 }
 // ------------------------------------ //
 int TestCrash(int writenum){
@@ -1490,8 +1529,4 @@ bool Engine::_ReceiveConsoleInput(const std::string &command){
     return PreReleaseWaiting;
 }
 // ------------------------------------ //
-DLLEXPORT void Engine::MarkQuit(){
 
-    if(Owner)
-        Owner->MarkAsClosing();
-}

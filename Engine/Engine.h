@@ -12,6 +12,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <list>
 
 
 namespace Leviathan{
@@ -83,18 +84,16 @@ public:
     //! \brief Runs function on the main thread before the next tick
     //!
     //! This is provided to be able to 
-    DLLEXPORT void Invoke(const std::function<void(Engine&)> &function){}
-
-    DLLEXPORT void Invoke(const std::function<void()> &function){}
+    DLLEXPORT void Invoke(const std::function<void()> &function);
 
     //! \brief Runs the function now if on the main thread otherwise calls Invoke
-    DLLEXPORT void RunOnMainThread(const std::function<void()> &function){}
+    DLLEXPORT void RunOnMainThread(const std::function<void()> &function);
 
     //! \brief Returns true if called on the main thread
     DLLEXPORT bool IsOnMainThread() const{LEVIATHAN_ASSERT(false, "TODO");}
 
     //! \brief Asserts if not called on the main thread
-    DLLEXPORT inline void AssertIfNotMainThread() const{};
+    DLLEXPORT inline void AssertIfNotMainThread() const;
     
 
     // ------------------------------------ //
@@ -196,6 +195,9 @@ protected:
     //! \note Should only be called on the client as this may break some simulations
     void _AdjustTickNumber(int tickamount, bool absolute);
 
+    //! \brief Handles InvokeQueue
+    void ProcessInvokes();
+
     //! Console input comes through this
     bool _ReceiveConsoleInput(const std::string &command);
 
@@ -280,6 +282,10 @@ protected:
     // Marks that the Engine has already done prerelease //
     bool PreReleaseCompleted = false;
 
+
+    // Invoke store //
+    RecursiveMutex InvokeLock;
+    std::list<std::function<void()>> InvokeQueue;
 
     // Stores the command line before running it //
     std::vector<std::unique_ptr<std::string>> PassedCommands;

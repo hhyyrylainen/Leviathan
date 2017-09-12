@@ -27,6 +27,8 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/GuiTests.cpp
     TestFiles/Delegate.cpp
     TestFiles/Task.cpp
+
+    TestFiles/CoreEngineTests.cpp
     )
 else()
   # Just a few tests required

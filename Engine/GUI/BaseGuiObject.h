@@ -100,7 +100,7 @@ protected:
 
 
     //! \brief Clears CEGUIRegisteredEvents and unsubscribes from all
-    void _UnsubscribeAllEvents();
+    void _UnsubscribeAllEvents(Lock &guard);
 
 
     //! \brief Calls the script for a specific CEGUI event listener

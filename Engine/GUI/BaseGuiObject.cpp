@@ -29,13 +29,13 @@ DLLEXPORT BaseGuiObject::~BaseGuiObject(){
 
 DLLEXPORT void BaseGuiObject::ReleaseData(){
 
-	// Unregister events to avoid access violations //
-	_UnsubscribeAllEvents();
-
 	// Unregister all non-CEGUI events //
 	UnRegisterAllEvents();
 
 	GUARD_LOCK();
+
+    // Unregister events to avoid access violations //
+	_UnsubscribeAllEvents(guard);
 
 	_LeaveBondBridge();
 
@@ -417,8 +417,8 @@ bool BaseGuiObject::_HookCEGUIEvent(const std::string &listenername){
 	return true;
 }
 
-void BaseGuiObject::_UnsubscribeAllEvents(){
-	GUARD_LOCK();
+void BaseGuiObject::_UnsubscribeAllEvents(Lock &guard){
+
 	// Loop an disconnect them all //
 	for(auto iter = CEGUIRegisteredEvents.begin(); iter != CEGUIRegisteredEvents.end();
         ++iter)
@@ -482,7 +482,7 @@ bool BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){
         "BaseGuiObject received destruction notification for unsubscribed window");
 
 	// This might be required to not leak memory //
-	_UnsubscribeAllEvents();
+	_UnsubscribeAllEvents(guard);
 
 	TargetElement = nullptr;
 

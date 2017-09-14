@@ -77,12 +77,21 @@ else()
     "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
     "Common/DataStoring/DataStore.cpp" "Common/DataStoring/DataStore.h"
     )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.cpp"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
+    )
   
   set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
     "Entities/Components.cpp" "Entities/Components.h"
     "Entities/Component.h" "Entities/EntityCommon.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
+    "Generated/StandardWorld.h" "Generated/StandardWorld.cpp"
     )
   
   file(GLOB GroupApplication "Application/AppDefine.cpp" "Application/AppDefine.h"
@@ -99,12 +108,14 @@ else()
     COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
     DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
 
   add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
     COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
     DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
 
   

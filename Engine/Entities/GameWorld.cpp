@@ -30,7 +30,6 @@
 #include "Exceptions.h"
 
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld(NETWORKED_TYPE type) :
     ID(IDFactory::GetID())
@@ -78,8 +77,6 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 
     (*WorldDestroyed) = true;
     
-	GUARD_LOCK();
-    
     ReceivingPlayers.clear();
     
 	// release objects //
@@ -87,20 +84,8 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 
     // As all objects are just pointers to components we can just dump the objects
     // and once the component pools are released
-    Objects.clear();
-
-    // Clear all nodes //
-
-    // Clear all components //
-    ComponentPosition.Clear();
-    ComponentRenderNode.Clear();
-    ComponentSendable.Clear();
-    ComponentModel.Clear();
-    ComponentPhysics.Clear();
-    ComponentBoxGeometry.Clear();
-    ComponentManualObject.Clear();
-    ComponentReceived.Clear();
-    
+    ClearObjects();
+        
 	if(GraphicalMode){
 		// TODO: notify our window that it no longer has a world workspace
 		LinkedToWindow = NULL;
@@ -159,7 +144,7 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
 		WorldSceneCamera, "WorldsWorkspace", true, 0);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const string &materialname){
+DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const std::string &materialname){
 	try{
 		WorldsScene->setSkyBox(true, materialname);
 	}
@@ -208,9 +193,8 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight(){
 }
 
 DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed,
-    ViewerCameraPos* camerapos, Lock &guard)
+    ViewerCameraPos* camerapos)
 {
-	VerifyLock(guard);
 	// Skip if no camera //
 	if(camerapos == NULL)
 		return;
@@ -258,8 +242,6 @@ DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection &connection) const {
 
 DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply){
 
-    GUARD_LOCK();
-    
     // Skip if already added //
     for(auto& player : ReceivingPlayers){
 
@@ -285,71 +267,70 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
     }
 
     // Update the position data //
-    UpdatePlayersPositionData(guard, *ply);
+    UpdatePlayersPositionData(*ply);
 
     // Start sending initial update //
     Logger::Get()->Info("Starting to send "+Convert::ToString(Objects.size())+" to player");
     
     // Now we can queue all objects for sending //
     // TODO: make sure that all objects are sent
-    ThreadingManager::Get()->QueueTask(
-        new RepeatCountedTask(std::bind<void>([](
-                    std::shared_ptr<Connection> connection,
-                    std::shared_ptr<ConnectedPlayer> processingobject, GameWorld* world,
-                    std::shared_ptr<bool> WorldInvalid)
-                -> void
-        {
-            // Get the next object //
-            RepeatCountedTask* task =
-                dynamic_cast<RepeatCountedTask*>(TaskThread::GetThreadSpecificThreadObject()->
-                QuickTaskAccess.get());
+    // TODO: redo this inside the world tick
+    // ThreadingManager::Get()->QueueTask(
+    //     new RepeatCountedTask(std::bind<void>([](
+    //                 std::shared_ptr<Connection> connection,
+    //                 std::shared_ptr<ConnectedPlayer> processingobject, GameWorld* world,
+    //                 std::shared_ptr<bool> WorldInvalid)
+    //             -> void
+    //     {
+    //         // Get the next object //
+    //         RepeatCountedTask* task =
+    //             dynamic_cast<RepeatCountedTask*>(TaskThread::GetThreadSpecificThreadObject()->
+    //             QuickTaskAccess.get());
 
-            LEVIATHAN_ASSERT(task, "wrong type passed to our task");
+    //         LEVIATHAN_ASSERT(task, "wrong type passed to our task");
 
-            size_t num = task->GetRepeatCount();
+    //         size_t num = task->GetRepeatCount();
 
-            if(*WorldInvalid){
+    //         if(*WorldInvalid){
 
-            taskstopprocessingobjectsforinitialsynclabel:
+    //         taskstopprocessingobjectsforinitialsynclabel:
                 
-                // Stop processing //
-                task->StopRepeating();
-                return;
-            }
+    //             // Stop processing //
+    //             task->StopRepeating();
+    //             return;
+    //         }
             
-            GUARD_LOCK_OTHER(world);
+    //         // Stop if out of bounds //
+    //         if(num >= world->Objects.size()){
 
-            // Stop if out of bounds //
-            if(num >= world->Objects.size()){
+    //             goto taskstopprocessingobjectsforinitialsynclabel;
+    //         }
 
-                goto taskstopprocessingobjectsforinitialsynclabel;
-            }
+    //         // Get the object //
+    //         auto tosend = world->Objects[num];
 
-            // Get the object //
-            auto tosend = world->Objects[num];
+    //         // Skip if shouldn't send //
+    //         try{
 
-            // Skip if shouldn't send //
-            try{
+    //             auto& position = world->GetComponent<Position>(tosend);
 
-                auto& position = world->GetComponent<Position>(tosend);
+    //             if(!world->ShouldPlayerReceiveObject(position, *connection)){
 
-                if(!world->ShouldPlayerReceiveObject(position, *connection)){
-
-                    return;
-                }
+    //                 return;
+    //             }
                 
-            } catch(const NotFound&){
+    //         } catch(const NotFound&){
 
-                // No position, should probably always send //
-            }
+    //             // No position, should probably always send //
+    //         }
 
 
-            // Send it //
-            world->SendObjectToConnection(guard, tosend, connection);
+    //         // Send it //
+    //         world->SendObjectToConnection(guard, tosend, connection);
 
-            return;
+    //         return;
             
-        }, ply->GetConnection(), ply, this, WorldDestroyed), Objects.size()));
+    //     }, ply->GetConnection(), ply, this, WorldDestroyed), Objects.size()));
 }
 
 DLLEXPORT void GameWorld::SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
@@ -377,17 +358,15 @@ DLLEXPORT size_t Leviathan::GameWorld::GetObjectCount() const
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
 
-    GUARD_LOCK();
-
     TickNumber = currenttick;
 
     // Apply queued packets //
-    ApplyQueuedPackets(guard);
+    ApplyQueuedPackets();
 
-    _HandleDelayedDelete(guard);
+    _HandleDelayedDelete();
 
     // All required nodes for entities are created //
-    HandleAdded(guard);
+    HandleAdded();
 
     // Remove closed player connections //
 
@@ -396,8 +375,6 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
         if(!(*iter)->GetConnection()->IsValidForSend()){
 
             DEBUG_BREAK;
-
-            
             
         } else {
 
@@ -410,7 +387,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
         
         if(IsOnServer){
     
-            _ApplyEntityUpdatePackets(guard);
+            _ApplyEntityUpdatePackets();
             _PhysicalWorld->SimulateWorldFixed(TICKSPEED, 2);
  
         } else {
@@ -440,7 +417,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
     }
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::HandleAdded(Lock &guard){
+DLLEXPORT void GameWorld::HandleAdded(){
 
     // Construct new nodes based on components values //
     // CreateNodes automatically removes the used onces from the Added in component pool
@@ -510,7 +487,7 @@ DLLEXPORT float Leviathan::GameWorld::GetTickProgress() const {
     return progress < 1.f ? progress : 1.f;
 }
 // ------------------ Object managing ------------------ //
-DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){
+DLLEXPORT ObjectID GameWorld::CreateEntity(){
 
     auto id = static_cast<ObjectID>(IDFactory::GetID());
 
@@ -519,7 +496,7 @@ DLLEXPORT ObjectID GameWorld::CreateEntity(Lock &guard){
     return id;
 }
 
-DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
+DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
 
     if(IsOnServer){
 
@@ -548,7 +525,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
             }
 
             // TODO: pass issendable here to avoid an extra lookup
-            if(!SendObjectToConnection(guard, id, safe)){
+            if(!SendObjectToConnection(id, safe)){
 
                 Logger::Get()->Warning("GameWorld: CreateEntity: failed to send "
                     "object to player (" + (*iter)->GetNickname() + ")");
@@ -564,23 +541,17 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(Lock &guard, ObjectID id){
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::ClearObjects(Lock &guard){
-	VerifyLock(guard);
+DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
 
     // release objects //
     // TODO: allow objects to do something
     Objects.clear();
+    
+    // Clear all nodes //
+    _ResetSystems();
 
-    ComponentPosition.Clear();
-    ComponentRenderNode.Clear();
-    ComponentSendable.Clear();
-    ComponentModel.Clear();
-    ComponentPhysics.Clear();
-    ComponentBoxGeometry.Clear();
-    ComponentManualObject.Clear();
-    ComponentReceived.Clear();
-
-    _RenderingPositionSystem.Clear();
+    // Clear all components //
+    _ResetComponents();
 
     // Notify everybody that all entities are discarded //
     for(auto iter = ReceivingPlayers.begin(); iter != ReceivingPlayers.end(); ++iter){
@@ -603,21 +574,20 @@ DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3 &pos){
 	return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const string &name){
+DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const std::string &name){
 
     return PhysicsMaterialManager::Get()->GetMaterialIDForWorld(name,
         _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyObject(ObjectID id){
-    GUARD_LOCK();
 
     auto end = Objects.end();
 	for(auto iter = Objects.begin(); iter != end; ++iter){
         
 		if(*iter == id){
 
-            _DoDestroy(guard, id);
+            _DoDestroy(id);
 			Objects.erase(iter);
             
 			return;
@@ -631,12 +601,12 @@ DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(ObjectID id) {
 	DelayedDeleteIDS.push_back(id);
 }
 
-void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
+void Leviathan::GameWorld::_HandleDelayedDelete(){
 
 	// We might want to delete everything //
 	if(ClearAllObjects){
 
-		ClearObjects(guard);
+		ClearObjects();
 
 		ClearAllObjects = false;
 
@@ -675,7 +645,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 
 		if(delthis){
 
-            _DoDestroy(guard, curid);
+            _DoDestroy(curid);
 			iter = Objects.erase(iter);
             
 			// Check for end //
@@ -688,25 +658,22 @@ void Leviathan::GameWorld::_HandleDelayedDelete(Lock &guard){
 	}
 }
 
-void GameWorld::_DoDestroy(Lock &guard, ObjectID id){
+void GameWorld::_DoDestroy(ObjectID id){
 
-    Logger::Get()->Info("GameWorld destroying object "+Convert::ToString(id));
+    Logger::Get()->Info("GameWorld destroying object " + Convert::ToString(id));
 
     if(IsOnServer)
-        _ReportEntityDestruction(guard, id);
+        _ReportEntityDestruction(id);
 
     // TODO: find a better way to do this
-    RemoveComponent<Position>(id);
-    RemoveComponent<RenderNode>(id);
-    RemoveComponent<Sendable>(id);
-    RemoveComponent<Model>(id);
-    RemoveComponent<Physics>(id);
-    RemoveComponent<BoxGeometry>(id);
-    RemoveComponent<ManualObject>(id);
-    RemoveComponent<Received>(id);
+    DestroyAllIn(id);
 }
 
-void Leviathan::GameWorld::_ReportEntityDestruction(Lock &guard, ObjectID id){
+DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id){
+    
+}
+
+void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id){
 
      SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
          RECEIVE_GUARANTEE::Critical);
@@ -943,8 +910,6 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data){
 
-    GUARD_LOCK();
-
     Logger::Get()->Info("GameWorld("+Convert::ToString(ID)+"): frozen state updated, now: "+
         Convert::ToString<int>(data->Frozen)+", tick: "+Convert::ToString(data->TickNumber)+
         " (our tick:"+Convert::ToString(TickNumber)+")");
@@ -1047,7 +1012,9 @@ DLLEXPORT Float3 Leviathan::RayCastHitEntity::GetPosition(){
 	return HitLocation;
 }
 
-DLLEXPORT RayCastHitEntity& Leviathan::RayCastHitEntity::operator=(const RayCastHitEntity& other){
+DLLEXPORT RayCastHitEntity& Leviathan::RayCastHitEntity::operator=(
+    const RayCastHitEntity& other)
+{
 	HitEntity = other.HitEntity;
 	HitVariable = other.HitVariable;
 	HitLocation = other.HitLocation;
@@ -1055,7 +1022,9 @@ DLLEXPORT RayCastHitEntity& Leviathan::RayCastHitEntity::operator=(const RayCast
 	return *this;
 }
 // ------------------ RayCastData ------------------ //
-DLLEXPORT Leviathan::RayCastData::RayCastData(int maxcount, const Float3 &from, const Float3 &to) : MaxCount(maxcount), 
+DLLEXPORT Leviathan::RayCastData::RayCastData(int maxcount, const Float3 &from,
+    const Float3 &to) :
+    MaxCount(maxcount), 
 	// Formula based on helpful guy on Newton forums
 	BaseHitLocationCalcVar(from+(to-from))
 {
@@ -1067,45 +1036,4 @@ DLLEXPORT Leviathan::RayCastData::~RayCastData(){
 	// We want to release all hit data //
 	SAFE_RELEASE_VECTOR(HitEntities);
 }
-// ------------------ Destroy functions ------------------ //
-#define BASIC_DESTROY_FUNC(x) template<> DLLEXPORT bool \
-GameWorld::RemoveComponent<x>(ObjectID id) {\
-    try {\
-        Component ## x.Destroy(id, false); \
-        _OnComponentDestroyed(id, Component::GetTypeFromClass<x>());\
-        return true;\
-    }\
-    catch (...) {\
-        return false;\
-    }\
-}
 
-BASIC_DESTROY_FUNC(Position);
-BASIC_DESTROY_FUNC(RenderNode);
-BASIC_DESTROY_FUNC(Sendable);
-BASIC_DESTROY_FUNC(Physics);
-BASIC_DESTROY_FUNC(BoxGeometry);
-BASIC_DESTROY_FUNC(Model);
-BASIC_DESTROY_FUNC(Received);
-BASIC_DESTROY_FUNC(ManualObject);
-
-#undef ADDCOMPONENTFUNCTIONSTOGAMEWORLD
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder) \
-    template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id){ \
-                                                                        \
-        auto component = holder.Find(id);                               \
-        if(!component)                                                  \
-            throw NotFound("Component for entity with id was not found"); \
-                                                                        \
-        return *component;                                              \
-    }                                                                   
-    
-
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject);

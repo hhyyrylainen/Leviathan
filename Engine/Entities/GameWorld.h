@@ -67,8 +67,12 @@ struct RayCastData{
 };
 
 //! \brief Represents a world that contains entities
-//! \note Only ConnectedPlayer object may be linked with the world through Notifier
-class GameWorld : public ThreadSafe{
+//!
+//! This is the base class from which worlds that support different components are derived from
+//! Custom worls should derive from StandardWorld which has all of the standard components
+//! supported. See the GenerateStandardWorld.rb file to figure out how to generate world
+//! classes
+class GameWorld{
 public:
     DLLEXPORT GameWorld(NETWORKED_TYPE type);
     DLLEXPORT ~GameWorld();
@@ -90,7 +94,7 @@ public:
     DLLEXPORT void MarkForClear();
 
     // clears all objects from the world //
-    DLLEXPORT void ClearObjects(Lock &guard);
+    DLLEXPORT void ClearObjects();
 
     //! \brief Returns the number of ObjectIDs this world keeps track of
     //! \note There may actually be more objects as it is possible to create components
@@ -111,14 +115,14 @@ public:
     DLLEXPORT float GetTickProgress() const;
 
     //! \brief Handles added entities and components
-    DLLEXPORT void HandleAdded(Lock &guard);
+    DLLEXPORT void HandleAdded();
 
     //! \brief Called by engine before frame rendering
     //! \todo Only call on worlds that contain cameras that are connected
     //! to GraphicalInputEntities
     DLLEXPORT void RunFrameRenderSystems(int tick, int timeintick);
-        
-
+    
+    
     //! \brief Fetches the physical material ID from the material manager
     DLLEXPORT int GetPhysicalMaterial(const std::string &name);
 
@@ -128,39 +132,16 @@ public:
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();
 
-    DLLEXPORT FORCE_INLINE void UpdateCameraLocation(int mspassed,
-        ViewerCameraPos* camerapos)
-    {
-        GUARD_LOCK();
-        UpdateCameraLocation(mspassed, camerapos, guard);
-    }
-        
-    DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos,
-        Lock &guard);
+    DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos);
 
 
     //! \brief Casts a ray from point along a vector and returns the first physical
     //! object it hits
     //! \warning You need to call Release on the returned object once done
-    FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from,
-        const Float3 &to)
-    {
-        GUARD_LOCK();
-        return CastRayGetFirstHit(from, to, guard);
-    }
-
-    //! \brief Actual implementation of CastRayGetFirsHit
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to,
-        Lock &guard);
+    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to);
 
     //! \brief Creates a new empty entity and returns its id
-    DLLEXPORT ObjectID CreateEntity(Lock &guard);
-
-    inline ObjectID CreateEntity(){
-
-        GUARD_LOCK();
-        return CreateEntity(guard);
-    }
+    DLLEXPORT ObjectID CreateEntity();
 
     //! \brief Destroys an entity and all of its components
     //! \todo Make this less expensive
@@ -175,34 +156,12 @@ public:
     //! \note Clients should also call this function
     //! \todo Allow to set the world to queue objects and send them in
     //!big bunches to players
-    DLLEXPORT void NotifyEntityCreate(Lock &guard, ObjectID id);
-
-    inline void NotifyEntityCreate(ObjectID id){
-
-        GUARD_LOCK();
-        NotifyEntityCreate(guard, id);
-    }
+    DLLEXPORT void NotifyEntityCreate(ObjectID id);
 
 
-    //! \brief Returns a reference to a component of wanted type
-    //! \exception NotFound when the specified entity doesn't have a component of the wanted
-    //! type
-    template<class ComponentType>
-        ComponentType& GetComponent(ObjectID id){
-            
-        static_assert(std::is_same<ComponentType, std::false_type>::value,
-            "Trying to use a component type that is missing a template specialization");
-    }
+    //! \brief Removes all components from an entity
+    DLLEXPORT virtual void DestroyAllIn(ObjectID id);
 
-    //! \brief Destroys a component belonging to an entity
-    //! \return True when destroyed, false if the entity didn't have a component of this type
-    template<class ComponentType>
-        bool RemoveComponent(ObjectID id){
-
-        static_assert(std::is_same<ComponentType, std::false_type>::value,
-            "Trying to use a component type that is missing a template specialization");
-        return false;
-    }
 
     //! \brief Creates a new component for entity
     //! \exception Exception if the component failed to init or it already exists
@@ -238,13 +197,7 @@ public:
     }
 
     //! \todo Synchronize this over the network
-    DLLEXPORT void SetWorldPhysicsFrozenState(Lock &guard, bool frozen);
-
-    inline void SetWorldPhysicsFrozenState(bool frozen){
-
-        GUARD_LOCK();
-        SetWorldPhysicsFrozenState(guard, frozen);
-    }
+    DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 
     // Ray callbacks //
     static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
@@ -275,7 +228,7 @@ public:
     //! \brief Sends an object to a connection and sets everything up
     //! \post The connection will receive updates from the object
     //! \return True when a packet was sent false otherwise
-    DLLEXPORT bool SendObjectToConnection(Lock &guard, ObjectID obj,
+    DLLEXPORT bool SendObjectToConnection(ObjectID obj,
         std::shared_ptr<Connection> connection);
         
     //! \brief Creates a new entity from initial entity response
@@ -300,37 +253,44 @@ public:
     DLLEXPORT void HandleWorldFrozenPacket(ResponseWorldFrozen* data);
 
     //! \brief Applies packets that have been received after the last call to this
-    DLLEXPORT void ApplyQueuedPackets(Lock &guard);
+    DLLEXPORT void ApplyQueuedPackets();
 
     //! \brief Called when a component is destroyed, used to destroy nodes
     DLLEXPORT void _OnComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
 
     //! \brief Use this to register destruction events for child classes
     DLLEXPORT virtual void _OnCustomComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
+    
+protected:
 
+    DLLEXPORT virtual void _ResetSystems() = 0;
+
+    DLLEXPORT virtual void _ResetComponents() = 0;
+
+    
 private:
 
     //! \brief Updates a players position info in this world
-    void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer &ply);
+    void UpdatePlayersPositionData(ConnectedPlayer &ply);
 
     void _CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget);
-    void _HandleDelayedDelete(Lock &guard);
+    void _HandleDelayedDelete();
 
     //! \brief Reports an entity deletion to clients
     //! \todo Potentially send these in a big blob
-    void _ReportEntityDestruction(Lock &guard, ObjectID id);
+    void _ReportEntityDestruction(ObjectID id);
 
     //! \brief Implementation of doing actual destroy part of removing an entity
-    void _DoDestroy(Lock &guard, ObjectID id);
+    void _DoDestroy(ObjectID id);
 
     //! \brief Sends sendable updates to all clients
-    void _SendEntityUpdates(Lock &guard, ObjectID id, Sendable &sendable, int tick);
+    void _SendEntityUpdates(ObjectID id, Sendable &sendable, int tick);
 
 
     // Packet apply functions //
-    void _ApplyInitialEntityPackets(Lock &guard);
+    void _ApplyInitialEntityPackets();
 
-    void _ApplyEntityUpdatePackets(Lock &guard);
+    void _ApplyEntityUpdatePackets();
 
     // ------------------------------------ //
     Ogre::Camera* WorldSceneCamera = nullptr;
@@ -418,21 +378,6 @@ private:
     SendableSystem _SendableSystem;
     RenderNodeHiderSystem _RenderNodeHiderSystem;
 };
-
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder)     \
-template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id);  \
-                                                                        \
- template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id);
-    
-
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject);
     
 }
 

@@ -51,13 +51,12 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
         void CreateNodes(
             const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
             const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
-            const ComponentHolder<FirstType> &firstholder, Lock &firstlock,
-            const ComponentHolder<SecondType> &secondholder, Lock &secondlock)
+            const ComponentHolder<FirstType> &firstholder,
+            const ComponentHolder<SecondType> &secondholder)
     {
         static_assert(std::is_same<FirstType, RenderNode>::value, 
             "CreateNodes FirstType is incorrect");
-        TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, firstlock, secondholder, 
-            secondlock);
+        TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, secondholder);
     }
 
  private:

@@ -35,6 +35,10 @@ public:
         
     struct Data : public ComponentData{
 
+        Data(const Float3 &position, const Float4 &orientation) :
+            _Position(position), _Orientation(orientation)
+        {}
+
         Float3 _Position;
         Float4 _Orientation;
     };
@@ -46,6 +50,8 @@ public:
                                         Members(data){}
         
     Data Members;
+    
+    static constexpr auto TYPE = COMPONENT_TYPE::Position;
 };
 
 //! \brief Entity has an Ogre scene node
@@ -63,6 +69,8 @@ public:
 
     //! Sets objects attached to the node to be hidden or visible
     bool Hidden = false;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::RenderNode;
 };
 
 //! \brief Entity is sendable to clients
@@ -119,6 +127,8 @@ public:
 
     //! Clients we have already sent a state to
     std::vector<std::shared_ptr<ActiveConnection>> UpdateReceivers;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::Sendable;
 };
 
 //! \brief Entity is received from a server
@@ -155,6 +165,8 @@ public:
 
     //! If true this uses local control and will send updates to the server
     bool LocallyControlled = false;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::Received;
 };
 
 
@@ -173,6 +185,8 @@ public:
 
     //! Entity created from a box mesh
     Ogre::Item* GraphicalObject = nullptr;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::BoxGeometry;
 };
 
 //! \brief Entity has a model
@@ -188,6 +202,8 @@ public:
 
     //! The entity that has this model's mesh loaded
     Ogre::Item* GraphicalObject = nullptr;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::Model;
 };
 
 
@@ -247,17 +263,17 @@ public:
         Float3 Torque;
     };
 
-    struct Arguments{
+    struct Data{
 
         ObjectID id;
         GameWorld* world;
         Position &updatepos;
         Sendable* updatesendable;
     };
-        
+    
 public:
-        
-    inline Physics(const Arguments &args) : Component(COMPONENT_TYPE::Physics),
+    
+    inline Physics(const Data &args) : Component(COMPONENT_TYPE::Physics),
         World(args.world),
         _Position(args.updatepos), ThisEntity(args.id),
         UpdateSendable(args.updatesendable){}
@@ -363,6 +379,8 @@ public:
     // Optional access to other components that can be used for marking when physics object
     // moves
     Sendable* UpdateSendable = nullptr;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::Physics;
 };
 
 class ManualObject : public Component{
@@ -377,6 +395,8 @@ public:
     //! When not empty the ManualObject has been created into an actual mesh
     //! that needs to be destroyed on release
     std::string CreatedMesh;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::ManualObject;
 };
 
 

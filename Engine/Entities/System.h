@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
@@ -55,11 +55,9 @@ protected:
         ObjectPool<std::tuple<FirstType&, SecondType&>, ObjectID> &Nodes,
         const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
         const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
-        const ComponentHolder<FirstType> &firstholder, Lock &firstlock,
-        const ComponentHolder<SecondType> &secondholder, Lock &secondlock) 
+        const ComponentHolder<FirstType> &firstholder,
+        const ComponentHolder<SecondType> &secondholder) 
     {
-        GUARD_LOCK_OTHER(Nodes);
-
         for (auto iter = firstdata.begin(); iter != firstdata.end(); ++iter) {
 
             SecondType* other = nullptr;
@@ -77,17 +75,17 @@ protected:
             if (!other) {
 
                 // Full search //
-                other = secondholder.Find(secondlock, id);
+                other = secondholder.Find(id);
             }
 
             if (!other)
                 continue;
 
             // Create node if it doesn't exist already //
-            if (Nodes.Find(guard, id))
+            if (Nodes.Find(id))
                 continue;
 
-            Nodes.ConstructNew(guard, id, *std::get<0>(*iter), *other);
+            Nodes.ConstructNew(id, *std::get<0>(*iter), *other);
         }
 
         // And the other way around //
@@ -108,17 +106,17 @@ protected:
             if (!other) {
 
                 // Full search //
-                other = firstholder.Find(firstlock, id);
+                other = firstholder.Find(id);
             }
 
             if (!other)
                 continue;
 
             // Create node if it doesn't exist already //
-            if (Nodes.Find(guard, id))
+            if (Nodes.Find(id))
                 continue;
 
-            Nodes.ConstructNew(guard, id, *other, *std::get<0>(*iter));
+            Nodes.ConstructNew(id, *other, *std::get<0>(*iter));
         }
     }
     

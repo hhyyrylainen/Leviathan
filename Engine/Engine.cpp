@@ -8,6 +8,7 @@
 #include "Common/StringOperations.h"
 #include "Common/Types.h"
 #include "Entities/GameWorld.h"
+#include "Entities/GameWorldFactory.h"
 #include "Entities/Serializers/EntitySerializer.h"
 #include "Events/EventHandler.h"
 #include "Handlers/IDFactory.h"
@@ -1143,10 +1144,10 @@ DLLEXPORT inline void Engine::AssertIfNotMainThread() const{
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow,
     std::shared_ptr<ViewerCameraPos> worldscamera)
 {
+    auto tmp = GameWorldFactory::Get()->CreateNewWorld();
     
-    auto tmp = make_shared<GameWorld>(_NetworkHandler->GetNetworkType());
-    
-    tmp->Init(owningwindow, NoGui ? NULL: Graph->GetOgreRoot());
+    tmp->Init(_NetworkHandler->GetNetworkType(), owningwindow,
+        NoGui ? NULL: Graph->GetOgreRoot());
     
     if(owningwindow)
         owningwindow->LinkObjects(worldscamera, tmp);

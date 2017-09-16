@@ -31,10 +31,10 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameWorld::GameWorld(NETWORKED_TYPE type) :
+DLLEXPORT Leviathan::GameWorld::GameWorld() :
     ID(IDFactory::GetID())
 {
-    IsOnServer = (type == NETWORKED_TYPE::Server);
+
 }
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
@@ -48,8 +48,11 @@ DLLEXPORT Leviathan::GameWorld::~GameWorld(){
     _PhysicalWorld.reset();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::Init(GraphicalInputEntity* renderto, Ogre::Root* ogre){
-
+DLLEXPORT bool Leviathan::GameWorld::Init(NETWORKED_TYPE type, GraphicalInputEntity* renderto,
+    Ogre::Root* ogre)
+{
+    IsOnServer = (type == NETWORKED_TYPE::Server);
+    
 	LinkedToWindow = renderto;
 
 	// Detecting non-GUI mode //
@@ -227,8 +230,6 @@ DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposit
 
 DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection &connection) const {
 
-    GUARD_LOCK();
-
     for(auto& player : ReceivingPlayers){
 
         if(player->GetConnection().get() == &connection){
@@ -367,6 +368,7 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
 
     // All required nodes for entities are created //
     HandleAdded();
+    ClearAdded();
 
     // Remove closed player connections //
 
@@ -405,71 +407,32 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
         //DEBUG_BREAK;
 
         // Skip if not tick that will be stored //
-        if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL == 0){
+        // if(TickNumber % WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL == 0){
 
-            _SendableSystem.Run(ComponentSendable.GetIndex(), *this);
-        }
+        //     _SendableSystem.Run(ComponentSendable.GetIndex(), *this);
+        // }
         
     } else {
 
         // TODO: direct control objects
-        _ReceivedSystem.Run(ComponentReceived.GetIndex(), *this);
+        // _ReceivedSystem.Run(ComponentReceived.GetIndex(), *this);
     }
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::HandleAdded(){
 
-    // Construct new nodes based on components values //
-    // CreateNodes automatically removes the used onces from the Added in component pool
+}
 
-    GUARD_LOCK_OTHER_NAME((&ComponentPosition), positionlock);
-    GUARD_LOCK_OTHER_NAME((&ComponentRenderNode), rendernodelock);
-    GUARD_LOCK_OTHER_NAME((&ComponentReceived), receivedlock);
-
-    auto& addedposition = ComponentPosition.GetAdded(positionlock);
-    auto& addedrendernode = ComponentRenderNode.GetAdded(rendernodelock);
-    auto& addedreceived = ComponentReceived.GetAdded(receivedlock);
-
-    _RenderingPositionSystem.CreateNodes(
-        addedrendernode, addedposition,
-        ComponentRenderNode, rendernodelock,
-        ComponentPosition, positionlock
-        );
-
-    // Clear added //
-    ComponentPosition.ClearAdded(positionlock);
-    ComponentRenderNode.ClearAdded(rendernodelock);
-    ComponentSendable.ClearAdded();
-    ComponentReceived.ClearAdded(receivedlock);
-    ComponentModel.ClearAdded();
-    ComponentPhysics.ClearAdded();
-    ComponentBoxGeometry.ClearAdded();
-    ComponentManualObject.ClearAdded();
+DLLEXPORT void GameWorld::ClearAdded(){
+    
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
 
-    GUARD_LOCK();
+    HandleAdded();
+    ClearAdded();
 
-    HandleAdded(guard);
-
-    _ApplyEntityUpdatePackets(guard);
-
-    // Client interpolation //
-    if(!IsOnServer){
-
-        //const float interpolatepercentage = std::max(0.f, timeintick / (float)TICKSPEED);
-
-        _ReceivedSystem.Run(ComponentReceived.GetIndex(), *this);
-    }
-
-    // Skip in non-gui mode //
-    if(!GraphicalMode)
-        return;
-
-    _RenderNodeHiderSystem.Run(ComponentRenderNode.GetIndex(), *this);
-
-    _RenderingPositionSystem.Run(*this);
+    _ApplyEntityUpdatePackets();
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
@@ -673,6 +636,11 @@ DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id){
     
 }
 
+DLLEXPORT std::tuple<void*, bool> GameWorld::GetComponent(ObjectID id, COMPONENT_TYPE type){
+
+    return std::make_tuple(nullptr, false);
+}
+// ------------------------------------ //
 void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id){
 
      SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
@@ -680,7 +648,7 @@ void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id){
 }
 
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(Lock &guard, bool frozen){
+DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen){
 	// Skip if set to the same //
 	if(frozen == WorldFrozen)
 		return;
@@ -697,9 +665,8 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(Lock &guard, boo
 }
 
 DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float3 &from,
-    const Float3 &to, Lock &guard)
+    const Float3 &to)
 {
-	VerifyLock(guard);
 	// Create a data object for the ray cast //
 	RayCastData data(1, from, to);
 
@@ -749,7 +716,7 @@ DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
 	ClearAllObjects = true;
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::UpdatePlayersPositionData(Lock &guard, ConnectedPlayer &ply)
+void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer &ply)
 {
 	// Get the position for this player in this world //
     ObjectID id = ply.GetPositionInWorld(this);
@@ -771,23 +738,24 @@ void Leviathan::GameWorld::UpdatePlayersPositionData(Lock &guard, ConnectedPlaye
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectID id,
+DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectID id,
     std::shared_ptr<Connection> connection)
 {
     // First create a packet which will be the object's data //
 
     sf::Packet packet;
-    
-    try {
-        if (!Engine::Get()->GetEntitySerializer()->CreatePacketForConnection(this, guard, id,
-            GetComponent<Sendable>(id), packet, *connection))
-        {
-            return false;
-        }
-    }
-    catch (const NotFound&) {
-        return false;
-    }
+
+    DEBUG_BREAK;
+    // try {
+    //     if (!Engine::Get()->GetEntitySerializer()->CreatePacketForConnection(this, id,
+    //         GetComponent<Sendable>(id), packet, *connection))
+    //     {
+    //         return false;
+    //     }
+    // }
+    // catch (const NotFound&) {
+    //     return false;
+    // }
 
     // Then gather all sorts of other stuff to make an response //
     return connection->SendPacketToConnection(std::make_shared<ResponseEntityCreation>(
@@ -795,17 +763,15 @@ DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(Lock &guard, ObjectI
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleEntityInitialPacket(
-    shared_ptr<NetworkResponse> message, ResponseEntityCreation* data)
+    std::shared_ptr<NetworkResponse> message, ResponseEntityCreation* data)
 {
     if(!data)
         return;
-    
-    GUARD_LOCK();
 
     InitialEntityPackets.push_back(message);
 }
 
-void GameWorld::_ApplyInitialEntityPackets(Lock &guard){
+void GameWorld::_ApplyInitialEntityPackets(){
 
     auto serializer = Engine::Get()->GetEntitySerializer();
     
@@ -815,9 +781,10 @@ void GameWorld::_ApplyInitialEntityPackets(Lock &guard){
             "invalid type in InitialEntityPackets");
         
         ObjectID id = 0;
-        
-        serializer->DeserializeWholeEntityFromPacket(this, guard, id,
-            static_cast<ResponseEntityCreation*>(response.get())->InitialEntity);
+
+        DEBUG_BREAK;
+        // serializer->DeserializeWholeEntityFromPacket(this, id,
+        //     static_cast<ResponseEntityCreation*>(response.get())->InitialEntity);
 
         if(id < 1){
 
@@ -834,12 +801,10 @@ DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(
     if(message->GetType() == NETWORK_RESPONSE_TYPE::EntityUpdate)
         return;
     
-    GUARD_LOCK();
-
     EntityUpdatePackets.push_back(message);
 }
 
-void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
+void GameWorld::_ApplyEntityUpdatePackets(){
 
     auto serializer = Engine::Get()->GetEntitySerializer();
     
@@ -858,13 +823,14 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
                 found = true;
 
                 // Apply the update //
-                if(!serializer->ApplyUpdateFromPacket(this, guard, data->EntityID,
-                        data->TickNumber, data->ReferenceTick, data->UpdateData))
-                {
-                    Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): "
-                        "applying update to entity " + 
-                        Convert::ToString(data->EntityID) + " failed");
-                }
+                DEBUG_BREAK;
+                // if(!serializer->ApplyUpdateFromPacket(this, guard, data->EntityID,
+                //         data->TickNumber, data->ReferenceTick, data->UpdateData))
+                // {
+                //     Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): "
+                //         "applying update to entity " + 
+                //         Convert::ToString(data->EntityID) + " failed");
+                // }
             
                 break;
             }
@@ -880,32 +846,26 @@ void GameWorld::_ApplyEntityUpdatePackets(Lock &guard){
     EntityUpdatePackets.clear();
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::ApplyQueuedPackets(Lock &guard){
+DLLEXPORT void GameWorld::ApplyQueuedPackets(){
 
     if(!InitialEntityPackets.empty())
-        _ApplyInitialEntityPackets(guard);
+        _ApplyInitialEntityPackets();
 
     if(!EntityUpdatePackets.empty())
-        _ApplyEntityUpdatePackets(guard);
+        _ApplyEntityUpdatePackets();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data){
-
-    GUARD_LOCK_NAME(lockit);
 
     Logger::Get()->Info("GameWorld: adjusting our clock: Absolute: " +
         Convert::ToString(data->Absolute)+", tick: " + Convert::ToString(data->Ticks) +
         ", engine ms: "+Convert::ToString(data->EngineMSTweak));
     
     // Change our TickNumber to match //
-    lockit.unlock();
-
     Engine::Get()->_AdjustTickNumber(data->Ticks, data->Absolute);
         
     if(data->EngineMSTweak)
         Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
-    
-    lockit.lock();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data){
@@ -920,7 +880,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen
     }
     
     // Set the state //
-    SetWorldPhysicsFrozenState(guard, data->Frozen);
+    SetWorldPhysicsFrozenState(data->Frozen);
 
     // Simulate ticks if required //
     if(!data->Frozen){

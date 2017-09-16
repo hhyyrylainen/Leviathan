@@ -74,9 +74,8 @@ struct RayCastData{
 //! classes
 class GameWorld{
 public:
-    DLLEXPORT GameWorld(NETWORKED_TYPE type);
+    DLLEXPORT GameWorld();
     DLLEXPORT ~GameWorld();
-
 
     //! \brief Returns the unique ID of this world
     DLLEXPORT inline int GetID() const{
@@ -85,7 +84,7 @@ public:
 
     //! \brief Creates resources for the world to work
     //! \post The world can be used after this
-    DLLEXPORT bool Init(GraphicalInputEntity* renderto, Ogre::Root* ogre);
+    DLLEXPORT bool Init(NETWORKED_TYPE type, GraphicalInputEntity* renderto, Ogre::Root* ogre);
 
     //! Release to not use Ogre when deleting
     DLLEXPORT void Release();
@@ -114,13 +113,10 @@ public:
     //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
     DLLEXPORT float GetTickProgress() const;
 
-    //! \brief Handles added entities and components
-    DLLEXPORT void HandleAdded();
-
     //! \brief Called by engine before frame rendering
     //! \todo Only call on worlds that contain cameras that are connected
     //! to GraphicalInputEntities
-    DLLEXPORT void RunFrameRenderSystems(int tick, int timeintick);
+    DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
     
     
     //! \brief Fetches the physical material ID from the material manager
@@ -162,28 +158,32 @@ public:
     //! \brief Removes all components from an entity
     DLLEXPORT virtual void DestroyAllIn(ObjectID id);
 
+    //! Helper for getting component of type. This is much slower than
+    //! direct lookups with the actual implementation class' GetComponent_Position etc.
+    //! methods
+    //! \exception NotFound if entity has no component of the wanted type
+    template<class TComponent>
+        TComponent& GetComponent(ObjectID id){
 
-    //! \brief Creates a new component for entity
-    //! \exception Exception if the component failed to init or it already exists
-    template<typename... Args>
-        Position& CreatePosition(ObjectID id, Args&&... args){
+        std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
 
-        return *ComponentPosition.ConstructNew(id, args...);
-    }
+        if(!std::get<1>(component))
+            throw InvalidArgument("Unrecognized component type as template parameter");
 
-#define QUICK_CREATE_COMPONENT(type) template<typename... Args> type&   \
- Create ## type (ObjectID id, Args&&... args){                          \
- return *Component ## type .ConstructNew(id, args...); }
+        void* ptr = std::get<0>(component);
 
-    QUICK_CREATE_COMPONENT(RenderNode);
-    QUICK_CREATE_COMPONENT(Sendable);
-    QUICK_CREATE_COMPONENT(Received);
+        if(!ptr)
+            throw NotFound("Component for entity with id was not found");
+        
+        return *static_cast<TComponent*>(ptr);
+    }    
 
-    QUICK_CREATE_COMPONENT(Model);
-    QUICK_CREATE_COMPONENT(Physics);
-    QUICK_CREATE_COMPONENT(BoxGeometry);
-    QUICK_CREATE_COMPONENT(ManualObject);
+    //! \brief Gets a component of type or returns nullptr
+    //!
+    //! \returns Tuple of pointer to component and boolean indicating if the type is known
+    DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
 
+    
     // Ogre get functions //
     inline Ogre::SceneManager* GetScene(){
         return WorldsScene;
@@ -263,6 +263,17 @@ public:
     
 protected:
 
+    //! \brief Handles added entities and components
+    //!
+    //! Construct new nodes based on components values. This is split
+    //! into multiple parts to support child classes using the same
+    //! Component types in additional nodes
+    DLLEXPORT virtual void HandleAdded();
+
+    //! \brief Clears the added components. Call after HandleAdded
+    DLLEXPORT virtual void ClearAdded();
+    
+
     DLLEXPORT virtual void _ResetSystems() = 0;
 
     DLLEXPORT virtual void _ResetComponents() = 0;
@@ -292,6 +303,17 @@ private:
 
     void _ApplyEntityUpdatePackets();
 
+protected:
+
+    bool GraphicalMode = false;
+
+    //! Bool flag telling whether this is a master world (on a server) or
+    //! a mirroring world (client)
+    bool IsOnServer = false;
+    
+private:
+    
+
     // ------------------------------------ //
     Ogre::Camera* WorldSceneCamera = nullptr;
     Ogre::SceneManager* WorldsScene = nullptr;
@@ -309,7 +331,7 @@ private:
 
     //! The world can be frozen to stop physics
     bool WorldFrozen = false;
-    bool GraphicalMode = false;
+
 
     //! Marks all objects to be released
     bool ClearAllObjects = false;
@@ -324,10 +346,6 @@ private:
 
     //! The unique ID
     int ID;
-
-    //! Bool flag telling whether this is a master world (on a server) or
-    //! a mirroring world (client)
-    bool IsOnServer = false;
 
     //! The current tick number
     //! This should be the same on all clients as closely as possible
@@ -358,25 +376,6 @@ private:
 
     //! Waiting update packets
     std::vector<std::shared_ptr<NetworkResponse>> EntityUpdatePackets;
-
-
-    // Components //
-    ComponentHolder<Position> ComponentPosition;
-    ComponentHolder<RenderNode> ComponentRenderNode;
-    ComponentHolder<Sendable> ComponentSendable;
-    ComponentHolder<Model> ComponentModel;
-    ComponentHolder<Physics> ComponentPhysics;
-    ComponentHolder<BoxGeometry> ComponentBoxGeometry;
-    ComponentHolder<ManualObject> ComponentManualObject;
-    ComponentHolder<Received> ComponentReceived;
-
-    
-
-    // Systems //
-    ReceivedSystem _ReceivedSystem;
-    RenderingPositionSystem _RenderingPositionSystem;
-    SendableSystem _SendableSystem;
-    RenderNodeHiderSystem _RenderNodeHiderSystem;
 };
     
 }

@@ -91,6 +91,7 @@ else()
     "Entities/Component.h" "Entities/EntityCommon.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
+    "Entities/GameWorldFactory.h" "Entities/GameWorldFactory.cpp"
     "Generated/StandardWorld.h" "Generated/StandardWorld.cpp"
     )
   

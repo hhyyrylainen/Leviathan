@@ -96,10 +96,10 @@ class OutputClass
   def initialize(name)
 
     @Name = name
-    @Members = Array.new
+    @Members = []
     @BaseClass = ""
     @BaseConstructor = ""
-    @CArgs = Array.new
+    @CArgs = []
   end
 
   def toText(f, opts)
@@ -145,7 +145,7 @@ class OutputClass
   end
 
   def genMemberConstructor(f, opts)
-    str = "#{@Name}("
+    str = "#{qualifier opts}#{@Name}("
 
     if not @CArgs.empty?
 
@@ -238,6 +238,24 @@ class OutputClass
       ""
     end
   end
+
+  # Returns override if :header set
+  def override(opts)
+    if opts.include?(:header)
+      "override"
+    else
+      ""
+    end
+  end
+
+  # Returns virtual if :header set
+  def virtual(opts)
+    if opts.include?(:header)
+      "virtual"
+    else
+      ""
+    end
+  end  
   
 end
 
@@ -375,7 +393,7 @@ end
 class ResponseClass < SFMLSerializeClass
 
   def genSerializer(f, opts)
-    f.write "void _SerializeCustom(sf::Packet &packet) const override"
+    f.write "void _SerializeCustom(sf::Packet &packet) const #{override opts}"
 
     if opts.include?(:impl)
       f.puts "{\n" + genToPacket + ";\n}"
@@ -389,17 +407,19 @@ end
 
 class GameWorldClass < OutputClass
 
-  def initialize(name, componentTypes=[], systems=[])
+  def initialize(name, componentTypes: [], systems: [], tickrunmethod: "")
 
     super name
 
     @BaseClass = "GameWorld"
 
+    @TickRunMethod = tickrunmethod
+
     @ComponentTypes = componentTypes
     @Systems = systems
 
     @ComponentTypes.each{|c|
-      @Members.push({type: c.type, name: "Component" + c.type})
+      @Members.push({type: "ComponentHolder<" + c.type + ">", name: "Component" + c.type})
     }
 
     @Systems.each{|s|
@@ -409,7 +429,7 @@ class GameWorldClass < OutputClass
 
   def genMemberConstructor(f, opts)
 
-    f.write "#{@Name}()"
+    f.write "#{qualifier opts}#{@Name}()"
     
     if opts.include?(:impl)
       f.puts "{}"
@@ -428,26 +448,29 @@ class GameWorldClass < OutputClass
 
   def genMethods(f, opts)
 
-    f.write "DLLEXPORT void _ResetComponents() override"
+    f.write "DLLEXPORT void #{qualifier opts}_ResetComponents() #{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
       f.puts "// Reset all component holders //"
       @ComponentTypes.each{|c|
-        f.puts "Component#{c.type}.Clear()"
+        f.puts "Component#{c.type}.Clear();"
       }
       f.puts "}"
     else
       f.puts ";"
     end
 
-    f.write "DLLEXPORT void _ResetSystems() override"
+    f.write "DLLEXPORT void #{qualifier opts}_ResetSystems() #{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
       f.puts "// Reset all system nodes //"
       @Systems.each{|s|
-        f.puts "_#{s.type}.Clear()"
+
+        if !s.NodeComponents.empty?
+          f.puts "_#{s.type}.Clear();"
+        end
       }
       f.puts "}"
     else
@@ -455,7 +478,9 @@ class GameWorldClass < OutputClass
     end
 
     firstLoop = true
-    
+
+    f.puts "// Component types (#{@ComponentTypes.length}) //"
+
     @ComponentTypes.each{|c|
 
       if firstLoop and opts.include?(:header)
@@ -484,13 +509,13 @@ class GameWorldClass < OutputClass
         f.puts "//! of this type"
       end
       
-      f.write "DLLEXPORT bool RemoveComponent_#{c.type}(ObjectID id)"
+      f.write "DLLEXPORT bool #{qualifier opts}RemoveComponent_#{c.type}(ObjectID id)"
       if opts.include?(:impl)
         f.puts "{"
 
         f.puts "try {"
         f.puts "    Component#{c.type}.Destroy(id, false);"
-        f.puts "    _OnComponentDestroyed(id, Component::GetTypeFromClass<#{c.type}>());"
+        f.puts "    //_OnComponentDestroyed(id, Component::GetTypeFromClass<#{c.type}>());"
         f.puts "    return true;"
         f.puts "}"
         f.puts "catch (...) {"
@@ -502,6 +527,32 @@ class GameWorldClass < OutputClass
         f.puts ";"
       end
 
+      if firstLoop and opts.include?(:header)
+        f.puts "//! \\brief Creates a new component for entity"
+        f.puts "//! \\exception Exception if the component failed to init or it already exists"
+      end
+
+      c.constructors.each{|a|
+
+        f.write "DLLEXPORT #{c.type}& #{qualifier opts}Create_#{c.type}(ObjectID id" +
+                a.formatParameters(opts) + ")"
+
+        if opts.include?(:impl)
+          f.write "\n"
+          f.puts "{"
+
+          f.puts "return *Component#{c.type}.ConstructNew(id" +
+                 a.formatNames(c.type) + ");"
+          
+          f.puts "}"
+        else
+          f.puts ";"
+        end
+      }
+
+      
+
+
       f.puts ""
       firstLoop = false
     }
@@ -511,12 +562,7 @@ class GameWorldClass < OutputClass
     }
 
 
-    f.write "DLLEXPORT void DestroyAllIn(ObjectID id) " +
-            if opts.include?(:header)
-              "override"
-            else
-              ""
-            end
+    f.write "DLLEXPORT void #{qualifier opts}DestroyAllIn(ObjectID id) #{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -528,26 +574,205 @@ class GameWorldClass < OutputClass
     else
       f.puts ";"
     end
+
+    f.write "DLLEXPORT std::tuple<void*, bool> #{qualifier opts}GetComponent(" +
+            "ObjectID id, COMPONENT_TYPE type) #{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "const auto baseType = " + @BaseClass + "::GetComponent(id, type);"
+
+      f.puts "if(std::get<1>(baseType))"
+      f.puts "    return baseType;"
+      f.puts ""
+
+      f.puts "switch(type){"
+      
+      @ComponentTypes.each{|c|
+        f.puts "case #{c.type}::TYPE:"
+        f.puts "{"
+        f.puts "return std::make_tuple(Component#{c.type}.Find(id), true);"
+        f.puts "}"
+      }
+
+      f.puts "default:"
+      f.puts "return std::make_tuple(nullptr, false);"
+      f.puts "}"
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+
+    f.write "DLLEXPORT void #{qualifier opts}RunFrameRenderSystems(int tick, " +
+            "int timeintick) #{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts @BaseClass + "::HandleAdded();"
+      f.puts ""
+      f.puts @TickRunMethod
+      
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+    
+
+    if opts.include?(:header)
+      f.puts "protected:"
+    end
+
+    f.write "DLLEXPORT void #{qualifier opts}HandleAdded() #{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts @BaseClass + "::HandleAdded();"
+      f.puts ""
+      
+      @ComponentTypes.each{|c|
+        f.puts "const auto& added#{c.type} = Component#{c.type}.GetAdded();"
+      }
+
+      f.puts ""
+      @Systems.each{|s|
+        
+        if !s.NodeComponents.empty?
+          f.puts "_#{s.type}.CreateNodes("
+          f.puts "    " + (s.NodeComponents.map{|c| "added" + c }.join(", ")) + ","
+          f.puts "    " + (s.NodeComponents.map{|c| "Component" + c }.join(", ")) + ");"
+          
+        end
+      }
+      
+
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+
+    f.write "DLLEXPORT void #{qualifier opts}ClearAdded() #{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts @BaseClass + "::ClearAdded();"
+      f.puts ""
+
+      @ComponentTypes.each{|c|
+        f.puts "Component#{c.type}.ClearAdded();"
+      }
+
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+    
+    # f.puts "public:"
     
   end
 
 end
 
+class ConstructorInfo
+  attr_reader :Parameters, :UseDataStruct
+
+  def initialize(parameters, usedatastruct: false)
+    @Parameters = parameters
+    @UseDataStruct = usedatastruct
+  end
+
+  def formatParameters(opts)
+    if @Parameters.empty?
+      ""
+    else
+      ", " + @Parameters.select{|p| !p.NonMethodParam}.map{
+        |p| p.formatForParams opts
+      }.join(", ")
+    end
+  end
+
+  def formatNames(componentclass)
+    if @Parameters.empty?
+      if @UseDataStruct
+        ", #{componentclass}::Data{}"
+      else
+        ""
+      end
+    else
+      if @UseDataStruct
+        ", #{componentclass}::Data{" + @Parameters.map{|p| p.Name}.join(", ") + "}"
+      else
+        ", " + @Parameters.map{|p| p.Name}.join(", ")
+      end
+    end
+  end
+  
+end
+
+class Variable
+  attr_reader :Name, :Type, :Default, :NonMethodParam
+
+  def initialize(name, type, default: nil, noRef: false, noConst: false, nonMethodParam: false)
+
+    @Name = name
+    @Type = type
+    @Default = default
+
+    if !@Default.nil?
+      if @Default == true
+        @Default = "true"
+      elsif @Default == false
+        @Default = "false"
+      end
+    end
+    
+    @NoRef = noRef
+    @NoConst = noConst
+    @NonMethodParam = nonMethodParam
+  end
+
+  def formatDefault(opts)
+    if @Default.nil?
+      ""
+    else
+      if opts.include?(:header)
+        " = " + @Default
+      else
+        "/* = #{@Default}"
+      end
+    end
+  end
+
+  def formatForParams(opts)
+    if @NoRef
+      "#{@Type} #{@Name}#{formatDefault opts}"
+    else
+      if @NoConst
+        "#{@Type} &#{@Name}#{formatDefault opts}"
+      else
+        "const #{@Type} &#{@Name}#{formatDefault opts}"
+      end
+    end
+  end
+end
+
 # Components for adding to gameworld
 class EntityComponent
   
-  attr_reader :type
+  attr_reader :type, :constructors
   
-  def initialize(type)
+  def initialize(type, constructors=[ConstructorInfo.new])
     @type = type
+    @constructors = constructors
   end
 
 end
 
 class EntitySystem
-  attr_reader :type
-  
-  def initialize(type)
+  attr_reader :type, :NodeComponents
+
+  # Leave nodeComponens empty if not using combined nodes
+  def initialize(type, nodeComponents=[])
     @type = type
+    @NodeComponents = nodeComponents
   end
 end

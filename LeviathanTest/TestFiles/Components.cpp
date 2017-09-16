@@ -4,6 +4,8 @@
 #include "Entities/Components.h"
 #include "Handlers/ObjectLoader.h"
 
+#include "Generated/StandardWorld.h"
+
 #include "catch.hpp"
 
 using namespace Leviathan;
@@ -13,18 +15,18 @@ TEST_CASE("Manual component add and remove", "[entity]"){
 
     PartialEngine<false> engine;
 
-    GameWorld TargetWorld(NETWORKED_TYPE::Client);
+    StandardWorld TargetWorld;
 
     auto brush = TargetWorld.CreateEntity();
 
-    CHECK(TargetWorld.RemoveComponent<Sendable>(brush) == false);
+    CHECK(TargetWorld.RemoveComponent_Sendable(brush) == false);
 
-    CHECK_NOTHROW(TargetWorld.CreateSendable(brush));
+    CHECK_NOTHROW(TargetWorld.Create_Sendable(brush));
 
-    CHECK_NOTHROW(TargetWorld.GetComponent<Sendable>(brush));
+    CHECK_NOTHROW(TargetWorld.GetComponent_Sendable(brush));
 
-    CHECK(TargetWorld.RemoveComponent<Sendable>(brush) == true);
+    CHECK(TargetWorld.RemoveComponent_Sendable(brush) == true);
 
-    CHECK_THROWS_AS(TargetWorld.GetComponent<Sendable>(brush), NotFound);
+    CHECK_THROWS_AS(TargetWorld.GetComponent_Sendable(brush), NotFound);
 }
 

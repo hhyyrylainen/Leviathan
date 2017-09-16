@@ -382,12 +382,8 @@ void Pong::PongServer::PreFirstTick(){
 void Pong::PongServer::OnStartPreMatch(){
 
     // Setup the world first as that can fail //
-    {
-        GUARD_LOCK_OTHER_NAME(WorldOfPong, lock);
-        WorldOfPong->ClearObjects(lock);
-        WorldOfPong->SetWorldPhysicsFrozenState(lock, true);
-
-    }
+    WorldOfPong->ClearObjects();
+    WorldOfPong->SetWorldPhysicsFrozenState(true);
 
     // Setup the objects in the world //
     if(!GameArena->GenerateArena(this, _PlayerList)){

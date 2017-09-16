@@ -45,6 +45,7 @@ jobs:
              - build/CMakeFiles
              - build/CMakeCache.txt
              - build/Makefile
+       - run: mkdir -p $CIRCLE_TEST_REPORTS/reports
        - run:
            command: ./LeviathanTest --reporter junit --out $CIRCLE_TEST_REPORTS/reports/test_run.xml "~[xrequired]"
            working_directory: ~/leviathan/build/bin

@@ -975,7 +975,7 @@ void Engine::RenderFrame(){
     MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
             new IntegerEventData(SinceLastFrame)));
 
-    // Run rendering systems //
+    // Calculate parameters for GameWorld frame rendering systems //
     int64_t timeintick = Time::GetTimeMs64() - LastTickTime;
     int moreticks = 0;
 
@@ -985,25 +985,17 @@ void Engine::RenderFrame(){
         moreticks++;
     }
 
-    {
-        Lock lock(GameWorldsLock);
-        
-        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
-
-            (*iter)->RunFrameRenderSystems(TickCount + moreticks, static_cast<int>(timeintick));
-        }
-    }
-    
-
     bool shouldrender = false;
 
     // Render //
-    if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame))
+    if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame, TickCount + moreticks,
+            static_cast<int>(timeintick)))
         shouldrender = true;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
 
-        if(AdditionalGraphicalEntities[i]->Render(SinceLastFrame))
+        if(AdditionalGraphicalEntities[i]->Render(SinceLastFrame, TickCount + moreticks,
+                static_cast<int>(timeintick)))
             shouldrender = true;
     }
 
@@ -1142,7 +1134,7 @@ DLLEXPORT inline void Engine::AssertIfNotMainThread() const{
 
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow,
-    std::shared_ptr<ViewerCameraPos> worldscamera)
+    bool createcamera)
 {
     auto tmp = GameWorldFactory::Get()->CreateNewWorld();
     
@@ -1150,7 +1142,11 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* o
         NoGui ? NULL: Graph->GetOgreRoot());
     
     if(owningwindow)
-        owningwindow->LinkObjects(worldscamera, tmp);
+        owningwindow->LinkObjects(tmp);
+
+    if(createcamera){
+        DEBUG_BREAK;
+    }
     
     Lock lock(GameWorldsLock);
     

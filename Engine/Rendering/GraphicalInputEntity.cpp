@@ -13,7 +13,6 @@
 #include "Handlers/IDFactory.h"
 #include "Engine.h"
 #include "Entities/GameWorld.h"
-#include "Entities/Objects/ViewerCameraPos.h"
 #include "Exceptions.h"
 #include "FileSystem.h"
 #include "GUI/FontManager.h"
@@ -294,13 +293,13 @@ Mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
 DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked(){
     // release world and object references //
     LinkedWorld.reset();
-    LinkedCamera.reset();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed){
+DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed, int tick, int timeintick){
     GUARD_LOCK();
+    
     if(LinkedWorld)
-        LinkedWorld->UpdateCameraLocation(mspassed, LinkedCamera.get());
+        LinkedWorld->Render(mspassed, tick, timeintick);
 
     // update input before each frame //
     WindowsGui->Render();
@@ -412,15 +411,14 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing(){
     AutoClearResources.reset();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(shared_ptr<ViewerCameraPos> camera,
-    std::shared_ptr<GameWorld> world)
+DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(std::shared_ptr<GameWorld> world)
 {
-    LinkedCamera = camera;
     LinkedWorld = world;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::SetCustomInputController(shared_ptr<InputController> controller){
-
+DLLEXPORT void GraphicalInputEntity::SetCustomInputController(
+    std::shared_ptr<InputController> controller)
+{
     GUARD_LOCK();
     
     TertiaryReceiver = controller;
@@ -516,7 +514,6 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::UnlinkAll(){
 	LinkedWorld.reset();
-	LinkedCamera.reset();
 }
 
 DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){

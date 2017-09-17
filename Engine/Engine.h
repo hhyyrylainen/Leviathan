@@ -105,7 +105,7 @@ public:
         
     //! \brief Creates a GameWorld for placing entities into
     DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
-        std::shared_ptr<ViewerCameraPos> worldscamera);
+        bool createcamera);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy.

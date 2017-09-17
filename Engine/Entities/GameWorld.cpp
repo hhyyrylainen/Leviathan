@@ -195,30 +195,29 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight(){
 	}
 }
 
-DLLEXPORT void Leviathan::GameWorld::UpdateCameraLocation(int mspassed,
-    ViewerCameraPos* camerapos)
-{
-	// Skip if no camera //
-	if(camerapos == NULL)
-		return;
+DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeintick){
+    
+    RunFrameRenderSystems(tick, timeintick);
+    
+    // Read camera entity //
+    DEBUG_BREAK;
 
-	// update camera //
-	camerapos->UpdatePos(mspassed);
+    // Skip if no camera //
+    
+	// // set camera position //
+	// WorldSceneCamera->setPosition(camerapos->GetPosition());
 
-	// set camera position //
-	WorldSceneCamera->setPosition(camerapos->GetPosition());
+	// // convert rotation into a quaternion //
+	// const Float3& angles = camerapos->GetRotation();
 
-	// convert rotation into a quaternion //
-	const Float3& angles = camerapos->GetRotation();
+	// // create quaternion from quaternion rotations around each axis //
+	// Ogre::Quaternion rotq(Ogre::Degree(angles.Y), Ogre::Vector3::UNIT_X);
+	// Ogre::Quaternion rotyaw(Ogre::Degree(angles.X), Ogre::Vector3::UNIT_Y);
+	// Ogre::Quaternion rotroll(Ogre::Degree(angles.Z), Ogre::Vector3::UNIT_Z);
 
-	// create quaternion from quaternion rotations around each axis //
-	Ogre::Quaternion rotq(Ogre::Degree(angles.Y), Ogre::Vector3::UNIT_X);
-	Ogre::Quaternion rotyaw(Ogre::Degree(angles.X), Ogre::Vector3::UNIT_Y);
-	Ogre::Quaternion rotroll(Ogre::Degree(angles.Z), Ogre::Vector3::UNIT_Z);
+	// rotq = rotyaw*rotq*rotroll;
 
-	rotq = rotyaw*rotq*rotroll;
-
-	WorldSceneCamera->setOrientation(rotq);
+	// WorldSceneCamera->setOrientation(rotq);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposition,

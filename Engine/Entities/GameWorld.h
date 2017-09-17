@@ -112,11 +112,6 @@ public:
 
     //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
     DLLEXPORT float GetTickProgress() const;
-
-    //! \brief Called by engine before frame rendering
-    //! \todo Only call on worlds that contain cameras that are connected
-    //! to GraphicalInputEntities
-    DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
     
     
     //! \brief Fetches the physical material ID from the material manager
@@ -128,7 +123,7 @@ public:
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();
 
-    DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos);
+    DLLEXPORT void Render(int mspassed, int tick, int timeintick);
 
 
     //! \brief Casts a ray from point along a vector and returns the first physical
@@ -262,6 +257,11 @@ public:
     DLLEXPORT virtual void _OnCustomComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
     
 protected:
+
+    //! \brief Called by Render which is called from a
+    //! GraphicalInputEntity if this is linked to one
+    DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
+    
 
     //! \brief Handles added entities and components
     //!

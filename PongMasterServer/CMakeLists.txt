@@ -22,6 +22,9 @@ set(ProgramIncludesHeader "${BaseIncludeFileName}")
 set(ProgramAppHeader "PongMasterServer.h")
 set(ProgramNamespace Pong)
 
+set(WorldFactoryClass "GameWorldFactory")
+set(WorldFactoryInclude "Entities/GameWorldFactory.h")
+
 # ------------------ ProgramConfiguration ------------------ #
 set(PROGRAMCLASSNAME				PongMasterServer)
 set(PROGRAMLOG						PongMaster)

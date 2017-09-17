@@ -1,5 +1,7 @@
 #include "@ProgramIncludesHeader@"
 #include "@ProgramAppHeader@"
+#include "@WorldFactoryInclude@"
+
 #include "resource.h"
 
 #include "Define.h"
@@ -18,6 +20,8 @@
 #endif //USE_BREAKPAD
 
 using namespace @ProgramNamespace@;
+// This is for easier logic with using standard classes instead of application specific
+using namespace Leviathan;
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
 
@@ -94,6 +98,9 @@ int main(int argcount, char* args[]){
         true, -1);
 #endif
 #endif //USE_BREAKPAD
+
+    // World creator object //
+    @WorldFactoryClass@ worldFactory;
     
     // Create program object //
     @PROGRAMCLASSNAME@ app;

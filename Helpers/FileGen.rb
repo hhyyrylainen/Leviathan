@@ -576,7 +576,7 @@ class GameWorldClass < OutputClass
     end
 
     f.write "DLLEXPORT std::tuple<void*, bool> #{qualifier opts}GetComponent(" +
-            "ObjectID id, COMPONENT_TYPE type) #{override opts}"
+            "ObjectID id, Leviathan::COMPONENT_TYPE type) #{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"

@@ -293,7 +293,7 @@ namespace Pong{
 
             // Setup world //
             WorldOfPong = std::dynamic_pointer_cast<Leviathan::StandardWorld>(
-                Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL));
+                Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity()));
 
             // create playing field manager with the world //
             GameArena = unique_ptr<Arena>(new Arena(WorldOfPong.get()));

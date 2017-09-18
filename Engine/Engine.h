@@ -104,8 +104,9 @@ public:
     DLLEXPORT bool PassCommandLine(int argcount, char* args[]);
         
     //! \brief Creates a GameWorld for placing entities into
-    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
-        bool createcamera);
+    //! \note To actually move the world camera you need to use
+    //! Leviathan::ObjectLoader::LoadCamera to create a camera entity
+    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy.

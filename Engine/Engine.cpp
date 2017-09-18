@@ -1133,9 +1133,8 @@ DLLEXPORT inline void Engine::AssertIfNotMainThread() const{
 };
 
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow,
-    bool createcamera)
-{
+DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow){
+    
     auto tmp = GameWorldFactory::Get()->CreateNewWorld();
     
     tmp->Init(_NetworkHandler->GetNetworkType(), owningwindow,
@@ -1144,10 +1143,6 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* o
     if(owningwindow)
         owningwindow->LinkObjects(tmp);
 
-    if(createcamera){
-        DEBUG_BREAK;
-    }
-    
     Lock lock(GameWorldsLock);
     
     GameWorlds.push_back(tmp);

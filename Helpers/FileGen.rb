@@ -616,12 +616,12 @@ TComponent& GetComponent(ObjectID id){
     std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
 
     if(!std::get<1>(component))
-        throw InvalidArgument("Unrecognized component type as template parameter");
+        throw Leviathan::InvalidArgument("Unrecognized component type as template parameter");
 
     void* ptr = std::get<0>(component);
 
     if(!ptr)
-        throw NotFound("Component for entity with id was not found");
+        throw Leviathan::NotFound("Component for entity with id was not found");
     
     return *static_cast<TComponent*>(ptr);
 }    

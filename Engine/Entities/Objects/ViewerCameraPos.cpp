@@ -214,8 +214,17 @@ DLLEXPORT void Leviathan::ViewerCameraPos::SetRotation(const Float3 &orientation
 void Leviathan::ViewerCameraPos::SendPositionIfSet(){
 	if(!SendSoundPosition)
 		return;
+    
 	// send own position to sound device for 3d sound //
-	SoundDevice::Get()->SetSoundListenerPosition(Position, Orientation);
+
+    // create quaternion from quaternion rotations around each axis //
+    Ogre::Quaternion rotq(Ogre::Degree(Orientation.Y), Ogre::Vector3::UNIT_X);
+    Ogre::Quaternion rotyaw(Ogre::Degree(Orientation.X), Ogre::Vector3::UNIT_Y);
+    Ogre::Quaternion rotroll(Ogre::Degree(Orientation.Z), Ogre::Vector3::UNIT_Z);
+
+    rotq = rotyaw*rotq*rotroll;
+    
+	SoundDevice::Get()->SetSoundListenerPosition(Position, rotq);
 }
 
 DLLEXPORT void Leviathan::ViewerCameraPos::BecomeSoundPerceiver(){

@@ -515,7 +515,7 @@ class GameWorldClass < OutputClass
 
         f.puts "try {"
         f.puts "    Component#{c.type}.Destroy(id, false);"
-        f.puts "    //_OnComponentDestroyed(id, Component::GetTypeFromClass<#{c.type}>());"
+        f.puts "    //_OnComponentDestroyed(id, #{c.type}::TYPE());"
         f.puts "    return true;"
         f.puts "}"
         f.puts "catch (...) {"
@@ -603,6 +603,30 @@ class GameWorldClass < OutputClass
       f.puts ";"
     end
 
+    f.puts <<-END
+//! Helper for getting component of type. This is much slower than
+//! direct lookups with the actual implementation class' GetComponent_Position etc.
+//! methods
+//! \\exception NotFound if entity has no component of the wanted type
+//!
+//! This is copied here as a method with the same name would overwrite this otherwise
+template<class TComponent>
+TComponent& GetComponent(ObjectID id){
+
+    std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
+
+    if(!std::get<1>(component))
+        throw InvalidArgument("Unrecognized component type as template parameter");
+
+    void* ptr = std::get<0>(component);
+
+    if(!ptr)
+        throw NotFound("Component for entity with id was not found");
+    
+    return *static_cast<TComponent*>(ptr);
+}    
+END
+
     f.write "DLLEXPORT void #{qualifier opts}RunFrameRenderSystems(int tick, " +
             "int timeintick) #{override opts}"
 
@@ -616,7 +640,6 @@ class GameWorldClass < OutputClass
     else
       f.puts ";"
     end
-    
 
     if opts.include?(:header)
       f.puts "protected:"
@@ -737,7 +760,7 @@ class Variable
       if opts.include?(:header)
         " = " + @Default
       else
-        "/* = #{@Default}"
+        "/* = #{@Default} */"
       end
     end
   end

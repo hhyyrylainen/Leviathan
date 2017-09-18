@@ -110,8 +110,8 @@ public:
     //! \brief Releases a GameWorld
     //! \param world The world to destroy.
     //! \post The World will have been released and removed from Engine's internal list and
-    //! the world pointer will be NULL
-    DLLEXPORT void DestroyWorld(std::shared_ptr<GameWorld> &world);
+    //! when all other holders of the pointer release it will be deleted
+    DLLEXPORT void DestroyWorld(const std::shared_ptr<GameWorld> &world);
 
     //! \brief Opens a new window
     //! \note The window may become broken if the main window is closed

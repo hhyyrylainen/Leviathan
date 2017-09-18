@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "PongGame.h"
 
+#include "Handlers/ObjectLoader.h"
+
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Networking/Connection.h"
 #include "Networking/NetworkClientInterface.h"
@@ -386,18 +388,6 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
     GameInputHandler = shared_ptr<GameInputController>(new GameInputController());
 
-    shared_ptr<ViewerCameraPos> MainCamera;
-
-    // Camera //
-    MainCamera = make_shared<ViewerCameraPos>();
-    MainCamera->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
-
-    // Camera should always point down towards the play field //
-    MainCamera->SetRotation(Float3(0.f, -90.f, 0.f));
-
-    // Sound listening camera //
-    MainCamera->BecomeSoundPerceiver();
-
     // Load GUI documents (but only if graphics are enabled) //
     if(Engine::Get()->GetNoGui()){
         
@@ -420,8 +410,16 @@ void Pong::PongGame::DoSpecialPostLoad(){
     
     GameArena->VerifyTrail();
 
-    // link world and camera to a window //
-    window1->LinkObjects(MainCamera, WorldOfPong);
+    // link world to a window //
+    window1->LinkObjects(WorldOfPong);
+
+    // Create camera in the world //
+    const auto camera = Leviathan::ObjectLoader::LoadCamera(*WorldOfPong,
+        Float3(0.f, 22.f*BASE_ARENASCALE, 0.f),
+        // Camera should always point down towards the play field //        
+        Ogre::Quaternion(Ogre::Radian(0), Ogre::Vector3(0, -1, 0)));
+
+    WorldOfPong->SetCamera(camera);    
 
     // link window input to game logic //
     window1->SetCustomInputController(GameInputHandler);
@@ -591,9 +589,10 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
                             new VariableBlock(string("On")))))));
 
         // Set the camera to be in the game playing position //
-        auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
-        cam->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
-        cam->SetRotation(Float3(0.f, -90.f, 0.f));
+        DEBUG_BREAK;
+        // auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+        // cam->SetPos(Float3(0.f, 22.f*BASE_ARENASCALE, 0.f));
+        // cam->SetRotation(Float3(0.f, -90.f, 0.f));
 
         return;
     }

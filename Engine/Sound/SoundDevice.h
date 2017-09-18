@@ -21,7 +21,7 @@ namespace Leviathan{
 
 		DLLEXPORT void Tick(int PassedMs);
 
-		DLLEXPORT void SetSoundListenerPosition(const Float3 &pos, const Float3 &pitchyawroll);
+		DLLEXPORT void SetSoundListenerPosition(const Float3 &pos, const Float4 &orientation);
 		DLLEXPORT void SetGlobalVolume(const float &vol);
 		// Getting proper sound stream functions //
 

@@ -592,9 +592,34 @@ public:
 // };
 
 
+//! \brief Properties that a camera entity has (will also need a Position component)
+class Camera : public Component{
+public:
+
+    //! \brief Creates at specific position
+    inline Camera(uint8_t fovy = 60, bool soundperceiver = true) :
+        Component(COMPONENT_TYPE::Camera), FOVY(fovy), SoundPerceiver(soundperceiver)
+    {
+
+    }
+
+    //! Y-axis based field of view.
+    //! \warning This is different than the usual x-axis based field of view!
+    //! See the Ogre manual for details: Ogre::Frustum::setFOVy (const Radian & fovy )
+    //!
+    //! Normal range is 45 to 60
+    uint8_t FOVY;
+    bool SoundPerceiver;
+    // TODO: orthographic
+    // bool Orthographic;
     
+    static constexpr auto TYPE = COMPONENT_TYPE::Camera;
+};
+
 }
 
+#ifdef LEAK_INTO_GLOBAL
 using ApplyForceInfo = Leviathan::Physics::ApplyForceInfo;
+#endif
 
 

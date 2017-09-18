@@ -45,6 +45,14 @@ generator.add GameWorldClass.new(
                                            Variable.new("material", "std::string")
                                          ], usedatastruct: false)]),
                   EntityComponent.new("ManualObject", [ConstructorInfo.new([])]),
+                  EntityComponent.new("Camera",
+                                      [ConstructorInfo.new(
+                                         [
+                                           Variable.new("fov", "uint8_t", default: "90"),
+                                           Variable.new("soundperceiver", "bool", default:
+                                                                                    "true")
+                                         ])
+                                      ]),                  
                 ],
                 systems: [
                   EntitySystem.new("ReceivedSystem", []),

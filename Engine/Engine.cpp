@@ -1154,7 +1154,7 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* o
     return GameWorlds.back();
 }
 
-DLLEXPORT void Engine::DestroyWorld(shared_ptr<GameWorld> &world){
+DLLEXPORT void Engine::DestroyWorld(const shared_ptr<GameWorld> &world){
 
     if(!world)
         return;
@@ -1171,13 +1171,9 @@ DLLEXPORT void Engine::DestroyWorld(shared_ptr<GameWorld> &world){
         if((*iter).get() == world.get()){
 
             GameWorlds.erase(iter);
-            world.reset();
             return;
         }
     }
-
-    // Should be fine destroying worlds that aren't on the list... //
-    world.reset();
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::ClearTimers(){

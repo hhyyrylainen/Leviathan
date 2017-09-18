@@ -84,9 +84,8 @@ DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSo
 }
 
 DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &pos,
-    const Float3 &pitchyawroll)
+    const Float4 &orientation)
 {
-    
     //LOG_WRITE("TODO: SetSoundListenerPosition");
     
 	// we need to create a vector from the angles //

@@ -16,6 +16,8 @@
 #include "../Handlers/IDFactory.h"
 #include "../Window.h"
 
+#include "Sound/SoundDevice.h"
+
 #include "Newton/NewtonManager.h"
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
@@ -120,7 +122,7 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
 	WorldSceneCamera = WorldsScene->createCamera("Camera01");
 
 	// near and far clipping planes //
-	WorldSceneCamera->setFOVy(Ogre::Radian(60.f*DEGREES_TO_RADIANS));
+	WorldSceneCamera->setFOVy(Ogre::Degree(60));
 	WorldSceneCamera->setNearClipDistance(0.1f);
 	WorldSceneCamera->setFarClipDistance(50000.f);
 
@@ -199,25 +201,70 @@ DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeinti
     
     RunFrameRenderSystems(tick, timeintick);
     
-    // Read camera entity //
-    DEBUG_BREAK;
+    // Read camera entity and update position //
 
     // Skip if no camera //
+    if(CameraEntity == 0)
+        return;
+
+    try{
+        Camera& properties = GetComponent<Camera>(CameraEntity);
+
+        Position& position = GetComponent<Position>(CameraEntity);
+
+        // set camera position //
+        WorldSceneCamera->setPosition(position.Members._Position);
+
+        WorldSceneCamera->setOrientation(position.Members._Orientation);
+
+        if(properties.SoundPerceiver){
+            
+            SoundDevice::Get()->SetSoundListenerPosition(position.Members._Position,
+                position.Members._Orientation);   
+        }
+
+        if(properties.Marked || AppliedCameraPropertiesPtr != &properties){
+
+            AppliedCameraPropertiesPtr = &properties;
+
+            WorldSceneCamera->setFOVy(Ogre::Degree(properties.FOVY));
+            
+            properties.Marked = false;
+        }
+
+    } catch(const Exception &e){
+
+        LOG_ERROR("GameWorld: Render: camera update failed. Was a component removed?, "
+            "exception:");
+        e.PrintToLog();
+        CameraEntity = 0;
+        return;
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::SetCamera(ObjectID object){
+
+    CameraEntity = object;
     
-	// // set camera position //
-	// WorldSceneCamera->setPosition(camerapos->GetPosition());
+    AppliedCameraPropertiesPtr = nullptr;
 
-	// // convert rotation into a quaternion //
-	// const Float3& angles = camerapos->GetRotation();
+    if(CameraEntity == 0)
+        return;
 
-	// // create quaternion from quaternion rotations around each axis //
-	// Ogre::Quaternion rotq(Ogre::Degree(angles.Y), Ogre::Vector3::UNIT_X);
-	// Ogre::Quaternion rotyaw(Ogre::Degree(angles.X), Ogre::Vector3::UNIT_Y);
-	// Ogre::Quaternion rotroll(Ogre::Degree(angles.Z), Ogre::Vector3::UNIT_Z);
+    // Check components //
+    try{
+        GetComponent<Camera>(object);
+    } catch(const NotFound&){
 
-	// rotq = rotyaw*rotq*rotroll;
+        throw InvalidArgument("SetCamera object is missing a needed component (Camera)");
+    }
 
-	// WorldSceneCamera->setOrientation(rotq);
+    try{
+        GetComponent<Position>(object);
+    } catch(const NotFound&){
+
+        throw InvalidArgument("SetCamera object is missing a needed component (Position)");
+    }    
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposition,

@@ -13,6 +13,7 @@
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Entities/Components.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //
@@ -104,18 +105,19 @@ void Pong::PongServer::Tick(int mspassed){
         ObjectID ball = GameArena->GetBall();
 
         try{
-            auto& pos = WorldOfPong->GetComponent<Position>(ball).Members;
+            DEBUG_BREAK;
+            // auto& pos = WorldOfPong->GetComponent<Leviathan::Position>(ball).Members;
 
-            const auto& ballcurpos = pos._Position;
+            // const auto& ballcurpos = pos._Position;
 
-            if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
+            // if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
 
-                _DisposeOldBall();
+            //     _DisposeOldBall();
 
-                // Serve new ball //
-                GameArena->ServeBall();
-                return;
-            }
+            //     // Serve new ball //
+            //     GameArena->ServeBall();
+            //     return;
+            // }
 
         } catch(const NotFound&){
             
@@ -132,8 +134,9 @@ void Pong::PongServer::Tick(int mspassed){
         bool ballstuck = false;
         
         try{
+            
             // Check is the ball stuck on the dead axis (where no paddle can hit it) //
-            auto& physics = WorldOfPong->GetComponent<Physics>(ball);
+            auto& physics = WorldOfPong->GetComponent<Leviathan::Physics>(ball);
             
             Float3 ballspeed = physics.GetVelocity();
             ballspeed.X = abs(ballspeed.X);
@@ -246,35 +249,36 @@ void Pong::PongServer::CheckForGameEnd(){
 
             // Do various activities related to winning the game //
 
-            // Set the camera location //
-            auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+            // // Set the camera location //
+            // auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
 
-            switch(i){
-            case 0:
-                {
-                    cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
-                    cam->SetRotation(Float3(-90.f, -30.f, 0.f));
-                }
-                break;
-            case 1:
-                {
-                    cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
-                    cam->SetRotation(Float3(-180.f, -30.f, 0.f));
-                }
-                break;
-            case 2:
-                {
-                    cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
-                    cam->SetRotation(Float3(90.f, -30.f, 0.f));
-                }
-                break;
-            case 3:
-                {
-                    cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
-                    cam->SetRotation(Float3(0.f, -30.f, 0.f));
-                }
-                break;
-            }
+            DEBUG_BREAK;
+            // switch(i){
+            // case 0:
+            //     {
+            //         cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+            //         cam->SetRotation(Float3(-90.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // case 1:
+            //     {
+            //         cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+            //         cam->SetRotation(Float3(-180.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // case 2:
+            //     {
+            //         cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+            //         cam->SetRotation(Float3(90.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // case 3:
+            //     {
+            //         cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+            //         cam->SetRotation(Float3(0.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // }
 
             Logger::Get()->Info("TODO: make clients move the camera around");
 

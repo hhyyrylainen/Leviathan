@@ -15,8 +15,10 @@
 #include "OgreRibbonTrail.h"
 #include "../Common/StringOperations.h"
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
+
+
+
 //void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
 //    ObjectID prop, const std::string &ogrefile, Model &model, bool hidden)
 //{

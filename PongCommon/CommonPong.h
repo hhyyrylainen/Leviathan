@@ -26,6 +26,8 @@
 #include "Threading/ThreadingManager.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 
+#include "Generated/StandardWorld.h"
+
 #include <functional>
 
 #define SCRIPT_REGISTERFAIL	Logger::Get()->Error(\
@@ -160,7 +162,7 @@ namespace Pong{
             return GameArena->GetBall();
         }
 
-        Leviathan::GameWorld* GetGameWorld(){
+        Leviathan::StandardWorld* GetGameWorld(){
             return WorldOfPong.get();
         }
         int GetLastHitPlayer(){
@@ -216,7 +218,7 @@ namespace Pong{
 
         // game objects //
         std::unique_ptr<Arena> GameArena;
-        std::shared_ptr<GameWorld> WorldOfPong;
+        std::shared_ptr<StandardWorld> WorldOfPong;
 
         // AI module //
         GameModule* GameAI = nullptr;
@@ -290,7 +292,8 @@ namespace Pong{
             PongPackets::RegisterAllPongPacketTypes();
 
             // Setup world //
-            WorldOfPong = Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL);
+            WorldOfPong = std::dynamic_pointer_cast<Leviathan::StandardWorld>(
+                Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), NULL));
 
             // create playing field manager with the world //
             GameArena = unique_ptr<Arena>(new Arena(WorldOfPong.get()));
@@ -315,6 +318,7 @@ namespace Pong{
 
             // Destroy the world //
             Engine::Get()->DestroyWorld(WorldOfPong);
+            WorldOfPong.reset();
             
             CustomEnginePreShutdown();
 

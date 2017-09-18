@@ -10,7 +10,6 @@
 #include "Systems.h"
 #include "Components.h"
 
-#include "Objects/ViewerCameraPos.h"
 #include "Newton/PhysicalWorld.h"
 #include "Common/ReferenceCounted.h"
 
@@ -107,6 +106,9 @@ public:
     //! events that need to happen at certain game world times this is ideal
     DLLEXPORT void Tick(int currenttick);
 
+    //! \brief Runs systems required for a rendering run. Also updates camera positions
+    DLLEXPORT void Render(int mspassed, int tick, int timeintick);
+
     //! \brief Returns the current tick
     DLLEXPORT int GetTickNumber() const;
 
@@ -122,8 +124,6 @@ public:
 
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();
-
-    DLLEXPORT void Render(int mspassed, int tick, int timeintick);
 
 
     //! \brief Casts a ray from point along a vector and returns the first physical
@@ -171,13 +171,19 @@ public:
             throw NotFound("Component for entity with id was not found");
         
         return *static_cast<TComponent*>(ptr);
-    }    
+    }
 
     //! \brief Gets a component of type or returns nullptr
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
     DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
 
+
+    //! \brief Sets the entity that acts as a camera.
+    //!
+    //! The entity needs atleast Position and Camera components
+    //! \exception InvalidArgument if the object is missing required components
+    DLLEXPORT void SetCamera(ObjectID object);
     
     // Ogre get functions //
     inline Ogre::SceneManager* GetScene(){
@@ -273,11 +279,11 @@ protected:
     //! \brief Clears the added components. Call after HandleAdded
     DLLEXPORT virtual void ClearAdded();
     
-
+    //! \brief Resets stored nodes in systems. Used together with _ResetComponents
     DLLEXPORT virtual void _ResetSystems() = 0;
 
+    //! \brief Resets components in holders. Used together with _ResetSystems
     DLLEXPORT virtual void _ResetComponents() = 0;
-
     
 private:
 
@@ -305,6 +311,10 @@ private:
 
 protected:
 
+    //! \brief If false a graphical Ogre window hasn't been created
+    //! and purely graphical stuff should be skipped
+    //!
+    //! Used on dedicated servers and other headless applications
     bool GraphicalMode = false;
 
     //! Bool flag telling whether this is a master world (on a server) or
@@ -312,9 +322,7 @@ protected:
     bool IsOnServer = false;
     
 private:
-    
 
-    // ------------------------------------ //
     Ogre::Camera* WorldSceneCamera = nullptr;
     Ogre::SceneManager* WorldsScene = nullptr;
 
@@ -353,6 +361,15 @@ private:
 
     //! A funky name for this world, if any
     std::string DecoratedName;
+
+    //! If not zero controls the position and properties of WorldSceneCamera
+    ObjectID CameraEntity = 0;
+    
+    //! The currently applied properties on WorldSceneCamera if the
+    //! Camera component of CameraEntity changes (or it is Marked)
+    //! these properties are set on WorldSceneCamera
+    Camera* AppliedCameraPropertiesPtr = nullptr;
+    
 
     //! A lock for delayed delete, to allow deleting objects from physical callbacks
     Mutex DeleteMutex;

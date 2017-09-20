@@ -34,6 +34,24 @@ public:
         return newEntity;
     }
 
+    //! \brief Creates a plane that has a material applied to it
+    template<class TWorldClass>
+        DLLEXPORT static ObjectID LoadPlane(TWorldClass &world, const Float3 &initialposition,
+            const Float4 &initialrotation, Float2 planesize, const std::string &materialname)
+    {
+        ObjectID newEntity = world.CreateEntity();
+        
+        world.Create_Position(newEntity, initialposition, initialrotation);
+
+        RenderNode& node = world.Create_RenderNode(newEntity);
+
+        node.Node;
+
+        
+
+        return newEntity;
+    }    
+
 };
 
 }

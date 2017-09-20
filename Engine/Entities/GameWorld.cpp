@@ -158,7 +158,18 @@ DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const std::string &materialname){
 		Logger::Get()->Error("[EXCEPTION] "+e.getFullDescription());
 	}
 }
+// ------------------------------------ //
+DLLEXPORT void GameWorld::SetSkyPlane(const std::string &material, const Ogre::Plane &plane
+    /*= Ogre::Plane(1, 1, 1, 1)*/)
+{
+    WorldsScene->setSkyPlane(true, plane, material);
+}
 
+DLLEXPORT void GameWorld::DisableSkyPlane(){
+
+    WorldsScene->setSkyPlaneEnabled(false);
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetFog(){
 	WorldsScene->setFog(Ogre::FOG_LINEAR, Ogre::ColourValue(0.7f, 0.7f, 0.8f), 0, 4000, 10000);
 	WorldsScene->setFog(Ogre::FOG_NONE);

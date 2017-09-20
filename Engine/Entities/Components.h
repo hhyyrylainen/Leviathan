@@ -46,7 +46,7 @@ public:
 public:
 
     //! \brief Creates at specific position
-    inline Position(const Data &data) : Component(COMPONENT_TYPE::Position),
+    inline Position(const Data &data) : Component(TYPE),
                                         Members(data){}
         
     Data Members;
@@ -60,7 +60,7 @@ public:
 class RenderNode : public Component{
 public:
 
-    inline RenderNode() : Component(COMPONENT_TYPE::RenderNode){ Marked = false; }
+    inline RenderNode() : Component(TYPE){ Marked = false; }
 
     //! \brief Gracefully releases while world is still valid
     DLLEXPORT void Release(Ogre::SceneManager* worldsscene);
@@ -118,7 +118,7 @@ public:
         
 public:
      
-    inline Sendable() : Component(COMPONENT_TYPE::Sendable){ }
+    inline Sendable() : Component(TYPE){ }
 
     inline void AddConnectionToReceivers(std::shared_ptr<Connection> connection) {
 
@@ -154,7 +154,7 @@ public:
     };
 public:
 
-    inline Received() : Component(COMPONENT_TYPE::Received),
+    inline Received() : Component(TYPE),
                         ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES){}
 
     DLLEXPORT void GetServerSentStates(StoredState const** first,
@@ -174,7 +174,7 @@ public:
 class BoxGeometry : public Component{
 public:
     inline BoxGeometry(const Float3 &size, const std::string &material) :
-        Component(COMPONENT_TYPE::BoxGeometry),
+        Component(TYPE),
         Sizes(size), Material(material){}
     
     //! Size along the axises
@@ -192,7 +192,7 @@ public:
 //! \brief Entity has a model
 class Model : public Component{
 public:
-    inline  Model(const std::string &file) : Component(COMPONENT_TYPE::Model),
+    inline  Model(const std::string &file) : Component(TYPE),
                                              ModelFile(file){}
 
     //! \brief Destroys GraphicalObject
@@ -205,6 +205,22 @@ public:
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;
 };
+
+//! \brief Plane component
+//! This would need to be implemented as a generated mesh. For backgrounds use the
+//! skyplane methods in the GameWorld
+// class Plane : public Component{
+// public:
+//     DLLEXPORT Plane(Ogre::SceneNode* parent, const std::string &material);
+
+//     //! \brief Destroys GraphicalObject
+//     DLLEXPORT void Release(Ogre::SceneManager* scene);
+
+//     //! The plane that this component creates
+//     Ogre::Plane* GraphicalObject = nullptr;
+
+//     static constexpr auto TYPE = COMPONENT_TYPE::Plane;
+// };
 
 
 //! \brief Entity has a physical component
@@ -273,7 +289,7 @@ public:
     
 public:
     
-    inline Physics(const Data &args) : Component(COMPONENT_TYPE::Physics),
+    inline Physics(const Data &args) : Component(TYPE),
         World(args.world),
         _Position(args.updatepos), ThisEntity(args.id),
         UpdateSendable(args.updatesendable){}
@@ -386,7 +402,7 @@ public:
 class ManualObject : public Component{
 public:
 
-    inline ManualObject() : Component(COMPONENT_TYPE::ManualObject){}
+    inline ManualObject() : Component(TYPE){}
 
     DLLEXPORT void Release(Ogre::SceneManager* scene);
 
@@ -598,7 +614,7 @@ public:
 
     //! \brief Creates at specific position
     inline Camera(uint8_t fovy = 60, bool soundperceiver = true) :
-        Component(COMPONENT_TYPE::Camera), FOVY(fovy), SoundPerceiver(soundperceiver)
+        Component(TYPE), FOVY(fovy), SoundPerceiver(soundperceiver)
     {
 
     }

@@ -34,6 +34,8 @@ enum class COMPONENT_TYPE : uint16_t{
 
     Camera,
 
+    Plane,
+
     //! All values above this are application specific types
     Custom = 10000
 };

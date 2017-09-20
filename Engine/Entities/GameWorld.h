@@ -28,7 +28,8 @@ namespace Leviathan{
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
     
-// Holds the returned object that was hit during ray casting //
+//! Holds the returned object that was hit during ray casting
+//! \todo Move to a new file
 class RayCastHitEntity : public ReferenceCounted{
 public:
     DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f,
@@ -91,12 +92,12 @@ public:
     //! \brief Marks all objects to be deleted
     DLLEXPORT void MarkForClear();
 
-    // clears all objects from the world //
+    //! Clears all objects from the world
     DLLEXPORT void ClearObjects();
 
     //! \brief Returns the number of ObjectIDs this world keeps track of
     //! \note There may actually be more objects as it is possible to create components
-    //! for ids that are not created
+    //! for ids that are not created (this is not recommended but it isn't enforced)
     DLLEXPORT size_t GetObjectCount() const;
 
 
@@ -119,8 +120,21 @@ public:
     //! \brief Fetches the physical material ID from the material manager
     DLLEXPORT int GetPhysicalMaterial(const std::string &name);
 
+    //! \todo Expose the parameters and make this activate the fog
     DLLEXPORT void SetFog();
     DLLEXPORT void SetSkyBox(const std::string &materialname);
+
+    //! \brief Alternative to skybox This is a (possibly curved) plane
+    //! attached to the camera that can be used to render a background or
+    //! a sky
+    DLLEXPORT void SetSkyPlane(const std::string &material, const Ogre::Plane &plane =
+        Ogre::Plane(1, 1, 1, 1));
+
+    //! \brief Disables sky plane
+    //! \pre SetSkyPlane has been used to set a sky plane
+    //! \post The sky plane is disabled
+    DLLEXPORT void DisableSkyPlane();
+    
 
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();

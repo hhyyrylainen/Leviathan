@@ -22,6 +22,20 @@ DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
     worldsscene->destroySceneNode(Node);
     Node = nullptr;
 }
+
+// // ------------------------------------ //
+// // Plane
+// DLLEXPORT Plane::Plane(Ogre::SceneNode* parent, const std::string &material) :
+//     Component(TYPE)
+// {
+        
+// }
+
+// //! \brief Destroys GraphicalObject
+// DLLEXPORT void Plane::Release(Ogre::SceneManager* scene){
+
+// }
+
 // ------------------ Physics ------------------ //
 DLLEXPORT void Physics::JumpTo(Position &target){
 

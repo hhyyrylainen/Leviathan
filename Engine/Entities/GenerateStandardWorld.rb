@@ -25,7 +25,12 @@ generator.add GameWorldClass.new(
                   EntityComponent.new("Received", [ConstructorInfo.new([])]),
                   EntityComponent.new("Model", [ConstructorInfo.new(
                                                   [
-                                                    Variable.new("model", "std::string")]
+                                                    Variable.new("GetScene()", "",
+                                                                 nonMethodParam: true),
+                                                    Variable.new("parent", "Ogre::SceneNode*",
+                                                                 noRef: true),
+                                                    Variable.new("model", "std::string")
+                                                  ]
                                                 )]),
                   EntityComponent.new("Physics", [
                                         ConstructorInfo.new(

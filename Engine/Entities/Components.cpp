@@ -10,7 +10,7 @@
 #include "OgreSceneManager.h"
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
-
+#include "OgreItem.h"
 
 #include <limits>
 using namespace Leviathan;
@@ -406,6 +406,14 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets(){
     }
 }
 // ------------------------------------ //
+DLLEXPORT Model::Model(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
+    const std::string &meshname) :
+    Component(TYPE)
+{
+    GraphicalObject = scene->createItem(meshname);
+    parent->attachObject(GraphicalObject);
+}
+
 DLLEXPORT void Model::Release(Ogre::SceneManager* scene){
 
     if(GraphicalObject){

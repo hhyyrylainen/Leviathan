@@ -192,14 +192,12 @@ public:
 //! \brief Entity has a model
 class Model : public Component{
 public:
-    inline  Model(const std::string &file) : Component(TYPE),
-                                             ModelFile(file){}
+    DLLEXPORT Model(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
+        const std::string &meshname);
 
     //! \brief Destroys GraphicalObject
     DLLEXPORT void Release(Ogre::SceneManager* scene);
         
-    std::string ModelFile;
-
     //! The entity that has this model's mesh loaded
     Ogre::Item* GraphicalObject = nullptr;
 

@@ -80,6 +80,7 @@ string Leviathan::FileSystem::ModelsFolder = "Models/";
 string Leviathan::FileSystem::ScriptsFolder = "Scripts/";
 string Leviathan::FileSystem::ShaderFolder = "Shaders/";
 string Leviathan::FileSystem::TextureFolder = "Textures/";
+string Leviathan::FileSystem::MaterialFolder = "Materials/";
 string Leviathan::FileSystem::FontFolder = "Fonts/";
 string Leviathan::FileSystem::SoundFolder = "Sound/";
 
@@ -922,6 +923,10 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /
 	manager.createResourceGroup("MainTexturesFolder");
     RegisterSubFolders(manager, "MainTexturesFolder", DataFolder + TextureFolder);
 
+	// Materials folder //
+	manager.createResourceGroup("MainMaterialsFolder");
+    RegisterSubFolders(manager, "MainMaterialsFolder", DataFolder + MaterialFolder);
+
     // Scripts folder //
     manager.createResourceGroup("GuiScripts");
     if(boost::filesystem::exists(DataFolder + ScriptsFolder + "GUI")){
@@ -958,8 +963,12 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /
 
 	
 	// initialize the groups //
-    if(!testload){
+    if(testload){
+        
         LOG_INFO("FileSystem: RegisterOGREResourceGroups: doing test load, skipping parsing");
+        
+    } else {
+
         manager.initialiseAllResourceGroups(true);
     }
 

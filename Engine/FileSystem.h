@@ -214,6 +214,7 @@ namespace Leviathan{
 		static std::string ScriptsFolder;
 		static std::string ShaderFolder;
 		static std::string TextureFolder;
+        static std::string MaterialFolder;
 		static std::string FontFolder;
 		static std::string SoundFolder;
 

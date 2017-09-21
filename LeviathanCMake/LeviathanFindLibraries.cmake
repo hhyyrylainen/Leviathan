@@ -54,8 +54,9 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
 
 
-  set(LEVIATHAN_ENGINE_LIBRARIES Newton angelscript OgreMain CEGUIBase-9999
-    CEGUICommonDialogs-9999
+  set(LEVIATHAN_ENGINE_LIBRARIES Newton angelscript
+    OgreMain OgreHlmsUnlit OgreHlmsPbs
+    CEGUIBase-9999 CEGUICommonDialogs-9999
     # CEGUICoreWindowRendererSet CEGUIExpatParser CEGUISILLYImageCodec
     CEGUIOgreRenderer-9999 sfml-system sfml-audio sfml-network
     # ffmpeg

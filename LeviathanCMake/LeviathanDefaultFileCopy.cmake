@@ -71,7 +71,7 @@ endif()
 # Copy the crucial Ogre scripts
 file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/CoreOgreScripts/*")
 file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
-install(FILES ${CoreOgreScriptsMoveFiles} DESTINATION "bin/CoreOgreScripts")
+install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreScripts")
 
 # Boost files
 # If we are not using static linking we need to copy everything

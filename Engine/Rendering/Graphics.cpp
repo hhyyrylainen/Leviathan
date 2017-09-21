@@ -7,14 +7,19 @@
 #include "FileSystem.h"
 #include "GUI/FontManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Threading/ThreadingManager.h"
+
+#include "OgreFrameListener.h"
+#include "OgreHlmsManager.h"
+#include "Hlms/Pbs/OgreHlmsPbs.h"
+#include "Hlms/Unlit/OgreHlmsUnlit.h"
+#include "OgreArchiveManager.h"
 #include "OgreLogManager.h"
 #include "OgreMaterialManager.h"
+#include "OgreMeshManager.h"
 #include "OgreRoot.h"
 #include "OgreTextureManager.h"
-#include "Threading/ThreadingManager.h"
-#include <OgreFrameListener.h>
-#include <OgreMeshManager.h>
-#include <boost/assign/list_of.hpp>
+
 #include <regex>
 #include <future>
 
@@ -29,6 +34,7 @@ DLLEXPORT Leviathan::Graphics::Graphics(){
     
 	Staticaccess = this;
 }
+
 Graphics::~Graphics(){
 }
 
@@ -231,7 +237,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 	// Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(7);
 
 	//Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
-
     
 	std::promise<bool> fontLoadResult;
     
@@ -305,6 +310,93 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
 	return true;
 }
+// ------------------------------------ //
+void Graphics::_LoadOgreHLMS(){
+
+    LOG_INFO("Graphics: Loading Ogre HLMS");
+
+    // HLMS Initialization code taken from Ogre samples. See
+    // License.txt for the Ogre license. And modified
+    Ogre::HlmsUnlit* hlmsUnlit = 0;
+    Ogre::HlmsPbs* hlmsPbs = 0;
+
+    Ogre::String rootHlmsFolder = "CoreOgreScripts/DefaultHLMS/";
+
+    //For retrieval of the paths to the different folders needed
+    Ogre::String mainFolderPath;
+    Ogre::StringVector libraryFoldersPaths;
+    Ogre::StringVector::const_iterator libraryFolderPathIt;
+    Ogre::StringVector::const_iterator libraryFolderPathEn;
+
+    Ogre::ArchiveManager &archiveManager = Ogre::ArchiveManager::getSingleton();
+        
+    {
+        //Create & Register HlmsUnlit
+        //Get the path to all the subdirectories used by HlmsUnlit
+        Ogre::HlmsUnlit::getDefaultPaths( mainFolderPath, libraryFoldersPaths );
+        Ogre::Archive *archiveUnlit = archiveManager.load( rootHlmsFolder + mainFolderPath,
+            "FileSystem", true );
+        Ogre::ArchiveVec archiveUnlitLibraryFolders;
+        libraryFolderPathIt = libraryFoldersPaths.begin();
+        libraryFolderPathEn = libraryFoldersPaths.end();
+        while( libraryFolderPathIt != libraryFolderPathEn )
+        {
+            Ogre::Archive *archiveLibrary =
+                archiveManager.load(rootHlmsFolder + *libraryFolderPathIt, "FileSystem", true);
+            archiveUnlitLibraryFolders.push_back( archiveLibrary );
+            ++libraryFolderPathIt;
+        }
+
+        //Create and register the unlit Hlms
+        hlmsUnlit = OGRE_NEW Ogre::HlmsUnlit( archiveUnlit, &archiveUnlitLibraryFolders );
+        Ogre::Root::getSingleton().getHlmsManager()->registerHlms( hlmsUnlit );
+    }
+
+    {
+        //Create & Register HlmsPbs
+        //Do the same for HlmsPbs:
+        Ogre::HlmsPbs::getDefaultPaths( mainFolderPath, libraryFoldersPaths );
+        Ogre::Archive *archivePbs = archiveManager.load( rootHlmsFolder + mainFolderPath,
+            "FileSystem", true );
+
+        //Get the library archive(s)
+        Ogre::ArchiveVec archivePbsLibraryFolders;
+        libraryFolderPathIt = libraryFoldersPaths.begin();
+        libraryFolderPathEn = libraryFoldersPaths.end();
+        while( libraryFolderPathIt != libraryFolderPathEn )
+        {
+            Ogre::Archive *archiveLibrary =
+                archiveManager.load(rootHlmsFolder + *libraryFolderPathIt, "FileSystem", true);
+            archivePbsLibraryFolders.push_back( archiveLibrary );
+            ++libraryFolderPathIt;
+        }
+
+        //Create and register
+        hlmsPbs = OGRE_NEW Ogre::HlmsPbs( archivePbs, &archivePbsLibraryFolders );
+        Ogre::Root::getSingleton().getHlmsManager()->registerHlms( hlmsPbs );
+    }
+
+
+    Ogre::RenderSystem *renderSystem = ORoot->getRenderSystem();
+    if( renderSystem->getName() == "Direct3D11 Rendering Subsystem" )
+    {
+        //Set lower limits 512kb instead of the default 4MB per Hlms in D3D 11.0
+        //and below to avoid saturating AMD's discard limit (8MB) or
+        //saturate the PCIE bus in some low end machines.
+        bool supportsNoOverwriteOnTextureBuffers;
+        renderSystem->getCustomAttribute( "MapNoOverwriteOnDynamicBufferSRV",
+            &supportsNoOverwriteOnTextureBuffers );
+
+        if( !supportsNoOverwriteOnTextureBuffers )
+        {
+            hlmsPbs->setTextureBufferDefaultSize( 512 * 1024 );
+            hlmsUnlit->setTextureBufferDefaultSize( 512 * 1024 );
+        }
+    }
+
+    LOG_INFO("Graphics: Ogre HLMS loaded");
+}
+
 // ------------------------------------------- //
 DLLEXPORT bool Leviathan::Graphics::Frame(){
 

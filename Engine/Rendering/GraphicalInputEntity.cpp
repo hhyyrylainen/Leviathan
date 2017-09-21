@@ -6,10 +6,12 @@
 #include "OgreVector4.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNodeDef.h"
+#include "Compositor/OgreCompositorNode.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 #include "Compositor/OgreCompositorWorkspaceDef.h"
 #include "Compositor/Pass/PassClear/OgreCompositorPassClearDef.h"
 #include "Compositor/Pass/PassScene/OgreCompositorPassSceneDef.h"
+#include "Compositor/Pass/PassQuad/OgreCompositorPassQuadDef.h"
 #include "Handlers/IDFactory.h"
 #include "Engine.h"
 #include "Entities/GameWorld.h"
@@ -158,6 +160,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 		// Notify engine to register threads to work with Ogre //
 		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 		FileSystem::RegisterOGREResourceGroups();
+        windowcreater->_LoadOgreHLMS();
 
 		// Create the GUI system //
 		CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
@@ -166,7 +169,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
         FirstCEGUIRenderer = &guirenderer;
 
 		// Print the used renderer //
-		Logger::Get()->Info(string("GUI using CEGUI renderer: ")+
+		Logger::Get()->Info(std::string("GUI using CEGUI renderer: ")+
             guirenderer.getIdentifierString().c_str());
 
 		// Load the GUI fonts //
@@ -351,10 +354,20 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     // Clear all of the buffers
     clearpass->mClearBufferFlags = Ogre::FBT_DEPTH | Ogre::FBT_STENCIL | Ogre::FBT_COLOUR;
 
-    // This will hopefully help it get properly cleared //
-    Ogre::CompositorPassSceneDef* scenepass =
-        static_cast<Ogre::CompositorPassSceneDef*>(targetpasses->
-            addPass(Ogre::PASS_SCENE));
+    // Doesn't work
+    // clearpass->mColourValue = Ogre::ColourValue::Green;
+
+    // Needs a new material
+    // Ogre::CompositorPassQuadDef* backgroundpass =
+    //     static_cast<Ogre::CompositorPassQuadDef*>(targetpasses->
+    //         addPass(Ogre::PASS_QUAD));
+
+    // backgroundpass->mMaterialName = "Stone";
+
+    // // This will hopefully help it get properly cleared //
+    // Ogre::CompositorPassSceneDef* scenepass =
+    //     static_cast<Ogre::CompositorPassSceneDef*>(targetpasses->
+    //         addPass(Ogre::PASS_SCENE));
     
     // Connect the main render target to the node
     templatedworkspace->connectExternal(0, "GraphicalInputEntity_clear_node", 0);

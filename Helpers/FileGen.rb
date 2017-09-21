@@ -704,7 +704,7 @@ class ConstructorInfo
   end
 
   def formatParameters(opts)
-    if @Parameters.empty?
+    if @Parameters.empty? or @Parameters.select{|p| !p.NonMethodParam}.empty?
       ""
     else
       ", " + @Parameters.select{|p| !p.NonMethodParam}.map{

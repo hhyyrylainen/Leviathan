@@ -20,7 +20,11 @@ generator.add GameWorldClass.new(
                                            Variable.new("orientation", "Float4")
                                          ], usedatastruct: true)
                                       ]),
-                  EntityComponent.new("RenderNode", [ConstructorInfo.new([])]),
+                  EntityComponent.new("RenderNode", [ConstructorInfo.new(
+                                                       [
+                                                         Variable.new("GetScene()", "",
+                                                                      nonMethodParam: true),
+                                                       ])]),
                   EntityComponent.new("Sendable", [ConstructorInfo.new([])]),
                   EntityComponent.new("Received", [ConstructorInfo.new([])]),
                   EntityComponent.new("Model", [ConstructorInfo.new(
@@ -57,7 +61,19 @@ generator.add GameWorldClass.new(
                                            Variable.new("soundperceiver", "bool", default:
                                                                                     "true")
                                          ])
-                                      ]),                  
+                                      ]),
+                  EntityComponent.new("Plane",
+                                      [ConstructorInfo.new(
+                                         [
+                                           Variable.new("GetScene()", "",
+                                                        nonMethodParam: true),
+                                           Variable.new("parent", "Ogre::SceneNode*",
+                                                        noRef: true),
+                                           Variable.new("material", "std::string"),
+                                           Variable.new("plane", "Ogre::Plane"),
+                                           Variable.new("size", "Float2")
+                                         ])
+                                      ]),
                 ],
                 systems: [
                   EntitySystem.new("ReceivedSystem", []),

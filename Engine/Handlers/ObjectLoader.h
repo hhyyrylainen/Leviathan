@@ -37,7 +37,8 @@ public:
     //! \brief Creates a plane that has a material applied to it
     template<class TWorldClass>
         DLLEXPORT static ObjectID LoadPlane(TWorldClass &world, const Float3 &initialposition,
-            const Float4 &initialrotation, Float2 planesize, const std::string &materialname)
+            const Float4 &initialrotation, const std::string &materialname,
+            const Ogre::Plane &plane, const Float2 &planesize)
     {
         ObjectID newEntity = world.CreateEntity();
         
@@ -45,9 +46,7 @@ public:
 
         RenderNode& node = world.Create_RenderNode(newEntity);
 
-        node.Node;
-
-        
+        world.Create_Plane(newEntity, node.Node, materialname, plane, planesize);
 
         return newEntity;
     }    

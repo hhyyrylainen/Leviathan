@@ -60,11 +60,11 @@ public:
 class RenderNode : public Component{
 public:
 
-    inline RenderNode() : Component(TYPE){ Marked = false; }
+    DLLEXPORT RenderNode(Ogre::SceneManager* scene);
 
     //! \brief Gracefully releases while world is still valid
     DLLEXPORT void Release(Ogre::SceneManager* worldsscene);
-        
+    
     Ogre::SceneNode* Node = nullptr;
 
     //! Sets objects attached to the node to be hidden or visible
@@ -205,20 +205,23 @@ public:
 };
 
 //! \brief Plane component
-//! This would need to be implemented as a generated mesh. For backgrounds use the
-//! skyplane methods in the GameWorld
-// class Plane : public Component{
-// public:
-//     DLLEXPORT Plane(Ogre::SceneNode* parent, const std::string &material);
+//!
+//! Creates a static mesh for this
+class Plane : public Component{
+public:
+    DLLEXPORT Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
+        const std::string &material, const Ogre::Plane &plane, const Float2 &size);
 
-//     //! \brief Destroys GraphicalObject
-//     DLLEXPORT void Release(Ogre::SceneManager* scene);
+    //! \brief Destroys GraphicalObject
+    DLLEXPORT void Release(Ogre::SceneManager* scene);
 
-//     //! The plane that this component creates
-//     Ogre::Plane* GraphicalObject = nullptr;
+    //! The plane that this component creates
+    Ogre::Item* GraphicalObject = nullptr;
 
-//     static constexpr auto TYPE = COMPONENT_TYPE::Plane;
-// };
+    const std::string GeneratedMeshName;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::Plane;
+};
 
 
 //! \brief Entity has a physical component

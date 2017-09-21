@@ -143,10 +143,12 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
 	SetSunlight();
 	
 	// Create the workspace for this scene //
-	// Which will be rendered before the overlay workspace //
+	// Which will be rendered before the overlay workspace but after potential
+    // clearing workspace
 	WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
         rendertarget->GetOgreWindow(), 
 		WorldSceneCamera, "WorldsWorkspace", true, 0);
+
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const std::string &materialname){

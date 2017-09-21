@@ -3,11 +3,16 @@
 
 #include "CommonStateObjects.h"
 
+#include "Handlers/IDFactory.h"
+
 #include "GameWorld.h"
 #include "Networking/Connection.h"
 #include "Networking/SentNetworkThing.h"
 
 #include "OgreSceneManager.h"
+#include "OgreMeshManager.h"
+#include "OgreMesh2.h"
+#include "OgreMeshManager2.h"
 #include "OgreBillboardChain.h"
 #include "OgreRibbonTrail.h"
 #include "OgreItem.h"
@@ -17,25 +22,55 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 // ------------------ RenderNode ------------------ //
+DLLEXPORT RenderNode::RenderNode(Ogre::SceneManager* scene) :
+    Component(TYPE)
+{
+    Marked = false;
+    Node = scene->createSceneNode();
+}
+
 DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
 
     worldsscene->destroySceneNode(Node);
     Node = nullptr;
 }
 
-// // ------------------------------------ //
-// // Plane
-// DLLEXPORT Plane::Plane(Ogre::SceneNode* parent, const std::string &material) :
-//     Component(TYPE)
-// {
-        
-// }
+// ------------------------------------ //
+// Plane
+DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
+    const std::string &material, const Ogre::Plane &plane, const Float2 &size) :
+    Component(TYPE), GeneratedMeshName("Plane_Component_Mesh_" +
+        std::to_string(IDFactory::GetID()))
+{
+    const auto mesh = Ogre::v1::MeshManager::getSingleton().createPlane(
+        GeneratedMeshName + "_v1",
+        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, plane, size.X, size.Y,
+        1, 1,
+        // Normals
+        true,
+        1,
+        1.0f, 1.0f, Ogre::Vector3::UNIT_Y,
+        Ogre::v1::HardwareBuffer::HBU_STATIC_WRITE_ONLY, 
+        Ogre::v1::HardwareBuffer::HBU_STATIC_WRITE_ONLY,
+        false, false);
 
-// //! \brief Destroys GraphicalObject
-// DLLEXPORT void Plane::Release(Ogre::SceneManager* scene){
+    const auto mesh2 = Ogre::MeshManager::getSingleton().createManual(
+        GeneratedMeshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
 
-// }
+    // Fourth true is qtangent encoding which is not needed if we don't do normal mapping
+    mesh2->importV1(mesh.get(), true, true, true );
 
+    Ogre::v1::MeshManager::getSingleton().remove(mesh);
+
+    GraphicalObject = scene->createItem(mesh2);
+}
+
+DLLEXPORT void Plane::Release(Ogre::SceneManager* scene){
+
+    scene->destroyItem(GraphicalObject);
+
+    Ogre::MeshManager::getSingleton().remove(GeneratedMeshName);
+}
 // ------------------ Physics ------------------ //
 DLLEXPORT void Physics::JumpTo(Position &target){
 

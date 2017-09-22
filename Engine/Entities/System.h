@@ -40,7 +40,8 @@ protected:
     //!
     //! Goes through all nodes and calls func on them
     template <class T, void(T::*F)(UsedNode &node, ObjectID nodesobject)>
-    void RunAllNodes(T &instance) {
+    void RunAllNodes(T &instance){
+        
         auto& index = Nodes.GetIndex();
         for (auto iter = index.begin(); iter != index.end(); ++iter) {
 
@@ -51,7 +52,7 @@ protected:
 
     //! \brief Helper function for creating nodes based on std::tuple 
     template<class FirstType, class SecondType>
-    void TupleNodeHelper(
+    static void TupleNodeHelper(
         ObjectPool<std::tuple<FirstType&, SecondType&>, ObjectID> &Nodes,
         const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
         const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,

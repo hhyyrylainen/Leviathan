@@ -25,12 +25,11 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
         if(!pos.Marked)
             return;
 
+        pos.Marked = false;
+
         auto& rendernode = std::get<0>(node);
         rendernode.Node->setPosition(pos.Members._Position);
         rendernode.Node->setOrientation(pos.Members._Orientation);
-
-        LOG_WRITE(std::to_string(id) + " orientation: " +
-            Convert::ToString(pos.Members._Orientation));
     }
     
 public:
@@ -65,10 +64,6 @@ public:
             "CreateNodes FirstType is incorrect");
         TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, secondholder);
     }
-
-private:
-
-    ObjectPool<std::tuple<RenderNode&, Position&>, ObjectID> Nodes;
 };
 
 //! \brief Sets visibility objects with Ogre nodes that have changed RenderNode::Hidden

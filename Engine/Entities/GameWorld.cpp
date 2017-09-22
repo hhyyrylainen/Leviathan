@@ -115,12 +115,14 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
         Ogre::INSTANCING_CULLING_THREADED,
         "MainSceneManager_"+Convert::ToString(ID));
 
-	WorldsScene->setShadowFarDistance(1000.f);
-	WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
+	// WorldsScene->setShadowFarDistance(1000.f);
+	// WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
 
 	// create camera //
 	WorldSceneCamera = WorldsScene->createCamera("Camera01");
 
+    // WorldSceneCamera->lookAt( Ogre::Vector3( 0, 0, 0 ) );
+    
 	// near and far clipping planes //
 	WorldSceneCamera->setFOVy(Ogre::Degree(60));
 	WorldSceneCamera->setNearClipDistance(0.1f);
@@ -136,10 +138,10 @@ void Leviathan::GameWorld::_CreateOgreResources(Ogre::Root* ogre,
 
 	// set scene ambient colour //
     // TODO: update this to the PBR HLMS system
-	WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
-        Ogre::ColourValue(0.2f, 0.2f, 0.2f), Ogre::Vector3(0.1f, 1.f, 0.085f));
+	// WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
+    //     Ogre::ColourValue(0.2f, 0.2f, 0.2f), Ogre::Vector3(0.1f, 1.f, 0.085f));
 
-	// default sun //
+	// // default sun //
 	SetSunlight();
 	
 	// Create the workspace for this scene //

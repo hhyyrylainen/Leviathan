@@ -490,9 +490,6 @@ DLLEXPORT void GameWorld::ClearAdded(){
 // ------------------------------------ //
 DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
 
-    HandleAdded();
-    ClearAdded();
-
     _ApplyEntityUpdatePackets();
 }
 // ------------------------------------ //

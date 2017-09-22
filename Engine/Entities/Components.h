@@ -19,6 +19,10 @@
 
 namespace Leviathan{
 
+namespace Test{
+class TestComponentCreation;
+}
+
 //! brief Class containing residue static helper functions
 class ComponentHelpers{
 
@@ -61,6 +65,9 @@ class RenderNode : public Component{
 public:
 
     DLLEXPORT RenderNode(Ogre::SceneManager* scene);
+
+    //! Test version that doesn't need a valid scene manager
+    DLLEXPORT RenderNode(const Test::TestComponentCreation &test);
 
     //! \brief Gracefully releases while world is still valid
     DLLEXPORT void Release(Ogre::SceneManager* worldsscene);

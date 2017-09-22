@@ -632,7 +632,7 @@ END
 
     if opts.include?(:impl)
       f.puts "{"
-      f.puts @BaseClass + "::HandleAdded();"
+      f.puts @BaseClass + "::RunFrameRenderSystems(tick, timeintick);"
       f.puts ""
       f.puts @TickRunMethod
       

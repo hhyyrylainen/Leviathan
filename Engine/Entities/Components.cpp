@@ -39,6 +39,13 @@ DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
     worldsscene->destroySceneNode(Node);
     Node = nullptr;
 }
+// ------------------------------------ //
+DLLEXPORT RenderNode::RenderNode(const Test::TestComponentCreation &test) :
+    Component(TYPE)
+{
+    Marked = false;
+    Node = nullptr;
+}
 
 // ------------------------------------ //
 // Plane
@@ -69,6 +76,9 @@ DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
 
     GraphicalObject = scene->createItem(mesh2);
     parent->attachObject(GraphicalObject);
+
+    // This DOESN'T seem to throw if material is invalid
+    GraphicalObject->setMaterialName(material);
 }
 
 DLLEXPORT void Plane::Release(Ogre::SceneManager* scene){

@@ -299,6 +299,11 @@ public:
         Added.clear();
     }
 
+    auto GetObjectCount() const{
+
+        return Index.size();
+    }
+
     //! \brief Returns a direct access to Index
     //! \note Do not change the returned index it is intended only for looping.
     //! Okay, you may change it but you have to be extremely careful

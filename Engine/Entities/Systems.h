@@ -28,9 +28,12 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
         auto& rendernode = std::get<0>(node);
         rendernode.Node->setPosition(pos.Members._Position);
         rendernode.Node->setOrientation(pos.Members._Orientation);
+
+        LOG_WRITE(std::to_string(id) + " orientation: " +
+            Convert::ToString(pos.Members._Orientation));
     }
     
- public:
+public:
 
     void Run(GameWorld &world) override{
 
@@ -40,6 +43,10 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
     void Clear(){
 
         Nodes.Clear();
+    }
+
+    auto GetNodeCount() const{
+        return Nodes.GetObjectCount();
     }
 
     //! \brief Creates nodes if matching ids are found in all data vectors or
@@ -59,7 +66,7 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
         TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, secondholder);
     }
 
- private:
+private:
 
     ObjectPool<std::tuple<RenderNode&, Position&>, ObjectID> Nodes;
 };

@@ -26,7 +26,12 @@ DLLEXPORT RenderNode::RenderNode(Ogre::SceneManager* scene) :
     Component(TYPE)
 {
     Marked = false;
-    Node = scene->createSceneNode();
+
+    // TODO: allow for static render nodes
+    Node = scene->getRootSceneNode(Ogre::SCENE_DYNAMIC)->createChildSceneNode(
+        Ogre::SCENE_DYNAMIC);
+    
+    //Node = scene->createSceneNode();
 }
 
 DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene){
@@ -63,6 +68,7 @@ DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
     Ogre::v1::MeshManager::getSingleton().remove(mesh);
 
     GraphicalObject = scene->createItem(mesh2);
+    parent->attachObject(GraphicalObject);
 }
 
 DLLEXPORT void Plane::Release(Ogre::SceneManager* scene){
@@ -451,11 +457,7 @@ DLLEXPORT Model::Model(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
 
 DLLEXPORT void Model::Release(Ogre::SceneManager* scene){
 
-    if(GraphicalObject){
-
-        scene->destroyItem(GraphicalObject);
-        GraphicalObject = nullptr;
-    }
+    scene->destroyItem(GraphicalObject);
 }
 
 // ------------------ ManualObject ------------------ //

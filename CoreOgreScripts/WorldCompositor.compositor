@@ -64,15 +64,12 @@ compositor_node WorldRenderClearNode
         // Clear everything from the window //
         pass clear
         {
-            depth_value 1.0
             buffers depth stencil colour
         }
         pass render_scene
         {
             shadows WorldNiceShadows first
             //shadows off
-            rq_first 0
-            rq_last max
         }
     }
 }

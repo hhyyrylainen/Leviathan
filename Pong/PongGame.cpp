@@ -407,7 +407,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
 
     // set skybox to have some sort of visuals //
     // Doesn't work needs fixing
-    WorldOfPong->SetSkyBox("NiceDaySky");
+    //WorldOfPong->SetSkyBox("NiceDaySky");
     //window1->SetAutoClearing("Stone");
     
     GameArena->VerifyTrail();

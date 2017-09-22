@@ -660,10 +660,14 @@ END
       @Systems.each{|s|
         
         if !s.NodeComponents.empty?
-          f.puts "_#{s.type}.CreateNodes("
-          f.puts "    " + (s.NodeComponents.map{|c| "added" + c }.join(", ")) + ","
-          f.puts "    " + (s.NodeComponents.map{|c| "Component" + c }.join(", ")) + ");"
+
+          f.write "if(" + s.NodeComponents.map{|c| "!added" + c + ".empty()" }.join(" || ")
+          f.puts "){"
           
+          f.puts "    _#{s.type}.CreateNodes("
+          f.puts "        " + (s.NodeComponents.map{|c| "added" + c }.join(", ")) + ","
+          f.puts "        " + (s.NodeComponents.map{|c| "Component" + c }.join(", ")) + ");"
+          f.puts "}"
         end
       }
       

@@ -80,8 +80,10 @@ else()
 
   add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.cpp"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
     COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
     DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
     "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
@@ -169,7 +171,8 @@ else()
     "Script/Bindings/CommonEngineBind.h" "Script/Bindings/CommonEngineBind.cpp"
     "Script/Bindings/GuiScriptBind.h" "Script/Bindings/GuiScriptBind.cpp"
     "Script/Bindings/TypesBind.h" "Script/Bindings/TypesBind.cpp"
-    "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"    
+    "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"
+    "Script/Bindings/StandardWorldBindHelper.h" "Generated/StandardWorldBindings.h"
     )
   
 

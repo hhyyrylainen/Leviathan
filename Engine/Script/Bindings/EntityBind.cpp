@@ -1,7 +1,11 @@
 // ------------------------------------ //
 #include "EntityBind.h"
 
+#include "Generated/StandardWorld.h"
+
 #include "Entities/GameWorld.h"
+
+#include "StandardWorldBindHelper.h"
 
 
 using namespace Leviathan;
@@ -129,21 +133,30 @@ bool Leviathan::BindEntity(asIScriptEngine* engine){
 
     // Component get functions //
     // GameWorld
-    if(engine->RegisterObjectMethod("GameWorld", "Physics@ GetComponentPhysics(ObjectID id)",
+    // These are inefficient versions of the get methods, prefer the ones in derived classes
+    if(engine->RegisterObjectMethod("GameWorld",
+            "Physics@ BaseWorldGetComponentPhysics(ObjectID id)",
             asMETHODPR(GameWorld, GetComponent<Physics>, (ObjectID), Physics&),
             asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("GameWorld", "Position@ GetComponentPosition(ObjectID id)",
+    if(engine->RegisterObjectMethod("GameWorld",
+            "Position@ BaseWorldGetComponentPosition(ObjectID id)",
             asMETHODPR(GameWorld, GetComponent<Position>, (ObjectID), Position&),
             asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    
+    // ------------------------------------ //
+    if(engine->RegisterObjectType("StandardWorld", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(!BindStandardWorldMethods<StandardWorld>(engine, "StandardWorld"))
+        return false;
     
     
     return true;
@@ -152,6 +165,7 @@ bool Leviathan::BindEntity(asIScriptEngine* engine){
 void Leviathan::RegisterEntity(asIScriptEngine* engine, std::map<int, std::string> &typeids){
 
     typeids.insert(std::make_pair(engine->GetTypeIdByDecl("GameWorld"), "GameWorld"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("StandardWorld"), "StandardWorld"));
     typeids.insert(std::make_pair(engine->GetTypeIdByDecl("RayCastHitEntity"),
             "RayCastHitEntity"));
     

@@ -3,7 +3,7 @@ require 'fileutils'
 
 
 class Generator
-  def initialize(outputFile, separateFiles=false)
+  def initialize(outputFile, separateFiles: false, bareOutput: false)
 
     @Separated = separateFiles
     
@@ -11,6 +11,7 @@ class Generator
     @OutputObjs = Array.new
     @Namespace = nil
     @Includes = []
+    @BareOutput = bareOutput
   end
 
   def add(obj)
@@ -36,10 +37,10 @@ class Generator
 
     File.open(file, 'w') do |file|
       
-      file.puts "// Automatically Generated File Do not edit! //"
-      file.puts "//"
+      file.puts "// Automatically Generated File Do not edit! //" unless @BareOutput
+      file.puts "//" unless @BareOutput
 
-      if options.include?(:header)
+      if options.include?(:header) and not @BareOutput
         file.puts "#pragma once"
       end
 
@@ -89,6 +90,18 @@ class Generator
 
 
   end
+end
+
+class OutputText
+
+  def initialize(text)
+    @Text = text
+  end
+
+  def toText(f, opts)
+    f.puts @Text
+  end
+  
 end
 
 class OutputClass

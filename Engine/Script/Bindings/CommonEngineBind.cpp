@@ -116,6 +116,8 @@ static void InvokeProxy(Engine* obj, asIScriptFunction* callback){
             callback->Release();
         });
 }
+// ------------------------------------ //
+static float PIProxy = PI;
 
 
 // ------------------------------------ //
@@ -560,10 +562,15 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
 	if(engine->RegisterGlobalFunction("void Print(const string &in message)",
             asFUNCTION(Logger::Print), asCALL_CDECL) < 0)
     {
-		// error abort //
-		Logger::Get()->Error("ScriptExecutor: Init: AngelScript: failed to register print");
-        throw Exception("Script bind failed");
-	}    
+        ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    // ------------------------------------ //
+    // Global vars
+    if(engine->RegisterGlobalProperty("const float PI", &PIProxy) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }

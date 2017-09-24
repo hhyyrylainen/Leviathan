@@ -1505,16 +1505,17 @@ void Engine::_RunQueuedConsoleCommands(){
 // ------------------------------------ //
 bool Engine::_ReceiveConsoleInput(const std::string &command){
 
-    GUARD_LOCK();
+    Invoke([=](){
 
-    if(MainConsole){
+            if(MainConsole){
 
-        MainConsole->RunConsoleCommand(command);
+                MainConsole->RunConsoleCommand(command);
 
-    } else {
+            } else {
         
-        LOG_WARNING("No console handler attached, cannot run command");
-    }
+                LOG_WARNING("No console handler attached, cannot run command");
+            }            
+        });
     
     // Listening thread quits if PreReleaseWaiting is true
     return PreReleaseWaiting;

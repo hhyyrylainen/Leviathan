@@ -251,10 +251,14 @@ DLLEXPORT int Leviathan::ScriptConsole::RunConsoleCommand(std::string cmd){
 DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(Lock &guard,
     const std::string &statement)
 {
-    
+    std::unique_ptr<asIScriptContext, std::function<void(asIScriptContext*)>> context(
+        InterfaceInstance->GetASEngine()->RequestContext(), [this](asIScriptContext* context){
+            InterfaceInstance->GetASEngine()->ReturnContext(context);
+        });
+        
     // Use ScriptHelper class to execute this statement in the module //
     int result = ExecuteString(InterfaceInstance->GetASEngine(), statement.c_str(),
-        ConsoleModule.lock()->GetModule());
+        ConsoleModule.lock()->GetModule(), context.get());
     if(result < 0){
 
         LOG_WRITE("Error in: " + statement);
@@ -263,12 +267,19 @@ DLLEXPORT bool Leviathan::ScriptConsole::ExecuteStringInstruction(Lock &guard,
 
     } else if(result == asEXECUTION_EXCEPTION){
 
+        // This is duplicated from ScriptExecutor. Should probably
+        // refactor to merge this reporting to some function that
+        // takes a report source
+
+        InterfaceInstance->PrintExceptionInfo(context.get(), LogOutput);
+        
         ConsoleOutput("Command caused an exception, more info is in the log, \n"
             "depending on the exception it may or may not have been your command, \n"
             "but rather a bug in someone else's code...");
         
         return false;
     }
+    
     // Couldn't fail that badly //
     return true;
 }
@@ -457,4 +468,36 @@ DLLEXPORT void Leviathan::ScriptConsole::ListVariables(Lock &guard){
     }
 }
 
+// ------------------------------------ //
+// ConsoleLogger
+
+void ConsoleLogger::Write(const std::string &text) {
+
+    Logger::Get()->Write("[CONSOLE]" + text);
+}
+
+void ConsoleLogger::WriteLine(const std::string &text) {
+
+    Logger::Get()->WriteLine("[CONSOLE]" + text);    
+}
+
+void ConsoleLogger::Info(const std::string &text) {
+
+    Logger::Get()->Info("[CONSOLE]" + text);
+}
+
+void ConsoleLogger::Warning(const std::string &text) {
+
+    Logger::Get()->Warning("[CONSOLE]" + text);
+}
+
+void ConsoleLogger::Error(const std::string &text) {
+
+    Logger::Get()->Error("[CONSOLE]" + text);
+}
+
+void ConsoleLogger::Fatal(const std::string &text) {
+
+    Logger::Get()->Fatal("[CONSOLE]" + text);
+}
 

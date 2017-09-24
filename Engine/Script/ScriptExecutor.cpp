@@ -460,16 +460,8 @@ std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::_GetScriptReturnedVari
             // code took too long //
         } else if(retcode == asEXECUTION_EXCEPTION){
             // script caused an exception //
-            const asIScriptFunction* exceptionfunc = ScriptContext->GetExceptionFunction();
-
-            int linenumber = ScriptContext->GetExceptionLineNumber();
-
-            Logger::Get()->Error(std::string("[SCRIPT] [EXCEPTION] ") +
-                ScriptContext->GetExceptionString() + ", function: " + func->GetDeclaration() +
-                "\n\t in " + exceptionfunc->GetScriptSectionName() + "(" +
-                Convert::ToString(linenumber) + ") " + scrptmodule->GetInfoString());
-
-            PrintAdditionalExcept(ScriptContext);
+            PrintExceptionInfo(ScriptContext, *Logger::Get(),
+                ScriptContext->GetExceptionFunction(), scrptmodule);
         }
         
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
@@ -676,10 +668,26 @@ DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int
     return false;
 }
 // ------------------------------------ //
-void Leviathan::ScriptExecutor::PrintAdditionalExcept(asIScriptContext *ctx){
+DLLEXPORT void ScriptExecutor::PrintExceptionInfo(asIScriptContext* ctx,
+    LErrorReporter &output, asIScriptFunction* func /*= nullptr*/,
+    ScriptModule* scrptmodule /*= nullptr*/)
+{
+    output.Error(std::string("[SCRIPT][EXCEPTION] ") +
+        ctx->GetExceptionString() +
+        (func ? std::string(", while running function: ") + func->GetDeclaration() :
+            std::string()) +
+        "\n\t in function " + ctx->GetExceptionFunction()->GetDeclaration() +
+        " defined in " + ctx->GetExceptionFunction()->GetScriptSectionName() + "(" +
+        std::to_string(ctx->GetExceptionLineNumber()) + ") " +
+        (scrptmodule ? scrptmodule->GetInfoString() : std::string()));
+    
+    PrintCallstack(ctx, output);
+}
+
+DLLEXPORT void ScriptExecutor::PrintCallstack(asIScriptContext* ctx, LErrorReporter &output){
     
     // Print callstack as additional information //
-    Logger::Get()->Write("// ------------------ CallStack ------------------ //\n");
+    output.WriteLine("// ------------------ CallStack ------------------ //");
     
     // Loop the stack starting from the frame below the current function
     // (actually might be nice to print the top frame too)
@@ -695,20 +703,19 @@ void Leviathan::ScriptExecutor::PrintAdditionalExcept(asIScriptContext *ctx){
             if(function->GetFuncType() == asFUNC_SCRIPT){
                 
                 // Print info about the script function //
-                Logger::Get()->Write(std::string("\t> ") + function->GetScriptSectionName() +
-                    ":" + Convert::ToString(ctx->GetLineNumber(n)) +
-                    function->GetDeclaration() + ":" +
-                    Convert::ToString(ctx->GetLineNumber(n)) + "\n");
+                output.WriteLine(std::string("\t> ") + function->GetScriptSectionName() +
+                    ":" + std::to_string(ctx->GetLineNumber(n)) + " " + 
+                    function->GetDeclaration());
                 
             } else {
                 // Info about the application functions //
                 // The context is being reused by the application for a nested call
-                Logger::Get()->Write(std::string("\t> {...Application...}: ")
-                    +function->GetDeclaration()+"\n");
+                output.WriteLine(std::string("\t> {...Application...}: ")
+                    +function->GetDeclaration());
             }
         } else {
             // The context is being reused by the script engine for a nested call
-            Logger::Get()->Write("\t> {...Script internal...}\n");
+            output.WriteLine("\t> {...Script internal...}");
         }
     }
 }

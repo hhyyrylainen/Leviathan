@@ -3,6 +3,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "ScriptExecutor.h"
+#include "ErrorReporter.h"
 
 
 namespace Leviathan{
@@ -22,6 +23,22 @@ enum CONSOLECOMMANDTYPE {
     CONSOLECOMMANDTYPE_PRINTVAR,
     CONSOLECOMMANDTYPE_PRINTFUNC,
     CONSOLECOMMANDTYPE_ERROR
+};
+
+//! \brief Logger for console output to the standard logger
+class ConsoleLogger : public LErrorReporter{
+public:
+    virtual void Write(const std::string &text) override;
+
+    virtual void WriteLine(const std::string &text) override;
+
+    virtual void Info(const std::string &text) override;
+
+    virtual void Warning(const std::string &text) override;
+
+    virtual void Error(const std::string &text) override;
+
+    virtual void Fatal(const std::string &text) override;
 };
 
 //! class used to execute script functions in the Console module
@@ -63,8 +80,10 @@ public:
 private:
     // function used to add prefix to console output //
     inline void ConsoleOutput(const std::string &text){
-        Logger::Get()->Write("[CONSOLE] "+text);
+        LogOutput.Write("[CONSOLE] " + text);
     }
+
+    ConsoleLogger LogOutput;
 
     // stored pointer to script interface //
     ScriptExecutor* InterfaceInstance;

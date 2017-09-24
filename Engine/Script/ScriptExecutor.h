@@ -59,11 +59,15 @@ public:
         ScriptRunningSetup* parameters);
 
 
+    //! \brief Prints exception info and stacktrace to a logger
+    DLLEXPORT static void PrintExceptionInfo(asIScriptContext* ctx, LErrorReporter &output,
+        asIScriptFunction* func = nullptr, ScriptModule* scrptmodule = nullptr);
+
+    DLLEXPORT static void PrintCallstack(asIScriptContext* ctx, LErrorReporter &output);
+    
     DLLEXPORT static ScriptExecutor* Get();
         
 private:
-
-    void PrintAdditionalExcept(asIScriptContext *ctx);
 
     //! \brief Handles the return type and return value of a function
     std::shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode,

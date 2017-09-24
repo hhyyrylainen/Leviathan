@@ -710,6 +710,27 @@ END
     
   end
 
+  def genComponentBinding(c)
+    str = ""
+
+    str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ GetComponent_#{c.type}} +
+           %{(ObjectID id)", \n} +
+           %{asMETHOD(WorldType, GetComponent_#{c.type}), asCALL_THISCALL) < 0)\n} +
+           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+
+    str
+  end
+  
+  def genAngelScriptBindings
+
+    str = "\n"
+
+    @ComponentTypes.each{|c|
+      str += genComponentBinding c
+    }
+    
+    str
+  end
 end
 
 class ConstructorInfo

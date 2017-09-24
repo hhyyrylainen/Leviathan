@@ -12,8 +12,6 @@ template<class WorldType>
 
     #include "Generated/StandardWorldBindings.h"
     
-    #error continue here
-    
     return true;
 }
 }

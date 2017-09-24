@@ -7,7 +7,6 @@
 
 #include "StandardWorldBindHelper.h"
 
-
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -106,6 +105,105 @@ bool BindComponentTypes(asIScriptEngine* engine){
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    
+    if(engine->RegisterObjectType("RenderNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("RenderNode", "bool Marked",
+            asOFFSET(RenderNode, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectType("Sendable", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Sendable", "bool Marked",
+            asOFFSET(Sendable, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectType("Received", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Received", "bool Marked",
+            asOFFSET(Received, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectType("Model", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Model", "bool Marked",
+            asOFFSET(Model, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectType("BoxGeometry", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("BoxGeometry", "bool Marked",
+            asOFFSET(BoxGeometry, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectType("ManualObject", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("ManualObject", "bool Marked",
+            asOFFSET(ManualObject, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectType("Camera", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Camera", "bool Marked",
+            asOFFSET(Camera, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Camera", "uint8 FOVY",
+            asOFFSET(Camera, FOVY)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    } 
+
+    if(engine->RegisterObjectProperty("Camera", "bool SoundPerceiver",
+            asOFFSET(Camera, SoundPerceiver)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectType("Plane", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Plane", "bool Marked",
+            asOFFSET(Plane, Marked)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
     
     return true;
 }
@@ -157,6 +255,8 @@ bool Leviathan::BindEntity(asIScriptEngine* engine){
 
     if(!BindStandardWorldMethods<StandardWorld>(engine, "StandardWorld"))
         return false;
+
+    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(GameWorld, "GameWorld", StandardWorld, "StandardWorld");
     
     
     return true;

@@ -12,14 +12,26 @@
 #include "Components.h"
 #include "Utility/Convert.h"
 
+#include "Generated/ComponentStates.h"
+
 #include "OgreSceneNode.h"
 
 namespace Leviathan{
 
+// ------------------------------------ //
+// State creation systems
+class PositionStateSystem : public StateCreationSystem<Position, PositionState>{
+
+};
+
+
+// ------------------------------------ //
+
 //! \brief Moves nodes of entities that have their positions changed
 class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>>{
     
-    void ProcessNode(std::tuple<RenderNode&, Position&> &node, ObjectID id)
+    void ProcessNode(std::tuple<RenderNode&, Position&> &node, ObjectID id,
+        int tick, int timeintick, const StateHolder<Position> &heldstates)
     {
         auto& pos = std::get<1>(node);
         if(!pos.Marked)
@@ -33,19 +45,16 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
     }
     
 public:
+    template<class GameWorldT>
+    void Run(GameWorldT &world, int tick, int timeintick){
 
-    void Run(GameWorld &world) override{
+        auto& states = world.GetStatesFor_Position();
 
-        RunAllNodes<RenderingPositionSystem, &RenderingPositionSystem::ProcessNode>(*this);
-    }
+        auto& index = Nodes.GetIndex();
+        for (auto iter = index.begin(); iter != index.end(); ++iter) {
 
-    void Clear(){
-
-        Nodes.Clear();
-    }
-
-    auto GetNodeCount() const{
-        return Nodes.GetObjectCount();
+            this->ProcessNode(*iter->second, iter->first, tick, timeintick, states);
+        }
     }
 
     //! \brief Creates nodes if matching ids are found in all data vectors or
@@ -70,7 +79,7 @@ public:
 class RenderNodeHiderSystem : public SingleSystem<RenderNode>{
 public:
 
-    void Run(std::unordered_map<ObjectID, RenderNode*> &Index, GameWorld &world) override{
+    void Run(GameWorld &world, std::unordered_map<ObjectID, RenderNode*> &Index){
 
         for(auto iter = Index.begin(); iter != Index.end(); ++iter){
 
@@ -94,7 +103,7 @@ class SendableSystem : public SingleSystem<Sendable>{
 public:
 
     //! \pre Final states for entities have been created for current tick
-    void Run(std::unordered_map<ObjectID, Sendable*> &Index, GameWorld &world) override{
+    void Run(std::unordered_map<ObjectID, Sendable*> &Index, GameWorld &world){
 
         for(auto iter = Index.begin(); iter != Index.end(); ++iter){
 
@@ -118,7 +127,6 @@ protected:
 class ReceivedSystem : public SingleSystem<Received>{
 public:
 
-    DLLEXPORT void Run(std::unordered_map<ObjectID, Received*> &Index, GameWorld &world)
-        override;
+    DLLEXPORT void Run(std::unordered_map<ObjectID, Received*> &Index, GameWorld &world);
 };
 }

@@ -11,6 +11,7 @@
 #include "Newton/PhysicalWorld.h"
 
 #include "Component.h"
+#include "ComponentState.h"
 
 #include "boost/circular_buffer.hpp"
 
@@ -34,9 +35,9 @@ class ComponentHelpers{
 
 //! \brief Entity has position and direction it is looking at
 //! \note Any possible locking needs to be handled by the caller
-class Position : public Component{
+class Position : public ComponentWithStates{
 public:
-        
+    
     struct Data : public ComponentData{
 
         Data(const Float3 &position, const Float4 &orientation) :
@@ -50,7 +51,7 @@ public:
 public:
 
     //! \brief Creates at specific position
-    inline Position(const Data &data) : Component(TYPE),
+    inline Position(const Data &data) : ComponentWithStates(TYPE),
                                         Members(data){}
         
     Data Members;

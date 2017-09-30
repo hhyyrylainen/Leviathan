@@ -164,7 +164,7 @@ public:
 
 
 template<class ComponentType>
-    class ComponentHolder : public ObjectPool<ComponentType, ObjectID>{
+    class ComponentHolder : public ObjectPoolTracked<ComponentType, ObjectID>{
 public:
     
     

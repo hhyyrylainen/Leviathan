@@ -6,6 +6,7 @@
 
 #include "Component.h"
 #include "EntityCommon.h"
+#include "StateHolder.h"
 
 #include "Common/ObjectPool.h"
 #include "Exceptions.h"
@@ -14,10 +15,7 @@
 namespace Leviathan{
 
 template<class NodeType>
-    class NodeHolder : public ObjectPool<NodeType, ObjectID>{
-public:
-
-};
+class NodeHolder : public ObjectPool<NodeType, ObjectID>{};
 
 //! \brief Base for all entity component related systems
 //!
@@ -28,27 +26,28 @@ public:
 
     using HolderType = NodeHolder<UsedNode>;
 
-    //! \brief Runs this system on its nodes
-    //!
-    //! \note The nodes need to be updated before calling this, otherwise some entities
-    //! might not be picked up
-    virtual void Run(GameWorld &world) = 0;
+    // Example run method
+    // void Run(GameWorld &world);
+
+    void Clear(){
+
+        Nodes.Clear();
+    }
+
+    auto GetNodeCount() const{
+        return Nodes.GetObjectCount();
+    }    
 
 protected:
 
-    //! \brief Helper for Run
-    //!
-    //! Goes through all nodes and calls func on them
-    template <class T, void(T::*F)(UsedNode &node, ObjectID nodesobject)>
-    void RunAllNodes(T &instance){
+    /* Template for node run method, copy-paste and fill in the parameters
         
         auto& index = Nodes.GetIndex();
         for (auto iter = index.begin(); iter != index.end(); ++iter) {
 
-            (instance.*F)(*iter->second, iter->first);
+            this->ProcessNode(*iter->second, iter->first, );
         }
-    }
-
+    */
 
     //! \brief Helper function for creating nodes based on std::tuple 
     template<class FirstType, class SecondType>
@@ -130,9 +129,32 @@ public:
 template<class UsedComponent>
 class SingleSystem{
 public:
-    virtual void Run(std::unordered_map<ObjectID, UsedComponent*> &Index,
-        GameWorld &world) = 0;
+    // Example run method
+    //void Run(std::unordered_map<ObjectID, UsedComponent*> &Index, GameWorld &world);
 };
+
+//! \brief Base class for all systems that create states from changed components
+template<class UsedComponent, class ComponentState>
+class StateCreationSystem{
+
+    void Run(std::unordered_map<ObjectID, UsedComponent*> &index,
+        StateHolder<ComponentState> &heldstates, int worldtick)
+    {
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
+
+            auto& node = *iter->second;
+            
+            if(!node.Marked)
+                return;
+
+            // Needs a new state //
+            heldstates.CreateNewState(node, worldtick);
+
+            node.Marked = false;
+        }
+    }
+};
+
 
 }
 

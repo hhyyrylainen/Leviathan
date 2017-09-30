@@ -12,71 +12,71 @@ thingsToGenerate = [
 
   ["Connect",
    [
-     { type: "int32_t", name: "CheckValue", default: "42" }
+     Variable.new("CheckValue", "int32_t", default: "42"),
    ]],
 
-   ["Security",
+  ["Security",
    [
-     { type: "CONNECTION_ENCRYPTION", as: "int32_t", name: "SecureType" },
-     { type: "std::string", name: "PublicKey", default: "" },
-     { type: "std::string", name: "AdditionalSettings", default: "" }
+     Variable.new("SecureType", "CONNECTION_ENCRYPTION", serializeas: "int32_t", ),
+     Variable.new("PublicKey", "std::string", default: ""),
+     Variable.new("AdditionalSettings", "std::string", default: ""),
    ]],
-   
-   ["Authenticate",
+  
+  ["Authenticate",
    [
-     { type: "std::string", name: "UserName", default: "" },
-     { type: "uint64_t", as: "sf::Uint64", name: "AuthToken", default: "0" },
-     { type: "std::string", name: "AuthPasswd", default: "" }
+     Variable.new("UserName", "std::string", default: ""),
+     Variable.new("AuthToken", "uint64_t", serializeas: "sf::Uint64", default: "0"),
+     Variable.new("AuthPasswd", "std::string", default: ""),
    ]],
 
   ["Identification",
    [
-     { type: "std::string", name: "DDOSBlock", default: "\"#{"v" * 65}\"" }
+     Variable.new("DDOSBlock", "std::string", default: "\"#{"v" * 65}\""),
    ]],
 
   ["RemoteConsoleOpen",
    [
-     { type: "int32_t", name: "SessionToken" }
+     Variable.new("SessionToken", "int32_t"),
    ]],
 
   ["RemoteConsoleAccess",
    [
-     { type: "int32_t", name: "SessionToken" }
+     Variable.new("SessionToken", "int32_t"),
    ]],
 
   ["JoinServer",
    [
-     { type: "int32_t", name: "MasterServerToken" }
+     Variable.new("MasterServerToken", "int32_t"),
    ]],
 
   ["GetSingleSyncValue",
    [
-     { type: "std::string", name: "NameOfValue" }
+     Variable.new("NameOfValue", "std::string"),
    ]],
 
   ["RequestCommandExecution",
    [
-     { type: "std::string", name: "Command" }
+     Variable.new("Command", "std::string"),
    ]],
 
   ["ConnectInput",
    [
-     { type: "sf::Packet", name: "DataForObject", move: true }
+     Variable.new("DataForObject", "sf::Packet", move: true),
    ]],
 
   ["WorldClockSync",
    [
-     { type: "int32_t", name: "WorldID" },
-     { type: "int32_t", name: "Ticks" },
-     { type: "int32_t", name: "EngineMSTweak" },
-     { type: "bool", name: "Absolute" }
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("Ticks", "int32_t"),
+     Variable.new("EngineMSTweak", "int32_t"),
+     Variable.new("Absolute", "bool"),
    ]],
 
-   ["DoRemoteConsoleOpen",
+  ["DoRemoteConsoleOpen",
    [
-     { type: "int32_t", name: "Token" }
+     Variable.new("Token", "int32_t"),
    ]]
-   
+  
 ]
 
 # Add all classes

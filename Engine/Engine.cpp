@@ -14,7 +14,6 @@
 #include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
-#include "Networking/NetworkCache.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
 #include "Newton/NewtonManager.h"

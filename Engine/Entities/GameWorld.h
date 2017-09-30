@@ -7,12 +7,12 @@
 
 #include "Networking/CommonNetwork.h"
 
-#include "Systems.h"
-#include "Components.h"
+#include "Component.h"
 
 #include "Newton/PhysicalWorld.h"
 #include "Common/ReferenceCounted.h"
 
+#include "OgrePlane.h"
 
 #define PHYSICS_BASE_GRAVITY		-9.81f
 
@@ -22,6 +22,8 @@ class CompositorWorkspace;
 }
 
 namespace Leviathan{
+
+class Camera;
 
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
@@ -115,6 +117,12 @@ public:
 
     //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
     DLLEXPORT float GetTickProgress() const;
+
+    //! \brief Returns a tuple of the current tick number and how long
+    //! it has passed since last tick
+    //!
+    //! The tick number is always adjusted so that the time since last tick is < TICKSPEED
+    DLLEXPORT std::tuple<int, int64_t> GetTickAndTime() const;
     
     
     //! \brief Fetches the physical material ID from the material manager
@@ -281,7 +289,13 @@ protected:
     //! \brief Called by Render which is called from a
     //! GraphicalInputEntity if this is linked to one
     DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
-    
+
+    //! \brief Called by Tick
+    //!
+    //! Derived worls should run their systems that need to be ran before the basic systems
+    //! and then call this and finally run systems that need to be ran after the base
+    //! class' systems (if any)
+    DLLEXPORT virtual void _RunTickSystems();
 
     //! \brief Handles added entities and components
     //!

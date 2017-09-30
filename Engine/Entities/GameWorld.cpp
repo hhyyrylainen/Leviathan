@@ -459,6 +459,8 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
         
         }
     }
+
+    _RunTickSystems();
     
     // Sendable objects may need something to be done //
 
@@ -492,6 +494,11 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick){
 
     _ApplyEntityUpdatePackets();
 }
+
+DLLEXPORT void GameWorld::_RunTickSystems(){
+
+    
+}
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const{
     
@@ -507,6 +514,21 @@ DLLEXPORT float Leviathan::GameWorld::GetTickProgress() const {
 
     return progress < 1.f ? progress : 1.f;
 }
+
+DLLEXPORT std::tuple<int, int64_t> GameWorld::GetTickAndTime() const{
+
+    int tick = TickNumber;
+    int timeSince = Engine::Get()->GetTimeSinceLastTick();
+
+    while(timeSince >= TICKSPEED){
+
+        ++tick;
+        timeSince -= TICKSPEED;
+    }
+
+    return std::make_tuple(tick, timeSince);
+}
+
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity(){
 

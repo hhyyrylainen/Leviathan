@@ -11,6 +11,7 @@ class Generator
     @OutputObjs = Array.new
     @Namespace = nil
     @Includes = []
+    @ImplIncludes = []
     @BareOutput = bareOutput
   end
 
@@ -27,6 +28,9 @@ class Generator
   def addInclude(include)
     @Includes.push include
   end
+  def addImplInclude(include)
+    @ImplIncludes.push include
+  end  
 
   def prepareFile(file)
     FileUtils.mkdir_p File.dirname(file)
@@ -47,6 +51,12 @@ class Generator
       @Includes.each{|i|
         file.puts "#include \"#{i}\""
       }
+
+      if options.include?(:impl)
+        @ImplIncludes.each{|i|
+          file.puts "#include \"#{i}\""
+        }        
+      end
       
       file.puts ""
 
@@ -106,10 +116,10 @@ end
 
 class OutputClass
 
-  def initialize(name)
+  def initialize(name, members: [])
 
     @Name = name
-    @Members = []
+    @Members = members
     @BaseClass = ""
     @BaseConstructor = ""
     @CArgs = []
@@ -167,17 +177,9 @@ class OutputClass
     end
     
     str += @Members.map{|a|
-      if a[:default].nil? or (opts.include?(:imp) and !opts.include?(:both))
-        if a[:move].nil?
-          "const #{a[:type]} &#{a[:name].downcase}"
-        else
-          # Move constructor
-          "#{a[:type]}&& #{a[:name].downcase}"
-        end
-      else
-        "const #{a[:type]} &#{a[:name].downcase} = #{a[:default]}"
-      end
-    }.join(", \n")
+
+      a.formatForParams opts
+    }.join(", ")
 
     if opts.include?(:impl)
       # Initializer list
@@ -189,12 +191,8 @@ class OutputClass
       end
       
       str += @Members.map{|a|
-        if a[:move].nil?
-          "#{a[:name]}(#{a[:name].downcase})"
-        else
-          # Move constructor
-          "#{a[:name]}(std::move(#{a[:name].downcase}))"
-        end
+
+        a.formatInitializer
         
       }.join(", ")
 
@@ -210,11 +208,8 @@ class OutputClass
   def genMembers(f, opts)
     
     f.puts @Members.map { |a|
-      if a[:default].nil?
-        "#{a[:type]} #{a[:name]};"
-      else
-        "#{a[:type]} #{a[:name]} = #{a[:default]};"
-      end
+
+      a.formatDefinition
     }.join("\n")
   end
   
@@ -227,14 +222,7 @@ class OutputClass
   end
 
   def addMember(arguments = {})
-    abort "addMember not hash" if not arguments.class == Hash
-    # If default is an empty string change it to be "\"\""
-    if not arguments[:default].nil?
-        if arguments[:default].empty?
-            arguments[:default] = "\"\""
-        end
-    end
-    
+    raise "addMember not Variable" if not arguments.class == Variable
     @Members.push arguments
   end
 
@@ -274,9 +262,9 @@ end
 
 class SFMLSerializeClass < OutputClass
   
-  def initialize(name)
+  def initialize(name, **basekeywords)
     
-    super name
+    super name, **basekeywords
     @deserializeArgs = []
     @deserializeBase = ""
   end
@@ -291,11 +279,8 @@ class SFMLSerializeClass < OutputClass
   def genToPacket
     "packet << " +
       @Members.map { |a|
-      if a[:as].nil?
-        "#{a[:name]}"
-      else
-        "static_cast<#{a[:as]}>(#{a[:name]})"
-      end
+      a.formatSerializer
+     
     }.join(" << ")
   end
 
@@ -351,7 +336,8 @@ class SFMLSerializeClass < OutputClass
       
       # Error check
       f.puts "if(!packet)\n    //Error loading\n" +
-             "    throw InvalidArgument(\"Invalid packet format for: '#{@Name}'\");" +
+             "    throw Leviathan::InvalidArgument(\"Invalid packet format for: " +
+             "'#{@Name}'\");" +
              "\n}"
     else
       f.puts ";"
@@ -366,31 +352,7 @@ class SFMLSerializeClass < OutputClass
 
     @Members.each do |a|
 
-      if a[:as].nil?
-        if not insideBracketExpression
-        
-          str += "packet"
-          insideBracketExpression = true
-          
-        end
-        
-        str += " >> " + a[:name]
-        
-      else
-        
-        if insideBracketExpression
-          
-          str += ";\n"
-          insideBracketExpression = false
-        end
-      
-        tempName = "temp_#{a[:name]}"
-        str += "#{a[:as]} #{tempName};\n"
-        str += "packet >> #{tempName};\n"
-        str += "#{a[:name]} = static_cast<#{a[:type]}>(#{tempName});\n"
-      end
-
-
+      str += a.formatDeserializer "packet"
       
     end
     
@@ -418,25 +380,43 @@ class ResponseClass < SFMLSerializeClass
 end
 
 
+class ComponentState < SFMLSerializeClass
+
+  def initialize(name, members: [])
+    super name, members: members
+
+    @BaseClass = "BaseComponentState"
+    
+  end
+  
+end
+
+
 class GameWorldClass < OutputClass
 
-  def initialize(name, componentTypes: [], systems: [], tickrunmethod: "")
+  def initialize(name, componentTypes: [], systems: [], systemspreticksetup: nil,
+                 framesystemrun: "")
 
     super name
 
     @BaseClass = "GameWorld"
 
-    @TickRunMethod = tickrunmethod
+    @FrameSystemRun = framesystemrun
+    @SystemsPreTickSetup = systemspreticksetup
 
     @ComponentTypes = componentTypes
     @Systems = systems
 
     @ComponentTypes.each{|c|
-      @Members.push({type: "ComponentHolder<" + c.type + ">", name: "Component" + c.type})
+      @Members.push(Variable.new("Component" + c.type, "ComponentHolder<" + c.type + ">"))
+
+      if c.StateType
+        @Members.push(Variable.new(c.type + "States", "StateHolder<" + c.type + ">"))
+      end
     }
 
     @Systems.each{|s|
-      @Members.push({type: s.type, name: "_" + s.type})
+      @Members.push(Variable.new("_" + s.type, s.type))
     }
   end
 
@@ -491,6 +471,7 @@ class GameWorldClass < OutputClass
     end
 
     firstLoop = true
+    stateHolderCommentPrinted = false
 
     f.puts "// Component types (#{@ComponentTypes.length}) //"
 
@@ -527,7 +508,15 @@ class GameWorldClass < OutputClass
         f.puts "{"
 
         f.puts "try {"
-        f.puts "    Component#{c.type}.Destroy(id, false);"
+        if c.Release
+          f.puts "    Component#{c.type}.Release(id, true" +
+                 if c.Release.length > 0
+                   ", " + c.Release.join(", ") else
+                   ""
+                 end +");"
+        else
+          f.puts "    Component#{c.type}.Destroy(id, true);"
+        end
         f.puts "    //_OnComponentDestroyed(id, #{c.type}::TYPE());"
         f.puts "    return true;"
         f.puts "}"
@@ -563,8 +552,20 @@ class GameWorldClass < OutputClass
         end
       }
 
-      
+      if opts.include?(:header)
+        if c.StateType
+          
+          if !stateHolderCommentPrinted and opts.include?(:header)
+            f.puts "//! \\brief Returns state holder for component type"
+            stateHolderCommentPrinted = true
+          end
 
+          f.puts "DLLEXPORT StateHolder<#{c.type}>& GetStatesFor_#{c.type}(){"
+          
+          f.puts "    return #{c.type}States;"
+          f.puts "}"
+        end
+      end
 
       f.puts ""
       firstLoop = false
@@ -647,7 +648,26 @@ END
       f.puts "{"
       f.puts @BaseClass + "::RunFrameRenderSystems(tick, timeintick);"
       f.puts ""
-      f.puts @TickRunMethod
+      f.puts @FrameSystemRun
+      f.puts ""
+      
+      renderSystems = @Systems.select{|s| !s.RunRender.nil?}.sort_by {|x| x.RunRender[:group]}
+
+      outGroup = nil
+      
+      renderSystems.each{|s|
+
+        if outGroup != s.RunRender[:group]
+          outGroup = s.RunRender[:group]
+          f.puts "// Begin of group #{s.RunRender[:group]} //"
+        end
+        
+        f.puts "_#{s.type}.Run(*this" +
+               if s.RunRender.include?(:parameters) then ", " +
+                                                         s.RunRender[:parameters].join(", ")
+               else "" end + 
+               ");"
+      }
       
       f.puts "}"
     else
@@ -656,6 +676,38 @@ END
 
     if opts.include?(:header)
       f.puts "protected:"
+    end
+
+    f.write "DLLEXPORT void #{qualifier opts}_RunTickSystems() #{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts @BaseClass + "::_RunTickSystems();"
+
+      if @SystemsPreTickSetup
+        f.puts @SystemsPreTickSetup
+        f.puts ""
+      end
+
+      tickSystems = @Systems.select{|s| !s.RunTick.nil?}.sort_by {|x| x.RunTick[:group]}
+
+      outGroup = nil
+      
+      tickSystems.each{|s|
+
+        if outGroup != s.RunTick[:group]
+          outGroup = s.RunTick[:group]
+          f.puts "// Begin of group #{s.RunTick[:group]} //"
+        end
+        
+        f.puts "_#{s.type}.Run(*this" +
+               if s.RunTick.include?(:parameters) then ", " + s.RunTick[:parameters].join(", ")
+               else "" end + 
+               ");"
+      }
+      f.puts "}"
+    else
+      f.puts ";"
     end
 
     f.write "DLLEXPORT void #{qualifier opts}HandleAdded() #{override opts}"
@@ -772,7 +824,8 @@ end
 class Variable
   attr_reader :Name, :Type, :Default, :NonMethodParam
 
-  def initialize(name, type, default: nil, noRef: false, noConst: false, nonMethodParam: false)
+  def initialize(name, type, default: nil, noRef: false, noConst: false, nonMethodParam: false,
+                 move: false, serializeas: nil)
 
     @Name = name
     @Type = type
@@ -784,11 +837,24 @@ class Variable
       elsif @Default == false
         @Default = "false"
       end
+
+      # Empty string is output as two quotes
+      if @Default.is_a? String and @Default == ""
+
+        @Default = %{""}
+        
+      end
     end
     
     @NoRef = noRef
     @NoConst = noConst
     @NonMethodParam = nonMethodParam
+    @Move = move
+    @SerializeAs = serializeas
+  end
+
+  def formatDefinition()
+    "#{@Type} #{@Name}#{formatDefault(header: true)};"
   end
 
   def formatDefault(opts)
@@ -805,35 +871,71 @@ class Variable
 
   def formatForParams(opts)
     if @NoRef
-      "#{@Type} #{@Name}#{formatDefault opts}"
+      "#{@Type} #{@Name.downcase}#{formatDefault opts}"
+    elsif @Move
+      "#{@Type}&& #{@Name.downcase}#{formatDefault opts}"
     else
       if @NoConst
-        "#{@Type} &#{@Name}#{formatDefault opts}"
+        "#{@Type} &#{@Name.downcase}#{formatDefault opts}"
       else
-        "const #{@Type} &#{@Name}#{formatDefault opts}"
+        "const #{@Type} &#{@Name.downcase}#{formatDefault opts}"
       end
     end
+  end
+
+  def formatInitializer()
+    if @Move
+      "#{@Name}(#{@Name.downcase})"
+    else
+      # Move constructor
+      "#{@Name}(std::move(#{@Name.downcase}))"      
+    end
+  end
+
+  def formatSerializer()
+    if @SerializeAs.nil?
+      "#{@Name}"
+    else
+      "static_cast<#{@SerializeAs}>(#{@Name})"
+    end
+  end
+
+  def formatDeserializer(packetname)
+    if @SerializeAs.nil?
+      "#{packetname} >> #{@Name};"
+    else
+      tempName = "temp_" + @Name
+      str = "#{@SerializeAs} #{tempName};\n"
+      str += "#{packetname} >> #{tempName};\n"
+      str += "#{@Name} = static_cast<#{@Type}>(#{tempName});\n"
+      str
+    end
+    
   end
 end
 
 # Components for adding to gameworld
 class EntityComponent
   
-  attr_reader :type, :constructors
+  attr_reader :type, :constructors, :StateType, :Release
   
-  def initialize(type, constructors=[ConstructorInfo.new])
+  def initialize(type, constructors=[ConstructorInfo.new], statetype: nil, releaseparams: nil)
     @type = type
     @constructors = constructors
+    @StateType = statetype
+    @Release = releaseparams
   end
 
 end
 
 class EntitySystem
-  attr_reader :type, :NodeComponents
+  attr_reader :type, :NodeComponents, :RunTick, :RunRender
 
   # Leave nodeComponens empty if not using combined nodes
-  def initialize(type, nodeComponents=[])
+  def initialize(type, nodeComponents=[], runtick: nil, runrender: nil)
     @type = type
     @NodeComponents = nodeComponents
+    @RunTick = runtick
+    @RunRender = runrender
   end
 end

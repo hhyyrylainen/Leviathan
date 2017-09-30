@@ -51,7 +51,7 @@ else()
   
   set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ObjectPool.h"
+    "Common/ObjectPool.h" "Common/ObjectPoolThreadSafe.h"
     "Common/ReferenceCounted.h"
     "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
@@ -87,14 +87,28 @@ else()
     DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
     "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.h"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.cpp"
+    #"${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStatesBindings.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates"
+    #"${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
+    )  
   
   set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
     "Entities/Components.cpp" "Entities/Components.h"
-    "Entities/Component.h" "Entities/EntityCommon.h"
+    "Entities/Component.h" "Entities/ComponentState.h" 
+    "Entities/StateHolder.h" "Entities/StateHolder.cpp" 
+    "Entities/StateInterpolator.h"
+    "Entities/EntityCommon.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
     "Entities/GameWorldFactory.h" "Entities/GameWorldFactory.cpp"
     "Generated/StandardWorld.h" "Generated/StandardWorld.cpp"
+    "Generated/ComponentStates.h"
     )
   
   file(GLOB GroupApplication "Application/AppDefine.cpp" "Application/AppDefine.h"

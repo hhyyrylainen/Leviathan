@@ -10,6 +10,8 @@ generator = Generator.new ARGV[0], separateFiles: true
 
 generator.useNamespace
 generator.addInclude "Entities/GameWorld.h"
+generator.addInclude "Entities/Components.h"
+generator.addInclude "Entities/Systems.h"
 
 worldClass = GameWorldClass.new(
   "StandardWorld", componentTypes: [
@@ -19,12 +21,12 @@ worldClass = GameWorldClass.new(
                              Variable.new("position", "Float3"),
                              Variable.new("orientation", "Float4")
                            ], usedatastruct: true)
-                        ]),
+                        ], statetype: true),
     EntityComponent.new("RenderNode", [ConstructorInfo.new(
                                          [
                                            Variable.new("GetScene()", "",
                                                         nonMethodParam: true),
-                                         ])]),
+                                         ])], releaseparams: ["GetScene()"]),
     EntityComponent.new("Sendable", [ConstructorInfo.new([])]),
     EntityComponent.new("Received", [ConstructorInfo.new([])]),
     EntityComponent.new("Model", [ConstructorInfo.new(
@@ -77,11 +79,22 @@ worldClass = GameWorldClass.new(
   ],
   systems: [
     EntitySystem.new("ReceivedSystem", []),
-    EntitySystem.new("RenderingPositionSystem", ["RenderNode", "Position"]),
+    EntitySystem.new("PositionStateSystem", []),
+    EntitySystem.new("RenderingPositionSystem", ["RenderNode", "Position"],
+                     runrender: {group: 10, parameters: ["calculatedTick", "progressInTick"]}),
+    EntitySystem.new("RenderNodeHiderSystem", [], runrender:
+                                                    {group: 11,
+                                                     parameters:
+                                                       ["ComponentRenderNode.GetIndex()"]}),
     EntitySystem.new("SendableSystem", []),
-    EntitySystem.new("RenderNodeHiderSystem", []),
   ],
-  tickrunmethod: <<-END
+  systemspreticksetup: (<<-END
+  const auto timeAndTickTuple = GetTickAndTime();
+  const auto calculatedTick = std::get<0>(timeAndTickTuple);
+  const auto progressInTick = std::get<1>(timeAndTickTuple);
+END
+                       ),
+  framesystemrun: (<<-END
     // Client interpolation //
     if(!IsOnServer){
 
@@ -94,10 +107,11 @@ worldClass = GameWorldClass.new(
     if(!GraphicalMode)
         return;
 
-    _RenderNodeHiderSystem.Run(ComponentRenderNode.GetIndex(), *this);
-
-    _RenderingPositionSystem.Run(*this);
+    const auto timeAndTickTuple = GetTickAndTime();
+    const auto calculatedTick = std::get<0>(timeAndTickTuple);
+    const auto progressInTick = std::get<1>(timeAndTickTuple);
 END
+                 )
 )
 
 

@@ -12,141 +12,140 @@ thingsToGenerate = [
 
   ["Connect",
    [
-     { type: "int32_t", name: "CheckValue", default: "42" }
+     Variable.new("CheckValue", "int32_t", default: "42"),
    ]],
-
+  
   ["Security",
    [
-     { type: "CONNECTION_ENCRYPTION", as: "int32_t", name: "SecureType" },
-     { type: "std::string", name: "PublicKey", default: "" },
-     { type: "std::string", name: "EncryptedSymmetricKey", default: "" }
+     Variable.new("SecureType", "CONNECTION_ENCRYPTION", serializeas: "int32_t"),
+     Variable.new("PublicKey", "std::string", default: ""),
+     Variable.new("EncryptedSymmetricKey", "std::string", default: ""),
    ]],
    
   ["Authenticate",
    [
-     { type: "int32_t", name: "UserID"},
-     { type: "uint64_t", as: "sf::Uint64", name: "UserToken", default: "0" }
+     Variable.new("UserID", "int32_t"),
+     Variable.new("UserToken", "uint64_t", serializeas: "sf::Uint64", default: "0"),
    ]],
 
 
   ["Identification",
    [
-     { type: "std::string", name: "UserReadableData" },
-     { type: "std::string", name: "GameName" },
-     { type: "std::string", name: "GameVersionString" },
-     { type: "std::string", name: "LeviathanVersionString",
-       default: "LEVIATHAN_VERSION_ANSIS" }
+     Variable.new("UserReadableData", "std::string"),
+     Variable.new("GameName", "std::string"),
+     Variable.new("GameVersionString", "std::string"),
+     Variable.new("LeviathanVersionString", "std::string", default: "LEVIATHAN_VERSION_ANSIS"),
    ]],
 
   ["InvalidRequest",
    [
-     { type: "NETWORK_RESPONSE_INVALIDREASON", as: "uint8_t", name: "Invalidness" },
-     { type: "std::string", name: "AdditionalInfo", default: "\"\"" }
+     Variable.new("Invalidness", "NETWORK_RESPONSE_INVALIDREASON", serializeas: "uint8_t"),
+     Variable.new("AdditionalInfo", "std::string", default: ""),
    ]],
 
   ["ServerStatus",
    [
-     { type: "std::string", name: "ServerNameString" },
-     { type: "bool", name: "Joinable" },
-     { type: "SERVER_JOIN_RESTRICT", as: "uint8_t", name: "JoinRestriction" },
-     { type: "SERVER_STATUS", as: "uint8_t", name: "ServerStatus" },
-     { type: "int32_t", name: "Players" },
-     { type: "int32_t", name: "MaxPlayers" },
-     { type: "int32_t", name: "Bots" },
-     { type: "int32_t", name: "AdditionalFlags", default: "0" },
+     Variable.new("ServerNameString", "std::string"),
+     Variable.new("Joinable", "bool"),
+     Variable.new("JoinRestriction", "SERVER_JOIN_RESTRICT", serializeas: "uint8_t"),
+     Variable.new("ServerStatus", "SERVER_STATUS", serializeas: "uint8_t"),
+     Variable.new("Players", "int32_t"),
+     Variable.new("MaxPlayers", "int32_t"),
+     Variable.new("Bots", "int32_t"),
+     Variable.new("AdditionalFlags", "int32_t", default: "0"),
    ]],
 
   ["DisconnectInput",
    [
-     { type: "int32_t", name: "InputID" },
-     { type: "int32_t", name: "OwnerID" }
+     Variable.new("InputID", "int32_t"),
+     Variable.new("OwnerID", "int32_t"),
    ]],
   
   ["ServerDisallow",
    [
-     { type: "std::string", name: "Message" },
-     { type: "NETWORK_RESPONSE_INVALIDREASON", as: "uint8_t", name: "Reason" }
+     Variable.new("Message", "std::string"),
+     Variable.new("Reason", "NETWORK_RESPONSE_INVALIDREASON", serializeas: "uint8_t"),
    ]],
 
   ["ServerAllow",
    [
-     { type: "SERVER_ACCEPTED_TYPE", as: "uint8_t", name: "ServerAcceptedWhat" },
-     { type: "std::string", name: "Message", default: "\"\"" }
+     Variable.new("ServerAcceptedWhat", "SERVER_ACCEPTED_TYPE", serializeas: "uint8_t"),
+     Variable.new("Message", "std::string", default: "\"\""),
    ]],
 
   ["SyncValData",
    [
-     { type: "NamedVariableList", name: "SyncValueData" }
+     Variable.new("SyncValueData", "NamedVariableList"),
    ]],
   
   ["SyncDataEnd",
    [
-     { type: "bool", name: "Succeeded" }
+     Variable.new("Succeeded", "bool"),
    ]],
 
   ["SyncResourceData",
    [
-     { type: "std::string", name: "OurCustomData" }
+     Variable.new("OurCustomData", "std::string"),
    ]],
 
   ["CreateNetworkedInput",
    [
-     { type: "sf::Packet", name: "OurCustomData", move: true }
+     Variable.new("OurCustomData", "sf::Packet", move: true ),
    ]],
 
   ["UpdateNetworkedInput",
    [
-     { type: "int32_t", name: "InputID" },
-     { type: "sf::Packet", name: "UpdateData", move: true }
+     Variable.new("InputID", "int32_t"),
+     Variable.new("UpdateData", "sf::Packet", move: true ),
    ]],
 
   ["EntityCreation",
    [
-     { type: "int32_t", name: "WorldID" },
-     { type: "sf::Packet", name: "InitialEntity", move: true}
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("InitialEntity", "sf::Packet", move: true),
    ]],
 
   ["EntityDestruction",
    [
-     { type: "int32_t", name: "WorldID" },
-     { type: "ObjectID", name: "EntityID" }
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("EntityID", "ObjectID"),
    ]],
 
   ["WorldFrozen",
    [
-     { type: "int32_t", name: "WorldID" },
-     { type: "bool", name: "Frozen" },
-     { type: "int32_t", name: "TickNumber" }
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("Frozen", "bool"),
+     Variable.new("TickNumber", "int32_t"),
    ]],
 
   ["EntityConstraint",
    [
-     { type: "int32_t", name: "WorldID" },
-     { type: "bool", name: "Create" },
-     { type: "int32_t", name: "ConstraintID" },
-     { type: "ObjectID", name: "EntityID1" },
-     { type: "ObjectID", name: "EntityID2" },
-     { type: "ENTITY_CONSTRAINT_TYPE", as: "uint16_t", name: "ConstraintType" },
-     { type: "ObjectID", name: "ConstraintData" }
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("Create", "bool"),
+     Variable.new("ConstraintID", "int32_t"),
+     Variable.new("EntityID1", "ObjectID"),
+     Variable.new("EntityID2", "ObjectID"),
+     Variable.new("ConstraintType", "ENTITY_CONSTRAINT_TYPE", serializeas: "uint16_t"),
+     Variable.new("ConstraintData", "ObjectID"),
    ]],
   
   ["EntityUpdate",
    [
-     { type: "int32_t", name: "WorldID" },
-     { type: "int32_t", name: "TickNumber" },
-     { type: "int32_t", name: "ReferenceTick" },
-     { type: "ObjectID", name: "EntityID" },
-     { type: "sf::Packet", name: "UpdateData", move: true}
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("TickNumber", "int32_t"),
+     Variable.new("ReferenceTick", "int32_t"),
+     Variable.new("EntityID", "ObjectID"),
+     Variable.new("UpdateData", "sf::Packet", move: true),
    ]],
   
   ["CacheUpdated",
    [
-     { type: "NamedVariableList", name: "Variable" }
+     Variable.new("Variable", "NamedVariableList"),
    ]],
 
   ["CacheRemoved",
    [
-     { type: "std::string", name: "Name" }
+     Variable.new("Name", "std::string"),
    ]],
 
   

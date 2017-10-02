@@ -71,3 +71,59 @@ TEST_CASE("RenderingPositionSystem creates nodes", "[entity]"){
 
 }
 
+TEST_CASE("PositionStateSystem creates state objects", "[entity]"){
+
+    PartialEngine<false> engine;
+
+    StateHolder<PositionState> PositionStates;
+
+    PositionStateSystem _PositionStateSystem;
+
+    ComponentHolder<Position> ComponentPosition;
+
+    StandardWorld dummyWorld;
+
+    ObjectID id = 36;
+
+    int tick = 0;
+
+    auto pos = ComponentPosition.ConstructNew(id,
+        Position::Data{Float3(0, 1, 2), Float4::IdentityQuaternion()});
+
+    CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 0);
+    CHECK(!PositionStates.GetEntityStates(id));
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, ++tick);
+
+    CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 1);
+    REQUIRE(PositionStates.GetEntityStates(id));
+    CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 1);
+
+    // No new state is created
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, ++tick);
+
+    CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 1);
+    REQUIRE(PositionStates.GetEntityStates(id));
+    CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 1);
+
+    // Even if marked
+    pos->Marked = true;
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, ++tick);
+
+    CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 1);
+    REQUIRE(PositionStates.GetEntityStates(id));
+    CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 1);
+
+    // Until position is changed
+    pos->Marked = true;
+    pos->Members._Position = Float3(1, 1, 1);
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, ++tick);
+
+    CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 1);
+    REQUIRE(PositionStates.GetEntityStates(id));
+    CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 2);
+}
+
+

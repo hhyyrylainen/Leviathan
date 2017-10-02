@@ -79,7 +79,6 @@ worldClass = GameWorldClass.new(
   ],
   systems: [
     EntitySystem.new("ReceivedSystem", []),
-    EntitySystem.new("PositionStateSystem", []),
     EntitySystem.new("RenderingPositionSystem", ["RenderNode", "Position"],
                      runrender: {group: 10, parameters: ["calculatedTick", "progressInTick"]}),
     EntitySystem.new("RenderNodeHiderSystem", [], runrender:
@@ -87,11 +86,16 @@ worldClass = GameWorldClass.new(
                                                      parameters:
                                                        ["ComponentRenderNode.GetIndex()"]}),
     EntitySystem.new("SendableSystem", []),
+    EntitySystem.new("PositionStateSystem", [], runtick: {
+                       group: 50,
+                       parameters: ["ComponentPosition.GetIndex()", "PositionStates",
+                                    "tick"]}),
   ],
   systemspreticksetup: (<<-END
   const auto timeAndTickTuple = GetTickAndTime();
   const auto calculatedTick = std::get<0>(timeAndTickTuple);
   const auto progressInTick = std::get<1>(timeAndTickTuple);
+  const auto tick = GetTickNumber();
 END
                        ),
   framesystemrun: (<<-END

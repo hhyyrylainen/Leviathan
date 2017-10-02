@@ -108,7 +108,7 @@ else()
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
     "Entities/GameWorldFactory.h" "Entities/GameWorldFactory.cpp"
     "Generated/StandardWorld.h" "Generated/StandardWorld.cpp"
-    "Generated/ComponentStates.h"
+    "Generated/ComponentStates.h" "Generated/ComponentStates.cpp"
     )
   
   file(GLOB GroupApplication "Application/AppDefine.cpp" "Application/AppDefine.h"

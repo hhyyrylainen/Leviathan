@@ -116,13 +116,17 @@ end
 
 class OutputClass
 
-  def initialize(name, members: [])
+  def initialize(name, members: [], constructors: nil, nodllexport: false, methods: nil)
 
     @Name = name
     @Members = members
     @BaseClass = ""
     @BaseConstructor = ""
     @CArgs = []
+    # Additional constructors
+    @Constructors = constructors
+    @NoDLLExport = nodllexport
+    @Methods = methods
   end
 
   def toText(f, opts)
@@ -157,6 +161,7 @@ class OutputClass
     
     genMethods f, opts
     f.puts ""
+    genFromMethodList f, opts
 
     if opts.include?(:header)
       genMembers f, opts
@@ -164,6 +169,28 @@ class OutputClass
   end
 
   def genMethods(f, opts)
+    f.puts ""
+  end
+
+  def genFromMethodList(f, opts)
+    if !@Methods
+      return
+    end
+
+    @Methods.each{|m|
+
+      f.write "#{export}#{m.ReturnType} #{qualifier opts}#{m.Name}(" +
+              m.formatParameters(opts) + ")"
+      
+      if opts.include?(:impl)
+        f.puts "{"
+        f.puts m.Body
+        f.puts "}"
+      else
+        f.puts ";"
+      end
+    }
+
     f.puts ""
   end
 
@@ -203,6 +230,31 @@ class OutputClass
     end
 
     f.write str
+
+    if @Constructors
+      f.puts "// Extra constructors"
+
+      @Constructors.each{|constructor|
+
+        f.write "#{export}#{qualifier opts}#{@Name}("
+
+        f.write constructor.formatParameters(opts, leadingcomma: false)
+
+        if opts.include?(:impl)
+          f.write ")"
+
+          f.puts constructor.formatMemberInitializers
+
+          f.puts "{"
+
+          f.puts "}"
+        else
+          f.puts ");"
+        end
+        
+      }
+      
+    end
   end
   
   def genMembers(f, opts)
@@ -243,7 +295,7 @@ class OutputClass
   # Returns override if :header set
   def override(opts)
     if opts.include?(:header)
-      "override"
+      " override"
     else
       ""
     end
@@ -256,8 +308,16 @@ class OutputClass
     else
       ""
     end
-  end  
-  
+  end
+
+  # Returns #{export}if not disabled
+  def export
+    if @NoDLLExport
+      ""
+    else
+      "DLLEXPORT "
+    end
+  end
 end
 
 class SFMLSerializeClass < OutputClass
@@ -271,6 +331,8 @@ class SFMLSerializeClass < OutputClass
 
   def genMethods(f, opts)
     f.puts ""
+
+    f.puts "// Packet constructor and serializer //"
     
     genSerializer f, opts
     genSFMLConstructor f, opts
@@ -286,7 +348,7 @@ class SFMLSerializeClass < OutputClass
 
   def genSerializer(f, opts)
 
-    f.write "void AddDataToPacket(sf::Packet &packet) const"
+    f.write "#{export}void #{qualifier opts}AddDataToPacket(sf::Packet &packet) const"
     if opts.include?(:impl)
       f.puts "{\n" + genToPacket + ";\n}"
     else
@@ -312,14 +374,14 @@ class SFMLSerializeClass < OutputClass
     if not @deserializeBase.empty?
       tmpbaseconstructor += ", " + @deserializeBase
     end
-
-    f.write "#{@Name}(" +
+    
+    f.write "#{export}#{qualifier opts}#{@Name}(" +
             if not tmpargs.empty?
               tmpargs.join(", ") + ", "
             else
               ""
             end +
-            "sf::Packet &packet) "
+            "sf::Packet &packet)"
 
     if opts.include?(:impl)
     
@@ -335,7 +397,7 @@ class SFMLSerializeClass < OutputClass
       f.write genDeserializer
       
       # Error check
-      f.puts "if(!packet)\n    //Error loading\n" +
+      f.puts "\nif(!packet)\n    //Error loading\n" +
              "    throw Leviathan::InvalidArgument(\"Invalid packet format for: " +
              "'#{@Name}'\");" +
              "\n}"
@@ -368,7 +430,8 @@ end
 class ResponseClass < SFMLSerializeClass
 
   def genSerializer(f, opts)
-    f.write "void _SerializeCustom(sf::Packet &packet) const #{override opts}"
+    f.write "#{export}void #{qualifier opts}_SerializeCustom(sf::Packet &packet) " +
+            "const#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{\n" + genToPacket + ";\n}"
@@ -382,12 +445,16 @@ end
 
 class ComponentState < SFMLSerializeClass
 
-  def initialize(name, members: [])
-    super name, members: members
+  def initialize(name, members: [], constructors: nil, methods: nil)
+
+    members = [Variable.new("TickNumber", "int")] + members
+    
+    super name, members: members, constructors: constructors, methods: methods
 
     @BaseClass = "BaseComponentState"
-    
   end
+
+  
   
 end
 
@@ -411,7 +478,7 @@ class GameWorldClass < OutputClass
       @Members.push(Variable.new("Component" + c.type, "ComponentHolder<" + c.type + ">"))
 
       if c.StateType
-        @Members.push(Variable.new(c.type + "States", "StateHolder<" + c.type + ">"))
+        @Members.push(Variable.new(c.type + "States", "StateHolder<" + c.type + "State>"))
       end
     }
 
@@ -441,7 +508,7 @@ class GameWorldClass < OutputClass
 
   def genMethods(f, opts)
 
-    f.write "DLLEXPORT void #{qualifier opts}_ResetComponents() #{override opts}"
+    f.write "#{export}void #{qualifier opts}_ResetComponents()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -454,7 +521,7 @@ class GameWorldClass < OutputClass
       f.puts ";"
     end
 
-    f.write "DLLEXPORT void #{qualifier opts}_ResetSystems() #{override opts}"
+    f.write "#{export}void #{qualifier opts}_ResetSystems()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -483,7 +550,7 @@ class GameWorldClass < OutputClass
         f.puts "//! the wanted type"
       end
       
-      f.write "DLLEXPORT #{c.type}& #{qualifier opts}GetComponent_#{c.type}(ObjectID id)"
+      f.write "#{export}#{c.type}& #{qualifier opts}GetComponent_#{c.type}(ObjectID id)"
       if opts.include?(:impl)
         f.puts "{"
         f.puts "auto component = Component#{c.type}.Find(id);"
@@ -503,7 +570,7 @@ class GameWorldClass < OutputClass
         f.puts "//! of this type"
       end
       
-      f.write "DLLEXPORT bool #{qualifier opts}RemoveComponent_#{c.type}(ObjectID id)"
+      f.write "#{export}bool #{qualifier opts}RemoveComponent_#{c.type}(ObjectID id)"
       if opts.include?(:impl)
         f.puts "{"
 
@@ -536,7 +603,7 @@ class GameWorldClass < OutputClass
 
       c.constructors.each{|a|
 
-        f.write "DLLEXPORT #{c.type}& #{qualifier opts}Create_#{c.type}(ObjectID id" +
+        f.write "#{export}#{c.type}& #{qualifier opts}Create_#{c.type}(ObjectID id" +
                 a.formatParameters(opts) + ")"
 
         if opts.include?(:impl)
@@ -560,7 +627,7 @@ class GameWorldClass < OutputClass
             stateHolderCommentPrinted = true
           end
 
-          f.puts "DLLEXPORT StateHolder<#{c.type}>& GetStatesFor_#{c.type}(){"
+          f.puts "#{export}StateHolder<#{c.type}State>& GetStatesFor_#{c.type}(){"
           
           f.puts "    return #{c.type}States;"
           f.puts "}"
@@ -576,7 +643,7 @@ class GameWorldClass < OutputClass
     }
 
 
-    f.write "DLLEXPORT void #{qualifier opts}DestroyAllIn(ObjectID id) #{override opts}"
+    f.write "#{export}void #{qualifier opts}DestroyAllIn(ObjectID id)#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -589,8 +656,8 @@ class GameWorldClass < OutputClass
       f.puts ";"
     end
 
-    f.write "DLLEXPORT std::tuple<void*, bool> #{qualifier opts}GetComponent(" +
-            "ObjectID id, Leviathan::COMPONENT_TYPE type) #{override opts}"
+    f.write "#{export}std::tuple<void*, bool> #{qualifier opts}GetComponent(" +
+            "ObjectID id, Leviathan::COMPONENT_TYPE type)#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -641,8 +708,8 @@ TComponent& GetComponent(ObjectID id){
 }    
 END
 
-    f.write "DLLEXPORT void #{qualifier opts}RunFrameRenderSystems(int tick, " +
-            "int timeintick) #{override opts}"
+    f.write "#{export}void #{qualifier opts}RunFrameRenderSystems(int tick, " +
+            "int timeintick)#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -678,7 +745,7 @@ END
       f.puts "protected:"
     end
 
-    f.write "DLLEXPORT void #{qualifier opts}_RunTickSystems() #{override opts}"
+    f.write "#{export}void #{qualifier opts}_RunTickSystems()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -710,7 +777,7 @@ END
       f.puts ";"
     end
 
-    f.write "DLLEXPORT void #{qualifier opts}HandleAdded() #{override opts}"
+    f.write "#{export}void #{qualifier opts}HandleAdded()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -742,7 +809,7 @@ END
       f.puts ";"
     end
 
-    f.write "DLLEXPORT void #{qualifier opts}ClearAdded() #{override opts}"
+    f.write "#{export}void #{qualifier opts}ClearAdded()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -788,16 +855,26 @@ end
 class ConstructorInfo
   attr_reader :Parameters, :UseDataStruct
 
-  def initialize(parameters, usedatastruct: false)
+  def initialize(parameters, usedatastruct: false, memberinitializers: nil)
     @Parameters = parameters
     @UseDataStruct = usedatastruct
+    @MemberInitializers = memberinitializers
   end
 
-  def formatParameters(opts)
+  def formatMemberInitializers
+
+    if !@MemberInitializers
+      return ""
+    end
+
+    " : " + @MemberInitializers.map{|i| i[0] + "(" + i[1] + ")"}.join(", ")
+  end
+
+  def formatParameters(opts, leadingcomma: true)
     if @Parameters.empty? or @Parameters.select{|p| !p.NonMethodParam}.empty?
       ""
     else
-      ", " + @Parameters.select{|p| !p.NonMethodParam}.map{
+      (if leadingcomma then ", " else "" end) + @Parameters.select{|p| !p.NonMethodParam}.map{
         |p| p.formatForParams opts
       }.join(", ")
     end
@@ -885,10 +962,10 @@ class Variable
 
   def formatInitializer()
     if @Move
-      "#{@Name}(#{@Name.downcase})"
-    else
       # Move constructor
-      "#{@Name}(std::move(#{@Name.downcase}))"      
+      "#{@Name}(std::move(#{@Name.downcase}))" 
+    else
+      "#{@Name}(#{@Name.downcase})" 
     end
   end
 
@@ -911,6 +988,27 @@ class Variable
       str
     end
     
+  end
+end
+
+# For easily adding methods to classes
+class GeneratedMethod
+
+  attr_reader :Name, :ReturnType, :Body
+
+  def initialize(name, type, parameters, body: "")
+    @Name = name
+    @ReturnType = type
+    @Parameters = parameters
+    @Body = body
+  end
+
+  def formatParameters(opts)
+    if !@Parameters
+      ""
+    else
+      @Parameters.map{|v| v.formatForParams opts}.join(", ")
+    end
   end
 end
 
@@ -939,3 +1037,12 @@ class EntitySystem
     @RunRender = runrender
   end
 end
+
+
+def genComparisonExpression(values)
+
+  values.map{|v| v[0] + " == " + v[1]}.join(" && ")
+  
+end
+
+

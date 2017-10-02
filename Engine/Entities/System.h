@@ -136,8 +136,8 @@ public:
 //! \brief Base class for all systems that create states from changed components
 template<class UsedComponent, class ComponentState>
 class StateCreationSystem{
-
-    void Run(std::unordered_map<ObjectID, UsedComponent*> &index,
+public:
+    void Run(GameWorld &world, std::unordered_map<ObjectID, UsedComponent*> &index,
         StateHolder<ComponentState> &heldstates, int worldtick)
     {
         for(auto iter = index.begin(); iter != index.end(); ++iter){
@@ -148,7 +148,7 @@ class StateCreationSystem{
                 return;
 
             // Needs a new state //
-            heldstates.CreateNewState(node, worldtick);
+            heldstates.CreateStateIfChanged(iter->first, node, worldtick);
 
             node.Marked = false;
         }

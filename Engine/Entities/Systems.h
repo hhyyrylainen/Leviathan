@@ -31,7 +31,7 @@ class PositionStateSystem : public StateCreationSystem<Position, PositionState>{
 class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>>{
     
     void ProcessNode(std::tuple<RenderNode&, Position&> &node, ObjectID id,
-        int tick, int timeintick, const StateHolder<Position> &heldstates)
+        int tick, int timeintick, const StateHolder<PositionState> &heldstates)
     {
         auto& pos = std::get<1>(node);
         if(!pos.Marked)

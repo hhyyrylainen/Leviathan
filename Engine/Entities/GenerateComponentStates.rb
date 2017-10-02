@@ -9,10 +9,36 @@ generator = Generator.new ARGV[0], separateFiles: true
 
 generator.useNamespace
 generator.addInclude "Entities/ComponentState.h"
+generator.addImplInclude "Entities/Components.h"
 
 generator.add ComponentState.new("PositionState", members: [
                                    Variable.new("_Position", "Float3"),
-                                   Variable.new("_Orientation", "Float4")])
+                                   Variable.new("_Orientation", "Float4")],
+                                 constructors: [
+                                   ConstructorInfo.new(
+                                     [
+                                       Variable.new("tick",
+                                                    "int"),
+                                       Variable.new("data",
+                                                    "Leviathan::Position")
+                                     ],
+                                     memberinitializers: [
+                                       ["TickNumber", "tick"],
+                                       ["_Position", "data.Members._Position"],
+                                       ["_Orientation", "data.Members._Orientation"],
+                                     ])
+                                 ], methods: [
+                                   GeneratedMethod.new(
+                                     "DoesMatchState", "bool",
+                                     [
+                                       Variable.new("state", "Leviathan::Position")
+                                     ], body: "return " + 
+                                        genComparisonExpression(
+                                          [
+                                            ["_Position", "state.Members._Position"],
+                                            ["_Orientation", "state.Members._Orientation"],
+                                          ]) + ";"),
+                                 ])
 
 
 

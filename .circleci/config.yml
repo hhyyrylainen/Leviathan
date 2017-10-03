@@ -47,7 +47,8 @@ jobs:
              - build/Makefile
        - run: mkdir -p /reports/reports
        - run:
-           command: ./LeviathanTest "~[xrequired]"         
+           command: ./LeviathanTest "~[xrequired]"
+           working_directory: ~/leviathan/build/bin
        # - run:
        #     command: ./LeviathanTest --reporter junit --out /reports/reports/test_run.xml "~[xrequired]"
        #     working_directory: ~/leviathan/build/bin

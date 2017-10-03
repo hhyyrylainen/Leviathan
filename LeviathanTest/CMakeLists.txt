@@ -62,13 +62,21 @@ include(LeviathanCoreProject)
 # testing
 
 if(WIN32)
+  # TODO: debug target (can't use the linux approach as visual studio
+  # can switch between the build types without invoking cmake)
   add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest.exe"
     DEPENDS LeviathanTest
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 else()
-  add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest"
-    DEPENDS LeviathanTest
-    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTestD"
+      DEPENDS LeviathanTest
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+  else()
+    add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest"
+      DEPENDS LeviathanTest
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+  endif()
 endif()
 
 

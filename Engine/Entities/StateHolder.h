@@ -46,6 +46,79 @@ public:
         return newest;
     }
 
+    //! \brief Returns the state with the lowest tick number
+    DLLEXPORT StateT* GetOldest() const{
+
+        StateT* oldest = nullptr;
+        int oldestTick = std::numeric_limits<int>::max();
+
+        for(StateT* state : StoredStates){
+
+            if(state && state->TickNumber <= oldestTick){
+
+                oldest = state;
+                oldestTick = state->TickNumber;
+            }
+        }
+
+        return oldest;
+    }
+
+    //! \brief Returns the state matching the tick number or the
+    //! closest tick that is higher than the tick number
+    //! \todo How can the caller of this method detect when a state
+    //! has been missed and should instead (maybe) wait a bit? Or
+    //! should we just skip missed states and start interpolating from
+    //! the later state
+    DLLEXPORT StateT* GetMatchingOrNewer(int ticknumber) const{
+
+        StateT* closest = nullptr;
+        int closestBy = std::numeric_limits<int>::max();
+
+        for(StateT* state : StoredStates){
+
+            if(!state || state->TickNumber < ticknumber)
+                continue;
+
+            if(state->TickNumber == ticknumber){
+                
+                return state;
+            }
+
+            const auto difference = state->TickNumber - ticknumber;
+            if(difference <= closestBy){
+
+                closestBy = difference;
+                closest = state;
+            }
+        }
+
+        return closest;        
+    }
+
+    //! \brief Returns state matching tick number
+    DLLEXPORT StateT* GetState(int ticknumber) const{
+
+        for(StateT* state : StoredStates){
+
+            if(state && state->TickNumber == ticknumber)
+                return state;
+        }
+
+        return nullptr;
+    }
+
+    //! \brief Returns true if state is still valid
+    DLLEXPORT bool IsStateValid(StateT* statetocheck) const{
+
+        for(StateT* state : StoredStates){
+            if(state == statetocheck)
+                return true;
+        }
+        
+        return false;
+    }
+
     //! \brief Appends a new state removing old states if they don't fit anymore
     DLLEXPORT void Append(StateT* newstate, StateHolder<StateT> &stateowner){
 
@@ -149,7 +222,7 @@ public:
     }
 
     //! \brief Returns a pointer to entity's states if they exist
-    DLLEXPORT ObjectsComponentStates<StateT>* GetEntityStates(ObjectID id){
+    DLLEXPORT ObjectsComponentStates<StateT> const* GetEntityStates(ObjectID id) const{
 
         return StateObjects.Find(id);
     }

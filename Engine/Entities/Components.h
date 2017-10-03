@@ -33,9 +33,11 @@ class ComponentHelpers{
     static std::shared_ptr<ComponentState> DeSerializeState(sf::Packet &packet);
 };
 
+class PositionState;
+
 //! \brief Entity has position and direction it is looking at
 //! \note Any possible locking needs to be handled by the caller
-class Position : public ComponentWithStates{
+class Position : public ComponentWithStates<PositionState>{
 public:
     
     struct Data : public ComponentData{

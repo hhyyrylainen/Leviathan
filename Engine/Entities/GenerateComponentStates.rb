@@ -11,34 +11,48 @@ generator.useNamespace
 generator.addInclude "Entities/ComponentState.h"
 generator.addImplInclude "Entities/Components.h"
 
-generator.add ComponentState.new("PositionState", members: [
-                                   Variable.new("_Position", "Float3"),
-                                   Variable.new("_Orientation", "Float4")],
-                                 constructors: [
-                                   ConstructorInfo.new(
-                                     [
-                                       Variable.new("tick",
-                                                    "int"),
-                                       Variable.new("data",
-                                                    "Leviathan::Position")
-                                     ],
-                                     memberinitializers: [
-                                       ["TickNumber", "tick"],
-                                       ["_Position", "data.Members._Position"],
-                                       ["_Orientation", "data.Members._Orientation"],
-                                     ])
-                                 ], methods: [
-                                   GeneratedMethod.new(
-                                     "DoesMatchState", "bool",
-                                     [
-                                       Variable.new("state", "Leviathan::Position")
-                                     ], body: "return " + 
-                                        genComparisonExpression(
-                                          [
-                                            ["_Position", "state.Members._Position"],
-                                            ["_Orientation", "state.Members._Orientation"],
-                                          ]) + ";"),
-                                 ])
+posState = ComponentState.new(
+  "PositionState", members: [
+    Variable.new("_Position", "Float3"),
+    Variable.new("_Orientation", "Float4")],
+  constructors: [
+    # Empty unitialized constructor
+    ConstructorInfo.new(
+      []),
+    ConstructorInfo.new(
+      [
+        Variable.new("tick", "int", noRef: true),
+        Variable.new("data", "Leviathan::Position")
+      ],
+      memberinitializers: [
+        ["TickNumber", "tick"],
+        ["_Position", "data.Members._Position"],
+        ["_Orientation", "data.Members._Orientation"],
+      ]),
+  ], methods: [
+    GeneratedMethod.new(
+      "DoesMatchState", "bool",
+      [
+        Variable.new("state", "Leviathan::Position")
+      ], body: "return " + 
+         genComparisonExpression(
+           [
+             ["_Position", "state.Members._Position"],
+             ["_Orientation", "state.Members._Orientation"],
+           ]) + ";"),
+    GeneratedMethod.new(
+      "Interpolate", "PositionState",
+      [
+        Variable.new("second", "PositionState"),
+        Variable.new("progress", "float", noRef: true)
+      ], body: (<<-END
+    return PositionState(TickNumber, _Position.Lerp(second._Position, progress),
+           _Orientation.Slerp(second._Orientation, progress));
+END
+               ))
+  ])
+
+generator.add posState
 
 
 

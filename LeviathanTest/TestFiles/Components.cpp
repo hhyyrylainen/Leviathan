@@ -2,6 +2,7 @@
 
 #include "Entities/GameWorld.h"
 #include "Entities/Components.h"
+#include "Entities/StateInterpolator.h"
 #include "Handlers/ObjectLoader.h"
 
 #include "Generated/StandardWorld.h"
@@ -124,6 +125,88 @@ TEST_CASE("PositionStateSystem creates state objects", "[entity]"){
     CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 1);
     REQUIRE(PositionStates.GetEntityStates(id));
     CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 2);
+
+    SECTION("Generated states have correct data"){
+
+        auto* entityStates = PositionStates.GetEntityStates(id);
+        REQUIRE(entityStates);
+
+        PositionState* firstState = entityStates->GetState(1);
+        REQUIRE(firstState);
+
+        // Tick should be 4 here
+        PositionState* secondState = entityStates->GetState(tick);
+        REQUIRE(secondState);
+
+        CHECK(firstState != secondState);
+        CHECK(firstState->_Position == Float3(0, 1, 2));
+        CHECK(secondState->_Position == Float3(1, 1, 1));
+    }
+}
+
+TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]"){
+
+    PartialEngine<false> engine;
+
+    StateHolder<PositionState> PositionStates;
+
+    PositionStateSystem _PositionStateSystem;
+
+    ComponentHolder<Position> ComponentPosition;
+
+    StandardWorld dummyWorld;
+
+    ObjectID id = 36;
+
+    // Create 2 positions 
+    auto pos = ComponentPosition.ConstructNew(id,
+        Position::Data{Float3(1, 6, 0), Float4::IdentityQuaternion()});
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
+
+    pos->Marked = true;
+    pos->Members._Position = Float3(3, 12, 1);
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 2);
+
+    REQUIRE(PositionStates.GetEntityStates(id));
+    CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 2);
+
+    auto* entityStates = PositionStates.GetEntityStates(id);
+    REQUIRE(entityStates);
+
+    PositionState* firstState = entityStates->GetState(1);
+    REQUIRE(firstState);
+    CHECK(firstState->_Position == Float3(1, 6, 0));
+
+    PositionState* secondState = entityStates->GetState(2);
+    REQUIRE(secondState);
+    CHECK(secondState->_Position == Float3(3, 12, 1));
+
+    Position interpolated({Float3(2, 9, 0.5f), Float4::IdentityQuaternion()});
+
+    // This sets the starting time of the interpolation //
+    // and returns the first state
+    const auto shouldBeFirstState = StateInterpolator::Interpolate(PositionStates, id, pos,
+        1, 0);
+
+    REQUIRE(std::get<0>(shouldBeFirstState));
+    CHECK(firstState->_Position == std::get<1>(shouldBeFirstState)._Position);
+
+    // Then we jump half a tick forward to be between the 2 states
+    const auto interpolationResult = StateInterpolator::Interpolate(PositionStates, id, pos,
+        1, TICKSPEED / 2);
+
+    REQUIRE(std::get<0>(interpolationResult));
+    CHECK(interpolated.Members._Position == std::get<1>(interpolationResult)._Position);
+    CHECK(interpolated.Members._Orientation == std::get<1>(interpolationResult)._Orientation);
+
+    // And should be the later state //
+    const auto shouldBeLast = StateInterpolator::Interpolate(PositionStates, id, pos,
+        1, TICKSPEED);
+
+    REQUIRE(std::get<0>(shouldBeLast));
+    CHECK(secondState->_Position == std::get<1>(shouldBeLast)._Position);
 }
 
 

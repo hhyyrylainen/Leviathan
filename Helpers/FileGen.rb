@@ -447,7 +447,7 @@ class ComponentState < SFMLSerializeClass
 
   def initialize(name, members: [], constructors: nil, methods: nil)
 
-    members = [Variable.new("TickNumber", "int")] + members
+    members = [Variable.new("TickNumber", "int", noRef: true)] + members
     
     super name, members: members, constructors: constructors, methods: methods
 

@@ -148,7 +148,10 @@ public:
                 return;
 
             // Needs a new state //
-            heldstates.CreateStateIfChanged(iter->first, node, worldtick);
+            if(heldstates.CreateStateIfChanged(iter->first, node, worldtick)){
+
+                node.StateMarked = true;
+            }
 
             node.Marked = false;
         }

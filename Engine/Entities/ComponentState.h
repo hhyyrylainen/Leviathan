@@ -8,6 +8,7 @@
 namespace Leviathan{
 
 //! \brief Alternative base class for Component that creates distinct state objects
+template<class StateT>
 class ComponentWithStates : public Component{
 public:
 
@@ -20,8 +21,10 @@ public:
     // Data for currently interpolating state
     // Some child classes might not use this if interpolating is not done
     // maybe some of these could be moved to a new class
-    float InterpolatingStartTime;
-    int InterpolatingStartTick;
+    float InterpolatingStartTime = 0.f;
+    int InterpolatingRemoteStartTick;
+    StateT* InterpolatingStartState = nullptr;
+    StateT* InterpolatingEndState = nullptr;
 
     // Current time can be calculated from the game world tick and engine clock
     // once the time - InterpolatingStartTime is >= TICKSPEED

@@ -672,12 +672,25 @@ DLLEXPORT void ScriptExecutor::PrintExceptionInfo(asIScriptContext* ctx,
     LErrorReporter &output, asIScriptFunction* func /*= nullptr*/,
     ScriptModule* scrptmodule /*= nullptr*/)
 {
+    
+    std::string declaration = ctx->GetExceptionFunction()->GetDeclaration() ?
+        ctx->GetExceptionFunction()->GetDeclaration() : "unknown function";
+
+    std::string section = ctx->GetExceptionFunction()->GetScriptSectionName() ?
+        ctx->GetExceptionFunction()->GetScriptSectionName() : "unknown";
+
+    std::string exception = ctx->GetExceptionString() ?
+        ctx->GetExceptionString() : "unknown exception";
+    
+    std::string funcDeclaration = func ? (func->GetDeclaration() ?
+        func->GetDeclaration() : "unknown function") : "";    
+    
     output.Error(std::string("[SCRIPT][EXCEPTION] ") +
-        ctx->GetExceptionString() +
-        (func ? std::string(", while running function: ") + func->GetDeclaration() :
-            std::string()) +
-        "\n\t in function " + ctx->GetExceptionFunction()->GetDeclaration() +
-        " defined in " + ctx->GetExceptionFunction()->GetScriptSectionName() + "(" +
+        exception +
+        (func ? std::string(", while running function: ") +
+            funcDeclaration : std::string()) +
+        "\n\t in function " + declaration +
+        " defined in " + section + "(" +
         std::to_string(ctx->GetExceptionLineNumber()) + ") " +
         (scrptmodule ? scrptmodule->GetInfoString() : std::string()));
     

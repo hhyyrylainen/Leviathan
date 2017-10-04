@@ -43,6 +43,8 @@ DLLEXPORT sf::Packet& operator >>(sf::Packet& packet, const NamedVariableList &d
 // ------------------ SFML Packet into a packet ------------------ //
 DLLEXPORT sf::Packet& operator <<(sf::Packet& packet, sf::Packet& packetinner)
 {
+    LEVIATHAN_ASSERT(&packet != &packetinner, "Trying to insert packet into itself");
+    
     const uint32_t size = static_cast<uint32_t>(packetinner.getDataSize());
 
     packet << size;
@@ -52,6 +54,7 @@ DLLEXPORT sf::Packet& operator <<(sf::Packet& packet, sf::Packet& packetinner)
 
 DLLEXPORT sf::Packet& operator >>(sf::Packet& packet, sf::Packet& packetinner)
 {
+    LEVIATHAN_ASSERT(&packet != &packetinner, "Trying to extract packet from itself");
     // uint32_t size = 0;
 
     // packet >> size;

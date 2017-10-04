@@ -1079,9 +1079,9 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
 
             ackPacket << LEVIATHAN_NORMAL_PACKET << uint32_t(1)
                 // Ack header start
-                << uint32_t(2) << uint8_t(1) << uint8_t(0x1) << 
+                << uint32_t(2) << uint8_t(1) << uint8_t(0x1) <<
                 // No messages
-                ackPacket << uint8_t(0);
+                uint8_t(0);
         }
     }
 

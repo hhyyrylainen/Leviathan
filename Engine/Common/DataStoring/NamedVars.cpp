@@ -1198,15 +1198,18 @@ bool NamedVars::AddScriptCompatibleValue(ScriptSafeVariableBlock* value){
 
     RemoveIfExists(value->GetName(), guard);
 
+    bool success = false;
+    
     try{
         
         Variables.push_back(shared_ptr<NamedVariableList>(new NamedVariableList(value)));
+        success = true;
     
     } catch(...){
-        return false;
     }
 
-    return true;
+    value->Release();
+    return success;
 }
 #endif // LEVIATHAN_USING_ANGELSCRIPT
 

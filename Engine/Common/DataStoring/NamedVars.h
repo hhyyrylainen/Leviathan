@@ -290,6 +290,8 @@ namespace Leviathan{
         ScriptSafeVariableBlock* GetScriptCompatibleValue(const std::string &name);
 
         //! For use from scripts
+        //!
+        //! Decrements value refcount
         bool AddScriptCompatibleValue(ScriptSafeVariableBlock* value);
 
     #endif // LEVIATHAN_USING_ANGELSCRIPT 

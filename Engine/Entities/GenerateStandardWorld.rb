@@ -78,14 +78,12 @@ worldClass = GameWorldClass.new(
                         ]),
   ],
   systems: [
-    EntitySystem.new("ReceivedSystem", []),
     EntitySystem.new("RenderingPositionSystem", ["RenderNode", "Position"],
                      runrender: {group: 10, parameters: ["calculatedTick", "progressInTick"]}),
-    EntitySystem.new("RenderNodeHiderSystem", [], runrender:
-                                                    {group: 11,
-                                                     parameters:
-                                                       ["ComponentRenderNode.GetIndex()"]}),
-    EntitySystem.new("SendableSystem", []),
+    EntitySystem.new("RenderNodeHiderSystem", [],
+                     runrender: {group: 11, parameters: ["ComponentRenderNode.GetIndex()"]}),
+    EntitySystem.new("ReceivedSystem", []), 
+    EntitySystem.new("SendableSystem", []), 
     EntitySystem.new("PositionStateSystem", [], runtick: {
                        group: 50,
                        parameters: ["ComponentPosition.GetIndex()", "PositionStates",

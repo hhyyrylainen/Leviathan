@@ -10,6 +10,8 @@
 
 #include "System.h"
 #include "Components.h"
+#include "StateInterpolator.h"
+
 #include "Utility/Convert.h"
 
 #include "Generated/ComponentStates.h"
@@ -31,29 +33,37 @@ class PositionStateSystem : public StateCreationSystem<Position, PositionState>{
 class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>>{
     
     void ProcessNode(std::tuple<RenderNode&, Position&> &node, ObjectID id,
-        int tick, int timeintick, const StateHolder<PositionState> &heldstates)
+        const StateHolder<PositionState> &heldstates, int tick, int timeintick)
     {
         auto& pos = std::get<1>(node);
-        if(!pos.Marked)
+        
+        if(!pos.StateMarked)
             return;
 
-        pos.Marked = false;
+        auto interpolated = StateInterpolator::Interpolate(heldstates, id, &pos,
+            tick, timeintick);
 
+        if(!std::get<0>(interpolated)){
+            // No states to interpolate //
+            return;
+        }
+
+        const auto& state = std::get<1>(interpolated);
+        
         auto& rendernode = std::get<0>(node);
-        rendernode.Node->setPosition(pos.Members._Position);
-        rendernode.Node->setOrientation(pos.Members._Orientation);
+        rendernode.Node->setPosition(state._Position);
+        rendernode.Node->setOrientation(state._Orientation);
     }
     
 public:
     template<class GameWorldT>
-    void Run(GameWorldT &world, int tick, int timeintick){
-
-        auto& states = world.GetStatesFor_Position();
-
+        void Run(GameWorldT &world, const StateHolder<PositionState> &heldstates, int tick,
+            int timeintick)
+    {
         auto& index = Nodes.GetIndex();
-        for (auto iter = index.begin(); iter != index.end(); ++iter) {
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
 
-            this->ProcessNode(*iter->second, iter->first, tick, timeintick, states);
+            this->ProcessNode(*iter->second, iter->first, heldstates, tick, timeintick);
         }
     }
 

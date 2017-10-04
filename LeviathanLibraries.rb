@@ -88,7 +88,7 @@ $ogre = Ogre.new(
 )
 
 $cegui = CEGUI.new(
-  version: "0555c53769264bd9bfd61a094a7dafe59bb2192c",
+  version: "32d32a0d5a9c",
   installPath: THIRD_PARTY_INSTALL,
   # Find Ogre in our search path
   extraOptions: ["-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"],

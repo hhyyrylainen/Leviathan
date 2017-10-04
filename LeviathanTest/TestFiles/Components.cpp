@@ -210,3 +210,103 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]"){
 }
 
 
+TEST_CASE("PositionStateSystem multiple states with gaps can be interpolated", "[entity]"){
+
+    PartialEngine<false> engine;
+
+    StateHolder<PositionState> PositionStates;
+
+    PositionStateSystem _PositionStateSystem;
+
+    ComponentHolder<Position> ComponentPosition;
+
+    StandardWorld dummyWorld;
+
+    ObjectID id = 12;
+
+    auto pos = ComponentPosition.ConstructNew(id,
+        Position::Data{Float3(0, 0, 0), Float4::IdentityQuaternion()});
+    
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
+
+    
+    pos->Members._Position = Float3(1, 0, 0);
+    pos->Marked = true;
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 2);
+
+    
+    pos->Members._Position = Float3(2, 0, 0);
+    pos->Marked = true;
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 3);
+
+    
+    pos->Members._Position = Float3(3, 0, 0);
+    pos->Marked = true; 
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 5);
+
+    
+    pos->Members._Position = Float3(4, 0, 0);
+    pos->Marked = true; 
+
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 6);
+
+    // Initial time set
+    StateInterpolator::Interpolate(PositionStates, id, pos, 1, 0);
+
+    SECTION("Tick 1 to 2"){
+
+        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            1, TICKSPEED / 2);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(0.5f, 0, 0) == std::get<1>(interpolated)._Position);
+    }
+
+    SECTION("Tick 2 to 3"){
+
+        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            2, TICKSPEED / 2);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(1.5f, 0, 0) == std::get<1>(interpolated)._Position);
+    }
+
+    SECTION("Tick 3 to 5 (4 missing)"){
+
+        auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            3, 0);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(2.f, 0, 0) == std::get<1>(interpolated)._Position);
+
+        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            3, TICKSPEED / 2);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(2.25f, 0, 0) == std::get<1>(interpolated)._Position);
+
+        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            4, 0);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(2.5f, 0, 0) == std::get<1>(interpolated)._Position);        
+
+        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            4, TICKSPEED / 2);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(2.75f, 0, 0) == std::get<1>(interpolated)._Position);
+
+        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            5, 0);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(3, 0, 0) == std::get<1>(interpolated)._Position);        
+    }
+
+    SECTION("Tick 5 to 6"){
+
+        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            5, TICKSPEED / 2);
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(Float3(3.5f, 0, 0) == std::get<1>(interpolated)._Position);
+    }    
+}
+
+

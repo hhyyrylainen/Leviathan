@@ -42,9 +42,13 @@ void RequireErrorReporter::WriteLine(const std::string &text) {
 }
 
 void RequireErrorReporter::Info(const std::string &text) {
+
+    INFO(text);
 }
 
 void RequireErrorReporter::Warning(const std::string &text) {
+
+    WARN(text);
 }
 
 void RequireErrorReporter::Error(const std::string &text) {

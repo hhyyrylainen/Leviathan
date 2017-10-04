@@ -86,11 +86,15 @@ public:
         if(passed <= EPSILON)
             return std::make_tuple(true, *entitycomponent->InterpolatingStartState);
 
-        if(passed == TICKSPEED)
+        const auto duration = (
+            entitycomponent->InterpolatingEndState->TickNumber -
+            entitycomponent->InterpolatingStartState->TickNumber) * TICKSPEED;
+        
+        if(passed == duration)
             return std::make_tuple(true, *entitycomponent->InterpolatingEndState);
 
         // Check for having finished interpolating //
-        if(passed > TICKSPEED){
+        if(passed > duration){
 
             entitycomponent->InterpolatingStartState = entitycomponent->InterpolatingEndState;
             entitycomponent->InterpolatingEndState = nullptr;
@@ -101,10 +105,8 @@ public:
             return Interpolate(stateholder, entity, entitycomponent, currenttick, timeintick);
         }
         
-        const float progress = passed / ((
-                entitycomponent->InterpolatingEndState->TickNumber -
-                entitycomponent->InterpolatingStartState->TickNumber) * TICKSPEED);
-
+        const float progress = passed / duration;
+        
         return std::make_tuple(true, entitycomponent->InterpolatingStartState->Interpolate(
                 *entitycomponent->InterpolatingEndState, progress));
     }
@@ -116,6 +118,8 @@ public:
             - entitycomponent->InterpolatingRemoteStartTick;
 
         entitycomponent->InterpolatingStartTime += difference * TICKSPEED;
+        entitycomponent->InterpolatingRemoteStartTick =
+            entitycomponent->InterpolatingStartState->TickNumber;
     }
     
 };

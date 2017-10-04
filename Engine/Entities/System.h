@@ -145,7 +145,7 @@ public:
             auto& node = *iter->second;
             
             if(!node.Marked)
-                return;
+                continue;
 
             // Needs a new state //
             if(heldstates.CreateStateIfChanged(iter->first, node, worldtick)){

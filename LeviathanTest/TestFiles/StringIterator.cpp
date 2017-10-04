@@ -35,7 +35,7 @@ TEST_CASE("StringIterator basic utf8 pointer", "[string]"){
 
     SECTION("In iterator"){
 
-        StringIterator itr(new UTF8PointerDataIterator(testdata,
+        StringIterator itr(std::make_unique<UTF8PointerDataIterator>(testdata,
                 testdata + std::char_traits<char>::length(testdata)));
 
         SECTION("Entire string"){
@@ -500,13 +500,14 @@ TEST_CASE("StringIterator UTF8 correctness", "[string][objectfile][utf8]"){
 	utf8::utf8to16(toutf8.begin(), toutf8.end(), back_inserter(resultuni16));
 
 	
-	StringIterator itr(new UTF8DataIterator(toutf8), true);
+	StringIterator itr(std::make_unique<UTF8DataIterator>(toutf8));
 
 	auto shouldbethesame = itr.GetUntilNextCharacterOrAll<std::string>('a');
 
     CHECK(*shouldbethesame == toutf8);
 	
-	itr.ReInit(new UTF8DataIterator("My Super nice \\= unicode is this : \""+toutf8+"\""), true);
+	itr.ReInit(std::make_unique<UTF8DataIterator>("My Super nice \\= unicode is this : \"" +
+            toutf8 + "\""));
 	itr.GetUntilEqualityAssignment<std::string>(EQUALITYCHARACTER_TYPE_ALL);
 
 	// Now get the UTF8 sequence //

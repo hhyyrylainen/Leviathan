@@ -212,7 +212,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
             StringIterator itr;
 
             // Height
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("height");
 
             auto str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -221,7 +221,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 height = Convert::StringTo<uint32_t>(*str);
 
             // Width
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("width");
 
             str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -230,7 +230,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 width = Convert::StringTo<uint32_t>(*str);
 
             // X
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("xPos");
 
             str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -239,7 +239,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 x = Convert::StringTo<uint32_t>(*str);
 
             // Y
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("yPos");
 
             str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);

@@ -29,11 +29,13 @@ bool Pong::PongCommandHandler::CanHandleCommand(const string &cmd) const{
     return false;
 }
 // ------------------------------------ //
-void Pong::PongCommandHandler::ExecuteCommand(const string &wholecommand, CommandSender* sender){
+void Pong::PongCommandHandler::ExecuteCommand(const string &wholecommand,
+    CommandSender* sender)
+{
+    StringIterator itr(std::make_unique<UTF8DataIterator>(wholecommand));
 
-    StringIterator itr(new UTF8DataIterator(wholecommand));
-
-    auto cmd = itr.GetNextCharacterSequence<string>(Leviathan::UNNORMALCHARACTER_TYPE_LOWCODES);
+    auto cmd = itr.GetNextCharacterSequence<string>(
+        Leviathan::UNNORMALCHARACTER_TYPE_LOWCODES);
 
     // Perform something based on the command //
     if(*cmd == "join"){

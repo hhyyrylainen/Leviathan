@@ -127,7 +127,7 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
     bool succeeded = true;
 
     // Create an UTF8 supporting iterator //
-    StringIterator itr(new UTF8DataIterator(filecontents), true);
+    StringIterator itr(std::make_unique<UTF8DataIterator>(filecontents));
 
     while(!itr.IsOutOfBounds()){
         
@@ -394,7 +394,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 		}
 	}
 
-	StringIterator quoteremover(nullptr, false);
+	StringIterator quoteremover;
 
 	// Remove any quotes from the arguments //
 	for(size_t i = 0; i < templateargs.size(); i++){
@@ -404,7 +404,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 		if(chartype == '"' || chartype == '\''){
             
 			// Remove the quotes //
-			quoteremover.ReInit(new UTF8DataIterator(*templateargs[i]), true);
+			quoteremover.ReInit(std::make_unique<UTF8DataIterator>(*templateargs[i]));
 			auto newstr = quoteremover.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
             
 			if(!newstr || newstr->empty()){
@@ -509,7 +509,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 
 			if(chartype == '"' || chartype == '\''){
 				// Remove the quotes //
-				quoteremover.ReInit(new UTF8DataIterator(*instanceargs[i]), true);
+				quoteremover.ReInit(std::make_unique<UTF8DataIterator>(*instanceargs[i]));
 				auto newstr = quoteremover.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
                 
 				if(!newstr || newstr->empty()){

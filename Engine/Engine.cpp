@@ -1394,7 +1394,7 @@ DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[]){
 
 DLLEXPORT void Engine::ExecuteCommandLine(){
 
-    StringIterator itr(NULL, false);
+    StringIterator itr;
 
     // Iterate over the commands and process them //
     for(size_t i = 0; i < PassedCommands.size(); i++){

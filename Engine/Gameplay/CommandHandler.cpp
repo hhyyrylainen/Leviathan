@@ -63,7 +63,7 @@ DLLEXPORT void Leviathan::CommandHandler::QueueCommand(const std::string &comman
     CommandSender* issuer)
 {
 	// Get the first word //
-	StringIterator itr(new UTF8DataIterator(command));
+	StringIterator itr(std::make_unique<UTF8DataIterator>(command));
 
 	// Only skip a single / if there is one //
 	if(itr.GetCharacter() == '/')

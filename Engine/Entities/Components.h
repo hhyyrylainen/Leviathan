@@ -37,6 +37,8 @@ class PositionState;
 
 //! \brief Entity has position and direction it is looking at
 //! \note Any possible locking needs to be handled by the caller
+//! \todo Initial position states should not be generated or initially sent data shouldn't
+//! have the state instead the first state would be guaranteed to be sent after it
 class Position : public ComponentWithStates<PositionState>{
 public:
     

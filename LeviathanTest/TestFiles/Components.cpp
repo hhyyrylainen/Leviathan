@@ -144,6 +144,63 @@ TEST_CASE("PositionStateSystem creates state objects", "[entity]"){
     }
 }
 
+TEST_CASE("PositionStateSystem single state is interpolated", "[entity]"){
+
+    PartialEngine<false> engine;
+
+    StateHolder<PositionState> PositionStates;
+
+    PositionStateSystem _PositionStateSystem;
+
+    ComponentHolder<Position> ComponentPosition;
+
+    StandardWorld dummyWorld;
+
+    ObjectID id = 36;
+
+    const auto initialPos = Float3(5, 8, -5);
+
+    // Create 2 positions 
+    auto pos = ComponentPosition.ConstructNew(id,
+        Position::Data{initialPos, Float4::IdentityQuaternion()});
+
+    CHECK(!pos->StateMarked);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
+    CHECK(pos->StateMarked);
+
+    REQUIRE(PositionStates.GetEntityStates(id));
+    CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 1);
+    
+    pos->Members._Position = Float3(0);
+
+    SECTION("First interpolation"){
+        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            1, 0);
+
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(std::get<1>(interpolated)._Position == initialPos);
+        CHECK(!pos->StateMarked);
+    }
+
+    SECTION("Second interpolation, should still be the same pos"){
+        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            1, 0);
+
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(std::get<1>(interpolated)._Position == initialPos);
+    }
+
+    SECTION("Third iteration, time passed, but should be the same"){
+        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos,
+            1, 15);
+
+        REQUIRE(std::get<0>(interpolated));
+        CHECK(std::get<1>(interpolated)._Position == initialPos);
+        CHECK(!pos->StateMarked);
+    }    
+
+}
+
 TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]"){
 
     PartialEngine<false> engine;

@@ -67,7 +67,10 @@ public:
 
                 // No ending state found //
                 entitycomponent->StateMarked = false;
-                return std::make_tuple(false, StateT());
+                // Only one state should allow interpolating to the one available state
+                // with the same function so we return the first state here
+                //return std::make_tuple(false, StateT());
+                return std::make_tuple(true, *entitycomponent->InterpolatingStartState);
             }
 
             // Initialize the remote time counter if this is the first time we start

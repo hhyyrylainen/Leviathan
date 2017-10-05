@@ -86,9 +86,13 @@ public:
         if(passed <= EPSILON)
             return std::make_tuple(true, *entitycomponent->InterpolatingStartState);
 
-        const auto duration = (
+        // Duration is clamped to INTERPOLATION_TIME to make entities
+        // that have stopped moving not take a ridiculously long time
+        // to move to their new positions
+        const auto duration = std::min((
             entitycomponent->InterpolatingEndState->TickNumber -
-            entitycomponent->InterpolatingStartState->TickNumber) * TICKSPEED;
+            entitycomponent->InterpolatingStartState->TickNumber) * TICKSPEED,
+            INTERPOLATION_TIME);
         
         if(passed == duration)
             return std::make_tuple(true, *entitycomponent->InterpolatingEndState);

@@ -16,7 +16,9 @@ public:
 
     //! True when there are states in a StateHolder for this entity, which haven't been
     //! shown yet.
-    bool StateMarked = false;
+    //! \note This is true by default to always apply the initial position even
+    //! if there are no states
+    bool StateMarked = true;
 
     // Data for currently interpolating state
     // Some child classes might not use this if interpolating is not done

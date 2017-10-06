@@ -164,7 +164,8 @@ TEST_CASE("PositionStateSystem single state is interpolated", "[entity]"){
     auto pos = ComponentPosition.ConstructNew(id,
         Position::Data{initialPos, Float4::IdentityQuaternion()});
 
-    CHECK(!pos->StateMarked);
+    // State marked by default to always apply the initial position even if there are no states
+    //CHECK(!pos->StateMarked);
     _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
     CHECK(pos->StateMarked);
 

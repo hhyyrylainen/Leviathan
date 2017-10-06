@@ -47,6 +47,8 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
 
         if(!std::get<0>(interpolated)){
             // No states to interpolate //
+            rendernode.Node->setPosition(pos.Members._Position);
+            rendernode.Node->setOrientation(pos.Members._Orientation);
             return;
         }
 

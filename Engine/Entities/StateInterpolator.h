@@ -24,8 +24,12 @@ public:
         // TODO: should this be stored in the component?
         auto* entitysStates = stateholder.GetEntityStates(entity);
 
-        if(!entitysStates)
-            throw Leviathan::InvalidState("Interpolated entity has no states in StateHolder");
+        if(!entitysStates){
+            // Probably shouldn't throw here to make the code that uses this simpler
+            entitycomponent->StateMarked = false;
+            return std::make_tuple(false, StateT());
+            //throw Leviathan::InvalidState("Interpolated entity has no states in StateHolder");
+        }
 
         // Find interpolation start spot //
         if(!entitycomponent->InterpolatingStartState ||

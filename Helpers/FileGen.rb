@@ -683,8 +683,8 @@ class GameWorldClass < OutputClass
     else
       f.puts ";"
     end
-
-    f.puts <<-END
+    if opts.include?(:header)
+      f.puts <<-END
 //! Helper for getting component of type. This is much slower than
 //! direct lookups with the actual implementation class' GetComponent_Position etc.
 //! methods
@@ -705,8 +705,57 @@ TComponent& GetComponent(ObjectID id){
         throw Leviathan::NotFound("Component for entity with id was not found");
     
     return *static_cast<TComponent*>(ptr);
-}    
+}
+
+template<class TComponent>
+Leviathan::StateHolder<typename TComponent::StateT>& GetStatesFor(){
+
+    std::tuple<void*, bool> stateHolder = GetStatesFor(TComponent::TYPE);
+
+    if(!std::get<1>(stateHolder))
+        throw InvalidArgument("Unrecognized component type as template parameter for "
+            "state holder");
+
+    void* ptr = std::get<0>(stateHolder);
+    
+    return *static_cast<Leviathan::StateHolder<typename TComponent::StateT>*>(ptr);
+}
 END
+    end
+
+    f.write "#{export}std::tuple<void*, bool> #{qualifier opts}GetStatesFor(" +
+            "Leviathan::COMPONENT_TYPE type)#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "const auto baseType = " + @BaseClass + "::GetStatesFor(type);"
+
+      f.puts "if(std::get<1>(baseType))"
+      f.puts "    return baseType;"
+      f.puts ""
+
+      f.puts "switch(type){"
+      
+      @ComponentTypes.each{|c|
+
+        if !c.StateType
+          next
+        end
+        
+        f.puts "case #{c.type}::TYPE:"
+        f.puts "{"
+        f.puts "return std::make_tuple(&#{c.type}States, true);"
+        f.puts "}"
+      }
+
+      f.puts "default:"
+      f.puts "return std::make_tuple(nullptr, false);"
+      f.puts "}"
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+    
 
     f.write "#{export}void #{qualifier opts}RunFrameRenderSystems(int tick, " +
             "int timeintick)#{override opts}"

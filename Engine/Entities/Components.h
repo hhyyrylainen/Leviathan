@@ -61,6 +61,7 @@ public:
     Data Members;
     
     static constexpr auto TYPE = COMPONENT_TYPE::Position;
+    using StateT = PositionState;
 };
 
 //! \brief Entity has an Ogre scene node

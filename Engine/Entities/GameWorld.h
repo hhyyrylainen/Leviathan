@@ -25,6 +25,8 @@ namespace Leviathan{
 
 class Camera;
 
+template<class StateT> class StateHolder;
+
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
@@ -199,6 +201,30 @@ public:
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
     DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
+
+    
+    //! Helper for getting component state holder for type. This is much slower than
+    //! direct lookups with the actual implementation class' GetStatesFor_Position etc.
+    //! methods
+    //! \exception NotFound if entity has no component of the wanted type
+    template<class TComponent>
+        StateHolder<typename TComponent::StateT>& GetStatesFor(){
+
+        std::tuple<void*, bool> stateHolder = GetStatesFor(TComponent::TYPE);
+
+        if(!std::get<1>(stateHolder))
+            throw InvalidArgument("Unrecognized component type as template parameter for "
+                "state holder");
+
+        void* ptr = std::get<0>(stateHolder);
+        
+        return *static_cast<StateHolder<typename TComponent::StateT>*>(ptr);
+    }
+
+    //! \brief Gets a component of type or returns nullptr
+    //!
+    //! \returns Tuple of pointer to component and boolean indicating if the type is known
+    DLLEXPORT virtual std::tuple<void*, bool> GetStatesFor(COMPONENT_TYPE type);
 
 
     //! \brief Sets the entity that acts as a camera.

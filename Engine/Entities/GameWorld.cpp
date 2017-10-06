@@ -720,6 +720,11 @@ DLLEXPORT std::tuple<void*, bool> GameWorld::GetComponent(ObjectID id, COMPONENT
 
     return std::make_tuple(nullptr, false);
 }
+
+DLLEXPORT std::tuple<void*, bool> GameWorld::GetStatesFor(COMPONENT_TYPE type){
+
+    return std::make_tuple(nullptr, false);
+}
 // ------------------------------------ //
 void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id){
 

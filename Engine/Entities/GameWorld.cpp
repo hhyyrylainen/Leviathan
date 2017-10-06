@@ -16,6 +16,10 @@
 #include "../Handlers/IDFactory.h"
 #include "../Window.h"
 
+// Camera interpolation
+#include "StateInterpolator.h"
+#include "Generated/ComponentStates.h"
+
 #include "Sound/SoundDevice.h"
 
 #include "Newton/NewtonManager.h"
@@ -227,10 +231,24 @@ DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeinti
 
         Position& position = GetComponent<Position>(CameraEntity);
 
+        auto& states = GetStatesFor<Position>();
+        
         // set camera position //
-        WorldSceneCamera->setPosition(position.Members._Position);
+        const auto interpolated =
+            StateInterpolator::Interpolate(states, CameraEntity, &position, tick, timeintick);
 
-        WorldSceneCamera->setOrientation(position.Members._Orientation);
+        if(!std::get<0>(interpolated)){
+
+            // No interpolated pos //
+            WorldSceneCamera->setPosition(position.Members._Position); 
+            WorldSceneCamera->setOrientation(position.Members._Orientation); 
+            
+        } else {
+
+            const auto& interpolatedPos = std::get<1>(interpolated);
+            WorldSceneCamera->setPosition(interpolatedPos._Position); 
+            WorldSceneCamera->setOrientation(interpolatedPos._Orientation); 
+        }
 
         if(properties.SoundPerceiver){
             

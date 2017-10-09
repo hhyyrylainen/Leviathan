@@ -91,9 +91,9 @@ public:
 class RenderNodeHiderSystem : public SingleSystem<RenderNode>{
 public:
 
-    void Run(GameWorld &world, std::unordered_map<ObjectID, RenderNode*> &Index){
+    void Run(GameWorld &world, std::unordered_map<ObjectID, RenderNode*> &index){
 
-        for(auto iter = Index.begin(); iter != Index.end(); ++iter){
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
 
             auto& node = *iter->second;
             
@@ -115,9 +115,9 @@ class SendableSystem : public SingleSystem<Sendable>{
 public:
 
     //! \pre Final states for entities have been created for current tick
-    void Run(std::unordered_map<ObjectID, Sendable*> &Index, GameWorld &world){
+    void Run(std::unordered_map<ObjectID, Sendable*> &index, GameWorld &world){
 
-        for(auto iter = Index.begin(); iter != Index.end(); ++iter){
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
 
             auto& node = *iter->second;
             
@@ -139,6 +139,6 @@ protected:
 class ReceivedSystem : public SingleSystem<Received>{
 public:
 
-    DLLEXPORT void Run(std::unordered_map<ObjectID, Received*> &Index, GameWorld &world);
+    DLLEXPORT void Run(std::unordered_map<ObjectID, Received*> &index, GameWorld &world);
 };
 }

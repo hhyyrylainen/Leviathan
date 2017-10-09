@@ -21,7 +21,7 @@ class NodeHolder : public ObjectPool<NodeType, ObjectID>{};
 //!
 //! For ones that use nodes. Not for ones that directly use a single component type
 template<class UsedNode>
-class System {
+class System{
 public:
 
     using HolderType = NodeHolder<UsedNode>;
@@ -41,6 +41,8 @@ public:
 protected:
 
     /* Template for node run method, copy-paste and fill in the parameters
+
+        void Run(GameWorld &world){
         
         auto& index = Nodes.GetIndex();
         for (auto iter = index.begin(); iter != index.end(); ++iter) {
@@ -130,7 +132,7 @@ template<class UsedComponent>
 class SingleSystem{
 public:
     // Example run method
-    //void Run(std::unordered_map<ObjectID, UsedComponent*> &Index, GameWorld &world);
+    //void Run(GameWorld &world, std::unordered_map<ObjectID, UsedComponent*> &index);
 };
 
 //! \brief Base class for all systems that create states from changed components

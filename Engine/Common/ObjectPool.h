@@ -157,6 +157,25 @@ public:
         RemoveFromAdded(id);
     }
 
+    //! \brief Destroys without releasing elements based on ids in vector
+    template<typename Any>
+        void RemoveBasedOnKeyTupleList(
+            const std::vector<std::tuple<Any, KeyType>> &values)
+    {
+        for(auto iter = values.begin(); iter != values.end(); ++iter){
+
+            auto todelete = Index.find(std::get<1>(*iter));
+
+            if(todelete == Index.end())
+                continue;
+
+            todelete->second->~ElementType();
+            Elements.free(todelete->second);
+            
+            Index.erase(todelete);
+        }
+    }
+
 
     //! \brief Calls an function on all the objects in the pool
     //! \note The order of the objects is not guaranteed and can change between runs
@@ -403,11 +422,11 @@ public:
             if(todelete == Index.end())
                 continue;
 
-                
-            if(addtoremoved){
-                    
+            todelete->second->~ElementType();
+            Elements.free(todelete->second);
+            
+            if(addtoremoved)
                 Removed.push_back(std::make_tuple(todelete->second, todelete->first));
-            }
 
             RemoveFromAdded(todelete->first);
                 

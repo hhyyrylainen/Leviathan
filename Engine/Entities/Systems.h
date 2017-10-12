@@ -85,6 +85,20 @@ public:
             "CreateNodes FirstType is incorrect");
         TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, secondholder);
     }
+
+    //! \brief Creates nodes if matching ids are found in all data vectors or
+    //! already existing component holders
+    //!
+    //! This should be 
+    //! \note It is more efficient to directly create nodes as entities are created
+    template<class FirstType, class SecondType>
+        void DestroyNodes(
+            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
+            const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata)
+    {
+        Nodes.RemoveBasedOnKeyTupleList(firstdata);
+        Nodes.RemoveBasedOnKeyTupleList(seconddata);
+    }    
 };
 
 //! \brief Sets visibility objects with Ogre nodes that have changed RenderNode::Hidden

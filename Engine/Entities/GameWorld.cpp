@@ -94,7 +94,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
     // As all objects are just pointers to components we can just dump the objects
     // and once the component pools are released
     ClearObjects();
-        
+    
 	if(GraphicalMode){
 		// TODO: notify our window that it no longer has a world workspace
 		LinkedToWindow = NULL;

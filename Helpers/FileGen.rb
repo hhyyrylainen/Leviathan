@@ -649,7 +649,15 @@ class GameWorldClass < OutputClass
       f.puts "{"
       f.puts @BaseClass + "::DestroyAllIn(id);"
       @ComponentTypes.each{|c|
-        f.puts "Component#{c.type}.Destroy(id, false);"
+        if c.Release
+          f.puts "Component#{c.type}.Release(id, true" +
+                 if c.Release.length > 0
+                   ", " + c.Release.join(", ") else
+                   ""
+                 end +");"
+        else
+          f.puts "Component#{c.type}.Destroy(id, false);"
+        end
       }
       f.puts "}"
     else
@@ -838,6 +846,8 @@ END
       }
 
       f.puts ""
+      f.puts "// Added"
+      
       @Systems.each{|s|
         
         if !s.NodeComponents.empty?
@@ -851,7 +861,24 @@ END
           f.puts "}"
         end
       }
-      
+
+      f.puts "// Removed"
+      @ComponentTypes.each{|c|
+        f.puts "const auto& removed#{c.type} = Component#{c.type}.GetRemoved();"
+      }
+
+      @Systems.each{|s|
+        
+        if !s.NodeComponents.empty?
+
+          f.write "if(" + s.NodeComponents.map{|c| "!removed" + c + ".empty()" }.join(" || ")
+          f.puts "){"
+          
+          f.puts "    _#{s.type}.DestroyNodes("
+          f.puts "        " + (s.NodeComponents.map{|c| "removed" + c }.join(", ")) + ");"
+          f.puts "}"
+        end
+      }      
 
       f.puts "}"
     else
@@ -867,6 +894,7 @@ END
 
       @ComponentTypes.each{|c|
         f.puts "Component#{c.type}.ClearAdded();"
+        f.puts "Component#{c.type}.ClearRemoved();"
       }
 
       f.puts "}"

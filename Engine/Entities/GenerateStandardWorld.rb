@@ -37,7 +37,7 @@ worldClass = GameWorldClass.new(
                                                    noRef: true),
                                       Variable.new("model", "std::string")
                                     ]
-                                  )]),
+                                  )], releaseparams: ["GetScene()"]),
     EntityComponent.new("Physics", [
                           ConstructorInfo.new(
                             [

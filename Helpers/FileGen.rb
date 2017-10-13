@@ -475,10 +475,12 @@ class GameWorldClass < OutputClass
     @Systems = systems
 
     @ComponentTypes.each{|c|
-      @Members.push(Variable.new("Component" + c.type, "ComponentHolder<" + c.type + ">"))
+      @Members.push(Variable.new("Component" + c.type, "Leviathan::ComponentHolder<" + c.type +
+                                                       ">"))
 
       if c.StateType
-        @Members.push(Variable.new(c.type + "States", "StateHolder<" + c.type + "State>"))
+        @Members.push(Variable.new(c.type + "States", "Leviathan::StateHolder<" + c.type +
+                                                      "State>"))
       end
     }
 
@@ -555,7 +557,7 @@ class GameWorldClass < OutputClass
         f.puts "{"
         f.puts "auto component = Component#{c.type}.Find(id);"
         f.puts "if(!component)"
-        f.puts "    throw NotFound(\"Component for entity with id was not found\");"
+        f.puts "    throw Leviathan::NotFound(\"Component for entity with id was not found\");"
         f.puts ""
         f.puts "return *component;"
        
@@ -675,10 +677,10 @@ class GameWorldClass < OutputClass
       f.puts "    return baseType;"
       f.puts ""
 
-      f.puts "switch(type){"
+      f.puts "switch(static_cast<uint16_t>(type)){"
       
       @ComponentTypes.each{|c|
-        f.puts "case #{c.type}::TYPE:"
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
         f.puts "{"
         f.puts "return std::make_tuple(Component#{c.type}.Find(id), true);"
         f.puts "}"
@@ -742,7 +744,7 @@ END
       f.puts "    return baseType;"
       f.puts ""
 
-      f.puts "switch(type){"
+      f.puts "switch(static_cast<uint16_t>(type)){"
       
       @ComponentTypes.each{|c|
 
@@ -750,7 +752,7 @@ END
           next
         end
         
-        f.puts "case #{c.type}::TYPE:"
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
         f.puts "{"
         f.puts "return std::make_tuple(&#{c.type}States, true);"
         f.puts "}"

@@ -338,6 +338,10 @@ protected:
 
     //! \brief Resets components in holders. Used together with _ResetSystems
     DLLEXPORT virtual void _ResetComponents() = 0;
+
+    //! \brief Called in ClearObjects to let components that need
+    //! Release called have it called on
+    DLLEXPORT virtual void _ReleaseAllComponents();
     
 private:
 

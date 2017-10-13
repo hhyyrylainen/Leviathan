@@ -29,6 +29,8 @@ TEST_CASE("Manual component add and remove", "[entity]"){
     CHECK(TargetWorld.RemoveComponent_Sendable(brush) == true);
 
     CHECK_THROWS_AS(TargetWorld.GetComponent_Sendable(brush), NotFound);
+
+    TargetWorld.Release();
 }
 
 namespace Leviathan{

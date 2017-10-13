@@ -434,6 +434,27 @@ public:
         }
     }
 
+    //! \brief Calls release on all objects and clears everything
+    template<typename... Args>
+        void ReleaseAllAndClear(Args&&... args){
+
+        for(auto iter = Index.begin(); iter != Index.end(); ++iter){
+
+            auto object = iter->second;
+
+            object->Release(std::forward<Args>(args)...);
+
+            object->~ElementType();
+            Elements.free(object);
+        }
+
+        // Skip double free
+        Index.clear();
+
+        // And then clear the rest of things
+        Clear();
+    }
+
     //! \brief Removes a specific id from the added list
     //!
     //! Used to remove entries that have been deleted before clearing the added ones

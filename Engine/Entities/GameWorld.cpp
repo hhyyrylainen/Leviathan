@@ -46,8 +46,11 @@ DLLEXPORT Leviathan::GameWorld::GameWorld() :
 DLLEXPORT Leviathan::GameWorld::~GameWorld(){
 
     (*WorldDestroyed) = true;
-    
-    Objects.clear();
+
+    // Assert if all objects haven't been released already.
+    // We can't call virtual methods here anymore
+    LEVIATHAN_ASSERT(Objects.empty(),
+        "GameWorld: Objects not empty in destructor. Was Release called?");
     
     // This should be relatively cheap if the newton threads don't deadlock while waiting
     // for each other
@@ -611,6 +614,9 @@ DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
     // Clear all nodes //
     _ResetSystems();
 
+    // Runs Release on components that need it
+    _ReleaseAllComponents();
+
     // Clear all components //
     _ResetComponents();
 
@@ -742,6 +748,11 @@ DLLEXPORT std::tuple<void*, bool> GameWorld::GetComponent(ObjectID id, COMPONENT
 DLLEXPORT std::tuple<void*, bool> GameWorld::GetStatesFor(COMPONENT_TYPE type){
 
     return std::make_tuple(nullptr, false);
+}
+
+DLLEXPORT void GameWorld::_ReleaseAllComponents(){
+
+    
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id){

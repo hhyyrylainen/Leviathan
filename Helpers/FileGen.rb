@@ -656,7 +656,7 @@ class GameWorldClass < OutputClass
                    ""
                  end +");"
         else
-          f.puts "Component#{c.type}.Destroy(id, false);"
+          f.puts "Component#{c.type}.Destroy(id, true);"
         end
       }
       f.puts "}"
@@ -895,6 +895,28 @@ END
       @ComponentTypes.each{|c|
         f.puts "Component#{c.type}.ClearAdded();"
         f.puts "Component#{c.type}.ClearRemoved();"
+      }
+
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+
+    f.write "#{export}void #{qualifier opts}_ReleaseAllComponents()#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts @BaseClass + "::_ReleaseAllComponents();"
+      f.puts ""
+
+      @ComponentTypes.each{|c|
+        if c.Release
+          f.puts "Component#{c.type}.ReleaseAllAndClear(" +
+                   if c.Release.length > 0
+                     c.Release.join(", ") else
+                     ""
+                   end +");"
+        end
       }
 
       f.puts "}"

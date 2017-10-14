@@ -39,7 +39,8 @@ public:
     //! \brief Notifies the children about something
     //!
     //! This will call the BaseNotifiable::OnNotified on all the child objects
-    virtual void NotifyAll();
+    //! \param guard The lock for this object
+    virtual void NotifyAll(Lock &guard);
 
 
     //! \brief Disconnects from previously connected notifiable

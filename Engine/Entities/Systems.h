@@ -98,7 +98,7 @@ public:
     {
         Nodes.RemoveBasedOnKeyTupleList(firstdata);
         Nodes.RemoveBasedOnKeyTupleList(seconddata);
-    }    
+    }
 };
 
 //! \brief Sets visibility objects with Ogre nodes that have changed RenderNode::Hidden

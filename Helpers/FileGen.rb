@@ -847,6 +847,39 @@ END
         f.puts "const auto& added#{c.type} = Component#{c.type}.GetAdded();"
       }
 
+      addedComment = false
+
+      # Added types from parent world types
+      @Systems.each{|s|
+        
+        if s.NodeComponents.empty?
+          next
+        end
+
+        s.NodeComponents.each{|c|
+          found = false
+
+          @ComponentTypes.each{|doesMatch|
+            if doesMatch.type == c
+              found = true
+              break
+            end
+          }
+
+          if !found
+
+            if !addedComment
+              addedComment = true
+              f.puts ""
+              f.puts "// Component types of parent type"
+            end
+            f.puts "const auto& added#{c} = Component#{c}.GetAdded();"
+            f.puts "const auto& removed#{c} = Component#{c}.GetRemoved();"
+          end
+        }
+      }
+
+      f.puts ""
       f.puts ""
       f.puts "// Added"
       

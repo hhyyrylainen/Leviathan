@@ -45,7 +45,7 @@ protected:
         void Run(GameWorld &world){
         
         auto& index = Nodes.GetIndex();
-        for (auto iter = index.begin(); iter != index.end(); ++iter) {
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
 
             this->ProcessNode(*iter->second, iter->first, );
         }

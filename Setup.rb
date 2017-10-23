@@ -62,7 +62,7 @@ require_relative 'LeviathanLibraries.rb'
 
 # All the objects
 installer = Installer.new(
-  [$newton, $angelscript, $sfml, $ffmpeg, $ogre, $cegui]
+  $leviathanLibList
 )
 
 if GetBreakpad

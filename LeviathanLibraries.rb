@@ -1,4 +1,5 @@
 # Libraries used by leviathan
+require 'os'
 
 require_relative 'RubySetupSystem/Libraries/SetupNewton.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
@@ -6,6 +7,14 @@ require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
 require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEGUI.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
+
+if OS.windows?
+  require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
+  require_relative 'RubySetupSystem/Libraries/SetupZLib.rb'
+  require_relative 'RubySetupSystem/Libraries/SetupFreeImage.rb'
+
+  require_relative 'RubySetupSystem/Libraries/SetupSDL.rb'
+end
 
 require_relative 'RubySetupSystem/Libraries/SetupLeviathan.rb'
 
@@ -88,7 +97,7 @@ $ogre = Ogre.new(
 )
 
 $cegui = CEGUI.new(
-  version: "32d32a0d5a9c",
+  version: "b1ee505d6d1b",
   installPath: THIRD_PARTY_INSTALL,
   # Find Ogre in our search path
   extraOptions: ["-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"],
@@ -96,3 +105,42 @@ $cegui = CEGUI.new(
 )
 
 $leviathanSelfLib = Leviathan.new({})
+
+if OS.windows?
+  $freetype = FreeType.new(
+    installPath: THIRD_PARTY_INSTALL,
+    noInstallSudo: true
+  )
+
+  $zlib = ZLib.new(
+    installPath: THIRD_PARTY_INSTALL,
+    noInstallSudo: true,
+  )
+
+  $freeimage = FreeImage.new(
+    installPath: THIRD_PARTY_INSTALL,
+    noInstallSudo: true,
+  )
+
+  $sdl = SDL.new(
+    installPath: THIRD_PARTY_INSTALL,
+    noInstallSudo: true,
+    version: "release-2.0.6"
+  )
+end
+
+
+$leviathanLibList =
+  [$newton, $angelscript, $sfml, $ffmpeg]
+
+# Ogre windows deps
+# sdl is also used by Leviathan directly
+if OS.windows?
+  $leviathanLibList += [$freetype, $zlib, $freeimage, $sdl]
+end
+
+$leviathanLibList += [$ogre, $cegui]
+
+
+
+

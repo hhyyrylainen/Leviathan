@@ -22,7 +22,7 @@ template<class StateT>
 class ObjectsComponentStates{
 public:
 
-    DLLEXPORT ObjectsComponentStates(){
+    ObjectsComponentStates(){
 
         for(size_t i = 0; i < StoredStates.size(); ++i){
 
@@ -31,7 +31,7 @@ public:
     }
 
     //! \brief Returns the state with the highest tick number
-    DLLEXPORT StateT* GetNewest() const{
+    StateT* GetNewest() const{
 
         StateT* newest = nullptr;
         int newestTick = 0;
@@ -49,7 +49,7 @@ public:
     }
 
     //! \brief Returns the state with the lowest tick number
-    DLLEXPORT StateT* GetOldest() const{
+    StateT* GetOldest() const{
 
         StateT* oldest = nullptr;
         int oldestTick = std::numeric_limits<int>::max();
@@ -72,7 +72,7 @@ public:
     //! has been missed and should instead (maybe) wait a bit? Or
     //! should we just skip missed states and start interpolating from
     //! the later state
-    DLLEXPORT StateT* GetMatchingOrNewer(int ticknumber) const{
+    StateT* GetMatchingOrNewer(int ticknumber) const{
 
         StateT* closest = nullptr;
         int closestBy = std::numeric_limits<int>::max();
@@ -99,7 +99,7 @@ public:
     }
 
     //! \brief Returns state matching tick number
-    DLLEXPORT StateT* GetState(int ticknumber) const{
+    StateT* GetState(int ticknumber) const{
 
         for(StateT* state : StoredStates){
 
@@ -111,7 +111,7 @@ public:
     }
 
     //! \brief Returns true if state is still valid
-    DLLEXPORT bool IsStateValid(StateT* statetocheck) const{
+    bool IsStateValid(StateT* statetocheck) const{
 
         for(StateT* state : StoredStates){
             if(state == statetocheck)
@@ -122,7 +122,7 @@ public:
     }
 
     //! \brief Appends a new state removing old states if they don't fit anymore
-    DLLEXPORT void Append(StateT* newstate, StateHolder<StateT> &stateowner){
+    void Append(StateT* newstate, StateHolder<StateT> &stateowner){
 
         // Fill from the back and pop from the front if states don't fit //
 
@@ -150,7 +150,7 @@ public:
 
     //! \brief Counts the filled number of state slots
     //! \returns A number in range [0, KEPT_STATES_COUNT]
-    DLLEXPORT auto GetNumberOfStates() const{
+    auto GetNumberOfStates() const{
 
         int count = 0;
         
@@ -174,11 +174,11 @@ class StateHolder{
     friend ObjectsComponentStates<StateT>;
 public:
 
-    DLLEXPORT StateHolder(){
+    StateHolder(){
 
     }
     
-    DLLEXPORT ~StateHolder(){
+    ~StateHolder(){
         // Both of the pools are released here so the destructor of ObjectsComponentStates
         // doesn't need to notify us of the states it held
     }
@@ -186,7 +186,7 @@ public:
     //! \brief Creates a new state for entity's component if it has changed
     //! \returns True if a new state was created
     template<class ComponentT>
-        DLLEXPORT bool CreateStateIfChanged(ObjectID id, const ComponentT &component,
+        bool CreateStateIfChanged(ObjectID id, const ComponentT &component,
             int ticknumber)
     {
         ObjectsComponentStates<StateT>* entityStates = StateObjects.Find(id);
@@ -218,13 +218,13 @@ public:
     }
 
     //! \brief Returns the number of entities that have states
-    DLLEXPORT auto GetNumberOfEntitiesWithStates() const{
+    auto GetNumberOfEntitiesWithStates() const{
 
         return StateObjects.GetObjectCount();
     }
 
     //! \brief Returns a pointer to entity's states if they exist
-    DLLEXPORT ObjectsComponentStates<StateT> const* GetEntityStates(ObjectID id) const{
+    ObjectsComponentStates<StateT> const* GetEntityStates(ObjectID id) const{
 
         return StateObjects.Find(id);
     }
@@ -232,12 +232,12 @@ public:
 protected:
 
     template<typename... Args>
-    DLLEXPORT StateT* _CreateNewState(Args&&... args){
+    StateT* _CreateNewState(Args&&... args){
         
         return StatePool.ConstructNew(std::forward<Args>(args)...);
     }
 
-    DLLEXPORT void _DestroyStateObject(StateT* state){
+    void _DestroyStateObject(StateT* state){
 
         StatePool.Destroy(state);
     }

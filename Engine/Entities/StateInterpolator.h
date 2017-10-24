@@ -125,7 +125,7 @@ public:
     }
 
     template<class ComponentT>
-        DLLEXPORT static void AdjustClock(ComponentT &entitycomponent)
+        static void AdjustClock(ComponentT &entitycomponent)
     {
         const auto difference = entitycomponent->InterpolatingStartState->TickNumber
             - entitycomponent->InterpolatingRemoteStartTick;

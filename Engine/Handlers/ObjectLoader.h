@@ -22,7 +22,7 @@ public:
     //! \brief Creates a full camera entity that can be usedas the
     //! primary world camera and sound listener
     template<class TWorldClass>
-        DLLEXPORT static ObjectID LoadCamera(TWorldClass &world, const Float3 &initialposition,
+        static ObjectID LoadCamera(TWorldClass &world, const Float3 &initialposition,
             const Float4 &initialrotation)
     {
         ObjectID newEntity = world.CreateEntity();
@@ -36,7 +36,7 @@ public:
 
     //! \brief Creates a plane that has a material applied to it
     template<class TWorldClass>
-        DLLEXPORT static ObjectID LoadPlane(TWorldClass &world, const Float3 &initialposition,
+        static ObjectID LoadPlane(TWorldClass &world, const Float3 &initialposition,
             const Float4 &initialrotation, const std::string &materialname,
             const Ogre::Plane &plane, const Float2 &planesize)
     {

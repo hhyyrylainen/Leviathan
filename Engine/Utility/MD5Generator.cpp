@@ -38,6 +38,7 @@ using namespace std;
 // ------------------------------------ //
 #include <iomanip> // for setfill
 #include <sstream> // for std::stringstream
+#include "Exceptions.h"
 // Constants for MD5Transform routine.
 #define S11 7
 #define S12 12
@@ -111,8 +112,11 @@ MD5::MD5()
 // nifty shortcut ctor, compute MD5 for string and finalize it right away
 MD5::MD5(const std::string &text)
 {
+    if(text.size() > std::numeric_limits<unsigned int>::max())
+        throw InvalidArgument("input string too long");
+
   init();
-  update(text.c_str(), text.length());
+  update(text.c_str(), static_cast<unsigned int>(text.length()));
   finalize();
 }
 

@@ -124,7 +124,7 @@ public:
     //! it has passed since last tick
     //!
     //! The tick number is always adjusted so that the time since last tick is < TICKSPEED
-    DLLEXPORT std::tuple<int, int64_t> GetTickAndTime() const;
+    DLLEXPORT std::tuple<int, int> GetTickAndTime() const;
     
     
     //! \brief Fetches the physical material ID from the material manager
@@ -253,7 +253,7 @@ public:
         const NewtonCollision* const shapeHit, const dFloat* const hitContact,
         const dFloat* const hitNormal, dLong collisionID, void* const userData,
         dFloat intersectParam);
-		
+        
     // Script proxies //
     DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);
 

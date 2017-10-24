@@ -160,7 +160,7 @@ protected:
     static int GlobalWindowCount;
 
     static Mutex GlobalCountMutex;
-		
+        
     //! Keeps track of how many windows in total have been created
     static int TotalCreatedWindows;
 

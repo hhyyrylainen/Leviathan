@@ -10,6 +10,10 @@
 
 #include "GUI/Widgets/CEGUIVideoPlayer.h"
 
+#ifdef _WIN32
+#include "WindowsInclude.h"
+#endif // _WIN32
+
 using namespace Leviathan;
 // ------------------------------------ //
 

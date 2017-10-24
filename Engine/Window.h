@@ -42,8 +42,8 @@ public:
     //! \brief Translates a client space coordinate to screen coordinate
     //! \exception ExceptionNotFound If the window is not found (the internal translate fails)
     //! \note Doesn't work on linux, returns the input point
-    DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
-				
+    // DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
+                
     //! \brief Captures input for this window and passes it on
     DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
 

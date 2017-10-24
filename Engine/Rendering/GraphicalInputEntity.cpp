@@ -79,28 +79,28 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
     AppDef* windowproperties) :
     ID(IDFactory::GetID())
 {
-	// create window //
+    // create window //
 
-	const WindowDataDetails& WData = windowproperties->GetWindowDetails();
+    const WindowDataDetails& WData = windowproperties->GetWindowDetails();
 
-	// get vsync (this is rather expensive so it is stored) //
-	bool vsync = windowproperties->GetVSync();
+    // get vsync (this is rather expensive so it is stored) //
+    bool vsync = windowproperties->GetVSync();
 
-	// set some rendering specific parameters //
-	Ogre::NameValuePairList WParams;
+    // set some rendering specific parameters //
+    Ogre::NameValuePairList WParams;
 
-	// variables //
-	int FSAA;
-	// get variables from engine configuration file //
-	ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), "FSAA",
+    // variables //
+    int FSAA;
+    // get variables from engine configuration file //
+    ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), "FSAA",
         FSAA, 4, Logger::Get(), "Graphics: Init:");
 
-	Ogre::String fsaastr = Convert::ToString(FSAA);
+    Ogre::String fsaastr = Convert::ToString(FSAA);
 
-	WParams["FSAA"] = fsaastr;
-	WParams["vsync"] = vsync ? "true": "false";
+    WParams["FSAA"] = fsaastr;
+    WParams["vsync"] = vsync ? "true": "false";
 
-	Ogre::String wcaption = WData.Title;
+    Ogre::String wcaption = WData.Title;
 
 
     SDL_Window* sdlWindow = SDL_CreateWindow(
@@ -127,7 +127,10 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
     
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(sdlWindow, &wmInfo);
+    if(!SDL_GetWindowWMInfo(sdlWindow, &wmInfo)){
+
+        LOG_FATAL("GraphicalInputEntity: created sdl window failed to retrieve info");
+    }
 
 #ifdef _WIN32
     size_t winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
@@ -142,7 +145,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
 #endif
 
-	Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption,
+    Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption,
         WData.Width, WData.Height, false, &WParams);
 
 
@@ -155,27 +158,27 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
     }
 
     // Do some first window initialization //
-	if(windowsafter == 1){
+    if(windowsafter == 1){
         
-		// Notify engine to register threads to work with Ogre //
-		Engine::GetEngine()->_NotifyThreadsRegisterOgre();
-		FileSystem::RegisterOGREResourceGroups();
+        // Notify engine to register threads to work with Ogre //
+        Engine::GetEngine()->_NotifyThreadsRegisterOgre();
+        FileSystem::RegisterOGREResourceGroups();
         windowcreater->_LoadOgreHLMS();
 
-		// Create the GUI system //
-		CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
-		CEGUIRenderer = &guirenderer;
+        // Create the GUI system //
+        CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
+        CEGUIRenderer = &guirenderer;
 
         FirstCEGUIRenderer = &guirenderer;
 
-		// Print the used renderer //
-		Logger::Get()->Info(std::string("GUI using CEGUI renderer: ")+
+        // Print the used renderer //
+        Logger::Get()->Info(std::string("GUI using CEGUI renderer: ")+
             guirenderer.getIdentifierString().c_str());
 
-		// Load the GUI fonts //
-		windowcreater->GetFontManager()->LoadAllFonts();
+        // Load the GUI fonts //
+        windowcreater->GetFontManager()->LoadAllFonts();
         
-	} else {
+    } else {
 
         // Wait for the first window to initialize //
         while(!FirstCEGUIRenderer){
@@ -188,8 +191,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
         // Create a new renderer //
         CEGUIRenderer = &CEGUI::OgreRenderer::registerWindow(*FirstCEGUIRenderer, *tmpwindow);
     }
-	
-	// Store this window's number
+    
+    // Store this window's number
     {
         Lock lock(TotalCountMutex);
         WindowNumber = ++TotalCreatedWindows;
@@ -197,44 +200,53 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
     OWindow = tmpwindow;
     
-	// create the actual window //
-	DisplayWindow = new Window(sdlWindow, this);
+    // create the actual window //
+    DisplayWindow = new Window(sdlWindow, this);
 
     _CreateOverlayScene();
     
 #ifdef _WIN32
-	// apply style settings (mainly ICON) //
-	WData.ApplyIconToHandle(DisplayWindow->GetHandle());
+    // Fetch the windows handle from SDL //
+    HWND ourHWND = wmInfo.info.win.window;
+
+    // apply style settings (mainly ICON) //
+    if(ourHWND){
+
+        WData.ApplyIconToHandle(ourHWND);
+
+    } else {
+        LOG_WARNING("GraphicalInputEntity: failed to get window HWND for styling");
+    }
 #else
-	// \todo linux icon
+    // \todo linux icon
 #endif
-	tmpwindow->setDeactivateOnFocusChange(false);
+    tmpwindow->setDeactivateOnFocusChange(false);
 
 
-	// set the main window to be active //
-	tmpwindow->setActive(true);
+    // set the main window to be active //
+    tmpwindow->setActive(true);
 
 
-	// create GUI //
-	WindowsGui = new GUI::GuiManager();
-	if(!WindowsGui){
-		throw NULLPtr("cannot create GUI manager instance");
-	}
+    // create GUI //
+    WindowsGui = new GUI::GuiManager();
+    if(!WindowsGui){
+        throw NULLPtr("cannot create GUI manager instance");
+    }
 
-	if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)){
+    if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)){
 
-		Logger::Get()->Error("GraphicalInputEntity: Gui init failed");
-		throw NULLPtr("invalid GUI manager");
-	}
+        Logger::Get()->Error("GraphicalInputEntity: Gui init failed");
+        throw NULLPtr("invalid GUI manager");
+    }
 
 
-	// create receiver interface //
-	TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
+    // create receiver interface //
+    TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
 }
 
 DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity(){
     
-	GUARD_LOCK();
+    GUARD_LOCK();
 
     // Do teardown //
     // Release Ogre resources //
@@ -522,46 +534,46 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
     GetOgreWindow()->windowMovedOrResized();
 
     // send to GUI //
-	WindowsGui->OnResize();
+    WindowsGui->OnResize();
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::UnlinkAll(){
-	LinkedWorld.reset();
+    LinkedWorld.reset();
 }
 
 DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state){
-	if(MouseCaptureState == state)
-		return true;
+    if(MouseCaptureState == state)
+        return true;
 
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	MouseCaptureState = state;
+    MouseCaptureState = state;
 
-	// handle changing state //
-	if(!MouseCaptureState){
+    // handle changing state //
+    if(!MouseCaptureState){
 
-		// set mouse visible and disable capturing //
-		DisplayWindow->SetCaptureMouse(false);
+        // set mouse visible and disable capturing //
+        DisplayWindow->SetCaptureMouse(false);
 
-		// reset pointer to indicate that this object no longer captures mouse to this window //
-		InputCapturer = NULL;
+        // reset pointer to indicate that this object no longer captures mouse to this window //
+        InputCapturer = NULL;
 
-	} else {
+    } else {
 
-		if(InputCapturer != this && InputCapturer != NULL){
-			// another window has input //
-			MouseCaptureState = false;
-			return false;
-		}
+        if(InputCapturer != this && InputCapturer != NULL){
+            // another window has input //
+            MouseCaptureState = false;
+            return false;
+        }
 
-		// hide mouse and tell window to capture //
-		DisplayWindow->SetCaptureMouse(true);
-		DisplayWindow->SetMouseToCenter();
+        // hide mouse and tell window to capture //
+        DisplayWindow->SetCaptureMouse(true);
+        DisplayWindow->SetMouseToCenter();
 
-		// set static ptr to this //
-		InputCapturer = this;
-	}
-	return true;
+        // set static ptr to this //
+        InputCapturer = this;
+    }
+    return true;
 }
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
@@ -575,7 +587,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
     DisplayWindow->Focused = focused;    
     DisplayWindow->_CheckMouseVisibilityStates();
 
-	WindowsGui->OnFocusChanged(focused);
+    WindowsGui->OnFocusChanged(focused);
 
     if(!DisplayWindow->Focused && DisplayWindow->MouseCaptured){
 
@@ -585,7 +597,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnFocusChange(bool focused){
 }
 
 DLLEXPORT int Leviathan::GraphicalInputEntity::GetGlobalWindowCount(){
-	return GlobalWindowCount;
+    return GlobalWindowCount;
 }
 
 

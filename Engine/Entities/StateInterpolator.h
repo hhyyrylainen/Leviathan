@@ -56,7 +56,9 @@ public:
             }
         }
 
-        const float currentTime = (currenttick * TICKSPEED) + timeintick;
+        // We cast the time from int64_t to float (visual studio was giving warnings about 
+        // losing data here)
+        const float currentTime = static_cast<float>((currenttick * TICKSPEED) + timeintick);
 
         // Find ending state //
         if(!entitycomponent->InterpolatingEndState){

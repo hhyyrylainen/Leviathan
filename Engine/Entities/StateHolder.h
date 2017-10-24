@@ -8,6 +8,8 @@
 
 #include "boost/pool/pool.hpp"
 
+#include <array>
+
 namespace Leviathan{
 
 //! Number of states that are kept. Corresponds to time span of TICKSPEED * KEPT_STATES_COUNT

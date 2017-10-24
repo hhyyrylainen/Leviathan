@@ -245,9 +245,9 @@ DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::InputAggregator* receiver){
 
     // Set the modifier keys to the input receiver //
     if(inputreceiver)
-        inputreceiver->setModifierKeys(SpecialKeyModifiers & KEYSPECIAL_SHIFT,
-            SpecialKeyModifiers & KEYSPECIAL_ALT,
-            SpecialKeyModifiers & KEYSPECIAL_CTRL);
+        inputreceiver->setModifierKeys((SpecialKeyModifiers & KEYSPECIAL_SHIFT) != 0,
+            (SpecialKeyModifiers & KEYSPECIAL_ALT) != 0,
+            (SpecialKeyModifiers & KEYSPECIAL_CTRL) != 0);
 
     
     // Handle mouse capture

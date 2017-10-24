@@ -120,6 +120,7 @@ if OS.windows?
   $freeimage = FreeImage.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
+    version: "master"
   )
 
   $sdl = SDL.new(

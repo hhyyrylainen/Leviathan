@@ -75,11 +75,30 @@ install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreSc
 
 # Boost files
 # If we are not using static linking we need to copy everything
-if(NOT Boost_USE_STATIC_LIBS AND COPY_BOOST_TO_PACKAGE AND NOT WIN32)
+if(NOT Boost_USE_STATIC_LIBS)
+  # AND NOT WIN32
+
+  if(WIN32)
+
+    # We need to replace .lib files with .dll when copying
+    foreach(lib ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
+	    ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE}
+        ${Boost_FILESYSTEM_LIBRARY_RELEASE}
+        )
+
+      string(REGEX REPLACE "\\.lib" ".dll" lib ${lib})
+      
+      list(APPEND ALL_DYNAMIC_LIBRARIES ${lib})
+      
+    endforeach()
     
-  list(APPEND ALL_DYNAMIC_LIBRARIES
-    ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-	${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE})
+  else()
+    
+    list(APPEND ALL_DYNAMIC_LIBRARIES
+      ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
+	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE}
+      ${Boost_FILESYSTEM_LIBRARY_RELEASE})
+  endif()
 
 endif()
 
@@ -89,9 +108,22 @@ if(WIN32)
     list(APPEND ALL_DYNAMIC_LIBRARIES "Leap/lib/x64/Leap.dll")
   endif()
   
-  file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/build/ThirdParty/lib/**/*.dll")
+  file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/build/ThirdParty/lib/**/*.dll"
+    # No clue why this line needed to be added for this to work
+    "${LEVIATHAN_SRC}/build/ThirdParty/bin/*.dll"
+    "${LEVIATHAN_SRC}/build/ThirdParty/bin/**/*.dll")
   list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
-  
+
+  # Need additional dlls from CEGUI dependencies
+  file(GLOB CEGUI_DEPENDENCY_DLLS
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/pcre.dll"
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/SILLY.dll"
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/freetype.dll"
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/raqm.dll"
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/harfbuzz.dll"
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/fribidi.dll"
+    )
+  list(APPEND ALL_DYNAMIC_LIBRARIES ${CEGUI_DEPENDENCY_DLLS})
 else()
 
   # linux variants of the copy functions
@@ -114,7 +146,12 @@ set(RawFilesToMove ${ALL_DYNAMIC_LIBRARIES} ${SDL_LIBRARIES})
   
 MakeUniqueAndSanitizeLibraryList(RawFilesToMove)
 
-#message(STATUS "Required library list is: ${RawFilesToMove}")
+# On windows need to filter out second sdl file
+if(WIN32)
+  list(FILTER RawFilesToMove EXCLUDE REGEX ".*/relwithdebinfo/SDL2.dll")
+endif()
+
+message(STATUS "Required library list is: ${RawFilesToMove}")
 
 if(WIN32)
   # To be able to debug move all the dlls to the bin folder

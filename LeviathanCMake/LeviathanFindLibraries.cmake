@@ -1,6 +1,11 @@
 # Leviathan cmake component for setting up linking against all dependencies
 include(LeviathanUtility)
 
+# Windows fix for SDL2 (and maybe other library finds, too)
+if(WIN32)
+  set(CMAKE_PREFIX_PATH "${LEVIATHAN_SRC}/build/ThirdParty")
+endif()
+
 # Find Boost
 if(USE_BOOST)
   # Might be a good idea to dynamically link Boost
@@ -48,7 +53,6 @@ if(LEVIATHAN_FULL_BUILD)
 
   # Find SDL2
   if(USE_SDL2)
-    # TODO windows version
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIR})
   endif()

@@ -23,6 +23,8 @@
 #include "WindowsInclude.h"
 #endif //_WIN32
 
+#include <boost/filesystem.hpp>
+
 #include <stdlib.h>
 
 using namespace Leviathan;
@@ -51,6 +53,19 @@ DLLEXPORT Logger::Logger(const std::string &file):
     write += "\nWriting to file \"" + file + "\"";
     write += "\n------------------------TIME: " + formatedtime.str() + "------------------------\n";
 
+    // Create the target folder if it doesn't exist
+    const auto path = boost::filesystem::path(file).parent_path();
+
+    if(!path.empty()){
+        try{
+            boost::filesystem::create_directories(path);
+        } catch(const std::exception &e){
+        	
+            SendDebugMessage("Failed to create folder for log file, exception: " + 
+                std::string(e.what()));
+        }
+    }
+
     std::ofstream writer(Path);
 
     if (!writer.is_open()) {
@@ -69,19 +84,19 @@ DLLEXPORT Logger::Logger(const std::string &file):
 
     
     PendingLog = "";
-	LatestLogger = this;
+    LatestLogger = this;
 }
 
 //! \brief Lock when using the logger singleton
 static Mutex LoggerWriteMutex;
 
 Logger::~Logger(){
-	// Save if unsaved //
+    // Save if unsaved //
     Lock lock(LoggerWriteMutex);
     
-	_Save();
+    _Save();
     
-	// Reset latest logger (this allows to create new logger,
+    // Reset latest logger (this allows to create new logger,
     // which is quite bad, but won't crash
     // There is also probably a race condition here
     if(LatestLogger == this)
@@ -160,7 +175,7 @@ DLLEXPORT void Logger::Error(const std::string &data){
     
     PendingLog += message;
 
-	_LogUpdateEndPart();
+    _LogUpdateEndPart();
 }
 // ------------------------------------ //
 DLLEXPORT void Logger::Warning(const std::string &data){
@@ -173,7 +188,7 @@ DLLEXPORT void Logger::Warning(const std::string &data){
     
     PendingLog += message;
 
-	_LogUpdateEndPart();
+    _LogUpdateEndPart();
 }
 // ------------------------------------ //
 void Logger::Save(){
@@ -197,24 +212,24 @@ void Logger::_Save(){
 }
 // -------------------------------- //
 void Logger::Print(const string &message){
-	Get()->Write(message);
+    Get()->Write(message);
 }
 
 DLLEXPORT void Logger::SendDebugMessage(const string &str){
 #ifdef _WIN32
-	const wstring converted = Convert::Utf8ToUtf16(str);
-	OutputDebugString(&*converted.begin());
+    const wstring converted = Convert::Utf8ToUtf16(str);
+    OutputDebugString(&*converted.begin());
 #endif // _WIN32
-	// We also want standard output messages //
-	// Using cout should be fine for most other platforms //
-	std::cout << str;
+    // We also want standard output messages //
+    // Using cout should be fine for most other platforms //
+    std::cout << str;
 }
 // ------------------------------------ //
 DLLEXPORT void Logger::DirectWriteBuffer(const std::string &data){
 
     Lock guard(LoggerWriteMutex);
 
-	PendingLog += data;
+    PendingLog += data;
 }
 // ------------------------------------ //
 void Logger::_LogUpdateEndPart(){

@@ -45,11 +45,17 @@ if(LEVIATHAN_FULL_BUILD)
 
   # Set the setup script result directories
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib")
+  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/bin")
   
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/newton")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/cegui-9999")
+
+  # Windows fix for GLM include missing in CEGUI
+  if(WIN32)
+      include_directories("${LEVIATHAN_SRC}/ThirdParty/cegui/dependencies/include")
+  endif()
 
   # Find SDL2
   if(USE_SDL2)
@@ -58,7 +64,7 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
 
 
-  set(LEVIATHAN_ENGINE_LIBRARIES Newton angelscript
+  set(LEVIATHAN_ENGINE_LIBRARIES Newton
     OgreMain OgreHlmsUnlit OgreHlmsPbs
     CEGUIBase-9999 CEGUICommonDialogs-9999
     # CEGUICoreWindowRendererSet CEGUIExpatParser CEGUISILLYImageCodec
@@ -67,7 +73,9 @@ if(LEVIATHAN_FULL_BUILD)
     avcodec avformat avutil swresample swscale
     ${Boost_LIBRARIES} ${SDL2_LIBRARY})
 
+  # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   if(WIN32)
+    # When using angelscript on windows /LTCG should be specified as a flag
     list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript64)
     list(APPEND LEVIATHAN_ENGINE_LIBRARIES debug angelscript64d)
     

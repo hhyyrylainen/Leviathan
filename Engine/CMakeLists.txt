@@ -383,6 +383,13 @@ if(NOT WIN32)
   
 endif(NOT WIN32)
 
+if(WIN32 AND LEVIATHAN_FULL_BUILD)
+
+  # Angelscript needs /LTCG flag
+  set_target_properties(Engine PROPERTIES LINK_FLAGS "/LTCG")
+  
+endif()
+
 # Avoid Xlib headers and windows header in the precompiled header to avoid macros destroying everything
 set_target_properties(Engine PROPERTIES 
   COTIRE_PREFIX_HEADER_IGNORE_PATH

@@ -817,8 +817,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
     return false;
 }
 // ------------------------------------ //
-std::shared_ptr<NetworkAckField> Connection::_GetAcksToSend(uint32_t localpacketid,
-    bool autoaddtosent /*= true*/)
+DLLEXPORT std::shared_ptr<Leviathan::NetworkAckField> Leviathan::Connection::_GetAcksToSend(
+    uint32_t localpacketid, bool autoaddtosent /*= true*/)
 {
     if(ReceivedRemotePackets.empty()){
 

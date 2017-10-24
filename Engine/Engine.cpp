@@ -57,59 +57,59 @@ DLLEXPORT Engine::Engine(LeviathanApplication* owner) :
     Owner(owner)
 {
     // This makes sure that uninitialized engine will have at least some last frame time //
-	LastTickTime = Time::GetTimeMs64();
+    LastTickTime = Time::GetTimeMs64();
 
     instance = this;
 }
 
 DLLEXPORT Engine::~Engine(){
-	// Reset the instance ptr //
-	instance = nullptr;
+    // Reset the instance ptr //
+    instance = nullptr;
 
     _ConsoleInput.reset();
 }
 
-Engine* Engine::instance = nullptr;
+DLLEXPORT Engine* Engine::instance = nullptr;
 
 Engine* Engine::GetEngine(){
-	return instance;
+    return instance;
 }
 
 DLLEXPORT Engine* Engine::Get(){
-	return instance;
+    return instance;
 }
 // ------------------------------------ //
 DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
     NetworkInterface* packethandler)
 {
     
-	GUARD_LOCK();
+    GUARD_LOCK();
     
-	// Get the  time, for monitoring how long loading takes //
-	auto InitStartTime = Time::GetTimeMs64();
+    // Get the  time, for monitoring how long loading takes //
+    auto InitStartTime = Time::GetTimeMs64();
 
-	// Store parameters //
-	Define = definition;
+    // Store parameters //
+    Define = definition;
 
     IsClient = ntype == NETWORKED_TYPE::Client;
 
-	// Create all the things //
+    // Create all the things //
     
-	OutOMemory = new OutOfMemoryHandler();
+    OutOMemory = new OutOfMemoryHandler();
 
     IDDefaultInstance = new IDFactory();
 
-	// Create threading facilities //
-	_ThreadingManager = new ThreadingManager();
-	if(!_ThreadingManager->Init()){
+    // Create threading facilities //
+    _ThreadingManager = new ThreadingManager();
+    if(!_ThreadingManager->Init()){
 
-		Logger::Get()->Error("Engine: Init: cannot start threading");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: cannot start threading");
+        return false;
+    }
 
-	// Create the randomizer //
-	MainRandom = new Random((int)InitStartTime);
-	MainRandom->SetAsMain();
+    // Create the randomizer //
+    MainRandom = new Random((int)InitStartTime);
+    MainRandom->SetAsMain();
 
     // Console might be the first thing we want //
     if(!NoSTDInput){
@@ -124,19 +124,19 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
         }
     }
     
-	if(NoGui){
+    if(NoGui){
 
-		// Tell window title //
-		Logger::Get()->Write("// ----------- "+Define->GetWindowDetails().Title+
+        // Tell window title //
+        Logger::Get()->Write("// ----------- "+Define->GetWindowDetails().Title+
             " ----------- //");
-	}
-	
+    }
+    
 
-	// We could immediately receive a remote console request so this should be
+    // We could immediately receive a remote console request so this should be
     // ready when networking is started
-	_RemoteConsole = new RemoteConsole();
+    _RemoteConsole = new RemoteConsole();
 
-	// We want to send a request to the master server as soon as possible //
+    // We want to send a request to the master server as soon as possible //
     {
         Lock lock(NetworkHandlerLock);
         
@@ -145,66 +145,66 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
         _NetworkHandler->Init(Define->GetMasterServerInfo());
     }
 
-	// These should be fine to be threaded //
+    // These should be fine to be threaded //
 
-	// File change listener //
-	_ResourceRefreshHandler = new ResourceRefreshHandler();
-	if(!_ResourceRefreshHandler->Init()){
+    // File change listener //
+    _ResourceRefreshHandler = new ResourceRefreshHandler();
+    if(!_ResourceRefreshHandler->Init()){
 
-		Logger::Get()->Error("Engine: Init: cannot start resource monitor");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: cannot start resource monitor");
+        return false;
+    }
 
-	// Data storage //
-	Mainstore = new DataStore(true);
-	if(!Mainstore){
+    // Data storage //
+    Mainstore = new DataStore(true);
+    if(!Mainstore){
 
-		Logger::Get()->Error("Engine: Init: failed to create main data store");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: failed to create main data store");
+        return false;
+    }
 
-	// Search data folder for files //
-	MainFileHandler = new FileSystem();
-	if(!MainFileHandler){
+    // Search data folder for files //
+    MainFileHandler = new FileSystem();
+    if(!MainFileHandler){
 
-		Logger::Get()->Error("Engine: Init: failed to create FileSystem");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: failed to create FileSystem");
+        return false;
+    }
 
-	if(!MainFileHandler->Init(Logger::Get())){
+    if(!MainFileHandler->Init(Logger::Get())){
 
-		Logger::Get()->Error("Engine: Init: failed to init FileSystem");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: failed to init FileSystem");
+        return false;
+    }
 
-	// File parsing //
-	ObjectFileProcessor::Initialize();
+    // File parsing //
+    ObjectFileProcessor::Initialize();
 
-	// Main program wide event dispatcher //
-	MainEvents = new EventHandler();
-	if(!MainEvents){
+    // Main program wide event dispatcher //
+    MainEvents = new EventHandler();
+    if(!MainEvents){
 
-		Logger::Get()->Error("Engine: Init: failed to create MainEvents");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: failed to create MainEvents");
+        return false;
+    }
 
-	if(!MainEvents->Init()){
+    if(!MainEvents->Init()){
 
-		Logger::Get()->Error("Engine: Init: failed to init MainEvents");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: failed to init MainEvents");
+        return false;
+    }
 
-	// Check is threading properly started //
-	if(!_ThreadingManager->CheckInit()){
+    // Check is threading properly started //
+    if(!_ThreadingManager->CheckInit()){
 
-		Logger::Get()->Error("Engine: Init: threading start failed");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: threading start failed");
+        return false;
+    }
 
-	// create script interface before renderer //
-	std::promise<bool> ScriptInterfaceResult;
+    // create script interface before renderer //
+    std::promise<bool> ScriptInterfaceResult;
     
-	// Ref is OK to use since this task finishes before this function //
+    // Ref is OK to use since this task finishes before this function //
     _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
                     std::promise<bool> &returnvalue, Engine* engine) -> void
         {
@@ -235,11 +235,11 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
             returnvalue.set_value(true);
         }, std::ref(ScriptInterfaceResult), this)));
 
-	// create newton manager before any newton resources are needed //
-	std::promise<bool> NewtonManagerResult;
+    // create newton manager before any newton resources are needed //
+    std::promise<bool> NewtonManagerResult;
     
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
+    // Ref is OK to use since this task finishes before this function //
+    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
                     std::promise<bool> &returnvalue, Engine* engine) -> void
         {
 
@@ -273,10 +273,10 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
         return false;
     }
     
-	// Check if we don't want a window //
-	if(NoGui){
+    // Check if we don't want a window //
+    if(NoGui){
 
-		Logger::Get()->Info("Engine: Init: starting in console mode "
+        Logger::Get()->Info("Engine: Init: starting in console mode "
             "(won't allocate graphical objects) ");
 
         if(!_ConsoleInput->IsAttachedToConsole()){
@@ -286,69 +286,69 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
             return false;
         }
         
-	} else {
+    } else {
 
-		ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), "MaxFPS",
+        ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), "MaxFPS",
             FrameLimit, 120, Logger::Get(), "Graphics: Init:");
 
-		Graph = new Graphics();
+        Graph = new Graphics();
 
-	}
+    }
 
-	// We need to wait for all current tasks to finish //
-	_ThreadingManager->WaitForAllTasksToFinish();
+    // We need to wait for all current tasks to finish //
+    _ThreadingManager->WaitForAllTasksToFinish();
 
-	// Check return values //
-	if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get())
-	{
+    // Check return values //
+    if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get())
+    {
 
-		Logger::Get()->Error("Engine: Init: one or more queued tasks failed");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: one or more queued tasks failed");
+        return false;
+    }
 
-	// We can queue some more tasks //
-	// create leap controller //
+    // We can queue some more tasks //
+    // create leap controller //
 #ifdef LEVIATHAN_USES_LEAP
 
     // Disable leap if in non-gui mode //
     if(NoGui)
         NoLeap = true;
 
-	std::thread leapinitthread;
-	if(!NoLeap){
+    std::thread leapinitthread;
+    if(!NoLeap){
         
         Logger::Get()->Info("Engine: will try to create Leap motion connection");
 
         // Seems that std::threads are joinable when constructed with default constructor
-		leapinitthread = std::thread(std::bind<void>([](Engine* engine) -> void{
+        leapinitthread = std::thread(std::bind<void>([](Engine* engine) -> void{
 
-			engine->LeapData = new LeapManager(engine);
-			if(!engine->LeapData){
-				Logger::Get()->Error("Engine: Init: failed to create LeapManager");
-				return;
-			}
-			// try here just in case //
-			try{
-				if(!engine->LeapData->Init()){
+            engine->LeapData = new LeapManager(engine);
+            if(!engine->LeapData){
+                Logger::Get()->Error("Engine: Init: failed to create LeapManager");
+                return;
+            }
+            // try here just in case //
+            try{
+                if(!engine->LeapData->Init()){
 
-					Logger::Get()->Info("Engine: Init: No Leap controller found, not using one");
-				}
-			}
-			catch(...){
-				// threw something //
-				Logger::Get()->Error("Engine: Init: Leap threw something, even without leap "
+                    Logger::Get()->Info("Engine: Init: No Leap controller found, not using one");
+                }
+            }
+            catch(...){
+                // threw something //
+                Logger::Get()->Error("Engine: Init: Leap threw something, even without leap "
                     "this shouldn't happen; continuing anyway");
-			}
+            }
 
-		}, this));
+        }, this));
     }
 #endif
 
 
-	// sound device //
-	std::promise<bool> SoundDeviceResult;
-	// Ref is OK to use since this task finishes before this function //
-	_ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
+    // sound device //
+    std::promise<bool> SoundDeviceResult;
+    // Ref is OK to use since this task finishes before this function //
+    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
                     std::promise<bool> &returnvalue, Engine* engine) -> void
         {
                     
@@ -387,34 +387,34 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
             returnvalue.set_value(true);
         }, std::ref(SoundDeviceResult), this)));
 
-	if(!NoGui){
-		if(!Graph){
+    if(!NoGui){
+        if(!Graph){
 
-			Logger::Get()->Error("Engine: Init: failed to create instance of Graphics");
-			return false;
-		}
+            Logger::Get()->Error("Engine: Init: failed to create instance of Graphics");
+            return false;
+        }
 
-		// call init //
-		if(!Graph->Init(definition)){
-			Logger::Get()->Error("Failed to init Engine, Init graphics failed! Aborting");
-			return false;
-		}
+        // call init //
+        if(!Graph->Init(definition)){
+            Logger::Get()->Error("Failed to init Engine, Init graphics failed! Aborting");
+            return false;
+        }
 
         _AlphaHitCache = std::make_unique<GUI::AlphaHitCache>();
 
-		// create window //
-		GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
-	}
+        // create window //
+        GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
+    }
 
-	if(!SoundDeviceResult.get_future().get()){
+    if(!SoundDeviceResult.get_future().get()){
 
-		Logger::Get()->Error("Engine: Init: sound device queued tasks failed");
-		return false;
-	}
+        Logger::Get()->Error("Engine: Init: sound device queued tasks failed");
+        return false;
+    }
 
 #ifdef LEVIATHAN_USES_LEAP
-	// We can probably assume here that leap creation has stalled if the thread is running //
-	if(!NoLeap){
+    // We can probably assume here that leap creation has stalled if the thread is running //
+    if(!NoLeap){
 
         auto start = WantedClockType::now();
         
@@ -432,39 +432,39 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
-	}
+    }
 #endif
 
-	PostLoad();
+    PostLoad();
 
-	Logger::Get()->Info("Engine init took " + Convert::ToString(Time::GetTimeMs64()
+    Logger::Get()->Info("Engine init took " + Convert::ToString(Time::GetTimeMs64()
             - InitStartTime) + " ms");
     
-	return true;
+    return true;
 }
 
 void Engine::PostLoad(){
-	// increase start count //
-	int startcounts = 0;
+    // increase start count //
+    int startcounts = 0;
 
-	if(Mainstore->GetValueAndConvertTo<int>("StartCount", startcounts)){
-		// increase //
-		Mainstore->SetValue("StartCount", new VariableBlock(new IntBlock(startcounts+1)));
-	} else {
+    if(Mainstore->GetValueAndConvertTo<int>("StartCount", startcounts)){
+        // increase //
+        Mainstore->SetValue("StartCount", new VariableBlock(new IntBlock(startcounts+1)));
+    } else {
 
-		Mainstore->AddVar(std::make_shared<NamedVariableList>("StartCount",
+        Mainstore->AddVar(std::make_shared<NamedVariableList>("StartCount",
                 new VariableBlock(1)));
         
-		// set as persistent //
-		Mainstore->SetPersistance("StartCount", true);
-	}
+        // set as persistent //
+        Mainstore->SetPersistance("StartCount", true);
+    }
 
     // Check if we are attached to a terminal //
 
     ClearTimers();
     
-	// get time //
-	LastTickTime = Time::GetTimeMs64();
+    // get time //
+    LastTickTime = Time::GetTimeMs64();
 
     ExecuteCommandLine();
     
@@ -531,12 +531,12 @@ DLLEXPORT void Engine::PreRelease(){
 }
 
 void Engine::Release(bool forced){
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	if(!forced)
-		LEVIATHAN_ASSERT(PreReleaseDone, "PreReleaseDone must be done before actual release!");
+    if(!forced)
+        LEVIATHAN_ASSERT(PreReleaseDone, "PreReleaseDone must be done before actual release!");
 
-	// Destroy worlds //
+    // Destroy worlds //
     {
         Lock lock(GameWorldsLock);
         
@@ -1100,7 +1100,7 @@ DLLEXPORT void Engine::Invoke(const std::function<void()> &function){
     InvokeQueue.push_back(function);
 }
 
-void Engine::ProcessInvokes(){
+DLLEXPORT void Engine::ProcessInvokes(){
 
     RecursiveLock lock(InvokeLock);
 

@@ -195,7 +195,7 @@ class OutputClass
   end
 
   def genMemberConstructor(f, opts)
-    str = "#{qualifier opts}#{@Name}("
+    str = "#{export}#{qualifier opts}#{@Name}("
 
     if not @CArgs.empty?
 
@@ -491,7 +491,7 @@ class GameWorldClass < OutputClass
 
   def genMemberConstructor(f, opts)
 
-    f.write "#{qualifier opts}#{@Name}()"
+    f.write "#{export}#{qualifier opts}#{@Name}()"
     
     if opts.include?(:impl)
       f.puts "{}"

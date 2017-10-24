@@ -6,15 +6,15 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 
-Delegate::Delegate(){
+DLLEXPORT Delegate::Delegate(){
 
 }
 
-Delegate::~Delegate(){
+DLLEXPORT Delegate::~Delegate(){
 
 }
 // ------------------------------------ //
-void Delegate::Call(const NamedVars::pointer &values) const{
+DLLEXPORT void Delegate::Call(const NamedVars::pointer &values) const{
 
     GUARD_LOCK();
 
@@ -22,7 +22,7 @@ void Delegate::Call(const NamedVars::pointer &values) const{
         callback->OnCalled(values);
 }
 
-void Delegate::Call(NamedVars* values) const{
+DLLEXPORT void Delegate::Call(NamedVars* values) const{
 
     GUARD_LOCK();
 
@@ -32,7 +32,7 @@ void Delegate::Call(NamedVars* values) const{
     values->Release();
 }
 // ------------------------------------ //
-void Delegate::Register(const BaseDelegateSlot::pointer &callback){
+DLLEXPORT void Delegate::Register(const BaseDelegateSlot::pointer &callback){
 
     GUARD_LOCK();
 
@@ -40,13 +40,3 @@ void Delegate::Register(const BaseDelegateSlot::pointer &callback){
 }
 // ------------------------------------ //
 // LambdaDelegateSlot
-LambdaDelegateSlot::LambdaDelegateSlot(
-    std::function<void (const NamedVars::pointer &values)> callback) :
-    Callback(callback)
-{
-}
-
-void LambdaDelegateSlot::OnCalled(const NamedVars::pointer &values){
-
-    Callback(values);
-}

@@ -15,7 +15,7 @@ template<>
         str[i] = (wchar_t)characters[i];
 }
 
-std::string StringOperations::URLProtocol(const std::string &url){
+DLLEXPORT std::string StringOperations::URLProtocol(const std::string &url){
 
     const auto colonpos = url.find_first_of(':');
 
@@ -25,7 +25,7 @@ std::string StringOperations::URLProtocol(const std::string &url){
     return url.substr(0, colonpos);
 }
 
-std::string StringOperations::BaseHostName(const std::string &url){
+DLLEXPORT std::string StringOperations::BaseHostName(const std::string &url){
 
     if(url.empty())
         return "";
@@ -57,7 +57,7 @@ std::string StringOperations::BaseHostName(const std::string &url){
     return url.substr(0, length);
 }
 
-std::string StringOperations::URLPath(const std::string &url){
+DLLEXPORT std::string StringOperations::URLPath(const std::string &url){
 
     if(url.empty())
         return "";
@@ -88,7 +88,9 @@ std::string StringOperations::URLPath(const std::string &url){
     return url.substr(startCopy, url.size() - startCopy);
 }
 
-std::string StringOperations::CombineURL(const std::string &first, const std::string &second){
+DLLEXPORT std::string StringOperations::CombineURL(const std::string &first, 
+    const std::string &second)
+{
 
     if(first.empty())
         return second;

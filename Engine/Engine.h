@@ -28,7 +28,7 @@ class AlphaHitCache;
 //! Allocates a lot of classes and performs almost all startup operations.
 //! \note Should be thread safe, but might not actually be
 class Engine : public ThreadSafe{
-		
+        
     friend GraphicalInputEntity;
     friend GUI::GuiManager;
     friend GameWorld;
@@ -59,8 +59,6 @@ public:
 
     //! \brief Returns the number of tick that was last simulated
     DLLEXPORT int GetCurrentTick() const;
-
-    DLLEXPORT static void DumpMemoryLeaks();
 
     //! \brief Processes queued messages from Ogre, SDL and input
     DLLEXPORT void MessagePump();
@@ -197,7 +195,7 @@ protected:
     void _AdjustTickNumber(int tickamount, bool absolute);
 
     //! \brief Handles InvokeQueue
-    void ProcessInvokes();
+    DLLEXPORT void ProcessInvokes();
 
     //! Console input comes through this
     bool _ReceiveConsoleInput(const std::string &command);
@@ -294,7 +292,7 @@ protected:
     //! Stores console commands that came from the command line
     std::vector<std::unique_ptr<std::string>> QueuedConsoleCommands;
 
-    static Engine* instance;
+    DLLEXPORT static Engine* instance;
 };
 
 }

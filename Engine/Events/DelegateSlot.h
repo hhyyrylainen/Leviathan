@@ -24,9 +24,15 @@ public:
 class LambdaDelegateSlot : public BaseDelegateSlot{
 public:
 
-    LambdaDelegateSlot(std::function<void (const NamedVars::pointer &values)> callback);
 
-    void OnCalled(const NamedVars::pointer &values) override;
+    LambdaDelegateSlot(std::function<void(const NamedVars::pointer &values)> callback) :
+        Callback(callback){
+
+    }
+
+    void OnCalled(const NamedVars::pointer &values) override{
+        Callback(values);
+    }
 
 private:
     
@@ -43,8 +49,8 @@ private:
 class Delegate : public ThreadSafe, public ReferenceCounted{
 public:
 
-    Delegate();
-    ~Delegate();
+    DLLEXPORT Delegate();
+    DLLEXPORT ~Delegate();
 
     REFERENCE_COUNTED_PTR_TYPE(Delegate);
 
@@ -53,14 +59,14 @@ public:
     //! \param values The data for the callbacks to receive. 
     //! \todo Find a way to more efficiently pass known types or
     //! data that may not be stored (only copied)
-    void Call(const NamedVars::pointer &values) const;
+    DLLEXPORT void Call(const NamedVars::pointer &values) const;
 
     //! \brief Registers a new callback
-    void Register(const BaseDelegateSlot::pointer &callback);
+    DLLEXPORT void Register(const BaseDelegateSlot::pointer &callback);
 
-    //! \brief Angelscript wrapper for Call
+    //! \brief AngelScript wrapper for Call
     //! \note Decreases reference count
-    void Call(NamedVars* variables) const;
+    DLLEXPORT void Call(NamedVars* variables) const;
 
 
 private:

@@ -25,10 +25,14 @@ if(WIN32)
   # and exceptions from floating point operations, 
   # higher memory for compiling precompiled headers
   # Currently it seems that Zm250 should be enough but it might not be
-  add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
+  # -Zm250 is probably no longer needed
+  add_definitions(-DUNICODE -D_UNICODE -fp:except)
   
   # program database flag for debug
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+
+  # Multi core compilation
+  add_definitions("/MP")
   
   # A policy is needed for launchers to work correctly
   

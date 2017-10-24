@@ -38,6 +38,7 @@ using namespace std;
 // ------------------------------------ //
 #include <iomanip> // for setfill
 #include <sstream> // for std::stringstream
+#include <limits>
 #include "Exceptions.h"
 // Constants for MD5Transform routine.
 #define S11 7
@@ -142,8 +143,8 @@ void MD5::init()
 void MD5::decode(uint4 output[], const uint1 input[], size_type len)
 {
   for (unsigned int i = 0, j = 0; j < len; i++, j += 4)
-	output[i] = ((uint4)input[j]) | (((uint4)input[j+1]) << 8) |
-	  (((uint4)input[j+2]) << 16) | (((uint4)input[j+3]) << 24);
+    output[i] = ((uint4)input[j]) | (((uint4)input[j+1]) << 8) |
+      (((uint4)input[j+2]) << 16) | (((uint4)input[j+3]) << 24);
 }
 
 //////////////////////////////
@@ -153,10 +154,10 @@ void MD5::decode(uint4 output[], const uint1 input[], size_type len)
 void MD5::encode(uint1 output[], const uint4 input[], size_type len)
 {
   for (size_type i = 0, j = 0; j < len; i++, j += 4) {
-	output[j] = input[i] & 0xff;
-	output[j+1] = (input[i] >> 8) & 0xff;
-	output[j+2] = (input[i] >> 16) & 0xff;
-	output[j+3] = (input[i] >> 24) & 0xff;
+    output[j] = input[i] & 0xff;
+    output[j+1] = (input[i] >> 8) & 0xff;
+    output[j+2] = (input[i] >> 16) & 0xff;
+    output[j+3] = (input[i] >> 24) & 0xff;
   }
 }
 
@@ -260,7 +261,7 @@ void MD5::update(const unsigned char input[], size_type length)
 
   // Update number of bits
   if ((count[0] += (length << 3)) < (length << 3))
-	count[1]++;
+    count[1]++;
   count[1] += (length >> 29);
 
   // number of bytes we need to fill in buffer
@@ -271,18 +272,18 @@ void MD5::update(const unsigned char input[], size_type length)
   // transform as many times as possible.
   if (length >= firstpart)
   {
-	// fill buffer first, transform
-	memcpy(&buffer[index], input, firstpart);
-	transform(buffer);
+    // fill buffer first, transform
+    memcpy(&buffer[index], input, firstpart);
+    transform(buffer);
 
-	// transform chunks of blocksize (64 bytes)
-	for (i = firstpart; i + blocksize <= length; i += blocksize)
-	  transform(&input[i]);
+    // transform chunks of blocksize (64 bytes)
+    for (i = firstpart; i + blocksize <= length; i += blocksize)
+      transform(&input[i]);
 
-	index = 0;
+    index = 0;
   }
   else
-	i = 0;
+    i = 0;
 
   // buffer remaining input
   memcpy(&buffer[index], &input[i], length-i);
@@ -303,9 +304,9 @@ void MD5::update(const char input[], size_type length)
 MD5& MD5::finalize()
 {
   if (!finalized) {
-	// Save number of bits
-	unsigned char bits[8];
-	encode(bits, count, 8);
+    // Save number of bits
+    unsigned char bits[8];
+    encode(bits, count, 8);
 
     static unsigned char padding[64] = {
         0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -313,22 +314,22 @@ MD5& MD5::finalize()
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
     
-	// pad out to 56 mod 64.
-	size_type index = count[0] / 8 % 64;
-	size_type padLen = (index < 56) ? (56 - index) : (120 - index);
-	update(padding, padLen);
+    // pad out to 56 mod 64.
+    size_type index = count[0] / 8 % 64;
+    size_type padLen = (index < 56) ? (56 - index) : (120 - index);
+    update(padding, padLen);
 
-	// Append length (before padding)
-	update(bits, 8);
+    // Append length (before padding)
+    update(bits, 8);
 
-	// Store state in digest
-	encode(digest, state, 16);
+    // Store state in digest
+    encode(digest, state, 16);
 
-	// Zeroize sensitive information.
-	memset(buffer, 0, sizeof buffer);
-	memset(count, 0, sizeof count);
+    // Zeroize sensitive information.
+    memset(buffer, 0, sizeof buffer);
+    memset(count, 0, sizeof count);
 
-	finalized=true;
+    finalized=true;
   }
 
   return *this;
@@ -340,7 +341,7 @@ MD5& MD5::finalize()
 std::string MD5::hexdigest() const
 {
   if (!finalized)
-	return "";
+    return "";
 
   stringstream digeststring("");
   // set proper settings //
@@ -349,9 +350,9 @@ std::string MD5::hexdigest() const
 
   //char buf[33];
   for (int i=0; i<16; i++)
-	//sprintf(buf+i*2, "%02x", digest[i]);
-	//sprintf_s(buf+i*2, sizeof(buf[0]),"%02x", digest[i]);
-	digeststring << std::setw(2) << static_cast<unsigned>(digest[i]);
+    //sprintf(buf+i*2, "%02x", digest[i]);
+    //sprintf_s(buf+i*2, sizeof(buf[0]),"%02x", digest[i]);
+    digeststring << std::setw(2) << static_cast<unsigned>(digest[i]);
   //buf[32]=0;
 
   return digeststring.str();
@@ -368,9 +369,9 @@ std::ostream& operator<<(std::ostream& out, MD5 md5)
 
 std::string md5(const std::string &str)
 {
-	MD5 md5 = MD5(str);
+    MD5 md5 = MD5(str);
 
-	return md5.hexdigest();
+    return md5.hexdigest();
 }
 // ------------------------------------ //
 

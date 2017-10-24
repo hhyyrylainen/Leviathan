@@ -10,7 +10,7 @@ DLLEXPORT Leviathan::MasterServerApplication::~MasterServerApplication(){
 
 }
 // ------------------------------------ //
-bool Leviathan::MasterServerApplication::PassCommandLine(int argcount, char* args[]){
+DLLEXPORT bool Leviathan::MasterServerApplication::PassCommandLine(int argcount, char* args[]){
 
     // Force nogui //
     _Engine->SetNoGUI();

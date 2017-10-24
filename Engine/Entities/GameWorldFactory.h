@@ -13,8 +13,8 @@ class GameWorld;
 //! engine. By default creates a StandardWorld
 class GameWorldFactory{
 public:
-    GameWorldFactory();
-    ~GameWorldFactory();
+    DLLEXPORT GameWorldFactory();
+    DLLEXPORT ~GameWorldFactory();
 
     //! \brief Creates a new world that can be used.
     //!
@@ -27,7 +27,7 @@ public:
 protected:
 
     //! Global instance. Overwrite this in child class constructors
-    static GameWorldFactory* StaticInstance;
+    DLLEXPORT static GameWorldFactory* StaticInstance;
 };
 
 }

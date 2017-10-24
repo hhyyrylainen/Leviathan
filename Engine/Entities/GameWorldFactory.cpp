@@ -5,18 +5,18 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-GameWorldFactory::GameWorldFactory(){
+DLLEXPORT GameWorldFactory::GameWorldFactory(){
 
     LEVIATHAN_ASSERT(StaticInstance == nullptr, "Multiple GameWorldFactories created");
     StaticInstance = this;
 }
 
-GameWorldFactory::~GameWorldFactory(){
+DLLEXPORT GameWorldFactory::~GameWorldFactory(){
 
     StaticInstance = nullptr;
 }
 
-GameWorldFactory* GameWorldFactory::StaticInstance = nullptr;
+DLLEXPORT GameWorldFactory* GameWorldFactory::StaticInstance = nullptr;
 
 DLLEXPORT GameWorldFactory* GameWorldFactory::Get(){
     return StaticInstance;

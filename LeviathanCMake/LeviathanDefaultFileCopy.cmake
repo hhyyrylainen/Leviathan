@@ -151,7 +151,7 @@ if(WIN32)
   list(FILTER RawFilesToMove EXCLUDE REGEX ".*/relwithdebinfo/SDL2.dll")
 endif()
 
-message(STATUS "Required library list is: ${RawFilesToMove}")
+# message(STATUS "Required library list is: ${RawFilesToMove}")
 
 if(WIN32)
   # To be able to debug move all the dlls to the bin folder

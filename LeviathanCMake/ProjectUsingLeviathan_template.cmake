@@ -60,7 +60,11 @@ else()
   file(COPY "${LEVIATHAN_SRC}/build/bin/libEngine.so" DESTINATION "${CMAKE_BINARY_DIR}/bin")
 endif()
 
+# Link own bin directory
 link_directories("${CMAKE_BINARY_DIR}/bin")
+
+# And engine
+link_directories("${LEVIATHAN_SRC}/build/bin")
 
 # Version
 set(PROGRAM_VERSION_STABLE 0)

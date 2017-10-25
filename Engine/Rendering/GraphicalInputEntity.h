@@ -86,7 +86,7 @@ public:
     DLLEXPORT void InjectKeyUp(int32_t sdlkey);
 
     // graphics related //
-    DLLEXPORT float GetViewportAspectRatio();
+    // DLLEXPORT float GetViewportAspectRatio();
     DLLEXPORT void SaveScreenShot(const std::string &filename);
 
     DLLEXPORT void OnResize(int width, int height);

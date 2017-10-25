@@ -31,7 +31,6 @@ target_link_libraries(${CurrentProjectName} ${LEVIATHAN_APPLICATION_LIBRARIES})
 # speed up build
 #cotire(${CurrentProjectName})
 
-# If the output directory is wrong then we need to use this
 if(WIN32)
 
   # Set debugging work directory

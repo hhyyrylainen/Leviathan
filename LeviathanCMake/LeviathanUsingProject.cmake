@@ -27,6 +27,14 @@ target_link_libraries(${CurrentProjectName} Engine ${ProjectCommonLibs} ${DEPEND
 # speed up build
 #cotire(${CurrentProjectName})
 
+if(WIN32)
+
+  # Set debugging work directory
+  set_target_properties(${CurrentProjectName} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY
+    "${CMAKE_BINARY_DIR}/bin")
+
+endif(WIN32)
+
 # Creating symbols after building
 # When not USE_BREAKPAD this won't be ran automatically
 if(UNIX)

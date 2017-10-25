@@ -150,7 +150,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
 
             // append "_d" if in debug mode //
         #ifdef _DEBUG
-            currentPlugin->append("_d");
+            currentPlugin.append("_d");
         #endif // _DEBUG
 
         #ifndef _WIN32            

@@ -108,7 +108,9 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(0), 
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(0), 
         WData.Width, WData.Height,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
+        // This seems to cause issues on Windows
+        //SDL_WINDOW_OPENGL | 
+        SDL_WINDOW_RESIZABLE
     );
 
     // SDL_WINDOW_FULLSCREEN_DESKTOP works so much better than
@@ -133,8 +135,10 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
     }
 
 #ifdef _WIN32
-    size_t winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
-    WParams["parentWindowHandle"] = Ogre::StringConverter::toString((unsigned long)winHandle);
+    auto winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
+    //WParams["parentWindowHandle"] = Ogre::StringConverter::toString(winHandle);
+    // This seems to be the right name on windows
+    WParams["externalWindowHandle"] = Ogre::StringConverter::toString(winHandle);
     //externalWindowHandle
 #else
     WParams["parentWindowHandle"] =
@@ -147,7 +151,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
     Ogre::RenderWindow* tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(wcaption,
         WData.Width, WData.Height, false, &WParams);
-
 
     int windowsafter = 0;
 

@@ -72,7 +72,9 @@ public:
     void Warning(const std::string &data) override {
 
         Logger::Warning(data);
-        FAIL(data);
+
+        if(!IgnoreWarnings)
+            FAIL(data);
     }
 
     void Fatal(const std::string &text) override {
@@ -80,6 +82,8 @@ public:
         Logger::Fatal(text);
         FAIL(text);
     }
+
+    bool IgnoreWarnings = false;
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests

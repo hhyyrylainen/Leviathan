@@ -68,6 +68,7 @@ TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired]"){
     
     // TODO: add leviathan intro video that can be attempted to be opened
     PartialEngineWithOgre engine;
+    engine.Log.IgnoreWarnings = true;
     
     VideoPlayer player;
 

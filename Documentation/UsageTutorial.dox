@@ -85,7 +85,7 @@ Old versions of Ogre (pre 2.0) are known to cause issues compiling or
 running Leviathan. So uninstall these old versions before starting if
 possible, or you (might) have a bad time.
 
-\subsubsection prequisite_troubleshooting_linux_previous Require file not found
+\subsubsection prequisite_troubleshooting_require Require file not found
 
 Make sure you have installed all of the ruby gems.
 

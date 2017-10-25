@@ -13,6 +13,7 @@ class Generator
     @Includes = []
     @ImplIncludes = []
     @BareOutput = bareOutput
+    @ExportType = "DLLEXPORT"
   end
 
   def add(obj)
@@ -23,6 +24,10 @@ class Generator
 
   def useNamespace(namespace="Leviathan")
     @Namespace = namespace
+  end
+
+  def useExportMacro(newtype)
+    @ExportType = newtype
   end
 
   def addInclude(include)
@@ -70,6 +75,9 @@ class Generator
 
       @OutputObjs.each do |obj|
 
+        if obj.respond_to? :setExport
+          obj.setExport @ExportType
+        end
         obj.toText(file, options)
 
       end
@@ -127,6 +135,11 @@ class OutputClass
     @Constructors = constructors
     @NoDLLExport = nodllexport
     @Methods = methods
+    
+  end
+
+  def setExport(exportmacro)
+    @ExportMacro = exportmacro
   end
 
   def toText(f, opts)
@@ -315,7 +328,11 @@ class OutputClass
     if @NoDLLExport
       ""
     else
-      "DLLEXPORT "
+      if !@ExportMacro.nil?
+        "#{@ExportMacro} "
+      else
+        ""
+      end
     end
   end
 end

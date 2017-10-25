@@ -1,5 +1,10 @@
 # CMake file for generating all project files
-cmake_minimum_required(VERSION 3.6)
+# Newer version required for VS_DEBUGGER_WORKING_DIRECTORY
+if(WIN32)
+  cmake_minimum_required(VERSION 3.8)
+else()
+  cmake_minimum_required(VERSION 3.6)
+endif()
 
 project(Leviathan)
 

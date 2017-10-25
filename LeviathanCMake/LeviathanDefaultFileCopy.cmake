@@ -122,6 +122,7 @@ if(WIN32)
     "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/raqm.dll"
     "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/harfbuzz.dll"
     "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/fribidi.dll"
+    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/libexpat.dll"
     )
   list(APPEND ALL_DYNAMIC_LIBRARIES ${CEGUI_DEPENDENCY_DLLS})
 else()

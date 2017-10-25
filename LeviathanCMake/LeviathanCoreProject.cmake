@@ -32,13 +32,13 @@ target_link_libraries(${CurrentProjectName} ${LEVIATHAN_APPLICATION_LIBRARIES})
 #cotire(${CurrentProjectName})
 
 # If the output directory is wrong then we need to use this
-if(WIN32 AND NOT MINGW)
+if(WIN32)
 
-    # post build copy
-    #ADD_CUSTOM_COMMAND(TARGET ${CurrentProjectName} POST_BUILD COMMAND copy ARGS 
-    #    "\"$(SolutionDir)bin\\$(Configuration)\\$(TargetName).exe\" \"$(SolutionDir)bin\\$(TargetName).exe\""
-    #)
-endif(WIN32 AND NOT MINGW)
+  # Set debugging work directory
+  set_target_properties(${CurrentProjectName} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY
+    "${CMAKE_BINARY_DIR}/bin")
+
+endif(WIN32)
 
 # Creating symbols after building
 # When not USE_BREAKPAD this won't be ran automatically

@@ -49,8 +49,10 @@ ruby 2.4.1p111
   - coreutils
   - make
   - bash
+  - tar (with gzip support)
   
-  You can also optionally install git and svn with cygwin.
+  You can also optionally install git and svn with cygwin. But cmake
+  has to be the Windows version, otherwise it won't work.
   
   Then add `C:\cygwin64\bin` to the system
   path to make everything visible to the script
@@ -64,14 +66,29 @@ ruby 2.4.1p111
 - os
 - colorize
 - rubyzip
+- nokogiri (Windows note: if this fails to install you may need an older or newer
+version of ruby. Version 2.4 has been tested to work)
 
 These can be installed by running `gem install os colorize
-rubyzip`. Running with sudo is probably not required. If you get
+rubyzip nokogiri`. Running with sudo is probably not required. If you get
 errors installing the gems you should try updating your ruby version.
 
 
 \subsection prerequisite_what_next Next
 To compile Leviathan see \ref compiling_leviathan
+
+\subsection prerequisite_troubleshooting Troubleshooting
+
+\subsubsection prequisite_troubleshooting_linux_previous Linux previously installed libraries
+
+Old versions of Ogre (pre 2.0) are known to cause issues compiling or
+running Leviathan. So uninstall these old versions before starting if
+possible, or you (might) have a bad time.
+
+\subsubsection prequisite_troubleshooting_linux_previous Require file not found
+
+Make sure you have installed all of the ruby gems.
+
 
 */
 
@@ -94,6 +111,11 @@ git clone https://hhyyrylainen@bitbucket.org/hhyyrylainen/leviathan.git
 cd leviathan
 git submodule init
 \endcode
+
+Windows tip: shift right-click in a folder and select "Open command
+prompt here" or "Open powershell here" to open a cmd window to the
+folder where you want to build Leviathan. If building fails you should
+try a path without a space in it.
 
 \section compiling_script Running Setup
 
@@ -186,6 +208,13 @@ some other shell).
 For other ffmpeg building issues see these guides:
 [windows guide](https://trac.ffmpeg.org/wiki/CompilationGuide/MSVC),
 [all guides](https://trac.ffmpeg.org/wiki/CompilationGuide)
+
+
+\subsubsection troubleshoothing_no_files_found LeviathanTest or sample games don't find files
+
+Make sure you are running them in the correct directory
+(`build/bin`). On Windows check the debugging startup directory in
+Visual Studio project settings.
 
 \section compile_manually Manually Compiling
 

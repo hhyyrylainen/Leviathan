@@ -533,7 +533,8 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::Tick(int mspassed){
 DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
 
     // Notify Ogre //
-    GetOgreWindow()->resize(width, height);
+    // This causes issues on Windows
+    // GetOgreWindow()->resize(width, height);
     GetOgreWindow()->windowMovedOrResized();
 
     // send to GUI //

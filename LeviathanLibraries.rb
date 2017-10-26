@@ -107,12 +107,10 @@ $cegui = CEGUI.new(
 $leviathanSelfLib = Leviathan.new({})
 
 if OS.windows?
-  # This may conflict with the version from CEGUI
-  # Also SFML has some version of freetype that gets installed
-  # $freetype = FreeType.new(
-  #   installPath: THIRD_PARTY_INSTALL,
-  #   noInstallSudo: true
-  # )
+  $freetype = FreeType.new(
+    installPath: THIRD_PARTY_INSTALL,
+    noInstallSudo: true
+  )
 
   $zlib = ZLib.new(
     installPath: THIRD_PARTY_INSTALL,
@@ -139,8 +137,7 @@ $leviathanLibList =
 # Ogre windows deps
 # sdl is also used by Leviathan directly
 if OS.windows?
-  # $leviathanLibList += [$freetype]
-  $leviathanLibList += [$zlib, $freeimage, $sdl]
+  $leviathanLibList += [$zlib, $freeimage, $sdl, $freetype]
 end
 
 $leviathanLibList += [$ogre, $cegui]

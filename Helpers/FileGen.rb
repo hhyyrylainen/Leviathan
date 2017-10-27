@@ -502,7 +502,7 @@ class GameWorldClass < OutputClass
     }
 
     @Systems.each{|s|
-      @Members.push(Variable.new("_" + s.type, s.type))
+      @Members.push(Variable.new("_" + s.Type, s.Type))
     }
   end
 
@@ -525,7 +525,7 @@ class GameWorldClass < OutputClass
     
   end
 
-  def genMethods(f, opts)
+  def genMethods(f, opts)    
 
     f.write "#{export}void #{qualifier opts}_ResetComponents()#{override opts}"
 
@@ -548,7 +548,7 @@ class GameWorldClass < OutputClass
       @Systems.each{|s|
 
         if !s.NodeComponents.empty?
-          f.puts "_#{s.type}.Clear();"
+          f.puts "_#{s.Type}.Clear();"
         end
       }
       f.puts "}"
@@ -657,10 +657,6 @@ class GameWorldClass < OutputClass
       firstLoop = false
     }
     
-    @Systems.each{|s|
-      
-    }
-
 
     f.write "#{export}void #{qualifier opts}DestroyAllIn(ObjectID id)#{override opts}"
 
@@ -805,7 +801,7 @@ END
           f.puts "// Begin of group #{s.RunRender[:group]} //"
         end
         
-        f.puts "_#{s.type}.Run(*this" +
+        f.puts "_#{s.Type}.Run(*this" +
                if s.RunRender.include?(:parameters) then ", " +
                                                          s.RunRender[:parameters].join(", ")
                else "" end + 
@@ -843,7 +839,7 @@ END
           f.puts "// Begin of group #{s.RunTick[:group]} //"
         end
         
-        f.puts "_#{s.type}.Run(*this" +
+        f.puts "_#{s.Type}.Run(*this" +
                if s.RunTick.include?(:parameters) then ", " + s.RunTick[:parameters].join(", ")
                else "" end + 
                ");"
@@ -907,7 +903,7 @@ END
           f.write "if(" + s.NodeComponents.map{|c| "!added" + c + ".empty()" }.join(" || ")
           f.puts "){"
           
-          f.puts "    _#{s.type}.CreateNodes("
+          f.puts "    _#{s.Type}.CreateNodes("
           f.puts "        " + (s.NodeComponents.map{|c| "added" + c }.join(", ")) + ","
           f.puts "        " + (s.NodeComponents.map{|c| "Component" + c }.join(", ")) + ");"
           f.puts "}"
@@ -926,7 +922,7 @@ END
           f.write "if(" + s.NodeComponents.map{|c| "!removed" + c + ".empty()" }.join(" || ")
           f.puts "){"
           
-          f.puts "    _#{s.type}.DestroyNodes("
+          f.puts "    _#{s.Type}.DestroyNodes("
           f.puts "        " + (s.NodeComponents.map{|c| "removed" + c }.join(", ")) + ");"
           f.puts "}"
         end
@@ -975,6 +971,39 @@ END
     else
       f.puts ";"
     end
+
+    f.write "#{export}void #{qualifier opts}_DoSystemsInit()#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "// Call Init on all systems that need it //"
+      @Systems.each{|s|
+
+        if s.Init
+          f.puts "_#{s.Type}.Init(#{s.Init.map(&:formatForArgumentList).join(', ')});"
+        end
+      }
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+
+    f.write "#{export}void #{qualifier opts}_DoSystemsRelease()#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "// Call Release on all systems that need it //"
+      @Systems.each{|s|
+
+        if s.Release
+          f.puts "_#{s.Type}.Release(#{s.Release.map(&:formatForArgumentList).join(', ')});"
+        end
+      }
+      f.puts "}"
+    else
+      f.puts ";"
+    end    
+
     
     # f.puts "public:"
     
@@ -1040,9 +1069,10 @@ class ConstructorInfo
       end
     else
       if @UseDataStruct
-        ", #{componentclass}::Data{" + @Parameters.map{|p| p.Name}.join(", ") + "}"
+        ", #{componentclass}::Data{" + @Parameters.map(&:formatForArgumentList).join(", ") +
+          "}"
       else
-        ", " + @Parameters.map{|p| p.Name}.join(", ")
+        ", " + @Parameters.map(&:formatForArgumentList).join(", ")
       end
     end
   end
@@ -1109,6 +1139,10 @@ class Variable
         "const #{@Type} &#{@Name.downcase}#{formatDefault opts}"
       end
     end
+  end
+
+  def formatForArgumentList()
+    "#{@Name}"
   end
 
   def formatInitializer()
@@ -1178,14 +1212,24 @@ class EntityComponent
 end
 
 class EntitySystem
-  attr_reader :type, :NodeComponents, :RunTick, :RunRender
+  attr_reader :Type, :NodeComponents, :RunTick, :RunRender, :Init, :Release
 
   # Leave nodeComponens empty if not using combined nodes
-  def initialize(type, nodeComponents=[], runtick: nil, runrender: nil)
-    @type = type
+  def initialize(type, nodeComponents=[], runtick: nil, runrender: nil, init: nil,
+                 release: nil)
+    @Type = type
     @NodeComponents = nodeComponents
     @RunTick = runtick
     @RunRender = runrender
+    @Init = init
+    @Release = release
+
+    if @Init
+      raise "wrong type" unless @Init.is_a? Array
+    end
+    if @Release
+      raise "wrong type" unless @Release.is_a? Array
+    end
   end
 end
 

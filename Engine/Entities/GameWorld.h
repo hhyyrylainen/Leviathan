@@ -342,6 +342,12 @@ protected:
     //! \brief Called in ClearObjects to let components that need
     //! Release called have it called on
     DLLEXPORT virtual void _ReleaseAllComponents();
+
+    //! \brief Called in Init when systems should run their initialization logic
+    DLLEXPORT virtual void _DoSystemsInit();
+
+    //! \brief Called in Release when systems should run their shutdown logic
+    DLLEXPORT virtual void _DoSystemsRelease();
     
 private:
 

@@ -82,10 +82,13 @@ DLLEXPORT bool Leviathan::GameWorld::Init(NETWORKED_TYPE type, GraphicalInputEnt
         _PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
     }
 
+    _DoSystemsInit();
     return true;
 }
 
 DLLEXPORT void Leviathan::GameWorld::Release(){
+
+    _DoSystemsRelease();
 
     (*WorldDestroyed) = true;
     
@@ -754,11 +757,19 @@ DLLEXPORT void GameWorld::_ReleaseAllComponents(){
 
     
 }
+
+DLLEXPORT void GameWorld::_DoSystemsInit(){
+
+}
+
+DLLEXPORT void GameWorld::_DoSystemsRelease(){
+
+}
 // ------------------------------------ //
 void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id){
 
-     SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
-         RECEIVE_GUARANTEE::Critical);
+    SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
+        RECEIVE_GUARANTEE::Critical);
 }
 
 // ------------------------------------ //

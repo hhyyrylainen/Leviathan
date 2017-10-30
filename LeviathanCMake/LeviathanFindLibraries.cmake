@@ -19,7 +19,7 @@ if(USE_BOOST)
   find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} QUIET)
 
   if(NOT Boost_FOUND)
-    message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})
+    message(FATAL_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})
   endif(NOT Boost_FOUND)
 
   # Boost is found or the configuration has already failed

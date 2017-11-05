@@ -254,9 +254,17 @@ public:
     //! \brief Combines a URL with another (relative) URL
     //! \example CombineURL("http://google.fi/index.html", "img.jpg") =
     //! "http://google.fi/img.jpg"
-    DLLEXPORT static std::string CombineURL(const std::string &first, const std::string &second);
-    
+    DLLEXPORT static std::string CombineURL(const std::string &first,
+        const std::string &second);
 
+    //! \brief Removes multiple hostnames from an address
+    //!
+    //! \example RemovePartsBeforeAbsoluteURLParts(
+    //! "http://example.com//a.example.com/img.png") = "http://a.example.com/img.png"
+    DLLEXPORT static std::string RemovePartsBeforeAbsoluteURLParts(const std::string &url);
+
+    //! \brief Returns true if string looks like a top level domain
+    DLLEXPORT static bool IsURLDomain(const std::string &str);
 
 
     //! \brief Changes all line separators to Windows line separators

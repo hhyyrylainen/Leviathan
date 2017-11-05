@@ -449,6 +449,24 @@ TEST_CASE("StringOperations URL combine", "[string][url]"){
         CHECK(StringOperations::CombineURL("http://google.fi/index.html", "/other/img.jpg") ==
             "http://google.fi/other/img.jpg");
     }
+
+    SECTION("combine with double /"){
+        CHECK(StringOperations::CombineURL(
+                "https://example.com/index.php?page=img",
+                "https://example.com//img.example.com//images/1234.jpeg") ==
+            "https://img.example.com/images/1234.jpeg");
+    }
+}
+
+TEST_CASE("StringOperations IsURLDomain", "[string][url]"){
+
+    CHECK(StringOperations::IsURLDomain("example.com"));
+    CHECK(StringOperations::IsURLDomain("google.com"));
+    CHECK(StringOperations::IsURLDomain("boostslair.com"));
+    CHECK(StringOperations::IsURLDomain("fp.boostslair.com"));
+    CHECK(StringOperations::IsURLDomain("a.b.test.com"));
+    CHECK(!StringOperations::IsURLDomain("a.b/test.com"));
+    CHECK(!StringOperations::IsURLDomain("file"));
 }
 
 TEST_CASE("StringOperations URL cut to path", "[string][url]"){
@@ -460,7 +478,7 @@ TEST_CASE("StringOperations URL cut to path", "[string][url]"){
         "b/Word Space/664/10232/01.jpg");
 
  
-}
+}    
 
 TEST_CASE("StringOperations RepeatCharacter", "[string]"){
 

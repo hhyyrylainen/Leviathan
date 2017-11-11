@@ -8,6 +8,8 @@
 #include "Handlers/ObjectLoader.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "Utility/Random.h"
+
+#include <iostream>
 using namespace Pong;
 using namespace std;
 // ------------------------------------ //

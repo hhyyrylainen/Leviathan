@@ -326,8 +326,14 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed, int tick, i
     Ogre::RenderWindow* tmpwindow = GetOgreWindow();
 
     // finish rendering the window //
-    tmpwindow->swapBuffers();
-
+    
+    // We don't actually want to swap buffers here because the Engine
+    // method that called us will call Ogre::Root::renderOneFrame
+    // after Render has been called on all active windows, so if we
+    // have this call here we may do double swap depending on the
+    // drivers.
+    // tmpwindow->swapBuffers();
+    
     return true;
 }
 // ------------------------------------ //

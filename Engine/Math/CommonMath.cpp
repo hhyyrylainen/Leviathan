@@ -5,10 +5,6 @@ using namespace std;
 // ------------------------------------ //
 #include "Utility/Random.h"
 
-float MMath::RandomNumber(float Min, float Max)
-{
-	return ((float(rand()) / float(RAND_MAX)) * (Max - Min)) + Min;
-}
 float MMath::CoordinateDistance(float x1, float x2,float y1, float y2){
 	float Distance=0;
 	Distance=sqrt( (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));

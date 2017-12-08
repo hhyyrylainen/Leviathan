@@ -59,7 +59,7 @@ void Leviathan::ObjectFileProcessor::Initialize(){
 
 	if(iter == RegisteredValues.end()){
 
-		LOG_ERROR("ObjectFileProcessor: RegisteredValues are messed up, "
+		LOG_FATAL("ObjectFileProcessor: RegisteredValues are messed up, "
             "DATAINDEX_TICKTIME is not defined, check the macros!");
         
 		return;
@@ -118,7 +118,7 @@ DLLEXPORT std::unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObj
 
 DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
     ObjectFileProcessor::ProcessObjectFileFromString(
-    std::string filecontents, const std::string &filenameforerrors,
+    const std::string &filecontents, const std::string &filenameforerrors,
     LErrorReporter* reporterror) 
 {
     // Create the target object //
@@ -127,7 +127,7 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
     bool succeeded = true;
 
     // Create an UTF8 supporting iterator //
-    StringIterator itr(std::make_unique<UTF8DataIterator>(filecontents));
+    StringIterator itr(std::make_unique<UTF8PointerDataIterator>(filecontents));
 
     while(!itr.IsOutOfBounds()){
         

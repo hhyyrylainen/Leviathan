@@ -247,7 +247,8 @@ public:
     //!  ^-begin          ^-end
     //! meaning the null terminator is optional
     //! \note Child classes may pass null pointers here as long as they call CheckLineChange
-    // in their constructors
+    //! in their constructors (to not miss line changes if the first character is a
+    //! line change, see UTF8DataIterator(const std::string &str) constructor)
     DLLEXPORT UTF8PointerDataIterator(const char* begin, const char* end);
 
     //! Helper for creating from strings

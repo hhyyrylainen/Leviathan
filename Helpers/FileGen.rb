@@ -547,7 +547,7 @@ class GameWorldClass < OutputClass
       f.puts "// Reset all system nodes //"
       @Systems.each{|s|
 
-        if !s.NodeComponents.empty?
+        if !s.NodeComponents.empty? and !s.NoState
           f.puts "_#{s.Type}.Clear();"
         end
       }
@@ -802,10 +802,7 @@ END
         end
         
         f.puts "_#{s.Type}.Run(*this" +
-               if s.RunRender.include?(:parameters) then ", " +
-                                                         s.RunRender[:parameters].join(", ")
-               else "" end + 
-               ");"
+               formatEntitySystemParameters(s.RunRender) + ");"
       }
       
       f.puts "}"
@@ -840,9 +837,7 @@ END
         end
         
         f.puts "_#{s.Type}.Run(*this" +
-               if s.RunTick.include?(:parameters) then ", " + s.RunTick[:parameters].join(", ")
-               else "" end + 
-               ");"
+               formatEntitySystemParameters(s.RunTick) + ");"
       }
       f.puts "}"
     else
@@ -863,6 +858,8 @@ END
       addedComment = false
 
       # Added types from parent world types
+      alreadySet = {}
+      
       @Systems.each{|s|
         
         if s.NodeComponents.empty?
@@ -880,12 +877,18 @@ END
           }
 
           if !found
+            found = alreadySet.include? c
+          end
 
+          if !found
+            alreadySet[c] = true
+              
             if !addedComment
               addedComment = true
               f.puts ""
               f.puts "// Component types of parent type"
             end
+
             f.puts "const auto& added#{c} = Component#{c}.GetAdded();"
             f.puts "const auto& removed#{c} = Component#{c}.GetRemoved();"
           end
@@ -1142,7 +1145,11 @@ class Variable
   end
 
   def formatForArgumentList()
-    "#{@Name}"
+    if !@NonMethodParam
+      "#{@Name.downcase}"
+    else
+      "#{@Name}"
+    end
   end
 
   def formatInitializer()
@@ -1212,17 +1219,19 @@ class EntityComponent
 end
 
 class EntitySystem
-  attr_reader :Type, :NodeComponents, :RunTick, :RunRender, :Init, :Release
+  attr_reader :Type, :NodeComponents, :RunTick, :RunRender, :Init, :Release, :NoState
 
   # Leave nodeComponens empty if not using combined nodes
-  def initialize(type, nodeComponents=[], runtick: nil, runrender: nil, init: nil,
-                 release: nil)
+  def initialize(type, nodeComponents=[], runtick: nil, runrender: nil, init: nil, 
+                 release: nil, nostate: nil)
     @Type = type
     @NodeComponents = nodeComponents
     @RunTick = runtick
     @RunRender = runrender
     @Init = init
     @Release = release
+    # If NoState is true then this doesn't hold nodes and .Clear() isn't called on this
+    @NoState = nostate
 
     if @Init
       raise "wrong type" unless @Init.is_a? Array
@@ -1233,6 +1242,11 @@ class EntitySystem
   end
 end
 
+def formatEntitySystemParameters(params)
+  if params.include?(:parameters) and !params[:parameters].empty? then
+    ", " + params[:parameters].join(", ")
+  else "" end 
+end
 
 def genComparisonExpression(values)
 

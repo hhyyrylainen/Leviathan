@@ -146,6 +146,10 @@ void Logger::Fatal(const std::string &data) {
         PendingLog += message;
 
         _LogUpdateEndPart();
+
+        // This might call Save for the second time, but better call
+        // it twice than miss saving the log before aborting
+        _Save();
     }
 
     // Exit process //

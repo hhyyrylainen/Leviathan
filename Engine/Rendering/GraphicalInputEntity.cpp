@@ -540,7 +540,9 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height){
 
     // Notify Ogre //
     // This causes issues on Windows
-    // GetOgreWindow()->resize(width, height);
+#ifdef __linux__
+    GetOgreWindow()->resize(width, height);
+#endif
     GetOgreWindow()->windowMovedOrResized();
 
     // send to GUI //

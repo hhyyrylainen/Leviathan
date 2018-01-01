@@ -309,8 +309,9 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func,
     
 	// Start of by getting metadata string //
     std::string meta = ScriptBuilder->GetMetadataStringForFunc(func);
+    StringOperations::RemovePreceedingTrailingSpaces(meta);
 
-	if(meta.size() < 3){
+	if(meta.size() < 1){
 		// Too short for anything //
 		return;
 	}
@@ -383,7 +384,10 @@ void Leviathan::ScriptModule::_ProcessMetadataForFunc(asIScriptFunction* func,
 		}
 
 
-	}
+	} else {
+
+        LOG_WARNING("ScriptModule: unknown metadata: " + meta);
+    }
 }
 
 

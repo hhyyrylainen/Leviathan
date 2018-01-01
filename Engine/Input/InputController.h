@@ -11,24 +11,24 @@ namespace Leviathan{
 
 class InputController;
 
-// class to derive from when wanting to connect to input //
+//! class to derive from when wanting to connect to input
 class InputReceiver{
     friend InputController;
 public:
     DLLEXPORT InputReceiver();
     DLLEXPORT virtual ~InputReceiver();
 
-    // called at the beginning of key press receive sequence (you
-    // shouldn't reset anything, since you will get blocked input
-    // if keys are released while the object isn't getting input
+    //! called at the beginning of key press receive sequence (you
+    //! shouldn't reset anything, since you will get blocked input
+    //! if keys are released while the object isn't getting input
     DLLEXPORT virtual void BeginNewReceiveQueue();
 
-    // Called when the object receives a key press, return true when consumed //
+    //! Called when the object receives a key press, return true when consumed
     DLLEXPORT virtual bool ReceiveInput(int32_t key, int modifiers, bool down) = 0;
     DLLEXPORT virtual void ReceiveBlockedInput(int32_t key, int modifiers,
         bool down) = 0;
 
-    // when mouse is captured and is moved (relative movement is passed) //
+    //! when mouse is captured and is moved (relative movement is passed)
     DLLEXPORT virtual bool OnMouseMove(int xmove, int ymove) = 0;
 
     //! \brief If ConnectedTo is not NULL notifies it that we are no longer valid
@@ -53,7 +53,7 @@ public:
     DLLEXPORT ~InputController();
 
 
-    DLLEXPORT void LinkReceiver(Lock &guard, InputReceiver* object);
+    DLLEXPORT void LinkReceiver(std::shared_ptr<InputReceiver> object);
 
     DLLEXPORT virtual void StartInputGather();
 
@@ -72,7 +72,7 @@ protected:
 
     // ------------------------------------ //
 
-    std::vector<InputReceiver*> ConnectedReceivers;
+    std::vector<std::shared_ptr<InputReceiver>> ConnectedReceivers;
 };
 
 }

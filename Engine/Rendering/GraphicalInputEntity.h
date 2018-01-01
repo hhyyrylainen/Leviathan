@@ -120,9 +120,6 @@ public:
 
     //! \brief Overwrites the default InputController with a
     //! custom one
-    //! \warning The controller will be deleted by this
-    //! and there is no way to release it without deleting after
-    //! this call
     DLLEXPORT void SetCustomInputController(std::shared_ptr<InputController> controller);
 
 

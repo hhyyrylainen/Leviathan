@@ -34,6 +34,8 @@ DLLEXPORT VideoPlayer::VideoPlayer(){
 
 DLLEXPORT VideoPlayer::~VideoPlayer(){
 
+    UnRegisterAllEvents();
+
     // Ensure all FFMPEG resources are closed
     Stop();
 }

@@ -461,64 +461,6 @@ TEST_CASE("Example file segments that cause errors", "[objectfile]") {
     }
 }
 
-//! \brief Matches line numbers for ReporterLineNumberChecker
-//!
-//! First capture group is the line number
-static const std::regex LineNumRegex {R"(\S:(\d+)\s*$)"};
-
-class ReporterLineNumberChecker : public LErrorReporter{
-public:
-    
-    virtual void Write(const std::string &text) override{
-    }
-
-    virtual void WriteLine(const std::string &text) override{
-    }
-
-    virtual void Info(const std::string &text) override{
-            
-        INFO(text);
-    }
-
-    virtual void Warning(const std::string &text) override{
-            
-        INFO(text);
-        
-        if(AlsoWarnings)
-            GetLine(text);
-    }
-
-    virtual void Error(const std::string &text) override{
-            
-        INFO(text);
-        GetLine(text);
-    }
-
-    virtual void Fatal(const std::string &text) override{
-            
-        INFO(text);
-    }
-
-    //! Captures error line number and saves it in ErrorLines
-    void GetLine(const std::string &text){
-
-        std::smatch lineMatch;
-
-        if(std::regex_search(text, lineMatch, LineNumRegex)){
-
-            if(lineMatch.size() == 2){
-
-                ErrorLines.push_back(Convert::StringTo<int>(lineMatch[1]));
-            }
-        }
-    }
-
-    bool AlsoWarnings {false};
-
-    //! \see GetLine
-    std::vector<int> ErrorLines;
-};
-
 TEST_CASE("ReporterLineNumberChecker test"){
 
     SECTION("Can read 'missing the closing '}', file: issue:6'"){

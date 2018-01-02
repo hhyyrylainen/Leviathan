@@ -521,3 +521,102 @@ TEST_CASE("Objectfile line error numbers are correct", "[objectfile]"){
         CHECK(reporter.ErrorLines[0] == 9);
     }
 }
+
+TEST_CASE("ObjectFile parser reports unclosed quotes", "[objectfile]"){
+
+    ReporterMatchMessagesRegex reporter({ReporterMatchMessagesRegex::MessageToLookFor(
+                std::regex(R"(.*unclosed.*quotes.*)"))});
+
+    SECTION("Single quote"){
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("\"",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+
+    SECTION("Simple cases"){
+
+        // This should be an error but isn't
+        // auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("var1 = \"my thing;",
+        //     "parse_unclosed_quotes_simple1", &reporter);
+        
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("o \"obj1\"{\n"
+            "s{\n"
+            "\"\n"
+            "}\n"
+            "}",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+
+    SECTION("Full examples"){
+        
+        constexpr auto fileText = "o \"thing\"{\n"
+            "    s{\n"
+            "        // User skips the video\n"
+            "        [\"Listener=\"Generic\",@Type=\"MainMenuIntroSkipEvent\"]\n"
+            "        int onSkipVideoEvent(){\n"
+            "            OnVideoEnded();\n"
+            "        }\n"
+            "    @%};\n"
+            "}";
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(fileText,
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+    
+}
+
+TEST_CASE("ObjectFile parser reports unclosed comments", "[objectfile]"){
+
+    ReporterMatchMessagesRegex reporter({ReporterMatchMessagesRegex::MessageToLookFor(
+                std::regex(R"(.*unclosed.*comment.*)"))});
+    
+    SECTION("Simple case"){
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("o \"thing\"{\n/*\n}",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+
+    SECTION("Ending with // doesn't cause errors"){
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("var = thing; \n//",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        REQUIRE(ofile);
+
+        REQUIRE(reporter.MessagesToDetect[0].MatchCount == 0);
+
+        ofile = ObjectFileProcessor::ProcessObjectFileFromString("//",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        REQUIRE(reporter.MessagesToDetect[0].MatchCount == 0);
+    }
+
+    // No examples currently
+    // SECTION("Full examples"){
+        
+        
+    // }
+}
+
+
+

@@ -585,6 +585,17 @@ public:
         return !DataIterator->IsPositionValid();
     }
 
+    // Flag checking methods for outside callers //
+    inline bool IsInsideString(){
+
+        return CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING;
+    }
+
+    inline bool IsInsideComment(){
+
+        return CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT;
+    }
+
     //! \brief Returns substring from the wanted indexes
     template<class STRSType>
 		std::unique_ptr<STRSType> GetSubstringFromIndexes(size_t firstcharacter,

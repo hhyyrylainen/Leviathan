@@ -226,7 +226,19 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
         // It failed //
         LogError("parsing file failed. Parsing ended",
             filenameforerrors, itr.GetCurrentLine(), reporterror);
-                        
+
+        // Notify about unended strings and comments //
+
+        if(itr.IsInsideString()){
+            LogError("parsing ended inside unclosed quotes",
+                filenameforerrors, itr.GetCurrentLine(), reporterror);
+        }
+
+        if(itr.IsInsideComment()){
+            LogError("parsing ended inside unclosed comment",
+                filenameforerrors, itr.GetCurrentLine(), reporterror);
+        }
+        
         return nullptr;
     }
 

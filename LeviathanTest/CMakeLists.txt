@@ -27,6 +27,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/GuiTests.cpp
     TestFiles/Delegate.cpp
     TestFiles/Task.cpp
+    TestFiles/Key.cpp
 
     TestFiles/CoreEngineTests.cpp
     )

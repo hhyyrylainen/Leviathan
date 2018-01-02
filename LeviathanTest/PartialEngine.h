@@ -57,6 +57,7 @@ public:
 class TestLogger : public Logger {
 public:
     TestLogger(const std::string &file) : Logger(file){ }
+    TestLogger() : Logger("Test/TestLog.txt"){ }
 
     void Info(const std::string &data) override {
 
@@ -79,11 +80,48 @@ public:
 
     void Fatal(const std::string &text) override {
 
-        Logger::Fatal(text);
         FAIL(text);
+        REQUIRE(false);
     }
 
     bool IgnoreWarnings = false;
+};
+
+//! Version of TestLogger that needs an error to be reported
+class TestLogRequireError : public Logger {
+public:
+    TestLogRequireError(const std::string &file) : Logger(file){ }
+    TestLogRequireError() : Logger("Test/TestLog.txt"){ }
+
+    ~TestLogRequireError(){
+
+        CHECK(ErrorOccured);
+    }
+
+    void Info(const std::string &data) override {
+
+        INFO(data);
+    }
+
+    void Error(const std::string &data) override {
+
+        ErrorOccured = true;
+    }
+
+    void Warning(const std::string &data) override {
+
+        Logger::Warning(data);
+
+        INFO(data);
+    }
+
+    void Fatal(const std::string &text) override {
+
+        FAIL(text);
+        REQUIRE(false);
+    }
+
+    bool ErrorOccured = false;
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests

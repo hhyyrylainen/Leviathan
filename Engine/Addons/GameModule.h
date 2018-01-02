@@ -41,7 +41,7 @@ namespace Leviathan{
 
 	private:
 
-		void _CallScriptListener(Event** pEvent, GenericEvent** event2);
+		void _CallScriptListener(Event* event, GenericEvent* event2) override;
 		// ------------------------------------ //
 
 		std::string OwnerName;

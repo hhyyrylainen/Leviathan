@@ -79,8 +79,8 @@ namespace Pong{
             return GameInputHandler.get();
         }
 
-        virtual int OnEvent(Event** pEvent) override;
-        virtual int OnGenericEvent(GenericEvent** pevent) override{
+        virtual int OnEvent(Event* event) override;
+        virtual int OnGenericEvent(GenericEvent* event) override{
             return -1;
         }
         

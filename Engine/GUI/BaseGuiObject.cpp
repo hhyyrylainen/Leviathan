@@ -137,10 +137,7 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(GuiManager* owner,
 	tmpptr->_HookListeners();
 
 	// Call the Init function //
-	Event initevent(EVENT_TYPE_INIT, NULL);
-	Event* eptr = &initevent;
-
-    tmpptr->OnEvent(&eptr);
+    tmpptr->OnEvent(new Event(EVENT_TYPE_INIT, nullptr));
 
 	tempobjects.push_back(tmpptr.release());
 	return true;
@@ -195,28 +192,30 @@ DLLEXPORT bool BaseGuiObject::IsCEGUIEventHooked() const{
     return !CEGUIRegisteredEvents.empty();
 }
 // ------------------------------------ //
-void BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
+void BaseGuiObject::_CallScriptListener(Event* event, GenericEvent* event2){
 	if(!Scripting)
 		return;
+    
 	ScriptModule* mod = Scripting->GetModule();
 
-	if(pEvent){
+	if(event){
 		// Get the listener name from the event type //
-		const std::string& listenername = GetListenerNameFromType((*pEvent)->GetType());
+		const std::string& listenername = GetListenerNameFromType(event->GetType());
 
 		// check does the script contain right listeners //
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// setup parameters //
             std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
                 std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GuiObject"),
-                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(*pEvent), "Event") };
+                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(event), "Event") };
             
 			// we are returning ourselves so increase refcount
 			AddRef();
-			(*pEvent)->AddRef();
+			event->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
+			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).
+                SetArguments(Args);
 
 			// Run the script //
             std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
@@ -224,20 +223,20 @@ void BaseGuiObject::_CallScriptListener(Event** pEvent, GenericEvent** event2){
 		}
 	} else {
 		// generic event is passed //
-		if(mod->DoesListenersContainSpecificListener("", (*event2)->GetTypePtr())){
+		if(mod->DoesListenersContainSpecificListener("", event2->GetTypePtr())){
 			// setup parameters //
             std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
                 std::make_shared<NamedVariableBlock>(
                     new VoidPtrBlock(this), "GuiObject"), 
                 std::make_shared<NamedVariableBlock>(
-                    new VoidPtrBlock(*event2), "GenericEvent") };
+                    new VoidPtrBlock(event2), "GenericEvent") };
 			// we are returning ourselves so increase refcount
 			AddRef();
-			(*event2)->AddRef();
+			event2->AddRef();
 
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName("",
-                    (*event2)->GetTypePtr())).SetArguments(Args);
+                    event2->GetTypePtr())).SetArguments(Args);
 
 			// Run the script //
             std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(

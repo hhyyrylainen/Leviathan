@@ -134,22 +134,14 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 	// Call init callbacks //
 
 	// fire an event //
-	Event* tmpevent = new Event(EVENT_TYPE_INIT, NULL);
-
-	OnEvent(&tmpevent);
-
-	tmpevent->Release();
+	OnEvent(new Event(EVENT_TYPE_INIT, nullptr));
 	return true;
 }
 
 DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
 	// Call release callback and destroy everything //
 	// fire an event //
-	Event* tmpevent = new Event(EVENT_TYPE_RELEASE, NULL);
-
-	OnEvent(&tmpevent);
-
-	tmpevent->Release();
+	OnEvent(new Event(EVENT_TYPE_RELEASE, nullptr));
 
 	// Remove our reference //
 	int tmpid = Scripting->GetModule()->GetID();
@@ -163,23 +155,23 @@ DLLEXPORT std::string Leviathan::GameModule::GetDescription(bool full /*= false*
         (full ? ", loaded from file: "+LoadedFromFile+".": ".");
 }
 // ------------------------------------ //
-void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** event2){
+void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* event2){
 
 	ScriptModule* mod = Scripting->GetModule();
 
-	if(pEvent){
+	if(event){
 		// Get the listener name from the event type //
-		std::string listenername = GetListenerNameFromType((*pEvent)->GetType());
+		std::string listenername = GetListenerNameFromType(event->GetType());
 
 		// check does the script contain right listeners //
 		if(mod->DoesListenersContainSpecificListener(listenername)){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
                 NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))
-				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), "Event"));
+				(new NamedVariableBlock(new VoidPtrBlock(event), "Event"));
 			// we are returning ourselves so increase refcount
 			AddRef();
-			(*pEvent)->AddRef();
+			event->AddRef();
 
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
@@ -192,18 +184,18 @@ void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** e
 		}
 	} else {
 		// generic event is passed //
-		if(mod->DoesListenersContainSpecificListener("", (*event2)->GetTypePtr())){
+		if(mod->DoesListenersContainSpecificListener("", event2->GetTypePtr())){
 			// setup parameters //
 			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
                 NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))
-				(new NamedVariableBlock(new VoidPtrBlock(*event2), "GenericEvent"));
+				(new NamedVariableBlock(new VoidPtrBlock(event2), "GenericEvent"));
             
 			// we are returning ourselves so increase refcount
 			AddRef();
-			(*event2)->AddRef();
+			event2->AddRef();
 
 			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName("", (*event2)->GetTypePtr())).
+			sargs.SetEntrypoint(mod->GetListeningFunctionName("", event2->GetTypePtr())).
                 SetArguments(Args);
             
 			// run the script //

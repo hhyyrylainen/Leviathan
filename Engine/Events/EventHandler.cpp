@@ -4,38 +4,38 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 EventHandler::EventHandler(){
-	main = this;
+
 }
+
 EventHandler::~EventHandler(){
 
 }
-
-DLLEXPORT EventHandler* Leviathan::EventHandler::Get(){
-	return main;
-}
-
-EventHandler* Leviathan::EventHandler::main = NULL;
 // ------------------------------------ //
 bool EventHandler::Init(){
 	return true;
 }
+
 void EventHandler::Release(){
 	GUARD_LOCK();
-	// release listeners //
+
+    
+    
+	// Release listeners //
 	EventListeners.clear();
-	SAFE_DELETE_VECTOR(GenericEventListeners);
+	GenericEventListeners.clear();
 }
 // ------------------------------------ //
-void EventHandler::CallEvent(Event* pEvent){
-	GUARD_LOCK();
+void EventHandler::CallEvent(Event* event){
 
-    const auto type = pEvent->GetType();
+    const auto type = event->GetType();
+
+    GUARD_LOCK();
 
 	for(auto iter = EventListeners.begin(); iter != EventListeners.end(); ){
 
-		if((*iter)->Type == type){
+		if(std::get<1>(*iter) == type){
 
-			const auto result = (*iter)->Receiver->OnEvent(&pEvent);
+			const auto result = std::get<0>(*iter)->OnEvent(event);
 
             if(result == -1){
 
@@ -47,71 +47,92 @@ void EventHandler::CallEvent(Event* pEvent){
 
         ++iter;
 	}
-    
-	SAFE_RELEASE(pEvent);
+
+    event->Release();
 }
 
-DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* pEvent){
+DLLEXPORT void Leviathan::EventHandler::CallEvent(GenericEvent* event){
+
+    const auto type = event->GetType();
+    
 	GUARD_LOCK();
+    
 	// Loop generic listeners //
-	for(size_t i = 0; i < GenericEventListeners.size(); i++){
+	for(auto iter = GenericEventListeners.begin(); iter != GenericEventListeners.end(); ){
 
-		if(GenericEventListeners[i]->Type == pEvent->GetType()){
+		if(std::get<1>(*iter) == type){
 
-			GenericEventListeners[i]->Receiver->OnGenericEvent(&pEvent);
-			if((pEvent) == NULL)
-				// callable destroyed message //
-				break;
+			const auto result = std::get<0>(*iter)->OnGenericEvent(event);
 
+            if(result == -1){
+
+                // Unregister requested //
+                iter = GenericEventListeners.erase(iter);
+                continue;
+            }
 		}
+
+        ++iter;
 	}
-	SAFE_RELEASE(pEvent);
+
+    event->Release();
 }
 // ------------------------------------ //
 bool EventHandler::RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype){
 	GUARD_LOCK();
-	EventListeners.push_back(move(make_unique<RegisteredCallback>(toregister, totype)));
+	EventListeners.push_back(std::make_tuple(toregister, totype));
 	return true;
 }
 
-DLLEXPORT bool Leviathan::EventHandler::RegisterForEvent(CallableObject* toregister, const std::string &genericname){
+DLLEXPORT bool Leviathan::EventHandler::RegisterForEvent(CallableObject* toregister,
+    const std::string &genericname)
+{
 	GUARD_LOCK();
-	GenericEventListeners.push_back(new GenericRegisteredCallback(toregister, genericname));
+	GenericEventListeners.push_back(std::make_tuple(toregister, genericname));
 	return true;
 }
 
 void EventHandler::Unregister(CallableObject* caller, EVENT_TYPE type, bool all){
 	GUARD_LOCK();
-	// loop and remove wanted objects //
-	for(size_t i = 0; i < EventListeners.size(); i++){
-		if(EventListeners[i]->Receiver == caller){
-			// check type or if all is specified delete //
-			if(all || type == EventListeners[i]->Type){
+    
+	// Loop and remove wanted objects //
+	for(auto iter = EventListeners.begin(); iter != EventListeners.end(); ){
 
-				EventListeners.erase(EventListeners.begin()+i);
-				i--;
+		if(std::get<0>(*iter) == caller){
+    
+			// check type or if all is specified delete //
+			if(all || type == std::get<1>(*iter)){
+                
+				iter = EventListeners.erase(iter);
+                continue;
 			}
 		}
+
+        ++iter;
 	}
 }
 
-DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller, const std::string &genericname,
+DLLEXPORT void Leviathan::EventHandler::Unregister(CallableObject* caller,
+    const std::string &genericname,
     bool all /*= false*/)
 {
 	GUARD_LOCK();
-	// loop and remove wanted objects //
-	for(size_t i = 0; i < GenericEventListeners.size(); i++){
-		if(GenericEventListeners[i]->Receiver == caller){
+    
+	// Loop and remove wanted objects //
+	for(auto iter = GenericEventListeners.begin(); iter != GenericEventListeners.end(); ){
+
+		if(std::get<0>(*iter) == caller){
+    
 			// check type or if all is specified delete //
-			if(all || GenericEventListeners[i]->Type == genericname){
-				delete GenericEventListeners[i];
-				GenericEventListeners.erase(GenericEventListeners.begin()+i);
-				i--;
+			if(all || genericname == std::get<1>(*iter)){
+                
+				iter = GenericEventListeners.erase(iter);
+                continue;
 			}
 		}
+
+        ++iter;
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::EventHandler::CallEventGenericProxy(GenericEvent* genericevent){
-	CallEvent(genericevent);
-}
+

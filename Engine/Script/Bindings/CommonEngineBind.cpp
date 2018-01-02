@@ -305,17 +305,10 @@ bool BindEvents(asIScriptEngine* engine){
     if(engine->RegisterObjectType("EventHandler", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
         ANGELSCRIPT_REGISTERFAIL;
     }
-
-    // Global get function //
-    if(engine->RegisterGlobalFunction("EventHandler& GetEventHandler()",
-            asFUNCTION(EventHandler::Get),
-            asCALL_CDECL) < 0){
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
+    
     // Script event firing //
     if(engine->RegisterObjectMethod("EventHandler", "void CallEvent(GenericEvent@ event)",
-            asMETHOD(EventHandler, CallEventGenericProxy), asCALL_THISCALL) < 0)
+            asMETHODPR(EventHandler, CallEvent, (GenericEvent*), void), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -367,6 +360,14 @@ bool BindEngine(asIScriptEngine* engine){
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    // Engine owned singletons //
+    if(engine->RegisterObjectMethod("Engine",
+            "EventHandler& GetEventHandler()",
+            asMETHOD(Engine, GetEventHandler), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }    
 
     if(engine->RegisterObjectMethod("Engine",
             "int64 GetTimeSinceLastTick()",

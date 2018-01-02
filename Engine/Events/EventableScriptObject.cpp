@@ -6,8 +6,8 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::EventableScriptObject::EventableScriptObject(shared_ptr<ScriptScript> script
-    /*= nullptr*/) :
+DLLEXPORT Leviathan::EventableScriptObject::EventableScriptObject(
+    shared_ptr<ScriptScript> script /*= nullptr*/) :
     Scripting(script)
 {
 
@@ -17,16 +17,16 @@ DLLEXPORT Leviathan::EventableScriptObject::~EventableScriptObject(){
 
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::EventableScriptObject::OnEvent(Event** pEvent){
+DLLEXPORT int Leviathan::EventableScriptObject::OnEvent(Event* event){
 	// call script to handle the event //
-	_CallScriptListener(pEvent, NULL);
+	_CallScriptListener(event, nullptr);
 
 	return 0;
 }
 
-DLLEXPORT int Leviathan::EventableScriptObject::OnGenericEvent(GenericEvent** pevent){
+DLLEXPORT int Leviathan::EventableScriptObject::OnGenericEvent(GenericEvent* event){
 	// call script to handle the event //
-	_CallScriptListener(NULL, pevent);
+	_CallScriptListener(nullptr, event);
 
 	return 0;
 }
@@ -42,7 +42,7 @@ DLLEXPORT bool Leviathan::EventableScriptObject::OnUpdate(
 	// fire an event //
 	Event* tmpevent = new Event(EVENT_TYPE_LISTENERVALUEUPDATED, NULL);
 
-	OnEvent(&tmpevent);
+	OnEvent(tmpevent);
 
 	tmpevent->Release();
 	return true;

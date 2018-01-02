@@ -1,5 +1,6 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "Event.h"
@@ -7,27 +8,7 @@
 
 namespace Leviathan{
 
-struct RegisteredCallback{
-    RegisteredCallback(CallableObject* receiver, EVENT_TYPE type) : Receiver(receiver), Type(type){
-    }
-    ~RegisteredCallback(){
-    }
-
-    CallableObject* Receiver;
-    EVENT_TYPE Type;
-};
-// callbacks are split to normal and generic, should probably improve performance //
-struct GenericRegisteredCallback{
-    GenericRegisteredCallback(CallableObject* receiver, const std::string &type) : Receiver(receiver), Type(type){
-    }
-    ~GenericRegisteredCallback(){
-    }
-
-    CallableObject* Receiver;
-    std::string Type;
-};
-
-
+//! \brief Allows object to register for events that can be fired from anywhere
 class EventHandler : public ThreadSafe{
 public:
     DLLEXPORT EventHandler();
@@ -36,25 +17,23 @@ public:
     DLLEXPORT bool Init();
     DLLEXPORT void Release();
 
-    //! \todo Make this use references instead
-    DLLEXPORT void CallEvent(Event* pEvent);
-    //! \todo Allow these events to also delete themselves
-    DLLEXPORT void CallEvent(GenericEvent* pEvent);
+    //! \param event The event to send. Reference count will be decremented by this
+    DLLEXPORT void CallEvent(Event* event);
+
+    //! \param event The event to send. Reference count will be decremented by this
+    DLLEXPORT void CallEvent(GenericEvent* event);
 
     DLLEXPORT bool RegisterForEvent(CallableObject* toregister, EVENT_TYPE totype);
-    DLLEXPORT bool RegisterForEvent(CallableObject* toregister, const std::string &genericname);
+    DLLEXPORT bool RegisterForEvent(CallableObject* toregister,
+        const std::string &genericname);
+    
     DLLEXPORT void Unregister(CallableObject* caller, EVENT_TYPE type, bool all = false);
-    DLLEXPORT void Unregister(CallableObject* caller, const std::string &genericname, bool all = false);
-
-    DLLEXPORT static EventHandler* Get();
-
-    DLLEXPORT void CallEventGenericProxy(GenericEvent* genericevent);
+    DLLEXPORT void Unregister(CallableObject* caller, const std::string &genericname,
+        bool all = false);
 
 private:
-    std::vector<std::unique_ptr<RegisteredCallback>> EventListeners;
-    std::vector<GenericRegisteredCallback*> GenericEventListeners;
-
-    static EventHandler* main;
+    std::vector<std::tuple<CallableObject*, EVENT_TYPE>> EventListeners;
+    std::vector<std::tuple<CallableObject*, std::string>> GenericEventListeners;
 };
 
 }

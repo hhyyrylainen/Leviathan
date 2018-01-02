@@ -93,7 +93,7 @@ protected:
 
     // this function will try to hook all wanted listeners to CEGUI elements //
     void _HookListeners();
-    virtual void _CallScriptListener(Event** pEvent, GenericEvent** event2);
+    virtual void _CallScriptListener(Event* event, GenericEvent* event2) override;
 
     //! \brief Registers for an event if it is a CEGUI event
     bool _HookCEGUIEvent(const std::string &listenername);

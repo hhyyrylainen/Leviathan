@@ -890,10 +890,9 @@ void VideoPlayer::DumpInfo() const{
     }
 }
 // ------------------------------------ //
-DLLEXPORT int VideoPlayer::OnEvent(Event** event){
+DLLEXPORT int VideoPlayer::OnEvent(Event* event){
 
-    switch((*event)->GetType()){
-
+    switch(event->GetType()){
     case EVENT_TYPE_FRAME_BEGIN:
     {
 
@@ -954,7 +953,7 @@ DLLEXPORT int VideoPlayer::OnEvent(Event** event){
     }
 }
 
-DLLEXPORT int VideoPlayer::OnGenericEvent(GenericEvent** event){
+DLLEXPORT int VideoPlayer::OnGenericEvent(GenericEvent* event){
 
     return 0;
 }

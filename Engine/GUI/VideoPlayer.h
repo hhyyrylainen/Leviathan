@@ -196,8 +196,8 @@ protected:
 public:
 
     // CallableObject
-    DLLEXPORT int OnEvent(Event** event) override;
-    DLLEXPORT int OnGenericEvent(GenericEvent** event) override;
+    DLLEXPORT int OnEvent(Event* event) override;
+    DLLEXPORT int OnGenericEvent(GenericEvent* event) override;
     
     
 protected:

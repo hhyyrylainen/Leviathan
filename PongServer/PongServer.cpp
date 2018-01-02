@@ -283,8 +283,10 @@ void Pong::PongServer::CheckForGameEnd(){
             Logger::Get()->Info("TODO: make clients move the camera around");
 
             // Send the game end event which should trigger proper menus //
-            Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new string("MatchEnded"),
-                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("WinningTeam",
+            Leviathan::Engine::Get()->GetEventHandler()->CallEvent(
+                new Leviathan::GenericEvent(new string("MatchEnded"),
+                    new NamedVars(shared_ptr<NamedVariableList>(
+                            new NamedVariableList("WinningTeam",
                                 new Leviathan::VariableBlock((int)i))))));
 
             // And finally destroy the ball //

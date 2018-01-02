@@ -160,6 +160,8 @@ public:
     //! \brief Gets the data if this is an event that has only one integer data member
     DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;
 
+    REFERENCE_COUNTED_PTR_TYPE(Event);
+
 protected:
 
     //! Events type
@@ -203,6 +205,8 @@ public:
     //! \brief Returns the name of the event
     //! \see GetTypePtr
     DLLEXPORT std::string GetType() const;
+
+    REFERENCE_COUNTED_PTR_TYPE(GenericEvent);
 
 protected:
 

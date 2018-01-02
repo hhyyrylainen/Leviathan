@@ -22,19 +22,19 @@ void TryToCrash(bool enable){
 
     string state = enable ? "On": "Off";
 
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(state))))));
 
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(state))))));
 
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("MatchScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("MatchScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(state))))));
 
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new VariableBlock(
                             string("test")))))));
 
@@ -43,7 +43,7 @@ void TryToCrash(bool enable){
     Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("TopLevelMenu", enable);
 }
 
-int Pong::PongGame::OnEvent(Event** pEvent){
+int Pong::PongGame::OnEvent(Event* event){
 
     //TryToCrash(Toggle);
     return 0;
@@ -146,7 +146,7 @@ int Pong::PongGame::StartServer(){
         if(justforperformance->GetActiveConnectionCount() == 0){
             // Failed //
             Logger::Get()->Error("Failed to receive a remote connection from the server");
-            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+            Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
                     Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
                                 new VariableBlock(string("The server failed to start properly")))))));
             StaticGame->Disconnect("Server failed to start properly");
@@ -172,7 +172,7 @@ int Pong::PongGame::StartServer(){
             GetConnectionForRemoteConsoleSession("ServerConsole");
 
         Logger::Get()->Info("Server started successfully");
-        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new
                             VariableBlock(string("Server started, awaiting proper startup")))))));
 
@@ -193,7 +193,7 @@ int Pong::PongGame::StartServer(){
     //            tmpptr->SetRepeatStatus(false);
 
     //            // Queue disconnect //
-    //            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        //            Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
     //                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(
     //                            new NamedVariableList("Message", new VariableBlock(
     //                                    string("Server connection closed unexpectedly")))))));
@@ -235,7 +235,7 @@ int Pong::PongGame::StartServer(){
 
     //                            tmpptr->SetRepeatStatus(false);
 
-    //                            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        //                            Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
     //                                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
     //                                                "Message", new VariableBlock(string(
     //                                                        "Attempting to connect in 1 second...")))))));
@@ -250,13 +250,13 @@ int Pong::PongGame::StartServer(){
     //                                        MillisecondDuration(1000))));
 
     //                        } else {
-    //                            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        //                            Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
     //                                    Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
     //                                                "Message", new VariableBlock(string("Server still starting")))))));
     //                        }
 
     //                    } else {
-    //                        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        //                        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
     //                                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList(
     //                                            "Message", new VariableBlock(string("Invalid packet!")))))));
     //                    }
@@ -264,7 +264,7 @@ int Pong::PongGame::StartServer(){
 
     //            } else {
 
-    //                EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        //                Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
     //                        Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
     //                                    new VariableBlock(string("Taskdata to server timed out, resending...")))))));
     //            }
@@ -276,7 +276,7 @@ int Pong::PongGame::StartServer(){
     //        }
 
     //        // We are waiting for the request //
-    //        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        //        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
     //                Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new
     //                            VariableBlock(string("Waiting for the server to respond to our status request")))))));
 
@@ -362,17 +362,17 @@ void Pong::PongGame::Disconnect(const string &reasonstring){
     ClientInterface->DisconnectFromServer(reasonstring);
     
     // Disable lobby screen //
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(string("Off")))))));
 
     // Disable prematch screen //
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(string("Off")))))));
 
     // Disable match screen //
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("MatchScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("MatchScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                         new VariableBlock(string("Off")))))));
 
@@ -427,7 +427,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
     window1->SetCustomInputController(GameInputHandler);
 
     // This is how to do something every frame //
-    Leviathan::EventHandler::Get()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
+    Leviathan::Engine::Get()->GetEventHandler()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
 
     ClearTimers();
 }
@@ -506,7 +506,7 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
     Logger::Get()->Info("About to connect to address "+address);
 
     // Send an event about the server name //
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ServerInfoUpdate",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ServerInfoUpdate",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Name",
                         new VariableBlock(address))))));
 
@@ -518,13 +518,13 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
 
         errorstr = "Tried to connect to an invalid address, "+address;
 
-        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
                             new VariableBlock(errorstr))))));
         return false;
     }
 
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message",
                         new VariableBlock("Opening connection to server at "+address))))));
 
@@ -540,7 +540,7 @@ bool Pong::PongGame::Connect(const string &address, string &errorstr){
 
 void Pong::PongGame::OnPlayerStatsUpdated(PlayerList* list){
     // Fire an event to notify the GUI about this //
-    EventHandler::Get()->CallEvent(new GenericEvent("PlayerStatusUpdated", NamedVars(new NamedVariableList())));
+    Engine::Get()->GetEventHandler()->CallEvent(new GenericEvent("PlayerStatusUpdated", NamedVars(new NamedVariableList())));
 
 
 }
@@ -571,7 +571,7 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
     {
         // Show the lobby //
         // Send event to enable the lobby screen //
-        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                             new VariableBlock(string("On")))))));
 
@@ -580,13 +580,13 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
     case PONG_JOINGAMERESPONSE_TYPE_PREMATCH:
     {
         // First hide the lobby screen //
-        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                             new VariableBlock(string("Off")))))));
         
         
         // Display the preparation screen //
-        EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
+        Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
                 Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                             new VariableBlock(string("On")))))));
 
@@ -601,13 +601,13 @@ void Pong::PongGame::VerifyCorrectState(PONG_JOINGAMERESPONSE_TYPE serverstatus)
         case PONG_JOINGAMERESPONSE_TYPE_MATCH:
         {
             // First hide the preparation screen  //
-            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
+            Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("PrematchScreenState",
                     Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                                 new VariableBlock(string("Off")))))));
             
 
             // And display the match HUD //
-            EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("MatchScreenState",
+            Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("MatchScreenState",
                     Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("State",
                                 new VariableBlock(string("On")))))));
 

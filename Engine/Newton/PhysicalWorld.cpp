@@ -5,6 +5,7 @@
 #include "PhysicsMaterialManager.h"
 #include "Events/EventHandler.h"
 #include "../TimeIncludes.h"
+#include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) :
@@ -70,7 +71,7 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 	while(PassedTimeTotal >= NEWTON_FPS_IN_MICROSECONDS){
         
 		// Call event //
-		EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
+        Engine::Get()->GetEventHandler()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
                 new PhysicsStartEventData(NEWTON_TIMESTEP,
                     OwningWorld)));
 
@@ -95,7 +96,7 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorldFixed(uint32_t mspassed,
 
     for (uint32_t i = 0; i < stepcount; ++i) {
 
-        EventHandler::Get()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
+        Engine::Get()->GetEventHandler()->CallEvent(new Event(EVENT_TYPE_PHYSICS_BEGIN,
             new PhysicsStartEventData(timestep,
                 OwningWorld)));
 
@@ -107,7 +108,8 @@ int Leviathan::SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void
     int bodyCount)
 {
 
-    PhysicalWorld* pworld = reinterpret_cast<PhysicalWorld*>(NewtonWorldGetUserData(newtonWorld));
+    PhysicalWorld* pworld = reinterpret_cast<PhysicalWorld*>(
+        NewtonWorldGetUserData(newtonWorld));
     
     for(int i = 0; i < bodyCount; i++){
 

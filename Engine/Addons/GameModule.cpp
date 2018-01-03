@@ -62,9 +62,9 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 	}
 
 
-	std::string sourcefilename = StringOperations::RemoveExtensionString(sources->GetLine(0),
-        true);
-	std::string extensions = StringOperations::GetExtensionString(sources->GetLine(0));
+	std::string sourcefilename = StringOperations::RemoveExtension<std::string>(
+        sources->GetLine(0), true);
+    std::string extensions = StringOperations::GetExtension<std::string>(sources->GetLine(0));
 
 	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions,
         false);

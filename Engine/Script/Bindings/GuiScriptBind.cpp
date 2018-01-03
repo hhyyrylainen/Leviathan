@@ -118,10 +118,11 @@ bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const std::string &filen
 {
 
     // Find the file //
-    const std::string onlyname = StringOperations::RemoveExtensionString(filename, true);
+    const std::string onlyname = StringOperations::RemoveExtension<std::string>(filename,
+        true);
 
     const std::string& targetfile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT,
-        onlyname, StringOperations::GetExtensionString(filename), true);
+        onlyname, StringOperations::GetExtension<std::string>(filename), true);
 
     if(targetfile.empty()){
 

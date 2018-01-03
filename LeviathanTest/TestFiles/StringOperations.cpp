@@ -193,11 +193,12 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 
 	CHECK(ressecond == L"filesthis.superier");
 
-	string removed = StringOperations::RemovePathString("./GUI/Nice/Panels/Mytexture.png");
+	string removed = StringOperations::RemovePath<std::string>(
+        "./GUI/Nice/Panels/Mytexture.png");
 
 	CHECK(removed == "Mytexture.png");
 
-	wstring pathy = StringOperations::GetPathWstring(paththing);
+	wstring pathy = StringOperations::GetPath<std::wstring>(paththing);
 
 	CHECK(pathy == L"My/super/path/");
 
@@ -209,20 +210,25 @@ TEST_CASE("StringOperations common work with string and wstring", "[string]"){
 	// Line end changing //
     wstring simplestr = L"Two\nlines";
 
-    const wstring convresult = StringOperations::ChangeLineEndsToWindowsWstring(simplestr);
+    const wstring convresult = StringOperations::ChangeLineEndsToWindows<std::wstring>(
+        simplestr);
 
     CHECK(convresult == L"Two\r\nlines");
 
 	wstring pathtestoriginal = L"My text is quite nice\nand has\n multiple\r\n lines\n"
         L"that are separated\n";
 
-	wstring pathresult = StringOperations::ChangeLineEndsToWindowsWstring(pathtestoriginal);
+	wstring pathresult = StringOperations::ChangeLineEndsToWindows<std::wstring>(
+        pathtestoriginal);
 
-	CHECK(pathresult == L"My text is quite nice\r\nand has\r\n multiple\r\n lines\r\nthat are separated\r\n");
+	CHECK(pathresult == L"My text is quite nice\r\nand has\r\n multiple\r\n lines\r\nthat "
+        L"are separated\r\n");
 
-	wstring backlinetest = StringOperations::ChangeLineEndsToUniversalWstring(pathresult);
+	wstring backlinetest = StringOperations::ChangeLineEndsToUniversal<std::wstring>(
+        pathresult);
 
-	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\nthat are separated\n");
+	CHECK(backlinetest == L"My text is quite nice\nand has\n multiple\n lines\nthat are "
+        L"separated\n");
 }
 
 TEST_CASE("StringOperations indent creation", "[string]") {
@@ -238,18 +244,19 @@ TEST_CASE("StringOperations indent lines", "[string]") {
 
     SECTION("Single line") {
 
-        CHECK(StringOperations::IndentLinesString("this is a line", 2) == "  this is a line");
+        CHECK(StringOperations::IndentLines<std::string>("this is a line", 2) ==
+            "  this is a line");
     }
 
     SECTION("Two lines") {
 
-        CHECK(StringOperations::IndentLinesString("this is a line\nthis is a second", 1) == 
-            " this is a line\n this is a second");
+        CHECK(StringOperations::IndentLines<std::string>("this is a line\nthis is a second",
+                1) == " this is a line\n this is a second");
     }
 
     SECTION("Ends with a new line") {
 
-        CHECK(StringOperations::IndentLinesString("this is a line\n", 1) ==
+        CHECK(StringOperations::IndentLines<std::string>("this is a line\n", 1) ==
             " this is a line\n");
     }
 
@@ -257,12 +264,14 @@ TEST_CASE("StringOperations indent lines", "[string]") {
 
         SECTION("Single line") {
 
-            CHECK(StringOperations::IndentLinesString(" this is a line", 2) == "  this is a line");
+            CHECK(StringOperations::IndentLines<std::string>(" this is a line", 2) ==
+                "  this is a line");
         }
 
         SECTION("Two lines") {
 
-            CHECK(StringOperations::IndentLinesString("    this is a line\n  this is a second", 1) ==
+            CHECK(StringOperations::IndentLines<std::string>(
+                    "    this is a line\n  this is a second", 1) ==
                 " this is a line\n this is a second");
         }
     }
@@ -272,7 +281,7 @@ TEST_CASE("StringOperations indent lines", "[string]") {
         constexpr auto input = "this is a\n multiline story\nthat spans many lines\n";
         constexpr auto result = "   this is a\n   multiline story\n   that spans many lines\n";
 
-        CHECK(StringOperations::IndentLinesString(input, 3) == result);
+        CHECK(StringOperations::IndentLines<std::string>(input, 3) == result);
     }
 
     SECTION("Windows lines") {
@@ -280,7 +289,7 @@ TEST_CASE("StringOperations indent lines", "[string]") {
         constexpr auto input = "this is a\r\n multiline story\r\nthat spans many lines\r\n";
         constexpr auto result = "   this is a\n   multiline story\n   that spans many lines\n";
 
-        CHECK(StringOperations::IndentLinesString(input, 3) == result);
+        CHECK(StringOperations::IndentLines<std::string>(input, 3) == result);
     }
 }
 

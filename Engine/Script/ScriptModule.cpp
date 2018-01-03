@@ -498,9 +498,9 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 trytofindinscriptfolderincludecallback:
 
 		// try to find in script folder //
-		std::string extension = StringOperations::GetExtensionString(file);
+		std::string extension = StringOperations::GetExtension<std::string>(file);
 
-		std::string name = StringOperations::RemoveExtensionString(file, true);
+		std::string name = StringOperations::RemoveExtension<std::string>(file, true);
 
 		// search //
 		std::string finalpath = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, name,
@@ -732,11 +732,11 @@ void Leviathan::ScriptModule::_StartMonitoringFiles(Lock& guard){
 		(*iter)->Added = true;
 
 		// Find all files that are in the same folder //
-		std::string basepath = StringOperations::GetPathString(*(*iter)->File);
+		std::string basepath = StringOperations::GetPath<std::string>(*(*iter)->File);
 
 		for(auto iter2 = iter+1; iter2 != end2; ++iter2){
 
-			if(basepath == StringOperations::GetPathString(*(*iter2)->File) &&
+			if(basepath == StringOperations::GetPath<std::string>(*(*iter2)->File) &&
                 !(*iter2)->Added)
             {
 				

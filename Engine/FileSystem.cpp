@@ -1002,13 +1002,13 @@ Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const st
     RelativePath(path)
 {
 	// get extension //
-	string tempexpt = StringOperations::GetExtensionString(path);
+	string tempexpt = StringOperations::GetExtension<std::string>(path);
 
 	// register extension and store id //
 	ExtensionID = instance->RegisterExtension(tempexpt);
 
 	// save name //
-	Name = StringOperations::RemoveExtensionString(path, true);
+	Name = StringOperations::RemoveExtension<std::string>(path, true);
 }
 
 bool Leviathan::FileDefinitionType::operator<(const FileDefinitionType& other) const{

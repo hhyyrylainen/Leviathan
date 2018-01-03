@@ -8,6 +8,7 @@
 #include "GUI/FontManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Threading/ThreadingManager.h"
+#include "Common/StringOperations.h"
 
 #include "OgreFrameListener.h"
 #include "OgreHlmsManager.h"
@@ -97,7 +98,8 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef){
     Ogre::LogManager* logMgr = new Ogre::LogManager();
 
     // Could also use the singleton access method here //
-    string ogrelogfile = appdef->GetLogFile() + "LogOGRE.txt";
+    string ogrelogfile = StringOperations::RemoveExtension(Logger::Get()->GetLogFile(),
+        false) + "OGRE.txt";
 
     OLog = logMgr->createLog(ogrelogfile, true, true, false);
     OLog->setDebugOutputEnabled(true);

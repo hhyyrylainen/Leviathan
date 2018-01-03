@@ -991,6 +991,17 @@ public:
         return result;
     }
 
+    template<class StringTypeN>
+    static StringTypeN RemoveEnding(const StringTypeN &str, const StringTypeN &ending){
+
+        const auto pos = str.rfind(ending);
+
+        if(pos != StringTypeN::npos && str.length() - pos == ending.length())
+            return str.substr(0, pos);
+        
+        return str;
+    }
+
     //! \returns True if a character is a line terminating character
     static bool IsLineTerminator(int32_t codepoint) {
 

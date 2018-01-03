@@ -153,9 +153,9 @@ if(NOT ONLY_DOCUMENTATION)
 endif()
 
 # Configure engine include file
-configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
+configure_file("${LEVIATHAN_SRC}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
 # Make a readonly copy of it
-file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "${PROJECT_SOURCE_DIR}/Engine"
+file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "${LEVIATHAN_SRC}/Engine"
   NO_SOURCE_PERMISSIONS
   FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
 

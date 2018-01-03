@@ -6,8 +6,9 @@
 #include "GameConfiguration.h"
 #include "ForwardDeclarations.h"
 #include "KeyConfiguration.h"
+
+#include <iostream>
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) :
     ConfigurationValues(new NamedVars()), 
@@ -25,47 +26,44 @@ DLLEXPORT Leviathan::AppDef::AppDef(const bool &isdef /*= false*/) :
 AppDef::~AppDef(){
 	// reset static access if this is it //
 	if(Defaultconf == this)
-		Defaultconf = NULL;
+		Defaultconf = nullptr;
 
 	SAFE_RELEASEDEL(_GameConfiguration);
 	SAFE_RELEASEDEL(_KeyConfiguration);
-
-	if(DeleteLog)
-		SAFE_DELETE(Mainlog);
 }
 
-AppDef* Leviathan::AppDef::Defaultconf = NULL;
+AppDef* Leviathan::AppDef::Defaultconf = nullptr;
 // ------------------------------------ //
 NamedVars* Leviathan::AppDef::GetValues(){
 	return ConfigurationValues.get();
 }
 
-DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &logfile,
-    const std::string &engineconfigfile, const std::string &gameconfig,
-    const std::string &keyconfig,
+DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &engineconfigfile,
+    const std::string &gameconfig, const std::string &keyconfig,
     std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
     std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker)
 {
-
-	unique_ptr<AppDef> tmpptr(new AppDef(true));
-
-	tmpptr->LogFile = logfile;
-
-    // Always create the logger //
-    tmpptr->Mainlog = new Logger(logfile+"Log.txt");
+    auto tmpptr = std::make_unique<AppDef>(true);
     
     // We created a new one //
     tmpptr->DeleteLog = true;
 
+    if(!Logger::Get()){
+
+        std::cout << "Error: main log hasn't been created before AppDef: GenerateAppdefine" <<
+            std::endl;
+        return nullptr;
+    }
+
 	// load variables from configuration file //
-	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile, tmpptr->Mainlog);
+	tmpptr->ConfigurationValues->LoadVarsFromFile(engineconfigfile, Logger::Get());
 
 	// Load game configuration //
 	tmpptr->_GameConfiguration = new GameConfiguration(gameconfig);
 
 	if(!tmpptr->_GameConfiguration->Init(configchecker)){
 
-		return NULL;
+		return nullptr;
 	}
 
 	// Load key configuration //
@@ -73,7 +71,7 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string &logfil
 
 	if(!tmpptr->_KeyConfiguration->Init(keychecker)){
 
-		return NULL;
+		return nullptr;
 	}
 
 	return tmpptr.release();

@@ -5,7 +5,9 @@
 #include "resource.h"
 
 #include "Define.h"
+#include "Logger.h"
 
+#include <string>
 #include <iostream>
 
 // Breakpad is used to detect and report crashes
@@ -99,16 +101,18 @@ int main(int argcount, char* args[]){
 #endif
 #endif //USE_BREAKPAD
 
+    // Logger. This is here to make logging shutdown errors etc. possible //
+    Logger mainLog("@PROGRAMLOG@" + std::string("Log.txt"));
+
     // World creator object //
     @WorldFactoryClass@ worldFactory;
     
     // Create program object //
     @PROGRAMCLASSNAME@ app;
 
-    std::unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine("@PROGRAMLOG@",
-            "@ENGINECONFIGURATION@", 
-        "@PROGRAMCONFIGURATION@", "@PROGRAMKEYCONFIGURATION@", &@PROGRAMCHECKCONFIGFUNCNAME@,
-        &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
+    std::unique_ptr<AppDef> ProgramDefinition(AppDef::GenerateAppdefine(
+            "@ENGINECONFIGURATION@", "@PROGRAMCONFIGURATION@", "@PROGRAMKEYCONFIGURATION@",
+            &@PROGRAMCHECKCONFIGFUNCNAME@, &@PROGRAMCHECKKEYCONFIGFUNCNAME@));
 
     // Fail if no definition could be created //
     if(!ProgramDefinition){

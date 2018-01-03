@@ -1,8 +1,8 @@
-// ------------------------------------ //
+// Leviathan Game Engine
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-
 #include "Networking/MasterServerInfo.h"
 
 #include "Common/ThreadSafe.h"
@@ -93,13 +93,8 @@ public:
     }
     DLLEXPORT bool GetVSync();
 
-    DLLEXPORT const std::string& GetLogFile(){
-        return LogFile;
-    }
-
-    DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
-        const std::string &engineconfigfile, const std::string &gameconfig,
-        const std::string &keyconfig, 
+    DLLEXPORT static AppDef* GenerateAppdefine(const std::string &engineconfigfile,
+        const std::string &gameconfig, const std::string &keyconfig, 
         std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
         std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker);
         
@@ -134,7 +129,6 @@ protected:
     GameConfiguration* _GameConfiguration = nullptr;
     KeyConfiguration* _KeyConfiguration = nullptr;
 
-    std::string LogFile;
     Logger* Mainlog = nullptr;
 
 

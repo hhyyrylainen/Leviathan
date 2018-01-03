@@ -103,6 +103,11 @@ Logger::~Logger(){
         LatestLogger = nullptr;
 }
 
+DLLEXPORT Logger* Logger::Get(){
+
+    return LatestLogger;
+}
+
 Logger* Logger::LatestLogger = NULL;
 // ------------------------------------ //
 DLLEXPORT void Logger::Write(const std::string &data){
@@ -236,15 +241,15 @@ DLLEXPORT void Logger::DirectWriteBuffer(const std::string &data){
     PendingLog += data;
 }
 // ------------------------------------ //
+DLLEXPORT std::string Logger::GetLogFile() const{
+
+    return Path;
+}
+// ------------------------------------ //
 void Logger::_LogUpdateEndPart(){
 
     _Save();
 }
 // ------------------------------------ //
-DLLEXPORT Logger* Logger::Get(){
-
-    return LatestLogger;
-}
-
 
 

@@ -147,9 +147,10 @@ set(PROGRAMCHECKKEYCONFIGFUNCNAME	"Client::CheckGameKeyConfigVariables")
 set(WINDOWTITLEGENFUNCTION			"Client::GenerateWindowTitle()")
 set(USERREADABLEIDENTIFICATION		"\"Game_Name client version \" GAME_VERSIONS")
 
-# Configure the main file
-configure_file("${LEVIATHAN_SRC}/File Templates/BaseLeviathanProjectMain.cpp.in" 
-  "${PROJECT_SOURCE_DIR}/${BaseSubFolder}/Main.cpp")
+# Configure the files
+StandardConfigureExecutableMainAndInclude("${BaseIncludeFileName}" "Main.cpp"
+  "${BaseSubFolder}" "${PROJECT_SOURCE_DIR}/${BaseSubFolder}")
+
 
 file(GLOB CoreGroup "*.cpp" "*.h")
 

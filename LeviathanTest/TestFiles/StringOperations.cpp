@@ -491,3 +491,25 @@ TEST_CASE("StringOperations RepeatCharacter", "[string]"){
     }
 }
 
+TEST_CASE("StringOperations RemoveEnding", "[string]"){
+
+    SECTION("Single character"){
+
+        CHECK(StringOperations::RemoveEnding<std::string>("my string", "g") == "my strin");
+    }
+
+    SECTION("Short string"){
+
+        CHECK(StringOperations::RemoveEnding<std::string>("my string that ends with this",
+                " this") == "my string that ends with");
+    }
+
+    SECTION("Not removing anything"){
+
+        CHECK(StringOperations::RemoveEnding<std::string>("my string", "n") == "my string");
+
+        CHECK(StringOperations::RemoveEnding<std::string>("my string that ends with this",
+                "i") == "my string that ends with this");
+    }
+}
+

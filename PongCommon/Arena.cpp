@@ -476,7 +476,7 @@ newtonmaterialfetchstartlabel:
 
     // Notify how much stuff was created //
     Logger::Get()->Info("Arena: finished generating arena, total objects: "+
-        Convert::ToString(TargetWorld->GetObjectCount()));
+        Convert::ToString(TargetWorld->GetEntityCount()));
     
     return true;
 }
@@ -615,7 +615,7 @@ void Pong::Arena::LetGoOfBall(){
     if(Ball && TargetWorld){
         
         Logger::Get()->Info("Arena: destroying old ball");
-        TargetWorld->QueueDestroyObject(Ball);
+        TargetWorld->QueueDestroyEntity(Ball);
         Ball = 0;
     }
 }

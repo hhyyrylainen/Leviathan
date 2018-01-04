@@ -49,8 +49,8 @@ DLLEXPORT Leviathan::GameWorld::~GameWorld(){
 
     // Assert if all objects haven't been released already.
     // We can't call virtual methods here anymore
-    LEVIATHAN_ASSERT(Objects.empty(),
-        "GameWorld: Objects not empty in destructor. Was Release called?");
+    LEVIATHAN_ASSERT(Entities.empty(),
+        "GameWorld: Entities not empty in destructor. Was Release called?");
     
     // This should be relatively cheap if the newton threads don't deadlock while waiting
     // for each other
@@ -99,7 +99,7 @@ DLLEXPORT void Leviathan::GameWorld::Release(){
 
     // As all objects are just pointers to components we can just dump the objects
     // and once the component pools are released
-    ClearObjects();
+    ClearEntities();
     
     if(GraphicalMode){
         // TODO: notify our window that it no longer has a world workspace
@@ -306,7 +306,7 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object){
     }    
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveObject(Position &atposition,
+DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveEntity(Position &atposition,
     Connection &connection)
 {
 
@@ -356,7 +356,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
     UpdatePlayersPositionData(*ply);
 
     // Start sending initial update //
-    Logger::Get()->Info("Starting to send "+Convert::ToString(Objects.size())+" to player");
+    Logger::Get()->Info("Starting to send "+Convert::ToString(Entities.size())+" to player");
     
     // Now we can queue all objects for sending //
     // TODO: make sure that all objects are sent
@@ -387,13 +387,13 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
     //         }
             
     //         // Stop if out of bounds //
-    //         if(num >= world->Objects.size()){
+    //         if(num >= world->Entities.size()){
 
     //             goto taskstopprocessingobjectsforinitialsynclabel;
     //         }
 
     //         // Get the object //
-    //         auto tosend = world->Objects[num];
+    //         auto tosend = world->Entities[num];
 
     //         // Skip if shouldn't send //
     //         try{
@@ -416,7 +416,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
 
     //         return;
             
-    //     }, ply->GetConnection(), ply, this, WorldDestroyed), Objects.size()));
+    //     }, ply->GetConnection(), ply, this, WorldDestroyed), Entities.size()));
 }
 
 DLLEXPORT void GameWorld::SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
@@ -434,12 +434,6 @@ DLLEXPORT void GameWorld::SendToAllPlayers(const std::shared_ptr<NetworkResponse
         
         safe->SendPacketToConnection(response, guarantee);
     }
-}
-// ------------------------------------ //
-DLLEXPORT size_t Leviathan::GameWorld::GetObjectCount() const
-{
-
-    return Objects.size();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick){
@@ -558,7 +552,7 @@ DLLEXPORT ObjectID GameWorld::CreateEntity(){
 
     auto id = static_cast<ObjectID>(IDFactory::GetID());
 
-    Objects.push_back(id);
+    Entities.push_back(id);
 
     return id;
 }
@@ -592,7 +586,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
             }
 
             // TODO: pass issendable here to avoid an extra lookup
-            if(!SendObjectToConnection(id, safe)){
+            if(!SendEntityToConnection(id, safe)){
 
                 Logger::Get()->Warning("GameWorld: CreateEntity: failed to send "
                     "object to player (" + (*iter)->GetNickname() + ")");
@@ -604,15 +598,15 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id){
     } else {
 
         // Clients register received objects here //
-        Objects.push_back(id);
+        Entities.push_back(id);
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::ClearObjects(){
+DLLEXPORT void Leviathan::GameWorld::ClearEntities(){
 
     // release objects //
     // TODO: allow objects to do something
-    Objects.clear();
+    Entities.clear();
     
     // Clear all nodes //
     _ResetSystems();
@@ -650,22 +644,22 @@ DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const std::string &name)
         _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::DestroyObject(ObjectID id){
+DLLEXPORT void Leviathan::GameWorld::DestroyEntity(ObjectID id){
 
-    auto end = Objects.end();
-    for(auto iter = Objects.begin(); iter != end; ++iter){
+    auto end = Entities.end();
+    for(auto iter = Entities.begin(); iter != end; ++iter){
         
         if(*iter == id){
 
             _DoDestroy(id);
-            Objects.erase(iter);
+            Entities.erase(iter);
             
             return;
         }
     }
 }
 
-DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(ObjectID id) {
+DLLEXPORT void Leviathan::GameWorld::QueueDestroyEntity(ObjectID id) {
 
     Lock lock(DeleteMutex);
     DelayedDeleteIDS.push_back(id);
@@ -674,11 +668,11 @@ DLLEXPORT void Leviathan::GameWorld::QueueDestroyObject(ObjectID id) {
 void Leviathan::GameWorld::_HandleDelayedDelete(){
 
     // We might want to delete everything //
-    if(ClearAllObjects){
+    if(ClearAllEntities){
 
-        ClearObjects();
+        ClearEntities();
 
-        ClearAllObjects = false;
+        ClearAllEntities = false;
 
         Lock lock(DeleteMutex);
         DelayedDeleteIDS.clear();
@@ -694,7 +688,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(){
         return;
 
     // Search all objects and find the ones that need to be deleted //
-    for(auto iter = Objects.begin(); iter != Objects.end(); ){
+    for(auto iter = Entities.begin(); iter != Entities.end(); ){
 
         // Check does id match any //
         auto curid = *iter;
@@ -716,7 +710,7 @@ void Leviathan::GameWorld::_HandleDelayedDelete(){
         if(delthis){
 
             _DoDestroy(curid);
-            iter = Objects.erase(iter);
+            iter = Entities.erase(iter);
             
             // Check for end //
             if(DelayedDeleteIDS.empty())
@@ -838,7 +832,7 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(const 
 }
 
 DLLEXPORT void Leviathan::GameWorld::MarkForClear(){
-    ClearAllObjects = true;
+    ClearAllEntities = true;
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer &ply)
@@ -863,7 +857,7 @@ void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer &ply)
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::SendObjectToConnection(ObjectID id,
+DLLEXPORT bool Leviathan::GameWorld::SendEntityToConnection(ObjectID id,
     std::shared_ptr<Connection> connection)
 {
     // First create a packet which will be the object's data //
@@ -941,7 +935,7 @@ void GameWorld::_ApplyEntityUpdatePackets(){
         bool found = false;
         
         // Just check if the entity is created/exists //
-        for(auto iter = Objects.begin(); iter != Objects.end(); ++iter){
+        for(auto iter = Entities.begin(); iter != Entities.end(); ++iter){
 
             if((*iter) == data->EntityID){
 

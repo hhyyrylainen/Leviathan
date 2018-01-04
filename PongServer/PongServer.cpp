@@ -388,7 +388,7 @@ void Pong::PongServer::PreFirstTick(){
 void Pong::PongServer::OnStartPreMatch(){
 
     // Setup the world first as that can fail //
-    WorldOfPong->ClearObjects();
+    WorldOfPong->ClearEntities();
     WorldOfPong->SetWorldPhysicsFrozenState(true);
 
     // Setup the objects in the world //

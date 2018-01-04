@@ -32,7 +32,7 @@ template<class StateT> class StateHolder;
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
     
-//! Holds the returned object that was hit during ray casting
+//! Holds the returned entity that was hit during ray casting
 //! \todo Move to a new file
 class RayCastHitEntity : public ReferenceCounted{
 public:
@@ -93,16 +93,18 @@ public:
     //! Release to not use Ogre when deleting
     DLLEXPORT void Release();
 
-    //! \brief Marks all objects to be deleted
+    //! \brief Marks all entities to be deleted
     DLLEXPORT void MarkForClear();
 
     //! Clears all objects from the world
-    DLLEXPORT void ClearObjects();
+    DLLEXPORT void ClearEntities();
 
     //! \brief Returns the number of ObjectIDs this world keeps track of
-    //! \note There may actually be more objects as it is possible to create components
+    //! \note There may actually be more entities as it is possible to create components
     //! for ids that are not created (this is not recommended but it isn't enforced)
-    DLLEXPORT size_t GetObjectCount() const;
+    DLLEXPORT size_t GetEntityCount() const{
+        return Entities.size();
+    }
 
 
     //! \brief Used to keep track of passed ticks and trigger timed triggers
@@ -160,10 +162,10 @@ public:
 
     //! \brief Destroys an entity and all of its components
     //! \todo Make this less expensive
-    DLLEXPORT void DestroyObject(ObjectID id);
+    DLLEXPORT void DestroyEntity(ObjectID id);
 
     //! \brief Deletes an entity during the next tick
-    DLLEXPORT void QueueDestroyObject(ObjectID id);
+    DLLEXPORT void QueueDestroyEntity(ObjectID id);
 
     //! \brief Notifies others that we have created a new entity
     //! \note This is called after all components are set up and it is ready to be sent to
@@ -258,9 +260,9 @@ public:
     DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);
 
     //! \brief Returns true when the player matching the connection should receive updates
-    //! about an object
+    //! about an entity
     //! \todo Implement this
-    DLLEXPORT bool ShouldPlayerReceiveObject(Position &atposition,
+    DLLEXPORT bool ShouldPlayerReceiveEntity(Position &atposition,
         Connection &connection);
 
     //! \brief Returns true if a player with the given connection is receiving updates for
@@ -274,10 +276,10 @@ public:
     DLLEXPORT void SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
         RECEIVE_GUARANTEE guarantee) const;
 
-    //! \brief Sends an object to a connection and sets everything up
-    //! \post The connection will receive updates from the object
+    //! \brief Sends an entity to a connection and sets everything up
+    //! \post The connection will receive updates from the entity
     //! \return True when a packet was sent false otherwise
-    DLLEXPORT bool SendObjectToConnection(ObjectID obj,
+    DLLEXPORT bool SendEntityToConnection(ObjectID obj,
         std::shared_ptr<Connection> connection);
         
     //! \brief Creates a new entity from initial entity response
@@ -339,7 +341,7 @@ protected:
     //! \brief Resets components in holders. Used together with _ResetSystems
     DLLEXPORT virtual void _ResetComponents() = 0;
 
-    //! \brief Called in ClearObjects to let components that need
+    //! \brief Called in ClearEntities to let components that need
     //! Release called have it called on
     DLLEXPORT virtual void _ReleaseAllComponents();
 
@@ -405,16 +407,16 @@ private:
     bool WorldFrozen = false;
 
 
-    //! Marks all objects to be released
-    bool ClearAllObjects = false;
+    //! Marks all entities to be released
+    bool ClearAllEntities = false;
 
     //! Holds the players who are receiving this worlds updates and their corresponding
     //! location entities (if any)
     //! \todo Change this to an object that holds more than the player pointer
     std::vector<std::shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
-    // objects //
-    std::vector<ObjectID> Objects;
+    // Entities //
+    std::vector<ObjectID> Entities;
 
     //! The unique ID
     int ID;
@@ -435,7 +437,7 @@ private:
     Camera* AppliedCameraPropertiesPtr = nullptr;
     
 
-    //! A lock for delayed delete, to allow deleting objects from physical callbacks
+    //! A lock for delayed delete, to allow deleting entities from physical callbacks
     Mutex DeleteMutex;
         
     //! This vector is used for delayed deletion

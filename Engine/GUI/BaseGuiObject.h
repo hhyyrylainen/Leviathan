@@ -85,9 +85,9 @@ public:
     //! \brief Proxy for PrintWindowsRecursive
     DLLEXPORT void PrintWindowsRecursiveProxy();
 		
-    DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForInit();
+    DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForInit() override;
 
-    DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForRelease();
+    DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForRelease() override;
 
 protected:
 

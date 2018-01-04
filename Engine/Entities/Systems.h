@@ -72,8 +72,7 @@ public:
     //! \brief Creates nodes if matching ids are found in all data vectors or
     //! already existing component holders
     //!
-    //! This should be 
-    //! \note It is more efficient to directly create nodes as entities are created
+    //! \todo This should probably not be templated
     template<class FirstType, class SecondType>
         void CreateNodes(
             const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
@@ -86,11 +85,7 @@ public:
         TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, secondholder);
     }
 
-    //! \brief Creates nodes if matching ids are found in all data vectors or
-    //! already existing component holders
-    //!
-    //! This should be 
-    //! \note It is more efficient to directly create nodes as entities are created
+    //! \brief Destroys nodes if matching ids are found in the removed data data vectors
     template<class FirstType, class SecondType>
         void DestroyNodes(
             const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,

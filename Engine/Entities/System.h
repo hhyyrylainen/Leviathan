@@ -17,17 +17,13 @@ namespace Leviathan{
 template<class NodeType>
 class NodeHolder : public ObjectPool<NodeType, ObjectID>{};
 
-//! \brief Base for all entity component related systems
-//!
-//! For ones that use nodes. Not for ones that directly use a single component type
+//! This is split from System to allow easily creation of systems that
+//! have multiple node types
 template<class UsedNode>
-class System{
+class SystemNodeStorage{
 public:
 
     using HolderType = NodeHolder<UsedNode>;
-
-    // Example run method
-    // void Run(GameWorld &world);
 
     void Clear(){
 
@@ -39,18 +35,6 @@ public:
     }    
 
 protected:
-
-    /* Template for node run method, copy-paste and fill in the parameters
-
-        void Run(GameWorld &world){
-        
-        auto& index = Nodes.GetIndex();
-        for(auto iter = index.begin(); iter != index.end(); ++iter){
-
-            this->ProcessNode(*iter->second, iter->first, );
-        }
-    */
-
     //! \brief Helper function for creating nodes based on std::tuple 
     template<class FirstType, class SecondType>
     static void TupleNodeHelper(
@@ -127,12 +111,33 @@ public:
     HolderType Nodes;
 };
 
+//! \brief Base for all entity component related systems
+//!
+//! For ones that use nodes. Not for ones that directly use a single component type
+//! \todo It would bemore efficient to directly create nodes as entities are created instead
+//! of running CreateNodes (implemented in subclasses of this)
+template<class UsedNode>
+class System : public SystemNodeStorage<UsedNode>{
+public:
+    
+    /* Template for node run method, copy-paste and fill in the parameters
+
+        void Run(GameWorld &world){
+        
+        auto& index = Nodes.GetIndex();
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
+
+            this->ProcessNode(*iter->second, iter->first, );
+        }
+    */
+};
+
 //! \brief Base class for systems that use a single component directly
 template<class UsedComponent>
 class SingleSystem{
 public:
     // Example run method
-    //void Run(GameWorld &world, std::unordered_map<ObjectID, UsedComponent*> &index);
+    // void Run(GameWorld &world, std::unordered_map<ObjectID, UsedComponent*> &index);
 };
 
 //! \brief Base class for all systems that create states from changed components

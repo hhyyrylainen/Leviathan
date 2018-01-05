@@ -34,7 +34,6 @@ public:
         return Nodes.GetObjectCount();
     }    
 
-protected:
     //! \brief Helper function for creating nodes based on std::tuple 
     template<class FirstType, class SecondType>
     static void TupleNodeHelper(

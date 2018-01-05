@@ -62,7 +62,7 @@ public:
         void Run(GameWorldT &world, const StateHolder<PositionState> &heldstates, int tick,
             int timeintick)
     {
-        auto& index = Nodes.GetIndex();
+        auto& index = CachedComponents.GetIndex();
         for(auto iter = index.begin(); iter != index.end(); ++iter){
 
             this->ProcessNode(*iter->second, iter->first, heldstates, tick, timeintick);
@@ -73,26 +73,23 @@ public:
     //! already existing component holders
     //!
     //! \todo This should probably not be templated
-    template<class FirstType, class SecondType>
-        void CreateNodes(
-            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
-            const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
-            const ComponentHolder<FirstType> &firstholder,
-            const ComponentHolder<SecondType> &secondholder)
+    void CreateNodes(
+        const std::vector<std::tuple<RenderNode*, ObjectID>> &firstdata,
+        const std::vector<std::tuple<Position*, ObjectID>> &seconddata,
+        const ComponentHolder<RenderNode> &firstholder,
+        const ComponentHolder<Position> &secondholder)
     {
-        static_assert(std::is_same<FirstType, RenderNode>::value, 
-            "CreateNodes FirstType is incorrect");
-        TupleNodeHelper(Nodes, firstdata, seconddata, firstholder, secondholder);
+        TupleCachedComponentCollectionHelper(CachedComponents, firstdata, seconddata,
+            firstholder, secondholder);
     }
 
     //! \brief Destroys nodes if matching ids are found in the removed data data vectors
-    template<class FirstType, class SecondType>
-        void DestroyNodes(
-            const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
-            const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata)
+    void DestroyNodes(
+        const std::vector<std::tuple<RenderNode*, ObjectID>> &firstdata,
+        const std::vector<std::tuple<Position*, ObjectID>> &seconddata)
     {
-        Nodes.RemoveBasedOnKeyTupleList(firstdata);
-        Nodes.RemoveBasedOnKeyTupleList(seconddata);
+        CachedComponents.RemoveBasedOnKeyTupleList(firstdata);
+        CachedComponents.RemoveBasedOnKeyTupleList(seconddata);
     }
 };
 

@@ -70,7 +70,7 @@ TEST_CASE("RenderingPositionSystem creates nodes", "[entity]"){
         addedRenderNode, addedPosition,
         ComponentRenderNode, ComponentPosition);    
     
-    CHECK(_RenderingPositionSystem.GetNodeCount() == 1);
+    CHECK(_RenderingPositionSystem.GetCachedComponentCollectionCount() == 1);
 
 }
 

@@ -172,3 +172,8 @@ public:
 
 };
 }
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::ComponentHolder;
+#endif //LEAK_INTO_GLOBAL
+

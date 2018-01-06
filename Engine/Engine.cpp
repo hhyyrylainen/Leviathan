@@ -858,7 +858,8 @@ void Engine::Tick(){
         
         
         // Call last tick event //
-        
+
+        return;
     }
 
     // Get the passed time since the last update //

@@ -83,6 +83,9 @@ public:
     //! Sets objects attached to the node to be hidden or visible
     bool Hidden = false;
 
+    //! Sets the scale of the node
+    Float3 Scale = Float3(1, 1, 1);
+
     static constexpr auto TYPE = COMPONENT_TYPE::RenderNode;
 };
 

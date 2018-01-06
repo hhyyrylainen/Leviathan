@@ -93,8 +93,8 @@ public:
     }
 };
 
-//! \brief Sets visibility objects with Ogre nodes that have changed RenderNode::Hidden
-class RenderNodeHiderSystem : public SingleSystem<RenderNode>{
+//! \brief Handles properties of Ogre nodes that have a changed RenderNode
+class RenderNodePropertiesSystem : public SingleSystem<RenderNode>{
 public:
 
     void Run(GameWorld &world, std::unordered_map<ObjectID, RenderNode*> &index){
@@ -107,6 +107,7 @@ public:
                 return;
 
             node.Node->setVisible(!node.Hidden);
+            node.Node->setScale(node.Scale);
 
             node.Marked = false;
         }

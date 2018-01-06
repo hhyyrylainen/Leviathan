@@ -183,6 +183,7 @@ public:
 };
 
 //! \brief Base class for systems that use a single component directly
+//! \note This basically has nothing so this doesn't need to be used
 template<class UsedComponent>
 class SingleSystem{
 public:

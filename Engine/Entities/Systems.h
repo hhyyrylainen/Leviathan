@@ -94,7 +94,7 @@ public:
 };
 
 //! \brief Handles properties of Ogre nodes that have a changed RenderNode
-class RenderNodePropertiesSystem : public SingleSystem<RenderNode>{
+class RenderNodePropertiesSystem{
 public:
 
     void Run(GameWorld &world, std::unordered_map<ObjectID, RenderNode*> &index){
@@ -106,6 +106,9 @@ public:
             if(!node.Marked)
                 return;
 
+            // TODO: would it be faster to first check have these
+            // changed or is it better to just set them as Ogre might
+            // also check have the value changed
             node.Node->setVisible(!node.Hidden);
             node.Node->setScale(node.Scale);
 
@@ -118,7 +121,7 @@ public:
 //! \brief Sends updated entities from server to clients
 //! \todo Change this to take distance into account
 //! don't send as many updates to clients far away
-class SendableSystem : public SingleSystem<Sendable>{
+class SendableSystem{
 public:
 
     //! \pre Final states for entities have been created for current tick
@@ -143,7 +146,7 @@ protected:
 };
 
 //! \brief Interpolates states for received objects and handles locally controlled entities
-class ReceivedSystem : public SingleSystem<Received>{
+class ReceivedSystem{
 public:
 
     DLLEXPORT void Run(std::unordered_map<ObjectID, Received*> &index, GameWorld &world);

@@ -568,6 +568,9 @@ struct StartEndIndex {
 		DLLEXPORT inline float Length() const{
 			return sqrt(X*X+Y*Y+Z*Z);
 		}
+        DLLEXPORT inline float LengthSquared() const{
+			return X*X+Y*Y+Z*Z;
+		}
 		// normalizes the vector //
 		DLLEXPORT inline Float3 Normalize() const{
 			const float length = Length();

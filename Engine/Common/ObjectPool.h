@@ -67,11 +67,13 @@ protected:
 };
 
 //! \brief Creates objects in a shared memory region
+//! \todo Should this class use the ordered_malloc family of methods to allow better use
+//! of memory blocks (but is slightly slower for a large number of allocations)
 template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPool{
 public:
-
-    ObjectPool() : Elements(sizeof(ElementType), 100, 200){
+    //! \todo Figure out the optimal value for the Elements constructor (initial size)
+    ObjectPool() : Elements(sizeof(ElementType), 50, 100){
 
     }
 

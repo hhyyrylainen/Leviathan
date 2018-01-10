@@ -25,8 +25,10 @@ class ReferenceCounted{
 public:
 
 #ifdef LEVIATHAN_USING_BOOST
-    using pointer = boost::intrusive_ptr<ReferenceCounted>;
+    // This needs to added with the REFERENCE_COUNTED_PTR_TYPE to any child class
+    // using pointer = boost::intrusive_ptr<ReferenceCounted>;
     using basepointer = boost::intrusive_ptr<ReferenceCounted>;
+    using refcountedpointer = boost::intrusive_ptr<ReferenceCounted>;
 #endif // LEVIATHAN_USING_BOOST
 
     DLLEXPORT inline ReferenceCounted() : RefCount(1){}

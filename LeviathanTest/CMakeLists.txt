@@ -30,6 +30,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/Task.cpp
     TestFiles/Key.cpp
     TestFiles/Events.cpp
+    TestFiles/GameModule.cpp
 
     TestFiles/CoreEngineTests.cpp
     )

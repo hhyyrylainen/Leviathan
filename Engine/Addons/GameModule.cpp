@@ -11,7 +11,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
     const std::string &ownername, const std::string &extension /*= "txt|levgm"*/) :
-    OwnerName(ownername), LoadedFromFile(modulename)
+    OwnerName(ownername)
 {
     std::string file = modulename + ".levgm";
     
@@ -19,14 +19,23 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
         // Find the actual file //
         file = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, modulename,
             extension, false);
+
+        if(file.size() == 0){
+
+            // One more search attempt //
+            file = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT,
+                StringOperations::RemoveExtension(modulename), extension, false);
+        }
         
         if(file.size() == 0){
             // Couldn't find file //
             
-            throw InvalidArgument("File doesn't exist and full search also failed for '" +
-                modulename + "'");
+            throw InvalidArgument("File doesn't exist and full search also failed for "
+                "module '" + modulename + "'");
         }
     }
+
+    LoadedFromFile = file;
 
 	// Load the file //
 	auto ofile = ObjectFileProcessor::ProcessObjectFile(file, Logger::Get());
@@ -67,18 +76,36 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 		throw InvalidArgument("At least one source file expected in sourcefiles");
 	}
 
-    if(sources->GetLineCount() > 1){
+    const auto moduleFilePath = boost::filesystem::path(StringOperations::GetPath(
+            LoadedFromFile));
 
-        LOG_WRITE("TODO: multiple files for GameModule");
-        DEBUG_BREAK;
+    // Resolve all files to their actual paths //
+    for(size_t i = 0; i < sources->GetLineCount(); ++i){
+
+        const std::string& codeFile = sources->GetLine(i);
+
+        // Check first relative, absolute, and then search //
+        if(boost::filesystem::is_regular_file(moduleFilePath / codeFile)){
+
+            SourceFiles.push_back((moduleFilePath / codeFile).generic_string());
+            
+        } else if(boost::filesystem::is_regular_file(codeFile)){
+
+            SourceFiles.push_back(codeFile);
+        } else {
+
+            const std::string& searchedFile = FileSystem::Get()->SearchForFile(
+                FILEGROUP_SCRIPT, StringOperations::RemoveExtension<std::string>(codeFile),
+                StringOperations::GetExtension<std::string>(codeFile), false);
+
+            if(searchedFile.empty()){
+                throw InvalidArgument("GameModule(" + LoadedFromFile + ") can't find "
+                    "source file: " + codeFile);
+            }
+        }
     }
 
-	std::string sourcefilename = StringOperations::RemoveExtension<std::string>(
-        sources->GetLine(0), true);
-    std::string extensions = StringOperations::GetExtension<std::string>(sources->GetLine(0));
-
-	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions,
-        false);
+    LEVIATHAN_ASSERT(!SourceFiles.empty(), "GameModule: empty source files");
 }
 
 DLLEXPORT Leviathan::GameModule::~GameModule(){
@@ -97,14 +124,16 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 
 		Scripting = std::shared_ptr<ScriptScript>(new
             ScriptScript(ScriptExecutor::Get()->CreateNewModule(
-                    "GameModule("+Name+") ScriptModule", SourceFile)));
+                    "GameModule("+Name+") ScriptModule", LoadedFromFile)));
 
 		// Get the newly created module //
 		mod = Scripting->GetModule();
 
-		mod->AddScriptSegmentFromFile(SourceFile);
-		mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
+        for(const auto& file : SourceFiles){
+            mod->AddScriptSegmentFromFile(file);
+        }
 
+        mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
 
 	} else {
         

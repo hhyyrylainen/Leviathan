@@ -1,0 +1,12 @@
+
+Version = 1;
+
+
+o GameModule "MultiFileTestModule"{
+    t sourcefiles{
+        MultiFile_First.as
+        MultiFile_Second.as
+    }
+    l properties{
+    }
+}

@@ -55,8 +55,7 @@ private:
     // Properties loaded from the file //
     std::string Name;
     std::string Version;
-    std::string SourceFile;
-
+    std::vector<std::string> SourceFiles;
 };
 
 }

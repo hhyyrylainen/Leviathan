@@ -43,6 +43,10 @@ Leviathan::FileSystem::FileSystem(){
 }
 
 Leviathan::FileSystem::~FileSystem(){
+
+    // Helps catch errors with tests etc.
+    if(Staticaccess == this)
+        Staticaccess = nullptr;
     
 	SAFE_DELETE_VECTOR(FileTypes);
 

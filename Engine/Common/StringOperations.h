@@ -79,7 +79,6 @@ public:
         static const StringTypeN RemoveExtension(const StringTypeN &filepath,
             bool delpath = true)
     {
-
         size_t startcopy = 0;
         size_t endcopy;
 

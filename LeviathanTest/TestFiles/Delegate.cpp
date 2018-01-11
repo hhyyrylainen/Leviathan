@@ -15,24 +15,24 @@ TEST_CASE("Lambda delegates work", "[delegate]"){
     bool lambda1Called = false;
     bool lambda2Called = false;
 
-    slot.Register(LambdaDelegateSlot::MakeShared(new LambdaDelegateSlot(
+    slot.Register(LambdaDelegateSlot::MakeShared<LambdaDelegateSlot>(
                 [&](const NamedVars::pointer&) -> void {
 
                     lambda1Called = true;
                     
-                }))); 
+                })); 
 
-    slot.Register(LambdaDelegateSlot::MakeShared(new LambdaDelegateSlot(
+    slot.Register(LambdaDelegateSlot::MakeShared<LambdaDelegateSlot>(
                 [&](const NamedVars::pointer&) -> void {
 
                     lambda2Called = true;
                     
-                }))); 
+                })); 
     
     CHECK(!lambda1Called);
     CHECK(!lambda2Called);
 
-    slot.Call(NamedVars::MakeShared(new NamedVars()));
+    slot.Call(NamedVars::MakeShared<NamedVars>());
 
     CHECK(lambda1Called);
     CHECK(lambda2Called);    

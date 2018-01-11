@@ -7,6 +7,7 @@ if(LEVIATHAN_FULL_BUILD)
     PartialEngine.h PartialEngine.cpp
     NetworkTestHelpers.h
 
+    TestFiles/ReferenceCounted.cpp
     TestFiles/StringIterator.cpp
     TestFiles/StringOperations.cpp
     TestFiles/ExtraAlgorithms.cpp

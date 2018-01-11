@@ -31,8 +31,15 @@ public:
     using refcountedpointer = boost::intrusive_ptr<ReferenceCounted>;
 #endif // LEVIATHAN_USING_BOOST
 
+    // Prevent directly using this class
+protected:
     DLLEXPORT inline ReferenceCounted() : RefCount(1){}
     DLLEXPORT virtual ~ReferenceCounted(){}
+public:
+    
+    // Cannot be easily copied because of the reference count
+    ReferenceCounted(const ReferenceCounted &other) = delete;
+    ReferenceCounted& operator=(const ReferenceCounted &other) = delete;
 
     FORCE_INLINE void AddRef(){
 
@@ -47,8 +54,10 @@ public:
 
 #ifdef LEVIATHAN_USING_BOOST
     //! \brief Creates an intrusive_ptr from raw pointer
+    //!
+    //! Releases the reference of the raw pointer (so you don't need to do it manually)
     template<class ActualType>
-        static boost::intrusive_ptr<ActualType> MakeShared(ActualType* ptr){
+        static inline boost::intrusive_ptr<ActualType> WrapPtr(ActualType* ptr){
 
         if(!ptr)
             return nullptr;
@@ -58,6 +67,25 @@ public:
 
         return newptr;
     }
+
+    // Copy this comment to any protected constructors that are meant to be
+    // accessed through this:
+    // These are protected for only constructing properly reference
+    // counted instances through MakeShared
+    // friend ReferenceCounted;
+    // Uncomment the above line after pasting
+
+    //! \brief Constructs a new instance and wraps it
+    //! \note Doesn't catch any exceptions
+    template<class ActualType, class... Args>
+        static boost::intrusive_ptr<ActualType> MakeShared(Args&&... args){
+
+        boost::intrusive_ptr<ActualType> ptr(new ActualType(std::forward<Args>(args)...));
+        ptr->Release();
+
+        return ptr;
+    }
+    
 #endif // LEVIATHAN_USING_BOOST
 
     //! \brief Returns the reference count

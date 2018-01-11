@@ -853,7 +853,7 @@ void VideoPlayer::ResetClock(){
 
 void VideoPlayer::OnStreamEndReached(){
 
-    auto vars = NamedVars::MakeShared(new NamedVars());
+    auto vars = NamedVars::MakeShared<NamedVars>();
     
     vars->AddVar(std::make_shared<NamedVariableList>("oldvideo", new StringBlock(VideoFile)));
     

@@ -12,6 +12,8 @@ DLLEXPORT Delegate::Delegate(){
 
 DLLEXPORT Delegate::~Delegate(){
 
+    LEVIATHAN_ASSERT(GetRefCount() == 1, "Delegate still has active references, scripts "
+        "shouldn't store these");
 }
 // ------------------------------------ //
 DLLEXPORT void Delegate::Call(const NamedVars::pointer &values) const{

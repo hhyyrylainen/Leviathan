@@ -14,26 +14,29 @@ namespace Leviathan{
 class BaseDelegateSlot : public ReferenceCounted{
 public:
 
-    REFERENCE_COUNTED_PTR_TYPE(BaseDelegateSlot);
-
     //! \brief Called from Delegate::Call
     virtual void OnCalled(const NamedVars::pointer &values) = 0;
-    
+
+    REFERENCE_COUNTED_PTR_TYPE(BaseDelegateSlot);
 };
 
 class LambdaDelegateSlot : public BaseDelegateSlot{
 public:
 
-
-    LambdaDelegateSlot(std::function<void(const NamedVars::pointer &values)> callback) :
-        Callback(callback){
-
-    }
-
     void OnCalled(const NamedVars::pointer &values) override{
         Callback(values);
     }
 
+protected:
+    // These are protected for only constructing properly reference
+    // counted instances through MakeShared
+    friend ReferenceCounted;
+    
+    LambdaDelegateSlot(std::function<void(const NamedVars::pointer &values)> callback) :
+        Callback(callback){
+
+    }
+    
 private:
     
     std::function<void (const NamedVars::pointer &values)> Callback;
@@ -48,11 +51,9 @@ private:
 //! shouldn't try to store these. unless the specific object supports storing them
 class Delegate : public ThreadSafe, public ReferenceCounted{
 public:
-
+    
     DLLEXPORT Delegate();
     DLLEXPORT ~Delegate();
-
-    REFERENCE_COUNTED_PTR_TYPE(Delegate);
 
     //! \brief Calls all the attached delegates
     //!
@@ -68,13 +69,12 @@ public:
     //! \note Decreases reference count
     DLLEXPORT void Call(NamedVars* variables) const;
 
+    REFERENCE_COUNTED_PTR_TYPE(Delegate);    
 
 private:
 
     std::vector<BaseDelegateSlot::pointer> AttachedCallbacks;
 };
-
-
 
 
 }

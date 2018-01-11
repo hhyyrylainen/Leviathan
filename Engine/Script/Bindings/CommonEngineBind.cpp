@@ -91,8 +91,8 @@ static void DelegateRegisterProxy(Delegate* obj, asIScriptFunction* callback){
     if(!callback)
         return;
 
-    obj->Register(Script::ScriptDelegateSlot::MakeShared(
-            new Script::ScriptDelegateSlot(callback)));
+    obj->Register(Script::ScriptDelegateSlot::MakeShared<Script::ScriptDelegateSlot>(
+            callback));
 }
 
 static NamedVars* NamedVarsFactory(){

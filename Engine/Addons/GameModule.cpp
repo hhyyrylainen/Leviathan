@@ -76,32 +76,21 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 		throw InvalidArgument("At least one source file expected in sourcefiles");
 	}
 
-    const auto moduleFilePath = boost::filesystem::path(StringOperations::GetPath(
-            LoadedFromFile));
+    const std::string moduleFilePath = boost::filesystem::path(StringOperations::GetPath(
+            LoadedFromFile)).generic_string();
 
     // Resolve all files to their actual paths //
     for(size_t i = 0; i < sources->GetLineCount(); ++i){
 
-        const std::string& codeFile = sources->GetLine(i);
+        const std::string codeFile = ScriptModule::ResolvePathToScriptFile(sources->GetLine(i),
+            moduleFilePath);
 
-        // Check first relative, absolute, and then search //
-        if(boost::filesystem::is_regular_file(moduleFilePath / codeFile)){
-
-            SourceFiles.push_back((moduleFilePath / codeFile).generic_string());
-            
-        } else if(boost::filesystem::is_regular_file(codeFile)){
-
-            SourceFiles.push_back(codeFile);
+        if(codeFile.empty()){
+            throw InvalidArgument("GameModule(" + LoadedFromFile + ") can't find "
+                    "source file: " + codeFile);
         } else {
 
-            const std::string& searchedFile = FileSystem::Get()->SearchForFile(
-                FILEGROUP_SCRIPT, StringOperations::RemoveExtension<std::string>(codeFile),
-                StringOperations::GetExtension<std::string>(codeFile), false);
-
-            if(searchedFile.empty()){
-                throw InvalidArgument("GameModule(" + LoadedFromFile + ") can't find "
-                    "source file: " + codeFile);
-            }
+            SourceFiles.push_back(codeFile);
         }
     }
 

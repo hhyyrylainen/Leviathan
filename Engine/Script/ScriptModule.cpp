@@ -2,13 +2,14 @@
 #include "ScriptModule.h"
 
 #include "ScriptExecutor.h"
-#include <boost/assign/list_of.hpp>
 #include "Iterators/StringIterator.h"
 #include "FileSystem.h"
 #include "Common/StringOperations.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "add_on/serializer/serializer.h"
 #include "Events/CallableObject.h"
+
+#include <boost/filesystem.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
 ScriptModule::ScriptModule(asIScriptEngine* engine, const std::string &name, int id,
@@ -452,80 +453,33 @@ DLLEXPORT void Leviathan::ScriptModule::PrintFunctionsInModule(){
 DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* include,
     const char* from, CScriptBuilder* builder, void* userParam)
 {
-	// by default we need to try to add include to from path and try to open it //
     std::string file(include);
     std::string infile(from);
 
 	ScriptModule* module = reinterpret_cast<ScriptModule*>(userParam);
     // The module has to be locked during this call
 
-	// if it is prefixed with ".\" or "./" then just look for the file with it's relative path
-	if(file.find(".\\") == 0 || file.find("./") == 0){
+    // Resolve it to an usable path //
+    const auto resolved = ResolvePathToScriptFile(file, infile);
+
+    if(resolved.empty() || !boost::filesystem::exists(resolved)){
+
+        Logger::Get()->Error("ScriptModule: IncludeCallback: couldn't resolve include "
+            "(even with full search), file: " + file + " included in: " + infile +
+            ", while compiling " + module->GetInfoString());
+
+        // Including failed
+        return -1;
+    }
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-		module->_AddFileToMonitorIfNotAlready(file);
+    module->_AddFileToMonitorIfNotAlready(file);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
-        const std::string beginstripped = file.substr(2, file.size()-2);
-        
-		return builder->AddSectionFromFile(file.c_str());
-	}
-
-	size_t lastpathseparator = infile.find_last_of('/');
-	if(lastpathseparator != std::string::npos){
-        
-        std::string justpath = infile.substr(0, lastpathseparator+1); 
-
-        std::string completefile = justpath += file;
-
-		if(FileSystem::FileExists(completefile)){
-			// completed search //
-#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
-
-			module->_AddFileToMonitorIfNotAlready(completefile);
-#endif // SCRIPTMODULE_LISTENFORFILECHANGES
-
-            if(completefile.find("./") == 0)
-                completefile = completefile.substr(2, completefile.size()-2);
-
-			return builder->AddSectionFromFile(completefile.c_str());
-		} else {
-			
-			goto trytofindinscriptfolderincludecallback;
-		}
-	} else {
-trytofindinscriptfolderincludecallback:
-
-		// try to find in script folder //
-		std::string extension = StringOperations::GetExtension<std::string>(file);
-
-		std::string name = StringOperations::RemoveExtension<std::string>(file, true);
-
-		// search //
-		std::string finalpath = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, name,
-            extension, false);
-
-		if(finalpath.size() > 0){
-
-#ifdef SCRIPTMODULE_LISTENFORFILECHANGES
-
-			module->_AddFileToMonitorIfNotAlready(finalpath);
-#endif // SCRIPTMODULE_LISTENFORFILECHANGES
-
-            if(finalpath.find("./") == 0)
-                finalpath = finalpath.substr(2, finalpath.size()-2);
-
-			return builder->AddSectionFromFile(finalpath.c_str());
-		} else {
-
-			Logger::Get()->Error("ScriptModule: IncludeCallback: couldn't resolve include "
-                "(even with full search), file: "+file+" in "+module->GetInfoString());
-		}
-	}
-
-	// if we got here the file couldn't be found //
-	return -1;
+    // TODO: could resolve the path to make the error messages from
+    // angelscripts easier to locate in the actual file
+    return builder->AddSectionFromFile(file.c_str());
 }
 // ------------------------------------ //
 DLLEXPORT size_t Leviathan::ScriptModule::GetScriptSegmentCount() const{
@@ -874,6 +828,28 @@ DLLEXPORT bool Leviathan::ScriptModule::OnAddedToBridge(
 	ArgsBridge = bridge;
 	return true;
 }
+// ------------------------------------ //
+DLLEXPORT std::string ScriptModule::ResolvePathToScriptFile(const std::string &inputfilename,
+    const std::string &relativepath, bool checkworkdirrelative /*= true*/)
+{
+    // Check first relative, absolute, and then search //
+    const auto asRelative = boost::filesystem::path(relativepath) / inputfilename;
+    if(boost::filesystem::is_regular_file(asRelative)){
+        return asRelative.generic_string();
+            
+    } else if(checkworkdirrelative && boost::filesystem::is_regular_file(inputfilename)){
+
+        return inputfilename;
+        
+    } else {
+
+        // This returns an empty string for us //
+        return FileSystem::Get()->SearchForFile(
+            FILEGROUP_SCRIPT, StringOperations::RemoveExtension<std::string>(inputfilename),
+            StringOperations::GetExtension<std::string>(inputfilename), false);
+    }
+}
+
 // ------------------------------------ //
 Mutex Leviathan::ScriptModule::ModuleBuildingMutex;
 

@@ -215,6 +215,9 @@ namespace Leviathan{
 		DLLEXPORT static int ScriptModuleIncludeCallback(const char* include, const char* from,
             CScriptBuilder* builder, void* userParam);
 
+        //! Finds a path to source file or returns an empty string
+        DLLEXPORT static std::string ResolvePathToScriptFile(const std::string &inputfilename,
+            const std::string &relativepath, bool checkworkdirrelative = true);
 
 		//! \brief Call when this module is added to a bridge
 		//! \return True when this is not in a bridge and it is added,

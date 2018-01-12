@@ -787,7 +787,8 @@ void Leviathan::ScriptModule::_BuildTheModule(Lock &guard){
                 ScriptSourceSegments[i]->StartLine-1) < 0)
 		{
 			Logger::Get()->Error("ScriptModule: GetModule: failed to build unbuilt module "
-                "(adding source files failed), "+GetInfoString());
+                "(adding source file '" + ScriptSourceSegments[i]->SourceFile +
+                "' failed), "+GetInfoString());
             
 			ScriptState = SCRIPTBUILDSTATE_FAILED;
 			return;

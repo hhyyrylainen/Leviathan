@@ -474,12 +474,12 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
 
 #ifdef SCRIPTMODULE_LISTENFORFILECHANGES
 
-    module->_AddFileToMonitorIfNotAlready(file);
+    module->_AddFileToMonitorIfNotAlready(resolved);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
     // TODO: could resolve the path to make the error messages from
     // angelscripts easier to locate in the actual file
-    return builder->AddSectionFromFile(file.c_str());
+    return builder->AddSectionFromFile(resolved.c_str());
 }
 // ------------------------------------ //
 DLLEXPORT size_t Leviathan::ScriptModule::GetScriptSegmentCount() const{

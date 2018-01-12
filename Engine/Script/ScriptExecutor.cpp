@@ -26,6 +26,7 @@
 #include "Bindings/GuiScriptBind.h"
 #include "Bindings/TypesBind.h"
 #include "Bindings/EntityBind.h"
+#include "Bindings/OgreBind.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -104,6 +105,9 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 
     // use various binding functions //
     // register global functions and classes //
+    if(!BindOgre(engine))
+        throw Exception("BindOgre failed");
+    
     if(!BindTypes(engine))
         throw Exception("BindTypes failed");    
 

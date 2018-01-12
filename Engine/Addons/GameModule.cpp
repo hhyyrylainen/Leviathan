@@ -87,7 +87,7 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
 
         if(codeFile.empty()){
             throw InvalidArgument("GameModule(" + LoadedFromFile + ") can't find "
-                    "source file: " + codeFile);
+                "source file: " + sources->GetLine(i));
         } else {
 
             SourceFiles.push_back(codeFile);

@@ -34,7 +34,10 @@ worldClass = GameWorldClass.new(
                                       Variable.new("GetScene()", "",
                                                    nonMethodParam: true),
                                       Variable.new("parent", "Ogre::SceneNode*",
-                                                   noRef: true),
+                                                   noRef: true,
+                                                   angelScriptUseInstead:
+                                                     Variable.new("parent", "Ogre::SceneNode")
+                                                  ),
                                       Variable.new("model", "std::string")
                                     ]
                                   )], releaseparams: ["GetScene()"]),

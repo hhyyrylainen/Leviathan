@@ -15,6 +15,13 @@ template<class WorldType>
     bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname){
 
     if(engine->RegisterObjectMethod(classname,
+            "ObjectID CreateEntity()",
+            asMETHOD(WorldType, CreateEntity), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
             "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
             asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0)
     {

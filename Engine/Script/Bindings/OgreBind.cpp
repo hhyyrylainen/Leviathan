@@ -71,6 +71,17 @@ bool BindColour(asIScriptEngine* engine){
     
     return true;
 }
+
+bool BindScene(asIScriptEngine* engine){
+    
+    if(engine->RegisterObjectType("SceneNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    return true;
+}
+
 }
 // ------------------------------------ //
 bool Leviathan::BindOgre(asIScriptEngine* engine){
@@ -82,6 +93,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine){
     }
     
     if(!BindColour(engine))
+        return false;
+
+    if(!BindScene(engine))
         return false;
 
     if(engine->RegisterObjectType("Root", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0)

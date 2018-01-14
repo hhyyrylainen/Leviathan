@@ -8,6 +8,29 @@ using namespace Leviathan;
 
 // Proxies etc.
 // ------------------------------------ //
+// TODO: do these float types need destructor or should they be declared POD types
+
+// Float2
+void Float2ConstructorProxy(void* memory){
+	new(memory) Float2();
+}
+
+void Float2ConstructorProxyAll(void* memory, float x, float y){
+	new(memory) Float2(x, y);
+}
+
+void Float2ConstructorProxySingle(void* memory, float all){
+	new(memory) Float2(all);
+}
+
+void Float2ConstructorProxyCopy(void* memory, const Float2 &other){
+	new(memory) Float2(other);
+}
+
+void Float2DestructorProxy(void* memory){
+	reinterpret_cast<Float2*>(memory)->~Float2();
+}
+
 // Float3
 void Float3ConstructorProxy(void* memory){
 	new(memory) Float3();
@@ -56,6 +79,94 @@ void Float4DestructorProxy(void* memory){
 // Start of the actual bind
 namespace Leviathan{
 
+bool BindFloat2(asIScriptEngine* engine){
+
+	if(engine->RegisterObjectType("Float2", sizeof(Float2), asOBJ_VALUE |
+            asGetTypeTraits<Float2>() | asOBJ_APP_CLASS_ALLFLOATS) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Float2", asBEHAVE_CONSTRUCT, "void f()",
+            asFUNCTION(Float2ConstructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Float2", asBEHAVE_CONSTRUCT, "void f(float value)",
+            asFUNCTION(Float2ConstructorProxySingle), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Float2", asBEHAVE_CONSTRUCT,
+            "void f(float x, float y)",
+            asFUNCTION(Float2ConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Float2", asBEHAVE_CONSTRUCT,
+            "void f(const Float2 &in other)",
+            asFUNCTION(Float2ConstructorProxyCopy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Float2", asBEHAVE_DESTRUCT, "void f()",
+            asFUNCTION(Float2DestructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// Operators //
+	if(engine->RegisterObjectMethod("Float2", "Float2& opAssign(const Float2 &in other)",
+            asMETHODPR(Float2, operator=, (const Float2&), Float2&), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Float2", "Float2 opAdd(const Float2 &in other) const",
+            asMETHODPR(Float2, operator+, (const Float2&) const, Float2), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Float2", "Float2 opSub(const Float2 &in other) const",
+            asMETHODPR(Float2, operator-, (const Float2&) const, Float2), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Float2", "Float2 opMul(float multiply) const",
+            asMETHODPR(Float2, operator*, (float) const, Float2), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Float2", "Float2 Normalize() const",
+            asMETHOD(Float2, Normalize),
+            asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Float2", "float HAddAbs()", asMETHOD(Float2, HAddAbs),
+            asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    // Direct access
+    if(engine->RegisterObjectProperty("Float2", "float X", asOFFSET(Float2, X)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Float2", "float Y", asOFFSET(Float2, Y)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+// ------------------------------------ //
 bool BindFloat3(asIScriptEngine* engine){
 
 	if(engine->RegisterObjectType("Float3", sizeof(Float3), asOBJ_VALUE |
@@ -257,6 +368,9 @@ bool BindTypeDefs(asIScriptEngine* engine){
 bool Leviathan::BindTypes(asIScriptEngine* engine){
 
 	// Register common float types //
+    if(!BindFloat2(engine))
+        return false;
+    
     if(!BindFloat3(engine))
         return false;
     

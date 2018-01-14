@@ -1015,10 +1015,26 @@ END
   def genComponentBinding(c)
     str = ""
 
+    opts = {header: true}
+
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ GetComponent_#{c.type}} +
            %{(ObjectID id)", \n} +
            %{asMETHOD(WorldType, GetComponent_#{c.type}), asCALL_THISCALL) < 0)\n} +
            "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+    str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ } +
+           %{RemoveComponent_#{c.type}(ObjectID id)", \n} +
+           %{asMETHOD(WorldType, GetComponent_#{c.type}), asCALL_THISCALL) < 0)\n} +
+           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"    
+
+    c.constructors.each{|a|
+    
+      str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ Create_#{c.type}} +
+             %{(ObjectID id#{a.formatParametersAngelScript()})", \n} +
+             %{asMETHODPR(WorldType, Create_#{c.type}, \n} +
+             %{    (ObjectID id#{a.formatParameterTypes()}), #{c.type}&), \n} +
+             %{asCALL_THISCALL) < 0)\n} +
+             "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"
+    }
 
     str
   end
@@ -1053,12 +1069,37 @@ class ConstructorInfo
     " : " + @MemberInitializers.map{|i| i[0] + "(" + i[1] + ")"}.join(", ")
   end
 
+  # Formats the parameters of this function for a parameter list
   def formatParameters(opts, leadingcomma: true)
     if @Parameters.empty? or @Parameters.select{|p| !p.NonMethodParam}.empty?
       ""
     else
       (if leadingcomma then ", " else "" end) + @Parameters.select{|p| !p.NonMethodParam}.map{
         |p| p.formatForParams opts
+      }.join(", ")
+    end
+  end
+
+  # Formats the types of parameters of this function for a parameter list
+  def formatParameterTypes(leadingcomma: true)
+    if @Parameters.empty? or @Parameters.select{|p| !p.NonMethodParam}.empty?
+      ""
+    else
+      (if leadingcomma then ", " else "" end) + @Parameters.select{|p| !p.NonMethodParam}.map{
+        |p| p.formatType
+      }.join(", ")
+    end
+  end
+
+  #
+  # AngelScript binding versions
+  #
+  def formatParametersAngelScript(leadingcomma: true)
+    if @Parameters.empty? or @Parameters.select{|p| !p.NonMethodParam}.empty?
+      ""
+    else
+      (if leadingcomma then ", " else "" end) + @Parameters.select{|p| !p.NonMethodParam}.map{
+        |p| p.formatForParamsAngelScript
       }.join(", ")
     end
   end
@@ -1083,10 +1124,11 @@ class ConstructorInfo
 end
 
 class Variable
-  attr_reader :Name, :Type, :Default, :NonMethodParam
+  attr_reader :Name, :Type, :Default, :NonMethodParam, :AngelScriptRef, :AngelScriptUseInstead
 
   def initialize(name, type, default: nil, noRef: false, noConst: false, nonMethodParam: false,
-                 move: false, serializeas: nil)
+                 move: false, serializeas: nil,
+                 angelScriptRef: "in", angelScriptUseInstead: nil)
 
     @Name = name
     @Type = type
@@ -1112,6 +1154,8 @@ class Variable
     @NonMethodParam = nonMethodParam
     @Move = move
     @SerializeAs = serializeas
+    @AngelScriptRef = angelScriptRef
+    @AngelScriptUseInstead = angelScriptUseInstead
   end
 
   def formatDefinition()
@@ -1130,6 +1174,7 @@ class Variable
     end
   end
 
+  # Formats full definition for use in parameter list
   def formatForParams(opts)
     if @NoRef
       "#{@Type} #{@Name.downcase}#{formatDefault opts}"
@@ -1143,6 +1188,56 @@ class Variable
       end
     end
   end
+
+  # Formats only the type. Useful for use in templates
+  def formatType()
+    if @NoRef
+      "#{@Type}"
+    elsif @Move
+      "#{@Type}&&"
+    else
+      if @NoConst
+        "#{@Type}&"
+      else
+        "const #{@Type}&"
+      end
+    end    
+  end
+
+
+  # Formatting for angelscript bindings
+  def TypeAS
+    # Standard translations that reduce typing
+    case @Type
+    when "std::string"
+      "string"
+    when "uint8_t"
+      "uint8"
+    else
+      @Type.sub('*', '@')
+    end
+  end
+  
+  # Formats full definition for use in parameter list
+  def formatForParamsAngelScript()
+
+    if(@AngelScriptUseInstead)
+      return @AngelScriptUseInstead.formatForParamsAngelScript()
+    end
+    
+    opts = {header: true}
+    if @NoRef
+      "#{self.TypeAS} #{@Name.downcase}#{formatDefault opts}"
+    elsif @Move
+      "#{self.TypeAS}&& #{@Name.downcase}#{formatDefault opts}"
+    else
+      if @NoConst
+        "#{self.TypeAS} &#{@AngelScriptRef} #{@Name.downcase}#{formatDefault opts}"
+      else
+        "const #{self.TypeAS} &#{@AngelScriptRef} #{@Name.downcase}#{formatDefault opts}"
+      end
+    end
+  end  
 
   def formatForArgumentList()
     if !@NonMethodParam

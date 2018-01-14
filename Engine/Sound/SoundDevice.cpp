@@ -1,13 +1,12 @@
 // ------------------------------------ //
 #include "SoundDevice.h"
 
-#include "Define.h"
+#include "SFML/Audio/Listener.hpp"
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 
 // might as well resize space for maximum number of playing sounds //
-SoundDevice::SoundDevice() : LoadedSoundObjects(MAX_CONCURRENT_SOUNDS, std::shared_ptr<SoundPlayingSlot>(nullptr)){
+SoundDevice::SoundDevice(){
 
 	// set instance //
 	Instance = this;
@@ -18,70 +17,76 @@ SoundDevice::~SoundDevice(){
 	Instance = NULL;
 }
 
+DLLEXPORT SoundDevice* SoundDevice::Get(){
+    return Instance;
+}
+
 SoundDevice* SoundDevice::Instance = NULL;
 // ------------------------------------ //
 bool SoundDevice::Init(){
 
 	// setup global volume //
-	SetGlobalVolume(50.f);
+	SetGlobalVolume(100.f);
+
+    sf::Listener::setUpVector(0, 1, 0);
 
 	return true;
 }
 void SoundDevice::Release(){
-	LoadedSoundObjects.clear();
+	//LoadedSoundObjects.clear();
 }
 // ------------------------------ //
 void SoundDevice::Tick(int PassedMs){
 	// we can probably mark sounds that should be recycled in the future //
 	bool delmore = true;
 
-	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
+	// for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
 
-		if(!LoadedSoundObjects[i])
-			continue;
+	// 	if(!LoadedSoundObjects[i])
+	// 		continue;
 
-		LoadedSoundObjects[i]->PassTimeIfNotPlaying(PassedMs);
+	// 	LoadedSoundObjects[i]->PassTimeIfNotPlaying(PassedMs);
 
-		if(delmore){
+	// 	if(delmore){
 
-			// very old sounds should be marked as re-use for something else //
-			if(LoadedSoundObjects[i]->GetUnusedTime() >= SOUND_UNLOAD_UNUSEDTIME){
-				// delete this sound //
-				LoadedSoundObjects.erase(LoadedSoundObjects.begin()+i);
-				// should be fine to stop here //
-				delmore = false;
-			}
-		}
-	}
+	// 		// very old sounds should be marked as re-use for something else //
+	// 		if(LoadedSoundObjects[i]->GetUnusedTime() >= SOUND_UNLOAD_UNUSEDTIME){
+	// 			// delete this sound //
+	// 			LoadedSoundObjects.erase(LoadedSoundObjects.begin()+i);
+	// 			// should be fine to stop here //
+	// 			delmore = false;
+	// 		}
+	// 	}
+	// }
 }
 
-DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const string &file){
-	// loop all and get an empty one or if some already has it return it (if not active) //
-	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
-		if(LoadedSoundObjects[i]){
-			// check is linked //
-			if(!LoadedSoundObjects[i]->IsConnected()){
-				// we can probably just return this one //
-				// TODO: add find same file for efficiency //
-				return LoadedSoundObjects[i];
-			}
+// DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const string &file){
+// 	// loop all and get an empty one or if some already has it return it (if not active) //
+// 	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
+// 		if(LoadedSoundObjects[i]){
+// 			// check is linked //
+// 			if(!LoadedSoundObjects[i]->IsConnected()){
+// 				// we can probably just return this one //
+// 				// TODO: add find same file for efficiency //
+// 				return LoadedSoundObjects[i];
+// 			}
 
-		} else {
-			// add new //
-			LoadedSoundObjects[i] = std::shared_ptr<SoundPlayingSlot>(new SoundPlayingSlot());
-			return LoadedSoundObjects[i];
-		}
-	}
-	// cannot find space for new one //
-	// TODO: clear old ones here //
+// 		} else {
+// 			// add new //
+// 			LoadedSoundObjects[i] = std::shared_ptr<SoundPlayingSlot>(new SoundPlayingSlot());
+// 			return LoadedSoundObjects[i];
+// 		}
+// 	}
+// 	// cannot find space for new one //
+// 	// TODO: clear old ones here //
 
-	return NULL;
-}
+// 	return NULL;
+// }
 
-DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
+// DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
     
-	throw std::runtime_error("not implemented");
-}
+// 	throw std::runtime_error("not implemented");
+// }
 
 DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &pos,
     const Float4 &orientation)
@@ -91,10 +96,30 @@ DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &po
 	// we need to create a vector from the angles //
 	// Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
     //     sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));
+
+    
+    sf::Listener::setPosition(pos.X, pos.Y, pos.Z);
+
+    Ogre::Quaternion quaternion(orientation);
+
+    Ogre::Radian angle;
+    Ogre::Vector3 direction;
+
+    quaternion.ToAngleAxis(angle, direction);
+    
+    sf::Listener::setDirection(direction.x, direction.y, direction.z);
 }
 
 DLLEXPORT void Leviathan::SoundDevice::SetGlobalVolume(const float &vol){
 
+    sf::Listener::setGlobalVolume(vol);
 }
 
 // ------------------------------ //
+DLLEXPORT bool SoundDevice::PlaySoundEffect(const std::string &file){
+
+    DEBUG_BREAK;
+    return false;
+}
+
+

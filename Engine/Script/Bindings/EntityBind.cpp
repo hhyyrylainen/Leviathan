@@ -248,6 +248,14 @@ void Leviathan::RegisterEntity(asIScriptEngine* engine, std::map<int, std::strin
     
     typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Physics"), "Physics"));
     typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Position"), "Position"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Camera"), "Camera"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Plane"), "Plane"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("ManualObject"), "ManualObject"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("BoxGeometry"), "BoxGeometry"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Model"), "Model"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("RenderNode"), "RenderNode"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Received"), "Received"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Sendable"), "Sendable"));
 }
 
 

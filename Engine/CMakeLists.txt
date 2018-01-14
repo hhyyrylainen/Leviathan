@@ -172,6 +172,7 @@ else()
     "Script/ScriptNotifiers.cpp" "Script/ScriptNotifiers.h"
     "Script/ScriptRunningSetup.cpp" "Script/ScriptRunningSetup.h"
     "Script/ScriptScript.cpp" "Script/ScriptScript.h"
+    "Script/AddonTypes.h"
     )
 
   set(GroupScriptInterface

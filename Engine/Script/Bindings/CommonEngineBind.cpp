@@ -28,6 +28,52 @@ using namespace Leviathan;
 
 // Proxies etc.
 // ------------------------------------ //
+
+// This is an assert that prints the callstack for ease of use (and
+// should probably also print local variables)
+void AngelScriptAssertWrapper(asIScriptGeneric* gen){
+
+    bool check = gen->GetArgByte(0);
+
+    if(check)
+        return;
+
+    // Assertion failed //
+    void* messagePtr = gen->GetAddressOfArg(1);
+    std::string message;
+
+    LEVIATHAN_ASSERT(gen->GetEngine()->GetTypeIdByDecl("string") == gen->GetArgTypeId(1),
+        "AngelScriptAssertWrapper got invalid type of message object in generic call");
+
+    if(!messagePtr){
+
+        message = "No message specified in assert() call";
+        
+    } else {
+
+        // Type check for safety //
+        message = *static_cast<std::string*>(messagePtr);
+    }
+
+    LOG_WRITE("[SCRIPT] [ASSERT] FAILED. Message: " + message);
+    // Callstack is printed by the executor of this script when they get our exception
+    // LOG_WRITE("Callstack:");
+
+    asIScriptContext* ctx = asGetActiveContext();
+
+    if(!ctx){
+
+        LOG_ERROR("Assertion couldn't retrieve active context");
+        
+        // Close game
+        LeviathanApplication::Get()->MarkAsClosing();
+        return;
+    }
+    
+    // TODO: allow making script assertions fatal
+    ctx->SetException(("Assertion failed: " + message).c_str());
+}
+
 // Event
 GenericEvent* WrapperGenericEventFactory(const std::string &name){
 
@@ -587,9 +633,16 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
     // LOG_FATAL not bound
+    // Use assert instead
 
 	if(engine->RegisterGlobalFunction("void Print(const string &in message)",
             asFUNCTION(Logger::Print), asCALL_CDECL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterGlobalFunction("void assert(bool expression, const string &in message)",
+            asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
 	}

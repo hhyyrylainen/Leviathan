@@ -160,3 +160,38 @@ if(engine->RegisterObjectMethod(base_as, derived_as "@ opCast()",       \
  }
 
 
+#define ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF_STRING(base, base_as, derived, derived_as) \
+if(engine->RegisterObjectMethod(base_as.c_str(), (derived_as +          \
+            "@ opCast()").c_str(),                                      \
+        asFUNCTION((Leviathan::DoReferenceCastDynamicNoRef<base,        \
+                derived>)),                                             \
+        asCALL_CDECL_OBJFIRST) < 1)                                     \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(                                       \
+         derived_as.c_str(), (base_as + "@ opImplCast()").c_str(),      \
+         asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
+                 base>)),                                               \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(base_as.c_str(),                       \
+         ("const " + derived_as + "@ opCast() const").c_str(),          \
+         asFUNCTION((Leviathan::DoReferenceCastDynamicNoRef<base,       \
+                 derived>)),                                            \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(derived_as.c_str(),                    \
+         ("const " + base_as + "@ opImplCast() const").c_str(),         \
+         asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
+                 base>)),                                               \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }
+
+

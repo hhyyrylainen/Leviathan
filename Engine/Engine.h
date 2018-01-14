@@ -145,6 +145,7 @@ public:
     inline PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
     inline NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
     inline ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
+    inline SoundDevice* GetSoundDevice(){ return Sound; };
     inline ResourceRefreshHandler* GetResourceRefreshHandler(){
         return _ResourceRefreshHandler; };
     inline EntitySerializer* GetEntitySerializer(){ return _EntitySerializer.get(); };

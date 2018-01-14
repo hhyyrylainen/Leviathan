@@ -219,34 +219,14 @@ bool Leviathan::BindEntity(asIScriptEngine* engine){
     if(!BindRayCast(engine))
         return false;
 
-    if(engine->RegisterObjectMethod("GameWorld",
-            "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
-            asMETHOD(GameWorld, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
     if(!BindComponentTypes(engine))
+        return false;
+
+    if(!BindGameWorldBaseMethods<GameWorld>(engine, "GameWorld"))
         return false;
 
     // Component get functions //
     // GameWorld
-    // These are inefficient versions of the get methods, prefer the ones in derived classes
-    if(engine->RegisterObjectMethod("GameWorld",
-            "Physics@ BaseWorldGetComponentPhysics(ObjectID id)",
-            asMETHODPR(GameWorld, GetComponent<Physics>, (ObjectID), Physics&),
-            asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("GameWorld",
-            "Position@ BaseWorldGetComponentPosition(ObjectID id)",
-            asMETHODPR(GameWorld, GetComponent<Position>, (ObjectID), Position&),
-            asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
 
     // ------------------------------------ //
     if(engine->RegisterObjectType("StandardWorld", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
@@ -255,9 +235,6 @@ bool Leviathan::BindEntity(asIScriptEngine* engine){
 
     if(!BindStandardWorldMethods<StandardWorld>(engine, "StandardWorld"))
         return false;
-
-    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(GameWorld, "GameWorld", StandardWorld, "StandardWorld");
-    
     
     return true;
 }

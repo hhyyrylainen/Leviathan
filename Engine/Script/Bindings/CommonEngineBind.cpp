@@ -13,6 +13,7 @@
 #include "Entities/GameWorld.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Networking/NetworkCache.h"
+#include "Sound/SoundDevice.h"
 
 #include "Application/Application.h"
 
@@ -367,7 +368,16 @@ bool BindEngine(asIScriptEngine* engine){
             asMETHOD(Engine, GetEventHandler), asCALL_THISCALL) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
-    }    
+    }
+
+    if(engine->RegisterObjectMethod("Engine",
+            "SoundDevice& GetSoundDevice()",
+            asMETHOD(Engine, GetSoundDevice), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    // ------------------------------------ //
 
     if(engine->RegisterObjectMethod("Engine",
             "int64 GetTimeSinceLastTick()",
@@ -478,8 +488,7 @@ bool BindGameModule(asIScriptEngine* engine){
     
     return true;
 }
-
-
+// ------------------------------------ //
 bool BindDelegates(asIScriptEngine* engine){
 
     if(engine->RegisterFuncdef("void DelegateCallbackFunc(NamedVars@ values)") < 0){
@@ -505,6 +514,22 @@ bool BindDelegates(asIScriptEngine* engine){
     return true;
 }
 
+bool BindSound(asIScriptEngine* engine){
+
+    if(engine->RegisterObjectType("SoundDevice", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SoundDevice",
+            "bool PlaySoundEffect(const string &in file)",
+            asMETHOD(SoundDevice, PlaySoundEffect), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    return true;
+}
+
 }
 
 bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
@@ -513,6 +538,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine){
         return false;
     
     if(!BindEvents(engine))
+        return false;
+
+    if(!BindSound(engine))
         return false;
 
     if(!BindEngine(engine))

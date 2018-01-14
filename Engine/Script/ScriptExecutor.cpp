@@ -18,6 +18,7 @@
 #include <add_on/weakref/weakref.h>
 #include <add_on/scripthelper/scripthelper.h>
 #include <add_on/scriptdictionary/scriptdictionary.h>
+#include <add_on/scriptany/scriptany.h>
 
 #include "ScriptModule.h"
 
@@ -102,6 +103,8 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
     RegisterScriptHandle(engine);
 
     RegisterScriptWeakRef(engine);
+
+    RegisterScriptAny(engine);
 
     // use various binding functions //
     // register global functions and classes //

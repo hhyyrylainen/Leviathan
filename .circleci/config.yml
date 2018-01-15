@@ -8,7 +8,7 @@ jobs:
        - checkout
        - restore_cache:
            keys:
-             - v1-deps-{{ arch }}-{{ checksum "Setup.rb" }}
+             - v1-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
              - v1-deps-{{ arch }}
        - restore_cache:
            keys:
@@ -27,7 +27,7 @@ jobs:
            paths:
              - bin/Data
        - save_cache:
-           key: v1-deps-{{ arch }}-{{ checksum "Setup.rb" }}
+           key: v1-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
            paths:
              - ThirdParty
        - save_cache:

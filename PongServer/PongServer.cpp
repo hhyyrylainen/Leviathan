@@ -87,10 +87,12 @@ void Pong::PongServer::Tick(int mspassed){
 
                         // The identifier defines the AI type and they are set in the database //
                         switch(slotptr->GetControlIdentifier()){
-                            case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs, ran); break;
-                            case 2: GameAI->ExecuteOnModule("CombinedAI", scriptargs, ran); break;
+                            case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs,
+                                ran, true); break;
+                        case 2: GameAI->ExecuteOnModule("CombinedAI", scriptargs, ran, true);
+                            break;
                             case 0: default:
-                                GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
+                                GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran, true);
                         }
                     }
 

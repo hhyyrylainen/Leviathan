@@ -135,6 +135,69 @@ struct StartEndIndex {
             LEVIATHAN_ASSERT(0, "invalid [] access");
             return 0;
         }
+
+		// ------------------- Operators ----------------- //
+		// add elements //
+		DLLEXPORT inline Int2 operator +(const Int2 &val) const{
+			return Int2(X+val.X, Y+val.Y);
+		}
+
+		DLLEXPORT inline Int2* operator +=(const Int2 &val){
+			X +=val.X;
+			Y +=val.Y;
+			return this;
+		}
+		// subtracts all elements //
+		DLLEXPORT inline Int2 operator-(const Int2 &val) const{
+			return Int2(X-val.X, Y-val.Y);
+		}
+		// negates all elements //
+		DLLEXPORT inline Int2 operator-() const{
+			return Int2(-X, -Y);
+		}
+		// multiplies elements together //
+		DLLEXPORT inline Int2 operator*(const Int2 &val) const{
+			return Int2(X*val.X, Y*val.Y);
+		}
+		// multiply  by scalar f //
+		DLLEXPORT inline Int2 operator*(int f) const{
+			return Int2(X*f, Y*f);
+		}
+
+		DLLEXPORT inline Int2* operator*=(int f){
+			X *= f;
+			Y *= f;
+			return this;
+		}
+		// divides all elements //
+		DLLEXPORT inline Int2 operator/(const Int2 &val) const{
+			return Int2(X/val.X, Y/val.Y);
+		}
+		// divides by int //
+		DLLEXPORT inline Int2 operator/(int f) const{
+			return Int2(X/f, Y/f);
+		}
+		// ---- comparison operators ---- //
+		// element by element comparison with operators //
+		DLLEXPORT inline bool operator <(const Int2 &other) const{
+			return X < other.X && Y < other.Y;
+		};
+		DLLEXPORT inline bool operator <=(const Int2 &other) const{
+			return X <= other.X && Y <= other.Y;
+		};
+		DLLEXPORT inline bool operator >(const Int2 &other) const{
+			return X > other.X && Y > other.Y;
+		};
+		DLLEXPORT inline bool operator >=(const Int2 &other) const{
+			return X >= other.X && Y >= other.Y;
+		};
+		DLLEXPORT inline bool operator ==(const Int2 &other) const{
+			return X == other.X && Y == other.Y;
+		};
+		DLLEXPORT inline bool operator !=(const Int2 &other) const{
+			return X != other.X && Y != other.Y;
+		};
+        
 		// ------------------------------------ //
 
 		DLLEXPORT void SetData(const int &data){ X = data; Y = data; };

@@ -126,7 +126,9 @@ namespace Pong{
         //! \brief Called before closing the engine, use to release some stuff
         virtual void CustomEnginePreShutdown(){
 
-            
+            if(GameAI){
+                GameAI->ReleaseScript();
+            }
         }
 
 
@@ -285,6 +287,7 @@ namespace Pong{
             if(!GameAI->Init()){
                 // No AI for the game //
                 Logger::Get()->Error("Failed to load AI!");
+                GameAI->ReleaseScript();
                 SAFE_DELETE(GameAI);
             }
 

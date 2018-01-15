@@ -245,15 +245,18 @@ void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* even
 DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(
     const std::string &entrypoint,
     std::vector<std::shared_ptr<NamedVariableBlock>> &otherparams, bool &existed,
+    bool passself,
     bool fulldeclaration /*= false*/)
 {
 	// Add this as parameter //
-	otherparams.insert(otherparams.begin(), std::shared_ptr<NamedVariableBlock>(new
-            NamedVariableBlock(new VoidPtrBlock(this), "GameModule")));
+    if(passself){
+        otherparams.insert(otherparams.begin(), std::shared_ptr<NamedVariableBlock>(new
+                NamedVariableBlock(new VoidPtrBlock(this), "GameModule")));
 
-	// we are returning ourselves so increase refcount
-	AddRef();
-
+        // we are returning ourselves so increase refcount
+        AddRef();
+    }
+    
 	ScriptRunningSetup setup;
 	setup.SetArguments(otherparams).SetEntrypoint(entrypoint).SetUseFullDeclaration(
         fulldeclaration);

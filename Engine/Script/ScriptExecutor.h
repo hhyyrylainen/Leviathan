@@ -70,6 +70,7 @@ public:
 private:
 
     //! \brief Handles the return type and return value of a function
+    //! \todo Return a tuple with an enum for checking for error conditions
     std::shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode,
         asIScriptContext* ScriptContext,
         ScriptRunningSetup* parameters, asIScriptFunction* func, ScriptModule* scrptmodule,

@@ -32,9 +32,10 @@ public:
 
     //! Executes something on the module and returns the result. Adds the module as first
     //! parameter and existed is set to true if something was executed
+    //! \parameter pasself If true this object is added as the first parameter
     DLLEXPORT std::shared_ptr<VariableBlock> ExecuteOnModule(const std::string &entrypoint,
         std::vector<std::shared_ptr<NamedVariableBlock>> &otherparams, bool &existed,
-        bool fulldeclaration = false);
+        bool passself, bool fulldeclaration = false);
 
 
     //! \brief Returns a string describing this module

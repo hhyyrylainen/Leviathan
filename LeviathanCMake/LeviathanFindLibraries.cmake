@@ -71,7 +71,7 @@ if(LEVIATHAN_FULL_BUILD)
     CEGUIOgreRenderer-9999 sfml-system sfml-audio sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
-    ${Boost_LIBRARIES} ${SDL2_LIBRARY})
+    ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons)
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   if(WIN32)
@@ -89,7 +89,7 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
   
   # Leviathan application libraries
-  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain)
+  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain AngelScriptAddons)
   
 else()
 

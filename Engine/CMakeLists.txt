@@ -287,6 +287,10 @@ if(USE_ANGELSCRIPT)
     message(SEND_ERROR "AngelScript add_on files haven't been installed to the "
       "ThirdParty/include directory")
   endif()
+
+  add_library(AngelScriptAddons ${GroupScriptAddons})
+  set_target_properties(AngelScriptAddons PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+  
 endif()
 
 # set groups
@@ -346,7 +350,7 @@ endif()
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupMath} ${GroupSound}
-  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}  ${GroupScriptAddons} 
+  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}  # ${GroupScriptAddons} 
   ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
   ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
   ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}

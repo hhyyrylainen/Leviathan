@@ -11,6 +11,14 @@
 "file " __FILE__ " on line " + std::to_string(__LINE__));                             \
  return false;
 
+// Maybe this could be avoided by typedefing the right thing to size_t in angelscript
+// initialization based on size of size_t
+//! Put this anywhere it is assumed that angelscript type uint64 is the same as size_t
+#define ANGELSCRIPT_ASSUMED_SIZE_T static_assert(sizeof(size_t) ==       \
+sizeof(uint64_t), "Script register for size_t assumes it is " \
+ "equivalent to uint64_t in angelscript");
+
+
 namespace Leviathan{
 
 // ------------------ Dynamic cast proxies ------------------ //

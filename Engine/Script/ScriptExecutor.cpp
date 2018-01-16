@@ -11,7 +11,6 @@
 #include <add_on/scriptmath/scriptmathcomplex.h>
 #include <add_on/scriptmath/scriptmath.h>
 #include <add_on/scriptarray/scriptarray.h>
-#include <add_on/scriptstdstring/scriptstdstring.h>
 #include <add_on/scriptgrid/scriptgrid.h>
 #include <add_on/scripthandle/scripthandle.h>
 #include <add_on/datetime/datetime.h>

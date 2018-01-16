@@ -66,7 +66,7 @@ public:
     DLLEXPORT static void PrintCallstack(asIScriptContext* ctx, LErrorReporter &output);
     
     DLLEXPORT static ScriptExecutor* Get();
-        
+    
 private:
 
     //! \brief Handles the return type and return value of a function

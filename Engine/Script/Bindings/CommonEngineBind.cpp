@@ -30,7 +30,9 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 // This is an assert that prints the callstack for ease of use (and
-// should probably also print local variables)
+// should probably also print local variables) (actually doesn't print
+// anything as the callstack printing code is in exception handling so
+// we just raise one)
 void AngelScriptAssertWrapper(asIScriptGeneric* gen){
 
     bool check = gen->GetArgByte(0);
@@ -39,11 +41,8 @@ void AngelScriptAssertWrapper(asIScriptGeneric* gen){
         return;
 
     // Assertion failed //
-    void* messagePtr = gen->GetAddressOfArg(1);
+    void* messagePtr = gen->GetArgObject(1);
     std::string message;
-
-    LEVIATHAN_ASSERT(gen->GetEngine()->GetTypeIdByDecl("string") == gen->GetArgTypeId(1),
-        "AngelScriptAssertWrapper got invalid type of message object in generic call");
 
     if(!messagePtr){
 
@@ -52,6 +51,9 @@ void AngelScriptAssertWrapper(asIScriptGeneric* gen){
     } else {
 
         // Type check for safety //
+        LEVIATHAN_ASSERT(gen->GetEngine()->GetTypeIdByDecl("string") == gen->GetArgTypeId(1),
+            "AngelScriptAssertWrapper got invalid type of message object in generic call");
+        
         message = *static_cast<std::string*>(messagePtr);
     }
 

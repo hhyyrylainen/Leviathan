@@ -706,6 +706,18 @@ class GameWorldClass < OutputClass
     else
       f.puts ";"
     end
+
+    # Gets for systems
+    if opts.include?(:header)
+      f.puts "// System gets"
+      @Systems.each{|s|
+
+        f.puts "#{export}#{s.Type}& Get#{s.Type}(){ return _#{s.Type}; }"
+      }
+
+      f.puts ""
+    end
+    
     if opts.include?(:header)
       f.puts <<-END
 //! Helper for getting component of type. This is much slower than

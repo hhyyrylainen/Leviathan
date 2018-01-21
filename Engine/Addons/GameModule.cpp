@@ -82,6 +82,10 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
     // Resolve all files to their actual paths //
     for(size_t i = 0; i < sources->GetLineCount(); ++i){
 
+        // Skip empty lines to allow commenting out things //
+        if(sources->GetLine(i).empty())
+            continue;
+        
         const std::string codeFile = ScriptModule::ResolvePathToScriptFile(sources->GetLine(i),
             moduleFilePath);
 

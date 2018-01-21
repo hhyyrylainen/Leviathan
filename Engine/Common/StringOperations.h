@@ -463,6 +463,13 @@ public:
             }
         }
 
+        // Return empty string if there is nothing here //
+        if(CopyOperations.empty()){
+
+            vec.push_back(StringTypeN());
+            return false;
+        }
+
         // make sure final position has end //
         if(!CopyOperations.back().End)
             CopyOperations.back().End = strtocut.length();

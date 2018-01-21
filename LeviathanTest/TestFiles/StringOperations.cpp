@@ -106,6 +106,16 @@ TEST_CASE("String cutting", "[string]"){
 
         CHECK(result == std::vector<std::string>({"victory sign", "peace sign", "v"}));
     }
+
+    SECTION("Empty CutString"){
+
+        std::vector<std::string> result;
+
+        CHECK(StringOperations::CutString<std::string>("", "a", result) == false);
+
+        REQUIRE(result.size() == 1);
+        CHECK(result[0] == "");
+    }
 }
 
 TEST_CASE("String text replacing ", "[string]"){

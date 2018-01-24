@@ -567,6 +567,9 @@ class GameWorldClass < OutputClass
         f.puts "//! \\brief Returns a reference to a component of wanted type"
         f.puts "//! \\exception NotFound when the specified entity doesn't have a component of"
         f.puts "//! the wanted type"
+        f.puts "//! \\note This is the recommended way to get components. \n"
+        f.puts "//! AngelScript uses the Ptr variant but with this name to not throw " +
+               "exceptions to the scripts"
       end
       
       f.write "#{export}#{c.type}& #{qualifier opts}GetComponent_#{c.type}(ObjectID id)"
@@ -652,6 +655,21 @@ class GameWorldClass < OutputClass
           f.puts "}"
         end
       end
+
+      if firstLoop and opts.include?(:header)
+        f.puts "//! \\brief Returns a pointer to entity's component if it has one of this type"
+        f.puts "//! \\returns nullptr if not found"
+        f.puts "//! \\note This is not the recommended way. Use GetComponent_ instead"
+      end
+      
+      f.write "#{export}#{c.type}* #{qualifier opts}GetComponentPtr_#{c.type}(ObjectID id)"
+      if opts.include?(:impl)
+        f.puts "{"
+        f.puts "return Component#{c.type}.Find(id);"
+        f.puts "}"
+      else
+        f.puts ";"
+      end      
 
       f.puts ""
       firstLoop = false
@@ -1031,7 +1049,7 @@ END
 
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ GetComponent_#{c.type}} +
            %{(ObjectID id)", \n} +
-           %{asMETHOD(WorldType, GetComponent_#{c.type}), asCALL_THISCALL) < 0)\n} +
+           %{asMETHOD(WorldType, GetComponentPtr_#{c.type}), asCALL_THISCALL) < 0)\n} +
            "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ } +
            %{RemoveComponent_#{c.type}(ObjectID id)", \n} +

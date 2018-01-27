@@ -477,8 +477,6 @@ DLLEXPORT int Leviathan::ScriptModule::ScriptModuleIncludeCallback(const char* i
     module->_AddFileToMonitorIfNotAlready(resolved);
 #endif // SCRIPTMODULE_LISTENFORFILECHANGES
 
-    // TODO: could resolve the path to make the error messages from
-    // angelscripts easier to locate in the actual file
     return builder->AddSectionFromFile(resolved.c_str());
 }
 // ------------------------------------ //
@@ -519,6 +517,9 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegment(
 
 DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const std::string &file){
 	GUARD_LOCK();
+
+    auto expanded = boost::filesystem::canonical(file).generic_string();
+    
 	// Check is it already there //
 	for(size_t i = 0; i < ScriptSourceSegments.size(); i++){
 
@@ -530,10 +531,10 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const std::stri
 
 	// Load the source code from the file //
     std::string scriptdata;
-	FileSystem::ReadFileEntirely(file, scriptdata);
+	FileSystem::ReadFileEntirely(expanded, scriptdata);
 
 	ScriptSourceSegments.push_back(std::make_shared<ScriptSourceFileData>(
-            file, 1, scriptdata));
+            expanded, 1, scriptdata));
     
     // Needs to be built next //
     ScriptState = SCRIPTBUILDSTATE_READYTOBUILD;
@@ -833,21 +834,29 @@ DLLEXPORT bool Leviathan::ScriptModule::OnAddedToBridge(
 DLLEXPORT std::string ScriptModule::ResolvePathToScriptFile(const std::string &inputfilename,
     const std::string &relativepath, bool checkworkdirrelative /*= true*/)
 {
+    // The canonical calls here are probably not needed as the as
+    // script builder makes all paths absolute
+    
     // Check first relative, absolute, and then search //
     const auto asRelative = boost::filesystem::path(relativepath) / inputfilename;
     if(boost::filesystem::is_regular_file(asRelative)){
-        return asRelative.generic_string();
+        return boost::filesystem::canonical(asRelative).generic_string();
             
     } else if(checkworkdirrelative && boost::filesystem::is_regular_file(inputfilename)){
 
-        return inputfilename;
+        return boost::filesystem::canonical(inputfilename).generic_string();
         
     } else {
 
         // This returns an empty string for us //
-        return FileSystem::Get()->SearchForFile(
+        std::string searched = FileSystem::Get()->SearchForFile(
             FILEGROUP_SCRIPT, StringOperations::RemoveExtension<std::string>(inputfilename),
             StringOperations::GetExtension<std::string>(inputfilename), false);
+
+        if(searched.empty())
+            return searched;
+        
+        return boost::filesystem::canonical(searched).generic_string();
     }
 }
 

@@ -126,8 +126,6 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
             mod->AddScriptSegmentFromFile(file);
         }
 
-        mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
-
 	} else {
         
 		// Get already created module //

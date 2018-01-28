@@ -22,6 +22,20 @@ template<class WorldType>
     }
 
     if(engine->RegisterObjectMethod(classname,
+            "bool DestroyEntity(ObjectID id)",
+            asMETHOD(WorldType, DestroyEntity), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
+            "PhysicalWorld@ GetPhysicalWorld()",
+            asMETHOD(WorldType, GetPhysicalWorld), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
             "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
             asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0)
     {

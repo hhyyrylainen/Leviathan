@@ -185,6 +185,7 @@ else()
     "Script/Bindings/BindHelpers.h"
     "Script/Bindings/CommonEngineBind.h" "Script/Bindings/CommonEngineBind.cpp"
     "Script/Bindings/OgreBind.h" "Script/Bindings/OgreBind.cpp"
+    "Script/Bindings/NewtonBind.h" "Script/Bindings/NewtonBind.cpp"
     "Script/Bindings/GuiScriptBind.h" "Script/Bindings/GuiScriptBind.cpp"
     "Script/Bindings/TypesBind.h" "Script/Bindings/TypesBind.cpp"
     "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"

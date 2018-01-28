@@ -27,6 +27,7 @@
 #include "Bindings/TypesBind.h"
 #include "Bindings/EntityBind.h"
 #include "Bindings/OgreBind.h"
+#include "Bindings/NewtonBind.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -109,6 +110,9 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
     // register global functions and classes //
     if(!BindOgre(engine))
         throw Exception("BindOgre failed");
+
+    if(!BindNewton(engine))
+        throw Exception("BindNewton failed");
     
     if(!BindTypes(engine))
         throw Exception("BindTypes failed");    

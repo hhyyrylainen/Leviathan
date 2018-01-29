@@ -72,6 +72,27 @@ void Float4ConstructorProxyCopy(void* memory, const Float4 &other){
 void Float4DestructorProxy(void* memory){
 	reinterpret_cast<Float4*>(memory)->~Float4();
 }
+// ------------------------------------ //
+// Int2
+void Int2ConstructorProxy(void* memory){
+	new(memory) Int2();
+}
+
+void Int2ConstructorProxyAll(void* memory, int x, int y){
+	new(memory) Int2(x, y);
+}
+
+void Int2ConstructorProxySingle(void* memory, int all){
+	new(memory) Int2(all);
+}
+
+void Int2ConstructorProxyCopy(void* memory, const Int2 &other){
+	new(memory) Int2(other);
+}
+
+void Int2DestructorProxy(void* memory){
+	reinterpret_cast<Int2*>(memory)->~Int2();
+}
 
 
 
@@ -352,6 +373,81 @@ bool BindFloat4(asIScriptEngine* engine){
     return true;
 }
 // ------------------------------------ //
+bool BindInt2(asIScriptEngine* engine){
+
+	if(engine->RegisterObjectType("Int2", sizeof(Int2), asOBJ_VALUE |
+            asGetTypeTraits<Int2>() | asOBJ_APP_CLASS_ALLINTS) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int2", asBEHAVE_CONSTRUCT, "void f()",
+            asFUNCTION(Int2ConstructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int2", asBEHAVE_CONSTRUCT, "void f(int value)",
+            asFUNCTION(Int2ConstructorProxySingle), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int2", asBEHAVE_CONSTRUCT,
+            "void f(int x, int y)",
+            asFUNCTION(Int2ConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int2", asBEHAVE_CONSTRUCT,
+            "void f(const Int2 &in other)",
+            asFUNCTION(Int2ConstructorProxyCopy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int2", asBEHAVE_DESTRUCT, "void f()",
+            asFUNCTION(Int2DestructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// Operators //
+	if(engine->RegisterObjectMethod("Int2", "Int2& opAssign(const Int2 &in other)",
+            asMETHODPR(Int2, operator=, (const Int2&), Int2&), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Int2", "Int2 opAdd(const Int2 &in other) const",
+            asMETHODPR(Int2, operator+, (const Int2&) const, Int2), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Int2", "Int2 opSub(const Int2 &in other) const",
+            asMETHODPR(Int2, operator-, (const Int2&) const, Int2), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Int2", "Int2 opMul(int multiply) const",
+            asMETHODPR(Int2, operator*, (int) const, Int2), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    // Direct access
+    if(engine->RegisterObjectProperty("Int2", "int X", asOFFSET(Int2, X)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Int2", "int Y", asOFFSET(Int2, Y)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+// ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine){
 
     if(engine->RegisterTypedef("ObjectID", "int") < 0){
@@ -375,6 +471,9 @@ bool Leviathan::BindTypes(asIScriptEngine* engine){
         return false;
     
     if(!BindFloat4(engine))
+        return false;
+
+    if(!BindInt2(engine))
         return false;
 
     if(!BindTypeDefs(engine))

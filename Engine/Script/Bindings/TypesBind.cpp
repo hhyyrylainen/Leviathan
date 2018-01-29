@@ -51,7 +51,7 @@ void Float3ConstructorProxyCopy(void* memory, const Float3 &other){
 void Float3DestructorProxy(void* memory){
 	reinterpret_cast<Float3*>(memory)->~Float3();
 }
-// ------------------------------------ //
+
 // Float4
 void Float4ConstructorProxy(void* memory){
 	new(memory) Float4();
@@ -94,6 +94,26 @@ void Int2DestructorProxy(void* memory){
 	reinterpret_cast<Int2*>(memory)->~Int2();
 }
 
+// Int3
+void Int3ConstructorProxy(void* memory){
+	new(memory) Int3();
+}
+
+void Int3ConstructorProxyAll(void* memory, int x, int y, int z){
+	new(memory) Int3(x, y, z);
+}
+
+void Int3ConstructorProxySingle(void* memory, int all){
+	new(memory) Int3(all);
+}
+
+void Int3ConstructorProxyCopy(void* memory, const Int3 &other){
+	new(memory) Int3(other);
+}
+
+void Int3DestructorProxy(void* memory){
+	reinterpret_cast<Int3*>(memory)->~Int3();
+}
 
 
 // ------------------------------------ //
@@ -448,6 +468,86 @@ bool BindInt2(asIScriptEngine* engine){
     return true;
 }
 // ------------------------------------ //
+bool BindInt3(asIScriptEngine* engine){
+
+	if(engine->RegisterObjectType("Int3", sizeof(Int3), asOBJ_VALUE |
+            asGetTypeTraits<Int3>() | asOBJ_APP_CLASS_ALLINTS) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int3", asBEHAVE_CONSTRUCT, "void f()",
+            asFUNCTION(Int3ConstructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int3", asBEHAVE_CONSTRUCT, "void f(int value)",
+            asFUNCTION(Int3ConstructorProxySingle), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int3", asBEHAVE_CONSTRUCT,
+            "void f(int x, int y, int z)",
+            asFUNCTION(Int3ConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int3", asBEHAVE_CONSTRUCT,
+            "void f(const Int3 &in other)",
+            asFUNCTION(Int3ConstructorProxyCopy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	if(engine->RegisterObjectBehaviour("Int3", asBEHAVE_DESTRUCT, "void f()",
+            asFUNCTION(Int3DestructorProxy),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+	// Operators //
+	if(engine->RegisterObjectMethod("Int3", "Int3& opAssign(const Int3 &in other)",
+            asMETHODPR(Int3, operator=, (const Int3&), Int3&), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Int3", "Int3 opAdd(const Int3 &in other) const",
+            asMETHODPR(Int3, operator+, (const Int3&) const, Int3), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Int3", "Int3 opSub(const Int3 &in other) const",
+            asMETHODPR(Int3, operator-, (const Int3&) const, Int3), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+	if(engine->RegisterObjectMethod("Int3", "Int3 opMul(int multiply) const",
+            asMETHODPR(Int3, operator*, (int) const, Int3), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    // Direct access
+    if(engine->RegisterObjectProperty("Int3", "int X", asOFFSET(Int3, X)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Int3", "int Y", asOFFSET(Int3, Y)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Int3", "int Z", asOFFSET(Int3, Z)) < 0){
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+// ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine){
 
     if(engine->RegisterTypedef("ObjectID", "int") < 0){
@@ -475,6 +575,9 @@ bool Leviathan::BindTypes(asIScriptEngine* engine){
 
     if(!BindInt2(engine))
         return false;
+
+    if(!BindInt3(engine))
+        return false;    
 
     if(!BindTypeDefs(engine))
         return false;

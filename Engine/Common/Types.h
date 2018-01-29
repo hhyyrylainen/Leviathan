@@ -224,9 +224,14 @@ struct StartEndIndex {
         }
 
 		// ------------------------------------ //
-        DLLEXPORT Int3 operator +(const Int3 &val) {
+        DLLEXPORT Int3 operator +(const Int3 &val) const {
             return Int3(X + val.X, Y + val.Y, Z + val.Z);
         }
+
+        DLLEXPORT Int3 operator *(int val) const {
+            return Int3(X * val, Y * val, Z * val);
+        }
+        
         DLLEXPORT int operator[](const int nIndex) const {
             switch (nIndex) {
             case 0: return X;
@@ -240,6 +245,14 @@ struct StartEndIndex {
         DLLEXPORT Int3 operator -(const Int3& other) const {
             return Int3(X - other.X, Y - other.Y, Z - other.Z);
         }
+
+		DLLEXPORT inline Int3* operator*=(int f){
+			X *= f;
+			Y *= f;
+            Z *= f;
+			return this;
+		}
+        
         DLLEXPORT int AddAllTogether() const {
             return X + Y + Z;
         }

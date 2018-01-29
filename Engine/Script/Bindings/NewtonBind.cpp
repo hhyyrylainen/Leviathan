@@ -30,7 +30,7 @@ bool BindNewtonTypes(asIScriptEngine* engine){
     // if(engine->SetDefaultNamespace("") < 0)
     // {
     //     ANGELSCRIPT_REGISTERFAIL;
-    // }    
+    // }
     
     return true;
 }

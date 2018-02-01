@@ -65,20 +65,22 @@ $ffmpeg = FFMPEG.new(
     #"--disable-demuxers",
     "--disable-encoders",
     "--disable-decoders",
-    "--disable-hwaccels",
+    #"--disable-hwaccels",
     "--disable-muxers",
     #"--disable-parsers",
-    #"--disable-protocols",
+    "--disable-protocols",
     "--disable-indevs",
     "--disable-outdevs",
     "--disable-filters",
 
     # Wanted things
     # These aren't enough so all the demuxers protocols and parsers are enabled
-    "--enable-decoder=aac", "--enable-decoder=mpeg4", "--enable-decoder=h264",
-    "--enable-parser=h264", "--enable-parser=aac", "--enable-parser=mpeg4video",
-    "--enable-demuxer=h264", "--enable-demuxer=aac", "--enable-demuxer=m4v",
-
+    # "--enable-decoder=aac", "--enable-decoder=mpeg4", "--enable-decoder=h264",
+    # "--enable-parser=h264", "--enable-parser=aac", "--enable-parser=mpeg4video",
+    # "--enable-demuxer=h264", "--enable-demuxer=aac", "--enable-demuxer=m4v",
+    "--enable-decoder=vorbis",
+    "--enable-decoder=opus",
+    "--enable-decoder=vp9",
     
     # Disable all the external libraries
     "--disable-bzlib", "--disable-iconv",
@@ -133,6 +135,9 @@ end
 
 $leviathanLibList =
   [$newton, $angelscript, $sfml, $ffmpeg]
+
+# This if for testing one single dependency compiling
+#$leviathanLibList = [$ffmpeg]
 
 # Ogre windows deps
 # sdl is also used by Leviathan directly

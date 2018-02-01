@@ -68,7 +68,7 @@ $ffmpeg = FFMPEG.new(
     #"--disable-hwaccels",
     "--disable-muxers",
     #"--disable-parsers",
-    "--disable-protocols",
+    #"--disable-protocols",
     "--disable-indevs",
     "--disable-outdevs",
     "--disable-filters",

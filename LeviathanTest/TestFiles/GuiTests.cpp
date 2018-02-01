@@ -72,9 +72,9 @@ TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired]"){
     
     VideoPlayer player;
 
-    REQUIRE(player.Play("Data/Videos/SampleVideo.mp4"));
+    REQUIRE(player.Play("Data/Videos/SampleVideo.mkv"));
 
-    CHECK(player.GetDuration() == 10.334f);
+    CHECK(player.GetDuration() == 10.336f);
 
     CHECK(player.GetVideoWidth() == 1920);
     CHECK(player.GetVideoHeight() == 1080);

@@ -91,7 +91,8 @@ end
 Dir.chdir(ProjectDir) do
   
   # Assets svn
-  if FetchAssets and not SkipPullUpdates
+  # Always updated for continuous integration stuff
+  if FetchAssets # and not SkipPullUpdates
     
     info "Checking out assets svn"
 

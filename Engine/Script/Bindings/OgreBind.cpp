@@ -16,6 +16,10 @@ void ColourValueProxy(void* memory, float r, float g, float b, float a){
     new(memory) Ogre::ColourValue(r, g, b, a);
 }
 
+void MatrixProxy(void* memory){
+    new(memory) Ogre::Matrix4;
+}
+
 // This is needed because directly registering
 // Ogre::Root::getSingletonPtr() with angelscript does weird stuff
 Ogre::Root* ScriptGetOgre(){
@@ -72,6 +76,26 @@ bool BindColour(asIScriptEngine* engine){
     return true;
 }
 
+bool BindMatrix4(asIScriptEngine* engine){
+
+    if(engine->RegisterObjectType("Matrix4", sizeof(Ogre::Matrix4),
+            asOBJ_VALUE | asGetTypeTraits<Ogre::Matrix4>() | asOBJ_POD) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Matrix4", asBEHAVE_CONSTRUCT,
+            "void f()", 
+            asFUNCTION(MatrixProxy), asCALL_CDECL_OBJFIRST) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    return true;
+}
+
+// ------------------------------------ //
+
 bool BindScene(asIScriptEngine* engine){
     
     if(engine->RegisterObjectType("SceneNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0)
@@ -93,6 +117,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine){
     }
     
     if(!BindColour(engine))
+        return false;
+
+    if(!BindMatrix4(engine))
         return false;
 
     if(!BindScene(engine))
@@ -122,6 +149,9 @@ void Leviathan::RegisterOgre(asIScriptEngine* engine,
     std::map<int, std::string> &typeids)
 {
     typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Ogre::Colour"), "Ogre::Colour"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Ogre::Matrix4"), "Ogre::Matrix4"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Ogre::SceneNode"),
+            "Ogre::SceneNode"));
 }
 
 

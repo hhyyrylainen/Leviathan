@@ -550,7 +550,7 @@ bool BindInt3(asIScriptEngine* engine){
 // ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine){
 
-    if(engine->RegisterTypedef("ObjectID", "int") < 0){
+    if(engine->RegisterTypedef("ObjectID", "int32") < 0){
 
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -586,9 +586,12 @@ bool Leviathan::BindTypes(asIScriptEngine* engine){
 }
 
 void Leviathan::RegisterTypes(asIScriptEngine* engine, std::map<int, std::string> &typeids){
-    
+
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Float2"), "Float2"));
 	typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Float3"), "Float3"));
     typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Float4"), "Float4"));
+    typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Int2"), "Int2"));
+	typeids.insert(std::make_pair(engine->GetTypeIdByDecl("Int3"), "Int3"));    
 }
 
 

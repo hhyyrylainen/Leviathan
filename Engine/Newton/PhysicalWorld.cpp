@@ -48,7 +48,7 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld(){
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/){
 
-    if(maxruns == 0){
+    if(maxruns <= 0){
 
         // TODO: report error?
         maxruns = 1;
@@ -133,6 +133,16 @@ DLLEXPORT void Leviathan::PhysicalWorld::AdjustClock(int milliseconds){
 
     // Convert from milliseconds (10^-3) to micro seconds (10^-6) //
     LastSimulatedTime -= 1000*milliseconds;
+}
+// ------------------------------------ //
+DLLEXPORT void PhysicalWorld::DestroyCollision(NewtonCollision* collision){
+
+    NewtonDestroyCollision(collision);
+}
+
+DLLEXPORT NewtonCollision* PhysicalWorld::CreateCompoundCollision(){
+    // 0 is shapeID
+    return NewtonCreateCompoundCollision(World, 0);
 }
 // ------------------------------------ //
 DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){

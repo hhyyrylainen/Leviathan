@@ -1,6 +1,9 @@
 // ------------------------------------ //
 #include "NewtonBind.h"
 
+#include "Newton/PhysicalWorld.h"
+#include <Newton.h>
+
 #include "Logger.h"
 #include "Define.h"
 
@@ -41,12 +44,27 @@ bool Leviathan::BindNewton(asIScriptEngine* engine){
     if(!BindNewtonTypes(engine))
         return false;
 
-    // These classes are Leviathan classes so these should in no way
-    // be in the newton namespace
+    // These classes are Leviathan classes so these should not be in the newton namespace
     if(engine->RegisterObjectType("PhysicalWorld", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0)
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
+    
+    // TODO: should these be somehow reference counted?
+    
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+            "NewtonCollision@ CreateCompoundCollision()",
+            asMETHOD(PhysicalWorld, CreateCompoundCollision), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+            "NewtonCollision@ DestroyCollision()",
+            asMETHOD(PhysicalWorld, DestroyCollision), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
     
 
     return true;

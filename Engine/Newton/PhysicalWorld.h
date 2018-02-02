@@ -1,17 +1,18 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 //#ifdef __GNUC__
 // Stop newton warnings from popping up
 //#pragma GCC diagnostic push
 //#pragma GCC diagnostic ignored "-Wextern-c-compat"
 //#endif //__GNUC__
 
+#include "Common/ThreadSafe.h"
+
 #include <Newton.h>
 #include <functional>
-#include "../Common/ThreadSafe.h"
 
 //#ifdef __GNUC__
 //#pragma GCC diagnostic pop
@@ -24,52 +25,61 @@
 
 namespace Leviathan{
 
-    int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,
-        int bodyCount);
+int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,
+    int bodyCount);
     
-	class PhysicalWorld{
-        friend int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void*
-            islandHandle, int bodyCount);
-	public:
-		// The constructor also builds the material list for the world, so it is rather expensive //
-		DLLEXPORT PhysicalWorld(GameWorld* owner);
-		DLLEXPORT ~PhysicalWorld();
+class PhysicalWorld{
+    friend int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void*
+        islandHandle, int bodyCount);
+public:
+    // The constructor also builds the material list for the world, so it is rather expensive
+    DLLEXPORT PhysicalWorld(GameWorld* owner);
+    DLLEXPORT ~PhysicalWorld();
 
-        //! \brief Calculates and simulates away all accumulated time
-        DLLEXPORT void SimulateWorld(int maxruns = -1);
+    //! \brief Calculates and simulates away all accumulated time
+    DLLEXPORT void SimulateWorld(int maxruns = -1);
 
-        //! \brief Advances the simulation the specified amount of time
-        DLLEXPORT void SimulateWorldFixed(uint32_t mspassed, uint32_t stepcount = 1);
+    //! \brief Advances the simulation the specified amount of time
+    DLLEXPORT void SimulateWorldFixed(uint32_t mspassed, uint32_t stepcount = 1);
 
-        //! \brief Clears passed time
-		DLLEXPORT void ClearTimers();
+    //! \brief Clears passed time
+    DLLEXPORT void ClearTimers();
 
-        //! \brief Adds or subtracts time from the clock
-        //!
-        //! For example passing in 100 will run the physical simulation more times next update
-        //! to account for milliseconds amount of passed time
-        DLLEXPORT void AdjustClock(int milliseconds);
+    //! \brief Adds or subtracts time from the clock
+    //!
+    //! For example passing in 100 will run the physical simulation more times next update
+    //! to account for milliseconds amount of passed time
+    DLLEXPORT void AdjustClock(int milliseconds);
+    
 
+    // ------------------------------------ //
+    // Physics body creation
+    // NOTE: all created bodies should be destroyed with a call to DestroyCollision
+    // TODO: shapeID apparently is for us to use to mark different bodies, if we want
+    DLLEXPORT void DestroyCollision(NewtonCollision* collision);
+    
+    DLLEXPORT NewtonCollision* CreateCompoundCollision();
+    
+    
 
-        //! \todo Make this return a newton lock that needs to be held while the pointer is used
-		DLLEXPORT NewtonWorld* GetNewtonWorld();
+    DLLEXPORT NewtonWorld* GetNewtonWorld();
 
-	protected:
+protected:
 
-        //! Total amount of microseconds required to be simulated
-		int64_t PassedTimeTotal = 0;
-        int64_t LastSimulatedTime = 0;
+    //! Total amount of microseconds required to be simulated
+    int64_t PassedTimeTotal = 0;
+    int64_t LastSimulatedTime = 0;
 
-		NewtonWorld* World;
-		GameWorld* OwningWorld;
+    NewtonWorld* World;
+    GameWorld* OwningWorld;
 
-        //! Lock for world updates
-        Mutex WorldUpdateLock;
+    //! Lock for world updates
+    Mutex WorldUpdateLock;
 
-        //! Used for resimulation
-        //! \todo Potentially allow this to be a vector
-        NewtonBody* ResimulatedBody = nullptr;
-	};
+    //! Used for resimulation
+    //! \todo Potentially allow this to be a vector
+    NewtonBody* ResimulatedBody = nullptr;
+};
 
 }
 

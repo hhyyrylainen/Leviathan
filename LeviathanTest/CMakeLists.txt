@@ -31,7 +31,8 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/Key.cpp
     TestFiles/Events.cpp
     TestFiles/GameModule.cpp
-
+    TestFiles/Physics.cpp
+    
     TestFiles/CoreEngineTests.cpp
     )
 else()

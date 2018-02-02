@@ -30,6 +30,15 @@ bool BindNewtonTypes(asIScriptEngine* engine){
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("NewtonCollision",
+            "void CompoundCollisionBeginAddRemove()",
+            asFUNCTION(NewtonCompoundCollisionBeginAddRemove), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
+    
+
     // if(engine->SetDefaultNamespace("") < 0)
     // {
     //     ANGELSCRIPT_REGISTERFAIL;
@@ -60,7 +69,7 @@ bool Leviathan::BindNewton(asIScriptEngine* engine){
 	}
 
     if(engine->RegisterObjectMethod("PhysicalWorld",
-            "NewtonCollision@ DestroyCollision()",
+            "void DestroyCollision(NewtonCollision@ collision)",
             asMETHOD(PhysicalWorld, DestroyCollision), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;

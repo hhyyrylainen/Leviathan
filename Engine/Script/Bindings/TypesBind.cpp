@@ -10,6 +10,8 @@ using namespace Leviathan;
 // ------------------------------------ //
 // TODO: do these float types need destructor or should they be declared POD types
 
+ObjectID NULL_OBJECT_WRAPPER = NULL_OBJECT;
+
 // Float2
 void Float2ConstructorProxy(void* memory){
 	new(memory) Float2();
@@ -260,6 +262,13 @@ bool BindFloat3(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+    // Return value isn't actually void here
+	if(engine->RegisterObjectMethod("Float3", "void opAddAssign(const Float3 &in other)",
+            asMETHODPR(Float3, operator+=, (const Float3&), Float3*), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
     
 	if(engine->RegisterObjectMethod("Float3", "Float3 opSub(const Float3 &in other) const",
             asMETHODPR(Float3, operator-, (const Float3&) const, Float3), asCALL_THISCALL) < 0)
@@ -272,6 +281,14 @@ bool BindFloat3(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+    // Return value isn't actually void here
+    if(engine->RegisterObjectMethod("Float3", "void opDivAssign(const float &in value)",
+            asMETHODPR(Float3, operator/=, (const float&), Float3&), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
     
 	if(engine->RegisterObjectMethod("Float3", "Float3 Normalize() const",
             asMETHOD(Float3, Normalize),
@@ -565,6 +582,12 @@ bool BindTypeDefs(asIScriptEngine* engine){
 
     if(engine->RegisterTypedef("ObjectID", "int32") < 0){
 
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const ObjectID NULL_OBJECT",
+            &NULL_OBJECT_WRAPPER) < 0)
+    {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

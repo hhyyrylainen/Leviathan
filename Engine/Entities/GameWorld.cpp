@@ -12,6 +12,7 @@
 #include "Serializers/EntitySerializer.h"
 #include "Entities/Objects/Constraints.h"
 #include "Engine.h"
+#include "Newton/PhysicalWorld.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "../Handlers/IDFactory.h"
 #include "../Window.h"
@@ -36,6 +37,14 @@
 #include "Exceptions.h"
 
 using namespace Leviathan;
+// ------------------------------------ //
+
+// Ray callbacks //
+static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
+    const NewtonCollision* const shapeHit, const dFloat* const hitContact,
+    const dFloat* const hitNormal, dLong collisionID, void* const userData,
+    dFloat intersectParam);
+
 // ------------------------------------ //
 DLLEXPORT Leviathan::GameWorld::GameWorld() :
     ID(IDFactory::GetID())
@@ -807,8 +816,9 @@ DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(const Float
     return data.HitEntities[0];
 }
 
+
 // \todo improve this performance //
-dFloat Leviathan::GameWorld::RayCallbackDataCallbackClosest(const NewtonBody* const body,
+dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
     const NewtonCollision* const shapeHit, const dFloat* const hitContact,
     const dFloat* const hitNormal, dLong collisionID, void* const userData,
     dFloat intersectParam)

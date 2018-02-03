@@ -9,21 +9,23 @@
 
 #include "Component.h"
 
-#include "Newton/PhysicalWorld.h"
 #include "Common/ReferenceCounted.h"
-
-#include "OgrePlane.h"
+#include "Common/ThreadSafe.h"
 
 #define PHYSICS_BASE_GRAVITY		-9.81f
+
+class NewtonBody;
 
 namespace Ogre{
 
 class CompositorWorkspace;
+class Plane;
 }
 
 namespace Leviathan{
 
 class Camera;
+class PhysicalWorld;
 
 template<class StateT> class StateHolder;
 
@@ -139,8 +141,9 @@ public:
     //! \brief Alternative to skybox This is a (possibly curved) plane
     //! attached to the camera that can be used to render a background or
     //! a sky
-    DLLEXPORT void SetSkyPlane(const std::string &material, const Ogre::Plane &plane =
-        Ogre::Plane(1, 1, 1, 1));
+    DLLEXPORT void SetSkyPlane(const std::string &material, const Ogre::Plane &plane
+        // = Ogre::Plane(1, 1, 1, 1)
+    );
 
     //! \brief Disables sky plane
     //! \pre SetSkyPlane has been used to set a sky plane
@@ -249,12 +252,6 @@ public:
 
     //! \todo Synchronize this over the network
     DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
-
-    // Ray callbacks //
-    static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
-        const NewtonCollision* const shapeHit, const dFloat* const hitContact,
-        const dFloat* const hitNormal, dLong collisionID, void* const userData,
-        dFloat intersectParam);
         
     // Script proxies //
     DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);

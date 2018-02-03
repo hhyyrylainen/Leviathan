@@ -36,6 +36,17 @@ bool BindNewtonTypes(asIScriptEngine* engine){
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+    if(engine->RegisterObjectMethod("NewtonCollision",
+            "void CompoundCollisionAddSubCollision(NewtonCollision@ convexCollision)",
+            asFUNCTION(NewtonCompoundCollisionAddSubCollision), asCALL_CDECL_OBJFIRST) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+
+    
+
+    
     
     
 
@@ -60,6 +71,12 @@ bool Leviathan::BindNewton(asIScriptEngine* engine){
     }
     
     // TODO: should these be somehow reference counted?
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+            "void DestroyCollision(NewtonCollision@ collision)",
+            asMETHOD(PhysicalWorld, DestroyCollision), asCALL_THISCALL) < 0)
+	{
+		ANGELSCRIPT_REGISTERFAIL;
+	}
     
     if(engine->RegisterObjectMethod("PhysicalWorld",
             "NewtonCollision@ CreateCompoundCollision()",
@@ -69,12 +86,12 @@ bool Leviathan::BindNewton(asIScriptEngine* engine){
 	}
 
     if(engine->RegisterObjectMethod("PhysicalWorld",
-            "void DestroyCollision(NewtonCollision@ collision)",
-            asMETHOD(PhysicalWorld, DestroyCollision), asCALL_THISCALL) < 0)
+            "NewtonCollision@ CreateSphere(float radius, const Ogre::Matrix4 &in offset = "
+            "Ogre::Matrix4::IDENTITY)",
+            asMETHOD(PhysicalWorld, CreateSphere), asCALL_THISCALL) < 0)
 	{
 		ANGELSCRIPT_REGISTERFAIL;
 	}
-    
 
     return true;
 }

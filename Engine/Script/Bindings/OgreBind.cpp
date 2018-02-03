@@ -90,6 +90,23 @@ bool BindMatrix4(asIScriptEngine* engine){
     {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->SetDefaultNamespace("Ogre::Matrix4") < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Ogre::Matrix4 IDENTITY",
+            const_cast<Ogre::Matrix4*>(&Ogre::Matrix4::IDENTITY)) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("Ogre") < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
     
     return true;
 }

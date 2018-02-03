@@ -5,6 +5,8 @@
 
 #include "Handlers/IDFactory.h"
 
+#include "Newton/NewtonConversions.h"
+
 #include "GameWorld.h"
 #include "Networking/Connection.h"
 #include "Networking/SentNetworkThing.h"
@@ -118,18 +120,12 @@ void Physics::PhysicsMovedEvent(const NewtonBody* const body,
 {
 
 	// first create Ogre 4x4 matrix from the matrix //
-	Ogre::Matrix4 mat(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5],
-        matrix[6], matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12],
-        matrix[13], matrix[14], matrix[15]);
+	Ogre::Matrix4 mat = NewtonMatrixToOgre(matrix);
 
-	// needs to convert from d3d style matrix to OpenGL style matrix //
-    // TODO: do this transpose in the mat constructor
-	Ogre::Matrix4 tmat = mat.transpose();
+	Physics* tmp = static_cast<Physics*>(NewtonBodyGetUserData(body));
 
-	Physics* tmp = reinterpret_cast<Physics*>(NewtonBodyGetUserData(body));
-
-    tmp->_Position.Members._Position = tmat.getTrans();
-    tmp->_Position.Members._Orientation = tmat.extractQuaternion();
+    tmp->_Position.Members._Position = mat.getTrans();
+    tmp->_Position.Members._Orientation = mat.extractQuaternion();
     tmp->_Position.Marked = true;
     
     if(tmp->UpdateSendable){
@@ -144,7 +140,7 @@ void Physics::ApplyForceAndTorgueEvent(const NewtonBody* const body, dFloat
     timestep, int threadIndex)
 {
 	// Get object from body //
-	Physics* tmp = reinterpret_cast<Physics*>(NewtonBodyGetUserData(body));
+	Physics* tmp = static_cast<Physics*>(NewtonBodyGetUserData(body));
     
 	// Check if physics can't apply //
     // Newton won't call this if the mass is 0

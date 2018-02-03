@@ -209,7 +209,13 @@ else()
 
 
   
-  file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
+  file(GLOB GroupNewton 
+    "Newton/NewtonConversions.h"
+    "Newton/NewtonManager.cpp" "Newton/NewtonManager.h"
+    "Newton/PhysicalMaterial.cpp" "Newton/PhysicalMaterial.h"
+    "Newton/PhysicalWorld.cpp" "Newton/PhysicalWorld.h"
+    "Newton/PhysicsMaterialManager.cpp" "Newton/PhysicsMaterialManager.h"
+  )
 
 
   file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")

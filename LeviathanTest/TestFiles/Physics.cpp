@@ -30,6 +30,11 @@ TEST_CASE("Physics world creates collisions", "[physics]"){
 
     REQUIRE(collision1);
 
+    NewtonCollision* collision2 = physWorld.CreateSphere(1);
+
+    REQUIRE(collision2);
+
     physWorld.DestroyCollision(collision1);
+    physWorld.DestroyCollision(collision2);
 }
 

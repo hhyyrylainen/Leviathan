@@ -90,6 +90,10 @@ void Int2ConstructorProxyCopy(void* memory, const Int2 &other){
 	new(memory) Int2(other);
 }
 
+void Int2ListConstructor(void* memory, int* list){
+	new(memory) Int2(list[0], list[1]);
+}
+
 void Int2DestructorProxy(void* memory){
 	reinterpret_cast<Int2*>(memory)->~Int2();
 }
@@ -429,6 +433,15 @@ bool BindInt2(asIScriptEngine* engine){
     {
 		ANGELSCRIPT_REGISTERFAIL;
 	}
+
+	if(engine->RegisterObjectBehaviour("Int2", asBEHAVE_LIST_CONSTRUCT,
+            "void f(const int &in) {int, int}",
+            asFUNCTION(Int2ListConstructor),
+            asCALL_CDECL_OBJFIRST) < 0)
+    {
+		ANGELSCRIPT_REGISTERFAIL;
+	}
+    
 	// Operators //
 	if(engine->RegisterObjectMethod("Int2", "Int2& opAssign(const Int2 &in other)",
             asMETHODPR(Int2, operator=, (const Int2&), Int2&), asCALL_THISCALL) < 0)

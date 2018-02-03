@@ -5,6 +5,7 @@
 #include "PhysicsMaterialManager.h"
 #include "Events/EventHandler.h"
 #include "../TimeIncludes.h"
+#include "NewtonConversions.h"
 #include "Engine.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -142,7 +143,14 @@ DLLEXPORT void PhysicalWorld::DestroyCollision(NewtonCollision* collision){
 
 DLLEXPORT NewtonCollision* PhysicalWorld::CreateCompoundCollision(){
     // 0 is shapeID
-    return NewtonCreateCompoundCollision(World, 0);
+    return NewtonCreateCompoundCollision(World, UNUSED_SHAPE_ID);
+}
+
+DLLEXPORT NewtonCollision* PhysicalWorld::CreateSphere(float radius,
+    const Ogre::Matrix4 &offset /*= Ogre::Matrix4::IDENTITY*/)
+{
+    const auto& prep = PrepareOgreMatrixForNewton(offset);
+    return NewtonCreateSphere(World, radius, UNUSED_SHAPE_ID, prep[0]);
 }
 // ------------------------------------ //
 DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){

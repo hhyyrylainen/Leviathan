@@ -11,6 +11,8 @@
 
 #include "Common/ThreadSafe.h"
 
+#include "OgreMatrix4.h"
+
 #include <Newton.h>
 #include <functional>
 
@@ -24,6 +26,8 @@
  
 
 namespace Leviathan{
+
+constexpr auto UNUSED_SHAPE_ID = 0;
 
 int SingleBodyUpdate(const NewtonWorld* const newtonWorld, const void* islandHandle,
     int bodyCount);
@@ -59,7 +63,9 @@ public:
     DLLEXPORT void DestroyCollision(NewtonCollision* collision);
     
     DLLEXPORT NewtonCollision* CreateCompoundCollision();
-    
+
+    DLLEXPORT NewtonCollision* CreateSphere(float radius, const Ogre::Matrix4 &offset =
+        Ogre::Matrix4::IDENTITY);
     
 
     DLLEXPORT NewtonWorld* GetNewtonWorld();

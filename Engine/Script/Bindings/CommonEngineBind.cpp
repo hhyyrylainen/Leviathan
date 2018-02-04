@@ -14,6 +14,7 @@
 #include "add_on/autowrapper/aswrappedcall.h"
 #include "Networking/NetworkCache.h"
 #include "Sound/SoundDevice.h"
+#include "Utility/Random.h"
 
 #include "Application/Application.h"
 
@@ -397,6 +398,36 @@ bool BindEvents(asIScriptEngine* engine){
     return true;
 }
 // ------------------------------------ //
+bool BindRandom(asIScriptEngine* engine){
+
+    if(engine->RegisterObjectType("Random", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0){
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    // TODO: constructor and reference counting for proper use from scripts
+    
+    if(engine->RegisterObjectMethod("Random", "int GetNumber(int min, int max)",
+            asMETHODPR(Random, GetNumber, (int, int), int), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Random", "int GetNumber(float min, float max)",
+            asMETHODPR(Random, GetNumber, (float, float), float), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Random", "int GetFloat(float min, float max)",
+            asMETHOD(Random, GetFloat), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    return true;
+}
+
+// ------------------------------------ //
 bool BindEngine(asIScriptEngine* engine){
 
     if(engine->RegisterObjectType("Engine", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0){
@@ -411,6 +442,16 @@ bool BindEngine(asIScriptEngine* engine){
     }
 
     // Engine owned singletons //
+    if(!BindRandom(engine))
+        return false;
+
+    if(engine->RegisterObjectMethod("Engine",
+            "Random& GetRandom()",
+            asMETHOD(Engine, GetRandom), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
     if(engine->RegisterObjectMethod("Engine",
             "EventHandler& GetEventHandler()",
             asMETHOD(Engine, GetEventHandler), asCALL_THISCALL) < 0)

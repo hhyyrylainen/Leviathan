@@ -155,6 +155,7 @@ public:
     inline GUI::AlphaHitCache* GetAlphaHitCache(){
         return _AlphaHitCache.get();
     }
+    inline Random* GetRandom(){ return MainRandom; }
 
     DLLEXPORT GraphicalInputEntity* GetWindowFromSDLID(uint32_t sdlid);
     

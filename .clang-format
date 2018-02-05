@@ -18,12 +18,29 @@ AlwaysBreakTemplateDeclarations: 'true'
 BinPackArguments: 'true'
 BinPackParameters: 'true'
 BreakBeforeBinaryOperators: None
-BreakBeforeBraces: Attach
+# BreakBeforeBraces: Attach
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: false
+    AfterControlStatement: false
+    AfterEnum: false
+    AfterFunction: true
+    AfterNamespace: false
+    AfterStruct: false
+    AfterUnion: false
+    # AfterExternBlock: false
+    BeforeCatch: false
+    BeforeElse: false
+    IndentBraces: false
+    SplitEmptyFunction: true
+    SplitEmptyRecord: false
+    SplitEmptyNamespace: true
 BreakBeforeInheritanceComma: 'false'
 BreakBeforeTernaryOperators: 'false'
 BreakConstructorInitializers: AfterColon
 ColumnLimit: '95'
-CommentPragmas: '^! \\'
+# Works fine even without this
+# CommentPragmas: '^! \\'
 CompactNamespaces: 'true'
 ConstructorInitializerAllOnOneLineOrOnePerLine: 'false'
 Cpp11BracedListStyle: 'true'

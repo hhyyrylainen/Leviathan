@@ -106,7 +106,8 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string& modulename,
 
 DLLEXPORT Leviathan::GameModule::~GameModule()
 {
-
+    UnRegisterAllEvents();
+    
     if(Scripting) {
 
         LOG_FATAL("GameModule: 'ReleaseScript' not called before destructor");
@@ -216,23 +217,15 @@ void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* even
 
         // check does the script contain right listeners //
         if(mod->DoesListenersContainSpecificListener(listenername)) {
-            // setup parameters //
-            std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
-                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GameModule"),
-                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(event), "Event")};
 
-            // we are returning ourselves so increase refcount
-            AddRef();
-            event->AddRef();
-
-            ScriptRunningSetup sargs;
-            sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername))
-                .SetArguments(Args);
+            ScriptRunningSetup ssetup;
+            ssetup.SetEntrypoint(mod->GetListeningFunctionName(listenername));
 
             // run the script //
             if(Scripting) {
-                std::shared_ptr<VariableBlock> result =
-                    ScriptExecutor::Get()->RunSetUp(Scripting->GetModule(), &sargs);
+                ScriptExecutor::Get()->RunScript<void>(
+                    Scripting->GetModuleSafe(), ssetup, this, event);
+                // do something with result //
             }
 
             // Do something with the result //
@@ -240,24 +233,14 @@ void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* even
     } else {
         // generic event is passed //
         if(mod->DoesListenersContainSpecificListener("", event2->GetTypePtr())) {
-            // setup parameters //
-            std::vector<std::shared_ptr<NamedVariableBlock>> Args = {
-                std::make_shared<NamedVariableBlock>(new VoidPtrBlock(this), "GameModule"),
-                std::make_shared<NamedVariableBlock>(
-                    new VoidPtrBlock(event2), "GenericEvent")};
 
-            // we are returning ourselves so increase refcount
-            AddRef();
-            event2->AddRef();
-
-            ScriptRunningSetup sargs;
-            sargs.SetEntrypoint(mod->GetListeningFunctionName("", event2->GetTypePtr()))
-                .SetArguments(Args);
+            ScriptRunningSetup ssetup;
+            ssetup.SetEntrypoint(mod->GetListeningFunctionName("", event2->GetTypePtr()));
 
             // run the script //
             if(Scripting) {
-                std::shared_ptr<VariableBlock> result =
-                    ScriptExecutor::Get()->RunSetUp(Scripting->GetModule(), &sargs);
+                ScriptExecutor::Get()->RunScript<void>(
+                    Scripting->GetModuleSafe(), ssetup, this, event2);
                 // do something with result //
             }
         }
@@ -269,6 +252,8 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(
     std::vector<std::shared_ptr<NamedVariableBlock>>& otherparams, bool& existed,
     bool passself, bool fulldeclaration /*= false*/)
 {
+    // TODO: move over to new script call type
+    DEBUG_BREAK;
     // Add this as parameter //
     if(passself) {
         otherparams.insert(otherparams.begin(),
@@ -286,7 +271,7 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(
 
     if(!Scripting)
         return nullptr;
-    
+
     auto result = ScriptExecutor::Get()->RunSetUp(Scripting->GetModule(), &setup);
 
     existed = setup.ScriptExisted;

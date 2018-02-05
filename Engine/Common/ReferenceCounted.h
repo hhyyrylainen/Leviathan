@@ -12,7 +12,8 @@
 namespace Leviathan{
 
 #ifdef LEVIATHAN_USING_BOOST
-#define REFERENCE_COUNTED_PTR_TYPE(x) using pointer = boost::intrusive_ptr<x>;
+#define REFERENCE_COUNTED_PTR_TYPE(x) using pointer = boost::intrusive_ptr<x>; \
+ static constexpr auto ANGELSCRIPT_TYPE = #x "@"; // Appended @ because these are handle types
 #else
 #define REFERENCE_COUNTED_PTR_TYPE(x) 
 #endif // LEVIATHAN_USING_BOOST
@@ -26,7 +27,8 @@ public:
 
 #ifdef LEVIATHAN_USING_BOOST
     // This needs to added with the REFERENCE_COUNTED_PTR_TYPE to any child class
-    // using pointer = boost::intrusive_ptr<ReferenceCounted>;
+    // using pointer = boost::intrusive_ptr<use REFERENCE_COUNTED_PTR_TYPE>;
+    // static constexpr auto ANGELSCRIPT_TYPE = "...";
     using basepointer = boost::intrusive_ptr<ReferenceCounted>;
     using refcountedpointer = boost::intrusive_ptr<ReferenceCounted>;
 #endif // LEVIATHAN_USING_BOOST

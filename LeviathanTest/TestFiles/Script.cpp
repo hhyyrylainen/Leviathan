@@ -104,7 +104,9 @@ int MyRefCountedParam = 0;
 
 class TestMyRefCounted : public ReferenceCounted{
 public:
-    using pointer = boost::intrusive_ptr<ReferenceCounted>;
+
+    REFERENCE_COUNTED_PTR_TYPE(TestMyRefCounted);
+
 protected:
     // Copy this comment to any protected constructors that are meant to be
     // accessed through this:
@@ -164,55 +166,37 @@ TEST_CASE("Running scripts that don't take all ref counted parameters", "[script
     CHECK(ourObj->GetRefCount() == 1);
     
     SECTION("First basic run"){
-        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
-            std::make_shared<NamedVariableBlock>(2, ""),
-            std::make_shared<NamedVariableBlock>(new VoidPtrBlock(ourObj.get()),
-                "TestMyRefCounted")
-        };
-
-        ourObj->AddRef();
-        CHECK(ourObj->GetRefCount() == 2);
 
         ScriptRunningSetup ssetup;
-        ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
+        ssetup.SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
             //.SetPrintErrors(false)
             ;
 
-        std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
-
-        CHECK(ssetup.ScriptExisted == true);
+        auto returned = exec.RunScript<int>(mod, ssetup, 2, ourObj.get());
+        CHECK(ourObj->GetRefCount() == 1);
 
         // check did it run //
-        int value = *returned;
+        CHECK(ssetup.ScriptExisted == true);
+        REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
 
-        CHECK(value == 4);
+        CHECK(returned.Value == 4);
     }
 
-    CHECK(ourObj->GetRefCount() == 1);
-
     SECTION("Second run with ignored object handle"){
-        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
-            std::make_shared<NamedVariableBlock>(2, ""),
-            std::make_shared<NamedVariableBlock>(new VoidPtrBlock(ourObj.get()),
-                "TestMyRefCounted")
-        };
-
-        ourObj->AddRef();
-        CHECK(ourObj->GetRefCount() == 2);
-
+        
         ScriptRunningSetup ssetup;
-        ssetup.SetArguments(Params).SetEntrypoint("Test2").SetUseFullDeclaration(false)
+        ssetup.SetEntrypoint("Test2").SetUseFullDeclaration(false)
             //.SetPrintErrors(false)
             ;
-
-        std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
-
-        CHECK(ssetup.ScriptExisted == true);
-
+        
+        auto returned = exec.RunScript<int>(mod, ssetup, 2, ourObj.get());
+        CHECK(ourObj->GetRefCount() == 1);
+        
         // check did it run //
-        int value = *returned;
+        CHECK(ssetup.ScriptExisted == true);
+        REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
 
-        CHECK(value == 2);
+        CHECK(returned.Value == 2);
     }    
 
     CHECK(ourObj->GetRefCount() == 1);

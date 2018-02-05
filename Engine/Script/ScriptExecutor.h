@@ -35,8 +35,14 @@ struct AngelScriptTypeIDResolver {
 public:
     static int Get(ScriptExecutor* resolver)
     {
-        static int cached = ResolveProxy(T::ANGELSCRIPT_TYPE, resolver);
-        return cached;
+        if constexpr(std::is_pointer_v<T>) {
+            static int cached =
+                ResolveProxy(std::remove_pointer_t<T>::ANGELSCRIPT_TYPE, resolver);
+            return cached;
+        } else {
+            static int cached = ResolveProxy(T::ANGELSCRIPT_TYPE, resolver);
+            return cached;
+        }
     }
 };
 
@@ -572,10 +578,10 @@ private:
                 // If this is by reference, then it must be const
                 if((flags & asTM_OUTREF)) {
 
-                    LOG_ERROR("ScriptExecutor: script wants to take parameter: " +
-                              std::to_string(i) +
-                              " as an outref which isn't supported, for func: " +
-                              func->GetName());
+                    LOG_ERROR(
+                        "ScriptExecutor: script wants to take parameter: " +
+                        std::to_string(i) +
+                        " as an outref which isn't supported, for func: " + func->GetName());
                     return false;
 
                 } else if((flags & asTM_INREF) && !(flags & asTM_CONST)) {

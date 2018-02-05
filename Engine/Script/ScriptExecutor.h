@@ -25,22 +25,55 @@ namespace Leviathan {
 //! This has to be constant (and luckily so far it has been)
 constexpr auto ANGELSCRIPT_VOID_TYPEID = 0;
 
+//! Needed to keep this mess in one file as ScriptExecutor depends on AngelScriptTypeIDResolver
+//! and that depends on it
+DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver);
+
 //! Helper for querying each type for their corresponding angelscript type once
 template<class T>
 struct AngelScriptTypeIDResolver {
 public:
-    static int Get(ScriptExecutor* resolver);
+    static int Get(ScriptExecutor* resolver)
+    {
+        static int cached = ResolveProxy(T::ANGELSCRIPT_TYPE, resolver);
+        return cached;
+    }
 };
 
-#define TYPE_RESOLVER_AS_PREDEFINED(x, astype)                         \
-    template<>                                                         \
-    struct AngelScriptTypeIDResolver<x> {                              \
-        static int Get(ScriptExecutor* resolver)                       \
-        {                                                              \
-            static int cached = resolver->ResolveStringToASID(astype); \
-            return cached;                                             \
-        }                                                              \
+#define TYPE_RESOLVER_AS_PREDEFINED(x, astype)                  \
+    template<>                                                  \
+    struct AngelScriptTypeIDResolver<x> {                       \
+        static int Get(ScriptExecutor* resolver)                \
+        {                                                       \
+            static int cached = ResolveProxy(astype, resolver); \
+            return cached;                                      \
+        }                                                       \
     };
+
+// Special cases of AngelScriptTypeIDResolver for fundamental types //
+TYPE_RESOLVER_AS_PREDEFINED(int, "int");
+TYPE_RESOLVER_AS_PREDEFINED(unsigned int, "uint");
+TYPE_RESOLVER_AS_PREDEFINED(int64_t, "int64");
+TYPE_RESOLVER_AS_PREDEFINED(uint64_t, "uint64");
+TYPE_RESOLVER_AS_PREDEFINED(int16_t, "int16");
+TYPE_RESOLVER_AS_PREDEFINED(uint16_t, "uint16");
+TYPE_RESOLVER_AS_PREDEFINED(int8_t, "int8");
+TYPE_RESOLVER_AS_PREDEFINED(uint8_t, "uint8");
+TYPE_RESOLVER_AS_PREDEFINED(double, "double");
+TYPE_RESOLVER_AS_PREDEFINED(float, "float");
+
+// And other inbuilt types that can't have ANGELSCRIPT_TYPE in their class
+TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
+
+// Special case void //
+template<>
+struct AngelScriptTypeIDResolver<void> {
+    static int Get(ScriptExecutor* resolver)
+    {
+        return ANGELSCRIPT_VOID_TYPEID;
+    }
+};
+
 
 
 //! \todo Make the module finding more efficient, store module IDs in all call sites
@@ -95,10 +128,14 @@ public:
     //! \todo Allow recursive calls and more context reuse. Also wrap context in an object that
     //! automatically returns it in case of expections (_HandleEndedScriptExecution can throw)
     template<typename ReturnT, class... Args>
-    DLLEXPORT ScriptRunResult<ReturnT> RunScript(
-        ScriptModule* module, ScriptRunningSetup& parameters, Args&&... args)
+    DLLEXPORT ScriptRunResult<ReturnT> RunScript(const std::shared_ptr<ScriptModule>& module,
+        ScriptRunningSetup& parameters, Args&&... args)
     {
-        asIScriptFunction* func = GetFunctionFromModule(module, parameters);
+        if(!parameters.Parameters.empty())
+            LOG_FATAL("RunScript: called with old style parameters. Move parameters to the "
+                      "function call");
+
+        asIScriptFunction* func = GetFunctionFromModule(module.get(), parameters);
 
         if(!func)
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
@@ -112,7 +149,8 @@ public:
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
         }
 
-        if(!_PrepareContextForPassingParameters(func, scriptContext, &parameters, module)) {
+        if(!_PrepareContextForPassingParameters(
+               func, scriptContext, &parameters, module.get())) {
 
             _DoneWithContext(scriptContext);
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
@@ -121,7 +159,7 @@ public:
         // Pass the parameters //
         // TODO: Needs a new method for this
         if(!_PassParametersToScript(
-               scriptContext, parameters, module, std::forward<Args>(args)...)) {
+               scriptContext, parameters, module.get(), func, std::forward<Args>(args)...)) {
 
             // Failed passing the parameters //
             _DoneWithContext(scriptContext);
@@ -134,7 +172,7 @@ public:
 
         // Get the return value //
         auto returnvalue = _HandleEndedScriptExecution<ReturnT>(
-            retcode, scriptContext, parameters, func, module);
+            retcode, scriptContext, parameters, func, module.get());
 
         // Release the context //
         _DoneWithContext(scriptContext);
@@ -272,34 +310,17 @@ private:
         const auto parameterType = AngelScriptTypeIDResolver<ReturnT>::Get(this);
         if(returnType != parameterType) {
 
-        forsafetyreleasereceivedobjlabel:
-
-            _DoReceiveParameterTypeError(setup, module, parameterType, returnType);
-
-            asITypeInfo* info = GetASEngine()->GetTypeInfoById(func->GetReturnTypeId());
-
-            const auto flags = info->GetFlags();
-            if((flags & asOBJ_REF) && !(flags & asOBJ_NOCOUNT)) {
-
-                LOG_ERROR(
-                    "ScriptExecutor: script returned an object of ref type but "
-                    "the application wasn't expecting that type. Trying to prevent memory "
-                    "leak my calling release ref through angelscript");
-
-                RunReleaseRefOnObject(
-                    scriptcontext->GetReturnObject(), func->GetReturnTypeId());
-
-                LOG_INFO("Success calling behaviour release");
-            }
-
-            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
+            return _ReturnedTypeDidntMatch<ReturnT>(
+                scriptcontext, setup, func, module, parameterType, returnType);
         }
 
         if constexpr(std::is_same_v<ReturnT, void>) {
 
-            // Need to do handle releases if type was different
+            // Need to do handle releases also here if type was different
             if(returnType != parameterType) {
-                goto forsafetyreleasereceivedobjlabel;
+
+                return _ReturnedTypeDidntMatch<ReturnT>(
+                    scriptcontext, setup, func, module, parameterType, returnType);
             }
 
             // Success, no return value wanted //
@@ -347,7 +368,7 @@ private:
 
             } else if constexpr(std::is_class_v<ReturnT>) {
 
-                // TODO: this needs testing and implementing passing by value INTO scripts
+                // TODO: this needs testing
                 return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, *obj);
             } else {
 
@@ -356,6 +377,32 @@ private:
             }
         }
     }
+
+    //! Helper for releasing unused handle types in _HandleEndedScriptExecution
+    template<typename ReturnT>
+    ScriptRunResult<ReturnT> _ReturnedTypeDidntMatch(asIScriptContext* scriptcontext,
+        ScriptRunningSetup& setup, asIScriptFunction* func, ScriptModule* module,
+        int parameterType, int returnType)
+    {
+        _DoReceiveParameterTypeError(setup, module, parameterType, returnType);
+
+        asITypeInfo* info = GetASEngine()->GetTypeInfoById(func->GetReturnTypeId());
+
+        const auto flags = info->GetFlags();
+        if((flags & asOBJ_REF) && !(flags & asOBJ_NOCOUNT)) {
+
+            LOG_ERROR("ScriptExecutor: script returned an object of ref type but "
+                      "the application wasn't expecting that type. Trying to prevent memory "
+                      "leak my calling release ref through angelscript");
+
+            RunReleaseRefOnObject(scriptcontext->GetReturnObject(), func->GetReturnTypeId());
+
+            LOG_INFO("Success calling behaviour release");
+        }
+
+        return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
+    }
+
 
     //! \brief Handles passing parameters to scripts
     //!
@@ -407,17 +454,77 @@ private:
 
         // Check that type matches //
         int wantedTypeID;
-        if(func->GetParam(i, &wantedTypeID) < 0) {
+        asDWORD flags;
+        if(func->GetParam(i, &wantedTypeID, &flags) < 0) {
 
             LOG_ERROR("ScriptExecutor: failed to get param type from as: " +
                       std::to_string(i) + ", for func: " + func->GetName());
             return false;
         }
 
-        // TODO: conversions from compatible types
+        // TODO: more conversions from compatible types
         const auto parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
-        if(wantedTypeID != parameterType)
+        if(wantedTypeID != parameterType) {
+
+            // Compatibility checks //
+            // This is not the most optimal as this results in a duplicate call to
+            // func->GetParam
+            // TODO: is there a better way than to have this mess here?
+            if(wantedTypeID == AngelScriptTypeIDResolver<int32_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, int32_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<int32_t>(current), std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint32_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, uint32_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<uint32_t>(current), std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint64_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, uint64_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<uint64_t>(current), std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<int64_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, int64_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<int64_t>(current), std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<int8_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, int8_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<int8_t>(current), std::forward<Args>(args)...);
+                }
+
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint8_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, uint8_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<uint8_t>(current), std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<float>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, float>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<float>(current), std::forward<Args>(args)...);
+                }
+
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<double>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, double>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<double>(current), std::forward<Args>(args)...);
+                }
+            }
+
+            // No conversion possible //
             return _DoPassParameterTypeError(setup, module, i, wantedTypeID, parameterType);
+        }
 
         if constexpr(std::is_same_v<CurrentT, int32_t>) {
 
@@ -448,17 +555,43 @@ private:
 
                 _IncrementRefCountIfRefCountedType(current);
 
-                r = scriptcontext->SetArgObject(i, current);
+                r = scriptcontext->SetArgAddress(i, current);
             } else if constexpr(std::is_lvalue_reference_v<CurrentT>) {
 
                 _IncrementRefCountIfRefCountedType(&current);
 
-                r = scriptcontext->SetArgObject(i, &current);
+                r = scriptcontext->SetArgAddress(i, &current);
             } else if constexpr(std::is_class_v<CurrentT>) {
 
-                static_assert(!std::is_class_v<CurrentT>,
-                    "Passing objects by value to scripts is not implemented, TODO: "
-                    "implement this");
+                // Has to be a class that isn't a handle type
+                // So make sure it isn't
+                static_assert(!std::is_base_of_v<CurrentT, ReferenceCounted>,
+                    "Trying to pass an object of reference type by value to script, call new "
+                    "on the argument");
+
+                // If this is by reference, then it must be const
+                if((flags & asTM_OUTREF)) {
+
+                    LOG_ERROR("ScriptExecutor: script wants to take parameter: " +
+                              std::to_string(i) +
+                              " as an outref which isn't supported, for func: " +
+                              func->GetName());
+                    return false;
+
+                } else if((flags & asTM_INREF) && !(flags & asTM_CONST)) {
+
+                    LOG_ERROR(
+                        "ScriptExecutor: script wants to take parameter: " +
+                        std::to_string(i) +
+                        " as non-const inref which isn't supported (add const), for func: " +
+                        func->GetName());
+                    return false;
+
+                } else {
+
+                    r = scriptcontext->SetArgObject(i, const_cast<CurrentT*>(&current));
+                }
+
             } else {
 
                 static_assert(std::is_same_v<CurrentT, void> == std::is_same_v<CurrentT, int>,
@@ -471,7 +604,8 @@ private:
 
         // Error check //
         if(r < 0) {
-
+            LOG_ERROR("ScriptExecutor: failed to pass parameter number: " +
+                      std::to_string(i - 1) + ", for func: " + func->GetName());
             return false;
         }
 
@@ -560,36 +694,6 @@ private:
     static std::map<std::string, int> EngineTypeIDSInverted;
 
     static ScriptExecutor* instance;
-}; // namespace Leviathan
-
-template<class T>
-int AngelScriptTypeIDResolver<T>::Get(ScriptExecutor* resolver)
-{
-    static int cached = resolver->ResolveStringToASID(T::ANGELSCRIPT_TYPE);
-    return cached;
-}
-
-// Special cases of AngelScriptTypeIDResolver for fundamental types //
-TYPE_RESOLVER_AS_PREDEFINED(int, "int");
-TYPE_RESOLVER_AS_PREDEFINED(int64_t, "int64");
-TYPE_RESOLVER_AS_PREDEFINED(uint64_t, "uint64");
-TYPE_RESOLVER_AS_PREDEFINED(int16_t, "int16");
-TYPE_RESOLVER_AS_PREDEFINED(uint16_t, "uint16");
-TYPE_RESOLVER_AS_PREDEFINED(int8_t, "int8");
-TYPE_RESOLVER_AS_PREDEFINED(uint8_t, "uint8");
-TYPE_RESOLVER_AS_PREDEFINED(double, "double");
-TYPE_RESOLVER_AS_PREDEFINED(float, "float");
-
-// And other inbuild types that can't have ANGELSCRIPT_TYPE in their class
-TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
-
-// Special case void //
-template<>
-struct AngelScriptTypeIDResolver<void> {
-    static int Get(ScriptExecutor* resolver)
-    {
-        return ANGELSCRIPT_VOID_TYPEID;
-    }
 };
 
 } // namespace Leviathan

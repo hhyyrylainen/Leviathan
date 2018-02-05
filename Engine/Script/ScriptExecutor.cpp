@@ -30,7 +30,10 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
+DLLEXPORT int Leviathan::ResolveProxy(const char* type, ScriptExecutor* resolver){
 
+    return resolver->ResolveStringToASID(type);
+}
 
 namespace Leviathan {
 

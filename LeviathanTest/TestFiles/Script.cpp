@@ -58,6 +58,48 @@ TEST_CASE("Basic script running", "[script]"){
 	mod->DeleteThisModule();
 }
 
+TEST_CASE("Basic new script running", "[script]"){
+
+    PartialEngine<false> engine;
+    
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    SECTION("Typeid checks"){
+
+        CHECK(exec.ResolveStringToASID("string") ==
+            AngelScriptTypeIDResolver<std::string>::Get(&exec));
+    }
+
+	// setup the script //
+	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "int TestFunction(int Val1, float Val2, const string &in msg){\n"
+		"return int(Val1 * Val2) + msg.length();\n"
+		"}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup;
+    ssetup.SetEntrypoint("TestFunction").SetUseFullDeclaration(false);
+    
+    ScriptRunResult<int> result = exec.RunScript<int>(mod, ssetup, 2, 5,
+        std::string("my string5"));
+
+    REQUIRE(result.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(result.Value == 20);
+    
+    // TODO: add tests for type conversions once they are done
+
+	mod->DeleteThisModule();
+}
+
 int MyRefCountedParam = 0;
 
 class TestMyRefCounted : public ReferenceCounted{

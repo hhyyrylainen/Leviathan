@@ -49,27 +49,6 @@ namespace Leviathan{
 #define LISTENERVALUE_LISTSELECTIONACCEPTED 110
 
 
-	//! used to store function's parameter info
-	struct FunctionParameterInfo{
-		FunctionParameterInfo(int id, int sizes) :
-            FunctionID(id), ParameterTypeIDS(sizes), ParameterDeclarations(sizes),
-			MatchingDataBlockTypes(sizes), ReturnMatchingDataBlock(-1)
-        {
-            
-        };
-
-		int FunctionID;
-
-        std::vector<asUINT> ParameterTypeIDS;
-		//vector<string> ParameterDeclarations;
-        std::vector<std::string> ParameterDeclarations;
-        std::vector<int> MatchingDataBlockTypes;
-
-		asUINT ReturnTypeID;
-        std::string ReturnTypeDeclaration;
-		int ReturnMatchingDataBlock;
-	};
-
 	//! some data that is stored when a listener is found
 	struct ValidListenerData{
 		ValidListenerData(asIScriptFunction* funcptr, std::string* name,

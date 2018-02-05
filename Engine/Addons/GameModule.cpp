@@ -169,14 +169,21 @@ DLLEXPORT bool Leviathan::GameModule::Init(){
 	// Call init callbacks //
 
 	// fire an event //
-	OnEvent(new Event(EVENT_TYPE_INIT, nullptr));
+    Event* initEvent = new Event(EVENT_TYPE_INIT, nullptr);
+	OnEvent(initEvent);
+    // Release our initial reference
+    initEvent->Release();
+    
 	return true;
 }
 
 DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
 	// Call release callback and destroy everything //
 	// fire an event //
-	OnEvent(new Event(EVENT_TYPE_RELEASE, nullptr));
+    Event* releaseEvent = new Event(EVENT_TYPE_RELEASE, nullptr);
+	OnEvent(releaseEvent);
+    // Release our initial reference
+    releaseEvent->Release();    
 
 	// Remove our reference //
 	int tmpid = Scripting->GetModule()->GetID();

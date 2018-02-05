@@ -34,9 +34,11 @@ TEST_CASE("Multi file GameModule runs init", "[script][gamemodule]"){
     REQUIRE_NOTHROW(module = GameModule::MakeShared<GameModule>(
             "MultiFileTestModule", "GameModule test" + std::to_string(__LINE__)));
     REQUIRE(module);
+    CHECK(module->GetRefCount() == 1);
     
     REQUIRE_NOTHROW(module->Init());
-
+    CHECK(module->GetRefCount() == 1);
+    
     // Init method changes it
     CHECK(FirstTestRunSuccessFlag != 0);
 
@@ -45,4 +47,6 @@ TEST_CASE("Multi file GameModule runs init", "[script][gamemodule]"){
 
     // Release module //
     module->ReleaseScript();
+
+    CHECK(module->GetRefCount() == 1);
 }

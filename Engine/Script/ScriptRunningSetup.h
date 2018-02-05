@@ -7,17 +7,21 @@
 
 #include "angelscript.h"
 
-namespace Leviathan{
+#include <type_traits>
 
-enum SCRIPT_RUNTYPE{SCRIPT_RUNTYPE_BREAKONERROR, SCRIPT_RUNTYPE_TRYTOCONTINUE};
+namespace Leviathan {
 
-class ScriptRunningSetup{
+enum SCRIPT_RUNTYPE { SCRIPT_RUNTYPE_BREAKONERROR, SCRIPT_RUNTYPE_TRYTOCONTINUE };
+
+enum class SCRIPT_RUN_RESULT { Success, Error, Suspended };
+
+class ScriptRunningSetup {
 public:
     DLLEXPORT ScriptRunningSetup();
     DLLEXPORT ~ScriptRunningSetup();
 
     // named constructor idiom //
-    DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const std::string &epoint){
+    DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const std::string& epoint) {
         // set //
         Entryfunction = epoint;
         return *this;
@@ -32,27 +36,26 @@ public:
     //     PreFetchedFunction = func;
     //     return *this;
     // }
-        
+
     DLLEXPORT inline ScriptRunningSetup& SetArguments(
-        std::vector<std::shared_ptr<NamedVariableBlock>> &args)
-    {
+        std::vector<std::shared_ptr<NamedVariableBlock>>& args) {
         // set //
         Parameters = args;
         return *this;
     }
-        
-    DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool &state){
+
+    DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool& state) {
         // set //
         FullDeclaration = state;
         return *this;
     }
-        
-    DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool &state){
-            
+
+    DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool& state) {
+
         PrintErrors = state;
         return *this;
     }
-		
+
 
     // variables //
     std::vector<std::shared_ptr<NamedVariableBlock>> Parameters;
@@ -68,5 +71,32 @@ public:
     std::string Entryfunction;
 };
 
-}
+//! \brief Holds a result of the new script run method
+//! \note If the return type is reference counted this automatically releases it, so
+//! if you want to keep the object around you must increase the reference count (and then for
+//! safety wrap it into intrusive_ptr)
+template<typename ReturnT>
+struct ScriptRunResult {
 
+    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result, ReturnT&& value) :
+        Result(result), Value(std::move(value)) {}
+
+    //! Only set result code
+    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result) {
+        if constexpr(std::is_pointer_v<ReturnT>)
+            Value = nullptr;
+    }
+
+    DLLEXPORT ~ScriptRunResult() {
+
+        if constexpr(std::is_base_of_v<ReturnT, ReferenceCounted>) {
+            Value->Release();
+        }
+    }
+
+
+    SCRIPT_RUN_RESULT Result;
+    ReturnT Value;
+};
+
+} // namespace Leviathan

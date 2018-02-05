@@ -13,7 +13,6 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "Math/CommonMath.h"
 #include <algorithm>
 
 using namespace std;
@@ -136,8 +135,8 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
     int32_t width, height;
     GetSize(width, height);
     
-    x = Leviathan::clamp(globalX, 0, width);
-    y = Leviathan::clamp(globalY, 0, height);
+    x = std::clamp(globalX, 0, width);
+    y = std::clamp(globalY, 0, height);
 }
 
 DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){

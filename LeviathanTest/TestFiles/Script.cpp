@@ -2,12 +2,14 @@
 
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptModule.h"
+#include "Script/Bindings/BindHelpers.h"
 #include "Handlers/IDFactory.h"
 
 #include "catch.hpp"
 
 using namespace Leviathan;
 using namespace Leviathan::Test;
+
 
 TEST_CASE("Basic script running", "[script]"){
 
@@ -54,6 +56,186 @@ TEST_CASE("Basic script running", "[script]"){
     CHECK(Value == 42);
 
 	mod->DeleteThisModule();
+}
+
+int MyRefCountedParam = 0;
+
+class TestMyRefCounted : public ReferenceCounted{
+public:
+    using pointer = boost::intrusive_ptr<ReferenceCounted>;
+protected:
+    // Copy this comment to any protected constructors that are meant to be
+    // accessed through this:
+    // These are protected for only constructing properly reference
+    // counted instances through MakeShared
+    friend ReferenceCounted;
+
+    TestMyRefCounted(){
+        ++MyRefCountedParam;
+    }
+
+    ~TestMyRefCounted(){
+
+        --MyRefCountedParam;
+    }
+};
+
+bool RegisterTestMyRefCounted(asIScriptEngine* engine){
+
+    ANGELSCRIPT_REGISTER_REF_TYPE("TestMyRefCounted", TestMyRefCounted);
+    return true;
+}
+
+
+TEST_CASE("Running scripts that don't take all ref counted parameters", "[script]"){
+    
+    TestMyRefCounted::pointer ourObj = ReferenceCounted::MakeShared<TestMyRefCounted>();
+
+    PartialEngine<false> engine;
+    
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    REQUIRE(RegisterTestMyRefCounted(exec.GetASEngine()));
+
+	// setup the script //
+	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "int TestFunction(int param1, TestMyRefCounted@ obj){\n"
+        "if(obj !is null)\n"
+        "return 2 * param1;\n"
+        "else\n"
+        "return 0;\n"
+        "}\n"
+        "int Test2(int param1){\n"
+        "return param1;\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    CHECK(ourObj->GetRefCount() == 1);
+    
+    SECTION("First basic run"){
+        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
+            std::make_shared<NamedVariableBlock>(2, ""),
+            std::make_shared<NamedVariableBlock>(new VoidPtrBlock(ourObj.get()),
+                "TestMyRefCounted")
+        };
+
+        ourObj->AddRef();
+        CHECK(ourObj->GetRefCount() == 2);
+
+        ScriptRunningSetup ssetup;
+        ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
+            //.SetPrintErrors(false)
+            ;
+
+        std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+
+        CHECK(ssetup.ScriptExisted == true);
+
+        // check did it run //
+        int value = *returned;
+
+        CHECK(value == 4);
+    }
+
+    CHECK(ourObj->GetRefCount() == 1);
+
+    SECTION("Second run with ignored object handle"){
+        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
+            std::make_shared<NamedVariableBlock>(2, ""),
+            std::make_shared<NamedVariableBlock>(new VoidPtrBlock(ourObj.get()),
+                "TestMyRefCounted")
+        };
+
+        ourObj->AddRef();
+        CHECK(ourObj->GetRefCount() == 2);
+
+        ScriptRunningSetup ssetup;
+        ssetup.SetArguments(Params).SetEntrypoint("Test2").SetUseFullDeclaration(false)
+            //.SetPrintErrors(false)
+            ;
+
+        std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+
+        CHECK(ssetup.ScriptExisted == true);
+
+        // check did it run //
+        int value = *returned;
+
+        CHECK(value == 2);
+    }    
+
+    CHECK(ourObj->GetRefCount() == 1);
+    
+	mod->DeleteThisModule();
+}
+
+TEST_CASE("Script global handles are released", "[script][engine]"){
+
+    TestMyRefCounted::pointer ourObj = ReferenceCounted::MakeShared<TestMyRefCounted>();
+
+    PartialEngine<false> engine;
+    
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    REQUIRE(RegisterTestMyRefCounted(exec.GetASEngine()));
+
+	// setup the script //
+	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "TestMyRefCounted@ GlobalVar;\n"
+        "int TestFunction(TestMyRefCounted@ obj){\n"
+        "@GlobalVar = obj;\n"
+        "return 8;\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    CHECK(ourObj->GetRefCount() == 1);
+    
+    SECTION("First basic run"){
+        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
+            std::make_shared<NamedVariableBlock>(new VoidPtrBlock(ourObj.get()),
+                "TestMyRefCounted")
+        };
+
+        ourObj->AddRef();
+
+        ScriptRunningSetup ssetup;
+        ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
+            //.SetPrintErrors(false)
+            ;
+
+        std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+
+        CHECK(ssetup.ScriptExisted == true);
+
+        // check did it run //
+        int value = *returned;
+
+        CHECK(value == 8);
+    }
+
+    CHECK(ourObj->GetRefCount() == 2);
+    
+	mod->DeleteThisModule();
+
+    CHECK(ourObj->GetRefCount() == 1);
 }
 
 TEST_CASE("Creating events in scripts", "[script][event]"){

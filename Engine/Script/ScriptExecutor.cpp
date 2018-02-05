@@ -6,74 +6,75 @@
 
 #include "ScriptNotifiers.h"
 
-#include <add_on/scriptstdstring/scriptstdstring.h>
+#include <add_on/datetime/datetime.h>
+#include <add_on/scriptany/scriptany.h>
 #include <add_on/scriptarray/scriptarray.h>
-#include <add_on/scriptmath/scriptmathcomplex.h>
-#include <add_on/scriptmath/scriptmath.h>
-#include <add_on/scriptarray/scriptarray.h>
+#include <add_on/scriptdictionary/scriptdictionary.h>
 #include <add_on/scriptgrid/scriptgrid.h>
 #include <add_on/scripthandle/scripthandle.h>
-#include <add_on/datetime/datetime.h>
-#include <add_on/weakref/weakref.h>
 #include <add_on/scripthelper/scripthelper.h>
-#include <add_on/scriptdictionary/scriptdictionary.h>
-#include <add_on/scriptany/scriptany.h>
+#include <add_on/scriptmath/scriptmath.h>
+#include <add_on/scriptmath/scriptmathcomplex.h>
+#include <add_on/scriptstdstring/scriptstdstring.h>
+#include <add_on/weakref/weakref.h>
 
 #include "ScriptModule.h"
 
 // Bindings
 #include "Bindings/CommonEngineBind.h"
-#include "Bindings/GuiScriptBind.h"
-#include "Bindings/TypesBind.h"
 #include "Bindings/EntityBind.h"
-#include "Bindings/OgreBind.h"
+#include "Bindings/GuiScriptBind.h"
 #include "Bindings/NewtonBind.h"
+#include "Bindings/OgreBind.h"
+#include "Bindings/TypesBind.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
 
 
-namespace Leviathan{
+namespace Leviathan {
 
-void ScriptMessageCallback(const asSMessageInfo *msg, void *param){
+void ScriptMessageCallback(const asSMessageInfo* msg, void* param)
+{
 
-    if(msg->type == asMSGTYPE_WARNING){
-        
+    if(msg->type == asMSGTYPE_WARNING) {
+
         Logger::Get()->Write(std::string("[SCRIPT] [WARNING] ") + msg->section + " (" +
-            std::to_string(msg->row) + ", " + std::to_string(msg->col) + ") : " +
-            msg->message);
-        
-    } else if(msg->type == asMSGTYPE_INFORMATION){
+                             std::to_string(msg->row) + ", " + std::to_string(msg->col) +
+                             ") : " + msg->message);
+
+    } else if(msg->type == asMSGTYPE_INFORMATION) {
 
         Logger::Get()->Write(std::string("[SCRIPT] [INFO] ") + msg->section + " (" +
-            std::to_string(msg->row) + ", " + std::to_string(msg->col) + ") : " +
-            msg->message);
-        
+                             std::to_string(msg->row) + ", " + std::to_string(msg->col) +
+                             ") : " + msg->message);
+
     } else {
 
         Logger::Get()->Write(std::string("[SCRIPT] [ERROR] ") + msg->section + " (" +
-            std::to_string(msg->row) + ", " + std::to_string(msg->col) + ") : " +
-            msg->message);
+                             std::to_string(msg->row) + ", " + std::to_string(msg->col) +
+                             ") : " + msg->message);
     }
 }
 
-}
+} // namespace Leviathan
 
 
 
-ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
-    
+ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules()
+{
+
     instance = this;
 
     // Initialize AngelScript //
     engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-    if(engine == NULL){
+    if(engine == NULL) {
 
         Logger::Get()->Error("ScriptExecutor: Init: asCreateScriptEngine failed");
         Logger::Get()->Info("ScriptExecutor: tried to init angelscript version " +
-            Convert::ToString(ANGELSCRIPT_VERSION));
+                            Convert::ToString(ANGELSCRIPT_VERSION));
         Logger::Get()->Write("Did you use a wrong angelscript version? copy header files to "
-            "leviathan/Angelscript/include from your angelscript.zip");
+                             "leviathan/Angelscript/include from your angelscript.zip");
         throw Exception("Failed to init angelscript");
     }
 
@@ -90,12 +91,12 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
     // register other script extensions //
     RegisterStdStringUtils(engine);
 
-    
+
     RegisterScriptDateTime(engine);
-    
+
     // register dictionary object //
     RegisterScriptDictionary(engine);
-    
+
     // Register the grid addon //
     RegisterScriptGrid(engine);
 
@@ -113,21 +114,21 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
 
     if(!BindNewton(engine))
         throw Exception("BindNewton failed");
-    
+
     if(!BindTypes(engine))
-        throw Exception("BindTypes failed");    
+        throw Exception("BindTypes failed");
 
     if(!BindEngineCommon(engine))
         throw Exception("BindEngineCommon failed");
-        
+
     if(!BindGUI(engine))
         throw Exception("BindGUI failed");
-    
+
     if(!BindEntity(engine))
         throw Exception("BindEntity failed");
 
     // Bind notifiers //
-    if(!RegisterNotifiersWithAngelScript(engine)){
+    if(!RegisterNotifiersWithAngelScript(engine)) {
         // failed //
         LOG_ERROR("ScriptExecutor: Init: AngelScript: register Notifier types failed");
         throw Exception("Script bind failed");
@@ -136,23 +137,24 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules(){
     // bind application specific //
     auto leviathanengine = Engine::GetEngine();
 
-    if(leviathanengine){
+    if(leviathanengine) {
 
-        if(!leviathanengine->GetOwningApplication()->InitLoadCustomScriptTypes(engine)){
+        if(!leviathanengine->GetOwningApplication()->InitLoadCustomScriptTypes(engine)) {
 
             LOG_ERROR("ScriptExecutor: Init: AngelScript: application register failed");
             throw Exception("Script bind failed");
-        }        
+        }
     }
 
     ScanAngelScriptTypes();
 }
-ScriptExecutor::~ScriptExecutor(){
+ScriptExecutor::~ScriptExecutor()
+{
 
     {
         Lock lock(ModulesLock);
         auto end = AllocatedScriptModules.end();
-        for(auto iter = AllocatedScriptModules.begin(); iter != end; ++iter){
+        for(auto iter = AllocatedScriptModules.begin(); iter != end; ++iter) {
 
             (*iter)->Release();
         }
@@ -169,72 +171,136 @@ ScriptExecutor::~ScriptExecutor(){
     EngineTypeIDSInverted.clear();
 
     instance = NULL;
-    
-    if(engine){
+
+    if(engine) {
 
         engine->Release();
         engine = NULL;
     }
 }
 
-DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get(){
+DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get()
+{
     return instance;
 }
 
 ScriptExecutor* Leviathan::ScriptExecutor::instance = NULL;
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
-    ScriptScript* scriptobject, ScriptRunningSetup* parameters)
+DLLEXPORT asIScriptFunction* ScriptExecutor::GetFunctionFromModule(
+    ScriptModule* module, ScriptRunningSetup& parameters)
 {
-    // Get the ScriptModule for the script //
-    ScriptModule* scrptmodule = scriptobject->GetModule();
-    
-    if(!scrptmodule){
-        
-        // report error and exit //
-        Logger::Get()->Error("ScriptExecutor: RunSetUp: trying to run an empty module");
-        return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
+    if(!module) {
+
+        if(parameters.PrintErrors) {
+            Logger::Get()->Error("ScriptExecutor: GetFunctionFromModule: module is nullptr");
+        }
+
+        return nullptr;
     }
 
-    // Use the actual running function //
-    return RunSetUp(scrptmodule, parameters);
+    asIScriptFunction* func;
+
+    asIScriptModule* asModule = module->GetModule();
+
+    if(!asModule) {
+
+        if(parameters.PrintErrors) {
+            Logger::Get()->Error(
+                "ScriptExecutor: GetFunctionFromModule: cannot get function from "
+                "an invalid script module: " +
+                module->GetInfoString());
+        }
+
+        return nullptr;
+    }
+
+    // Get the entry function from the module //
+    if(!parameters.FullDeclaration) {
+
+        func = asModule->GetFunctionByName(parameters.Entryfunction.c_str());
+
+    } else {
+
+        func = asModule->GetFunctionByDecl(parameters.Entryfunction.c_str());
+    }
+
+    if(!_CheckScriptFunctionPtr(func, &parameters, module)) {
+
+        return nullptr;
+    }
+
+    return func;
 }
+// ------------------------------------ //
+void RunReleaseRefOnObject(void* obj, int objid)
+{
+    asITypeInfo* info = engine->GetTypeInfoById(objid);
+
+    asUINT count = info->GetBehaviourCount();
+
+    for(asUINT i = 0; i < count; ++i) {
+
+        asEBehaviours behaviour;
+        asIScriptFunction* func = info->GetBehaviourByIndex(i, &behaviour);
+
+        if(!func) {
+
+            LOG_ERROR("ScriptExecutor: RunReleaseRefOnObject: failed to get behaviour");
+            continue;
+        }
+
+        if(behaviour == asBEHAVE_RELEASE) {
+
+            LOG_INFO(
+                "ScriptExecutor: RunReleaseRefOnObject: Found asBEHAVE_RELEASE, calling it");
+
+            ScriptRunningSetup ssetup;
+            const auto result = ScriptRunResult<void>(ssetup, func, obj);
+
+            if(result.Result != SCRIPT_RUN_RESULT::Success)
+                throw Exception("Failed to run release behaviour");
+            
+            return;
+        }
+    }
+
+    throw Exception("Didn't find release ref behaviour on object type");
+}
+
+// ------------------------------------ //
+
+// DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
+//     ScriptScript* scriptobject, ScriptRunningSetup* parameters) {
+
+//     // Get the ScriptModule for the script //
+//     ScriptModule* scrptmodule = scriptobject->GetModule();
+
+//     if(!scrptmodule) {
+
+//         // report error and exit //
+//         Logger::Get()->Error("ScriptExecutor: RunSetUp: trying to run an empty module");
+//         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
+//     }
+
+//     // Use the actual running function //
+//     return RunSetUp(scrptmodule, parameters);
+// }
 
 DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     ScriptModule* scrptmodule, ScriptRunningSetup* parameters)
 {
-    
-    if(!scrptmodule){
-        Logger::Get()->Error("ScriptExecutor: RunSetUp: trying to run without a module");
-        return NULL;
-    }
+    if(!parameters) {
 
-    // Load the actual script //
-    asIScriptModule* Module = scrptmodule->GetModule();
-    
-    if(!Module){
-        
         // report error and exit //
-        Logger::Get()->Error("ScriptExecutor: RunSetUp: cannot run an invalid script module: "+
-            scrptmodule->GetInfoString());
-        
+        Logger::Get()->Error("ScriptExecutor: RunSetUp: given null parameters");
+
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
 
-    // Get a function pointer to the start function //
-    asIScriptFunction *func = NULL;
+    asIScriptFunction* func = GetFunctionFromModule(scrptmodule, *parameters);
 
-    // Get the entry function from the module //
-    if(!parameters->FullDeclaration){
+    if(!_CheckScriptFunctionPtr(func, parameters, scrptmodule)) {
 
-        func = Module->GetFunctionByName(parameters->Entryfunction.c_str());
-    } else {
-
-        func = Module->GetFunctionByDecl(parameters->Entryfunction.c_str());
-    }
-
-    if(!_CheckScriptFunctionPtr(func, parameters, scrptmodule)){
-        
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
 
@@ -244,7 +310,7 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     if(!ScriptContext)
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
 
-    if(!_PrepareContextForPassingParameters(func, ScriptContext, parameters, scrptmodule)){
+    if(!_PrepareContextForPassingParameters(func, ScriptContext, parameters, scrptmodule)) {
 
         _DoneWithContext(ScriptContext);
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
@@ -255,9 +321,10 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     FunctionParameterInfo* paraminfo = scrptmodule->GetParamInfoForFunction(func);
 
     // Pass the parameters //
-    if(!_SetScriptParameters(ScriptContext, parameters, scrptmodule, paraminfo)){
+    if(!_SetScriptParameters(ScriptContext, parameters, scrptmodule, paraminfo)) {
 
         // Failed passing the parameters //
+        _DoneWithContext(ScriptContext);
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
 
@@ -267,8 +334,8 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     int retcode = ScriptContext->Execute();
 
     // Get the return value //
-    auto returnvalue = _GetScriptReturnedVariable(retcode, ScriptContext, parameters, func,
-        scrptmodule, paraminfo);
+    auto returnvalue = _GetScriptReturnedVariable(
+        retcode, ScriptContext, parameters, func, scrptmodule, paraminfo);
 
     // Release the context //
     _DoneWithContext(ScriptContext);
@@ -284,19 +351,20 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     // TODO: find by AngelScript module pointer
     auto locked = GetModuleByAngelScriptName(function->GetModuleName()).lock();
 
-    ScriptModule* scrptmodule = locked ? locked.get(): NULL;
-    
-    if(!scrptmodule){
-        
+    ScriptModule* scrptmodule = locked ? locked.get() : NULL;
+
+    if(!scrptmodule) {
+
         // report error and exit //
         if(parameters->ErrorOnNonExistingFunction)
             LOG_ERROR(std::string("ScriptExecutor: RunSetUp: the module is no longer "
-                    "available: ") + function->GetModuleName());
-        
+                                  "available: ") +
+                      function->GetModuleName());
+
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
 
-    if(!_CheckScriptFunctionPtr(function, parameters, scrptmodule)){
+    if(!_CheckScriptFunctionPtr(function, parameters, scrptmodule)) {
 
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
@@ -307,7 +375,8 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     if(!ScriptContext)
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
 
-    if(!_PrepareContextForPassingParameters(function, ScriptContext, parameters, scrptmodule)){
+    if(!_PrepareContextForPassingParameters(
+           function, ScriptContext, parameters, scrptmodule)) {
 
         _DoneWithContext(ScriptContext);
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
@@ -318,9 +387,10 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     FunctionParameterInfo* paraminfo = scrptmodule->GetParamInfoForFunction(function);
 
     // Pass the parameters //
-    if(!_SetScriptParameters(ScriptContext, parameters, scrptmodule, paraminfo)){
+    if(!_SetScriptParameters(ScriptContext, parameters, scrptmodule, paraminfo)) {
 
         // Failed passing the parameters //
+        _DoneWithContext(ScriptContext);
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
 
@@ -330,8 +400,8 @@ DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::RunSetUp(
     int retcode = ScriptContext->Execute();
 
     // Get the return value //
-    auto returnvalue = _GetScriptReturnedVariable(retcode, ScriptContext, parameters, function,
-        scrptmodule, paraminfo);
+    auto returnvalue = _GetScriptReturnedVariable(
+        retcode, ScriptContext, parameters, function, scrptmodule, paraminfo);
 
     // Release the context //
     _DoneWithContext(ScriptContext);
@@ -348,108 +418,91 @@ bool Leviathan::ScriptExecutor::_SetScriptParameters(asIScriptContext* ScriptCon
     auto parameterc = static_cast<asUINT>(paraminfo->ParameterTypeIDS.size());
 
     // Start passing the parameters provided by the application //
-    for(asUINT i = 0; i < parameterc; ++i){
+    for(asUINT i = 0; i < parameterc; ++i) {
 
         // no more parameters //
         if(i >= parameters->Parameters.size())
             break;
 
         // Try to pass the parameter //
-        switch(paraminfo->MatchingDataBlockTypes[i]){
-            case DATABLOCK_TYPE_INT:
-            {
-                int tmpparam = 0;
+        switch(paraminfo->MatchingDataBlockTypes[i]) {
+        case DATABLOCK_TYPE_INT: {
+            int tmpparam = 0;
 
-                if(!parameters->Parameters[i]->ConvertAndAssingToVariable(tmpparam)){
+            if(!parameters->Parameters[i]->ConvertAndAssingToVariable(tmpparam)) {
 
-                    goto scriptexecutorpassparamsinvalidconversionparam;
-                }
-
-                ScriptContext->SetArgDWord(i, tmpparam);
-            }
-            break;
-            case DATABLOCK_TYPE_FLOAT:
-            {
-                float tmpparam = 0;
-
-                if(!parameters->Parameters[i]->ConvertAndAssingToVariable(tmpparam)){
-
-                    goto scriptexecutorpassparamsinvalidconversionparam;
-                }
-
-                ScriptContext->SetArgFloat(i, tmpparam);
-            }
-            break;
-            case DATABLOCK_TYPE_BOOL: case DATABLOCK_TYPE_CHAR:
-            {
-                char tmpparam = 0;
-
-                if(!parameters->Parameters[i]->ConvertAndAssingToVariable(tmpparam)){
-
-                    goto scriptexecutorpassparamsinvalidconversionparam;
-                }
-
-                ScriptContext->SetArgByte(i, tmpparam);
-            }
-            break;
-            case DATABLOCK_TYPE_STRING:
-            {
-
-                std::string* varpointer = static_cast<std::string*>(
-                    *parameters->Parameters[i]);
-
-                ScriptContext->SetArgObject(i, varpointer);
-                
-            }
-            break;
-            case DATABLOCK_TYPE_WSTRING:
-            {
-                // save as a string that can be retrieved //
-                // not done
                 goto scriptexecutorpassparamsinvalidconversionparam;
             }
-            break;
-            case DATABLOCK_TYPE_VOIDPTR:
-            {
-                // we need to make sure that script object name matches engine object name //
-                if(paraminfo->ParameterDeclarations[i] !=
-                    parameters->Parameters[i]->GetName())
-                {
-                    // non matching pointer types //
-                    LOG_ERROR("Mismatching ptr types, comparing " + 
-                        paraminfo->ParameterDeclarations[i] + " to passed type of " +
-                        parameters->Parameters[i]->GetName());
-                    
-                } else {
 
-                    // Sanity helpers
-                    if(parameters->Parameters[i]->GetBlockConst()->Type ==
-                        DATABLOCK_TYPE_BOOL)
-                    {
-                        LOG_FATAL("ScriptExecutor: parameter should be of type void* but it "
-                            "is bool. Did you forget to specifically construct a pointer "
-                            "block type?");
-                    }
-                    
-                    // types match, we can pass in the raw pointer //
-                    void* ptrtostuff = static_cast<void*>(*parameters->Parameters[i]);
-                    ScriptContext->SetArgAddress(i, ptrtostuff);
-                }
-            }
-            break;
-            default:
+            ScriptContext->SetArgDWord(i, tmpparam);
+        } break;
+        case DATABLOCK_TYPE_FLOAT: {
+            float tmpparam = 0;
+
+            if(!parameters->Parameters[i]->ConvertAndAssingToVariable(tmpparam)) {
+
                 goto scriptexecutorpassparamsinvalidconversionparam;
+            }
+
+            ScriptContext->SetArgFloat(i, tmpparam);
+        } break;
+        case DATABLOCK_TYPE_BOOL:
+        case DATABLOCK_TYPE_CHAR: {
+            char tmpparam = 0;
+
+            if(!parameters->Parameters[i]->ConvertAndAssingToVariable(tmpparam)) {
+
+                goto scriptexecutorpassparamsinvalidconversionparam;
+            }
+
+            ScriptContext->SetArgByte(i, tmpparam);
+        } break;
+        case DATABLOCK_TYPE_STRING: {
+
+            std::string* varpointer = static_cast<std::string*>(*parameters->Parameters[i]);
+
+            ScriptContext->SetArgObject(i, varpointer);
+
+        } break;
+        case DATABLOCK_TYPE_WSTRING: {
+            // save as a string that can be retrieved //
+            // not done
+            goto scriptexecutorpassparamsinvalidconversionparam;
+        } break;
+        case DATABLOCK_TYPE_VOIDPTR: {
+            // we need to make sure that script object name matches engine object name //
+            if(paraminfo->ParameterDeclarations[i] != parameters->Parameters[i]->GetName()) {
+                // non matching pointer types //
+                LOG_ERROR("Mismatching ptr types, comparing " +
+                          paraminfo->ParameterDeclarations[i] + " to passed type of " +
+                          parameters->Parameters[i]->GetName());
+
+            } else {
+
+                // Sanity helpers
+                if(parameters->Parameters[i]->GetBlockConst()->Type == DATABLOCK_TYPE_BOOL) {
+                    LOG_FATAL("ScriptExecutor: parameter should be of type void* but it "
+                              "is bool. Did you forget to specifically construct a pointer "
+                              "block type?");
+                }
+
+                // types match, we can pass in the raw pointer //
+                void* ptrtostuff = static_cast<void*>(*parameters->Parameters[i]);
+                ScriptContext->SetArgAddress(i, ptrtostuff);
+            }
+        } break;
+        default: goto scriptexecutorpassparamsinvalidconversionparam;
         }
 
         continue;
 
-scriptexecutorpassparamsinvalidconversionparam:
+    scriptexecutorpassparamsinvalidconversionparam:
 
 
-        Logger::Get()->Error("ScriptExecutor: RunScript: pass parameters failed func: "+
-            parameters->Entryfunction+" param number: "+
-            Convert::ToString(i)+" in: "+scrptmodule->GetInfoString());
-        
+        Logger::Get()->Error("ScriptExecutor: RunScript: pass parameters failed func: " +
+                             parameters->Entryfunction + " param number: " +
+                             Convert::ToString(i) + " in: " + scrptmodule->GetInfoString());
+
         return false;
     }
 
@@ -462,94 +515,84 @@ std::shared_ptr<VariableBlock> Leviathan::ScriptExecutor::_GetScriptReturnedVari
     asIScriptFunction* func, ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo)
 {
     // Check the return type //
-    if(retcode != asEXECUTION_FINISHED){
+    if(retcode != asEXECUTION_FINISHED) {
         // something went wrong //
 
         // The execution didn't finish as we had planned. Determine why.
-        if(retcode == asEXECUTION_ABORTED){
+        if(retcode == asEXECUTION_ABORTED) {
             // code took too long //
-        } else if(retcode == asEXECUTION_EXCEPTION){
+        } else if(retcode == asEXECUTION_EXCEPTION) {
             // script caused an exception //
             PrintExceptionInfo(ScriptContext, *Logger::Get(),
                 ScriptContext->GetExceptionFunction(), scrptmodule);
         }
-        
+
         return std::shared_ptr<VariableBlock>(new VariableBlock(-1));
     }
 
     // Successfully executed, try to fetch return value //
-    if(paraminfo->ReturnTypeID != 0){
+    if(paraminfo->ReturnTypeID != 0) {
         // return type isn't void //
-        switch(paraminfo->ReturnMatchingDataBlock){
-            case DATABLOCK_TYPE_INT:
-            {
-                return std::shared_ptr<VariableBlock>(new VariableBlock(
-                        new IntBlock(ScriptContext->GetReturnDWord())));
-            }
-            break;
-            case DATABLOCK_TYPE_FLOAT:
-            {
-                return std::shared_ptr<VariableBlock>(new VariableBlock(
-                        new FloatBlock(ScriptContext->GetReturnFloat())));
-            }
-            break;
-            case DATABLOCK_TYPE_BOOL:
-            {
-                return std::shared_ptr<VariableBlock>(new VariableBlock(
-                        new BoolBlock(ScriptContext->GetReturnByte() != 0)));
-            }
-            break;
-            case DATABLOCK_TYPE_CHAR:
-            {
-                return std::shared_ptr<VariableBlock>(new VariableBlock(
-                        new CharBlock(ScriptContext->GetReturnByte())));
-            }
-            break;
-            case DATABLOCK_TYPE_STRING:
-            {
+        switch(paraminfo->ReturnMatchingDataBlock) {
+        case DATABLOCK_TYPE_INT: {
+            return std::shared_ptr<VariableBlock>(
+                new VariableBlock(new IntBlock(ScriptContext->GetReturnDWord())));
+        } break;
+        case DATABLOCK_TYPE_FLOAT: {
+            return std::shared_ptr<VariableBlock>(
+                new VariableBlock(new FloatBlock(ScriptContext->GetReturnFloat())));
+        } break;
+        case DATABLOCK_TYPE_BOOL: {
+            return std::shared_ptr<VariableBlock>(
+                new VariableBlock(new BoolBlock(ScriptContext->GetReturnByte() != 0)));
+        } break;
+        case DATABLOCK_TYPE_CHAR: {
+            return std::shared_ptr<VariableBlock>(
+                new VariableBlock(new CharBlock(ScriptContext->GetReturnByte())));
+        } break;
+        case DATABLOCK_TYPE_STRING: {
 
-                // TODO: check do we need to delete this
-                
-                std::string* varpointer = reinterpret_cast<std::string*>(
-                    ScriptContext->GetReturnObject());
+            // TODO: check do we need to delete this
 
-                if(varpointer){
+            std::string* varpointer =
+                reinterpret_cast<std::string*>(ScriptContext->GetReturnObject());
 
-                    return std::make_shared<VariableBlock>(new StringBlock(*varpointer));
-                    
-                } else {
+            if(varpointer) {
 
-                    return std::make_shared<VariableBlock>(new VoidPtrBlock((void*)nullptr));
-                }
+                return std::make_shared<VariableBlock>(new StringBlock(*varpointer));
+
+            } else {
+
+                return std::make_shared<VariableBlock>(new VoidPtrBlock((void*)nullptr));
             }
-            break;
+        } break;
         }
 
-        Logger::Get()->Info("[SCRIPT] return type not supported "+
-            paraminfo->ReturnTypeDeclaration);
-        
-        return std::shared_ptr<VariableBlock>(new VariableBlock(
-                std::string("Return type not supported")));
+        Logger::Get()->Info(
+            "[SCRIPT] return type not supported " + paraminfo->ReturnTypeDeclaration);
+
+        return std::shared_ptr<VariableBlock>(
+            new VariableBlock(std::string("Return type not supported")));
     }
 
     // No return value //
     return NULL;
 }
 
-bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(asIScriptFunction* func,
-    ScriptRunningSetup* parameters, ScriptModule* scrptmodule)
+bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(
+    asIScriptFunction* func, ScriptRunningSetup* parameters, ScriptModule* scrptmodule)
 {
     // Check is it NULL //
-    if(func == NULL){
+    if(func == NULL) {
         // Set exists state //
         parameters->ScriptExisted = false;
 
         // Check should we print an error //
-        if(parameters->PrintErrors && parameters->ErrorOnNonExistingFunction){
-            
+        if(parameters->PrintErrors && parameters->ErrorOnNonExistingFunction) {
+
             LOG_ERROR("ScriptExecutor: RunScript: Could not find starting function: " +
-                parameters->Entryfunction + " in: " + scrptmodule->GetInfoString());
-            
+                      parameters->Entryfunction + " in: " + scrptmodule->GetInfoString());
+
             scrptmodule->PrintFunctionsInModule();
         }
 
@@ -566,11 +609,12 @@ bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(asIScriptFunction* func,
 bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFunction* func,
     asIScriptContext* ScriptContext, ScriptRunningSetup* parameters, ScriptModule* scrptmodule)
 {
-    if(ScriptContext->Prepare(func) < 0){
-        
+    if(ScriptContext->Prepare(func) < 0) {
+
         Logger::Get()->Error("ScriptExecutor: RunScript: prepare context failed, func: " +
-                parameters->Entryfunction + " in: " + scrptmodule->GetInfoString());
-        
+            parameters->Entryfunction + (scrptmodule ? (
+                    " in: " + scrptmodule->GetInfoString()) : std::string()));
+
         return false;
     }
 
@@ -578,12 +622,13 @@ bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFun
 }
 
 // ------------------------------------ //
-asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution(){
+asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
+{
 
     // TODO: pool context and detect already acive context and push state and use that
     asIScriptContext* ScriptContext = engine->CreateContext();
 
-    if(!ScriptContext){
+    if(!ScriptContext) {
 
         Logger::Get()->Error("ScriptExecutor: RunScript: Failed to create a context ");
         return NULL;
@@ -592,19 +637,21 @@ asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution(){
     return ScriptContext;
 }
 
-void Leviathan::ScriptExecutor::_DoneWithContext(asIScriptContext* context){
+void Leviathan::ScriptExecutor::_DoneWithContext(asIScriptContext* context)
+{
     context->Release();
 }
 // ------------------------------------ //
-DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModule(const int &ID){
+DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModule(const int& ID)
+{
     // loop modules and return a ptr to matching id //
     Lock lock(ModulesLock);
-    
-    for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
+
+    for(size_t i = 0; i < AllocatedScriptModules.size(); i++) {
         if(AllocatedScriptModules[i]->GetID() == ID)
             return AllocatedScriptModules[i];
     }
-    
+
     return std::shared_ptr<ScriptModule>(NULL);
 }
 
@@ -615,9 +662,9 @@ DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModuleByAnge
     std::string module(nameofmodule);
 
     Lock lock(ModulesLock);
-    
+
     // TODO: check could this be checked by comparing pointers
-    for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
+    for(size_t i = 0; i < AllocatedScriptModules.size(); i++) {
         if(AllocatedScriptModules[i]->GetModuleName() == module)
             return AllocatedScriptModules[i];
     }
@@ -626,7 +673,7 @@ DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModuleByAnge
 }
 // ------------------------------------ //
 DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::CreateNewModule(
-    const std::string &name, const std::string &source, const int &modulesid
+    const std::string& name, const std::string& source, const int& modulesid
     /*= IDFactory::GetID()*/)
 {
     // create new module to a smart pointer //
@@ -638,31 +685,33 @@ DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::CreateNewModule
     return tmpptr;
 }
 
-DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch){
+DLLEXPORT void Leviathan::ScriptExecutor::DeleteModule(ScriptModule* ptrtomatch)
+{
 
     Lock lock(ModulesLock);
-    
+
     // find module based on pointer and remove //
-    for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
-        if(AllocatedScriptModules[i].get() == ptrtomatch){
+    for(size_t i = 0; i < AllocatedScriptModules.size(); i++) {
+        if(AllocatedScriptModules[i].get() == ptrtomatch) {
 
             AllocatedScriptModules[i]->Release();
             // remove //
-            AllocatedScriptModules.erase(AllocatedScriptModules.begin()+i);
+            AllocatedScriptModules.erase(AllocatedScriptModules.begin() + i);
             return;
         }
     }
 }
 
-DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int ID){
+DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int ID)
+{
 
     Lock lock(ModulesLock);
-    
+
     // Find based on the id //
-    for(size_t i = 0; i < AllocatedScriptModules.size(); i++){
-        if(AllocatedScriptModules[i]->GetID() == ID){
+    for(size_t i = 0; i < AllocatedScriptModules.size(); i++) {
+        if(AllocatedScriptModules[i]->GetID() == ID) {
             // Check reference count //
-            if(AllocatedScriptModules[i].use_count() != 1){
+            if(AllocatedScriptModules[i].use_count() != 1) {
                 // Other references exist //
                 return false;
             }
@@ -670,7 +719,7 @@ DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int
             AllocatedScriptModules[i]->Release();
 
             // remove //
-            AllocatedScriptModules.erase(AllocatedScriptModules.begin()+i);
+            AllocatedScriptModules.erase(AllocatedScriptModules.begin() + i);
             return true;
         }
     }
@@ -678,63 +727,79 @@ DLLEXPORT bool Leviathan::ScriptExecutor::DeleteModuleIfNoExternalReferences(int
     return false;
 }
 // ------------------------------------ //
+DLLEXPORT bool ScriptExecutor::_DoPassParameterTypeError(
+    ScriptRunningSetup& setup, ScriptModule* module, int i, int scriptwanted, int provided)
+{
+    if(setup.PrintErrors) {
+
+        LOG_ERROR("ScriptExecutor: pass parameters to script failed, func: " +
+                  setup.Entryfunction + " param number: " + std::to_string(i) +
+                  " script wanted type: " + std::to_string(scriptwanted) +
+                  " but application provided: " + std::to_string(provided) +
+                  " in: " + module->GetInfoString());
+    }
+
+    return false;
+}
+// ------------------------------------ //
 DLLEXPORT void ScriptExecutor::PrintExceptionInfo(asIScriptContext* ctx,
-    LErrorReporter &output, asIScriptFunction* func /*= nullptr*/,
+    LErrorReporter& output, asIScriptFunction* func /*= nullptr*/,
     ScriptModule* scrptmodule /*= nullptr*/)
 {
-    
+
     std::string declaration = ctx->GetExceptionFunction()->GetDeclaration() ?
-        ctx->GetExceptionFunction()->GetDeclaration() : "unknown function";
+                                  ctx->GetExceptionFunction()->GetDeclaration() :
+                                  "unknown function";
 
     std::string section = ctx->GetExceptionFunction()->GetScriptSectionName() ?
-        ctx->GetExceptionFunction()->GetScriptSectionName() : "unknown";
+                              ctx->GetExceptionFunction()->GetScriptSectionName() :
+                              "unknown";
 
-    std::string exception = ctx->GetExceptionString() ?
-        ctx->GetExceptionString() : "unknown exception";
-    
-    std::string funcDeclaration = func ? (func->GetDeclaration() ?
-        func->GetDeclaration() : "unknown function") : "";    
-    
-    output.Error(std::string("[SCRIPT][EXCEPTION] ") +
-        exception +
-        (func ? std::string(", while running function: ") +
-            funcDeclaration : std::string()) +
-        "\n\t in function " + declaration +
-        " defined in " + section + "(" +
+    std::string exception =
+        ctx->GetExceptionString() ? ctx->GetExceptionString() : "unknown exception";
+
+    std::string funcDeclaration =
+        func ? (func->GetDeclaration() ? func->GetDeclaration() : "unknown function") : "";
+
+    output.Error(
+        std::string("[SCRIPT][EXCEPTION] ") + exception +
+        (func ? std::string(", while running function: ") + funcDeclaration : std::string()) +
+        "\n\t in function " + declaration + " defined in " + section + "(" +
         std::to_string(ctx->GetExceptionLineNumber()) + ") " +
         (scrptmodule ? scrptmodule->GetInfoString() : std::string()));
-    
+
     PrintCallstack(ctx, output);
 }
 
-DLLEXPORT void ScriptExecutor::PrintCallstack(asIScriptContext* ctx, LErrorReporter &output){
-    
+DLLEXPORT void ScriptExecutor::PrintCallstack(asIScriptContext* ctx, LErrorReporter& output)
+{
+
     // Print callstack as additional information //
     output.WriteLine("// ------------------ CallStack ------------------ //");
-    
+
     // Loop the stack starting from the frame below the current function
     // (actually might be nice to print the top frame too)
-    for(asUINT n = 0; n < ctx->GetCallstackSize(); n++){
-        
+    for(asUINT n = 0; n < ctx->GetCallstackSize(); n++) {
+
         // Get the function object //
         const asIScriptFunction* function = ctx->GetFunction(n);
-        
+
         // If the function doesn't exist this frame is used internally by the script engine //
-        if(function){
-            
+        if(function) {
+
             // Check function type //
-            if(function->GetFuncType() == asFUNC_SCRIPT){
-                
+            if(function->GetFuncType() == asFUNC_SCRIPT) {
+
                 // Print info about the script function //
-                output.WriteLine(std::string("\t> ") + function->GetScriptSectionName() +
-                    ":" + std::to_string(ctx->GetLineNumber(n)) + " " + 
-                    function->GetDeclaration());
-                
+                output.WriteLine(std::string("\t> ") + function->GetScriptSectionName() + ":" +
+                                 std::to_string(ctx->GetLineNumber(n)) + " " +
+                                 function->GetDeclaration());
+
             } else {
                 // Info about the application functions //
                 // The context is being reused by the application for a nested call
-                output.WriteLine(std::string("\t> {...Application...}: ")
-                    +function->GetDeclaration());
+                output.WriteLine(
+                    std::string("\t> {...Application...}: ") + function->GetDeclaration());
             }
         } else {
             // The context is being reused by the script engine for a nested call
@@ -743,13 +808,14 @@ DLLEXPORT void ScriptExecutor::PrintCallstack(asIScriptContext* ctx, LErrorRepor
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
+DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes()
+{
     // Skip if already registered //
-    if(!EngineTypeIDS.empty()){
+    if(!EngineTypeIDS.empty()) {
 
         return;
     }
-    
+
     // put basic types //
     EngineTypeIDS.insert(std::make_pair(engine->GetTypeIdByDecl("int"), "int"));
     EngineTypeIDS.insert(std::make_pair(engine->GetTypeIdByDecl("float"), "float"));
@@ -757,39 +823,46 @@ DLLEXPORT void Leviathan::ScriptExecutor::ScanAngelScriptTypes(){
     EngineTypeIDS.insert(std::make_pair(engine->GetTypeIdByDecl("string"), "string"));
     EngineTypeIDS.insert(std::make_pair(engine->GetTypeIdByDecl("void"), "void"));
 
-    
+
     // call some callbacks //
     RegisterEngineCommon(engine, EngineTypeIDS);
     RegisterGUI(engine, EngineTypeIDS);
     RegisterTypes(engine, EngineTypeIDS);
     RegisterEntity(engine, EngineTypeIDS);
-    
+
     auto leviathanengine = Engine::GetEngine();
-    if(leviathanengine){
-        
-        leviathanengine->GetOwningApplication()->RegisterCustomScriptTypes(engine, EngineTypeIDS);
+    if(leviathanengine) {
+
+        leviathanengine->GetOwningApplication()->RegisterCustomScriptTypes(
+            engine, EngineTypeIDS);
     }
 
     // Invert the current list, since it should be final //
-    for(auto iter = EngineTypeIDS.begin(); iter != EngineTypeIDS.end(); ++iter){
+    for(auto iter = EngineTypeIDS.begin(); iter != EngineTypeIDS.end(); ++iter) {
 
         EngineTypeIDSInverted.insert(make_pair(iter->second, iter->first));
     }
 }
 
-DLLEXPORT int ScriptExecutor::GetAngelScriptTypeID(const std::string &typesname){
+DLLEXPORT int ScriptExecutor::GetAngelScriptTypeID(const std::string& typesname)
+{
 
     auto iter = EngineTypeIDSInverted.find(typesname);
 
-    if(iter != EngineTypeIDSInverted.end()){
+    if(iter != EngineTypeIDSInverted.end()) {
         return iter->second;
     }
-            
+
     return -1;
+}
+
+DLLEXPORT int ScriptExecutor::ResolveStringToASID(const char* str) const
+{
+
+    return engine->GetTypeIdByDecl(str);
 }
 
 // TODO: switch to boost bidirectional map
 std::map<std::string, int> Leviathan::ScriptExecutor::EngineTypeIDSInverted;
 
 std::map<int, std::string> Leviathan::ScriptExecutor::EngineTypeIDS;
-

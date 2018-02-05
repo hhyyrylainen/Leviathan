@@ -124,7 +124,7 @@ FunctionParameterInfo* Leviathan::ScriptModule::GetParamInfoForFunction(
 	return FuncParameterInfos.back();
 }
 // ------------------------------------ //
-void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, asUINT* paramtypeid,
+void Leviathan::ScriptModule::_FillParameterDataObject(int typeofas, int* paramtypeid,
     std::string* paramdecl, int* datablocktype)
 {
 	// set //

@@ -147,6 +147,15 @@ ScriptExecutor::ScriptExecutor() : engine(NULL), AllocatedScriptModules()
     }
 
     ScanAngelScriptTypes();
+
+    // Verify void type //
+    const auto actualVoid = engine->GetTypeIdByDecl("void");
+    if(actualVoid != ANGELSCRIPT_VOID_TYPEID) {
+
+        LOG_FATAL("ScriptExecutor: angelscript void type has changed! expected " +
+                  std::to_string(ANGELSCRIPT_VOID_TYPEID) +
+                  " (constexpr) == " + std::to_string(actualVoid) + " (actual value)");
+    }
 }
 ScriptExecutor::~ScriptExecutor()
 {
@@ -232,7 +241,7 @@ DLLEXPORT asIScriptFunction* ScriptExecutor::GetFunctionFromModule(
     return func;
 }
 // ------------------------------------ //
-void RunReleaseRefOnObject(void* obj, int objid)
+void ScriptExecutor::RunReleaseRefOnObject(void* obj, int objid)
 {
     asITypeInfo* info = engine->GetTypeInfoById(objid);
 
@@ -255,11 +264,11 @@ void RunReleaseRefOnObject(void* obj, int objid)
                 "ScriptExecutor: RunReleaseRefOnObject: Found asBEHAVE_RELEASE, calling it");
 
             ScriptRunningSetup ssetup;
-            const auto result = ScriptRunResult<void>(ssetup, func, obj);
+            const auto result = RunScriptMethod<void>(ssetup, func, obj);
 
             if(result.Result != SCRIPT_RUN_RESULT::Success)
                 throw Exception("Failed to run release behaviour");
-            
+
             return;
         }
     }
@@ -611,9 +620,10 @@ bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFun
 {
     if(ScriptContext->Prepare(func) < 0) {
 
-        Logger::Get()->Error("ScriptExecutor: RunScript: prepare context failed, func: " +
-            parameters->Entryfunction + (scrptmodule ? (
-                    " in: " + scrptmodule->GetInfoString()) : std::string()));
+        Logger::Get()->Error(
+            "ScriptExecutor: RunScript: prepare context failed, func: " +
+            parameters->Entryfunction +
+            (scrptmodule ? (" in: " + scrptmodule->GetInfoString()) : std::string()));
 
         return false;
     }
@@ -736,10 +746,23 @@ DLLEXPORT bool ScriptExecutor::_DoPassParameterTypeError(
                   setup.Entryfunction + " param number: " + std::to_string(i) +
                   " script wanted type: " + std::to_string(scriptwanted) +
                   " but application provided: " + std::to_string(provided) +
-                  " in: " + module->GetInfoString());
+                  (module ? (" in: " + module->GetInfoString()) : std::string()));
     }
 
     return false;
+}
+
+DLLEXPORT void ScriptExecutor::_DoReceiveParameterTypeError(
+    ScriptRunningSetup& setup, ScriptModule* module, int applicationwanted, int scripthad)
+{
+    if(setup.PrintErrors) {
+
+        LOG_ERROR("ScriptExecutor: return parameter from script failed, func: " +
+                  setup.Entryfunction +
+                  " application wanted type: " + std::to_string(applicationwanted) +
+                  " but script return type is: " + std::to_string(scripthad) +
+                  (module ? (" in: " + module->GetInfoString()) : std::string()));
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void ScriptExecutor::PrintExceptionInfo(asIScriptContext* ctx,

@@ -27,14 +27,14 @@ constexpr auto ANGELSCRIPT_VOID_TYPEID = 0;
 
 //! Helper for querying each type for their corresponding angelscript type once
 template<class T>
-class AngelScriptTypeIDResolver {
+struct AngelScriptTypeIDResolver {
 public:
     static int Get(ScriptExecutor* resolver);
 };
 
 #define TYPE_RESOLVER_AS_PREDEFINED(x, astype)                         \
     template<>                                                         \
-    class AngelScriptTypeIDResolver<x> {                               \
+    struct AngelScriptTypeIDResolver<x> {                              \
         static int Get(ScriptExecutor* resolver)                       \
         {                                                              \
             static int cached = resolver->ResolveStringToASID(astype); \
@@ -92,7 +92,8 @@ public:
     //! \brief Runs a function in a script
     //! \note This is the recommended way to run scripts (other than GameModule that has its
     //! own method)
-    //! \todo Allow recursive calls and more context reuse
+    //! \todo Allow recursive calls and more context reuse. Also wrap context in an object that
+    //! automatically returns it in case of expections (_HandleEndedScriptExecution can throw)
     template<typename ReturnT, class... Args>
     DLLEXPORT ScriptRunResult<ReturnT> RunScript(
         ScriptModule* module, ScriptRunningSetup& parameters, Args&&... args)
@@ -146,7 +147,7 @@ public:
     //! \note This doesn't verify that the object type is correct for the function.
     //! The caller is responsible for making sure that func is part of the class of obj
     //! \note The parameters object is largely ignored (function name)
-    //! \todo Merge common parts with
+    //! \todo Merge common parts with RunScript
     template<typename ReturnT, class... Args>
     DLLEXPORT ScriptRunResult<ReturnT> RunScriptMethod(
         ScriptRunningSetup& parameters, asIScriptFunction* func, void* obj, Args&&... args)
@@ -172,7 +173,7 @@ public:
         // Pass the parameters //
         // TODO: Needs a new method for this
         if(!_PassParametersToScript(
-               scriptContext, parameters, nullptr, std::forward<Args>(args)...)) {
+               scriptContext, parameters, nullptr, func, std::forward<Args>(args)...)) {
 
             // Failed passing the parameters //
             _DoneWithContext(scriptContext);
@@ -271,6 +272,8 @@ private:
         const auto parameterType = AngelScriptTypeIDResolver<ReturnT>::Get(this);
         if(returnType != parameterType) {
 
+        forsafetyreleasereceivedobjlabel:
+
             _DoReceiveParameterTypeError(setup, module, parameterType, returnType);
 
             asITypeInfo* info = GetASEngine()->GetTypeInfoById(func->GetReturnTypeId());
@@ -285,13 +288,24 @@ private:
 
                 RunReleaseRefOnObject(
                     scriptcontext->GetReturnObject(), func->GetReturnTypeId());
+
+                LOG_INFO("Success calling behaviour release");
             }
 
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
         }
 
+        if constexpr(std::is_same_v<ReturnT, void>) {
 
-        if constexpr(std::is_same_v<ReturnT, int32_t>) {
+            // Need to do handle releases if type was different
+            if(returnType != parameterType) {
+                goto forsafetyreleasereceivedobjlabel;
+            }
+
+            // Success, no return value wanted //
+            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
+
+        } else if constexpr(std::is_same_v<ReturnT, int32_t>) {
 
             return ScriptRunResult<ReturnT>(
                 SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDWord());
@@ -360,7 +374,7 @@ private:
 
         // Start passing the parameters provided by the application //
         if(!_DoPassEachParameter(
-               parameterc, i, scriptcontext, func, std::forward<Args>(args)...))
+               parameterc, i, scriptcontext, setup, module, func, std::forward<Args>(args)...))
             return false;
 
         // Check that we passed enough parameters for the script (we
@@ -462,20 +476,31 @@ private:
         }
 
         // Call other parameters //
-        return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module, func,
-            std::forward<Args>(args)...);
+        return _DoPassEachParameter(
+            parameterc, i, scriptcontext, setup, module, func, std::forward<Args>(args)...);
     }
 
     // End condition for the variadic template
-    bool _DoPassEachParameter(asUINT parameterc, asUINT& i)
+    bool _DoPassEachParameter(asUINT parameterc, asUINT& i, asIScriptContext* scriptcontext,
+        ScriptRunningSetup& setup, ScriptModule* module, asIScriptFunction* func)
     {
         return true;
     }
 
     //! Helper for type errors in _DoPassEachParameter
     //! \returns False so that "return _DoPassParameterTypeError(...)" can be used by callers
+    //! \todo Switch this and _DoReceiveParameterTypeError to take a asIScriptFunction from
+    //! which these take the name of failed function (this fixes cases where setup didn't
+    //! specify entry point)
     DLLEXPORT bool _DoPassParameterTypeError(ScriptRunningSetup& setup, ScriptModule* module,
         int i, int scriptwanted, int provided);
+
+    //! Helper for type errors in _HandleEndedScriptExecution
+    //! \note Unlike _DoPassParameterTypeError this just prints an error
+    DLLEXPORT void _DoReceiveParameterTypeError(
+        ScriptRunningSetup& setup, ScriptModule* module, int applicationwanted, int scripthad);
+
+
 
     //! \brief Increments refcount of obj if it is derived from ReferenceCounted
     //! Helper _DoPassEachParameter
@@ -558,5 +583,13 @@ TYPE_RESOLVER_AS_PREDEFINED(float, "float");
 // And other inbuild types that can't have ANGELSCRIPT_TYPE in their class
 TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
 
+// Special case void //
+template<>
+struct AngelScriptTypeIDResolver<void> {
+    static int Get(ScriptExecutor* resolver)
+    {
+        return ANGELSCRIPT_VOID_TYPEID;
+    }
+};
 
 } // namespace Leviathan

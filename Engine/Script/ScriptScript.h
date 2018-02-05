@@ -6,7 +6,7 @@
 
 namespace Leviathan{
 
-	// holds a reference of script module //
+	//! holds a reference of script module
     //! \todo Remove this and replace with direct access to ScriptModule
 	class ScriptScript{
 	public:

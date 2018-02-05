@@ -132,7 +132,7 @@ DLLEXPORT void GuiCollection::UpdateState(bool newstate){
 			ScriptRunningSetup sargs;
 			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
 
-			ScriptExecutor::Get()->RunSetUp(tmpscript, &sargs);
+			ScriptExecutor::Get()->RunSetUp(tmpscript->GetModule(), &sargs);
 
 			onevent->Release();
 		}

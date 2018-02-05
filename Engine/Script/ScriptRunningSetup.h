@@ -21,7 +21,8 @@ public:
     DLLEXPORT ~ScriptRunningSetup();
 
     // named constructor idiom //
-    DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const std::string& epoint) {
+    DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const std::string& epoint)
+    {
         // set //
         Entryfunction = epoint;
         return *this;
@@ -38,19 +39,22 @@ public:
     // }
 
     DLLEXPORT inline ScriptRunningSetup& SetArguments(
-        std::vector<std::shared_ptr<NamedVariableBlock>>& args) {
+        std::vector<std::shared_ptr<NamedVariableBlock>>& args)
+    {
         // set //
         Parameters = args;
         return *this;
     }
 
-    DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool& state) {
+    DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool& state)
+    {
         // set //
         FullDeclaration = state;
         return *this;
     }
 
-    DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool& state) {
+    DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool& state)
+    {
 
         PrintErrors = state;
         return *this;
@@ -79,15 +83,19 @@ template<typename ReturnT>
 struct ScriptRunResult {
 
     DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result, ReturnT&& value) :
-        Result(result), Value(std::move(value)) {}
+        Result(result), Value(std::move(value))
+    {
+    }
 
     //! Only set result code
-    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result) {
+    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result)
+    {
         if constexpr(std::is_pointer_v<ReturnT>)
             Value = nullptr;
     }
 
-    DLLEXPORT ~ScriptRunResult() {
+    DLLEXPORT ~ScriptRunResult()
+    {
 
         if constexpr(std::is_base_of_v<ReturnT, ReferenceCounted>) {
             Value->Release();
@@ -97,6 +105,14 @@ struct ScriptRunResult {
 
     SCRIPT_RUN_RESULT Result;
     ReturnT Value;
+};
+
+template<>
+struct ScriptRunResult<void> {
+
+    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result) {}
+
+    SCRIPT_RUN_RESULT Result;
 };
 
 } // namespace Leviathan

@@ -218,8 +218,11 @@ void BaseGuiObject::_CallScriptListener(Event* event, GenericEvent* event2){
                 SetArguments(Args);
 
 			// Run the script //
-            std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
-                Scripting.get(), &sargs);
+            if(Scripting){
+            
+                std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                    Scripting->GetModule(), &sargs);
+            }
 		}
 	} else {
 		// generic event is passed //
@@ -239,8 +242,11 @@ void BaseGuiObject::_CallScriptListener(Event* event, GenericEvent* event2){
                     event2->GetTypePtr())).SetArguments(Args);
 
 			// Run the script //
-            std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
-                Scripting.get(), &sargs);
+            if(Scripting){
+            
+                std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+                    Scripting->GetModule(), &sargs);
+            }
 		}
 	}
 }
@@ -459,16 +465,21 @@ bool BaseGuiObject::_CallCEGUIListener(const std::string &name,
 
 
 	// Run the script //
-    std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
-        Scripting.get(), &sargs);
+    if(Scripting){
+        std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
+            Scripting->GetModule(), &sargs);
+        
+        if(!result || !result->IsConversionAllowedNonPtr<bool>()){
+            
+            return false;
+        }
 
-	if(!result || !result->IsConversionAllowedNonPtr<bool>()){
-
-		return false;
-	}
-
-	// Return the value returned by the script //
-	return result->ConvertAndReturnVariable<bool>();
+        // Return the value returned by the script //
+        return result->ConvertAndReturnVariable<bool>();
+        
+    } else {
+        return false;
+    }
 }
 // ------------------------------------ //
 bool BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs &args){

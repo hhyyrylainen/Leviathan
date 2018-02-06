@@ -85,6 +85,14 @@ struct ScriptRunResult {
     DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result, ReturnT&& value) :
         Result(result), Value(std::move(value))
     {
+        // We need to take a reference as the script context is reset
+        // before we are returned to the caller
+        if constexpr(std::is_pointer_v<ReturnT>) {
+            if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
+                if(Value)
+                    Value->AddRef();
+            }
+        }
     }
 
     //! Only set result code
@@ -96,9 +104,10 @@ struct ScriptRunResult {
 
     DLLEXPORT ~ScriptRunResult()
     {
-
-        if constexpr(std::is_base_of_v<ReturnT, ReferenceCounted>) {
-            Value->Release();
+        if constexpr(std::is_pointer_v<ReturnT>) {
+            if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
+                Value->Release();
+            }
         }
     }
 

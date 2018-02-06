@@ -110,9 +110,16 @@ public:
 
     void Warning(const std::string &data) override {
 
-        Logger::Warning(data);
+        if(WarningsCountAsErrors){
+            
+            ErrorOccured = true;
+            
+        } else {
+        
+            Logger::Warning(data);
 
-        INFO(data);
+            INFO(data);
+        }
     }
 
     void Fatal(const std::string &text) override {
@@ -122,6 +129,7 @@ public:
     }
 
     bool ErrorOccured = false;
+    bool WarningsCountAsErrors = false;
 };
 
 //! \brief Partial implementation of Leviathan::Engine for tests

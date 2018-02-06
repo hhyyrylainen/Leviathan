@@ -1,9 +1,9 @@
 #include "../PartialEngine.h"
 
+#include "Handlers/IDFactory.h"
+#include "Script/Bindings/BindHelpers.h"
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptModule.h"
-#include "Script/Bindings/BindHelpers.h"
-#include "Handlers/IDFactory.h"
 
 #include "catch.hpp"
 
@@ -11,24 +11,25 @@ using namespace Leviathan;
 using namespace Leviathan::Test;
 
 
-TEST_CASE("Basic script running", "[script]"){
+TEST_CASE("Basic script running", "[script]")
+{
 
     PartialEngine<false> engine;
-    
+
     IDFactory ids;
     ScriptExecutor exec;
 
-	// setup the script //
-	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
         "int TestFunction(int Val1, int Val2){\n"
-		"// do some time consuming stuff //\n"
-		"Val1 *= Val1+Val2 % 15;\n"
-		"Val2 /= Val2-Val1-Val2*25+2;\n"
-		"return 42;\n"
-		"}");
+        "// do some time consuming stuff //\n"
+        "Val1 *= Val1+Val2 % 15;\n"
+        "Val2 /= Val2-Val1-Val2*25+2;\n"
+        "return 42;\n"
+        "}");
 
     mod->AddScriptSegment(sourcecode);
 
@@ -38,8 +39,7 @@ TEST_CASE("Basic script running", "[script]"){
 
     std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
         std::make_shared<NamedVariableBlock>(252134, "Val1"),
-        std::make_shared<NamedVariableBlock>(25552, "Val2")
-    };
+        std::make_shared<NamedVariableBlock>(25552, "Val2")};
 
     ScriptRunningSetup ssetup;
     ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
@@ -55,30 +55,32 @@ TEST_CASE("Basic script running", "[script]"){
 
     CHECK(Value == 42);
 
-	mod->DeleteThisModule();
+    mod->DeleteThisModule();
 }
 
-TEST_CASE("Basic new script running", "[script]"){
+TEST_CASE("Basic new script running", "[script]")
+{
 
     PartialEngine<false> engine;
-    
+
     IDFactory ids;
     ScriptExecutor exec;
 
-    SECTION("Typeid checks"){
+    SECTION("Typeid checks")
+    {
 
         CHECK(exec.ResolveStringToASID("string") ==
-            AngelScriptTypeIDResolver<std::string>::Get(&exec));
+              AngelScriptTypeIDResolver<std::string>::Get(&exec));
     }
 
-	// setup the script //
-	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
         "int TestFunction(int Val1, float Val2, const string &in msg){\n"
-		"return int(Val1 * Val2) + msg.length();\n"
-		"}");
+        "return int(Val1 * Val2) + msg.length();\n"
+        "}");
 
     mod->AddScriptSegment(sourcecode);
 
@@ -88,23 +90,22 @@ TEST_CASE("Basic new script running", "[script]"){
 
     ScriptRunningSetup ssetup;
     ssetup.SetEntrypoint("TestFunction").SetUseFullDeclaration(false);
-    
-    ScriptRunResult<int> result = exec.RunScript<int>(mod, ssetup, 2, 5,
-        std::string("my string5"));
+
+    ScriptRunResult<int> result =
+        exec.RunScript<int>(mod, ssetup, 2, 5, std::string("my string5"));
 
     REQUIRE(result.Result == SCRIPT_RUN_RESULT::Success);
     CHECK(result.Value == 20);
-    
+
     // TODO: add tests for type conversions once they are done
 
-	mod->DeleteThisModule();
+    mod->DeleteThisModule();
 }
 
 int MyRefCountedParam = 0;
 
-class TestMyRefCounted : public ReferenceCounted{
+class TestMyRefCounted : public ReferenceCounted {
 public:
-
     REFERENCE_COUNTED_PTR_TYPE(TestMyRefCounted);
 
 protected:
@@ -114,36 +115,40 @@ protected:
     // counted instances through MakeShared
     friend ReferenceCounted;
 
-    TestMyRefCounted(){
+    TestMyRefCounted()
+    {
         ++MyRefCountedParam;
     }
 
-    ~TestMyRefCounted(){
+    ~TestMyRefCounted()
+    {
 
         --MyRefCountedParam;
     }
 };
 
-bool RegisterTestMyRefCounted(asIScriptEngine* engine){
+bool RegisterTestMyRefCounted(asIScriptEngine* engine)
+{
 
     ANGELSCRIPT_REGISTER_REF_TYPE("TestMyRefCounted", TestMyRefCounted);
     return true;
 }
 
 
-TEST_CASE("Running scripts that don't take all ref counted parameters", "[script]"){
-    
+TEST_CASE("Running scripts that don't take all ref counted parameters", "[script]")
+{
+
     TestMyRefCounted::pointer ourObj = ReferenceCounted::MakeShared<TestMyRefCounted>();
 
     PartialEngine<false> engine;
-    
+
     IDFactory ids;
     ScriptExecutor exec;
 
     REQUIRE(RegisterTestMyRefCounted(exec.GetASEngine()));
 
-	// setup the script //
-	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
@@ -164,8 +169,9 @@ TEST_CASE("Running scripts that don't take all ref counted parameters", "[script
     REQUIRE(module != nullptr);
 
     CHECK(ourObj->GetRefCount() == 1);
-    
-    SECTION("First basic run"){
+
+    SECTION("First basic run")
+    {
 
         ScriptRunningSetup ssetup;
         ssetup.SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
@@ -182,41 +188,43 @@ TEST_CASE("Running scripts that don't take all ref counted parameters", "[script
         CHECK(returned.Value == 4);
     }
 
-    SECTION("Second run with ignored object handle"){
-        
+    SECTION("Second run with ignored object handle")
+    {
+
         ScriptRunningSetup ssetup;
         ssetup.SetEntrypoint("Test2").SetUseFullDeclaration(false)
             //.SetPrintErrors(false)
             ;
-        
+
         auto returned = exec.RunScript<int>(mod, ssetup, 2, ourObj.get());
         CHECK(ourObj->GetRefCount() == 1);
-        
+
         // check did it run //
         CHECK(ssetup.ScriptExisted == true);
         REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
 
         CHECK(returned.Value == 2);
-    }    
+    }
 
     CHECK(ourObj->GetRefCount() == 1);
-    
-	mod->DeleteThisModule();
+
+    mod->DeleteThisModule();
 }
 
-TEST_CASE("Script global handles are released", "[script][engine]"){
+TEST_CASE("Script global handles are released", "[script][engine]")
+{
 
     TestMyRefCounted::pointer ourObj = ReferenceCounted::MakeShared<TestMyRefCounted>();
 
     PartialEngine<false> engine;
-    
+
     IDFactory ids;
     ScriptExecutor exec;
 
     REQUIRE(RegisterTestMyRefCounted(exec.GetASEngine()));
 
-	// setup the script //
-	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
@@ -233,12 +241,12 @@ TEST_CASE("Script global handles are released", "[script][engine]"){
     REQUIRE(module != nullptr);
 
     CHECK(ourObj->GetRefCount() == 1);
-    
-    SECTION("First basic run"){
+
+    SECTION("First basic run")
+    {
         std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
-            std::make_shared<NamedVariableBlock>(new VoidPtrBlock(ourObj.get()),
-                "TestMyRefCounted")
-        };
+            std::make_shared<NamedVariableBlock>(
+                new VoidPtrBlock(ourObj.get()), "TestMyRefCounted")};
 
         ourObj->AddRef();
 
@@ -258,21 +266,174 @@ TEST_CASE("Script global handles are released", "[script][engine]"){
     }
 
     CHECK(ourObj->GetRefCount() == 2);
-    
-	mod->DeleteThisModule();
+
+    mod->DeleteThisModule();
 
     CHECK(ourObj->GetRefCount() == 1);
 }
 
-TEST_CASE("Creating events in scripts", "[script][event]"){
+TEST_CASE("Passing and returning objects from RunScript", "[script]")
+{
 
     PartialEngine<false> engine;
-    
+
     IDFactory ids;
     ScriptExecutor exec;
 
-	// setup the script //
-	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "uint64 CountLength(const string &in str){\n"
+        "return str.length();\n"
+        "}\n"
+        "string GetStr(float val){\n"
+        "return formatFloat(val);\n"
+        "}\n"
+        "GenericEvent@ GetEvent(){\n"
+        "return GenericEvent(\"some event\");\n"
+        "}\n"
+        "GenericEvent@ PassEvent(GenericEvent@ event){\n"
+        "return event;\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup;
+    ssetup.SetEntrypoint("CountLength").SetUseFullDeclaration(false);
+
+    auto returned =
+        exec.RunScript<uint64_t>(mod, ssetup, std::string("string to count characters in"));
+
+    REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
+
+    CHECK(returned.Value == 29);
+
+    std::string str2 = "other text that is different length";
+    returned = exec.RunScript<uint64_t>(mod, ssetup, str2);
+
+    REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
+
+    CHECK(returned.Value == 35);
+
+
+    ssetup.SetEntrypoint("GetStr");
+
+    auto returned2 = exec.RunScript<std::string>(mod, ssetup, 2.0);
+
+    REQUIRE(returned2.Result == SCRIPT_RUN_RESULT::Success);
+
+    CHECK(returned2.Value == "2");
+
+    GenericEvent* gotEvent;
+
+    {
+        ssetup.SetEntrypoint("GetEvent");
+
+        auto returned3 = exec.RunScript<GenericEvent*>(mod, ssetup);
+
+        REQUIRE(returned3.Result == SCRIPT_RUN_RESULT::Success);
+
+        CHECK(returned3.Value != nullptr);
+
+        gotEvent = returned3.Value;
+        CHECK(gotEvent->GetRefCount() == 1);
+        gotEvent->AddRef();
+        CHECK(gotEvent->GetRefCount() == 2);
+    }
+
+    CHECK(gotEvent->GetRefCount() == 1);
+
+    // Check type str //
+    CHECK(gotEvent->GetType() == "some event");
+
+
+    gotEvent->Release();
+    gotEvent = new GenericEvent("test event2");
+    CHECK(gotEvent->GetRefCount() == 1);
+
+    {
+        ssetup.SetEntrypoint("PassEvent");
+
+        auto returned3 = exec.RunScript<GenericEvent*>(mod, ssetup, gotEvent);
+
+        REQUIRE(returned3.Result == SCRIPT_RUN_RESULT::Success);
+
+        CHECK(returned3.Value != nullptr);
+
+        CHECK(gotEvent->GetRefCount() == 2);
+
+        REQUIRE(gotEvent == returned3.Value);
+    }
+
+    CHECK(gotEvent->GetRefCount() == 1);
+
+    // Check type str //
+    CHECK(gotEvent->GetType() == "test event2");
+    gotEvent->Release();
+
+    mod->DeleteThisModule();
+}
+
+TEST_CASE("Ignored returned object doesn't leak", "[script]")
+{
+    PartialEngine<false> engine;
+    // Overwrite the logger in engine
+    TestLogRequireError requireError;
+    requireError.WarningsCountAsErrors = true;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "GenericEvent@ PassEvent(GenericEvent@ event){\n"
+        "return event;\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup;
+    ssetup.SetEntrypoint("PassEvent").SetUseFullDeclaration(false);
+
+    GenericEvent* event = new GenericEvent("Test1322>");
+    CHECK(event->GetRefCount() == 1);
+
+    // Causes errors as this has to release 
+    auto returned =
+        exec.RunScript<void>(mod, ssetup, event);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(event->GetRefCount() == 1);
+    event->Release();
+
+
+    mod->DeleteThisModule();
+}
+
+
+TEST_CASE("Creating events in scripts", "[script][event]")
+{
+
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
@@ -287,13 +448,12 @@ TEST_CASE("Creating events in scripts", "[script][event]"){
         "    if(@tempvalues !is @otherVals)\n"
         "         return 0;\n"
         "    if(@tempvalues is null)\n"
-        "         return 0;\n"        
+        "         return 0;\n"
         "    if(tempvalues !is otherVals)\n"
         "         return 0;\n"
         "\n"
         "    return 12;\n"
-        "}"
-    );
+        "}");
 
     mod->AddScriptSegment(sourcecode);
 
@@ -315,15 +475,16 @@ TEST_CASE("Creating events in scripts", "[script][event]"){
 }
 
 
-TEST_CASE("Documentation samples compile", "[script]"){
+TEST_CASE("Documentation samples compile", "[script]")
+{
 
     PartialEngine<false> engine;
-    
+
     IDFactory ids;
     ScriptExecutor exec;
 
-	// setup the script //
-	auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
 
     // Setup source for script //
     auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
@@ -368,8 +529,7 @@ TEST_CASE("Documentation samples compile", "[script]"){
         "    NamedVars@ thirdVariable = GetVars();\n"
         "\n"
         "    @other = null;\n"
-        "}"
-    );
+        "}");
 
     mod->AddScriptSegment(sourcecode);
 
@@ -388,5 +548,5 @@ TEST_CASE("Documentation samples compile", "[script]"){
 
     exec.RunSetUp(mod.get(), &ssetup);
 
-    CHECK(ssetup.ScriptExisted == true);    
+    CHECK(ssetup.ScriptExisted == true);
 }

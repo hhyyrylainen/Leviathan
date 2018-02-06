@@ -163,7 +163,6 @@ public:
         }
 
         // Pass the parameters //
-        // TODO: Needs a new method for this
         if(!_PassParametersToScript(
                scriptContext, parameters, module.get(), func, std::forward<Args>(args)...)) {
 
@@ -215,11 +214,17 @@ public:
         }
 
         // Pass the parameters //
-        // TODO: Needs a new method for this
         if(!_PassParametersToScript(
                scriptContext, parameters, nullptr, func, std::forward<Args>(args)...)) {
 
             // Failed passing the parameters //
+            _DoneWithContext(scriptContext);
+            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
+        }
+
+        // Pass the object instance //
+        if(scriptContext->SetObject(obj) < 0) {
+
             _DoneWithContext(scriptContext);
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
         }
@@ -259,6 +264,8 @@ public:
 
 private:
     //! \brief Handles status and returning a value from ran script function
+    //! \todo When receiving signed types do we need to reinterpret_cast them from unsigned
+    //! types
     template<typename ReturnT>
     ScriptRunResult<ReturnT> _HandleEndedScriptExecution(int retcode,
         asIScriptContext* scriptcontext, ScriptRunningSetup& setup, asIScriptFunction* func,
@@ -286,8 +293,6 @@ private:
 
         // Successfully executed, try to fetch return value //
 
-        // TODO: support for value types (also need support for them in the parameter passing)
-
         const auto returnType = func->GetReturnTypeId();
 
         // Script didn't return anything
@@ -310,76 +315,85 @@ private:
             }
         }
 
-        // return type isn't void //
-        // TODO: conversions from compatible types
+        // script return type isn't void //
 
         const auto parameterType = AngelScriptTypeIDResolver<ReturnT>::Get(this);
-        if(returnType != parameterType) {
-
-            return _ReturnedTypeDidntMatch<ReturnT>(
-                scriptcontext, setup, func, module, parameterType, returnType);
-        }
 
         if constexpr(std::is_same_v<ReturnT, void>) {
 
-            // Need to do handle releases also here if type was different
+            // Success, no return value wanted //
+            if(setup.PrintErrors && (returnType != parameterType)) {
+
+                LOG_WARNING("ScriptExecutor: application ignoring script return value");
+            }
+
+            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
+
+        } else {
+            // TODO: conversions between compatible types
             if(returnType != parameterType) {
 
                 return _ReturnedTypeDidntMatch<ReturnT>(
                     scriptcontext, setup, func, module, parameterType, returnType);
             }
 
-            // Success, no return value wanted //
-            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
+            if constexpr(std::is_same_v<ReturnT, int32_t> ||
+                         std::is_same_v<ReturnT, uint32_t>) {
 
-        } else if constexpr(std::is_same_v<ReturnT, int32_t>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDWord());
+            } else if constexpr(std::is_same_v<ReturnT, int64_t> ||
+                                std::is_same_v<ReturnT, uint64_t>) {
 
-            return ScriptRunResult<ReturnT>(
-                SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDWord());
-        } else if constexpr(std::is_same_v<ReturnT, float>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnQWord());
+            } else if constexpr(std::is_same_v<ReturnT, float>) {
 
-            return ScriptRunResult<ReturnT>(
-                SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnFloat());
-        } else if constexpr(std::is_same_v<ReturnT, double>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnFloat());
+            } else if constexpr(std::is_same_v<ReturnT, double>) {
 
-            return ScriptRunResult<ReturnT>(
-                SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDouble());
-        } else if constexpr(std::is_same_v<ReturnT, char> || std::is_same_v<ReturnT, int8_t> ||
-                            std::is_same_v<ReturnT, bool>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDouble());
+            } else if constexpr(std::is_same_v<ReturnT, char> ||
+                                std::is_same_v<ReturnT, int8_t> ||
+                                std::is_same_v<ReturnT, bool>) {
 
-            return ScriptRunResult<ReturnT>(
-                SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnByte());
-
-        } else {
-
-            // This is a class type and we need to do a copy if it was
-            // by value or this isn't a handle type
-
-            // According to AS documentation the return object is
-            // deleted when the context is recycled, so we need to
-            // increase ref or make a copy
-
-            // We have already done type checks, so this should be fine to cast //
-            ReturnT* obj = static_cast<ReturnT*>(scriptcontext->GetReturnObject());
-
-            if constexpr(std::is_pointer_v<ReturnT>) {
-
-                _IncrementRefCountIfRefCountedType(obj);
-                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, obj);
-
-            } else if constexpr(std::is_lvalue_reference_v<ReturnT>) {
-
-                static_assert(!std::is_class_v<ReturnT>,
-                    "Returning by reference from scripts doesn't work");
-
-            } else if constexpr(std::is_class_v<ReturnT>) {
-
-                // TODO: this needs testing
-                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, *obj);
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnByte());
             } else {
 
-                static_assert(std::is_same_v<ReturnT, void> == std::is_same_v<ReturnT, int>,
-                    "Tried to return some very weird type from a script function");
+                // This is a class type and we need to do a copy if it was
+                // by value or this isn't a handle type
+
+                // According to AS documentation the return object is
+                // deleted when the context is recycled, so we need to
+                // increase ref or make a copy
+
+                if constexpr(std::is_pointer_v<ReturnT>) {
+
+                    // We have already done type checks, so this should be fine to cast //
+                    ReturnT obj = static_cast<ReturnT>(scriptcontext->GetReturnObject());
+
+                    _IncrementRefCountIfRefCountedType(obj);
+                    return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, ReturnT(obj));
+
+                } else if constexpr(std::is_lvalue_reference_v<ReturnT>) {
+
+                    static_assert(!std::is_class_v<ReturnT>,
+                        "Returning by reference from scripts doesn't work");
+
+                } else if constexpr(std::is_class_v<ReturnT>) {
+
+                    // We have already done type checks, so this should be fine to cast //
+                    ReturnT* obj = static_cast<ReturnT*>(scriptcontext->GetReturnObject());
+                    return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, ReturnT(*obj));
+                } else {
+
+                    static_assert(
+                        std::is_same_v<ReturnT, void> == std::is_same_v<ReturnT, int>,
+                        "Tried to return some very weird type from a script function");
+                }
             }
         }
     }
@@ -391,21 +405,6 @@ private:
         int parameterType, int returnType)
     {
         _DoReceiveParameterTypeError(setup, module, parameterType, returnType);
-
-        asITypeInfo* info = GetASEngine()->GetTypeInfoById(func->GetReturnTypeId());
-
-        const auto flags = info->GetFlags();
-        if((flags & asOBJ_REF) && !(flags & asOBJ_NOCOUNT)) {
-
-            LOG_ERROR("ScriptExecutor: script returned an object of ref type but "
-                      "the application wasn't expecting that type. Trying to prevent memory "
-                      "leak my calling release ref through angelscript");
-
-            RunReleaseRefOnObject(scriptcontext->GetReturnObject(), func->GetReturnTypeId());
-
-            LOG_INFO("Success calling behaviour release");
-        }
-
         return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
     }
 
@@ -446,6 +445,7 @@ private:
     }
 
     //! Helper for _PassParametersToScript
+    //! \todo When passing signed types do we need to reinterpret_cast them to unsigned types
     template<class CurrentT, class... Args>
     bool _DoPassEachParameter(asUINT parameterc, asUINT& i, asIScriptContext* scriptcontext,
         ScriptRunningSetup& setup, ScriptModule* module, asIScriptFunction* func,
@@ -468,7 +468,6 @@ private:
             return false;
         }
 
-        // TODO: more conversions from compatible types
         const auto parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
         if(wantedTypeID != parameterType) {
 
@@ -532,9 +531,13 @@ private:
             return _DoPassParameterTypeError(setup, module, i, wantedTypeID, parameterType);
         }
 
-        if constexpr(std::is_same_v<CurrentT, int32_t>) {
+        if constexpr(std::is_same_v<CurrentT, int32_t> || std::is_same_v<CurrentT, uint32_t>) {
 
             r = scriptcontext->SetArgDWord(i, current);
+        } else if constexpr(std::is_same_v<CurrentT, int64_t> ||
+                            std::is_same_v<CurrentT, uint64_t>) {
+
+            r = scriptcontext->SetArgQWord(i, current);
         } else if constexpr(std::is_same_v<CurrentT, float>) {
 
             r = scriptcontext->SetArgFloat(i, current);
@@ -650,6 +653,24 @@ private:
         if constexpr(std::is_base_of_v<ReferenceCounted, T>) {
             if(current)
                 current->AddRef();
+        }
+    }
+
+    //! Unused helper for calling release on an unkown script type
+    //! \param obj The object to release (scriptcontext->GetReturnObject())
+    //! \param returnTypeID id of obj (func->GetReturnTypeId())
+    void _CallBehaviourReleaseIfNeeded(void* obj, int returnTypeID)
+    {
+        asITypeInfo* info = GetASEngine()->GetTypeInfoById(returnTypeID);
+
+        const auto flags = info->GetFlags();
+        if((flags & asOBJ_REF) && !(flags & asOBJ_NOCOUNT)) {
+
+            LOG_INFO("ScriptExecutor: attempting to release ref through angelscript");
+
+            RunReleaseRefOnObject(obj, returnTypeID);
+
+            LOG_INFO("Success calling behaviour release");
         }
     }
 

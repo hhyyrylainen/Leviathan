@@ -21,8 +21,6 @@ namespace Pong{
 
 		// customized callbacks //
 		bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override;
-		void RegisterCustomScriptTypes(asIScriptEngine* engine,
-            std::map<int, std::string> &typeids) override;
 		void RegisterApplicationPhysicalMaterials(
             Leviathan::PhysicsMaterialManager* manager) override;
 

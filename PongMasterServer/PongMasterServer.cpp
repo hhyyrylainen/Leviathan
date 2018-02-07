@@ -49,12 +49,6 @@ bool Pong::PongMasterServer::InitLoadCustomScriptTypes(asIScriptEngine* engine){
 
 	return true;
 }
-
-void Pong::PongMasterServer::RegisterCustomScriptTypes(asIScriptEngine* engine,
-    std::map<int, string> &typeids)
-{
-
-}
 // ------------------------------------ //
 void Pong::PongMasterServer::RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager){
 

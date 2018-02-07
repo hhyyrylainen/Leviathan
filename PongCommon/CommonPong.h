@@ -576,16 +576,6 @@ namespace Pong{
             return MoreCustomScriptTypes(engine);
         }
 
-        virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
-            std::map<int, string> &typeids)
-        {
-            // we have registered just a one type, add it //
-            typeids.insert(make_pair(engine->GetTypeIdByDecl("PongBase"), "PongBase"));
-            typeids.insert(make_pair(engine->GetTypeIdByDecl("PlayerSlot"), "PlayerSlot"));
-
-            MoreCustomScriptRegister(engine, typeids);
-        }
-
         virtual void RegisterApplicationPhysicalMaterials(Leviathan::PhysicsMaterialManager* manager){
             // \todo implement loading from files //
 
@@ -634,8 +624,6 @@ namespace Pong{
     protected:
 
         virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;
-        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
-            std::map<int, string> &typeids) = 0;
 
         // ------------------------------------ //
 

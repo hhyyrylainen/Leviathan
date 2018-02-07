@@ -5,11 +5,7 @@
 #include "BindHelpers.h"
 
 
-namespace Leviathan{
+namespace Leviathan {
 
 bool BindTypes(asIScriptEngine* engine);
-void RegisterTypes(asIScriptEngine* engine, std::map<int, std::string> &typeids);
-
 }
-
-

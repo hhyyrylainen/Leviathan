@@ -498,10 +498,6 @@ bool Pong::PongGame::MoreCustomScriptTypes(asIScriptEngine* engine){
     return true;
 }
 
-void Pong::PongGame::MoreCustomScriptRegister(asIScriptEngine* engine, std::map<int, string> &typeids){
-    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongGame"), "PongGame"));
-}
-
 bool Pong::PongGame::Connect(const string &address, string &errorstr){
     Logger::Get()->Info("About to connect to address "+address);
 

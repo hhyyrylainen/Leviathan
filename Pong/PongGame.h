@@ -118,8 +118,6 @@ namespace Pong{
         virtual void DoSpecialPostLoad() override;
         virtual void CustomizedGameEnd() override;
         virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) override;
-        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
-            std::map<int, string> &typeids) override;
 
 
         //! \brief Sends updates to the GUI

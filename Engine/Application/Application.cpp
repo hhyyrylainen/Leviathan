@@ -169,12 +169,6 @@ DLLEXPORT bool LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* 
     return true;
 }
 
-DLLEXPORT void LeviathanApplication::RegisterCustomScriptTypes(
-    asIScriptEngine* engine, std::map<int, std::string> &typeids)
-{
-
-}
-
 DLLEXPORT void LeviathanApplication::RegisterApplicationPhysicalMaterials(
     PhysicsMaterialManager* manager)
 {

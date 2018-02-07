@@ -369,12 +369,6 @@ bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
     return true;
 }
 
-void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine,
-    std::map<int, string> &typeids)
-{
-    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongServer"), "PongServer"));
-}
-
 void Pong::PongServer::PreFirstTick(){
 
     ServerInterface->SetServerAllowPlayers(true);

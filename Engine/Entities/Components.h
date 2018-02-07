@@ -57,7 +57,9 @@ public:
     //! \brief Creates at specific position
     inline Position(const Data &data) : ComponentWithStates(TYPE),
                                         Members(data){}
-        
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Position);
+    
     Data Members;
     
     static constexpr auto TYPE = COMPONENT_TYPE::Position;
@@ -77,6 +79,8 @@ public:
 
     //! \brief Gracefully releases while world is still valid
     DLLEXPORT void Release(Ogre::SceneManager* worldsscene);
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(RenderNode);
     
     Ogre::SceneNode* Node = nullptr;
 
@@ -141,6 +145,8 @@ public:
         UpdateReceivers.push_back(std::make_shared<ActiveConnection>(connection));
     }
 
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Sendable);
+
     //! Clients we have already sent a state to
     std::vector<std::shared_ptr<ActiveConnection>> UpdateReceivers;
 
@@ -176,6 +182,8 @@ public:
     DLLEXPORT void GetServerSentStates(StoredState const** first,
         StoredState const** second, int tick, float &progress) const;
 
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Received);
+
     //! Client side buffer of past states
     boost::circular_buffer<StoredState> ClientStateBuffer;
 
@@ -192,6 +200,8 @@ public:
     inline BoxGeometry(const Float3 &size, const std::string &material) :
         Component(TYPE),
         Sizes(size), Material(material){}
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(BoxGeometry);
     
     //! Size along the axises
     Float3 Sizes;
@@ -213,6 +223,8 @@ public:
 
     //! \brief Destroys GraphicalObject
     DLLEXPORT void Release(Ogre::SceneManager* scene);
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Model);
         
     //! The entity that has this model's mesh loaded
     Ogre::Item* GraphicalObject = nullptr;
@@ -230,6 +242,8 @@ public:
 
     //! \brief Destroys GraphicalObject
     DLLEXPORT void Release(Ogre::SceneManager* scene);
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Plane);
 
     //! The plane that this component creates
     Ogre::Item* GraphicalObject = nullptr;
@@ -371,6 +385,7 @@ public:
     static void PhysicsMovedEvent(const NewtonBody* const body, const dFloat* const matrix,
         int threadIndex);
 
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Physics);
         
     //! \brief Adds all applied forces together
     Float3 _GatherApplyForces(const float &mass);
@@ -422,6 +437,8 @@ public:
     inline ManualObject() : Component(TYPE){}
 
     DLLEXPORT void Release(Ogre::SceneManager* scene);
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(ManualObject);
 
     Ogre::ManualObject* Object = nullptr;
 
@@ -635,6 +652,8 @@ public:
     {
 
     }
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Camera);
 
     //! Y-axis based field of view.
     //! \warning This is different than the usual x-axis based field of view!

@@ -11,9 +11,6 @@
 namespace Leviathan{
 
 	bool RegisterNotifiersWithAngelScript(asIScriptEngine* engine);
-	void RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine,
-        std::map<int, std::string> &typeids);
-
 
 	//! \brief BaseNotifier for use in scripts
 	class ScriptNotifier : public BaseNotifierAll, public ReferenceCounted{

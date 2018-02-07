@@ -4,9 +4,7 @@
 // ------------------------------------ //
 #include "BindHelpers.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
 bool BindOgre(asIScriptEngine* engine);
-void RegisterOgre(asIScriptEngine* engine, std::map<int, std::string> &typeids);
-
 }

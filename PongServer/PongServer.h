@@ -88,8 +88,6 @@ namespace Pong{
         void CustomizedGameEnd() override;
 
         bool MoreCustomScriptTypes(asIScriptEngine* engine) override;
-        void MoreCustomScriptRegister(asIScriptEngine* engine,
-            std::map<int, string> &typeids) override;
 
         //! \brief For testing AI with valgrind
         //! \todo Add a score limit and a way to go back to default state afterwards

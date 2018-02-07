@@ -4,12 +4,8 @@
 // ------------------------------------ //
 #include "BindHelpers.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
 //! \todo Create a wrapper around NewtonBody which has reference counting
 bool BindEntity(asIScriptEngine* engine);
-void RegisterEntity(asIScriptEngine* engine, std::map<int, std::string> &typeids);
-
-
-}
-
+} // namespace Leviathan

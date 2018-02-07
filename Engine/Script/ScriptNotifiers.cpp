@@ -142,11 +142,4 @@ bool Leviathan::RegisterNotifiersWithAngelScript(asIScriptEngine* engine){
 	return true;
 }
 
-void Leviathan::RegisterNotifierTypesWithAngelScript(asIScriptEngine* engine,
-    std::map<int, string> &typeids)
-{
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptNotifiable"), "ScriptNotifiable"));
-	typeids.insert(make_pair(engine->GetTypeIdByDecl("ScriptNotifier"), "ScriptNotifier"));
-}
-
 

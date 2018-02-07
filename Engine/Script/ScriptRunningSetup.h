@@ -117,5 +117,6 @@ struct ScriptRunResult<void> {
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::ScriptRunningSetup;
 using Leviathan::ScriptRunResult;
+using Leviathan::SCRIPT_RUN_RESULT;
 #endif //LEAK_INTO_GLOBAL
 

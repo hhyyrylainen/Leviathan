@@ -113,3 +113,9 @@ struct ScriptRunResult<void> {
 };
 
 } // namespace Leviathan
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::ScriptRunningSetup;
+using Leviathan::ScriptRunResult;
+#endif //LEAK_INTO_GLOBAL
+

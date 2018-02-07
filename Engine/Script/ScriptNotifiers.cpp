@@ -12,7 +12,7 @@ using namespace std;
 DLLEXPORT Leviathan::ScriptNotifier::ScriptNotifier(asIScriptFunction* functiontocall) :
     CallbackFunction(functiontocall)
 {
-
+    // TODO: increase ref count? or does the caller do that
 }
 
 DLLEXPORT Leviathan::ScriptNotifier::~ScriptNotifier(){
@@ -33,15 +33,16 @@ void Leviathan::ScriptNotifier::OnNotified(Lock &ownlock, BaseNotifiableAll* chi
 	ScriptRunningSetup params;
 	params.ErrorOnNonExistingFunction = true;
     
-	// No parameters used //
+	auto result = ScriptExecutor::Get()->RunScript<void>(CallbackFunction, nullptr, params);
 
-	ScriptExecutor::Get()->RunSetUp(CallbackFunction, &params);
+    if(result.Result != SCRIPT_RUN_RESULT::Success)
+        LOG_ERROR("ScriptNotifier: OnNotified: failed to call script callback");
 }
 // ------------------ ScriptNotifiable ------------------ //
 DLLEXPORT Leviathan::ScriptNotifiable::ScriptNotifiable(asIScriptFunction* functiontocall) :
     CallbackFunction(functiontocall)
 {
-
+    // TODO: increase ref count? or does the caller do that
 }
 
 DLLEXPORT Leviathan::ScriptNotifiable::~ScriptNotifiable(){
@@ -59,13 +60,13 @@ DLLEXPORT Leviathan::ScriptNotifiable::~ScriptNotifiable(){
 void Leviathan::ScriptNotifiable::OnNotified(Lock &ownlock, BaseNotifierAll* parent,
     Lock &parentlock)
 {
-
 	ScriptRunningSetup params;
 	params.ErrorOnNonExistingFunction = true;
-	// No parameters used //
+    
+	auto result = ScriptExecutor::Get()->RunScript<void>(CallbackFunction, nullptr, params);
 
-
-	ScriptExecutor::Get()->RunSetUp(CallbackFunction, &params);
+    if(result.Result != SCRIPT_RUN_RESULT::Success)
+        LOG_ERROR("ScriptNotifiable: OnNotified: failed to call script callback");
 }
 // ------------------------------------ //
 ScriptNotifier* ScriptNotifierFactory(asIScriptFunction* cb){

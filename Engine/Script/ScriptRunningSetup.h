@@ -38,14 +38,6 @@ public:
     //     return *this;
     // }
 
-    DLLEXPORT inline ScriptRunningSetup& SetArguments(
-        std::vector<std::shared_ptr<NamedVariableBlock>>& args)
-    {
-        // set //
-        Parameters = args;
-        return *this;
-    }
-
     DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool& state)
     {
         // set //
@@ -60,17 +52,13 @@ public:
         return *this;
     }
 
-
-    // variables //
-    std::vector<std::shared_ptr<NamedVariableBlock>> Parameters;
-
-    bool PrintErrors;
-    bool FullDeclaration;
-    bool ErrorOnNonExistingFunction;
-    SCRIPT_RUNTYPE RunType;
+    bool PrintErrors = true;
+    bool FullDeclaration = false;
+    bool ErrorOnNonExistingFunction = true;
+    SCRIPT_RUNTYPE RunType = SCRIPT_RUNTYPE_BREAKONERROR;
 
 
-    bool ScriptExisted;
+    bool ScriptExisted = false;
 
     std::string Entryfunction;
 };

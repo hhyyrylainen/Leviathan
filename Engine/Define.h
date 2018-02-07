@@ -61,6 +61,17 @@ constexpr float DEGREES_TO_RADIANS = PI/180.f;
 constexpr float EPSILON = 0.00000001f;
 }
 
+// AngelScript type registration (that isn't ReferenceCounted)
+#ifdef LEVIATHAN_USING_ANGELSCRIPT
+#define REFERENCE_HANDLE_UNCOUNTED_TYPE(x) static constexpr auto ANGELSCRIPT_TYPE = #x "@"; \
+// Appended @ because these are handle types
+#define REFERENCE_HANDLE_UNCOUNTED_TYPE_NAMED(x, y) static constexpr auto ANGELSCRIPT_TYPE \
+ = #y "@";
+#else
+#define REFERENCE_HANDLE_UNCOUNTED_TYPE(x)
+#define REFERENCE_HANDLE_UNCOUNTED_TYPE_NAMED(x, y)
+#endif //LEVIATHAN_USING_ANGELSCRIPT
+
 // Logging macros //
 #define LOG_INFO(x) Logger::Get()->Info(x);
 #define LOG_WARNING(x) Logger::Get()->Warning(x);

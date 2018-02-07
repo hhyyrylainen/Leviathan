@@ -82,7 +82,7 @@ struct ScriptSourceFileData {
 
 
 // \brief Holds everything related to "one" script needed to run it an build it
-class ScriptModule : public ThreadSafe {
+class ScriptModule : public ThreadSafe, public std::enable_shared_from_this<ScriptModule> {
     // friend to be able to delete static objects //
     friend ScriptExecutor;
 
@@ -90,8 +90,6 @@ public:
     DLLEXPORT ScriptModule(
         asIScriptEngine* engine, const std::string& name, int id, const std::string& source);
     DLLEXPORT ~ScriptModule();
-
-    DLLEXPORT FunctionParameterInfo* GetParamInfoForFunction(asIScriptFunction* func);
 
     //! \brief Builds the script if applicable
     //! \return The associated module or NULL if build fails
@@ -268,9 +266,6 @@ private:
 
     //! THe direct pointer to the module, this is stored to avoid searching
     asIScriptModule* ASModule = nullptr;
-
-
-    std::vector<FunctionParameterInfo*> FuncParameterInfos;
 
 
     //! Map of found listener functions

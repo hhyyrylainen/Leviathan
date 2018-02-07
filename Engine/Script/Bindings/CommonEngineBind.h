@@ -7,7 +7,6 @@
 namespace Leviathan{
 
 bool BindEngineCommon(asIScriptEngine* engine);
-void RegisterEngineCommon(asIScriptEngine* engine, std::map<int, std::string> &typeids);
 
 }
 

@@ -6,7 +6,6 @@
 #include "Common/DataStoring/DataBlock.h"
 #include "Common/ThreadSafe.h"
 #include "Handlers/IDFactory.h"
-#include "Script/FunctionParameterInfo.h"
 #include "Script/ScriptRunningSetup.h"
 #include "Script/ScriptScript.h"
 
@@ -67,6 +66,10 @@ TYPE_RESOLVER_AS_PREDEFINED(int8_t, "int8");
 TYPE_RESOLVER_AS_PREDEFINED(uint8_t, "uint8");
 TYPE_RESOLVER_AS_PREDEFINED(double, "double");
 TYPE_RESOLVER_AS_PREDEFINED(float, "float");
+TYPE_RESOLVER_AS_PREDEFINED(bool, "bool");
+// Char isn't actually signed or unsigned in c++ but this allows basically using char as alias
+// for int8_t without explicit casts to angelscript
+TYPE_RESOLVER_AS_PREDEFINED(char, "int8");
 
 // And other inbuilt types that can't have ANGELSCRIPT_TYPE in their class
 TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
@@ -82,17 +85,14 @@ struct AngelScriptTypeIDResolver<void> {
 
 
 
-//! \todo Make the module finding more efficient, store module IDs in all call sites
+//! \brief Handles ScriptModule creation and AngelScript code execution
 class ScriptExecutor {
-    friend ScriptModule;
-
 public:
     DLLEXPORT ScriptExecutor();
     DLLEXPORT ~ScriptExecutor();
 
-    DLLEXPORT void ScanAngelScriptTypes();
-
-    // module managing //
+    // ------------------------------------ //
+    // module managing
     DLLEXPORT std::weak_ptr<ScriptModule> CreateNewModule(const std::string& name,
         const std::string& source, const int& modulesid = IDFactory::GetID());
 
@@ -100,33 +100,6 @@ public:
     DLLEXPORT bool DeleteModuleIfNoExternalReferences(int ID);
     DLLEXPORT std::weak_ptr<ScriptModule> GetModule(const int& ID);
     DLLEXPORT std::weak_ptr<ScriptModule> GetModuleByAngelScriptName(const char* nameofmodule);
-
-    DLLEXPORT inline asIScriptEngine* GetASEngine()
-    {
-        return engine;
-    }
-
-    //! \deprecated use AngelScriptTypeIDResolver (or ResolveStringToASID)
-    DLLEXPORT int GetAngelScriptTypeID(const std::string& typesname);
-
-
-    // //! \brief Runs a script
-    // DLLEXPORT std::shared_ptr<VariableBlock> RunSetUp(
-    //     ScriptScript* scriptobject, ScriptRunningSetup* parameters);
-
-    //! \brief Finds release ref behaviour on object and calls it
-    //! \exception Exception if it didn't work
-    //! \note Should only be called if the object of type has asOBJ_REF and no asOBJ_NOCOUNT
-    void RunReleaseRefOnObject(void* obj, int objid);
-
-    //! \brief Runs a script
-    DLLEXPORT std::shared_ptr<VariableBlock> RunSetUp(
-        ScriptModule* scrptmodule, ScriptRunningSetup* parameters);
-
-    //! \brief Runs a script function whose pointer is passed in
-    DLLEXPORT std::shared_ptr<VariableBlock> RunSetUp(
-        asIScriptFunction* function, ScriptRunningSetup* parameters);
-
 
     //! \brief Runs a function in a script
     //! \note This is the recommended way to run scripts (other than GameModule that has its
@@ -137,14 +110,27 @@ public:
     DLLEXPORT ScriptRunResult<ReturnT> RunScript(const std::shared_ptr<ScriptModule>& module,
         ScriptRunningSetup& parameters, Args&&... args)
     {
-        if(!parameters.Parameters.empty())
-            LOG_FATAL("RunScript: called with old style parameters. Move parameters to the "
-                      "function call");
-
+        // This calls _CheckScriptFunctionPtr
         asIScriptFunction* func = GetFunctionFromModule(module.get(), parameters);
 
+        return RunScript<ReturnT>(func, module, parameters, std::forward<Args>(args)...);
+    }
+
+    //! \brief Runs a function in a script (that is known already)
+    //! \todo Wrap context in an object that automatically returns it in case of expections
+    //! (_HandleEndedScriptExecution can throw)
+    template<typename ReturnT, class... Args>
+    DLLEXPORT ScriptRunResult<ReturnT> RunScript(asIScriptFunction* func,
+        std::shared_ptr<ScriptModule> module, ScriptRunningSetup& parameters, Args&&... args)
+    {
         if(!func)
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
+
+        if(!module) {
+            // Find the right module //
+            module = GetScriptModuleByFunction(func, parameters.PrintErrors);
+        }
+
 
         // Create a running context for the function //
         asIScriptContext* scriptContext = _GetContextForExecution();
@@ -156,7 +142,7 @@ public:
         }
 
         if(!_PrepareContextForPassingParameters(
-               func, scriptContext, &parameters, module.get())) {
+               func, scriptContext, parameters, module.get())) {
 
             _DoneWithContext(scriptContext);
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
@@ -198,6 +184,9 @@ public:
         if(!func || !obj)
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
 
+        std::shared_ptr<ScriptModule> module =
+            GetScriptModuleByFunction(func, parameters.PrintErrors);
+
         // Create a running context for the function //
         asIScriptContext* scriptContext = _GetContextForExecution();
 
@@ -207,7 +196,8 @@ public:
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
         }
 
-        if(!_PrepareContextForPassingParameters(func, scriptContext, &parameters, nullptr)) {
+        if(!_PrepareContextForPassingParameters(
+               func, scriptContext, parameters, module.get())) {
 
             _DoneWithContext(scriptContext);
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
@@ -215,7 +205,7 @@ public:
 
         // Pass the parameters //
         if(!_PassParametersToScript(
-               scriptContext, parameters, nullptr, func, std::forward<Args>(args)...)) {
+               scriptContext, parameters, module.get(), func, std::forward<Args>(args)...)) {
 
             // Failed passing the parameters //
             _DoneWithContext(scriptContext);
@@ -235,7 +225,7 @@ public:
 
         // Get the return value //
         auto returnvalue = _HandleEndedScriptExecution<ReturnT>(
-            retcode, scriptContext, parameters, func, nullptr);
+            retcode, scriptContext, parameters, func, module.get());
 
         // Release the context //
         _DoneWithContext(scriptContext);
@@ -244,8 +234,21 @@ public:
         return returnvalue;
     }
 
+    //! \brief Finds release ref behaviour on object and calls it
+    //! \exception Exception if it didn't work
+    //! \note Should only be called if the object of type has asOBJ_REF and no asOBJ_NOCOUNT
+    DLLEXPORT void RunReleaseRefOnObject(void* obj, int objid);
+
+    //! \brief Returns module in which script function was defined in
+    //! \todo When module is null find the module by AngelScript module pointer (set the
+    //! userdata pointer on the module to point to the ScriptModule object) for faster finding
+    DLLEXPORT std::shared_ptr<ScriptModule> GetScriptModuleByFunction(
+        asIScriptFunction* func, bool reporterror);
+
     //! \brief Finds a script function in module matching setup
     //! \returns The function or null if not found or module is invalid
+    //!
+    //! Sets the function existed in the parameters
     DLLEXPORT asIScriptFunction* GetFunctionFromModule(
         ScriptModule* module, ScriptRunningSetup& parameters);
 
@@ -253,6 +256,11 @@ public:
     //!
     //! Replaces GetAngelScriptTypeID
     DLLEXPORT int ResolveStringToASID(const char* str) const;
+
+    DLLEXPORT inline asIScriptEngine* GetASEngine()
+    {
+        return engine;
+    }
 
     //! \brief Prints exception info and stacktrace to a logger
     DLLEXPORT static void PrintExceptionInfo(asIScriptContext* ctx, LErrorReporter& output,
@@ -677,33 +685,24 @@ private:
 
     // ------------------------------------ //
 
-    //! \brief Handles the return type and return value of a function
-    //! \todo Return a tuple with an enum for checking for error conditions
-    std::shared_ptr<VariableBlock> _GetScriptReturnedVariable(int retcode,
-        asIScriptContext* ScriptContext, ScriptRunningSetup* parameters,
-        asIScriptFunction* func, ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo);
-
-    //! \brief Handles passing parameters to a context
-    bool _SetScriptParameters(asIScriptContext* ScriptContext, ScriptRunningSetup* parameters,
-        ScriptModule* scrptmodule, FunctionParameterInfo* paraminfo);
-
     //! \brief Checks whether a function is a valid pointer
     bool _CheckScriptFunctionPtr(
-        asIScriptFunction* func, ScriptRunningSetup* parameters, ScriptModule* scrptmodule);
+        asIScriptFunction* func, ScriptRunningSetup& parameters, ScriptModule* scrptmodule);
 
     //! \brief Prepares a context for usage
     bool _PrepareContextForPassingParameters(asIScriptFunction* func,
-        asIScriptContext* ScriptContext, ScriptRunningSetup* parameters,
-        ScriptModule* scrptmodule);
+        asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
+        ScriptModule* scriptmodule);
 
     //! \brief Called when a context is required for script execution
-    //! \todo Add a pool from which these are retrieved
+    //! \todo Allow recursive calls and more context reuse (a pool from which these are
+    //! retrieved)
     asIScriptContext* _GetContextForExecution();
 
     //! \brief Called after a script has been executed and the context is no longer needed
     void _DoneWithContext(asIScriptContext* context);
 
-    // ------------------------------ //
+private:
     // AngelScript engine script executing part //
     asIScriptEngine* engine;
 
@@ -712,13 +711,6 @@ private:
     std::vector<std::shared_ptr<ScriptModule>> AllocatedScriptModules;
 
     Mutex ModulesLock;
-
-
-    // map of type name and engine type id //
-    static std::map<int, std::string> EngineTypeIDS;
-
-    // inverted of the former for better performance //
-    static std::map<std::string, int> EngineTypeIDSInverted;
 
     static ScriptExecutor* instance;
 };

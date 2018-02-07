@@ -3,44 +3,46 @@
 #include "Events/CallableObject.h"
 #include "Events/EventHandler.h"
 
-#include "Exceptions.h"
 #include "Common/ThreadSafe.h"
+#include "Exceptions.h"
 #include "Script/ScriptExecutor.h"
 
 #include "Engine.h"
 
-namespace Leviathan{ namespace Script{
+namespace Leviathan { namespace Script {
 
-//! \brief Script class 
-class EventListener : public ReferenceCounted, public CallableObject, public ThreadSafe{
+//! \brief Script class
+class EventListener : public ReferenceCounted, public CallableObject, public ThreadSafe {
 public:
-    EventListener(asIScriptFunction* onevent, asIScriptFunction* ongeneric){
+    EventListener(asIScriptFunction* onevent, asIScriptFunction* ongeneric)
+    {
 
-        if(onevent){
-                    
+        if(onevent) {
+
             OnEventScript = onevent;
-                    
+
         } else {
-                    
+
             OnEventScript = NULL;
         }
 
-        if(ongeneric){
-                    
+        if(ongeneric) {
+
             OnGenericScript = ongeneric;
-                    
+
         } else {
-                    
+
             OnGenericScript = NULL;
         }
 
         // Fail if neither is set //
         if(!OnGenericScript && !OnEventScript)
             throw InvalidArgument("At least on event or on generic listeners need to be "
-                "provided, both are NULL");
+                                  "provided, both are NULL");
     }
-            
-    ~EventListener(){
+
+    ~EventListener()
+    {
 
         UnRegisterAllEvents();
 
@@ -50,78 +52,67 @@ public:
         SAFE_RELEASE(OnGenericScript);
     }
 
-    int OnEvent(Event* event) override{
+    int OnEvent(Event* event) override
+    {
 
         GUARD_LOCK();
-                
-        if(OnEventScript){
 
-            // Setup the parameters //
-            std::vector<std::shared_ptr<NamedVariableBlock>> Args =
-                boost::assign::list_of(new NamedVariableBlock(
-                        new VoidPtrBlock(event), "Event"));
-
-            event->AddRef();
+        if(OnEventScript) {
 
             ScriptRunningSetup sargs;
-            sargs.SetArguments(Args);
-
 
             // Run the script //
-            std::shared_ptr<VariableBlock> result =
-                ScriptExecutor::Get()->RunSetUp(OnGenericScript, &sargs);
+            auto result =
+                ScriptExecutor::Get()->RunScript<int>(OnGenericScript, nullptr, sargs, event);
 
-            if(!result || !result->IsConversionAllowedNonPtr<int>()){
+            if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
+                LOG_ERROR("ScriptEventListener: failed to call OnGenericScript callback");
                 return 0;
             }
 
             // Return the value returned by the script //
-            return result->ConvertAndReturnVariable<int>();
+            return result.Value;
         }
 
         return -1;
     }
 
-    int OnGenericEvent(GenericEvent* event) override{
+    int OnGenericEvent(GenericEvent* event) override
+    {
 
         GUARD_LOCK();
-                
-        if(OnGenericScript){
 
-            // Setup the parameters //
-            std::vector<std::shared_ptr<NamedVariableBlock>> Args =
-                boost::assign::list_of(new NamedVariableBlock(
-                        new VoidPtrBlock(event), "GenericEvent"));
+        if(OnGenericScript) {
 
-            event->AddRef();
+            // TODO: merge with OnEvent to reduce duplication
 
             ScriptRunningSetup sargs;
-            sargs.SetArguments(Args);
-
 
             // Run the script //
-            std::shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
-                OnGenericScript, &sargs);
+            auto result =
+                ScriptExecutor::Get()->RunScript<int>(OnGenericScript, nullptr, sargs, event);
 
-            if(!result || !result->IsConversionAllowedNonPtr<int>()){
+            if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
+                LOG_ERROR("ScriptEventListener: failed to call OnGenericScript callback");
                 return 0;
             }
 
             // Return the value returned by the script //
-            return result->ConvertAndReturnVariable<int>();
+            return result.Value;
         }
 
         return -1;
     }
 
     //! \brief Registers for a predefined event type if OnEvent is not NULL
-    bool RegisterForEventType(EVENT_TYPE type){
-                
+    bool RegisterForEventType(EVENT_TYPE type)
+    {
+
         {
             GUARD_LOCK();
-                
+
             if(!OnEventScript)
                 return false;
         }
@@ -131,56 +122,53 @@ public:
     }
 
     //! \brief Registers for a generic event if OnGeneric is not NULL
-    bool RegisterForEventGeneric(const std::string &name){
-                
+    bool RegisterForEventGeneric(const std::string& name)
+    {
+
         {
             GUARD_LOCK();
-                
+
             if(!OnGenericScript)
                 return false;
         }
-                
+
         Engine::Get()->GetEventHandler()->RegisterForEvent(this, name);
         return true;
     }
 
 protected:
-
     // The AngelScript functions to be called //
     asIScriptFunction* OnEventScript;
     asIScriptFunction* OnGenericScript;
 };
 
-EventListener* EventListenerFactory(asIScriptFunction* onevent,
-    asIScriptFunction* ongeneric)
+EventListener* EventListenerFactory(asIScriptFunction* onevent, asIScriptFunction* ongeneric)
 {
 
     EventListener* listener = NULL;
-            
-    try{
-                
+
+    try {
+
         listener = new EventListener(onevent, ongeneric);
-                
-    } catch(const InvalidArgument &e){
+
+    } catch(const InvalidArgument& e) {
 
         Logger::Get()->Error("Failed to construct Script::EventListener, exception: ");
         e.PrintToLog();
     }
 
-    if(!listener){
-                
+    if(!listener) {
+
         // The object won't release the parameter references //
         if(onevent)
             onevent->Release();
-                
+
         if(ongeneric)
             ongeneric->Release();
     }
-            
+
     return listener;
 }
 
 
-}
-}
-
+}} // namespace Leviathan::Script

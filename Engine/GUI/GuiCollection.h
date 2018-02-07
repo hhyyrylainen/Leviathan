@@ -59,6 +59,9 @@ public:
 
 
     DLLEXPORT static bool LoadCollection(GuiManager* gui, const ObjectFileObject &data);
+
+    REFERENCE_COUNTED_PTR_TYPE(GuiCollection);
+    
 private:
 
     void _PlayAnimations(const std::vector<std::unique_ptr<std::string>> &anims);

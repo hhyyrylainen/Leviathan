@@ -173,7 +173,6 @@ else()
     "Script/ScriptRunningSetup.cpp" "Script/ScriptRunningSetup.h"
     "Script/ScriptScript.cpp" "Script/ScriptScript.h"
     "Script/AddonTypes.h"
-    "Script/FunctionParameterInfo.h"
     )
 
   set(GroupScriptInterface

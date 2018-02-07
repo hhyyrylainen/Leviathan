@@ -246,36 +246,4 @@ void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* even
         }
     }
 }
-// ------------------ Being an actual module ------------------ //
-DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(
-    const std::string& entrypoint,
-    std::vector<std::shared_ptr<NamedVariableBlock>>& otherparams, bool& existed,
-    bool passself, bool fulldeclaration /*= false*/)
-{
-    // TODO: move over to new script call type
-    DEBUG_BREAK;
-    // Add this as parameter //
-    if(passself) {
-        otherparams.insert(otherparams.begin(),
-            std::shared_ptr<NamedVariableBlock>(
-                new NamedVariableBlock(new VoidPtrBlock(this), "GameModule")));
 
-        // we are returning ourselves so increase refcount
-        AddRef();
-    }
-
-    ScriptRunningSetup setup;
-    setup.SetArguments(otherparams)
-        .SetEntrypoint(entrypoint)
-        .SetUseFullDeclaration(fulldeclaration);
-
-    if(!Scripting)
-        return nullptr;
-
-    auto result = ScriptExecutor::Get()->RunSetUp(Scripting->GetModule(), &setup);
-
-    existed = setup.ScriptExisted;
-
-    return result;
-}
-// ------------------ Script proxies ------------------ //

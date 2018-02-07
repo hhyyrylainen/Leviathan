@@ -369,9 +369,6 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
                 }
             }
 
-            // make angel script make list of registered stuff //
-            engine->MainScript->ScanAngelScriptTypes();
-
             if(!engine->NoGui){
                 // measuring //
                 engine->RenderTimer = new RenderingStatistics();

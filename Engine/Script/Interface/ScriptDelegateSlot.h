@@ -24,16 +24,13 @@ public:
     
     void OnCalled(const NamedVars::pointer &values) override{
 
-        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
-            std::make_shared<NamedVariableBlock>(static_cast<void*>(values.get()), "NamedVars")
-        };
-
-        values->AddRef();
-        
         ScriptRunningSetup ssetup;
-        ssetup.SetArguments(Params);
 
-        ScriptExecutor::Get()->RunSetUp(Callback, &ssetup);
+        auto result = ScriptExecutor::Get()->RunScript<void>(Callback, nullptr, ssetup,
+            values.get());
+
+        if(result.Result != SCRIPT_RUN_RESULT::Success)
+            LOG_WARNING("ScriptDelegateSlot: failed to call callback");
     }
 
 private:

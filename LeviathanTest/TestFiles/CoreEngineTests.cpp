@@ -107,24 +107,22 @@ TEST_CASE("Invokes work from scripts", "[engine][script]"){
     ScriptRunningSetup ssetup;
     ssetup.SetEntrypoint("TestInvoke").SetUseFullDeclaration(false);
 
-    exec.RunSetUp(mod.get(), &ssetup);
+    auto result = exec.RunScript<void>(mod, ssetup);
 
     CHECK(ssetup.ScriptExisted == true);
+    CHECK(result.Result == SCRIPT_RUN_RESULT::Success);
 
     engine.RunInvokes();
     
 
     // check did it exist //
     ssetup.SetEntrypoint("GetResult");
-    std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+    auto result2 = exec.RunScript<int>(mod, ssetup);
 
     CHECK(ssetup.ScriptExisted == true);
+    REQUIRE(result2.Result == SCRIPT_RUN_RESULT::Success);
 
-    REQUIRE(returned);
-    
-    int value = *returned;
-
-    CHECK(value == 3);
+    CHECK(result2.Value == 3);
 }
 
 

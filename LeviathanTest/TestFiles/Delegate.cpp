@@ -79,25 +79,22 @@ TEST_CASE("Script can register and call delegate", "[delegate][script]"){
 
     REQUIRE(module != nullptr);
 
-    Delegate basicDelegate;
-
-    std::vector<std::shared_ptr<NamedVariableBlock>> args = {
-        std::make_shared<NamedVariableBlock>(&basicDelegate, "Delegate")
-    };
-
-    basicDelegate.AddRef();
+    Delegate* basicDelegate = new Delegate();
 
     ScriptRunningSetup ssetup;
-    ssetup.SetArguments(args).SetEntrypoint("RunTest").SetUseFullDeclaration(false);
+    ssetup.SetEntrypoint("RunTest").SetUseFullDeclaration(false);
 
-    std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+    auto returned = exec.RunScript<bool>(mod, ssetup, basicDelegate);
 
     CHECK(ssetup.ScriptExisted == true);
+    REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
 
     // check did it exist //
-    bool value = *returned;
+    bool value = returned.Value;
 
     CHECK(value);
+    CHECK(basicDelegate->GetRefCount() == 1);
+    basicDelegate->Release();
 }
 
 

@@ -89,10 +89,13 @@ public:
 
     DLLEXPORT virtual std::unique_ptr<ScriptRunningSetup> GetParametersForRelease() override;
 
+    REFERENCE_COUNTED_PTR_TYPE_NAMED(BaseGuiObject, GuiObject);
+
 protected:
 
     // this function will try to hook all wanted listeners to CEGUI elements //
     void _HookListeners();
+    //! \todo Store the callbacks as asIScriptFunction instead of by name for performance
     virtual void _CallScriptListener(Event* event, GenericEvent* event2) override;
 
     //! \brief Registers for an event if it is a CEGUI event

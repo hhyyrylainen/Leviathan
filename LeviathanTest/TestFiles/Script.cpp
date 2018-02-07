@@ -37,23 +37,18 @@ TEST_CASE("Basic script running", "[script]")
 
     REQUIRE(module != nullptr);
 
-    std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
-        std::make_shared<NamedVariableBlock>(252134, "Val1"),
-        std::make_shared<NamedVariableBlock>(25552, "Val2")};
-
     ScriptRunningSetup ssetup;
-    ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
+    ssetup.SetEntrypoint("TestFunction")
         //.SetPrintErrors(false)
         ;
 
-    std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+    auto returned = exec.RunScript<int>(mod, ssetup, 252134, 25552);
 
+    // Check did it exist //
     CHECK(ssetup.ScriptExisted == true);
+    REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
 
-    // check did it exist //
-    int Value = *returned;
-
-    CHECK(Value == 42);
+    CHECK(returned.Value == 42);
 
     mod->DeleteThisModule();
 }
@@ -244,25 +239,16 @@ TEST_CASE("Script global handles are released", "[script][engine]")
 
     SECTION("First basic run")
     {
-        std::vector<std::shared_ptr<NamedVariableBlock>> Params = {
-            std::make_shared<NamedVariableBlock>(
-                new VoidPtrBlock(ourObj.get()), "TestMyRefCounted")};
-
-        ourObj->AddRef();
-
         ScriptRunningSetup ssetup;
-        ssetup.SetArguments(Params).SetEntrypoint("TestFunction").SetUseFullDeclaration(false)
-            //.SetPrintErrors(false)
-            ;
+        ssetup.SetEntrypoint("TestFunction");
 
-        std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
-
-        CHECK(ssetup.ScriptExisted == true);
+        auto returned = exec.RunScript<int>(mod, ssetup, ourObj.get());
 
         // check did it run //
-        int value = *returned;
+        CHECK(ssetup.ScriptExisted == true);
+        REQUIRE(returned.Result == SCRIPT_RUN_RESULT::Success);
 
-        CHECK(value == 8);
+        CHECK(returned.Value == 8);
     }
 
     CHECK(ourObj->GetRefCount() == 2);
@@ -462,16 +448,13 @@ TEST_CASE("Creating events in scripts", "[script][event]")
     REQUIRE(module != nullptr);
 
     ScriptRunningSetup ssetup;
-    ssetup.SetEntrypoint("TestFunction").SetUseFullDeclaration(false);
+    ssetup.SetEntrypoint("TestFunction");
 
-    std::shared_ptr<VariableBlock> returned = exec.RunSetUp(mod.get(), &ssetup);
+    auto returned = exec.RunScript<int>(mod, ssetup);
 
-    CHECK(ssetup.ScriptExisted == true);
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
 
-    // check did it exist //
-    int Value = *returned;
-
-    CHECK(Value == 12);
+    CHECK(returned.Value == 12);
 }
 
 
@@ -538,15 +521,15 @@ TEST_CASE("Documentation samples compile", "[script]")
     REQUIRE(module != nullptr);
 
     ScriptRunningSetup ssetup;
-    ssetup.SetEntrypoint("Sample1").SetUseFullDeclaration(false);
+    ssetup.SetEntrypoint("Sample1");
 
-    exec.RunSetUp(mod.get(), &ssetup);
+    auto result = exec.RunScript<void>(mod, ssetup);
 
-    CHECK(ssetup.ScriptExisted == true);
+    CHECK(result.Result == SCRIPT_RUN_RESULT::Success);
 
     ssetup.SetEntrypoint("Sample2");
 
-    exec.RunSetUp(mod.get(), &ssetup);
+    result = exec.RunScript<void>(mod, ssetup);
 
-    CHECK(ssetup.ScriptExisted == true);
+    CHECK(result.Result == SCRIPT_RUN_RESULT::Success);
 }

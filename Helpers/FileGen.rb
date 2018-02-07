@@ -841,6 +841,11 @@ END
     end
 
     if opts.include?(:header)
+      f.puts "REFERENCE_HANDLE_UNCOUNTED_TYPE(#{@Name});"
+      f.puts ""
+    end
+
+    if opts.include?(:header)
       f.puts "protected:"
     end
 
@@ -1036,7 +1041,6 @@ END
     else
       f.puts ";"
     end    
-
     
     # f.puts "public:"
     

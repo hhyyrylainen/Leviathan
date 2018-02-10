@@ -21,7 +21,7 @@ public:
     DLLEXPORT ~ScriptRunningSetup();
 
     // named constructor idiom //
-    DLLEXPORT inline ScriptRunningSetup& SetEntrypoint(const std::string& epoint)
+    inline ScriptRunningSetup& SetEntrypoint(const std::string& epoint)
     {
         // set //
         Entryfunction = epoint;
@@ -38,14 +38,14 @@ public:
     //     return *this;
     // }
 
-    DLLEXPORT inline ScriptRunningSetup& SetUseFullDeclaration(const bool& state)
+    inline ScriptRunningSetup& SetUseFullDeclaration(const bool& state)
     {
         // set //
         FullDeclaration = state;
         return *this;
     }
 
-    DLLEXPORT inline ScriptRunningSetup& SetPrintErrors(const bool& state)
+    inline ScriptRunningSetup& SetPrintErrors(const bool& state)
     {
 
         PrintErrors = state;
@@ -70,7 +70,7 @@ public:
 template<typename ReturnT>
 struct ScriptRunResult {
 
-    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result, ReturnT&& value) :
+    ScriptRunResult(SCRIPT_RUN_RESULT result, ReturnT&& value) :
         Result(result), Value(std::move(value))
     {
         // We need to take a reference as the script context is reset
@@ -84,13 +84,13 @@ struct ScriptRunResult {
     }
 
     //! Only set result code
-    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result)
+    ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result)
     {
         if constexpr(std::is_pointer_v<ReturnT>)
             Value = nullptr;
     }
 
-    DLLEXPORT ~ScriptRunResult()
+    ~ScriptRunResult()
     {
         if constexpr(std::is_pointer_v<ReturnT>) {
             if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
@@ -107,7 +107,7 @@ struct ScriptRunResult {
 template<>
 struct ScriptRunResult<void> {
 
-    DLLEXPORT ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result) {}
+    ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result) {}
 
     SCRIPT_RUN_RESULT Result;
 };

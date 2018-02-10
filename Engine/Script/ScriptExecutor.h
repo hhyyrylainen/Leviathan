@@ -708,21 +708,21 @@ private:
     // ------------------------------------ //
 
     //! \brief Checks whether a function is a valid pointer
-    bool _CheckScriptFunctionPtr(
+    DLLEXPORT bool _CheckScriptFunctionPtr(
         asIScriptFunction* func, ScriptRunningSetup& parameters, ScriptModule* scrptmodule);
 
     //! \brief Prepares a context for usage
-    bool _PrepareContextForPassingParameters(asIScriptFunction* func,
+	DLLEXPORT bool _PrepareContextForPassingParameters(asIScriptFunction* func,
         asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
         ScriptModule* scriptmodule);
 
     //! \brief Called when a context is required for script execution
     //! \todo Allow recursive calls and more context reuse (a pool from which these are
     //! retrieved)
-    asIScriptContext* _GetContextForExecution();
+	DLLEXPORT asIScriptContext* _GetContextForExecution();
 
     //! \brief Called after a script has been executed and the context is no longer needed
-    void _DoneWithContext(asIScriptContext* context);
+	DLLEXPORT void _DoneWithContext(asIScriptContext* context);
 
 private:
     // AngelScript engine script executing part //

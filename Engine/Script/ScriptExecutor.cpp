@@ -299,7 +299,7 @@ DLLEXPORT std::shared_ptr<ScriptModule> ScriptExecutor::GetScriptModuleByFunctio
     return module;
 }
 // ------------------------------------ //
-bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(
+DLLEXPORT bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(
     asIScriptFunction* func, ScriptRunningSetup& parameters, ScriptModule* scriptmodule)
 {
     // Check is it null //
@@ -329,7 +329,7 @@ bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(
     return true;
 }
 
-bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFunction* func,
+DLLEXPORT bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFunction* func,
     asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
     ScriptModule* scriptmodule)
 {
@@ -347,7 +347,7 @@ bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFun
 }
 
 // ------------------------------------ //
-asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
+DLLEXPORT asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
 {
     // TODO: pool context and detect already acive context and push state and use that
     asIScriptContext* ScriptContext = engine->CreateContext();
@@ -361,7 +361,7 @@ asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
     return ScriptContext;
 }
 
-void Leviathan::ScriptExecutor::_DoneWithContext(asIScriptContext* context)
+DLLEXPORT void Leviathan::ScriptExecutor::_DoneWithContext(asIScriptContext* context)
 {
     context->Release();
 }

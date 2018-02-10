@@ -75,13 +75,21 @@ struct ScriptRunResult {
     {
         // We need to take a reference as the script context is reset
         // before we are returned to the caller
-        if constexpr(std::is_pointer_v<ReturnT>) {
-            if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
-                if(Value)
-                    Value->AddRef();
-            }
-        }
+		IncreasePointerReference();
     }
+
+	ScriptRunResult(const ScriptRunResult<ReturnT>& other) :
+		Result(other.Result), Value(other.Value)
+	{
+		// We need to take a reference as the other instance will release its pointer
+		IncreasePointerReference();
+	}
+
+	ScriptRunResult(ScriptRunResult<ReturnT>&& other) : 
+		Result(other.Result), Value(std::move(other.Value))
+	{
+
+	}
 
     //! Only set result code
     ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result)
@@ -92,15 +100,53 @@ struct ScriptRunResult {
 
     ~ScriptRunResult()
     {
-        if constexpr(std::is_pointer_v<ReturnT>) {
-            if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
-                Value->Release();
-            }
-        }
+		ReleasePointerReference();
     }
 
+	//! Assign other
+	ScriptRunResult& operator=(const ScriptRunResult<ReturnT>& other)
+	{
+		// Release our old pointer if it was reference counted
+		ReleasePointerReference();
 
+		Value = other.Value;
+		Result = other.Result;
+
+		// We need to take a reference as the other instance will release its pointer
+		IncreasePointerReference();
+
+		return *this;
+	}
+
+protected:
+	//! Helper for the multiple places that do pointer reference decrease
+	void ReleasePointerReference() 
+	{
+		if constexpr(std::is_pointer_v<ReturnT>) {
+			if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
+				if (Value) {
+					Value->Release();
+				}
+			}
+		}
+	}
+
+	//! Helper for the multiple places that do pointer reference increase
+	void IncreasePointerReference() 
+	{
+		if constexpr(std::is_pointer_v<ReturnT>) {
+			if constexpr(std::is_base_of_v<ReferenceCounted, std::remove_pointer_t<ReturnT>>) {
+				if (Value)
+					Value->AddRef();
+			}
+		}
+	}
+public:
+	//! Result code of the script running
     SCRIPT_RUN_RESULT Result;
+
+	//! Return value received from the script. 
+	//! Only valid of Result == SCRIPT_RUN_RESULT::Success
     ReturnT Value;
 };
 
@@ -109,7 +155,12 @@ struct ScriptRunResult<void> {
 
     ScriptRunResult(SCRIPT_RUN_RESULT result) : Result(result) {}
 
+	ScriptRunResult(const ScriptRunResult<void>& other) : Result(other.Result) {}
+
+	//! Result code of the script running
     SCRIPT_RUN_RESULT Result;
+
+	// This is the variant with no wanted return type
 };
 
 } // namespace Leviathan

@@ -1,7 +1,7 @@
 # CMake file for generating all project files
 # Newer version required for VS_DEBUGGER_WORKING_DIRECTORY
 if(WIN32)
-  cmake_minimum_required(VERSION 3.8)
+  cmake_minimum_required(VERSION 3.10)
 else()
   cmake_minimum_required(VERSION 3.6)
 endif()
@@ -216,6 +216,10 @@ if(NOT ONLY_DOCUMENTATION)
     install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
     
   endif()
+
+  # Set the tests as the default startup project
+  set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY
+    VS_STARTUP_PROJECT LeviathanTest)
 endif()
 
 ##### All symbol creating target

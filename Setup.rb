@@ -140,7 +140,7 @@ Dir.chdir(File.join(ProjectDir, "build")) do
     onError "Failed to configure Leviathan"
   end
   
-  if !runCompiler $compileThreads
+  if !TC.runCompiler
     onError "Failed to compile Leviathan"
   end
   

@@ -22,10 +22,11 @@ require_relative 'RubySetupSystem/Libraries/SetupLeviathan.rb'
 THIRD_PARTY_INSTALL = File.join(ProjectDir, "build", "ThirdParty")
 
 $newton = Newton.new(
-  version: "7c5970ccda537dea134e0443d702ef9f5ce81a38",
+  version: "e60733c5a6eafd952b7b981f3c6aa06ccc5b326e",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  disableDemos: true
+  disableDemos: true,
+  fork: "https://github.com/hhyyrylainen/newton-dynamics.git"
 )
 
 $angelscript = AngelScript.new(
@@ -138,6 +139,7 @@ $leviathanLibList =
 
 # This if for testing one single dependency compiling
 #$leviathanLibList = [$ffmpeg]
+#$leviathanLibList = []
 
 # Ogre windows deps
 # sdl is also used by Leviathan directly

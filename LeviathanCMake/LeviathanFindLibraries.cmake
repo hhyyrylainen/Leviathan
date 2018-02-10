@@ -11,18 +11,23 @@ if(USE_BOOST)
   # Might be a good idea to dynamically link Boost
   set(Boost_USE_STATIC_LIBS FALSE)
 
-  set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
+  set(Boost_ADDITIONAL_VERSIONS "1.66")
 
   # Other than these that are required are header-only libraries
-  set(LEVIATHAN_BOOST_COMPONENTS chrono system filesystem)
+  set(LEVIATHAN_BOOST_COMPONENTS system filesystem)
   
-  find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} QUIET)
+  # set(Boost_DEBUG ON)  
+  find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})
 
   if(NOT Boost_FOUND)
     message(FATAL_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})
   endif(NOT Boost_FOUND)
 
   # Boost is found or the configuration has already failed
+
+  # Needed for file copy
+  set(LEVIATHAN_BOOST_FILECOPY ${Boost_SYSTEM_LIBRARY_RELEASE}
+        ${Boost_FILESYSTEM_LIBRARY_RELEASE})
 
   # Set up referencing of Boost
   include_directories(${Boost_INCLUDE_DIR})
@@ -74,10 +79,11 @@ if(LEVIATHAN_FULL_BUILD)
     ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons)
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
+  # Now it is named the same as we are using the cmake build for angelscript
   if(WIN32)
     # When using angelscript on windows /LTCG should be specified as a flag
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript64)
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES debug angelscript64d)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES debug angelscriptd)
     
   else()
     list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript)

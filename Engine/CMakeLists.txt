@@ -403,6 +403,9 @@ if(WIN32 AND LEVIATHAN_FULL_BUILD)
   
 endif()
 
+set_property(TARGET Engine PROPERTY CXX_STANDARD 17)
+set_property(TARGET Engine PROPERTY CXX_EXTENSIONS OFF)
+
 # Avoid Xlib headers and windows header in the precompiled header to avoid macros destroying everything
 set_target_properties(Engine PROPERTIES 
   COTIRE_PREFIX_HEADER_IGNORE_PATH

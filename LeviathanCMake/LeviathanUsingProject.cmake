@@ -8,6 +8,8 @@ else()
 endif()
 
 set_target_properties(${CurrentProjectName} PROPERTIES DEBUG_POSTFIX D)
+set_property(TARGET ${CurrentProjectName} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${CurrentProjectName} PROPERTY CXX_EXTENSIONS OFF)
 
 if(NOT SKIP_INSTALL)
   install(TARGETS ${CurrentProjectName} DESTINATION bin)

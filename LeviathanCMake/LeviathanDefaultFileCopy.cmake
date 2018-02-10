@@ -76,28 +76,21 @@ install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreSc
 # Boost files
 # If we are not using static linking we need to copy everything
 if(NOT Boost_USE_STATIC_LIBS)
-  # AND NOT WIN32
 
   if(WIN32)
-
+    
     # We need to replace .lib files with .dll when copying
-    foreach(lib ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-	    ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE}
-        ${Boost_FILESYSTEM_LIBRARY_RELEASE}
-        )
+    foreach(lib ${LEVIATHAN_BOOST_FILECOPY})
 
       string(REGEX REPLACE "\\.lib" ".dll" lib ${lib})
-      
+
       list(APPEND ALL_DYNAMIC_LIBRARIES ${lib})
       
     endforeach()
     
   else()
     
-    list(APPEND ALL_DYNAMIC_LIBRARIES
-      ${Boost_DATE_TIME_LIBRARY_RELEASE} ${Boost_CHRONO_LIBRARY_RELEASE}
-	  ${Boost_THREAD_LIBRARY_RELEASE} ${Boost_SYSTEM_LIBRARY_RELEASE}
-      ${Boost_FILESYSTEM_LIBRARY_RELEASE})
+    list(APPEND ALL_DYNAMIC_LIBRARIES ${LEVIATHAN_BOOST_FILECOPY})
   endif()
 
 endif()

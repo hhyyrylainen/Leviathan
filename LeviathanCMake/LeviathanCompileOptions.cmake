@@ -33,6 +33,11 @@ if(WIN32)
 
   # Multi core compilation
   add_definitions("/MP")
+
+  # Enable c++17
+  # This is instead set per target by set_property(TARGET target PROPERTY CXX_STANDARD 17) and
+  # set_property(TARGET target PROPERTY CXX_EXTENSIONS OFF)
+  # add_definitions("/stdc:c++17")
   
   # A policy is needed for launchers to work correctly
   

@@ -129,7 +129,7 @@ public:
     //! \todo Allow recursive calls and more context reuse. Also wrap context in an object that
     //! automatically returns it in case of expections (_HandleEndedScriptExecution can throw)
     template<typename ReturnT, class... Args>
-    DLLEXPORT ScriptRunResult<ReturnT> RunScript(const std::shared_ptr<ScriptModule>& module,
+    ScriptRunResult<ReturnT> RunScript(const std::shared_ptr<ScriptModule>& module,
         ScriptRunningSetup& parameters, Args&&... args)
     {
         // This calls _CheckScriptFunctionPtr
@@ -142,7 +142,7 @@ public:
     //! \todo Wrap context in an object that automatically returns it in case of expections
     //! (_HandleEndedScriptExecution can throw)
     template<typename ReturnT, class... Args>
-    DLLEXPORT ScriptRunResult<ReturnT> RunScript(asIScriptFunction* func,
+    ScriptRunResult<ReturnT> RunScript(asIScriptFunction* func,
         std::shared_ptr<ScriptModule> module, ScriptRunningSetup& parameters, Args&&... args)
     {
         if(!func)
@@ -200,7 +200,7 @@ public:
     //! \note The parameters object is largely ignored (function name)
     //! \todo Merge common parts with RunScript
     template<typename ReturnT, class... Args>
-    DLLEXPORT ScriptRunResult<ReturnT> RunScriptMethod(
+    ScriptRunResult<ReturnT> RunScriptMethod(
         ScriptRunningSetup& parameters, asIScriptFunction* func, void* obj, Args&&... args)
     {
         if(!func || !obj)

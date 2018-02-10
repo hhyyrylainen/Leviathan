@@ -26,7 +26,13 @@ if(WIN32)
   # higher memory for compiling precompiled headers
   # Currently it seems that Zm250 should be enough but it might not be
   # -Zm250 is probably no longer needed
-  add_definitions(-DUNICODE -D_UNICODE -fp:except)
+  add_definitions(-DUNICODE -D_UNICODE)
+
+  # According to https://developercommunity.visualstudio.com/content/problem/162020/c3199-including-in-155.html
+  # this has already been fixed, but we need to wait for a new visual studio release
+  # -fp:except causes issues with c++17 enabled
+  # error C3199: invalid use of floating-point pragmas: exceptions are
+  # not supported in non-precise mode
   
   # program database flag for debug
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")

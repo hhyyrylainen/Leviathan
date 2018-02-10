@@ -397,9 +397,10 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 if(WIN32 AND LEVIATHAN_FULL_BUILD)
-
+  
   # Angelscript needs /LTCG flag
-  set_target_properties(Engine PROPERTIES LINK_FLAGS "/LTCG")
+  # It now actually doesn't with the new build setup stuff
+  # set_target_properties(Engine PROPERTIES LINK_FLAGS "/LTCG")
   
 endif()
 

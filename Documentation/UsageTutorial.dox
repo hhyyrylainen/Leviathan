@@ -27,7 +27,7 @@ game. You can run tests with make like this (make sure to be in the
 \section tutorial0_windows On Windows
 
 Start by opening `build/Leviathan.sln`. Then make sure you have
-selected `RelWithDebInfo` as the activbe configuration (and make sure
+selected `RelWithDebInfo` as the active configuration (and make sure
 arch is `x64`) in visual studio and then to run the Pong sample right
 click the project and set as startup project then press the green
 arrow in "Local Windows Debugger" or press F5. You can also run

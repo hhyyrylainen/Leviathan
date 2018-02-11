@@ -1,20 +1,49 @@
-/*! \page angelscript_main AngelScript reference index
+/*! \page angelscript_main Scripting Documentation
     \tableofcontents
 
-    \section angelscript_tutorials AngelScript Tutorials
+    \section angelscript_tutorials_list AngelScript Tutorials
 
     \subpage angelscript_tutorial_handles
 
     Also see the official  manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
 
-    \section angelscript_common_tasks AngelScript common tasks
+    specifically these are important pages:
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_dictionary.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_arrays.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_addon_math.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_class.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_as_vs_cpp_types.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_ref.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_expressions.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_strings.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_funcptr.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_class_ops.html
+
+    And for writing bindings:
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_register_type.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_as_vs_cpp_types.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_generic.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_addon_handle.html
+
+    \section angelscript_common_tasks Common Tasks
+
     \subpage eventinscripts Adding a new event type to AngelScript
 
     \section angelscript_reference_list Script class references
-    \todo Split these classes to their own documentation pages
-    \subsection angelscript_events Events
+    
+    \subpage angelscript_events
+    
+    \subpage angelscript_namedvars
+    
+    \subpage angelscript_delegate
 
-    \subsubsection angelscript_event_listening Listening for events in scripts
+    \subpage angelscript_invoking
+    
+*/
+
+/*! \page angelscript_events Events
+
+    \section angelscript_event_listening Listening for events in scripts
     Standalone scripts can create a listener object
     \code
         // This example creates a new listener object //
@@ -62,7 +91,7 @@
 
     \endcode
 
-    \subsubsection angelscript_event_getting_values_from_generic Getting values from GenericEvent
+    \subsection angelscript_event_getting_values_from_generic Getting values from GenericEvent
     To get values from a GenericEvent you first need to get the underlying Leviathan::NamedVars
     and retrieve values from there
 
@@ -83,7 +112,7 @@
     \endcode
     \see \ref angelscript_namedvars    
 
-    \subsubsection angelscript_event_firing Firing events
+    \section angelscript_event_firing Firing events
     To fire an event from AngelScript you first need to create an event object
     \code
         // Create a GenericEvent like this //
@@ -103,7 +132,7 @@
         GetEventHandler().CallEvent(generic);
     \endcode
 
-    \subsubsection angelscript_event_setting_parameters Setting event parameters
+    \subsection angelscript_event_setting_parameters Setting event parameters
     To set the data contained within a GenericEvent, you first need to access the event's Leviathan::NamedVars
 
     \code
@@ -115,8 +144,11 @@
 
     \todo Allow scripts to create data for Leviathan::Event objects
 
-    \subsection angelscript_namedvars NamedVars
-    \subsubsection angelscript_namedvars_access_values Accessing values
+*/
+
+
+/*! \page angelscript_namedvars NamedVars
+    \section angelscript_namedvars_access_values Accessing values
     Single values (nonlist values) can be accessed with `GetSingleValueByName`
 
     \code
@@ -131,7 +163,7 @@
         int8 initial = int8(var);
     \endcode
 
-    \subsubsection angelscript_namedvars_adding_values Adding values
+    \section angelscript_namedvars_adding_values Adding values
     To add values first create a ScriptSafeVariableBlock.
 
     \code
@@ -149,7 +181,9 @@
 
     \see Leviathan::NamedVars::AddScriptCompatibleValue
 
-    \subsection angelscript_scriptsafevariableblock Variable blocks in scripts (ScriptSafeVariableBlock)
+    \section angelscript_scriptsafevariableblock Variable blocks in scripts (ScriptSafeVariableBlock)
+    \todo This needs redoing
+    
     An AngelScript safe version of Leviathan::NamedVariableBlock
 
     First parameter is the name and the second is the value. Supported types are: string, int, float, double, int8, bool.
@@ -158,7 +192,7 @@
         ScriptSafeVariableBlock@ var = ScriptSafeVariableBlock("My value!", 2.5f);
     \endcode
 
-    \subsubsection angelscript_scriptsafevariableblock_getting_primites Getting primitive values
+    \subsection angelscript_scriptsafevariableblock_getting_primites Getting primitive values
     Getting primite types works by casting to the primite type like in these examples.
     \code
         ScriptSafeVariableBlock@ var;
@@ -167,22 +201,9 @@
         int val = int(var);
         int8 initial = int8(var);        
     \endcode
+*/
 
-
-    \subsection angelscript_reference_invoking Invoking From Scripts
-    
-    Invoking is used to queue some function or method to be ran
-    later. This can be done from scripts like this:
-    \code
-        void Callback(){
-
-             LOG_INFO("In callback");
-        }
-
-        GetEngine().Invoke(@Callback);
-    \endcode
-
-    \subsection angelscript_reference_delegate Delegates in scripts
+/*! \page angelscript_delegate Delegates in scripts
 
     Registering to a delegate and firing it works like this:
 
@@ -209,26 +230,20 @@
     means that handles to delegates are not safe to store. So register
     your callback and let go of the handle.
 
-    \subsection angelscript_ainetworkcache AINetworkCache in scripts
-    
-    \deprecated This is not the recommended way to do things.
-    Use Leviathan::SyncedVariables instead and run the AI only on the server.
-    
-    \subsubsection angelscript_ainetworkcache_setting_values Setting and reading values
-    Getting a variable with a name is done by calling `GetVariable` on the global instance of Leviathan::AINetworkCache.
-    \code
-        ScriptSafeVariableBlock@ value = GetAINetworkCache().GetVariable("Name of variable");
+*/
 
-        // Casting to a primitive
-        float target = float(value);
-    \endcode
-
-    Setting a new value is done by calling `SetVariable` with the ScriptSafeVariableBlock. The value won't
-    be actually updated unless it has changed.
+/*! \page angelscript_invoking Invoking From Scripts
+    
+    Invoking is used to queue some function or method to be ran later,
+    for example form a background thread. This can be done from
+    scripts like this:
+    
     \code
-        GetAINetworkCache().SetVariable(ScriptSafeVariableBlock("Name of value", "COMMAND_SHOOT"));
+        void Callback(){
+
+             LOG_INFO("In callback");
+        }
+
+        GetEngine().Invoke(@Callback);
     \endcode
-    
-    \see Leviathan::AINetworkCache \ref angelscript_scriptsafevariableblock
-    
 */

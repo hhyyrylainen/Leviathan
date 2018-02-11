@@ -11,6 +11,10 @@
 
 
     \subpage tutorial1
+
+    \subsection tutorials_link_toscripts Information about scripting
+
+    \ref angelscript_main
     
 */
 

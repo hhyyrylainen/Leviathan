@@ -1,4 +1,4 @@
-/*! \page tutorials Tutorials index
+/*! \page tutorials Tutorials
     \tableofcontents
     \section gettingstartedsection Getting started
     See first: \subpage prerequisites and \subpage compiling_leviathan.
@@ -7,12 +7,64 @@
     \note It is recommended that you work through the tutorials in order.
     
     \subsection beginnertutorials Beginner tutorials
+    \subpage tutorial0
+
+
     \subpage tutorial1
     
 */
 
+/*! \page tutorial0 Running the samples
+
+\section tutorial0_linux On Linux
+
+First go to the `build` folder and make sure everything is compiled by
+running `cmake .. && make -j numberofcores`. If that succeeds you can
+go to `build/bin` folder and run `./Pong` to run the sample pong
+game. You can run tests with make like this (make sure to be in the
+`build` folder): `cmake .. && make check -j numberofcores`.
+
+\section tutorial0_windows On Windows
+
+Start by opening `build/Leviathan.sln`. Then make sure you have
+selected `RelWithDebInfo` as the activbe configuration (and make sure
+arch is `x64`) in visual studio and then to run the Pong sample right
+click the project and set as startup project then press the green
+arrow in "Local Windows Debugger" or press F5. You can also run
+LeviathanTest like this to verify that individual tests of the engine
+run correctly.
+
+\see \ref tutorial1
+
+*/
+
 /*! \page tutorial1 Getting started tutorial
+
+
+    \section tutorial1recompiling Recompiling
+
+    To save time you shouldn't run the setup script every time you
+    have made changes. Instead on linux you should run `make -j
+    numberofcores` in `project/build` folder and on Windows compile
+    from visual studio.
+
+    <b>Important</b>: when updating the scripts or assets of a game
+    you must re-run cmake to make it copy the changed assets to the
+    game binary folder. On Windows you should have cmd.exe (or
+    powershell) open in the folder that has the solution file and run
+    `cmake ..` in that when you change the assets (visual studio may
+    ask you to reload the project you have open after running
+    cmake. You should always reload the solution when asked). On linux
+    you should combine the cmake command to make (it shouldn't do
+    anything if nothing has changed) so in the build folder compile
+    and run like this:
+    \code{sh}
+    cmake .. && make -j numberofcores && (cd bin && ./GameName)
+    \endcode
+
+    \section tutorial1setup Setup a new project using Leviathan
     \todo Create tutorials
+
 */
 
 /*! \page prerequisites Prerequisites
@@ -33,9 +85,10 @@ These programs are needed for all platforms:
 
 - cmake
 
-- boost libraries 1.65 or newer is recommended but older versions may work. (On
-*linux* the setup script will automatically use the package manager to
-install this. For *Windows* \see prerequisite_software_windows )
+- boost libraries 1.65 or newer is recommended but older versions may
+work. (On **linux** the setup script will automatically use the package
+manager to install this. For **Windows** see \ref
+prerequisite_software_windows)
 
 You can check whether a program is in PATH by opening a command 
 prompt/terminal and running the program by typing its name. 
@@ -67,8 +120,7 @@ ruby 2.4.1p111
 
 - After compiling Boost make sure to set `BOOST_ROOT` to the folder
 where you compiled boost (for example `C:\projects\boost`).  And
-compile shared versions and use 64 bit build (this should be
-automatic).
+compile shared versions and use 64 bit build.
 
 Additional tip: when running `b2` make sure you specify the toolset,
 bitness, type and the number of cores to use for compiling like this:
@@ -129,7 +181,7 @@ Make sure you have installed \ref prerequisites first.
 If you haven't used git to clone the Leviathan repository yet. Run
 this command to clone Leviathan to a new folder:
 \code{sh}
-git clone https://hhyyrylainen@bitbucket.org/hhyyrylainen/leviathan.git
+git clone https://bitbucket.org/hhyyrylainen/leviathan.git
 cd leviathan
 git submodule init
 \endcode
@@ -152,9 +204,17 @@ section. Otherwise see \ref compile_troubleshooting.
 
 
 \section compile_done Done
+
+You can run tests on linux by running `make check -j numberofcores` in
+the build folder. And on Windows by running the LeviathanTest project
+in visual studio debugger. Note: when you open `build/Leviathan.sln` make sure
+you select `RelWithDebInfo` as the active configuration as the debug
+builds are known to be broken very often.
+
+For a tutorial on what to do next see \ref tutorial0.
 Now, if the samples runs correctly, you are all set to start your own project.
 
-For a tutorial on what to do next see \ref tutorial1.
+\see \ref tutorials
 
 \section compile_troubleshooting Troubleshooting
 

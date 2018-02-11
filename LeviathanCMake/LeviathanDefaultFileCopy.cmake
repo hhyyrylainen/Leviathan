@@ -33,6 +33,8 @@ if(WIN32)
   file(GLOB ALL_DYNAMIC_LIBRARIES "${LEVIATHAN_SRC}/build/ThirdParty/lib/*.dll")
 else()
   file(GLOB ALL_DYNAMIC_LIBRARIES "${LEVIATHAN_SRC}/build/ThirdParty/lib/*.so*")
+  file(GLOB LINUX_LIBS_IN64 "${LEVIATHAN_SRC}/build/ThirdParty/lib64/*.so*")
+  list(APPEND ALL_DYNAMIC_LIBRARIES ${LINUX_LIBS_IN64})
 endif()
 
 

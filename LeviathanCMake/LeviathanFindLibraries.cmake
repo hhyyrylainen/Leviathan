@@ -50,6 +50,7 @@ if(LEVIATHAN_FULL_BUILD)
 
   # Set the setup script result directories
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib")
+  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib64")
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/bin")
   
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include")

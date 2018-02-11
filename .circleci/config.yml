@@ -17,7 +17,7 @@ jobs:
              - v1-assets
        - restore_cache:
            keys:
-             - v2-build-{{ arch }}-{{ .Branch }}
+             - v3-build-{{ arch }}-{{ .Branch }}
        - run: ./Setup.rb --no-packagemanager --no-updates -j 2 --fully-parallel-project-compile --project-parallel 5
        - save_cache:
            key: v2-assets-{{ .Branch }}
@@ -36,7 +36,7 @@ jobs:
            paths:
              - ThirdParty
        - save_cache:
-           key: v2-build-{{ arch }}-{{ .Branch }}
+           key: v3-build-{{ arch }}-{{ .Branch }}
            paths:
              - build/Engine
              - build/LeviathanTest

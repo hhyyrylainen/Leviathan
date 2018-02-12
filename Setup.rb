@@ -21,7 +21,7 @@ if not File.exists? "RubySetupSystem/RubySetupSystem.rb"
 else
   # Make sure RubySetupSystem is up to date
   # This may make debugging RubySetupSystem harder so feel free to comment out
-  system "git submodule update"
+  # system "git submodule update"
 end
 
 require 'fileutils'

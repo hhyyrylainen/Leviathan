@@ -18,6 +18,10 @@ if not File.exists? "RubySetupSystem/RubySetupSystem.rb"
           "Please make sure git is in path and " +
           "you have an ssh key setup for your github account")
   end
+else
+  # Make sure RubySetupSystem is up to date
+  # This may make debugging RubySetupSystem harder so feel free to comment out
+  system "git submodule update"
 end
 
 require 'fileutils'
@@ -133,7 +137,8 @@ info "Compiling Leviathan"
 Dir.chdir(File.join(ProjectDir, "build")) do
 
   if !runCMakeConfigure [
-       "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+       # This is done automatically
+       # "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
        "-DOGRE_HOME=#{THIRD_PARTY_INSTALL}",
        "-DUSE_BREAKPAD=OFF"
      ]

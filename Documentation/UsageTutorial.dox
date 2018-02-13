@@ -79,7 +79,7 @@ run correctly.
 
 These programs are needed for all platforms:
 
-- [Ruby](http://ruby-lang.org) (It is recommended to use RubyInstaller on Windows)
+- [Ruby](http://ruby-lang.org) (It is recommended to use RubyInstaller on Windows, version 2.4 or newer)
 
 - git
 
@@ -114,9 +114,9 @@ ruby 2.4.1p111
   - bash
   - tar (with gzip support)
  
-  You can also optionally install git and svn with cygwin. But cmake
-  has to be the Windows version, otherwise it won't properly generate
-  visual studio project files.
+  You can also optionally install git and svn (the package is called
+  subversion) with cygwin. But cmake has to be the Windows version,
+  otherwise it won't properly generate visual studio project files.
   
   Then add `C:\cygwin64\bin` to the system
   path to make everything visible to the script
@@ -146,15 +146,22 @@ to compile all of the components, which takes a long time.
 - os
 - colorize
 - rubyzip
+- json
 - sha3
 
 These can be installed by running `gem install os colorize
-rubyzip sha3`. Running with sudo is probably not required. If you get
+rubyzip json sha3`. Running with sudo is probably not required. If you get
 errors installing the gems you should try updating your ruby version.
 
-If you have trouble installing sha3 on windows: run `ridk install` and
-try all of the options. After that your ruby native extension build
-tools should be installed and the gem installation should work.
+If you have trouble installing sha3 on windows: make sure you have
+ruby 2.4 or newer installed with ruby installer for windows. Then run
+`ridk install` and try all of the options. The third option at least
+should reinstall all the ruby development tools, including gmp, which
+is needed for sha3. After that your ruby native extension build tools
+should be installed and the gem installation should work.
+
+If it still doesn't work run `ridk exec pacman -S gmp-devel` and then
+run `ridk install` again.
 
 
 \subsection prerequisite_what_next Next

@@ -8,8 +8,8 @@ jobs:
        - checkout
        - restore_cache:
            keys:
-             - v3-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
-             - v3-deps-{{ arch }}
+             - v4-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
+             - v4-deps-{{ arch }}
        - restore_cache:
            keys:
              - v2-assets-{{ .Branch }}
@@ -28,11 +28,11 @@ jobs:
            paths:
              - bin/Data
        - save_cache:
-           key: v3-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
+           key: v4-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
            paths:
              - ThirdParty
        - save_cache:
-           key: v3-deps-{{ arch }}
+           key: v4-deps-{{ arch }}
            paths:
              - ThirdParty
        - save_cache:

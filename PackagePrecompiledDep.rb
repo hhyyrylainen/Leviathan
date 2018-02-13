@@ -1,6 +1,5 @@
 # Package a leviathan dependency as precompiled binary for current platform
-# To package all run: `ruby PackagePrecompiledDep.rb newton  angelscript sfml
-# ffmpeg zlib freeimage sdl freetype ogre cegui`
+# To package all run: `ruby PackagePrecompiledDep.rb newton  angelscript sfml ffmpeg zlib freeimage sdl freetype ogre cegui`
 PrecompiledInstallFolder = "build/ThirdParty"
 
 require_relative 'RubySetupSystem/CreatePrecompiled.rb'

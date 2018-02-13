@@ -59,9 +59,7 @@ if(LEVIATHAN_FULL_BUILD)
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/cegui-9999")
 
   # Windows fix for GLM include missing in CEGUI
-  if(WIN32)
-      include_directories("${LEVIATHAN_SRC}/ThirdParty/cegui/dependencies/include")
-  endif()
+  # This is now in the third party include folder
 
   # Find SDL2
   if(USE_SDL2)

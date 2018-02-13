@@ -146,10 +146,15 @@ to compile all of the components, which takes a long time.
 - os
 - colorize
 - rubyzip
+- sha3
 
 These can be installed by running `gem install os colorize
-rubyzip`. Running with sudo is probably not required. If you get
+rubyzip sha3`. Running with sudo is probably not required. If you get
 errors installing the gems you should try updating your ruby version.
+
+If you have trouble installing sha3 on windows: run `ridk install` and
+try all of the options. After that your ruby native extension build
+tools should be installed and the gem installation should work.
 
 
 \subsection prerequisite_what_next Next

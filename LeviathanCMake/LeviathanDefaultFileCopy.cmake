@@ -108,18 +108,6 @@ if(WIN32)
     "${LEVIATHAN_SRC}/build/ThirdParty/bin/*.dll"
     "${LEVIATHAN_SRC}/build/ThirdParty/bin/**/*.dll")
   list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
-
-  # Need additional dlls from CEGUI dependencies
-  file(GLOB CEGUI_DEPENDENCY_DLLS
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/pcre.dll"
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/SILLY.dll"
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/freetype.dll"
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/raqm.dll"
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/harfbuzz.dll"
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/fribidi.dll"
-    "${LEVIATHAN_SRC}/ThirdParty/cegui/cegui-dependencies/build/dependencies/**/libexpat.dll"
-    )
-  list(APPEND ALL_DYNAMIC_LIBRARIES ${CEGUI_DEPENDENCY_DLLS})
 else()
 
   # linux variants of the copy functions

@@ -116,7 +116,7 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     // register global functions and classes //
     if(!BindStandardFunctions(engine))
         throw Exception("BindStandardFunctions failed");
-    
+
     if(!BindOgre(engine))
         throw Exception("BindOgre failed");
 

@@ -94,6 +94,8 @@ work. (On **linux** the setup script will automatically use the package
 manager to install this. For **Windows** see \ref
 prerequisite_software_windows)
 
+- 7zip (if you want to use precompiled dependencies)
+
 You can check whether a program is in PATH by opening a command 
 prompt/terminal and running the program by typing its name. 
 For example `ruby -v` this shouldn't print an error instead you should get something like this:
@@ -140,23 +142,30 @@ ruby 2.4.1p111
 
 
 - After compiling Boost make sure to set `BOOST_ROOT` to the folder
-where you compiled boost (for example `C:\projects\boost`).  And
-compile shared versions and use 64 bit build.
+  where you compiled boost (for example `C:\projects\boost`).  And
+  compile shared versions and use 64 bit build.
 
-Additional tip: when running `b2` make sure you specify the toolset,
-bitness, type and the number of cores to use for compiling like this:
-`.\b2 --toolset=msvc link=shared,static address-model=64 --with-system
---with-filesystem -j numberofcores`. Note: replace numberofcores with
-how many cores you have for optimal compilation time. Also if you plan on
-using boost with other projects as well remove the `--with-` options
-to compile all of the components, which takes a long time.
+  Additional tip: when running `b2` make sure you specify the toolset,
+  bitness, type and the number of cores to use for compiling like
+  this: `.\b2 --toolset=msvc link=shared,static address-model=64
+  --with-system --with-filesystem -j numberofcores`. Note: replace
+  numberofcores with how many cores you have for optimal compilation
+  time. Also if you plan on using boost with other projects as well
+  remove the `--with-` options to compile all of the components, which
+  takes a long time.
 
+- 7zip. Download the <a
+  href="http://www.7-zip.org/download.html">official</a> installer
+  release and then once installed add the installed folder (where
+  `7z.exe` is) to path.
 
 \subsection prerequisite_software_linux Linux
 
 - lsb_release
 
 - GCC 7+ or clang 5+ (clang is untested, but probably works...)
+
+- 7zip. Use your package manager to install, it is probably named `p7zip`.
 
 \subsection prerequisite_software_gems Ruby Gems
 

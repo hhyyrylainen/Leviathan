@@ -121,6 +121,23 @@ ruby 2.4.1p111
   Then add `C:\cygwin64\bin` to the system
   path to make everything visible to the script
 
+  If you have issues with not getting everything installed you can
+  reference these images (that have additional packages installed, but
+  also all the required ones):
+  <a href="https://leviathanengine.com/images/setup_list_1.png">cygwin list 1</a>,
+  <a href="https://leviathanengine.com/images/setup_list_2.png">cygwin list 2</a>,
+  <a href="https://leviathanengine.com/images/setup_list_3.png">cygwin list 3</a>,
+  <a href="https://leviathanengine.com/images/setup_list_4.png">cygwin list 4</a>,
+  <a href="https://leviathanengine.com/images/setup_list_5.png">cygwin list 5</a>.
+
+  Additionally if you have a lot of entires in your system path there
+  may be conflicting names with executables from cygwin. This results
+  in weird errors during ffmpeg compilation with the install
+  etc. commands not accepting the parameters they are given. This can
+  be fixed in two ways: either delete the conflicting programs OR make
+  cygwin be the first thing in your path to let it override other
+  programs if they have the same name.
+
 
 - After compiling Boost make sure to set `BOOST_ROOT` to the folder
 where you compiled boost (for example `C:\projects\boost`).  And

@@ -431,7 +431,14 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const std::stri
 {
     GUARD_LOCK();
 
-    auto expanded = boost::filesystem::canonical(file).generic_string();
+    std::string expanded;
+    
+    try {
+        expanded = boost::filesystem::canonical(file).generic_string();
+    } catch(const boost::filesystem::filesystem_error&) {
+        // Doesn't exist //
+        return false;
+    }
 
     // Check is it already there //
     for(size_t i = 0; i < ScriptSourceSegments.size(); i++) {

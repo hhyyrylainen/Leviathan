@@ -18,6 +18,7 @@
     - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_strings.html
     - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_funcptr.html
     - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_class_ops.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_func_retref.html
 
     And for writing bindings:
     - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_register_type.html

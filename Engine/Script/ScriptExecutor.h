@@ -293,9 +293,8 @@ public:
     DLLEXPORT static ScriptExecutor* Get();
 
 private:
-
 #ifdef _MSC_VER
-	// Helpers for the alternative to constexpr ifs in _DoPassEachParameter 
+    // Helpers for the alternative to constexpr ifs in _DoPassEachParameter
 #include "MSVCAlternativeConstexprStuff.h"
 #endif //_MSC_VER
 
@@ -326,84 +325,80 @@ private:
         const auto parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
         if(wantedTypeID != parameterType) {
 
-            // Compatibility checks //
-            // This is not the most optimal as this results in a duplicate call to
-            // func->GetParam
-            // TODO: is there a better way than to have this mess here?
+        // Compatibility checks //
+        // This is not the most optimal as this results in a duplicate call to
+        // func->GetParam
+        // TODO: is there a better way than to have this mess here?
 
 #ifdef _MSC_VER // Microsoft, fix your shit
-			// MSVC can't handle the good looking constexpr if things so this is a butchered version
-			if (wantedTypeID == AngelScriptTypeIDResolver<int32_t>::Get(this)) {
-				// Uncommenting constexpr here causes: 
-				// MSVCAlternativeConstexprStuff.h(227): fatal error C1001: An internal error has occurred in the compiler.
-				// 2>(compiler file 'f:\dd\vctools\compiler\cxxfe\sl\p1\c\parsetree.cpp', line 1691)
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, int32_t>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int32_t>>::f<int32_t>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<uint32_t>::Get(this)) {
+            // MSVC can't handle the good looking constexpr if things so this is a butchered
+            // version
+            if(wantedTypeID == AngelScriptTypeIDResolver<int32_t>::Get(this)) {
+                // Uncommenting constexpr here causes:
+                // MSVCAlternativeConstexprStuff.h(227): fatal error C1001: An internal error
+                // has occurred in the compiler. 2>(compiler file
+                // 'f:\dd\vctools\compiler\cxxfe\sl\p1\c\parsetree.cpp', line 1691)
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, int32_t>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int32_t>>::f<
+                        int32_t>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint32_t>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, uint32_t>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint32_t>>::f<uint32_t>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<uint64_t>::Get(this)) {
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, uint32_t>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint32_t>>::f<
+                        uint32_t>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint64_t>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, uint64_t>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint64_t>>::f<uint64_t>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<int64_t>::Get(this)) {
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, uint64_t>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint64_t>>::f<
+                        uint64_t>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<int64_t>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, int64_t>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int64_t>>::f<int64_t>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<int8_t>::Get(this)) {
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, int64_t>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int64_t>>::f<
+                        int64_t>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<int8_t>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, int8_t>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int8_t>>::f<int8_t>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, int8_t>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int8_t>>::f<
+                        int8_t>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
 
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<uint8_t>::Get(this)) {
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint8_t>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, uint8_t>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint8_t>>::f<uint8_t>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<float>::Get(this)) {
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, uint8_t>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint8_t>>::f<
+                        uint8_t>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<float>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, float>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, float>>::f<float>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
-			else if (wantedTypeID == AngelScriptTypeIDResolver<double>::Get(this)) {
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, float>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, float>>::f<float>(
+                        this, parameterc, i, scriptcontext, setup, module, func, current,
+                        std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<double>::Get(this)) {
 
-				if /*constexpr*/ (std::is_convertible_v<CurrentT, double>) {
-					return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, double>>::f<double>(
-						this, parameterc, i, scriptcontext, setup, module,
-						func, current, std::forward<Args>(args)...);
-				}
-			}
+                if /*constexpr*/ (std::is_convertible_v<CurrentT, double>) {
+                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, double>>::f<
+                        double>(this, parameterc, i, scriptcontext, setup, module, func,
+                        current, std::forward<Args>(args)...);
+                }
+            }
 #else //_MSC_VER
 
-			// NOTE: IF THIS OR THE MSVCAlternativeConstexprStuff IS CHANGED THE OTHER MUST ALSO BE CHANGED!
-			
+            // NOTE: IF THIS OR THE MSVCAlternativeConstexprStuff IS CHANGED THE OTHER MUST
+            // ALSO BE CHANGED!
+
             if(wantedTypeID == AngelScriptTypeIDResolver<int32_t>::Get(this)) {
 
                 if constexpr(std::is_convertible_v<CurrentT, int32_t>) {
@@ -554,192 +549,185 @@ private:
     }
 
 
-	//! \brief Handles status and returning a value from ran script function
-	//! \todo When receiving signed types do we need to reinterpret_cast them from unsigned
-	//! types
-	template<typename ReturnT>
-	ScriptRunResult<ReturnT> _HandleEndedScriptExecution(int retcode,
-		asIScriptContext* scriptcontext, ScriptRunningSetup& setup, asIScriptFunction* func,
-		ScriptModule* module)
-	{
-		// Check the return type //
-		if (retcode != asEXECUTION_FINISHED) {
-			// something went wrong //
+    //! \brief Handles status and returning a value from ran script function
+    //! \todo When receiving signed types do we need to reinterpret_cast them from unsigned
+    //! types
+    template<typename ReturnT>
+    ScriptRunResult<ReturnT> _HandleEndedScriptExecution(int retcode,
+        asIScriptContext* scriptcontext, ScriptRunningSetup& setup, asIScriptFunction* func,
+        ScriptModule* module)
+    {
+        // Check the return type //
+        if(retcode != asEXECUTION_FINISHED) {
+            // something went wrong //
 
-			// The execution didn't finish as we had planned. Determine why.
-			switch (retcode) {
-				// script caused an exception //
-			case asEXECUTION_EXCEPTION:
-				PrintExceptionInfo(scriptcontext, *Logger::Get(),
-					scriptcontext->GetExceptionFunction(), module);
-				[[fallthrough]];
-			default:
-				// code took too long //
-			case asEXECUTION_ABORTED:
-				return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
-			case asEXECUTION_SUSPENDED:
-				return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Suspended);
-			}
-		}
+            // The execution didn't finish as we had planned. Determine why.
+            switch(retcode) {
+                // script caused an exception //
+            case asEXECUTION_EXCEPTION:
+                PrintExceptionInfo(scriptcontext, *Logger::Get(),
+                    scriptcontext->GetExceptionFunction(), module);
+                [[fallthrough]];
+            default:
+                // code took too long //
+            case asEXECUTION_ABORTED:
+                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
+            case asEXECUTION_SUSPENDED:
+                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Suspended);
+            }
+        }
 
-		// Successfully executed, try to fetch return value //
+        // Successfully executed, try to fetch return value //
 
-		const auto returnType = func->GetReturnTypeId();
+        const auto returnType = func->GetReturnTypeId();
 
-		// Script didn't return anything
-		if (returnType == ANGELSCRIPT_VOID_TYPEID) {
+        // Script didn't return anything
+        if(returnType == ANGELSCRIPT_VOID_TYPEID) {
 
-			// Set the return value to default if it isn't void //
-			if constexpr(std::is_void_v<ReturnT>) {
-				return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
-			}
-			else {
+            // Set the return value to default if it isn't void //
+            if constexpr(std::is_void_v<ReturnT>) {
+                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
+            } else {
 
-				if (setup.PrintErrors) {
+                if(setup.PrintErrors) {
 
-					LOG_ERROR("ScriptExecutor: script return value is void, but application "
-						"expected a value of type: " +
-						std::string(typeid(ReturnT).name()));
-				}
+                    LOG_ERROR("ScriptExecutor: script return value is void, but application "
+                              "expected a value of type: " +
+                              std::string(typeid(ReturnT).name()) + " id: " +
+                              std::to_string(AngelScriptTypeIDResolver<ReturnT>::Get(this)));
+                }
 
-				// Rely on 0 being a valid value for pointer etc.
-				return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, 0);
-			}
-		}
+                // Rely on 0 being a valid value for pointer etc.
+                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, 0);
+            }
+        }
 
-		// script return type isn't void //
+        // script return type isn't void //
 
-		const auto parameterType = AngelScriptTypeIDResolver<ReturnT>::Get(this);
+        const auto parameterType = AngelScriptTypeIDResolver<ReturnT>::Get(this);
 
-		if constexpr(std::is_same_v<ReturnT, void>) {
+        if constexpr(std::is_same_v<ReturnT, void>) {
 
-			// Success, no return value wanted //
-			if (setup.PrintErrors && (returnType != parameterType)) {
+            // Success, no return value wanted //
+            if(setup.PrintErrors && (returnType != parameterType)) {
 
-				LOG_WARNING("ScriptExecutor: application ignoring script return value");
-			}
+                LOG_WARNING("ScriptExecutor: application ignoring script return value");
+            }
 
-			return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
+            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success);
 
-		}
-		else {
-			// TODO: conversions between compatible types
-			if (returnType != parameterType) {
+        } else {
+            // TODO: conversions between compatible types
+            if(returnType != parameterType) {
 
-				return _ReturnedTypeDidntMatch<ReturnT>(
-					scriptcontext, setup, func, module, parameterType, returnType);
-			}
+                return _ReturnedTypeDidntMatch<ReturnT>(
+                    scriptcontext, setup, func, module, parameterType, returnType);
+            }
 
-			if constexpr(std::is_same_v<ReturnT, int32_t> ||
-				std::is_same_v<ReturnT, uint32_t>) {
+            if constexpr(std::is_same_v<ReturnT, int32_t> ||
+                         std::is_same_v<ReturnT, uint32_t>) {
 
-				return ScriptRunResult<ReturnT>(
-					SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDWord());
-			}
-			else if constexpr(std::is_same_v<ReturnT, int64_t> ||
-				std::is_same_v<ReturnT, uint64_t>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDWord());
+            } else if constexpr(std::is_same_v<ReturnT, int64_t> ||
+                                std::is_same_v<ReturnT, uint64_t>) {
 
-				return ScriptRunResult<ReturnT>(
-					SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnQWord());
-			}
-			else if constexpr(std::is_same_v<ReturnT, float>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnQWord());
+            } else if constexpr(std::is_same_v<ReturnT, float>) {
 
-				return ScriptRunResult<ReturnT>(
-					SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnFloat());
-			}
-			else if constexpr(std::is_same_v<ReturnT, double>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnFloat());
+            } else if constexpr(std::is_same_v<ReturnT, double>) {
 
-				return ScriptRunResult<ReturnT>(
-					SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDouble());
-			}
-			else if constexpr(std::is_same_v<ReturnT, char> ||
-				std::is_same_v<ReturnT, int8_t> ||
-				std::is_same_v<ReturnT, bool>) {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnDouble());
+            } else if constexpr(std::is_same_v<ReturnT, char> ||
+                                std::is_same_v<ReturnT, int8_t> ||
+                                std::is_same_v<ReturnT, bool>) {
 
-				return ScriptRunResult<ReturnT>(
-					SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnByte());
-			}
-			else {
+                return ScriptRunResult<ReturnT>(
+                    SCRIPT_RUN_RESULT::Success, scriptcontext->GetReturnByte());
+            } else {
 
-				// This is a class type and we need to do a copy if it was
-				// by value or this isn't a handle type
+                // This is a class type and we need to do a copy if it was
+                // by value or this isn't a handle type
 
-				// According to AS documentation the return object is
-				// deleted when the context is recycled, so we need to
-				// increase ref or make a copy
+                // According to AS documentation the return object is
+                // deleted when the context is recycled, so we need to
+                // increase ref or make a copy
 
-				if constexpr(std::is_pointer_v<ReturnT>) {
+                if constexpr(std::is_pointer_v<ReturnT>) {
 
-					// We have already done type checks, so this should be fine to cast //
-					ReturnT obj = static_cast<ReturnT>(scriptcontext->GetReturnObject());
+                    // We have already done type checks, so this should be fine to cast //
+                    ReturnT obj = static_cast<ReturnT>(scriptcontext->GetReturnObject());
 
-					_IncrementRefCountIfRefCountedType(obj);
-					return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, std::move(obj));
+                    _IncrementRefCountIfRefCountedType(obj);
+                    return ScriptRunResult<ReturnT>(
+                        SCRIPT_RUN_RESULT::Success, std::move(obj));
 
-				}
-				else if constexpr(std::is_lvalue_reference_v<ReturnT>) {
+                } else if constexpr(std::is_lvalue_reference_v<ReturnT>) {
 
-					static_assert(!std::is_class_v<ReturnT>,
-						"Returning by reference from scripts doesn't work");
+                    static_assert(!std::is_class_v<ReturnT>,
+                        "Returning by reference from scripts doesn't work");
 
-				}
-				else if constexpr(std::is_class_v<ReturnT>) {
+                } else if constexpr(std::is_class_v<ReturnT>) {
 
-					// We have already done type checks, so this should be fine to cast //
-					ReturnT* obj = static_cast<ReturnT*>(scriptcontext->GetReturnObject());
-					return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, std::move(*obj));
-				}
-				else {
+                    // We have already done type checks, so this should be fine to cast //
+                    ReturnT* obj = static_cast<ReturnT*>(scriptcontext->GetReturnObject());
+                    return ScriptRunResult<ReturnT>(
+                        SCRIPT_RUN_RESULT::Success, std::move(*obj));
+                } else {
 
-					static_assert(
-						std::is_same_v<ReturnT, void> == std::is_same_v<ReturnT, int>,
-						"Tried to return some very weird type from a script function");
-				}
-			}
-		}
-	}
+                    static_assert(
+                        std::is_same_v<ReturnT, void> == std::is_same_v<ReturnT, int>,
+                        "Tried to return some very weird type from a script function");
+                }
+            }
+        }
+    }
 
-	//! \brief Handles passing parameters to scripts
-	//!
-	//! Automatically ignores extra parameters that the script didn't want to take.
-	//! Also automatically increases reference counts of objects that are derived from
-	//! ReferenceCounted
-	//! \returns False if passing parameters failed and the script shouldn't be attempted
-	//! to be ran
-	template<class... Args>
-	bool _PassParametersToScript(asIScriptContext* scriptcontext, ScriptRunningSetup& setup,
-		ScriptModule* module, asIScriptFunction* func, Args&&... args)
-	{
-		// Get the number of parameters expected //
-		auto parameterc = func->GetParamCount();
-		asUINT i = 0;
+    //! \brief Handles passing parameters to scripts
+    //!
+    //! Automatically ignores extra parameters that the script didn't want to take.
+    //! Also automatically increases reference counts of objects that are derived from
+    //! ReferenceCounted
+    //! \returns False if passing parameters failed and the script shouldn't be attempted
+    //! to be ran
+    template<class... Args>
+    bool _PassParametersToScript(asIScriptContext* scriptcontext, ScriptRunningSetup& setup,
+        ScriptModule* module, asIScriptFunction* func, Args&&... args)
+    {
+        // Get the number of parameters expected //
+        auto parameterc = func->GetParamCount();
+        asUINT i = 0;
 
-		// Start passing the parameters provided by the application //
-		if (!_DoPassEachParameter(
-			parameterc, i, scriptcontext, setup, module, func, std::forward<Args>(args)...))
-			return false;
+        // Start passing the parameters provided by the application //
+        if(!_DoPassEachParameter(
+               parameterc, i, scriptcontext, setup, module, func, std::forward<Args>(args)...))
+            return false;
 
-		// Check that we passed enough parameters for the script (we
-		// don't care if the script took less parameters than we gave
-		// it)
-		if (i < parameterc) {
-			// We didn't have enough parameters
-			if (setup.PrintErrors) {
-				LOG_ERROR("ScriptExecutor: not enough parameters to pass to script function");
-			}
+        // Check that we passed enough parameters for the script (we
+        // don't care if the script took less parameters than we gave
+        // it)
+        if(i < parameterc) {
+            // We didn't have enough parameters
+            if(setup.PrintErrors) {
+                LOG_ERROR("ScriptExecutor: not enough parameters to pass to script function");
+            }
 
-			return false;
-		}
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	// End condition for the variadic template
-	bool _DoPassEachParameter(asUINT parameterc, asUINT& i, asIScriptContext* scriptcontext,
-		ScriptRunningSetup& setup, ScriptModule* module, asIScriptFunction* func)
-	{
-		return true;
-	}
+    // End condition for the variadic template
+    bool _DoPassEachParameter(asUINT parameterc, asUINT& i, asIScriptContext* scriptcontext,
+        ScriptRunningSetup& setup, ScriptModule* module, asIScriptFunction* func)
+    {
+        return true;
+    }
 
     //! Helper for releasing unused handle types in _HandleEndedScriptExecution
     template<typename ReturnT>
@@ -803,17 +791,17 @@ private:
         asIScriptFunction* func, ScriptRunningSetup& parameters, ScriptModule* scrptmodule);
 
     //! \brief Prepares a context for usage
-	DLLEXPORT bool _PrepareContextForPassingParameters(asIScriptFunction* func,
+    DLLEXPORT bool _PrepareContextForPassingParameters(asIScriptFunction* func,
         asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
         ScriptModule* scriptmodule);
 
     //! \brief Called when a context is required for script execution
     //! \todo Allow recursive calls and more context reuse (a pool from which these are
     //! retrieved)
-	DLLEXPORT asIScriptContext* _GetContextForExecution();
+    DLLEXPORT asIScriptContext* _GetContextForExecution();
 
     //! \brief Called after a script has been executed and the context is no longer needed
-	DLLEXPORT void _DoneWithContext(asIScriptContext* context);
+    DLLEXPORT void _DoneWithContext(asIScriptContext* context);
 
 private:
     // AngelScript engine script executing part //

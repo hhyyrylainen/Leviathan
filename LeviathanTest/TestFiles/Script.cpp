@@ -397,9 +397,8 @@ TEST_CASE("Ignored returned object doesn't leak", "[script]")
     GenericEvent* event = new GenericEvent("Test1322>");
     CHECK(event->GetRefCount() == 1);
 
-    // Causes errors as this has to release 
-    auto returned =
-        exec.RunScript<void>(mod, ssetup, event);
+    // Causes errors as this has to release
+    auto returned = exec.RunScript<void>(mod, ssetup, event);
 
     CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
     CHECK(event->GetRefCount() == 1);
@@ -532,4 +531,28 @@ TEST_CASE("Documentation samples compile", "[script]")
     result = exec.RunScript<void>(mod, ssetup);
 
     CHECK(result.Result == SCRIPT_RUN_RESULT::Success);
+}
+
+TEST_CASE("Script bound stuff standard functions work correctly", "[script]")
+{
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/StandardFunctionsTest.as"));
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup;
+    ssetup.SetEntrypoint("TestFunction1");
+
+    auto returned = exec.RunScript<bool>(mod, ssetup);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value == true);
 }

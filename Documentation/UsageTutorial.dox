@@ -154,6 +154,10 @@ ruby 2.4.1p111
   remove the `--with-` options to compile all of the components, which
   takes a long time.
 
+  <a
+  href="http://www.boost.org/doc/libs/1_66_0/more/getting_started/windows.html#prepare-to-use-a-boost-library-binary">official
+  boost guide</a>
+
 - 7zip. Download the <a
   href="http://www.7-zip.org/download.html">official</a> installer
   release and then once installed add the installed folder (where

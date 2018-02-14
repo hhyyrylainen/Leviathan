@@ -21,6 +21,7 @@
 #include "ScriptModule.h"
 
 // Bindings
+#include "Bindings/BindStandardFunctions.h"
 #include "Bindings/CommonEngineBind.h"
 #include "Bindings/EntityBind.h"
 #include "Bindings/GuiScriptBind.h"
@@ -113,6 +114,9 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 
     // use various binding functions //
     // register global functions and classes //
+    if(!BindStandardFunctions(engine))
+        throw Exception("BindStandardFunctions failed");
+    
     if(!BindOgre(engine))
         throw Exception("BindOgre failed");
 
@@ -329,8 +333,8 @@ DLLEXPORT bool Leviathan::ScriptExecutor::_CheckScriptFunctionPtr(
     return true;
 }
 
-DLLEXPORT bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(asIScriptFunction* func,
-    asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
+DLLEXPORT bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(
+    asIScriptFunction* func, asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
     ScriptModule* scriptmodule)
 {
     if(ScriptContext->Prepare(func) < 0) {
@@ -550,4 +554,3 @@ DLLEXPORT int ScriptExecutor::ResolveStringToASID(const char* str) const
 
     return engine->GetTypeIdByDecl(str);
 }
-

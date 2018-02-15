@@ -22,6 +22,26 @@ void MatrixProxy(void* memory)
     new(memory) Ogre::Matrix4;
 }
 
+void DegreeProxy(void* memory, float degree)
+{
+    new(memory) Ogre::Degree(degree);
+}
+
+void DegreeProxyRadian(void* memory, const Ogre::Radian& radian)
+{
+    new(memory) Ogre::Degree(radian);
+}
+
+void RadianProxy(void* memory, float radian)
+{
+    new(memory) Ogre::Radian(radian);
+}
+
+void RadianProxyDegree(void* memory, const Ogre::Degree& degree)
+{
+    new(memory) Ogre::Radian(degree);
+}
+
 // This is needed because directly registering
 // Ogre::Root::getSingletonPtr() with angelscript does weird stuff
 Ogre::Root* ScriptGetOgre()
@@ -104,6 +124,45 @@ bool BindMatrix4(asIScriptEngine* engine)
     return true;
 }
 
+bool BindAngles(asIScriptEngine* engine)
+{
+
+    if(engine->RegisterObjectType("Radian", sizeof(Ogre::Radian),
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Radian>() | asOBJ_POD) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectType("Degree", sizeof(Ogre::Degree),
+            asOBJ_VALUE | asGetTypeTraits<Ogre::Degree>() | asOBJ_POD) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT, "void f(float radians)",
+           asFUNCTION(RadianProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT,
+           "void f(const Degree &in degree)", asFUNCTION(RadianProxyDegree),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_CONSTRUCT, "void f(float degrees)",
+           asFUNCTION(DegreeProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_CONSTRUCT,
+           "void f(const Radian &in radian)", asFUNCTION(DegreeProxyRadian),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    return true;
+}
+
 // ------------------------------------ //
 
 bool BindScene(asIScriptEngine* engine)
@@ -127,6 +186,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
     }
 
     if(!BindColour(engine))
+        return false;
+
+    if(!BindAngles(engine))
         return false;
 
     if(!BindMatrix4(engine))

@@ -533,7 +533,7 @@ TEST_CASE("Documentation samples compile", "[script]")
     CHECK(result.Result == SCRIPT_RUN_RESULT::Success);
 }
 
-TEST_CASE("Script bound stuff standard functions work correctly", "[script]")
+TEST_CASE("Script bound standard functions work correctly", "[script]")
 {
     PartialEngine<false> engine;
 

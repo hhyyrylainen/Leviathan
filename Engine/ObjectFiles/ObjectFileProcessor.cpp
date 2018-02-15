@@ -929,6 +929,8 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
             auto linething = itr.GetUntilLineEnd<std::string>();
 
             // Add it to us //
+            // But make sure we strip also trailing spaces
+            StringOperations::RemovePreceedingTrailingSpaces(*linething);
             ourobj->AddTextLine(*linething);
         }
 	}

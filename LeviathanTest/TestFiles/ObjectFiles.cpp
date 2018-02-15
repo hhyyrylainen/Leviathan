@@ -619,4 +619,36 @@ TEST_CASE("ObjectFile parser reports unclosed comments", "[objectfile]"){
 }
 
 
+TEST_CASE("Preceeeding and trailing spaces don't matter in text blocks", "[objectfile]"){
+
+    DummyReporter reporter;
+
+    // Try to parse a minimal syntax file //
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(
+        "o \"obj\"{\n"
+        "t block{\n"
+        " this is text   \n"
+        "this is more text\n"
+        "}}",
+        "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+    REQUIRE(ofile != nullptr);
+    
+    // Validate the output //
+    ObjectFileObject* obj = ofile->GetObjectFromIndex(0);
+
+    REQUIRE(obj != nullptr);
+
+    CHECK(obj->GetName() == "obj");
+
+    ObjectFileTextBlock* text = obj->GetTextBlock(0);
+
+    REQUIRE(text != nullptr);
+
+    REQUIRE(text->GetLineCount() == 2);
+
+    CHECK(text->GetLine(0) == "this is text");
+    CHECK(text->GetLine(1) == "this is more text");
+}
+
 

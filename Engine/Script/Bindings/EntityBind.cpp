@@ -111,6 +111,21 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectProperty(
+            "RenderNode", "Float3 Scale", asOFFSET(RenderNode, Scale)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+            "RenderNode", "Ogre::SceneNode@ Node", asOFFSET(RenderNode, Node)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+            "RenderNode", "bool Hidden", asOFFSET(RenderNode, Hidden)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 
     if(engine->RegisterObjectType("Sendable", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

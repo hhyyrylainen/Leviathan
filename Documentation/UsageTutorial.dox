@@ -154,6 +154,10 @@ ruby 2.4.1p111
   remove the `--with-` options to compile all of the components, which
   takes a long time.
 
+  If msvc isn't detected correctly, open "Developer Command Prompt for
+  Visual Studio 2017" and run again in that. That should make boost
+  detect visual studio.
+
   <a
   href="http://www.boost.org/doc/libs/1_66_0/more/getting_started/windows.html#prepare-to-use-a-boost-library-binary">official
   boost guide</a>

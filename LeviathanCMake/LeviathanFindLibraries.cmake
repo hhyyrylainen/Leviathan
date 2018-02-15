@@ -85,7 +85,7 @@ if(LEVIATHAN_FULL_BUILD)
     list(APPEND LEVIATHAN_ENGINE_LIBRARIES debug angelscriptd)
     
   else()
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES angelscript)
   endif()
 
   if(USING_LEAP)

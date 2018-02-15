@@ -32,6 +32,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/Events.cpp
     TestFiles/GameModule.cpp
     TestFiles/Physics.cpp
+    TestFiles/Entities.cpp
     
     TestFiles/CoreEngineTests.cpp
     )

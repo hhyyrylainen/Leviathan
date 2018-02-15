@@ -170,6 +170,10 @@ public:
     //! \brief Deletes an entity during the next tick
     DLLEXPORT void QueueDestroyEntity(ObjectID id);
 
+    //! \brief Makes child entity be deleted when parent is deleted
+    //! \note Doesn't check that the entitiy ids exist
+    DLLEXPORT void SetEntitysParent(ObjectID child, ObjectID parent);
+
     //! \brief Notifies others that we have created a new entity
     //! \note This is called after all components are set up and it is ready to be sent to
     //! other players
@@ -361,6 +365,7 @@ private:
     void _ReportEntityDestruction(ObjectID id);
 
     //! \brief Implementation of doing actual destroy part of removing an entity
+    //! \note The caller has to remove the id from Entities
     void _DoDestroy(ObjectID id);
 
     //! \brief Sends sendable updates to all clients
@@ -414,6 +419,10 @@ private:
 
     // Entities //
     std::vector<ObjectID> Entities;
+
+    // Parented entities, used to destroy children
+    // First is the parent, second is child
+    std::vector<std::tuple<ObjectID, ObjectID>> Parents;
 
     //! The unique ID
     int ID;

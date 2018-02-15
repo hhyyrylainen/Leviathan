@@ -617,6 +617,9 @@ DLLEXPORT void Leviathan::GameWorld::ClearEntities(){
     // release objects //
     // TODO: allow objects to do something
     Entities.clear();
+    Parents.clear();
+    // This shouldn't be used all that much so release the memory
+    Parents.shrink_to_fit();
     
     // Clear all nodes //
     _ResetSystems();
@@ -661,9 +664,8 @@ DLLEXPORT void Leviathan::GameWorld::DestroyEntity(ObjectID id){
         
         if(*iter == id){
 
-            _DoDestroy(id);
             Entities.erase(iter);
-            
+            _DoDestroy(id);
             return;
         }
     }
@@ -740,13 +742,42 @@ void GameWorld::_DoDestroy(ObjectID id){
         _ReportEntityDestruction(id);
 
     // TODO: find a better way to do this
-    DestroyAllIn(id);
+    DestroyAllIn(id);    
+
+    // Parent destroy children //
+    // We need to support recursively parented entities
+    for(size_t i = 0; i < Parents.size(); ){
+
+        if(std::get<0>(Parents[i]) == id){
+
+            const auto childId = std::get<1>(Parents[i]);
+
+            // Remove it //
+            std::swap(Parents[i], Parents[Parents.size() - 1]);
+            Parents.pop_back();
+
+            // And then destroy //
+            DestroyEntity(childId);
+
+            // To support recursively parented we go back to the start to scan again
+            i = 0;
+
+        } else {
+            ++i;
+        }
+    }
 }
+
 
 DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id){
     
 }
+// ------------------------------------ //
+DLLEXPORT void GameWorld::SetEntitysParent(ObjectID child, ObjectID parent){
 
+    Parents.push_back(std::make_tuple(parent, child));
+}
+// ------------------------------------ //
 DLLEXPORT std::tuple<void*, bool> GameWorld::GetComponent(ObjectID id, COMPONENT_TYPE type){
 
     return std::make_tuple(nullptr, false);

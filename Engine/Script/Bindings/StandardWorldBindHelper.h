@@ -29,6 +29,13 @@ template<class WorldType>
     }
 
     if(engine->RegisterObjectMethod(classname,
+            "void SetEntitysParent(ObjectID child, ObjectID parent)",
+            asMETHOD(WorldType, SetEntitysParent), asCALL_THISCALL) < 0)
+    {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
             "PhysicalWorld@ GetPhysicalWorld()",
             asMETHOD(WorldType, GetPhysicalWorld), asCALL_THISCALL) < 0)
     {

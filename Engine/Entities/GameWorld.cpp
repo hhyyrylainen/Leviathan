@@ -58,6 +58,7 @@ DLLEXPORT Leviathan::GameWorld::~GameWorld(){
 
     // Assert if all objects haven't been released already.
     // We can't call virtual methods here anymore
+    // This can be hit in tests quite easily if something throws an exception
     LEVIATHAN_ASSERT(Entities.empty(),
         "GameWorld: Entities not empty in destructor. Was Release called?");
     

@@ -596,22 +596,17 @@ class GameWorldClass < OutputClass
       if opts.include?(:impl)
         f.puts "{"
 
-        f.puts "try {"
         if c.Release
-          f.puts "    Component#{c.type}.Release(id, true" +
+          f.puts "    const bool destroyed = Component#{c.type}.ReleaseIfExists(id, true" +
                  if c.Release.length > 0
                    ", " + c.Release.join(", ") else
                    ""
                  end +");"
         else
-          f.puts "    Component#{c.type}.Destroy(id, true);"
+          f.puts "    const bool destroyed = Component#{c.type}.DestroyIfExists(id, true);"
         end
         f.puts "    //_OnComponentDestroyed(id, #{c.type}::TYPE());"
-        f.puts "    return true;"
-        f.puts "}"
-        f.puts "catch (...) {"
-        f.puts "    return false;"
-        f.puts "}"
+        f.puts "    return destroyed;"
         
         f.puts "}"
       else
@@ -683,13 +678,13 @@ class GameWorldClass < OutputClass
       f.puts @BaseClass + "::DestroyAllIn(id);"
       @ComponentTypes.each{|c|
         if c.Release
-          f.puts "Component#{c.type}.Release(id, true" +
+          f.puts "Component#{c.type}.ReleaseIfExists(id, true" +
                  if c.Release.length > 0
                    ", " + c.Release.join(", ") else
                    ""
                  end +");"
         else
-          f.puts "Component#{c.type}.Destroy(id, true);"
+          f.puts "Component#{c.type}.DestroyIfExists(id, true);"
         end
       }
       f.puts "}"

@@ -7,6 +7,9 @@
 #include "OgreColourValue.h"
 #include "OgreRoot.h"
 
+// For Float type conversions
+#include "Common/Types.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -42,6 +45,18 @@ void RadianProxyDegree(void* memory, const Ogre::Degree& degree)
     new(memory) Ogre::Radian(degree);
 }
 
+void QuaternionProxyAroundAxis(
+    void* memory, const Ogre::Radian& radian, const Ogre::Vector3& vector)
+{
+    new(memory) Ogre::Quaternion(radian, vector);
+}
+
+void Vector3Proxy(void* memory, float x, float y, float z)
+{
+
+    new(memory) Ogre::Vector3(x, y, z);
+}
+
 // This is needed because directly registering
 // Ogre::Root::getSingletonPtr() with angelscript does weird stuff
 Ogre::Root* ScriptGetOgre()
@@ -56,6 +71,34 @@ Ogre::Root* ScriptGetOgre()
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
+
+
+bool BindVector3(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Vector3", sizeof(Ogre::Vector3),
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Vector3>() | asOBJ_POD) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Vector3", asBEHAVE_CONSTRUCT,
+           "void f(float x, float y, float z)", asFUNCTION(Vector3Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector3", "float x", asOFFSET(Ogre::Vector3, x)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector3", "float y", asOFFSET(Ogre::Vector3, y)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector3", "float z", asOFFSET(Ogre::Vector3, z)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    return true;
+}
 
 bool BindColour(asIScriptEngine* engine)
 {
@@ -124,7 +167,7 @@ bool BindMatrix4(asIScriptEngine* engine)
     return true;
 }
 
-bool BindAngles(asIScriptEngine* engine)
+bool BindAnglesAndQuaternion(asIScriptEngine* engine)
 {
 
     if(engine->RegisterObjectType("Radian", sizeof(Ogre::Radian),
@@ -133,7 +176,12 @@ bool BindAngles(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectType("Degree", sizeof(Ogre::Degree),
-            asOBJ_VALUE | asGetTypeTraits<Ogre::Degree>() | asOBJ_POD) < 0) {
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Degree>() | asOBJ_POD) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectType("Quaternion", sizeof(Ogre::Quaternion),
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Quaternion>() | asOBJ_POD) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -159,6 +207,11 @@ bool BindAngles(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT,
+           "void f(const Radian &in radian, const Vector3 &in vector)",
+           asFUNCTION(QuaternionProxyAroundAxis), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }
@@ -185,10 +238,13 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindVector3(engine))
+        return false;
+
     if(!BindColour(engine))
         return false;
 
-    if(!BindAngles(engine))
+    if(!BindAnglesAndQuaternion(engine))
         return false;
 
     if(!BindMatrix4(engine))

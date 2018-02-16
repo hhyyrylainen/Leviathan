@@ -147,6 +147,13 @@ void Int3DestructorProxy(void* memory)
     reinterpret_cast<Int3*>(memory)->~Int3();
 }
 
+// ------------------------------------ //
+// Ogre conversions
+void Vector3Float3Proxy(void* memory, const Float3& vector)
+{
+
+    new(memory) Ogre::Vector3(vector);
+}
 
 // ------------------------------------ //
 // Start of the actual bind
@@ -267,7 +274,7 @@ bool BindFloat3(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Float3", "bool opEquals(const Float3 &in other) const",
-            asMETHODPR(Float3, operator==,(const Float3&) const, bool), asCALL_THISCALL) < 0) {
+           asMETHODPR(Float3, operator==,(const Float3&) const, bool), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -366,7 +373,7 @@ bool BindFloat4(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Float4", "bool opEquals(const Float4 &in other) const",
-            asMETHODPR(Float4, operator==,(const Float4&) const, bool), asCALL_THISCALL) < 0) {
+           asMETHODPR(Float4, operator==,(const Float4&) const, bool), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -548,6 +555,17 @@ bool BindInt3(asIScriptEngine* engine)
     return true;
 }
 // ------------------------------------ //
+bool BindOgreConversions(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectBehaviour("Ogre::Vector3", asBEHAVE_CONSTRUCT,
+           "void f(const Float3 &in vector)", asFUNCTION(Vector3Float3Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+// ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine)
 {
 
@@ -584,6 +602,9 @@ bool Leviathan::BindTypes(asIScriptEngine* engine)
         return false;
 
     if(!BindInt3(engine))
+        return false;
+
+    if(!BindOgreConversions(engine))
         return false;
 
     if(!BindTypeDefs(engine))

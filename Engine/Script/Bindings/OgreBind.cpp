@@ -67,6 +67,11 @@ void Vector3Proxy(void* memory, Ogre::Real x, Ogre::Real y, Ogre::Real z)
     new(memory) Ogre::Vector3(x, y, z);
 }
 
+void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child){
+    if(child)
+        self->addChild(child);
+}
+
 // This is needed because directly registering
 // Ogre::Root::getSingletonPtr() with angelscript does weird stuff
 Ogre::Root* ScriptGetOgre()
@@ -294,11 +299,17 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
 // ------------------------------------ //
 
 bool BindScene(asIScriptEngine* engine)
-{
-
+{    
     if(engine->RegisterObjectType("SceneNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    // This is actually in the base
+    if(engine->RegisterObjectMethod("SceneNode", "void addChild(SceneNode@ child)",
+            asFUNCTION(SceneNodeAddChildProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 
     return true;
 }

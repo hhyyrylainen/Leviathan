@@ -556,3 +556,28 @@ TEST_CASE("Script bound standard functions work correctly", "[script]")
     CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
     CHECK(returned.Value == true);
 }
+
+TEST_CASE("Ogre bound functions work correctly", "[script][ogre]")
+{
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/OgreFunctionsTest.as"));
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup;
+    ssetup.SetEntrypoint("TestAngleConversions");
+
+    auto returned = exec.RunScript<bool>(mod, ssetup);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value == true);
+}
+

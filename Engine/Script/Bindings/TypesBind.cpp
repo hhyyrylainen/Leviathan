@@ -155,6 +155,12 @@ void Vector3Float3Proxy(void* memory, const Float3& vector)
     new(memory) Ogre::Vector3(vector);
 }
 
+void Float3Vector3Proxy(void* memory, const Ogre::Vector3& vector)
+{
+
+    new(memory) Float3(vector);
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -560,6 +566,17 @@ bool BindOgreConversions(asIScriptEngine* engine)
     if(engine->RegisterObjectBehaviour("Ogre::Vector3", asBEHAVE_CONSTRUCT,
            "void f(const Float3 &in vector)", asFUNCTION(Vector3Float3Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
+           "void f(const Ogre::Vector3 &in vector)", asFUNCTION(Float3Vector3Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "Ogre::Vector3 opImplConv() const",
+           asMETHOD(Float3, operator Ogre::Vector3), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

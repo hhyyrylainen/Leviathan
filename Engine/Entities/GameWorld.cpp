@@ -762,6 +762,12 @@ void GameWorld::_DoDestroy(ObjectID id){
             // To support recursively parented we go back to the start to scan again
             i = 0;
 
+        } else if(std::get<1>(Parents[i]) == id){
+            // Child has been destroyed //
+            // Remove it //
+            std::swap(Parents[i], Parents[Parents.size() - 1]);
+            Parents.pop_back();
+            
         } else {
             ++i;
         }

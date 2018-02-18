@@ -41,31 +41,38 @@ constexpr auto ANGELSCRIPT_VOID_TYPEID = 0;
 //! and that depends on it
 DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver);
 
+//! Converts type to AngelScript type string
+template<class T>
+struct TypeToAngelScriptTypeString {
+    static constexpr const char* Type()
+    {
+        if constexpr(std::is_pointer_v<T>) {
+            return std::remove_pointer_t<T>::ANGELSCRIPT_TYPE;
+        } else {
+
+            return T::ANGELSCRIPT_TYPE;
+        }
+    }
+};
+
 //! Helper for querying each type for their corresponding angelscript type once
 template<class T>
 struct AngelScriptTypeIDResolver {
 public:
     static int Get(ScriptExecutor* resolver)
     {
-        if constexpr(std::is_pointer_v<T>) {
-            static int cached =
-                ResolveProxy(std::remove_pointer_t<T>::ANGELSCRIPT_TYPE, resolver);
-            return cached;
-        } else {
-            static int cached = ResolveProxy(T::ANGELSCRIPT_TYPE, resolver);
-            return cached;
-        }
+        static int cached = ResolveProxy(TypeToAngelScriptTypeString<T>::Type(), resolver);
+        return cached;
     }
 };
 
-#define TYPE_RESOLVER_AS_PREDEFINED(x, astype)                  \
-    template<>                                                  \
-    struct AngelScriptTypeIDResolver<x> {                       \
-        static int Get(ScriptExecutor* resolver)                \
-        {                                                       \
-            static int cached = ResolveProxy(astype, resolver); \
-            return cached;                                      \
-        }                                                       \
+#define TYPE_RESOLVER_AS_PREDEFINED(x, astype) \
+    template<>                                 \
+    struct TypeToAngelScriptTypeString<x> {    \
+        static constexpr const char* Type()    \
+        {                                      \
+            return astype;                     \
+        }                                      \
     };
 
 // Special cases of AngelScriptTypeIDResolver for fundamental types //
@@ -278,6 +285,12 @@ public:
     //!
     //! Replaces GetAngelScriptTypeID
     DLLEXPORT int ResolveStringToASID(const char* str) const;
+
+    //! \brief Returns an asITypeInfo object for type id or null
+    DLLEXPORT asITypeInfo* GetTypeInfo(int type) const;
+
+    //! \brief Returns an asITypeInfo object for type name or null
+    DLLEXPORT asITypeInfo* GetTypeInfoByDecl(const char* str) const;
 
     DLLEXPORT inline asIScriptEngine* GetASEngine()
     {

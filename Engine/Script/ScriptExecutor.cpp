@@ -554,3 +554,11 @@ DLLEXPORT int ScriptExecutor::ResolveStringToASID(const char* str) const
 
     return engine->GetTypeIdByDecl(str);
 }
+
+DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const{
+
+    if(type < 0)
+        return nullptr;
+
+    return engine->GetTypeInfoById(type);
+}

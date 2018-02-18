@@ -18,6 +18,10 @@ enum class SCRIPT_RUN_RESULT { Success, Error, Suspended };
 class ScriptRunningSetup {
 public:
     DLLEXPORT ScriptRunningSetup();
+
+    //! Set entry point in constructor
+    DLLEXPORT ScriptRunningSetup(const std::string& entrypoint);
+    
     DLLEXPORT ~ScriptRunningSetup();
 
     // named constructor idiom //

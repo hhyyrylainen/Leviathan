@@ -94,7 +94,8 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
   
   # Leviathan application libraries
-  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain AngelScriptAddons)
+  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
+    sfml-system sfml-network AngelScriptAddons)
   
 else()
 

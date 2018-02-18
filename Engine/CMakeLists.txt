@@ -390,11 +390,11 @@ else()
 endif()
 
 # Link the engine against dependencies
-target_link_libraries(Engine ${LEVIATHAN_ENGINE_LIBRARIES})
+target_link_libraries(Engine PRIVATE ${LEVIATHAN_ENGINE_LIBRARIES})
 
 if(NOT WIN32)
   # Link with X11 and threads
-  target_link_libraries(Engine ${X11_LIBRARIES} ${X11_Xmu_LIB}
+  target_link_libraries(Engine PRIVATE ${X11_LIBRARIES} ${X11_Xmu_LIB}
     ${CMAKE_THREAD_LIBS_INIT})
   
 endif(NOT WIN32)

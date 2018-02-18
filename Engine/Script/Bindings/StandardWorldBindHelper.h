@@ -6,84 +6,79 @@
 #include "BindHelpers.h"
 #include "Logger.h"
 
-#include "Entities/GameWorld.h"
 #include "Entities/Components.h"
+#include "Entities/GameWorld.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
 template<class WorldType>
-    bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname){
+bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
+{
 
-    if(engine->RegisterObjectMethod(classname,
-            "ObjectID CreateEntity()",
-            asMETHOD(WorldType, CreateEntity), asCALL_THISCALL) < 0)
-    {
+    if(engine->RegisterObjectMethod(classname, "ObjectID CreateEntity()",
+           asMETHOD(WorldType, CreateEntity), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Use this rather than DestroyEntity
+    if(engine->RegisterObjectMethod(classname, "void QueueDestroyEntity(ObjectID id)",
+           asMETHOD(WorldType, QueueDestroyEntity), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname, "bool DestroyEntity(ObjectID id)",
+           asMETHOD(WorldType, DestroyEntity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod(classname,
-            "bool DestroyEntity(ObjectID id)",
-            asMETHOD(WorldType, DestroyEntity), asCALL_THISCALL) < 0)
-    {
+           "void SetEntitysParent(ObjectID child, ObjectID parent)",
+           asMETHOD(WorldType, SetEntitysParent), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname, "PhysicalWorld@ GetPhysicalWorld()",
+           asMETHOD(WorldType, GetPhysicalWorld), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod(classname,
-            "void SetEntitysParent(ObjectID child, ObjectID parent)",
-            asMETHOD(WorldType, SetEntitysParent), asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod(classname,
-            "PhysicalWorld@ GetPhysicalWorld()",
-            asMETHOD(WorldType, GetPhysicalWorld), asCALL_THISCALL) < 0)
-    {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod(classname,
-            "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
-            asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0)
-    {
+           "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
+           asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     // ------------------------------------ //
     // These are inefficient versions of the get methods, prefer the ones in derived classes
     if(engine->RegisterObjectMethod(classname,
-            "Physics@ BaseWorldGetComponentPhysics(ObjectID id)",
-            asMETHODPR(WorldType, template GetComponent<Physics>, (ObjectID), Physics&),
-            asCALL_THISCALL) < 0)
-    {
+           "Physics@ BaseWorldGetComponentPhysics(ObjectID id)",
+           asMETHODPR(WorldType, template GetComponent<Physics>, (ObjectID), Physics&),
+           asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod(classname,
-            "Position@ BaseWorldGetComponentPosition(ObjectID id)",
-            asMETHODPR(WorldType, template GetComponent<Position>, (ObjectID), Position&),
-            asCALL_THISCALL) < 0)
-    {
+           "Position@ BaseWorldGetComponentPosition(ObjectID id)",
+           asMETHODPR(WorldType, template GetComponent<Position>, (ObjectID), Position&),
+           asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    
+
     return true;
 }
 
 template<class WorldType>
-    bool BindStandardWorldMethods(asIScriptEngine* engine, const char* classname){
+bool BindStandardWorldMethods(asIScriptEngine* engine, const char* classname)
+{
 
     if(!BindGameWorldBaseMethods<WorldType>(engine, classname))
         return false;
 
-    #include "Generated/StandardWorldBindings.h"
+#include "Generated/StandardWorldBindings.h"
 
-    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF_STRING(GameWorld, std::string("GameWorld"),
-        WorldType, std::string(classname));
-    
+    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF_STRING(
+        GameWorld, std::string("GameWorld"), WorldType, std::string(classname));
+
     return true;
 }
-}
-
-
-
+} // namespace Leviathan

@@ -3,47 +3,46 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include <type_traits>
-
-#include "Networking/CommonNetwork.h"
-
-#include "Component.h"
-
 #include "Common/ReferenceCounted.h"
 #include "Common/ThreadSafe.h"
+#include "Component.h"
+#include "Networking/CommonNetwork.h"
 
-#define PHYSICS_BASE_GRAVITY		-9.81f
+#include <type_traits>
+
+#define PHYSICS_BASE_GRAVITY -9.81f
 
 class NewtonBody;
 
-namespace Ogre{
+namespace Ogre {
 
 class CompositorWorkspace;
 class Plane;
-}
+} // namespace Ogre
 
-namespace Leviathan{
+namespace Leviathan {
 
 class Camera;
 class PhysicalWorld;
 
-template<class StateT> class StateHolder;
+template<class StateT>
+class StateHolder;
 
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
-    
+
 //! Holds the returned entity that was hit during ray casting
 //! \todo Move to a new file
-class RayCastHitEntity : public ReferenceCounted{
+class RayCastHitEntity : public ReferenceCounted {
 public:
-    DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f,
-        RayCastData* ownerptr = NULL);
+    DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = nullptr, const float& tvar = 0.f,
+        RayCastData* ownerptr = nullptr);
 
-    DLLEXPORT RayCastHitEntity& operator =(const RayCastHitEntity& other);
+    DLLEXPORT RayCastHitEntity& operator=(const RayCastHitEntity& other);
 
-    // Compares the hit entity with NULL //
+    // Compares the hit entity with nullptr //
     DLLEXPORT bool HasHit();
 
     DLLEXPORT Float3 GetPosition();
@@ -60,8 +59,8 @@ public:
 };
 
 // Internal object in ray casts //
-struct RayCastData{
-    DLLEXPORT RayCastData(int maxcount, const Float3 &from, const Float3 &to);
+struct RayCastData {
+    DLLEXPORT RayCastData(int maxcount, const Float3& from, const Float3& to);
     DLLEXPORT ~RayCastData();
 
     // All hit entities that pass checks //
@@ -78,13 +77,14 @@ struct RayCastData{
 //! Custom worls should derive from StandardWorld which has all of the standard components
 //! supported. See the GenerateStandardWorld.rb file to figure out how to generate world
 //! classes
-class GameWorld{
+class GameWorld {
 public:
     DLLEXPORT GameWorld();
     DLLEXPORT ~GameWorld();
 
     //! \brief Returns the unique ID of this world
-    DLLEXPORT inline int GetID() const{
+    DLLEXPORT inline int GetID() const
+    {
         return ID;
     }
 
@@ -104,7 +104,8 @@ public:
     //! \brief Returns the number of ObjectIDs this world keeps track of
     //! \note There may actually be more entities as it is possible to create components
     //! for ids that are not created (this is not recommended but it isn't enforced)
-    DLLEXPORT size_t GetEntityCount() const{
+    DLLEXPORT size_t GetEntityCount() const
+    {
         return Entities.size();
     }
 
@@ -129,42 +130,25 @@ public:
     //!
     //! The tick number is always adjusted so that the time since last tick is < TICKSPEED
     DLLEXPORT std::tuple<int, int> GetTickAndTime() const;
-    
-    
+
+
     //! \brief Fetches the physical material ID from the material manager
-    DLLEXPORT int GetPhysicalMaterial(const std::string &name);
-
-    //! \todo Expose the parameters and make this activate the fog
-    DLLEXPORT void SetFog();
-    DLLEXPORT void SetSkyBox(const std::string &materialname);
-
-    //! \brief Alternative to skybox This is a (possibly curved) plane
-    //! attached to the camera that can be used to render a background or
-    //! a sky
-    DLLEXPORT void SetSkyPlane(const std::string &material, const Ogre::Plane &plane
-        // = Ogre::Plane(1, 1, 1, 1)
-    );
-
-    //! \brief Disables sky plane
-    //! \pre SetSkyPlane has been used to set a sky plane
-    //! \post The sky plane is disabled
-    DLLEXPORT void DisableSkyPlane();
-    
-
-    DLLEXPORT void SetSunlight();
-    DLLEXPORT void RemoveSunlight();
+    DLLEXPORT int GetPhysicalMaterial(const std::string& name);
 
 
     //! \brief Casts a ray from point along a vector and returns the first physical
     //! object it hits
     //! \warning You need to call Release on the returned object once done
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to);
+    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3& from, const Float3& to);
 
     //! \brief Creates a new empty entity and returns its id
     DLLEXPORT ObjectID CreateEntity();
 
     //! \brief Destroys an entity and all of its components
-    //! \todo Make this less expensive
+    //! \warning This destroyes the entity immediately. If called during a system update this
+    //! will cause issues as required components may be destroyed and cached components will
+    //! only be updated at the start of next tick. So use QueueDestroyEntity instead. \todo
+    //! Make this less expensive
     DLLEXPORT void DestroyEntity(ObjectID id);
 
     //! \brief Deletes an entity during the next tick
@@ -179,7 +163,7 @@ public:
     //! other players
     //! \note Clients should also call this function
     //! \todo Allow to set the world to queue objects and send them in
-    //!big bunches to players
+    //! big bunches to players
     DLLEXPORT void NotifyEntityCreate(ObjectID id);
 
 
@@ -191,7 +175,8 @@ public:
     //! methods
     //! \exception NotFound if entity has no component of the wanted type
     template<class TComponent>
-        TComponent& GetComponent(ObjectID id){
+    TComponent& GetComponent(ObjectID id)
+    {
 
         std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
 
@@ -202,7 +187,7 @@ public:
 
         if(!ptr)
             throw NotFound("Component for entity with id was not found");
-        
+
         return *static_cast<TComponent*>(ptr);
     }
 
@@ -211,22 +196,23 @@ public:
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
     DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
 
-    
+
     //! Helper for getting component state holder for type. This is much slower than
     //! direct lookups with the actual implementation class' GetStatesFor_Position etc.
     //! methods
     //! \exception NotFound if entity has no component of the wanted type
     template<class TComponent>
-        StateHolder<typename TComponent::StateT>& GetStatesFor(){
+    StateHolder<typename TComponent::StateT>& GetStatesFor()
+    {
 
         std::tuple<void*, bool> stateHolder = GetStatesFor(TComponent::TYPE);
 
         if(!std::get<1>(stateHolder))
             throw InvalidArgument("Unrecognized component type as template parameter for "
-                "state holder");
+                                  "state holder");
 
         void* ptr = std::get<0>(stateHolder);
-        
+
         return *static_cast<StateHolder<typename TComponent::StateT>*>(ptr);
     }
 
@@ -241,52 +227,53 @@ public:
     //! The entity needs atleast Position and Camera components
     //! \exception InvalidArgument if the object is missing required components
     DLLEXPORT void SetCamera(ObjectID object);
-    
+
     // Ogre get functions //
-    inline Ogre::SceneManager* GetScene(){
+    inline Ogre::SceneManager* GetScene()
+    {
         return WorldsScene;
     }
-    
-    // physics functions //
-    DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
-    inline PhysicalWorld* GetPhysicalWorld(){
+    // physics functions //
+    DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
+
+    inline PhysicalWorld* GetPhysicalWorld()
+    {
         return _PhysicalWorld.get();
     }
 
     //! \todo Synchronize this over the network
     DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
-        
+
     // Script proxies //
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);
+    DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3& from, const Float3& to);
 
     //! \brief Returns true when the player matching the connection should receive updates
     //! about an entity
     //! \todo Implement this
-    DLLEXPORT bool ShouldPlayerReceiveEntity(Position &atposition,
-        Connection &connection);
+    DLLEXPORT bool ShouldPlayerReceiveEntity(Position& atposition, Connection& connection);
 
     //! \brief Returns true if a player with the given connection is receiving updates for
     //! this world
-    DLLEXPORT bool IsConnectionInWorld(Connection &connection) const;
+    DLLEXPORT bool IsConnectionInWorld(Connection& connection) const;
 
     //! \brief Verifies that player is receiving this world
     DLLEXPORT void SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply);
 
     //! \brief Sends a packet to all connected players
-    DLLEXPORT void SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
-        RECEIVE_GUARANTEE guarantee) const;
+    DLLEXPORT void SendToAllPlayers(
+        const std::shared_ptr<NetworkResponse>& response, RECEIVE_GUARANTEE guarantee) const;
 
     //! \brief Sends an entity to a connection and sets everything up
     //! \post The connection will receive updates from the entity
     //! \return True when a packet was sent false otherwise
-    DLLEXPORT bool SendEntityToConnection(ObjectID obj,
-        std::shared_ptr<Connection> connection);
-        
+    DLLEXPORT bool SendEntityToConnection(
+        ObjectID obj, std::shared_ptr<Connection> connection);
+
     //! \brief Creates a new entity from initial entity response
     //! \note This should only be called on the client
-    DLLEXPORT void HandleEntityInitialPacket(std::shared_ptr<NetworkResponse> message,
-        ResponseEntityCreation* data);
+    DLLEXPORT void HandleEntityInitialPacket(
+        std::shared_ptr<NetworkResponse> message, ResponseEntityCreation* data);
 
     //! \brief Applies an update packet
     //!
@@ -312,9 +299,28 @@ public:
 
     //! \brief Use this to register destruction events for child classes
     DLLEXPORT virtual void _OnCustomComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
-    
-protected:
 
+    //! \todo Expose the parameters and make this activate the fog
+    DLLEXPORT void SetFog();
+    DLLEXPORT void SetSkyBox(const std::string& materialname);
+
+    //! \brief Alternative to skybox This is a (possibly curved) plane
+    //! attached to the camera that can be used to render a background or
+    //! a sky
+    DLLEXPORT void SetSkyPlane(const std::string& material, const Ogre::Plane& plane
+        // = Ogre::Plane(1, 1, 1, 1)
+    );
+
+    //! \brief Disables sky plane
+    //! \pre SetSkyPlane has been used to set a sky plane
+    //! \post The sky plane is disabled
+    DLLEXPORT void DisableSkyPlane();
+
+
+    DLLEXPORT void SetSunlight();
+    DLLEXPORT void RemoveSunlight();
+
+protected:
     //! \brief Called by Render which is called from a
     //! GraphicalInputEntity if this is linked to one
     DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
@@ -335,7 +341,7 @@ protected:
 
     //! \brief Clears the added components. Call after HandleAdded
     DLLEXPORT virtual void ClearAdded();
-    
+
     //! \brief Resets stored nodes in systems. Used together with _ResetComponents
     DLLEXPORT virtual void _ResetSystems() = 0;
 
@@ -351,11 +357,10 @@ protected:
 
     //! \brief Called in Release when systems should run their shutdown logic
     DLLEXPORT virtual void _DoSystemsRelease();
-    
-private:
 
+private:
     //! \brief Updates a players position info in this world
-    void UpdatePlayersPositionData(ConnectedPlayer &ply);
+    void UpdatePlayersPositionData(ConnectedPlayer& ply);
 
     void _CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget);
     void _HandleDelayedDelete();
@@ -369,7 +374,7 @@ private:
     void _DoDestroy(ObjectID id);
 
     //! \brief Sends sendable updates to all clients
-    void _SendEntityUpdates(ObjectID id, Sendable &sendable, int tick);
+    void _SendEntityUpdates(ObjectID id, Sendable& sendable, int tick);
 
 
     // Packet apply functions //
@@ -378,7 +383,6 @@ private:
     void _ApplyEntityUpdatePackets();
 
 protected:
-
     //! \brief If false a graphical Ogre window hasn't been created
     //! and purely graphical stuff should be skipped
     //!
@@ -388,9 +392,8 @@ protected:
     //! Bool flag telling whether this is a master world (on a server) or
     //! a mirroring world (client)
     bool IsOnServer = false;
-    
-private:
 
+private:
     Ogre::Camera* WorldSceneCamera = nullptr;
     Ogre::SceneManager* WorldsScene = nullptr;
 
@@ -436,16 +439,16 @@ private:
 
     //! If not zero controls the position and properties of WorldSceneCamera
     ObjectID CameraEntity = 0;
-    
+
     //! The currently applied properties on WorldSceneCamera if the
     //! Camera component of CameraEntity changes (or it is Marked)
     //! these properties are set on WorldSceneCamera
     Camera* AppliedCameraPropertiesPtr = nullptr;
-    
+
 
     //! A lock for delayed delete, to allow deleting entities from physical callbacks
     Mutex DeleteMutex;
-        
+
     //! This vector is used for delayed deletion
     std::vector<ObjectID> DelayedDeleteIDS;
 
@@ -466,11 +469,10 @@ private:
     //! Waiting update packets
     std::vector<std::shared_ptr<NetworkResponse>> EntityUpdatePackets;
 };
-    
-}
+
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::GameWorld;
 using Leviathan::ObjectID;
 #endif
-

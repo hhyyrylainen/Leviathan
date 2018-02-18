@@ -174,6 +174,8 @@ static void InvokeProxy(Engine* obj, asIScriptFunction* callback)
 // ------------------------------------ //
 static float PIProxy = PI;
 
+static int TICKSPEEDProxy = TICKSPEED;
+
 
 // ------------------------------------ //
 // Start of the actual bind
@@ -649,6 +651,11 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterGlobalProperty("const int TICKSPEED", &TICKSPEEDProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
     return true;
 }
-

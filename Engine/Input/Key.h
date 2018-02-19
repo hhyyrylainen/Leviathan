@@ -147,6 +147,7 @@ namespace Leviathan{
 				Ctrl = true;
 		}
 
+        //! \See https://wiki.libsdl.org/SDL_Keycode for key names
 		DLLEXPORT static Key<T> GenerateKeyFromString(const std::string &representation){
 			if(representation.size() == 0){
 				// empty, nothing to do //
@@ -156,10 +157,21 @@ namespace Leviathan{
 			StringIterator itr(representation);
 
 			auto str = itr.GetUntilNextCharacterOrAll<std::string>('+');
-            
-            auto converted = StringOperations::ToUpperCase<std::string>(*str);
 
-			T character = Leviathan::Window::ConvertStringToKeyCode(converted);
+            T character;
+
+            // Only upcase single letters as long key codes have also lowercase letters
+            if(str->length() <= 1){
+            
+                auto converted = StringOperations::ToUpperCase<std::string>(*str);
+            
+                character = Leviathan::Window::ConvertStringToKeyCode(converted);
+                
+            } else {
+
+                character = Leviathan::Window::ConvertStringToKeyCode(*str);
+            }
+            
 			short special = 0;
 
 			while((str = itr.GetUntilNextCharacterOrAll<std::string>('+')) && (str->size() > 0)){

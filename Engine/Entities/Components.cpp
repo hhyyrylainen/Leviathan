@@ -311,6 +311,67 @@ DLLEXPORT void Physics::SetPhysicalMaterialID(int ID){
     
 	NewtonBodySetMaterialGroupID(Body, ID);
 }
+// ------------------------------------ //
+DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(PhysicalWorld* world){
+
+    if(!world || !Collision)
+        return nullptr;
+
+    Body = world->CreateBodyFromCollision(Collision);
+
+    if(!Body)
+        return nullptr;
+
+    // Add this as user data //
+    NewtonBodySetUserData(Body, this);
+    
+    // Callbacks //
+    NewtonBodySetTransformCallback(Body,
+        Physics::PhysicsMovedEvent);
+    
+    NewtonBodySetForceAndTorqueCallback(Body,
+        Physics::ApplyForceAndTorgueEvent);
+    
+    NewtonBodySetDestructorCallback(Body, Physics::DestroyBodyCallback);
+    
+    return Body;
+}
+
+DLLEXPORT void Physics::SetMass(float mass){
+
+    if(!Body)
+        return;
+
+    Mass = mass;
+    
+    // First calculate inertia and center of mass points //
+    Float3 inertia;
+    Float3 centerofmass;
+
+    // TODO: cache this per Collision object
+    NewtonConvexCollisionCalculateInertialMatrix(Collision, &inertia.X,
+        &centerofmass.X);
+    
+    // Apply mass to inertia
+    inertia *= Mass;
+    
+    NewtonBodySetMassMatrix(Body, Mass, inertia.X, inertia.Y,
+        inertia.Z);
+    NewtonBodySetCentreOfMass(Body, &centerofmass.X);
+}
+
+DLLEXPORT bool Physics::SetCollision(NewtonCollision* collision){
+
+    if(Body)
+        return false;
+
+    if(Collision)
+        Release();
+    
+    Collision = collision;
+
+    return true;
+}
 // ------------------ Received ------------------ //
 DLLEXPORT void Received::GetServerSentStates(StoredState const** first,
     StoredState const** second, int tick, float &progress) const

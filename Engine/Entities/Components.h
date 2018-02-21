@@ -325,7 +325,11 @@ public:
         _Position(args.updatepos), ThisEntity(args.id),
         UpdateSendable(args.updatesendable){}
 
+    //! \brief Destroys the physical body
     DLLEXPORT void Release();
+
+    //! \brief Use this to create a body for this component once Collision is set
+    DLLEXPORT NewtonBody* CreatePhysicsBody(PhysicalWorld* world);
         
     DLLEXPORT void GiveImpulse(const Float3 &deltaspeed, const Float3 &point = Float3(0));
 
@@ -344,11 +348,6 @@ public:
 
     //! \brief Gets the absolute velocity
     DLLEXPORT Float3 GetVelocity() const;
-
-    inline NewtonBody* GetBody() const{
-
-        return Body;
-    }
 
     //! \brief Sets the torque of the body
     //! \see GetBodyTorque
@@ -389,17 +388,30 @@ public:
         
     //! \brief Adds all applied forces together
     Float3 _GatherApplyForces(const float &mass);
-        
-    //! \brief Destroys the physical body
-    DLLEXPORT void Release(NewtonWorld* world);
 
     //! \brief Moves the physical body to the specified position
     DLLEXPORT void JumpTo(Position &target);
 
     DLLEXPORT bool SetPosition(const Float3 &pos, const Float4 &orientation);
 
-        
-        
+    //! \brief Calculates the mass matrix and applies the mass parameter to the body
+    DLLEXPORT void SetMass(float mass);
+
+    //! \brief Sets collision when body hasn't been created yet
+    DLLEXPORT bool SetCollision(NewtonCollision* collision);
+    
+    inline NewtonBody* GetBody() const{
+
+        return Body;
+    }
+
+    inline NewtonCollision* GetCollision() const{
+
+        return Collision;
+    }
+
+    
+private:
     NewtonCollision* Collision = nullptr;
     NewtonBody* Body = nullptr;
 
@@ -408,12 +420,14 @@ public:
     //! The default material ID from GetDefaultPhysicalMaterialID might be applied
     int AppliedPhysicalMaterial = -1;
 
-    bool ApplyGravity = true;
-
     //! Non-newton access to mass
     float Mass = 0.f;
 
+    bool ApplyGravity = true;
+
     std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
+    
+public:
 
     //! Used to access gravity data
     GameWorld* World = nullptr;
@@ -422,7 +436,7 @@ public:
     Position& _Position;
 
     //! For access from physics callbacks
-    ObjectID ThisEntity;
+    const ObjectID ThisEntity;
 
     // Optional access to other components that can be used for marking when physics object
     // moves

@@ -18,14 +18,6 @@ using namespace Leviathan;
 namespace Leviathan {
 bool BindNewtonTypes(asIScriptEngine* engine)
 {
-
-
-    // This doesn't need to be restored if we fail //
-    // if(engine->SetDefaultNamespace("Newton") < 0)
-    // {
-    //     ANGELSCRIPT_REGISTERFAIL;
-    // }
-
     if(engine->RegisterObjectType("NewtonCollision", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -43,12 +35,9 @@ bool BindNewtonTypes(asIScriptEngine* engine)
     }
 
 
-
-
-    // if(engine->SetDefaultNamespace("") < 0)
-    // {
-    //     ANGELSCRIPT_REGISTERFAIL;
-    // }
+    if(engine->RegisterObjectType("NewtonBody", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }
@@ -84,6 +73,19 @@ bool Leviathan::BindNewton(asIScriptEngine* engine)
            asMETHOD(PhysicalWorld, CreateSphere), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    // ------------------------------------ //
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+           "NewtonBody@ CreateBodyFromCollision(NewtonCollision@ collision)",
+           asMETHOD(PhysicalWorld, CreateBodyFromCollision), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicalWorld", "void DestroyBody(NewtonBody@ body)",
+           asMETHOD(PhysicalWorld, DestroyBody), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 
     return true;
 }

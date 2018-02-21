@@ -41,7 +41,11 @@ void AngelScriptAssertWrapper(asIScriptGeneric* gen)
         return;
 
     // Assertion failed //
-    void* messagePtr = gen->GetArgObject(1);
+    void* messagePtr = nullptr;
+
+    if(gen->GetArgCount() >= 1)
+        messagePtr = gen->GetArgObject(1);
+    
     std::string message;
 
     if(!messagePtr) {
@@ -641,6 +645,10 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
 
     if(engine->RegisterGlobalFunction("void assert(bool expression, const string &in message)",
            asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterGlobalFunction("void assert(bool expression)",
+            asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

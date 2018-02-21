@@ -18,26 +18,10 @@ using namespace Leviathan;
 // Start of the actual bind
 namespace Leviathan {
 
-// Called from BindRayCast
-bool BindNewtonBody(asIScriptEngine* engine)
-{
-
-    // Bind the NewtonBody as non counted handle and don't register
-    // any methods since it will only be used to compare the
-    // pointer //
-    if(engine->RegisterObjectType("NewtonBody", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    return true;
-}
-
 
 bool BindRayCast(asIScriptEngine* engine)
 {
-
-    if(!BindNewtonBody(engine))
-        return false;
+    // Newton needs to be bound before this //
 
     // Result class for ray cast //
     ANGELSCRIPT_REGISTER_REF_TYPE("RayCastHitEntity", RayCastHitEntity);
@@ -76,8 +60,34 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Physics", "NewtonBody@ GetBody() const",
-           asMETHODPR(Physics, GetBody, () const, NewtonBody*), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Physics", "NewtonBody@ get_Body() const",
+           asMETHOD(Physics, GetBody), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics",
+           "NewtonBody@ CreatePhysicsBody(PhysicalWorld@ world)",
+           asMETHOD(Physics, CreatePhysicsBody), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "NewtonCollision@ get_Collision() const",
+            asMETHOD(Physics, GetCollision), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "bool SetCollision(NewtonCollision@ collision)",
+            asMETHOD(Physics, SetCollision), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "void SetMass(float mass)",
+            asMETHOD(Physics, SetMass), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(
+           "Physics", "void Release()", asMETHOD(Physics, Release), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -112,17 +122,17 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectProperty(
-            "RenderNode", "Float3 Scale", asOFFSET(RenderNode, Scale)) < 0) {
+           "RenderNode", "Float3 Scale", asOFFSET(RenderNode, Scale)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectProperty(
-            "RenderNode", "Ogre::SceneNode@ Node", asOFFSET(RenderNode, Node)) < 0) {
+           "RenderNode", "Ogre::SceneNode@ Node", asOFFSET(RenderNode, Node)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectProperty(
-            "RenderNode", "bool Hidden", asOFFSET(RenderNode, Hidden)) < 0) {
+           "RenderNode", "bool Hidden", asOFFSET(RenderNode, Hidden)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

@@ -153,6 +153,20 @@ DLLEXPORT NewtonCollision* PhysicalWorld::CreateSphere(float radius,
     return NewtonCreateSphere(World, radius, UNUSED_SHAPE_ID, prep[0]);
 }
 // ------------------------------------ //
+DLLEXPORT NewtonBody* PhysicalWorld::CreateBodyFromCollision(NewtonCollision* collision){
+
+    if(!collision)
+        return nullptr;
+
+    const auto& prep = PrepareOgreMatrixForNewton(Ogre::Matrix4::IDENTITY);
+    return NewtonCreateDynamicBody(World, collision, prep[0]);
+}
+
+DLLEXPORT void PhysicalWorld::DestroyBody(NewtonBody* body){
+
+    NewtonDestroyBody(body);
+}
+// ------------------------------------ //
 DLLEXPORT NewtonWorld* Leviathan::PhysicalWorld::GetNewtonWorld(){
 	return World;
 }

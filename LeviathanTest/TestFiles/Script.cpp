@@ -411,7 +411,6 @@ TEST_CASE("Ignored returned object doesn't leak", "[script]")
 
 TEST_CASE("Creating events in scripts", "[script][event]")
 {
-
     PartialEngine<false> engine;
 
     IDFactory ids;
@@ -580,4 +579,112 @@ TEST_CASE("Ogre bound functions work correctly", "[script][ogre]")
     CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
     CHECK(returned.Value == true);
 }
+
+
+
+asIScriptFunction* FactoryFunc = nullptr;
+ScriptExecutor* ScriptExec = nullptr;
+
+void TestPassFactoryIn(asIScriptFunction* func)
+{
+    FactoryFunc = func;
+}
+
+asIScriptObject* GetObject(int i)
+{
+    ScriptRunningSetup setup;
+
+    auto result = ScriptExec->RunScript<asIScriptObject*>(FactoryFunc, nullptr, setup, i);
+
+    REQUIRE(result.Result == SCRIPT_RUN_RESULT::Success);
+    REQUIRE(result.Value != nullptr);
+    
+    result.Value->AddRef();
+    return result.Value;
+}
+
+TEST_CASE("Passing factory to application and getting results and returning script object",
+    "[script]")
+{
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+    ScriptExec = &exec;
+
+    // Register our custom stuff //
+    asIScriptEngine* as = exec.GetASEngine();
+    
+    REQUIRE(as->RegisterInterface("MyCoolInterface") >= 0);
+    REQUIRE(as->RegisterInterfaceMethod("MyCoolInterface", "int GetValue()") >= 0);
+
+    REQUIRE(as->RegisterFuncdef("MyCoolInterface@ CoolFactoryFunc(int i)") >= 0);
+
+    REQUIRE(as->RegisterGlobalFunction("void TestPassFactoryIn(CoolFactoryFunc@ func)",
+            asFUNCTION(TestPassFactoryIn), asCALL_CDECL) >= 0);
+
+    REQUIRE(as->RegisterGlobalFunction("MyCoolInterface@ GetObject(int i)",
+            asFUNCTION(GetObject), asCALL_CDECL) >= 0);
+    
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "class ImplClass : MyCoolInterface{\n"
+        "ImplClass(int i){\n"
+        "value = i;\n"
+        "}\n"
+        "int GetValue(){\n"
+        "return value;\n"
+        "}\n"
+        "int value;\n"
+        "}\n"
+        "MyCoolInterface@ Factory(int i){\n"
+        "return ImplClass(i);\n"
+        "}\n"
+        "MyCoolInterface@ TestFunction(){\n"
+        "TestPassFactoryIn(@Factory);\n"
+        "return GetObject(42);\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup("TestFunction");
+
+    auto returned = exec.RunScript<asIScriptObject*>(mod, ssetup);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+
+    CHECK(returned.Value != nullptr);
+
+    // Get the value from it //
+    asIScriptFunction* objFunc = returned.Value->GetObjectType()->GetMethodByName("GetValue");
+
+    REQUIRE(objFunc);
+
+    // Not needed but done to test that this isn't used
+    ssetup.SetEntrypoint("");
+
+    auto objValueResult = exec.RunScriptMethod<int>(ssetup, objFunc, returned.Value);
+
+    REQUIRE(objValueResult.Result == SCRIPT_RUN_RESULT::Success);
+
+    CHECK(objValueResult.Value == 42);
+
+    if(FactoryFunc)
+        FactoryFunc->Release();
+    FactoryFunc = nullptr;
+    ScriptExec = nullptr;
+}
+
+
+// asIScriptObject* CurrentASObject = nullptr;
+// asUINT CurrentASObjectID = 0;
+// TEST_CASE("Passing and returning variable argument type", "[script]")
 

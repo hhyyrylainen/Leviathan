@@ -873,7 +873,6 @@ DLLEXPORT bool GameWorld::GetRemovedForScriptDefined(
 
     auto& removed = iter->second->GetRemoved();
 
-    result.reserve(result.size() + removed.size());
     result.insert(std::end(result), std::begin(removed), std::end(removed));
     return true;
 }
@@ -894,7 +893,6 @@ DLLEXPORT bool GameWorld::GetAddedForScriptDefined(
 
     auto& added = iter->second->GetAdded();
 
-    result.reserve(result.size() + added.size());
     result.insert(std::end(result), std::begin(added), std::end(added));
     return true;
 }

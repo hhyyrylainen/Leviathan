@@ -86,6 +86,9 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     // set callback to error report function //
     engine->SetMessageCallback(asFUNCTION(ScriptMessageCallback), 0, asCALL_CDECL);
 
+    // The ScriptExecutor can be retrieved from asIScriptEngine user data
+    engine->SetUserData(this);
+
     // math functions //
     RegisterScriptMath(engine);
     RegisterScriptMathComplex(engine);

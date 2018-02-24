@@ -1,6 +1,9 @@
 // ------------------------------------ //
 #include "GameWorld.h"
 
+#include "ScriptComponentHolder.h"
+#include "ScriptSystemWrapper.h"
+
 #include "../Handlers/IDFactory.h"
 #include "../Window.h"
 #include "Common/DataStoring/NamedVars.h"
@@ -14,6 +17,8 @@
 #include "Newton/PhysicalWorld.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "Rendering/GraphicalInputEntity.h"
+#include "Script/ScriptConversionHelpers.h"
+#include "Script/ScriptExecutor.h"
 #include "Serializers/EntitySerializer.h"
 #include "Threading/ThreadingManager.h"
 
@@ -36,6 +41,8 @@
 
 #include "Exceptions.h"
 
+#include "add_on/scriptarray/scriptarray.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -46,7 +53,17 @@ static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
     dFloat intersectParam);
 
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameWorld::GameWorld() : ID(IDFactory::GetID()) {}
+class GameWorld::Implementation {
+public:
+    std::map<std::string, ScriptComponentHolder::pointer> RegisteredScriptComponents;
+    std::map<std::string, std::unique_ptr<ScriptSystemWrapper>> RegisteredScriptSystems;
+};
+
+// ------------------------------------ //
+DLLEXPORT Leviathan::GameWorld::GameWorld() :
+    pimpl(std::make_unique<Implementation>()), ID(IDFactory::GetID())
+{
+}
 
 DLLEXPORT Leviathan::GameWorld::~GameWorld()
 {
@@ -95,7 +112,6 @@ DLLEXPORT bool Leviathan::GameWorld::Init(
 
 DLLEXPORT void Leviathan::GameWorld::Release()
 {
-
     _DoSystemsRelease();
 
     (*WorldDestroyed) = true;
@@ -122,6 +138,9 @@ DLLEXPORT void Leviathan::GameWorld::Release()
         ogre.destroySceneManager(WorldsScene);
         WorldsScene = NULL;
     }
+
+    // Let go of our these resources
+    pimpl.reset();
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_CreateOgreResources(
@@ -231,7 +250,6 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight()
 
 DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeintick)
 {
-
     RunFrameRenderSystems(tick, timeintick);
 
     // Read camera entity and update position //
@@ -458,8 +476,8 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick)
     _HandleDelayedDelete();
 
     // All required nodes for entities are created //
-    HandleAdded();
-    ClearAdded();
+    HandleAddedAndDeleted();
+    ClearAddedAndRemoved();
 
     // Remove closed player connections //
 
@@ -511,27 +529,70 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick)
     }
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::HandleAdded() {}
+DLLEXPORT void GameWorld::HandleAddedAndDeleted()
+{
+    // We are responsible for script systems //
+    for(auto iter = pimpl->RegisteredScriptSystems.begin();
+        iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
 
-DLLEXPORT void GameWorld::ClearAdded() {}
+        iter->second->CreateAndDestroyNodes();
+    }
+}
+
+DLLEXPORT void GameWorld::ClearAddedAndRemoved()
+{
+    // We are responsible for script components //
+    for(auto iter = pimpl->RegisteredScriptComponents.begin();
+        iter != pimpl->RegisteredScriptComponents.end(); ++iter) {
+
+        iter->second->ClearAdded();
+        iter->second->ClearRemoved();
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::_ResetSystems()
+{
+    // We are responsible for script systems //
+    for(auto iter = pimpl->RegisteredScriptSystems.begin();
+        iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
+
+        iter->second->Clear();
+    }
+}
+
+DLLEXPORT void GameWorld::_ResetOrReleaseComponents()
+{
+    // We are responsible for script components //
+    for(auto iter = pimpl->RegisteredScriptComponents.begin();
+        iter != pimpl->RegisteredScriptComponents.end(); ++iter) {
+
+        iter->second->ReleaseAllComponents();
+    }
+}
 // ------------------------------------ //
 DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick)
 {
-
+    // Don't have any systems, but these updates may be important for interpolation //
     _ApplyEntityUpdatePackets();
 }
 
-DLLEXPORT void GameWorld::_RunTickSystems() {}
+DLLEXPORT void GameWorld::_RunTickSystems()
+{
+    // We are responsible for script systems //
+    for(auto iter = pimpl->RegisteredScriptSystems.begin();
+        iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
+
+        iter->second->Run();
+    }
+}
 // ------------------------------------ //
 DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const
 {
-
     return TickNumber;
 }
 
 DLLEXPORT float Leviathan::GameWorld::GetTickProgress() const
 {
-
     float progress = Engine::Get()->GetTimeSinceLastTick() / (float)TICKSPEED;
 
     if(progress < 0.f)
@@ -542,7 +603,6 @@ DLLEXPORT float Leviathan::GameWorld::GetTickProgress() const
 
 DLLEXPORT std::tuple<int, int> GameWorld::GetTickAndTime() const
 {
-
     int tick = TickNumber;
     int timeSince = static_cast<int>(Engine::Get()->GetTimeSinceLastTick());
 
@@ -558,7 +618,6 @@ DLLEXPORT std::tuple<int, int> GameWorld::GetTickAndTime() const
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity()
 {
-
     auto id = static_cast<ObjectID>(IDFactory::GetID());
 
     Entities.push_back(id);
@@ -568,7 +627,6 @@ DLLEXPORT ObjectID GameWorld::CreateEntity()
 
 DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id)
 {
-
     if(IsOnServer) {
 
         // This is at least a decent place to send them,
@@ -615,9 +673,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id)
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::ClearEntities()
 {
-
-    // release objects //
-    // TODO: allow objects to do something
+    // Release objects //
     Entities.clear();
     Parents.clear();
     // This shouldn't be used all that much so release the memory
@@ -626,11 +682,9 @@ DLLEXPORT void Leviathan::GameWorld::ClearEntities()
     // Clear all nodes //
     _ResetSystems();
 
+    // Clears all components
     // Runs Release on components that need it
-    _ReleaseAllComponents();
-
-    // Clear all components //
-    _ResetComponents();
+    _ResetOrReleaseComponents();
 
     // Notify everybody that all entities are discarded //
     for(auto iter = ReceivingPlayers.begin(); iter != ReceivingPlayers.end(); ++iter) {
@@ -803,11 +857,65 @@ DLLEXPORT std::tuple<void*, bool> GameWorld::GetStatesFor(COMPONENT_TYPE type)
     return std::make_tuple(nullptr, false);
 }
 
-DLLEXPORT void GameWorld::_ReleaseAllComponents() {}
+DLLEXPORT bool GameWorld::GetRemovedFor(
+    COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result)
+{
+    return false;
+}
 
-DLLEXPORT void GameWorld::_DoSystemsInit() {}
+DLLEXPORT bool GameWorld::GetRemovedForScriptDefined(
+    const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result)
+{
+    auto iter = pimpl->RegisteredScriptComponents.find(name);
 
-DLLEXPORT void GameWorld::_DoSystemsRelease() {}
+    if(iter == pimpl->RegisteredScriptComponents.end())
+        return false;
+
+    auto& removed = iter->second->GetRemoved();
+
+    result.reserve(result.size() + removed.size());
+    result.insert(std::end(result), std::begin(removed), std::end(removed));
+    return true;
+}
+
+DLLEXPORT bool GameWorld::GetAddedFor(
+    COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result)
+{
+    return false;
+}
+
+DLLEXPORT bool GameWorld::GetAddedForScriptDefined(
+    const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result)
+{
+    auto iter = pimpl->RegisteredScriptComponents.find(name);
+
+    if(iter == pimpl->RegisteredScriptComponents.end())
+        return false;
+
+    auto& added = iter->second->GetAdded();
+
+    result.reserve(result.size() + added.size());
+    result.insert(std::end(result), std::begin(added), std::end(added));
+    return true;
+}
+
+// ------------------------------------ //
+DLLEXPORT void GameWorld::_DoSystemsInit()
+{
+    // Script systems are initialized as they are created
+}
+
+DLLEXPORT void GameWorld::_DoSystemsRelease()
+{
+    // We are responsible for script systems //
+    for(auto iter = pimpl->RegisteredScriptSystems.begin();
+        iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
+
+        iter->second->Release();
+    }
+
+    pimpl->RegisteredScriptSystems.clear();
+}
 // ------------------------------------ //
 void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id)
 {
@@ -1090,38 +1198,149 @@ DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen
         Logger::Get()->Info("TODO: world freeze snap things back a bit");
     }
 }
-
-DLLEXPORT void Leviathan::GameWorld::_OnComponentDestroyed(ObjectID id, COMPONENT_TYPE type)
+// ------------------------------------ //
+DLLEXPORT CScriptArray* GameWorld::GetRemovedIDsForComponents(CScriptArray* componenttypes)
 {
+    if(!componenttypes)
+        return nullptr;
 
-    if(type > COMPONENT_TYPE::Custom) {
+    if(componenttypes->GetElementTypeId() !=
+        AngelScriptTypeIDResolver<uint16_t>::Get(ScriptExecutor::Get())) {
 
-        // Handle custom components //
-        _OnCustomComponentDestroyed(id, type);
-        return;
+        LOG_ERROR("GameWorld: GetRemovedIDsForComponents: given an array of wrong type");
+        componenttypes->Release();
+        return nullptr;
     }
 
-    switch(type) {
-    case Leviathan::COMPONENT_TYPE::Position: break;
-    case Leviathan::COMPONENT_TYPE::RenderNode: break;
-    case Leviathan::COMPONENT_TYPE::Sendable: break;
-    case Leviathan::COMPONENT_TYPE::Received: break;
-    case Leviathan::COMPONENT_TYPE::Physics: break;
-    case Leviathan::COMPONENT_TYPE::BoxGeometry: break;
-    case Leviathan::COMPONENT_TYPE::Model: break;
-    case Leviathan::COMPONENT_TYPE::ManualObject: break;
-    case Leviathan::COMPONENT_TYPE::Custom: {
-        // This is not allowed
-        DEBUG_BREAK;
-    } break;
-    default: DEBUG_BREAK; break;
+    std::vector<std::tuple<void*, ObjectID>> result;
+
+    for(asUINT i = 0; i < componenttypes->GetSize(); ++i) {
+
+        uint16_t* type = static_cast<uint16_t*>(componenttypes->At(i));
+
+        if(!GetRemovedFor(static_cast<COMPONENT_TYPE>(*type), result)) {
+
+            LOG_WARNING("GameWorld: GetRemovedIDsForComponents: unknown component type: " +
+                        std::to_string(*type));
+        }
     }
+
+    componenttypes->Release();
+
+    asITypeInfo* typeInfo =
+        ScriptExecutor::Get()->GetASEngine()->GetTypeInfoByDecl("array<ObjectID>");
+
+    CScriptArray* array = CScriptArray::Create(typeInfo, static_cast<asUINT>(result.size()));
+
+    if(!array)
+        return nullptr;
+
+    for(asUINT i = 0; i < static_cast<asUINT>(result.size()); ++i) {
+
+        array->SetValue(i, &std::get<1>(result[i]));
+    }
+
+    return array;
 }
 
-DLLEXPORT void Leviathan::GameWorld::_OnCustomComponentDestroyed(
-    ObjectID id, COMPONENT_TYPE type)
+DLLEXPORT CScriptArray* GameWorld::GetRemovedIDsForScriptComponents(CScriptArray* typenames)
 {
-    DEBUG_BREAK;
+    if(!typenames)
+        return nullptr;
+
+    if(typenames->GetElementTypeId() !=
+        AngelScriptTypeIDResolver<std::string>::Get(ScriptExecutor::Get())) {
+
+        LOG_ERROR("GameWorld: GetRemovedIDsForScriptComponents: given an array of wrong type "
+                  "(expected array<string>)");
+        typenames->Release();
+        return nullptr;
+    }
+
+    std::vector<std::tuple<asIScriptObject*, ObjectID>> result;
+
+    for(asUINT i = 0; i < typenames->GetSize(); ++i) {
+
+        std::string* type = static_cast<std::string*>(typenames->At(i));
+
+        if(!GetRemovedForScriptDefined(*type, result)) {
+
+            LOG_WARNING(
+                "GameWorld: GetRemovedIDsForScriptComponents: unknown component type: " +
+                *type);
+        }
+    }
+
+    typenames->Release();
+
+    asITypeInfo* typeInfo =
+        ScriptExecutor::Get()->GetASEngine()->GetTypeInfoByDecl("array<ObjectID>");
+
+    CScriptArray* array = CScriptArray::Create(typeInfo, static_cast<asUINT>(result.size()));
+
+    if(!array)
+        return nullptr;
+
+    for(asUINT i = 0; i < static_cast<asUINT>(result.size()); ++i) {
+
+        array->SetValue(i, &std::get<1>(result[i]));
+    }
+    
+    return array;
+}
+
+DLLEXPORT bool GameWorld::RegisterScriptComponentType(
+    const std::string& name, asIScriptFunction* factory)
+{
+    // Skip if already registered //
+    if(pimpl->RegisteredScriptComponents.find(name) != pimpl->RegisteredScriptComponents.end())
+        return false;
+
+    // ScriptComponentHolder takes care of releasing the reference
+    pimpl->RegisteredScriptComponents[name] =
+        ScriptComponentHolder::MakeShared<ScriptComponentHolder>(name, factory, this);
+
+    return true;
+}
+
+DLLEXPORT ScriptComponentHolder* GameWorld::GetScriptComponentHolder(const std::string& name)
+{
+    // if called after release
+    if(!pimpl)
+        return nullptr;
+
+    auto iter = pimpl->RegisteredScriptComponents.find(name);
+
+    if(iter == pimpl->RegisteredScriptComponents.end())
+        return nullptr;
+
+    iter->second->AddRef();
+    return iter->second.get();
+}
+
+DLLEXPORT bool GameWorld::RegisterScriptSystem(
+    const std::string& name, asIScriptObject* system)
+{
+    // if called after release
+    if(!pimpl)
+        return false;
+
+    if(!system) {
+        LOG_ERROR("GameWorld: RegisterScriptSystem: passed null object as new system");
+        return false;
+    }
+
+    // Skip if already registered //
+    if(pimpl->RegisteredScriptSystems.find(name) != pimpl->RegisteredScriptSystems.end())
+        return false;
+
+    // Create a wrapper for it //
+    // The wrapper handles unreferencing the handle
+    pimpl->RegisteredScriptSystems[name] = std::make_unique<ScriptSystemWrapper>(name, system);
+
+    // Might as well call Init now as other systems are almost certainly initialized as well //
+    pimpl->RegisteredScriptSystems[name]->Init(this);
+    return true;
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(

@@ -527,13 +527,21 @@ class GameWorldClass < OutputClass
 
   def genMethods(f, opts)    
 
-    f.write "#{export}void #{qualifier opts}_ResetComponents()#{override opts}"
+    f.write "#{export}void #{qualifier opts}_ResetOrReleaseComponents()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
       f.puts "// Reset all component holders //"
       @ComponentTypes.each{|c|
-        f.puts "Component#{c.type}.Clear();"
+        if c.Release
+          f.puts "Component#{c.type}.ReleaseAllAndClear(" +
+                 if c.Release.length > 0
+                   c.Release.join(", ") else
+                   ""
+                 end +");"
+        else
+          f.puts "Component#{c.type}.Clear();"
+        end
       }
       f.puts "}"
     else
@@ -720,6 +728,60 @@ class GameWorldClass < OutputClass
       f.puts ";"
     end
 
+
+    f.write "#{export}bool #{qualifier opts}GetRemovedFor(" +
+            "Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& " +
+            "result)#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "switch(static_cast<uint16_t>(type)){"
+      
+      @ComponentTypes.each{|c|
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
+        f.puts "{"
+        f.puts "auto& vec = Component#{c.type}.GetRemoved();"
+        f.puts "result.reserve(result.size() + vec.size());"
+        f.puts "result.insert(std::end(result), std::begin(vec), std::end(vec));"
+        f.puts "return true;"
+        f.puts "}"
+      }
+
+      f.puts "default:"
+      f.puts "return #{@BaseClass}::GetRemovedFor(type, result);"
+      f.puts "}"
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+
+    f.write "#{export}bool #{qualifier opts}GetAddedFor(" +
+            "Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& " +
+            "result)#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "switch(static_cast<uint16_t>(type)){"
+      
+      @ComponentTypes.each{|c|
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
+        f.puts "{"
+        f.puts "auto& vec = Component#{c.type}.GetAdded();"
+        f.puts "result.reserve(result.size() + vec.size());"
+        f.puts "result.insert(std::end(result), std::begin(vec), std::end(vec));"
+        f.puts "return true;"
+        f.puts "}"
+      }
+
+      f.puts "default:"
+      f.puts "return #{@BaseClass}::GetAddedFor(type, result);"
+      f.puts "}"
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+    
+
     # Gets for systems
     if opts.include?(:header)
       f.puts "// System gets"
@@ -874,11 +936,11 @@ END
       f.puts ";"
     end
 
-    f.write "#{export}void #{qualifier opts}HandleAdded()#{override opts}"
+    f.write "#{export}void #{qualifier opts}HandleAddedAndDeleted()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
-      f.puts @BaseClass + "::HandleAdded();"
+      f.puts @BaseClass + "::HandleAddedAndDeleted();"
       f.puts ""
       
       @ComponentTypes.each{|c|
@@ -966,38 +1028,16 @@ END
       f.puts ";"
     end
 
-    f.write "#{export}void #{qualifier opts}ClearAdded()#{override opts}"
+    f.write "#{export}void #{qualifier opts}ClearAddedAndRemoved()#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
-      f.puts @BaseClass + "::ClearAdded();"
+      f.puts @BaseClass + "::ClearAddedAndRemoved();"
       f.puts ""
 
       @ComponentTypes.each{|c|
         f.puts "Component#{c.type}.ClearAdded();"
         f.puts "Component#{c.type}.ClearRemoved();"
-      }
-
-      f.puts "}"
-    else
-      f.puts ";"
-    end
-
-    f.write "#{export}void #{qualifier opts}_ReleaseAllComponents()#{override opts}"
-
-    if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::_ReleaseAllComponents();"
-      f.puts ""
-
-      @ComponentTypes.each{|c|
-        if c.Release
-          f.puts "Component#{c.type}.ReleaseAllAndClear(" +
-                   if c.Release.length > 0
-                     c.Release.join(", ") else
-                     ""
-                   end +");"
-        end
       }
 
       f.puts "}"

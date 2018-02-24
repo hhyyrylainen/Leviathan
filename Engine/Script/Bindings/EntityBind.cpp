@@ -4,6 +4,7 @@
 #include "Generated/StandardWorld.h"
 
 #include "Entities/GameWorld.h"
+#include "Entities/ScriptComponentHolder.h"
 
 #include "StandardWorldBindHelper.h"
 
@@ -42,6 +43,36 @@ bool BindRayCast(asIScriptEngine* engine)
     return true;
 }
 
+static uint16_t PhysicsTYPEProxy = static_cast<uint16_t>(Physics::TYPE);
+static uint16_t PositionTYPEProxy = static_cast<uint16_t>(Position::TYPE);
+static uint16_t RenderNodeTYPEProxy = static_cast<uint16_t>(RenderNode::TYPE);
+static uint16_t SendableTYPEProxy = static_cast<uint16_t>(Sendable::TYPE);
+static uint16_t ReceivedTYPEProxy = static_cast<uint16_t>(Received::TYPE);
+static uint16_t ModelTYPEProxy = static_cast<uint16_t>(Model::TYPE);
+static uint16_t BoxGeometryTYPEProxy = static_cast<uint16_t>(BoxGeometry::TYPE);
+static uint16_t CameraTYPEProxy = static_cast<uint16_t>(Camera::TYPE);
+static uint16_t ManualObjectTYPEProxy = static_cast<uint16_t>(ManualObject::TYPE);
+static uint16_t PlaneTYPEProxy = static_cast<uint16_t>(Plane::TYPE);
+
+//! Helper for BindComponentTypes
+bool BindComponentTypeID(asIScriptEngine* engine, const char* name, uint16_t* value)
+{
+    if(engine->SetDefaultNamespace(name) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const uint16 TYPE", value) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 bool BindComponentTypes(asIScriptEngine* engine)
 {
 
@@ -72,17 +103,17 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics", "NewtonCollision@ get_Collision() const",
-            asMETHOD(Physics, GetCollision), asCALL_THISCALL) < 0) {
+           asMETHOD(Physics, GetCollision), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("Physics", "bool SetCollision(NewtonCollision@ collision)",
-            asMETHOD(Physics, SetCollision), asCALL_THISCALL) < 0) {
+           asMETHOD(Physics, SetCollision), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("Physics", "void SetMass(float mass)",
-            asMETHOD(Physics, SetMass), asCALL_THISCALL) < 0) {
+           asMETHOD(Physics, SetMass), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -91,6 +122,10 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "Physics", &PhysicsTYPEProxy))
+        return false;
+
+    // ------------------------------------ //
     // Position
     if(engine->RegisterObjectType("Position", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -111,7 +146,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "Position", &PositionTYPEProxy))
+        return false;
 
+    // ------------------------------------ //
+    // RenderNode
     if(engine->RegisterObjectType("RenderNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -136,7 +175,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "RenderNode", &RenderNodeTYPEProxy))
+        return false;
 
+    // ------------------------------------ //
+    // Sendable
     if(engine->RegisterObjectType("Sendable", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -146,7 +189,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "Sendable", &SendableTYPEProxy))
+        return false;
 
+    // ------------------------------------ //
+    // Received
     if(engine->RegisterObjectType("Received", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -156,7 +203,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "Received", &ReceivedTYPEProxy))
+        return false;
 
+    // ------------------------------------ //
+    // Model
     if(engine->RegisterObjectType("Model", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -165,6 +216,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "Model", &ModelTYPEProxy))
+        return false;
+
+    // ------------------------------------ //
+    // BoxGeometry
     if(engine->RegisterObjectType("BoxGeometry", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -174,7 +230,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "BoxGeometry", &BoxGeometryTYPEProxy))
+        return false;
 
+    // ------------------------------------ //
+    // ManualObject
     if(engine->RegisterObjectType("ManualObject", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -184,7 +244,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "ManualObject", &ManualObjectTYPEProxy))
+        return false;
 
+    // ------------------------------------ //
+    // Camera
     if(engine->RegisterObjectType("Camera", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -202,12 +266,90 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(!BindComponentTypeID(engine, "Camera", &CameraTYPEProxy))
+        return false;
 
+
+    // ------------------------------------ //
+    // Plane
     if(engine->RegisterObjectType("Plane", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectProperty("Plane", "bool Marked", asOFFSET(Plane, Marked)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(!BindComponentTypeID(engine, "Plane", &PlaneTYPEProxy))
+        return false;
+
+    return true;
+}
+
+bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
+{
+    if(engine->RegisterInterface("ScriptComponent") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Factory definition
+    if(engine->RegisterFuncdef("ScriptComponent@ ComponentFactoryFunc(GameWorld@ world)") <
+        0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterInterface("ScriptSystem") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Required operations
+    if(engine->RegisterInterfaceMethod("ScriptSystem", "void Init(GameWorld@ world)") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterInterfaceMethod("ScriptSystem", "void Release()") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterInterfaceMethod("ScriptSystem", "void Run()") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterInterfaceMethod("ScriptSystem", "void CreateAndDestroyNodes()") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterInterfaceMethod("ScriptSystem", "void Clear()") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Component holder type
+    ANGELSCRIPT_REGISTER_REF_TYPE("ScriptComponentHolder", ScriptComponentHolder);
+
+    if(engine->RegisterObjectMethod("ScriptComponentHolder",
+           "bool ReleaseComponent(ObjectID entity)",
+           asMETHOD(ScriptComponentHolder, ReleaseComponent), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Not sure if scripts should be allowed to call this
+    if(engine->RegisterObjectMethod("ScriptComponentHolder",
+            "void ReleaseAllComponents()",
+            asMETHOD(ScriptComponentHolder, ReleaseAllComponents), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptComponentHolder",
+            "ScriptComponent@ Create(ObjectID entity)",
+            asMETHOD(ScriptComponentHolder, Create), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptComponentHolder",
+            "ScriptComponent@ Find(ObjectID entity)",
+            asMETHOD(ScriptComponentHolder, Find), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -222,6 +364,9 @@ bool Leviathan::BindEntity(asIScriptEngine* engine)
     if(engine->RegisterObjectType("GameWorld", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(!BindScriptComponentTypeSupport(engine))
+        return false;
 
     if(!BindRayCast(engine))
         return false;
@@ -242,6 +387,8 @@ bool Leviathan::BindEntity(asIScriptEngine* engine)
 
     if(!BindStandardWorldMethods<StandardWorld>(engine, "StandardWorld"))
         return false;
+
+    // ------------------------------------ //
 
     return true;
 }

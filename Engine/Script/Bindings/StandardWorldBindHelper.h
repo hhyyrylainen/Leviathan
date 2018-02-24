@@ -49,6 +49,39 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     // ------------------------------------ //
+    // Support for script types
+    if(engine->RegisterObjectMethod(classname,
+           "array<ObjectID>@ GetRemovedIDsForComponents(array<uint16>@ componenttypes)",
+           asMETHOD(WorldType, GetRemovedIDsForComponents), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
+           "array<ObjectID>@ GetRemovedIDsForScriptComponents(array<string>@ typenames)",
+           asMETHOD(WorldType, GetRemovedIDsForScriptComponents), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
+           "bool RegisterScriptComponentType(const string &in name, ComponentFactoryFunc@ "
+           "factory)",
+           asMETHOD(WorldType, RegisterScriptComponentType), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
+            "bool RegisterScriptSystem(const string &in name, ScriptSystem@ systemobject)",
+            asMETHOD(WorldType, RegisterScriptSystem), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
+            "ScriptComponentHolder@ GetScriptComponentHolder(const string &in name)",
+            asMETHOD(WorldType, GetScriptComponentHolder), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
     // These are inefficient versions of the get methods, prefer the ones in derived classes
     if(engine->RegisterObjectMethod(classname,
            "Physics@ BaseWorldGetComponentPhysics(ObjectID id)",

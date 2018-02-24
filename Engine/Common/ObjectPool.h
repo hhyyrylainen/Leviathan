@@ -261,6 +261,8 @@ protected:
 //! \brief Creates objects in a shared memory region
 //!
 //! Tracks the creation and destruction of elements as needed by components in a GameWorld
+//! \todo Created and destroyed vectors could use swap with last and remove the last to
+//! remove more effectively
 template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPoolTracked {
 public:

@@ -231,6 +231,7 @@ public:
         if(!func || !obj)
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
 
+        // TODO: this is a performance waste if there are no errors
         std::shared_ptr<ScriptModule> module =
             GetScriptModuleByFunction(func, parameters.PrintErrors);
 
@@ -321,6 +322,7 @@ public:
 
     DLLEXPORT static void PrintCallstack(asIScriptContext* ctx, LErrorReporter& output);
 
+    //! \note Alternative way to get ScriptExecutor is from asIScriptEngine::GetUserData
     DLLEXPORT static ScriptExecutor* Get();
 
 private:

@@ -34,6 +34,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/GameModule.cpp
     TestFiles/Physics.cpp
     TestFiles/Entities.cpp
+    TestFiles/CustomScriptComponents.cpp
     
     TestFiles/CoreEngineTests.cpp
     )

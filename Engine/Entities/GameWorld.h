@@ -14,6 +14,10 @@
 
 class NewtonBody;
 
+class CScriptArray;
+class asIScriptObject;
+class asIScriptFunction;
+
 namespace Ogre {
 
 class CompositorWorkspace;
@@ -24,6 +28,7 @@ namespace Leviathan {
 
 class Camera;
 class PhysicalWorld;
+class ScriptComponentHolder;
 
 template<class StateT>
 class StateHolder;
@@ -78,6 +83,8 @@ struct RayCastData {
 //! supported. See the GenerateStandardWorld.rb file to figure out how to generate world
 //! classes
 class GameWorld {
+    class Implementation;
+
 public:
     DLLEXPORT GameWorld();
     DLLEXPORT ~GameWorld();
@@ -117,6 +124,7 @@ public:
     DLLEXPORT void Tick(int currenttick);
 
     //! \brief Runs systems required for a rendering run. Also updates camera positions
+    //! \todo Allow script systems to specify their type
     DLLEXPORT void Render(int mspassed, int tick, int timeintick);
 
     //! \brief Returns the current tick
@@ -142,6 +150,7 @@ public:
     DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3& from, const Float3& to);
 
     //! \brief Creates a new empty entity and returns its id
+    //! \todo Make this have a per world counter
     DLLEXPORT ObjectID CreateEntity();
 
     //! \brief Destroys an entity and all of its components
@@ -216,11 +225,29 @@ public:
         return *static_cast<StateHolder<typename TComponent::StateT>*>(ptr);
     }
 
-    //! \brief Gets a component of type or returns nullptr
+    //! \brief Gets a component states of type or returns nullptr
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
     DLLEXPORT virtual std::tuple<void*, bool> GetStatesFor(COMPONENT_TYPE type);
 
+    //! \brief Gets a list of destroyed components of type
+    //!
+    //! \returns True if the type is known and no further base classes need to be checked
+    DLLEXPORT virtual bool GetRemovedFor(
+        COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result);
+
+    //! \brief Variant of GetRemovedFor for script defined types
+    DLLEXPORT bool GetRemovedForScriptDefined(
+        const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result);
+
+    //! \brief Gets a list of created components of type
+    //! \see GetRemovedFor
+    DLLEXPORT virtual bool GetAddedFor(
+        COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result);
+
+    //! \brief Variant of GetAddedFor for script defined types
+    DLLEXPORT bool GetAddedForScriptDefined(
+        const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result);
 
     //! \brief Sets the entity that acts as a camera.
     //!
@@ -294,12 +321,6 @@ public:
     //! \brief Applies packets that have been received after the last call to this
     DLLEXPORT void ApplyQueuedPackets();
 
-    //! \brief Called when a component is destroyed, used to destroy nodes
-    DLLEXPORT void _OnComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
-
-    //! \brief Use this to register destruction events for child classes
-    DLLEXPORT virtual void _OnCustomComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
-
     //! \todo Expose the parameters and make this activate the fog
     DLLEXPORT void SetFog();
     DLLEXPORT void SetSkyBox(const std::string& materialname);
@@ -320,6 +341,34 @@ public:
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();
 
+
+    // ------------------------------------ //
+    // Script proxies for script system implementation (don't use from c++ systems)
+
+    //! \brief Returns a list of ObjectIDs that have been removed from
+    //! any of the specified component types
+    DLLEXPORT CScriptArray* GetRemovedIDsForComponents(CScriptArray* componenttypes);
+
+    //! \brief Returns a list of ObjectIDs that have been removed from
+    //! any of the script registered component types specified by typeNames
+    DLLEXPORT CScriptArray* GetRemovedIDsForScriptComponents(CScriptArray* typenames);
+
+    //! \brief Registers a component type from scripts.
+    DLLEXPORT bool RegisterScriptComponentType(
+        const std::string& name, asIScriptFunction* factory);
+
+    //! \brief Retrieves a script registered component type holder
+    //! \note Increments refcount on return value
+    DLLEXPORT ScriptComponentHolder* GetScriptComponentHolder(const std::string& name);
+
+    //! \brief Registers a new system defined in a script. Must
+    //! implement the ScriptSystem interface
+    DLLEXPORT bool RegisterScriptSystem(const std::string& name, asIScriptObject* system);
+
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(GameWorld);
+
+
 protected:
     //! \brief Called by Render which is called from a
     //! GraphicalInputEntity if this is linked to one
@@ -337,20 +386,16 @@ protected:
     //! Construct new nodes based on components values. This is split
     //! into multiple parts to support child classes using the same
     //! Component types in additional nodes
-    DLLEXPORT virtual void HandleAdded();
+    DLLEXPORT virtual void HandleAddedAndDeleted();
 
-    //! \brief Clears the added components. Call after HandleAdded
-    DLLEXPORT virtual void ClearAdded();
+    //! \brief Clears the added components. Call after HandleAddedAndDeleted
+    DLLEXPORT virtual void ClearAddedAndRemoved();
 
     //! \brief Resets stored nodes in systems. Used together with _ResetComponents
-    DLLEXPORT virtual void _ResetSystems() = 0;
+    DLLEXPORT virtual void _ResetSystems();
 
     //! \brief Resets components in holders. Used together with _ResetSystems
-    DLLEXPORT virtual void _ResetComponents() = 0;
-
-    //! \brief Called in ClearEntities to let components that need
-    //! Release called have it called on
-    DLLEXPORT virtual void _ReleaseAllComponents();
+    DLLEXPORT virtual void _ResetOrReleaseComponents();
 
     //! \brief Called in Init when systems should run their initialization logic
     DLLEXPORT virtual void _DoSystemsInit();
@@ -394,6 +439,11 @@ protected:
     bool IsOnServer = false;
 
 private:
+    // pimpl to reduce need of including tons of headers (this causes
+    // a double pointer dereference so don't put performance critical
+    // stuff here)
+    std::unique_ptr<Implementation> pimpl;
+
     Ogre::Camera* WorldSceneCamera = nullptr;
     Ogre::SceneManager* WorldsScene = nullptr;
 

@@ -39,32 +39,14 @@ class CoolSystem : ScriptSystem{
 
     void CreateAndDestroyNodes(){
 
-        // Creation: delegate to helper //
-        
-
-        _RemoveByList(World.GetRemovedIDsForComponents({Position::TYPE}));
-        _RemoveByList(World.GetRemovedIDsForScriptComponents({"CoolTimer"}));
-    }
-
-    // This should really be a C++ helper...
-    private void _RemoveByList(const array<ObjectID> &in todelete){
-
-        for(uint i = 0; i < todelete.length(); ++i){
-
-            const auto lookfor = todelete[i];
-
-            for(uint a = 0; a < CachedComponents.length(); ++a){
-
-                if(CachedComponents[a].ID == lookfor){
-
-                    CachedComponents.removeAt(a);
-                    break;
-                }
-            }
-        }
+        // delegate to helper //
+        ScriptSystemNodeHelper(World, CachedComponents, SystemComponents);
     }
 
     private StandardWorld@ World;
+    private array<ScriptSystemUses> SystemComponents = {
+        ScriptSystemUses("CoolTimer"), ScriptSystemUses(Position::TYPE)
+    };
 
     array<CoolSystemCached@> CachedComponents;
 };

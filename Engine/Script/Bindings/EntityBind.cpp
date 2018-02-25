@@ -5,6 +5,7 @@
 
 #include "Entities/GameWorld.h"
 #include "Entities/ScriptComponentHolder.h"
+#include "Entities/ScriptSystemWrapper.h"
 
 #include "StandardWorldBindHelper.h"
 
@@ -13,7 +14,25 @@ using namespace Leviathan;
 
 // Proxies etc.
 // ------------------------------------ //
+void ScriptSystemUsesProxyName(void* memory, const std::string& name)
+{
+    new(memory) ScriptSystemUses(name);
+}
 
+void ScriptSystemUsesProxyType(void* memory, uint16_t componenttype)
+{
+    new(memory) ScriptSystemUses(componenttype);
+}
+
+void ScriptSystemUsesProxyInvalid(void* memory)
+{
+    new(memory) ScriptSystemUses();
+}
+
+void ScriptSystemUsesDestructorProxy(void* memory)
+{
+    static_cast<ScriptSystemUses*>(memory)->~ScriptSystemUses();
+}
 
 // ------------------------------------ //
 // Start of the actual bind
@@ -288,6 +307,39 @@ bool BindComponentTypes(asIScriptEngine* engine)
 
 bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
 {
+    // ------------------------------------ //
+    // ScriptSystemUses
+    if(engine->RegisterObjectType("ScriptSystemUses", sizeof(ScriptSystemUses),
+           asOBJ_VALUE | asGetTypeTraits<ScriptSystemUses>()) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("ScriptSystemUses", asBEHAVE_CONSTRUCT,
+           "void f(const string &in name)", asFUNCTION(ScriptSystemUsesProxyName),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("ScriptSystemUses", asBEHAVE_CONSTRUCT,
+           "void f(uint16 type)", asFUNCTION(ScriptSystemUsesProxyType),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("ScriptSystemUses", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(ScriptSystemUsesProxyInvalid), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("ScriptSystemUses", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(ScriptSystemUsesDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptSystemUses",
+           "ScriptSystemUses& opAssign(const ScriptSystemUses &in other)",
+           asMETHOD(ScriptSystemUses, operator=), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // ScriptComponent
     if(engine->RegisterInterface("ScriptComponent") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -335,21 +387,30 @@ bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
     }
 
     // Not sure if scripts should be allowed to call this
-    if(engine->RegisterObjectMethod("ScriptComponentHolder",
-            "void ReleaseAllComponents()",
-            asMETHOD(ScriptComponentHolder, ReleaseAllComponents), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("ScriptComponentHolder", "void ReleaseAllComponents()",
+           asMETHOD(ScriptComponentHolder, ReleaseAllComponents), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("ScriptComponentHolder",
-            "ScriptComponent@ Create(ObjectID entity)",
-            asMETHOD(ScriptComponentHolder, Create), asCALL_THISCALL) < 0) {
+           "ScriptComponent@ Create(ObjectID entity)", asMETHOD(ScriptComponentHolder, Create),
+           asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("ScriptComponentHolder",
-            "ScriptComponent@ Find(ObjectID entity)",
-            asMETHOD(ScriptComponentHolder, Find), asCALL_THISCALL) < 0) {
+           "ScriptComponent@ Find(ObjectID entity)", asMETHOD(ScriptComponentHolder, Find),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Helpers for creating and destroying nodes
+    // The second argument should be of type array<ThisSystemsCachedType>
+    if(engine->RegisterGlobalFunction(
+           "void ScriptSystemNodeHelper(GameWorld@ world, ?&in "
+           "cachedcomponents, array<ScriptSystemUses> &in systemcomponents)",
+           asFUNCTION(ScriptSystemNodeHelper), asCALL_CDECL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

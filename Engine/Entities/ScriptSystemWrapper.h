@@ -7,9 +7,40 @@
 
 class asIScriptObject;
 class asIScriptFunction;
+class CScriptArray;
 
 namespace Leviathan {
 
+class GameWorld;
+
+//! \brief Holds a single component type from c++ or from script, which a ScriptSystem uses
+struct ScriptSystemUses {
+
+    ScriptSystemUses(const std::string& name) : Name(name), UsesName(true) {}
+    ScriptSystemUses(uint16_t type) : Type(type), UsesName(false) {}
+    ScriptSystemUses() : Name("invalid"), UsesName(true) {}
+    ~ScriptSystemUses() {}
+
+    ScriptSystemUses& operator=(const ScriptSystemUses& other)
+    {
+        Type = other.Type;
+        Name = other.Name;
+        UsesName = other.UsesName;
+        return *this;
+    }
+
+    static constexpr auto ANGELSCRIPT_TYPE = "ScriptSystemUses";
+
+    uint16_t Type = -1;
+    std::string Name;
+    bool UsesName = false;
+};
+
+//! \brief Helper for script systems to call to properly handle added and removed nodes
+DLLEXPORT void ScriptSystemNodeHelper(GameWorld* world, void* cachedcomponents,
+    int cachedtypeid, CScriptArray& systemcomponents);
+
+//! \brief Wraps an AngelScript object that is an implementation of ScriptSystem
 class ScriptSystemWrapper {
 public:
     //! \note Doesn't increase reference on impl so caller needs to
@@ -26,18 +57,18 @@ public:
     DLLEXPORT void Init(GameWorld* world);
     //! \note This also clears ImplementationObject ptr.
     DLLEXPORT void Release();
-    
+
     DLLEXPORT void Run();
 
     DLLEXPORT void CreateAndDestroyNodes();
 
     DLLEXPORT void Clear();
-    
+
 protected:
     //! Helper for reducing copy pasting between the functions that don't need extra parameters
-    DLLEXPORT bool _CallMethodOnUs(const std::string &methodname);
+    DLLEXPORT bool _CallMethodOnUs(const std::string& methodname);
 
-    
+
 private:
     //! This is the actual implementation of this system in angelscript
     //! This is reference counted so make sure to release the reference

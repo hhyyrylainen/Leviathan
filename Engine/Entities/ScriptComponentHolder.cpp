@@ -19,6 +19,8 @@ DLLEXPORT ScriptComponentHolder::~ScriptComponentHolder()
     // Make sure all are released
     ReleaseAllComponents();
 
+    Factory->Release();
+
     LEVIATHAN_ASSERT(CreatedObjects.empty(), "ScriptComponentHolder didn't properly clear");
 }
 // ------------------------------------ //

@@ -9,7 +9,7 @@
 #include "Script/ScriptCallingHelpers.h"
 #include "Script/ScriptRunningSetup.h"
 #include "Script/ScriptScript.h"
-
+#include "Script/ScriptTypeResolver.h"
 
 #include <memory>
 #include <string>
@@ -19,121 +19,37 @@
 #include "angelscript.h"
 
 
-// Forward declare things for type resolver specification
-namespace Ogre {
-class SceneNode;
-class Matrix4;
-class ColourValue;
-} // namespace Ogre
-
-namespace CEGUI {
-class Window;
-}
-
-class NewtonCollision;
-
-
 namespace Leviathan {
 
-//! This has to be constant (and luckily so far it has been)
-constexpr auto ANGELSCRIPT_VOID_TYPEID = 0;
+class ScriptExecutor;
 
-//! Needed to keep this mess in one file as ScriptExecutor depends on AngelScriptTypeIDResolver
-//! and that depends on it
-DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver);
+//! \brief Contains data for script runs where arguments are passed manually
+//! \note This isn't the recommended way if the normal single function call script running can
+//! be used
+class CustomScriptRun {
+    friend ScriptExecutor;
 
-//! Converts type to AngelScript type string
-template<class T>
-struct TypeToAngelScriptTypeString {
-    static constexpr const char* Type()
-    {
-        if constexpr(std::is_pointer_v<T>) {
-            return std::remove_pointer_t<T>::ANGELSCRIPT_TYPE;
-        } else {
-
-            return T::ANGELSCRIPT_TYPE;
-        }
-    }
-};
-
-//! Helper for querying each type for their corresponding angelscript type once
-template<class T>
-struct AngelScriptTypeIDResolver {
 public:
-    static int Get(ScriptExecutor* resolver)
-    {
-        static int cached = ResolveProxy(TypeToAngelScriptTypeString<T>::Type(), resolver);
-        return cached;
-    }
+    //! \param exec Used to release context if this isn't properly passed to ExecuteCustomRun
+    inline CustomScriptRun(ScriptExecutor* exec) : Exec(exec){};
+    DLLEXPORT ~CustomScriptRun();
+
+    ScriptRunningSetup Setup;
+    asIScriptFunction* Func;
+    asIScriptContext* Context;
+    std::shared_ptr<ScriptModule> Module;
+
+    // For keeping track of parameter number (not used by ScriptExecutor but is used by helpers
+    // in CustomScriptRunHelpers.h)
+    asUINT PassedIndex = 0;
+
+private:
+    ScriptExecutor* Exec;
 };
-
-#define TYPE_RESOLVER_AS_PREDEFINED(x, astype) \
-    template<>                                 \
-    struct TypeToAngelScriptTypeString<x> {    \
-        static constexpr const char* Type()    \
-        {                                      \
-            return astype;                     \
-        }                                      \
-    };
-
-// Special cases of AngelScriptTypeIDResolver for fundamental types //
-TYPE_RESOLVER_AS_PREDEFINED(int, "int");
-TYPE_RESOLVER_AS_PREDEFINED(unsigned int, "uint");
-TYPE_RESOLVER_AS_PREDEFINED(int64_t, "int64");
-TYPE_RESOLVER_AS_PREDEFINED(uint64_t, "uint64");
-TYPE_RESOLVER_AS_PREDEFINED(int16_t, "int16");
-TYPE_RESOLVER_AS_PREDEFINED(uint16_t, "uint16");
-TYPE_RESOLVER_AS_PREDEFINED(int8_t, "int8");
-TYPE_RESOLVER_AS_PREDEFINED(uint8_t, "uint8");
-TYPE_RESOLVER_AS_PREDEFINED(double, "double");
-TYPE_RESOLVER_AS_PREDEFINED(float, "float");
-TYPE_RESOLVER_AS_PREDEFINED(bool, "bool");
-// Char isn't actually signed or unsigned in c++ but this allows basically using char as alias
-// for int8_t without explicit casts to angelscript
-TYPE_RESOLVER_AS_PREDEFINED(char, "int8");
-
-// And other inbuilt types that can't have ANGELSCRIPT_TYPE in their class
-TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
-
-// And other types
-TYPE_RESOLVER_AS_PREDEFINED(Ogre::ColourValue, "Ogre::ColourValue@");
-TYPE_RESOLVER_AS_PREDEFINED(Ogre::Matrix4, "Ogre::Matrix4@");
-TYPE_RESOLVER_AS_PREDEFINED(Ogre::SceneNode, "Ogre::SceneNode@");
-
-TYPE_RESOLVER_AS_PREDEFINED(NewtonCollision, "NewtonCollision@");
-
-TYPE_RESOLVER_AS_PREDEFINED(CEGUI::Window, "CEGUI::Window@");
-
-// Special case void //
-template<>
-struct AngelScriptTypeIDResolver<void> {
-    static int Get(ScriptExecutor* resolver)
-    {
-        return ANGELSCRIPT_VOID_TYPEID;
-    }
-};
-
-// Also these angelscript types that can have a bunch of different
-// types is a special case
-template<>
-struct AngelScriptTypeIDResolver<asIScriptFunction*> {
-    static int Get(ScriptExecutor* resolver)
-    {
-        return -1;
-    }
-};
-
-template<>
-struct AngelScriptTypeIDResolver<asIScriptObject*> {
-    static int Get(ScriptExecutor* resolver)
-    {
-        return -1;
-    }
-};
-
 
 //! \brief Handles ScriptModule creation and AngelScript code execution
 class ScriptExecutor {
+    friend CustomScriptRun;
 public:
     DLLEXPORT ScriptExecutor();
     DLLEXPORT ~ScriptExecutor();
@@ -153,6 +69,8 @@ public:
     //! own method)
     //! \todo Allow recursive calls and more context reuse. Also wrap context in an object that
     //! automatically returns it in case of expections (_HandleEndedScriptExecution can throw)
+    //! \todo Also make all the script module using functions automatically get it if they need
+    //! for error reporting
     template<typename ReturnT, class... Args>
     ScriptRunResult<ReturnT> RunScript(const std::shared_ptr<ScriptModule>& module,
         ScriptRunningSetup& parameters, Args&&... args)
@@ -282,9 +200,41 @@ public:
         return returnvalue;
     }
 
+    //! \brief Starts a script run that supports custom argument passing
+    DLLEXPORT std::unique_ptr<CustomScriptRun> PrepareCustomScriptRun(
+        asIScriptFunction* func, ScriptRunningSetup extraoptions = ScriptRunningSetup());
+
+    //! \brief Ends a custom script run by actually executing the script and returning a value.
+    //! \note You MUST manually pass arguments before calling this! Use RunScript if you don't
+    //! need custom argument passing
+    template<typename ReturnT>
+    ScriptRunResult<ReturnT> ExecuteCustomRun(const std::unique_ptr<CustomScriptRun>& run)
+    {
+        if(!run)
+            return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
+
+        // Run the script //
+        // TODO: timeout and debugging registering with linecallbacks here //
+        int retcode = run->Context->Execute();
+
+        // Get the return value //
+        auto returnvalue = _HandleEndedScriptExecution<ReturnT>(
+            retcode, run->Context, run->Setup, run->Func, run->Module.get());
+
+        // Release the context //
+        _DoneWithContext(run->Context);
+        run->Context = nullptr;
+
+        // Return the returned value //
+        return returnvalue;
+    }
+
+
     //! \brief Finds release ref behaviour on object and calls it
     //! \exception Exception if it didn't work
-    //! \note Should only be called if the object of type has asOBJ_REF and no asOBJ_NOCOUNT
+    //! \note Should only be called if the object of type has asOBJ_REF and no
+    //! asOBJ_NOCOUNT \todo This is actually a method in the angelscript engine, so use
+    //! that, but this is a good example how to run any behaviour
     DLLEXPORT void RunReleaseRefOnObject(void* obj, int objid);
 
     //! \brief Returns module in which script function was defined in
@@ -894,7 +844,10 @@ private:
     //! retrieved)
     DLLEXPORT asIScriptContext* _GetContextForExecution();
 
+protected:
+    
     //! \brief Called after a script has been executed and the context is no longer needed
+    //! \note Also called from CustomScriptRun
     DLLEXPORT void _DoneWithContext(asIScriptContext* context);
 
 private:
@@ -908,6 +861,6 @@ private:
     Mutex ModulesLock;
 
     static ScriptExecutor* instance;
-}; // namespace Leviathan
+};
 
 } // namespace Leviathan

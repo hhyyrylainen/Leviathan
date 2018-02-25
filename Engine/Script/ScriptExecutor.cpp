@@ -31,12 +31,6 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT int Leviathan::ResolveProxy(const char* type, ScriptExecutor* resolver)
-{
-
-    return resolver->ResolveStringToASID(type);
-}
-
 namespace Leviathan {
 
 void ScriptMessageCallback(const asSMessageInfo* msg, void* param)
@@ -279,7 +273,40 @@ DLLEXPORT void ScriptExecutor::RunReleaseRefOnObject(void* obj, int objid)
 
     throw Exception("Didn't find release ref behaviour on object type");
 }
+// ------------------------------------ //
+DLLEXPORT std::unique_ptr<CustomScriptRun> ScriptExecutor::PrepareCustomScriptRun(
+    asIScriptFunction* func, ScriptRunningSetup extraoptions /*= ScriptRunningSetup()*/)
+{
+    if(!func)
+        return nullptr;
 
+    auto run = std::make_unique<CustomScriptRun>(this);
+    run->Setup = extraoptions;
+    run->Func = func;
+
+    // // TODO: this is a performance waste if there are no errors
+    // std::shared_ptr<ScriptModule> module =
+    //     GetScriptModuleByFunction(func, run->Setup.PrintErrors);
+
+    // Create a running context for the function //
+    run->Context = _GetContextForExecution();
+
+    if(!run->Context) {
+        // Should this be fatal?
+        LOG_ERROR("ScriptExecutor: PrepareCustomScriptRun: failed to create a new context");
+        return nullptr;
+    }
+
+    if(!_PrepareContextForPassingParameters(
+           func, run->Context, run->Setup, run->Module.get())) {
+
+        _DoneWithContext(run->Context);
+        return nullptr;
+    }
+
+    return run;
+}
+// ------------------------------------ //
 DLLEXPORT std::shared_ptr<ScriptModule> ScriptExecutor::GetScriptModuleByFunction(
     asIScriptFunction* func, bool reporterror)
 {
@@ -558,10 +585,21 @@ DLLEXPORT int ScriptExecutor::ResolveStringToASID(const char* str) const
     return engine->GetTypeIdByDecl(str);
 }
 
-DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const{
+DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const
+{
 
     if(type < 0)
         return nullptr;
 
     return engine->GetTypeInfoById(type);
 }
+// ------------------------------------ //
+// CustomScriptRun
+DLLEXPORT CustomScriptRun::~CustomScriptRun(){
+
+    if(Context){
+
+        Exec->_DoneWithContext(Context);
+    }
+}
+

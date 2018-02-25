@@ -106,6 +106,9 @@ DLLEXPORT asIScriptObject* ScriptComponentHolder::Create(ObjectID entity)
     result.Value->AddRef();
 
     CreatedObjects[entity] = result.Value;
+
+    // And we return it so increase refcount for that too //
+    result.Value->AddRef();
     return result.Value;
 }
 

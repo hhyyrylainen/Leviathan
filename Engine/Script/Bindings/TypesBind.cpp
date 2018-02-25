@@ -12,6 +12,8 @@ using namespace Leviathan;
 
 ObjectID NULL_OBJECT_WRAPPER = NULL_OBJECT;
 
+Float4 IdentityQuaternion = Float4::IdentityQuaternion();
+
 // Float2
 void Float2ConstructorProxy(void* memory)
 {
@@ -433,6 +435,22 @@ bool BindFloat4(asIScriptEngine* engine)
 
     if(engine->RegisterObjectProperty("Float4", "float W", asOFFSET(Float4, W)) < 0) {
 
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Named ones
+    if(engine->SetDefaultNamespace("Float4") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Float4 IdentityQuaternion",
+            IdentityQuaternion) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

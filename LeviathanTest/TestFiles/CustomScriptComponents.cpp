@@ -20,8 +20,6 @@ TEST_CASE("Script can register custom entity type and do stuff with it", "[scrip
 {
     PartialEngine<false> engine;
 
-    Logger log("Test/dummy.txt");
-
     IDFactory ids;
     ScriptExecutor exec;
 
@@ -51,7 +49,7 @@ TEST_CASE("Script can register custom entity type and do stuff with it", "[scrip
     auto returned2 = exec.RunScript<int>(mod, ssetup, static_cast<GameWorld*>(&world));
 
     CHECK(returned2.Result == SCRIPT_RUN_RESULT::Success);
-    CHECK(returned2.Value == 42);
+    CHECK(returned2.Value == 141);
 
     REQUIRE_NOTHROW(world.Release());
 }

@@ -12,6 +12,8 @@ generator.useNamespace
 generator.addInclude "Entities/GameWorld.h"
 generator.addInclude "Entities/Components.h"
 generator.addInclude "Entities/Systems.h"
+# Needs script include for stuff
+generator.addInclude "Script/ScriptTypeResolver.h"
 
 worldClass = GameWorldClass.new(
   "StandardWorld", componentTypes: [

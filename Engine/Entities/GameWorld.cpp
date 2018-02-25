@@ -851,6 +851,12 @@ DLLEXPORT std::tuple<void*, bool> GameWorld::GetComponent(ObjectID id, COMPONENT
     return std::make_tuple(nullptr, false);
 }
 
+DLLEXPORT std::tuple<void*, ComponentTypeInfo, bool> GameWorld::GetComponentWithType(
+    ObjectID id, COMPONENT_TYPE type)
+{
+    return std::make_tuple(nullptr, ComponentTypeInfo(-1, -1), false);
+}
+
 DLLEXPORT std::tuple<void*, bool> GameWorld::GetStatesFor(COMPONENT_TYPE type)
 {
 
@@ -878,13 +884,13 @@ DLLEXPORT bool GameWorld::GetRemovedForScriptDefined(
 }
 
 DLLEXPORT bool GameWorld::GetAddedFor(
-    COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result)
+    COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID, ComponentTypeInfo>>& result)
 {
     return false;
 }
 
-DLLEXPORT bool GameWorld::GetAddedForScriptDefined(
-    const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result)
+DLLEXPORT bool GameWorld::GetAddedForScriptDefined(const std::string& name,
+    std::vector<std::tuple<asIScriptObject*, ObjectID, ScriptComponentHolder*>>& result)
 {
     auto iter = pimpl->RegisteredScriptComponents.find(name);
 
@@ -893,7 +899,14 @@ DLLEXPORT bool GameWorld::GetAddedForScriptDefined(
 
     auto& added = iter->second->GetAdded();
 
-    result.insert(std::end(result), std::begin(added), std::end(added));
+    result.reserve(result.size() + added.size());
+
+    for(const auto& tuple : added){
+
+        result.push_back(std::make_tuple(std::get<0>(tuple), std::get<1>(tuple), 
+                iter->second.get()));
+    }
+    
     return true;
 }
 
@@ -1283,7 +1296,7 @@ DLLEXPORT CScriptArray* GameWorld::GetRemovedIDsForScriptComponents(CScriptArray
 
         array->SetValue(i, &std::get<1>(result[i]));
     }
-    
+
     return array;
 }
 

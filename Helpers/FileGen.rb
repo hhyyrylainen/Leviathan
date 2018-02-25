@@ -504,6 +504,7 @@ class GameWorldClass < OutputClass
     @Systems.each{|s|
       @Members.push(Variable.new("_" + s.Type, s.Type))
     }
+    
   end
 
   def genMemberConstructor(f, opts)
@@ -705,12 +706,6 @@ class GameWorldClass < OutputClass
 
     if opts.include?(:impl)
       f.puts "{"
-      f.puts "const auto baseType = " + @BaseClass + "::GetComponent(id, type);"
-
-      f.puts "if(std::get<1>(baseType))"
-      f.puts "    return baseType;"
-      f.puts ""
-
       f.puts "switch(static_cast<uint16_t>(type)){"
       
       @ComponentTypes.each{|c|
@@ -721,7 +716,38 @@ class GameWorldClass < OutputClass
       }
 
       f.puts "default:"
-      f.puts "return std::make_tuple(nullptr, false);"
+      
+      f.puts "return " + @BaseClass + "::GetComponent(id, type);"
+      f.puts "}"
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+
+    f.write "#{export}std::tuple<void*, ComponentTypeInfo, bool> " +
+            "#{qualifier opts}GetComponentWithType(" +
+            "ObjectID id, Leviathan::COMPONENT_TYPE type)#{override opts}"
+
+    if opts.include?(:impl)
+      f.puts "{"
+      f.puts "switch(static_cast<uint16_t>(type)){"
+      
+      @ComponentTypes.each{|c|
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
+        f.puts "{"
+        f.puts "auto* ptr = Component#{c.type}.Find(id);"
+        f.puts "if(!ptr)"
+        f.puts "    return std::make_tuple(nullptr, ComponentTypeInfo(-1, -1), true);"
+        f.puts "return std::make_tuple(ptr, "
+        f.puts "    ComponentTypeInfo(static_cast<uint16_t>(#{c.type}::TYPE), " 
+        f.puts "        Leviathan::AngelScriptTypeIDResolver<#{c.type}>::Get("
+        f.puts "        Leviathan::GetCurrentGlobalScriptExecutor())), true);"
+        f.puts "}"
+      }
+
+      f.puts "default:"
+      
+      f.puts "return " + @BaseClass + "::GetComponentWithType(id, type);"
       f.puts "}"
       f.puts "}"
     else
@@ -755,8 +781,8 @@ class GameWorldClass < OutputClass
     end
 
     f.write "#{export}bool #{qualifier opts}GetAddedFor(" +
-            "Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& " +
-            "result)#{override opts}"
+            "Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID," +
+            "ComponentTypeInfo>>& result)#{override opts}"
 
     if opts.include?(:impl)
       f.puts "{"
@@ -766,7 +792,13 @@ class GameWorldClass < OutputClass
         f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
         f.puts "{"
         f.puts "auto& vec = Component#{c.type}.GetAdded();"
-        f.puts "result.insert(std::end(result), std::begin(vec), std::end(vec));"
+        f.puts "result.reserve(result.size() + vec.size());"
+        f.puts "for(const auto& res : vec){"
+        f.puts "    result.push_back(std::make_tuple(std::get<0>(res), std::get<1>(res), "
+        f.puts "        ComponentTypeInfo(static_cast<uint16_t>(#{c.type}::TYPE), " 
+        f.puts "        Leviathan::AngelScriptTypeIDResolver<#{c.type}>::Get("
+        f.puts "        Leviathan::GetCurrentGlobalScriptExecutor()))));"
+        f.puts "}"
         f.puts "return true;"
         f.puts "}"
       }
@@ -836,12 +868,6 @@ END
 
     if opts.include?(:impl)
       f.puts "{"
-      f.puts "const auto baseType = " + @BaseClass + "::GetStatesFor(type);"
-
-      f.puts "if(std::get<1>(baseType))"
-      f.puts "    return baseType;"
-      f.puts ""
-
       f.puts "switch(static_cast<uint16_t>(type)){"
       
       @ComponentTypes.each{|c|
@@ -856,8 +882,8 @@ END
         f.puts "}"
       }
 
-      f.puts "default:"
-      f.puts "return std::make_tuple(nullptr, false);"
+      f.puts "default:"      
+      f.puts "return " + @BaseClass + "::GetStatesFor(type);"
       f.puts "}"
       f.puts "}"
     else
@@ -1047,6 +1073,7 @@ END
 
     if opts.include?(:impl)
       f.puts "{"
+      f.puts @BaseClass + "::_DoSystemsInit();"
       f.puts "// Call Init on all systems that need it //"
       @Systems.each{|s|
 
@@ -1063,6 +1090,7 @@ END
 
     if opts.include?(:impl)
       f.puts "{"
+      f.puts @BaseClass + "::_DoSystemsRelease();"
       f.puts "// Call Release on all systems that need it //"
       @Systems.each{|s|
 

@@ -33,6 +33,17 @@ class ScriptComponentHolder;
 template<class StateT>
 class StateHolder;
 
+struct ComponentTypeInfo {
+
+    inline ComponentTypeInfo(uint16_t ltype, int astype) :
+        LeviathanType(ltype), AngelScriptType(astype)
+    {
+    }
+
+    uint16_t LeviathanType;
+    int AngelScriptType;
+};
+
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
@@ -204,7 +215,12 @@ public:
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
     DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
-
+    
+    //! \brief Gets a component of type or returns nullptr
+    //!
+    //! \returns Tuple of pointer to component and boolean indicating if the type is known
+    DLLEXPORT virtual std::tuple<void*, ComponentTypeInfo, bool> GetComponentWithType(
+        ObjectID id, COMPONENT_TYPE type);
 
     //! Helper for getting component state holder for type. This is much slower than
     //! direct lookups with the actual implementation class' GetStatesFor_Position etc.
@@ -242,12 +258,14 @@ public:
 
     //! \brief Gets a list of created components of type
     //! \see GetRemovedFor
-    DLLEXPORT virtual bool GetAddedFor(
-        COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result);
+    //! \todo Find a better way than having to have the component type specified here. This is
+    //! only used by script node proxy, so this has to be somewhere for it to access
+    DLLEXPORT virtual bool GetAddedFor(COMPONENT_TYPE type,
+        std::vector<std::tuple<void*, ObjectID, ComponentTypeInfo>>& result);
 
     //! \brief Variant of GetAddedFor for script defined types
-    DLLEXPORT bool GetAddedForScriptDefined(
-        const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result);
+    DLLEXPORT bool GetAddedForScriptDefined(const std::string& name,
+        std::vector<std::tuple<asIScriptObject*, ObjectID, ScriptComponentHolder*>>& result);
 
     //! \brief Sets the entity that acts as a camera.
     //!

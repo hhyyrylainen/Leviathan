@@ -6,6 +6,13 @@ class CoolTimer : ScriptComponent{
 
 class CoolSystemCached{
 
+    CoolSystemCached(ObjectID id, CoolTimer@ first, Position@ second)
+    {
+        ID = id;
+        @First = first;
+        @Second = second;
+    }
+
     ObjectID ID;
     CoolTimer@ First;
     Position@ Second;
@@ -29,6 +36,7 @@ class CoolSystem : ScriptSystem{
             CoolSystemCached@ cached = CachedComponents[i];
 
             cached.First.TimeValue += int(cached.Second._Position.X);
+            cached.First.TimeValue *= cached.First.TimeValue;
         }
     }
 
@@ -39,8 +47,8 @@ class CoolSystem : ScriptSystem{
 
     void CreateAndDestroyNodes(){
 
-        // delegate to helper //
-        ScriptSystemNodeHelper(World, CachedComponents, SystemComponents);
+        // Delegate to helper //
+        ScriptSystemNodeHelper(World, @CachedComponents, SystemComponents);
     }
 
     private StandardWorld@ World;
@@ -66,13 +74,41 @@ bool SetupCustomComponents(GameWorld@ world){
 
     StandardWorld@ asStandard = cast<StandardWorld>(world);
 
-    
-    
+    // ------------------------------------ //
+    // Entity 1
+    CoolTimer@ timer1 = cast<CoolTimer>(world.GetScriptComponentHolder("CoolTimer").Create(1));
 
-    return false;
+    timer1.TimeValue = 1;
+    
+    asStandard.Create_Position(1, Float3(1, 0, 0), Float4::IdentityQuaternion);
+    
+    
+    // ------------------------------------ //
+    // Entity 2
+    CoolTimer@ timer2 = cast<CoolTimer>(world.GetScriptComponentHolder("CoolTimer").Create(2));
+
+    timer2.TimeValue = 2;
+
+    asStandard.Create_Position(2, Float3(2, 0, 0), Float4::IdentityQuaternion);
+
+    // ------------------------------------ //
+    // Entity 3
+    CoolTimer@ timer3 = cast<CoolTimer>(world.GetScriptComponentHolder("CoolTimer").Create(3));
+
+    timer3.TimeValue = 7;
+
+    asStandard.Create_Position(3, Float3(4, 0, 0), Float4::IdentityQuaternion);    
+    
+    return true;
 }
 
 int VerifyRunResult(GameWorld@ world){
 
-    return 0;
+    CoolTimer@ timer1 = cast<CoolTimer>(world.GetScriptComponentHolder("CoolTimer").Find(1));
+
+    CoolTimer@ timer2 = cast<CoolTimer>(world.GetScriptComponentHolder("CoolTimer").Find(2));
+
+    CoolTimer@ timer3 = cast<CoolTimer>(world.GetScriptComponentHolder("CoolTimer").Find(3));
+
+    return timer1.TimeValue + timer2.TimeValue + timer3.TimeValue;
 }

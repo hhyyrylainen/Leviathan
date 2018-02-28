@@ -215,7 +215,7 @@ public:
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
     DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
-    
+
     //! \brief Gets a component of type or returns nullptr
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
@@ -382,6 +382,11 @@ public:
     //! \brief Registers a new system defined in a script. Must
     //! implement the ScriptSystem interface
     DLLEXPORT bool RegisterScriptSystem(const std::string& name, asIScriptObject* system);
+
+    //! \brief Returns the underlying angelscript object that implements a script system
+    //! \note Increases refcount on returned object
+    DLLEXPORT asIScriptObject* GetScriptSystem(const std::string& name);
+
 
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(GameWorld);

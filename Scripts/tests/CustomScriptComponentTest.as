@@ -70,6 +70,11 @@ bool SetupCustomComponents(GameWorld@ world){
 
     world.RegisterScriptComponentType("CoolTimer", @CoolFactory);
     world.RegisterScriptSystem("CoolSystem", CoolSystem());
+
+    CoolSystem@ system = cast<CoolSystem>(world.GetScriptSystem("CoolSystem"));
+
+    if(system is null)
+        return false;
     
 
     StandardWorld@ asStandard = cast<StandardWorld>(world);

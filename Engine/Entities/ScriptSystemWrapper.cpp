@@ -25,6 +25,13 @@ DLLEXPORT ScriptSystemWrapper::~ScriptSystemWrapper()
     }
 }
 // ------------------------------------ //
+DLLEXPORT asIScriptObject* ScriptSystemWrapper::GetASImplementationObject()
+{
+    if(ImplementationObject)
+        ImplementationObject->AddRef();
+    return ImplementationObject;
+}
+// ------------------------------------ //
 DLLEXPORT void ScriptSystemWrapper::Init(GameWorld* world)
 {
     asIScriptFunction* func = ImplementationObject->GetObjectType()->GetMethodByName("Init");
@@ -356,7 +363,7 @@ inline bool TryToCreateNewCachedComponentsForEntity(ObjectID newentity, CScriptA
                 success = PassParameterToCustomRun(
                     scriptRunInfo, component.CppComponent, component.CType.AngelScriptType);
             }
-            
+
             if(!success) {
 
                 context->SetException(

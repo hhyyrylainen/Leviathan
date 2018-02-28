@@ -901,12 +901,12 @@ DLLEXPORT bool GameWorld::GetAddedForScriptDefined(const std::string& name,
 
     result.reserve(result.size() + added.size());
 
-    for(const auto& tuple : added){
+    for(const auto& tuple : added) {
 
-        result.push_back(std::make_tuple(std::get<0>(tuple), std::get<1>(tuple), 
-                iter->second.get()));
+        result.push_back(
+            std::make_tuple(std::get<0>(tuple), std::get<1>(tuple), iter->second.get()));
     }
-    
+
     return true;
 }
 
@@ -1352,6 +1352,24 @@ DLLEXPORT bool GameWorld::RegisterScriptSystem(
     // Might as well call Init now as other systems are almost certainly initialized as well //
     pimpl->RegisteredScriptSystems[name]->Init(this);
     return true;
+}
+
+DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
+{
+    // if called after release
+    if(!pimpl)
+        return nullptr;
+
+    auto iter = pimpl->RegisteredScriptSystems.find(name);
+
+    // Skip if already registered //
+    if(iter == pimpl->RegisteredScriptSystems.end()) {
+
+        LOG_ERROR("GameWorld: GetScriptSystemDirect: world has no system called: " + name);
+        return nullptr;
+    }
+
+    return iter->second->GetASImplementationObject();
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(

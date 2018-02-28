@@ -52,6 +52,9 @@ public:
     ScriptSystemWrapper(const ScriptSystemWrapper& other) = delete;
     ScriptSystemWrapper& operator=(const ScriptSystemWrapper& other) = delete;
 
+    //! \brief Returns the ImplementationObject increasing refcount
+    DLLEXPORT asIScriptObject* GetASImplementationObject();
+
     // These functions are proxied to the script object
     // Use these similarly to normal systems
     DLLEXPORT void Init(GameWorld* world);

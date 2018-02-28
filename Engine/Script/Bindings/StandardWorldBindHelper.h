@@ -70,16 +70,23 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     if(engine->RegisterObjectMethod(classname,
-            "bool RegisterScriptSystem(const string &in name, ScriptSystem@ systemobject)",
-            asMETHOD(WorldType, RegisterScriptSystem), asCALL_THISCALL) < 0) {
+           "bool RegisterScriptSystem(const string &in name, ScriptSystem@ systemobject)",
+           asMETHOD(WorldType, RegisterScriptSystem), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod(classname,
-            "ScriptComponentHolder@ GetScriptComponentHolder(const string &in name)",
-            asMETHOD(WorldType, GetScriptComponentHolder), asCALL_THISCALL) < 0) {
+           "ScriptComponentHolder@ GetScriptComponentHolder(const string &in name)",
+           asMETHOD(WorldType, GetScriptComponentHolder), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectMethod(classname,
+           "ScriptSystem@ GetScriptSystem(const string &in name)",
+           asMETHOD(WorldType, GetScriptSystem), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 
     // ------------------------------------ //
     // These are inefficient versions of the get methods, prefer the ones in derived classes

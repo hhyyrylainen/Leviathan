@@ -292,7 +292,7 @@ DLLEXPORT bool FileSystem::LoadDataDump(const string &file,
     
     if(!stream.good()){
         // no file ! //
-        errorreport->Error("FileSystem: LoadDataDumb: Failed to read file: "+file);
+        errorreport->Error("FileSystem: LoadDataDump: Failed to read file: "+file);
         return false;
     }
     
@@ -431,15 +431,8 @@ size_t Leviathan::FileSystem::GetFileLength(const string &name){
 }
 
 DLLEXPORT bool Leviathan::FileSystem::FileExists(const string &name){
-    bool existed=false;
-    ifstream file(name);
-    
-    if(file.is_open()){
-        existed=true;
-    }
-    
-    file.close();
-    return existed;
+
+    return boost::filesystem::exists(name);
 }
 
 bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filename){

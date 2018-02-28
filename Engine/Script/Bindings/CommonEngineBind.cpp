@@ -8,6 +8,7 @@
 #include "Events/DelegateSlot.h"
 #include "Events/Event.h"
 #include "Events/EventHandler.h"
+#include "FileSystem.h"
 #include "Networking/NetworkCache.h"
 #include "Script/ScriptExecutor.h"
 #include "Sound/SoundDevice.h"
@@ -45,7 +46,7 @@ void AngelScriptAssertWrapper(asIScriptGeneric* gen)
 
     if(gen->GetArgCount() >= 1)
         messagePtr = gen->GetArgObject(1);
-    
+
     std::string message;
 
     if(!messagePtr) {
@@ -448,6 +449,11 @@ bool BindEngine(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Engine", "FileSystem& GetFileSystem()",
+           asMETHOD(Engine, GetFileSystem), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // ------------------------------------ //
 
     if(engine->RegisterObjectMethod("Engine", "int64 GetTimeSinceLastTick()",
@@ -583,6 +589,61 @@ bool BindSound(asIScriptEngine* engine)
     return true;
 }
 
+bool BindFileSystem(asIScriptEngine* engine)
+{
+    // Many of the filesystem methods aren't safe to expose to every
+    // script so they are hidden by default
+    if(engine->RegisterEnum("FILEGROUP") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE(FILEGROUP, FILEGROUP_MODEL);
+    ANGELSCRIPT_REGISTER_ENUM_VALUE(FILEGROUP, FILEGROUP_TEXTURE);
+    ANGELSCRIPT_REGISTER_ENUM_VALUE(FILEGROUP, FILEGROUP_SOUND);
+    ANGELSCRIPT_REGISTER_ENUM_VALUE(FILEGROUP, FILEGROUP_SCRIPT);
+    ANGELSCRIPT_REGISTER_ENUM_VALUE(FILEGROUP, FILEGROUP_OTHER);
+
+    if(engine->RegisterObjectType("FileSystem", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    const auto oldMask =
+        engine->SetDefaultAccessMask(static_cast<AccessFlags>(ScriptAccess::FullFileSystem));
+
+    if(engine->RegisterObjectMethod("FileSystem",
+           "string SearchForFile(FILEGROUP which, const string &in name, const string &in "
+           "extensions, bool searchall = true)",
+           asMETHOD(FileSystem, SearchForFile), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Restore access for non-full access requiring static stuff
+    engine->SetDefaultAccessMask(oldMask);
+
+    // ------------------------------------ //
+    // Static methods
+    if(engine->SetDefaultNamespace("FileSystem") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // And back to protected functions
+    engine->SetDefaultAccessMask(static_cast<AccessFlags>(ScriptAccess::FullFileSystem));
+
+    if(engine->RegisterGlobalFunction("bool FileExists(const string &in filepath)",
+           asFUNCTION(FileSystem::FileExists), asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Restore settings //
+    engine->SetDefaultAccessMask(oldMask);
+    if(engine->SetDefaultNamespace("") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 } // namespace Leviathan
 
 bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
@@ -595,6 +656,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         return false;
 
     if(!BindSound(engine))
+        return false;
+
+    if(!BindFileSystem(engine))
         return false;
 
     if(!BindEngine(engine))
@@ -648,7 +712,7 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
     if(engine->RegisterGlobalFunction("void assert(bool expression)",
-            asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0) {
+           asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

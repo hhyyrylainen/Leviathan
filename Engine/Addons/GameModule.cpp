@@ -101,13 +101,36 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string& modulename,
         }
     }
 
+    // Read properties //
+    if(auto* data = properties->GetVariables().GetValueDirectRaw("ExtraAccess");
+        data != nullptr) {
+
+        std::string flags;
+        if(data->GetVariableCount() != 1 ||
+            !data->GetValue().ConvertAndAssingToVariable(flags)) {
+
+            throw InvalidArgument(
+                "GameModule(" + LoadedFromFile +
+                ") has an invalid value for property 'ExtraAccess': not string");
+        }
+
+        try {
+            ExtraAccess = ParseScriptAccess(flags);
+        } catch(const InvalidArgument& e) {
+            throw InvalidArgument(
+                "GameModule(" + LoadedFromFile +
+                ") has an invalid value for property 'ExtraAccess': " + e.what());
+        }
+    }
+
+
     LEVIATHAN_ASSERT(!SourceFiles.empty(), "GameModule: empty source files");
 }
 
 DLLEXPORT Leviathan::GameModule::~GameModule()
 {
     UnRegisterAllEvents();
-    
+
     if(Scripting) {
 
         LOG_FATAL("GameModule: 'ReleaseScript' not called before destructor");
@@ -137,6 +160,10 @@ DLLEXPORT bool Leviathan::GameModule::Init()
         // Get already created module //
         mod = Scripting->GetModule();
     }
+
+    // Set access flags //
+    if(ExtraAccess != 0)
+        mod->AddAccessRight(ExtraAccess);
 
     // Build the module (by creating a callback list) //
     std::vector<std::shared_ptr<ValidListenerData>> containedlisteners;
@@ -246,4 +273,3 @@ void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* even
         }
     }
 }
-

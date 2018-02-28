@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "ScriptExecutor.h"
 
+#include "AccessMask.h"
+
 #include "Application/Application.h"
 #include "Iterators/StringIterator.h"
 
@@ -83,6 +85,10 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     // The ScriptExecutor can be retrieved from asIScriptEngine user data
     engine->SetUserData(this);
 
+    // Builtins are in this access group //
+    const auto initialMask = engine->SetDefaultAccessMask(
+        static_cast<AccessFlags>( ScriptAccess::Builtin));
+
     // math functions //
     RegisterScriptMath(engine);
     RegisterScriptMathComplex(engine);
@@ -108,6 +114,8 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     RegisterScriptWeakRef(engine);
 
     RegisterScriptAny(engine);
+
+    // All normal engine stuff is in the DefaultEngine access mask //
 
     // use various binding functions //
     // register global functions and classes //
@@ -138,6 +146,9 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
         LOG_ERROR("ScriptExecutor: Init: AngelScript: register Notifier types failed");
         throw Exception("Script bind failed");
     }
+
+    // Restore the default mask to let the application do what it wants with the masks
+    engine->SetDefaultAccessMask(initialMask);
 
     // bind application specific //
     auto leviathanengine = Engine::GetEngine();

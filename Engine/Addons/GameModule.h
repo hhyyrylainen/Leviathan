@@ -60,6 +60,8 @@ private:
     void _CallScriptListener(Event* event, GenericEvent* event2) override;
     // ------------------------------------ //
 
+    AccessFlags ExtraAccess;
+
     std::string OwnerName;
     std::string LoadedFromFile;
 

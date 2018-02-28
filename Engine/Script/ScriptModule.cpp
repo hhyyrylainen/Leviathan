@@ -29,6 +29,9 @@ ScriptModule::ScriptModule(
     // setup include resolver //
     ScriptBuilder->SetIncludeCallback(ScriptModuleIncludeCallback, this);
 
+    // Apply the default mask //
+    ScriptBuilder->GetModule()->SetAccessMask(AccessMask);
+
     ListenerDataBuilt = false;
 }
 
@@ -432,7 +435,7 @@ DLLEXPORT bool Leviathan::ScriptModule::AddScriptSegmentFromFile(const std::stri
     GUARD_LOCK();
 
     std::string expanded;
-    
+
     try {
         expanded = boost::filesystem::canonical(file).generic_string();
     } catch(const boost::filesystem::filesystem_error&) {
@@ -721,6 +724,9 @@ void Leviathan::ScriptModule::_FileChanged(
 // ------------------------------------ //
 void Leviathan::ScriptModule::_BuildTheModule(Lock& guard)
 {
+    // Apply the (possibly) updated access mask first //
+    ScriptBuilder->GetModule()->SetAccessMask(AccessMask);
+
     // Add the source files before building //
     for(size_t i = 0; i < ScriptSourceSegments.size(); i++) {
         if(ScriptBuilder->AddSectionFromMemory(ScriptSourceSegments[i]->SourceFile.c_str(),

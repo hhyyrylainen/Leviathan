@@ -175,6 +175,7 @@ else()
     "Script/ScriptNotifiers.cpp" "Script/ScriptNotifiers.h"
     "Script/ScriptRunningSetup.cpp" "Script/ScriptRunningSetup.h"
     "Script/ScriptScript.cpp" "Script/ScriptScript.h"
+    "Script/AccessMask.cpp" "Script/AccessMask.h"
     "Script/AddonTypes.h"
     "Script/ScriptCallingHelpers.h"
     "Script/CustomScriptRunHelpers.h"

@@ -3,6 +3,8 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "AccessMask.h"
+
 #include "Common/ThreadSafe.h"
 #include "ScriptArgumentsProvider.h"
 
@@ -91,6 +93,21 @@ public:
         asIScriptEngine* engine, const std::string& name, int id, const std::string& source);
     DLLEXPORT ~ScriptModule();
 
+    //! \brief Sets the access mask to be used for this script
+    //!
+    //! This only takes effect before building the module
+    DLLEXPORT inline void SetAccessMask(AccessFlags access)
+    {
+        AccessMask = access;
+    }
+
+    //! \brief Adds flags to the AccessMask
+    //! \see SetAccessMask
+    DLLEXPORT void AddAccessRight(AccessFlags newaccess)
+    {
+        AccessMask |= newaccess;
+    }
+
     //! \brief Builds the script if applicable
     //! \return The associated module or NULL if build fails
     DLLEXPORT asIScriptModule* GetModule(Lock& guard);
@@ -168,7 +185,6 @@ public:
     DLLEXPORT FORCE_INLINE bool AddScriptSegment(
         const std::string& file, int line, const std::string& code)
     {
-
         return AddScriptSegment(std::make_shared<ScriptSourceFileData>(file, line, code));
     }
 
@@ -255,6 +271,9 @@ private:
 
     //! Flag for determining if we need to update listener data
     bool ListenerDataBuilt;
+
+    //! The access flags to set to the angelscript before building it
+    AccessFlags AccessMask = DefaultAccessFlags;
 
     SCRIPTBUILDSTATE ScriptState = SCRIPTBUILDSTATE_EMPTY;
     CScriptBuilder* ScriptBuilder;

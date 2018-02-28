@@ -87,7 +87,7 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 
     // Builtins are in this access group //
     const auto initialMask = engine->SetDefaultAccessMask(
-        static_cast<AccessFlags>( ScriptAccess::Builtin));
+        static_cast<AccessFlags>(ScriptAccess::Builtin));
 
     // math functions //
     RegisterScriptMath(engine);
@@ -116,6 +116,8 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     RegisterScriptAny(engine);
 
     // All normal engine stuff is in the DefaultEngine access mask //
+    engine->SetDefaultAccessMask(
+        static_cast<AccessFlags>(ScriptAccess::DefaultEngine));
 
     // use various binding functions //
     // register global functions and classes //

@@ -94,7 +94,32 @@ bool BindComponentTypeID(asIScriptEngine* engine, const char* name, uint16_t* va
 
 bool BindComponentTypes(asIScriptEngine* engine)
 {
+    // ------------------------------------ //
+    // Position
+    if(engine->RegisterObjectType("Position", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
+    if(engine->RegisterObjectProperty("Position", "bool Marked", asOFFSET(Position, Marked)) <
+        0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+           "Position", "Float3 _Position", asOFFSET(Position, Members._Position)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+           "Position", "Float4 _Orientation", asOFFSET(Position, Members._Orientation)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(!BindComponentTypeID(engine, "Position", &PositionTYPEProxy))
+        return false;
+
+    // ------------------------------------ //
+    // Physics
     if(engine->RegisterObjectType("Physics", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -141,31 +166,18 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics", "void JumpTo(Position@ positiontosync)",
+           asMETHOD(Physics, JumpTo), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics",
+           "bool SetPosition(const Float3 &in pos, const Float4 &in orientation)",
+           asMETHOD(Physics, SetPosition), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(!BindComponentTypeID(engine, "Physics", &PhysicsTYPEProxy))
-        return false;
-
-    // ------------------------------------ //
-    // Position
-    if(engine->RegisterObjectType("Position", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectProperty("Position", "bool Marked", asOFFSET(Position, Marked)) <
-        0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectProperty(
-           "Position", "Float3 _Position", asOFFSET(Position, Members._Position)) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectProperty(
-           "Position", "Float4 _Orientation", asOFFSET(Position, Members._Orientation)) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(!BindComponentTypeID(engine, "Position", &PositionTYPEProxy))
         return false;
 
     // ------------------------------------ //

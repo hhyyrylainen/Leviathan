@@ -389,9 +389,15 @@ public:
     //! \brief Adds all applied forces together
     Float3 _GatherApplyForces(const float &mass);
 
-    //! \brief Moves the physical body to the specified position
+    //! \brief Syncs this physics body to a changed position.
+    //!
+    //! Call after making changes to Position component if you don't want this physics
+    //! body to overwrite the change on next tick.
     DLLEXPORT void JumpTo(Position &target);
 
+    //! \brief Moves the physical body to the specified position
+    //! \returns False if this fails because there currently is no physics body
+    //! for this component
     DLLEXPORT bool SetPosition(const Float3 &pos, const Float4 &orientation);
 
     //! \brief Calculates the mass matrix and applies the mass parameter to the body

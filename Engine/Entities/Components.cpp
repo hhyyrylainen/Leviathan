@@ -318,9 +318,12 @@ DLLEXPORT void Physics::SetPhysicalMaterialID(int ID)
 // ------------------------------------ //
 DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(PhysicalWorld* world)
 {
-
     if(!world || !Collision)
         return nullptr;
+
+    // Destroy old if there is one //
+    if(Body)
+        NewtonDestroyBody(Body);
 
     Body = world->CreateBodyFromCollision(Collision);
 

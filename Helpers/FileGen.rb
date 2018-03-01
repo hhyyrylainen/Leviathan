@@ -675,6 +675,14 @@ class GameWorldClass < OutputClass
         f.puts ";"
       end      
 
+      if opts.include?(:header)
+        f.write "#{export}inline const auto& #{qualifier opts}GetComponentIndex_#{c.type}()"
+
+        f.puts "{"
+        f.puts "    return Component#{c.type}.GetIndex();"
+        f.puts "}"
+      end
+      
       f.puts ""
       firstLoop = false
     }

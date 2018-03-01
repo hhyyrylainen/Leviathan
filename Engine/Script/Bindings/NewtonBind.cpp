@@ -28,9 +28,20 @@ bool BindNewtonTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("NewtonCollision", "void CompoundCollisionEndAddRemove()",
+           asFUNCTION(NewtonCompoundCollisionEndAddRemove), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("NewtonCollision",
            "void CompoundCollisionAddSubCollision(NewtonCollision@ convexCollision)",
            asFUNCTION(NewtonCompoundCollisionAddSubCollision), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("NewtonCollision",
+           "void CompoundCollisionRemoveSubCollision(NewtonCollision@ convexCollision)",
+           asFUNCTION(NewtonCompoundCollisionRemoveSubCollision), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

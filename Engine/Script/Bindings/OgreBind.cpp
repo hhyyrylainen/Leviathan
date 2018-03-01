@@ -67,7 +67,8 @@ void Vector3Proxy(void* memory, Ogre::Real x, Ogre::Real y, Ogre::Real z)
     new(memory) Ogre::Vector3(x, y, z);
 }
 
-void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child){
+void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child)
+{
     if(child)
         self->addChild(child);
 }
@@ -299,17 +300,33 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
 // ------------------------------------ //
 
 bool BindScene(asIScriptEngine* engine)
-{    
+{
     if(engine->RegisterObjectType("SceneNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // This is actually in the base
+    // These methods are actually in the base Node class
     if(engine->RegisterObjectMethod("SceneNode", "void addChild(SceneNode@ child)",
-            asFUNCTION(SceneNodeAddChildProxy), asCALL_CDECL_OBJFIRST) < 0) {
+           asFUNCTION(SceneNodeAddChildProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("SceneNode",
+           "void setPosition(const Ogre::Vector3 &in pos)",
+           asMETHODPR(Ogre::SceneNode, setPosition, (const Ogre::Vector3&), void),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SceneNode",
+            "void setOrientation(Ogre::Quaternion quat)",
+            asMETHODPR(Ogre::SceneNode, setOrientation, (Ogre::Quaternion), void),
+            asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    // ------------------------------------ //
 
     return true;
 }

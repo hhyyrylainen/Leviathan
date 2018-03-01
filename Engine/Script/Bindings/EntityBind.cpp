@@ -161,6 +161,12 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics", "float get_Mass() const",
+           asMETHOD(Physics, GetMass), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
     if(engine->RegisterObjectMethod(
            "Physics", "void Release()", asMETHOD(Physics, Release), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

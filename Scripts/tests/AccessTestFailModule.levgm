@@ -1,0 +1,11 @@
+Version = 1;
+
+
+o GameModule "AccessTestModule"{
+    t sourcefiles{
+        AccessTest1.as
+    }
+    l properties{
+
+    }
+}

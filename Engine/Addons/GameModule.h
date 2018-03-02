@@ -29,6 +29,12 @@ public:
     //! Use to release script before releasing any other objects
     DLLEXPORT void ReleaseScript();
 
+    //! \returns The script module
+    DLLEXPORT inline auto GetScriptModule()
+    {
+        return ScriptMain;
+    }
+
     // Used to actually use the module //
 
     //! Executes something on the module and returns the result. Adds the module as first
@@ -60,7 +66,7 @@ private:
     void _CallScriptListener(Event* event, GenericEvent* event2) override;
     // ------------------------------------ //
 
-    AccessFlags ExtraAccess;
+    AccessFlags ExtraAccess = 0;
 
     std::string OwnerName;
     std::string LoadedFromFile;

@@ -110,3 +110,39 @@ TEST_CASE("GameModule ExtraAccess property works", "[script][gamemodule]"){
 }
 
 
+TEST_CASE("GameModule script doesn't have all access set", "[script][gamemodule]"){
+
+    PartialEngine<false> engine;
+    // Overwrite the logger in engine
+    TestLogRequireError requireError;
+    requireError.WarningsCountAsErrors = true;
+
+    REQUIRE(Logger::Get() == &requireError);
+    
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // Filesystem required for search //
+    FileSystem filesystem;
+    REQUIRE(filesystem.Init(&engine.Log));
+
+    GameModule::pointer module;
+    REQUIRE_NOTHROW(module = GameModule::MakeShared<GameModule>(
+            "AccessTestFailModule", "GameModule test" + std::to_string(__LINE__)));
+    
+    REQUIRE(module);
+
+    REQUIRE(Logger::Get() == &requireError);
+    
+    // We just need it to compile
+    CHECK(module->Init() == false);
+
+    // It needs to have failed
+    CHECK(module->GetScriptModule() == nullptr);
+
+    // Release module //
+    module->ReleaseScript();
+}
+
+
+

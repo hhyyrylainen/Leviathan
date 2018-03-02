@@ -98,6 +98,11 @@ public:
         CHECK(ErrorOccured);
     }
 
+    void Write(const std::string &data) override {
+
+        INFO(data);
+    }
+
     void Info(const std::string &data) override {
 
         INFO(data);

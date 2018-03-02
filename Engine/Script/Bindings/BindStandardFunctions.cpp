@@ -17,6 +17,11 @@ int RoundProxy(double value)
     return static_cast<int>(std::round(value));
 }
 
+int RoundProxy2(float value)
+{
+    return static_cast<int>(std::round(value));
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -64,6 +69,11 @@ bool BindMathOperations(asIScriptEngine* engine)
     // round
     if(engine->RegisterGlobalFunction(
            "int round(double value)", asFUNCTION(RoundProxy), asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterGlobalFunction(
+            "int round(float value)", asFUNCTION(RoundProxy2), asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

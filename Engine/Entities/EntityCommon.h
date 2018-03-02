@@ -6,16 +6,16 @@
 
 // ------------------------------------ //
 
+namespace Leviathan {
 
-namespace Leviathan{
-
-    using ObjectID = int32_t;
+using ObjectID = int32_t;
 
 // TODO: start using this everywhere
 constexpr ObjectID NULL_OBJECT = 0;
-}
+
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
-using Leviathan::ObjectID;
 using Leviathan::NULL_OBJECT;
+using Leviathan::ObjectID;
 #endif

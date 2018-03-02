@@ -1150,6 +1150,16 @@ END
     @ComponentTypes.each{|c|
       str += genComponentBinding c
     }
+
+    str += "\n"
+
+    @Systems.each{|s|
+      if s.VisibleToScripts
+        str += %{if(engine->RegisterObjectMethod(classname, "#{s.Type}@ Get#{s.Type}()",\n} +
+               %{asMETHOD(WorldType, Get#{s.Type}), asCALL_THISCALL) < 0)\n} +
+               "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+      end
+    }
     
     str
   end
@@ -1418,11 +1428,12 @@ class EntityComponent
 end
 
 class EntitySystem
-  attr_reader :Type, :NodeComponents, :RunTick, :RunRender, :Init, :Release, :NoState
+  attr_reader :Type, :NodeComponents, :RunTick, :RunRender, :Init, :Release, :NoState,
+              :VisibleToScripts
 
   # Leave nodeComponens empty if not using combined nodes
   def initialize(type, nodeComponents=[], runtick: nil, runrender: nil, init: nil, 
-                 release: nil, nostate: nil)
+                 release: nil, nostate: nil, visibletoscripts: false)
     @Type = type
     @NodeComponents = nodeComponents
     @RunTick = runtick
@@ -1431,6 +1442,7 @@ class EntitySystem
     @Release = release
     # If NoState is true then this doesn't hold nodes and .Clear() isn't called on this
     @NoState = nostate
+    @VisibleToScripts = visibletoscripts
 
     if @Init
       raise "wrong type" unless @Init.is_a? Array

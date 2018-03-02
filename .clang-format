@@ -1,5 +1,5 @@
 ﻿---
-# Language: Cpp
+Language: Cpp
 AccessModifierOffset: '-4'
 AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: 'false'
@@ -61,7 +61,6 @@ IndentCaseLabels: 'false'
 IndentWidth: '4'
 IndentWrappedFunctionNames: 'true'
 KeepEmptyLinesAtTheStartOfBlocks: 'true'
-Language: Cpp
 MaxEmptyLinesToKeep: '4'
 NamespaceIndentation: None
 PointerAlignment: Left
@@ -72,6 +71,8 @@ SpaceAfterCStyleCast: 'false'
 SpaceAfterTemplateKeyword: 'false'
 SpaceBeforeAssignmentOperators: 'true'
 SpaceBeforeParens: Never
+# This is also a new setting not yet available
+# SpaceBeforeRangeBasedForLoopColon: 'true'
 SpaceInEmptyParentheses: 'false'
 SpacesBeforeTrailingComments: '1'
 SpacesInAngles: 'false'

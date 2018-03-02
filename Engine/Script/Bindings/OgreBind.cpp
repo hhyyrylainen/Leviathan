@@ -294,6 +294,21 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 xAxis() const",
+            asMETHOD(Ogre::Quaternion, xAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 yAxis() const",
+            asMETHOD(Ogre::Quaternion, yAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 zAxis() const",
+            asMETHOD(Ogre::Quaternion, zAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 

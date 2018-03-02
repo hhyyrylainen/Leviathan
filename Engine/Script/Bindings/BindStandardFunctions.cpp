@@ -4,6 +4,7 @@
 #include "Define.h"
 
 #include <algorithm>
+#include <cmath>
 #include <inttypes.h>
 
 using namespace Leviathan;
@@ -11,6 +12,10 @@ using namespace Leviathan;
 
 // Proxies etc.
 // ------------------------------------ //
+int RoundProxy(double value)
+{
+    return static_cast<int>(std::round(value));
+}
 
 // ------------------------------------ //
 // Start of the actual bind
@@ -40,17 +45,25 @@ bool BindMathOperations(asIScriptEngine* engine)
     // ------------------------------------ //
     // max
     if(engine->RegisterGlobalFunction(
-            "const float & max(const float &in a, const float &in b)",
-            asFUNCTIONPR(std::max<float>, (const float&, const float&), const float&),
-            asCALL_CDECL) < 0) {
+           "const float & max(const float &in a, const float &in b)",
+           asFUNCTIONPR(std::max<float>, (const float&, const float&), const float&),
+           asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterGlobalFunction(
-            "const int64 & max(const int64 &in a, const int64 &in b)",
-            asFUNCTIONPR(std::max<int64_t>, (const int64_t&, const int64_t&), const int64_t&),
-            asCALL_CDECL) < 0) {
+           "const int64 & max(const int64 &in a, const int64 &in b)",
+           asFUNCTIONPR(std::max<int64_t>, (const int64_t&, const int64_t&), const int64_t&),
+           asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // round
+    if(engine->RegisterGlobalFunction(
+           "int round(double value)", asFUNCTION(RoundProxy), asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

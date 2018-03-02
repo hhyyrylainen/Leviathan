@@ -192,6 +192,17 @@ DLLEXPORT void Physics::SetVelocity(const Float3& velocities)
     NewtonBodySetVelocity(Body, &velocities.X);
 }
 
+DLLEXPORT void Physics::ClearVelocity(){
+
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
+
+    Float3 zeroVector(0, 0, 0);
+    NewtonBodySetForce(Body, &zeroVector.X);
+    NewtonBodySetTorque(Body, &zeroVector.X);
+    NewtonBodySetVelocity(Body, &zeroVector.X);
+}
+
 DLLEXPORT Float3 Physics::GetVelocity() const
 {
 

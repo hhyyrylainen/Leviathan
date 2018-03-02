@@ -353,6 +353,9 @@ public:
     //! \brief Sets absolute velocity of the object
     DLLEXPORT void SetVelocity(const Float3& velocities);
 
+    //! \brief Clears velocity and last frame forces (but not the applied force list)
+    DLLEXPORT void ClearVelocity();
+
     //! \brief Gets the absolute velocity
     DLLEXPORT Float3 GetVelocity() const;
 

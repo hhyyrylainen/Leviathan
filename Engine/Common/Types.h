@@ -203,6 +203,8 @@ struct StartEndIndex {
 		DLLEXPORT void SetData(const int &data){ X = data; Y = data; };
 		DLLEXPORT void SetData(const int &data1, const int &data2){ X = data1; Y = data2; };
 
+        VALUE_TYPE(Int2);
+
 		int X, Y;
 	};
 
@@ -256,6 +258,9 @@ struct StartEndIndex {
         DLLEXPORT int AddAllTogether() const {
             return X + Y + Z;
         }
+
+        VALUE_TYPE(Int3);
+        
 		// ------------------------------------ //
 
 		int X, Y, Z;
@@ -315,7 +320,7 @@ struct StartEndIndex {
 
 	struct Float2{
 	public:
-		DLLEXPORT inline Float2(){};
+		DLLEXPORT inline Float2(){ X = Y = 0;};
 		DLLEXPORT inline Float2(float x, float y){
 			X = x;
 			Y = y;
@@ -489,13 +494,15 @@ struct StartEndIndex {
 		//	return D3DXVECTOR2(X, Y);
 		//}
 
+        VALUE_TYPE(Float2);
 
 		// data //
 		float X, Y;
 	};
 	struct Float3{
 	public:
-		DLLEXPORT Float3(){};
+        // Needed for returning from scripts
+		DLLEXPORT Float3(){X = Y = Z = 0;};
 		DLLEXPORT Float3(float x, float y, float z){
 			X = x;
 			Y = y;
@@ -727,6 +734,7 @@ struct StartEndIndex {
     #endif // LEVIATHAN_USING_OGRE
 		// ------------------------------------ //
 
+        VALUE_TYPE(Float3);
 
 		float X, Y, Z;
 
@@ -737,7 +745,8 @@ struct StartEndIndex {
 	struct Float4
 	{
 	public:
-		DLLEXPORT Float4(){};
+        // Needed for returning from scripts
+		DLLEXPORT Float4(){X = Y = Z = W = 0;};
 		DLLEXPORT Float4(float f1, float f2, float f3, float f4){
 			X = f1;
 			Y = f2;
@@ -1062,6 +1071,7 @@ struct StartEndIndex {
             //return Float4();
 		}
 
+        VALUE_TYPE(Float4);
 
 		// ----------------- casts ------------------- //
 

@@ -683,6 +683,40 @@ TEST_CASE("Passing factory to application and getting results and returning scri
     ScriptExec = nullptr;
 }
 
+TEST_CASE("Pass by value objects to scripts work", "[script]")
+{
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "Float3 PassFloat3(Float3 value){\n"
+        "return value + Float3(1, 0, 2);\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup("PassFloat3");
+
+    // Causes errors as this has to release
+    auto returned = exec.RunScript<Float3>(mod, ssetup, Float3(1, 2, 3));
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value == Float3(2, 2, 5));
+
+
+    mod->DeleteThisModule();
+}
+
 
 // asIScriptObject* CurrentASObject = nullptr;
 // asUINT CurrentASObjectID = 0;

@@ -50,6 +50,7 @@ private:
 //! \brief Handles ScriptModule creation and AngelScript code execution
 class ScriptExecutor {
     friend CustomScriptRun;
+
 public:
     DLLEXPORT ScriptExecutor();
     DLLEXPORT ~ScriptExecutor();
@@ -610,7 +611,13 @@ private:
                 }
 
                 // Rely on 0 being a valid value for pointer etc.
-                return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, 0);
+                if constexpr(std::is_pointer_v<ReturnT> || !std::is_class_v<ReturnT>) {
+                    return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, 0);
+                } else {
+
+                    // Default constructor needs to be available
+                    return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Success, ReturnT());
+                }
             }
         }
 
@@ -845,7 +852,6 @@ private:
     DLLEXPORT asIScriptContext* _GetContextForExecution();
 
 protected:
-    
     //! \brief Called after a script has been executed and the context is no longer needed
     //! \note Also called from CustomScriptRun
     DLLEXPORT void _DoneWithContext(asIScriptContext* context);

@@ -135,8 +135,14 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics",
+           "void SetVelocity(const Float3 &in velocity) const",
+           asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Physics", "Float3 ClearVelocity() const",
-            asMETHOD(Physics, ClearVelocity), asCALL_THISCALL) < 0) {
+           asMETHOD(Physics, ClearVelocity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

@@ -48,7 +48,10 @@ worldClass = GameWorldClass.new(
                                            nonMethodParam: true),
                               Variable.new("world", "GameWorld*", noRef: true),
                               Variable.new("updatepos", "Position",
-                                           noConst: true),
+                                           noConst: true,
+                                           angelScriptUseInstead:
+                                             Variable.new("updatepos", "Position*",
+                                                          noRef: true)),
                               Variable.new("updatesendable", "Sendable*",
                                            noRef: true)
                             ], usedatastruct: true)]),

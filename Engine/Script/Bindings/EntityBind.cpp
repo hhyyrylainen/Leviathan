@@ -256,6 +256,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
     if(!BindComponentTypeID(engine, "Model", &ModelTYPEProxy))
         return false;
 
+    if(engine->RegisterObjectProperty(
+           "Model", "Ogre::Item@ GraphicalObject", asOFFSET(Model, GraphicalObject)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // ------------------------------------ //
     // BoxGeometry
     if(engine->RegisterObjectType("BoxGeometry", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
@@ -319,6 +324,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
 
     if(!BindComponentTypeID(engine, "Plane", &PlaneTYPEProxy))
         return false;
+
+    if(engine->RegisterObjectProperty(
+           "Plane", "Ogre::Item@ GraphicalObject", asOFFSET(Plane, GraphicalObject)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }

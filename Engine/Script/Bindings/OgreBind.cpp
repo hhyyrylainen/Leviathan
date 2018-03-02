@@ -6,6 +6,7 @@
 
 #include "OgreColourValue.h"
 #include "OgreRoot.h"
+#include "OgreItem.h"
 
 // For Float type conversions
 #include "Common/Types.h"
@@ -71,6 +72,12 @@ void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child)
 {
     if(child)
         self->addChild(child);
+}
+
+void ItemSetMaterialProxy(Ogre::Item* self, const std::string& material)
+{
+    if(self)
+        self->setMaterialName(material);
 }
 
 // This is needed because directly registering
@@ -295,17 +302,17 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Quaternion", "Vector3 xAxis() const",
-            asMETHOD(Ogre::Quaternion, xAxis), asCALL_THISCALL) < 0) {
+           asMETHOD(Ogre::Quaternion, xAxis), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    
+
     if(engine->RegisterObjectMethod("Quaternion", "Vector3 yAxis() const",
-            asMETHOD(Ogre::Quaternion, yAxis), asCALL_THISCALL) < 0) {
+           asMETHOD(Ogre::Quaternion, yAxis), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("Quaternion", "Vector3 zAxis() const",
-            asMETHOD(Ogre::Quaternion, zAxis), asCALL_THISCALL) < 0) {
+           asMETHOD(Ogre::Quaternion, zAxis), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -333,15 +340,23 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("SceneNode",
-            "void setOrientation(Ogre::Quaternion quat)",
-            asMETHODPR(Ogre::SceneNode, setOrientation, (Ogre::Quaternion), void),
-            asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("SceneNode", "void setOrientation(Ogre::Quaternion quat)",
+           asMETHODPR(Ogre::SceneNode, setOrientation, (Ogre::Quaternion), void),
+           asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
 
     // ------------------------------------ //
+    // Item
+    if(engine->RegisterObjectType("Item", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Item", "void setMaterial(const string &in materialname)",
+            asFUNCTION(ItemSetMaterialProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }

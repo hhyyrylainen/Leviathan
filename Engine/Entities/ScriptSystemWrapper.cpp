@@ -20,6 +20,8 @@ DLLEXPORT ScriptSystemWrapper::ScriptSystemWrapper(
 
 DLLEXPORT ScriptSystemWrapper::~ScriptSystemWrapper()
 {
+    _ReleaseCachedFunctions();
+
     if(ImplementationObject) {
         LOG_ERROR("ScriptSystemWrapper: Release has not been called before destructor");
         ImplementationObject->Release();
@@ -76,10 +78,10 @@ DLLEXPORT void ScriptSystemWrapper::Release()
         return;
     }
 
+    _ReleaseCachedFunctions();
+
     ImplementationObject->Release();
     ImplementationObject = nullptr;
-    RunMethod = nullptr;
-    CreateAndDestroyNodesMethod = nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT void ScriptSystemWrapper::Run()
@@ -88,6 +90,7 @@ DLLEXPORT void ScriptSystemWrapper::Run()
     if(!RunMethod) {
 
         RunMethod = ImplementationObject->GetObjectType()->GetMethodByName("Run");
+        RunMethod->AddRef();
     }
 
     if(!RunMethod) {
@@ -115,6 +118,7 @@ DLLEXPORT void ScriptSystemWrapper::CreateAndDestroyNodes()
 
         CreateAndDestroyNodesMethod =
             ImplementationObject->GetObjectType()->GetMethodByName("CreateAndDestroyNodes");
+        CreateAndDestroyNodesMethod->AddRef();
     }
 
     if(!CreateAndDestroyNodesMethod) {
@@ -155,6 +159,20 @@ DLLEXPORT void ScriptSystemWrapper::Clear()
 
         LOG_ERROR("Script system(" + Name + "): failed to call Clear");
         return;
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void ScriptSystemWrapper::_ReleaseCachedFunctions()
+{
+
+    if(RunMethod) {
+        RunMethod->Release();
+        RunMethod = nullptr;
+    }
+
+    if(CreateAndDestroyNodesMethod) {
+        CreateAndDestroyNodesMethod->Release();
+        CreateAndDestroyNodesMethod = nullptr;
     }
 }
 // ------------------------------------ //
@@ -403,11 +421,11 @@ DLLEXPORT void Leviathan::ScriptSystemNodeHelper(
 
     if(!context)
         throw InvalidState(
-            "ScriptSystemNodeHelper: not called from a script function (no active context");
+            "ScriptSystemNodeHelper: not called from a script function (no active context)");
 
     if(!world) {
 
-        context->SetException("world reference is null");
+        context->SetException("ScriptSystemNodeHelper: world reference is null");
         return;
     }
 

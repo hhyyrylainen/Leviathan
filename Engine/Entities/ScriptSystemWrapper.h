@@ -73,6 +73,9 @@ protected:
     //! Helper for reducing copy pasting between the functions that don't need extra parameters
     DLLEXPORT bool _CallMethodOnUs(const std::string& methodname);
 
+    //! Must be called to not leak the cached function pointers (RunMethod,
+    //! CreateAndDestroyNodesMethod)
+    DLLEXPORT void _ReleaseCachedFunctions();
 
 private:
     //! This is the actual implementation of this system in angelscript

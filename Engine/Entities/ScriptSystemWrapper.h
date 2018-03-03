@@ -67,6 +67,8 @@ public:
 
     DLLEXPORT void Clear();
 
+    const std::string Name;
+
 protected:
     //! Helper for reducing copy pasting between the functions that don't need extra parameters
     DLLEXPORT bool _CallMethodOnUs(const std::string& methodname);

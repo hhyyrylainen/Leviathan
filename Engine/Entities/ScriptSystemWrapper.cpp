@@ -11,6 +11,7 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT ScriptSystemWrapper::ScriptSystemWrapper(
     const std::string& name, asIScriptObject* impl) :
+    Name(name),
     ImplementationObject(impl)
 {
     if(!ImplementationObject)
@@ -38,7 +39,7 @@ DLLEXPORT void ScriptSystemWrapper::Init(GameWorld* world)
 
     if(!func) {
 
-        LOG_ERROR("Script system: failed to find Init method on as object");
+        LOG_ERROR("Script system(" + Name + "): failed to find Init method on as object");
         return;
     }
 
@@ -49,7 +50,7 @@ DLLEXPORT void ScriptSystemWrapper::Init(GameWorld* world)
 
     if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
-        LOG_ERROR("Script system: failed to call Init");
+        LOG_ERROR("Script system(" + Name + "): failed to call Init");
         return;
     }
 }
@@ -60,7 +61,7 @@ DLLEXPORT void ScriptSystemWrapper::Release()
 
     if(!func) {
 
-        LOG_ERROR("Script system: failed to find Release method on as object");
+        LOG_ERROR("Script system(" + Name + "): failed to find Release method on as object");
         return;
     }
 
@@ -71,7 +72,7 @@ DLLEXPORT void ScriptSystemWrapper::Release()
 
     if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
-        LOG_ERROR("Script system: failed to call Release");
+        LOG_ERROR("Script system(" + Name + "): failed to call Release");
         return;
     }
 
@@ -91,7 +92,7 @@ DLLEXPORT void ScriptSystemWrapper::Run()
 
     if(!RunMethod) {
 
-        LOG_ERROR("Script system: failed to find Run method on as object");
+        LOG_ERROR("Script system(" + Name + "): failed to find Run method on as object");
         return;
     }
 
@@ -102,7 +103,7 @@ DLLEXPORT void ScriptSystemWrapper::Run()
 
     if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
-        LOG_ERROR("Script system: failed to call Run");
+        LOG_ERROR("Script system(" + Name + "): failed to call Run");
         return;
     }
 }
@@ -118,7 +119,8 @@ DLLEXPORT void ScriptSystemWrapper::CreateAndDestroyNodes()
 
     if(!CreateAndDestroyNodesMethod) {
 
-        LOG_ERROR("Script system: failed to find CreateAndDestroyNodes method on as object");
+        LOG_ERROR("Script system(" + Name +
+                  "): failed to find CreateAndDestroyNodes method on as object");
         return;
     }
 
@@ -129,7 +131,7 @@ DLLEXPORT void ScriptSystemWrapper::CreateAndDestroyNodes()
 
     if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
-        LOG_ERROR("Script system: failed to call CreateAndDestroyNodes");
+        LOG_ERROR("Script system(" + Name + "): failed to call CreateAndDestroyNodes");
         return;
     }
 }
@@ -140,7 +142,7 @@ DLLEXPORT void ScriptSystemWrapper::Clear()
 
     if(!func) {
 
-        LOG_ERROR("Script system: failed to find Clear method on as object");
+        LOG_ERROR("Script system(" + Name + "): failed to find Clear method on as object");
         return;
     }
 
@@ -151,7 +153,7 @@ DLLEXPORT void ScriptSystemWrapper::Clear()
 
     if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
-        LOG_ERROR("Script system: failed to call Clear");
+        LOG_ERROR("Script system(" + Name + "): failed to call Clear");
         return;
     }
 }

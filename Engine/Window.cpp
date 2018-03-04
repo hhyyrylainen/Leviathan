@@ -72,6 +72,13 @@ DLLEXPORT Leviathan::Window::~Window(){
         SDL_SetRelativeMouseMode(SDL_FALSE);
     }
 
+    // Un fullscreen to make sure nothing is screwed up
+    if(SDL_GetWindowFlags(SDLWindow) & SDL_WINDOW_FULLSCREEN_DESKTOP){
+
+        LOG_INFO("Window: unfullscreened before quit");
+        SDL_SetWindowFullscreen(SDLWindow, 0);
+    }
+
     LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
         "GLX plugin uninstall");
     //SDL_DestroyWindow(SDLWindow);

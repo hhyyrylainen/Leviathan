@@ -1042,8 +1042,12 @@ DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow(){
 
     AppDef winparams;
 
-
-    winparams.SetWindowDetails(WindowDataDetails("My Second window", 1280, 720, true, true,
+    winparams.SetWindowDetails(WindowDataDetails("My Second window", 1280, 720, "no",
+            Define->GetWindowDetails().VSync,
+            // Opens on same display as the other window
+            // TODO: open on next display
+            Define->GetWindowDetails().DisplayNumber,
+            Define->GetWindowDetails().FSAA, true,
 #ifdef _WIN32
             NULL,
 #endif            

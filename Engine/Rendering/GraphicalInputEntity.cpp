@@ -83,34 +83,42 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(Graphics* window
 
     const WindowDataDetails& WData = windowproperties->GetWindowDetails();
 
-    // get vsync (this is rather expensive so it is stored) //
-    bool vsync = windowproperties->GetVSync();
-
     // set some rendering specific parameters //
     Ogre::NameValuePairList WParams;
 
     // variables //
-    int FSAA;
-    // get variables from engine configuration file //
-    ObjectFileProcessor::LoadValueFromNamedVars<int>(windowproperties->GetValues(), "FSAA",
-        FSAA, 4, Logger::Get(), "Graphics: Init:");
-
-    Ogre::String fsaastr = Convert::ToString(FSAA);
+    Ogre::String fsaastr = Convert::ToString(WData.FSAA);
 
     WParams["FSAA"] = fsaastr;
-    WParams["vsync"] = vsync ? "true": "false";
+    WParams["vsync"] = WData.VSync ? "true": "false";
 
     Ogre::String wcaption = WData.Title;
 
+    int extraFlags = 0;
+
+    if(WData.FullScreen == "no" || WData.FullScreen == "0"){
+    } else if(WData.FullScreen == "fullscreendesktop"){
+        extraFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    } else if(WData.FullScreen == "fullscreenvideomode"){
+        extraFlags |= SDL_WINDOW_FULLSCREEN;
+    } else {
+
+        LOG_ERROR("GraphicalInputEntity: invalid fullscreen value: " + WData.FullScreen);
+    }
+
+    // TODO: On Apple's OS X you must set the NSHighResolutionCapable
+    // Info.plist property to YES, otherwise you will not receive a
+    // High DPI OpenGL
+    // canvas. https://wiki.libsdl.org/SDL_CreateWindow
 
     SDL_Window* sdlWindow = SDL_CreateWindow(
         WData.Title.c_str(), 
-        SDL_WINDOWPOS_UNDEFINED_DISPLAY(0), 
-        SDL_WINDOWPOS_UNDEFINED_DISPLAY(0), 
+        SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber), 
+        SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber), 
         WData.Width, WData.Height,
         // This seems to cause issues on Windows
         //SDL_WINDOW_OPENGL | 
-        SDL_WINDOW_RESIZABLE
+        SDL_WINDOW_RESIZABLE | extraFlags
     );
 
     // SDL_WINDOW_FULLSCREEN_DESKTOP works so much better than

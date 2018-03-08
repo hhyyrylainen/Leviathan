@@ -978,6 +978,14 @@ struct StartEndIndex {
 			W = quat.w;
 		}
 
+        DLLEXPORT Float4(const Ogre::ColourValue &colour){
+			// copy values //
+			X = colour.r;
+			Y = colour.g;
+			Z = colour.b;
+			W = colour.a;
+		}
+
 		DLLEXPORT inline operator Ogre::Quaternion() const{
 
 			return Ogre::Quaternion(W, X, Y, Z);

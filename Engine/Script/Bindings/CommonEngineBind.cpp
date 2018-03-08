@@ -179,6 +179,8 @@ static void InvokeProxy(Engine* obj, asIScriptFunction* callback)
 // ------------------------------------ //
 static float PIProxy = PI;
 
+static float EPSILONProxy = EPSILON;
+
 static int TICKSPEEDProxy = TICKSPEED;
 
 
@@ -719,6 +721,11 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
     // ------------------------------------ //
     // Global vars
     if(engine->RegisterGlobalProperty("const float PI", &PIProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const float EPSILON", &EPSILONProxy) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

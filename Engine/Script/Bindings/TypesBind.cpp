@@ -175,7 +175,8 @@ void Float4QuaternionProxy(void* memory, const Ogre::Quaternion& quat)
     new(memory) Float4(quat);
 }
 
-Float4 ConvertQuaternionToFloat4(Ogre::Quaternion* self){
+Float4 ConvertQuaternionToFloat4(Ogre::Quaternion* self)
+{
 
     return Float4(*self);
 }
@@ -331,8 +332,23 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Float3", "float HAddAbs() const",
+           asMETHOD(Float3, HAddAbs), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod(
-           "Float3", "float HAddAbs()", asMETHOD(Float3, HAddAbs), asCALL_THISCALL) < 0) {
+           "Float3", "float HAdd() const", asMETHOD(Float3, HAdd), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "float LengthSquared() const",
+           asMETHOD(Float3, LengthSquared), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "float Dot(const Float3 &in val) const",
+           asMETHOD(Float3, Dot), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -444,8 +460,8 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalProperty("const Float4 IdentityQuaternion",
-            IdentityQuaternion) < 0) {
+    if(engine->RegisterGlobalProperty("const Float4 IdentityQuaternion", IdentityQuaternion) <
+        0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -616,19 +632,19 @@ bool BindOgreConversions(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectBehaviour("Ogre::Quaternion", asBEHAVE_CONSTRUCT,
-            "void f(const Float4 &in vector)", asFUNCTION(QuaternionFloat4Proxy),
-            asCALL_CDECL_OBJFIRST) < 0) {
+           "void f(const Float4 &in vector)", asFUNCTION(QuaternionFloat4Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
-            "void f(const Ogre::Quaternion &in quat)", asFUNCTION(Float4QuaternionProxy),
-            asCALL_CDECL_OBJFIRST) < 0) {
+           "void f(const Ogre::Quaternion &in quat)", asFUNCTION(Float4QuaternionProxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("Ogre::Quaternion", "Float4 opImplConv() const",
-            asFUNCTION(ConvertQuaternionToFloat4), asCALL_CDECL_OBJFIRST) < 0) {
+           asFUNCTION(ConvertQuaternionToFloat4), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

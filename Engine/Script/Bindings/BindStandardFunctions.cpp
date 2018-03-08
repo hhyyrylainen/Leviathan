@@ -22,6 +22,12 @@ int RoundProxy2(float value)
     return static_cast<int>(std::round(value));
 }
 
+float SignProxy(float value)
+{
+
+    return value < 0 ? -1 : 1;
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -73,10 +79,19 @@ bool BindMathOperations(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
     if(engine->RegisterGlobalFunction(
-            "int round(float value)", asFUNCTION(RoundProxy2), asCALL_CDECL) < 0) {
+           "int round(float value)", asFUNCTION(RoundProxy2), asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    // ------------------------------------ //
+    // sign
+    if(engine->RegisterGlobalFunction(
+           "float sign(float value)", asFUNCTION(SignProxy), asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 
     return true;
 }

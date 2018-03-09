@@ -214,7 +214,7 @@ DLLEXPORT Float3 Physics::GetVelocity() const
     return vel;
 }
 
-DLLEXPORT Float3 Physics::GetTorque()
+DLLEXPORT Float3 Physics::GetTorque() const
 {
 
     if(!Body)

@@ -364,7 +364,7 @@ public:
     DLLEXPORT void SetTorque(const Float3& torque);
 
     //! \brief Gets the torque of the body (rotational velocity)
-    DLLEXPORT Float3 GetTorque();
+    DLLEXPORT Float3 GetTorque() const;
 
     //! \brief Sets the physical material ID of this object
     //! \note You have to fetch the ID from the world's corresponding PhysicalMaterialManager

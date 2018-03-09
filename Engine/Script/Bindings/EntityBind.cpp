@@ -146,6 +146,16 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics", "Float3 GetTorque() const",
+            asMETHODPR(Physics, GetTorque, () const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "void SetTorque(const Float3 &in torque)",
+            asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Physics", "NewtonBody@ get_Body() const",
            asMETHOD(Physics, GetBody), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -191,6 +201,12 @@ bool BindComponentTypes(asIScriptEngine* engine)
     if(engine->RegisterObjectMethod("Physics",
            "bool SetPosition(const Float3 &in pos, const Float4 &in orientation)",
            asMETHOD(Physics, SetPosition), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics",
+           "void GiveImpulse(const Float3 &in deltaspeed, const Float3 &in point = Float3(0))",
+           asMETHOD(Physics, GiveImpulse), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

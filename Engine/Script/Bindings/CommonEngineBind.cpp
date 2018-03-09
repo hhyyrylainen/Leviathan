@@ -183,6 +183,9 @@ static float EPSILONProxy = EPSILON;
 
 static int TICKSPEEDProxy = TICKSPEED;
 
+static float DEGREES_TO_RADIANSProxy = DEGREES_TO_RADIANS;
+static float RADIANS_TO_DEGREESProxy = RADIANS_TO_DEGREES;
+
 
 // ------------------------------------ //
 // Start of the actual bind
@@ -726,6 +729,18 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
     }
 
     if(engine->RegisterGlobalProperty("const float EPSILON", &EPSILONProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty(
+           "const float DEGREES_TO_RADIANS", &DEGREES_TO_RADIANSProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty(
+           "const float RADIANS_TO_DEGREES", &RADIANS_TO_DEGREESProxy) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

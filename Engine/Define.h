@@ -58,6 +58,7 @@ constexpr auto MICROSECONDS_IN_SECOND = 1000000;
 constexpr float PI = 3.14159265f;
 #endif //PI
 constexpr float DEGREES_TO_RADIANS = PI/180.f;
+constexpr float RADIANS_TO_DEGREES = 180.f/PI;
 constexpr float EPSILON = 0.00000001f;
 }
 

@@ -32,6 +32,13 @@
 
     To convert a character in a string back to a string call `CharacterToString`
 
+    \code
+    string stringCode = "my string";
+    for(uint i = 0; i < stringCode.length(); ++i){
+        const auto letter = CharacterToString(stringCode[i]);
+    }
+    \endcode
+
     \note \code auto c = str[1]; string newStr = "" + c; \endcode doesn't work
 
     \section angelscript_reference_list Script class references

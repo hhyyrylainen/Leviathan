@@ -1,6 +1,8 @@
 #include "Engine.h"
 #include "../PartialEngine.h"
 
+#include "Utility/Random.h"
+
 #include "catch.hpp"
 
 using namespace Leviathan;
@@ -126,3 +128,14 @@ TEST_CASE("Invokes work from scripts", "[engine][script]"){
 }
 
 
+TEST_CASE("Random gives values between the correct things", "[engine]"){
+
+    Random random;
+
+    for(int i = 0; i < 20; ++i){
+        float value = random.GetNumber(0.f, 13.f);
+
+        if(value < 0.f || value > 13.f)
+            CHECK(false);
+    }
+}

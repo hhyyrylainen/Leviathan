@@ -532,9 +532,10 @@ TEST_CASE("Documentation samples compile", "[script]")
     CHECK(result.Result == SCRIPT_RUN_RESULT::Success);
 }
 
-TEST_CASE("Script bound standard functions work correctly", "[script]")
+TEST_CASE("Script bound random (not tested elsewhere) functions work correctly", "[script]")
 {
     PartialEngine<false> engine;
+    engine.InitRandomForTest();
 
     IDFactory ids;
     ScriptExecutor exec;
@@ -547,10 +548,16 @@ TEST_CASE("Script bound standard functions work correctly", "[script]")
 
     REQUIRE(module != nullptr);
 
-    ScriptRunningSetup ssetup;
-    ssetup.SetEntrypoint("TestFunction1");
+    ScriptRunningSetup ssetup("TestFunction1");
 
     auto returned = exec.RunScript<bool>(mod, ssetup);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value == true);
+
+    ssetup.SetEntrypoint("TestFunction2");
+
+    returned = exec.RunScript<bool>(mod, ssetup);
 
     CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
     CHECK(returned.Value == true);

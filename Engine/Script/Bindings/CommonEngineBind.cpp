@@ -422,12 +422,12 @@ bool BindRandom(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Random", "int GetNumber(float min, float max)",
+    if(engine->RegisterObjectMethod("Random", "float GetNumber(float min, float max)",
            asMETHODPR(Random, GetNumber, (float, float), float), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Random", "int GetFloat(float min, float max)",
+    if(engine->RegisterObjectMethod("Random", "float GetFloat(float min, float max)",
            asMETHOD(Random, GetFloat), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

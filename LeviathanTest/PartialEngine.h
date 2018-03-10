@@ -14,6 +14,8 @@
 #include "OgreRoot.h"
 #include "OgreLogManager.h"
 
+#include "Utility/Random.h"
+
 #include <string>
 
 #include "catch/catch.hpp"
@@ -187,6 +189,16 @@ public:
         SAFE_RELEASEDEL(MainEvents);
 
         SAFE_DELETE(IDDefaultInstance);
+
+        SAFE_DELETE(MainRandom);
+    }
+
+    //! Creates random support
+    void InitRandomForTest(){
+
+        // Always same number to have reproducible tests
+        MainRandom = new Random(42);
+        MainRandom->SetAsMain();
     }
 
     void ResetClock(int mstoset){

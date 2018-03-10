@@ -18,3 +18,29 @@ bool TestFunction1(){
     return true;
 }
 
+float MAX_CHANCE_SCORE = 13;
+
+// Tests small engine parts
+bool TestFunction2(){
+
+    {
+        int i = GetEngine().GetRandom().GetNumber(0, 13);
+        
+        if(i < 0 || i > 13){
+            LOG_WRITE("invalid value, i = " + i);
+            return false;
+        }
+    }
+
+    {
+        float i = GetEngine().GetRandom().GetNumber(0.f, MAX_CHANCE_SCORE);
+        
+        if(i < 0.f || i > MAX_CHANCE_SCORE){
+            LOG_WRITE("invalid value, i = " + i);
+            return false;
+        }
+    }
+    
+    return true;
+}
+

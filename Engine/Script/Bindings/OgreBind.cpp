@@ -5,8 +5,8 @@
 #include "Logger.h"
 
 #include "OgreColourValue.h"
-#include "OgreRoot.h"
 #include "OgreItem.h"
+#include "OgreRoot.h"
 
 // For Float type conversions
 #include "Common/Types.h"
@@ -72,6 +72,13 @@ void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child)
 {
     if(child)
         self->addChild(child);
+}
+
+void SceneNodeRemoveFromParent(Ogre::SceneNode* self)
+{
+    Ogre::SceneNode* parent = self->getParentSceneNode();
+    if(parent)
+        parent->removeChild(self);
 }
 
 void ItemSetMaterialProxy(Ogre::Item* self, const std::string& material)
@@ -192,6 +199,11 @@ bool BindMatrix4(asIScriptEngine* engine)
 
     if(engine->RegisterObjectBehaviour("Matrix4", asBEHAVE_CONSTRUCT, "void f()",
            asFUNCTION(MatrixProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Matrix4", "void setTrans(const Vector3 &in trans)",
+           asMETHOD(Ogre::Matrix4, setTrans), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -333,6 +345,12 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    // New helper method
+    if(engine->RegisterObjectMethod("SceneNode", "void removeFromParent()",
+            asFUNCTION(SceneNodeRemoveFromParent), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
     if(engine->RegisterObjectMethod("SceneNode",
            "void setPosition(const Ogre::Vector3 &in pos)",
            asMETHODPR(Ogre::SceneNode, setPosition, (const Ogre::Vector3&), void),
@@ -354,7 +372,7 @@ bool BindScene(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Item", "void setMaterial(const string &in materialname)",
-            asFUNCTION(ItemSetMaterialProxy), asCALL_CDECL_OBJFIRST) < 0) {
+           asFUNCTION(ItemSetMaterialProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

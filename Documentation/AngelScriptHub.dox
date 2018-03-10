@@ -30,6 +30,10 @@
 
     \subpage eventinscripts Adding a new event type to AngelScript
 
+    To convert a character in a string back to a string call `CharacterToString`
+
+    \note \code auto c = str[1]; string newStr = "" + c; \endcode doesn't work
+
     \section angelscript_reference_list Script class references
     
     \subpage angelscript_events

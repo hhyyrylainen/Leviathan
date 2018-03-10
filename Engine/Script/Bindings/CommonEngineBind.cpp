@@ -81,6 +81,20 @@ void AngelScriptAssertWrapper(asIScriptGeneric* gen)
     ctx->SetException(("Assertion failed: " + message).c_str());
 }
 
+//! \brief Prints current angelscript callstack
+void PrintASCallStack()
+{
+    asIScriptContext* ctx = asGetActiveContext();
+
+    if(!ctx) {
+
+        LOG_ERROR("PrintASCallStack couldn't retrieve active context");
+        return;
+    }
+
+    ScriptExecutor::PrintCallstack(ctx, *Logger::Get());
+}
+
 // Event
 GenericEvent* WrapperGenericEventFactory(const std::string& name)
 {
@@ -718,6 +732,11 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
     }
     if(engine->RegisterGlobalFunction("void assert(bool expression)",
            asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction(
+           "void PrintCallStack()", asFUNCTION(PrintASCallStack), asCALL_CDECL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

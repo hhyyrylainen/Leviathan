@@ -115,14 +115,14 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 
     RegisterScriptAny(engine);
 
-    // All normal engine stuff is in the DefaultEngine access mask //
-    engine->SetDefaultAccessMask(
-        static_cast<AccessFlags>(ScriptAccess::DefaultEngine));
+    // Put the extended standard stuff also in Builtin access mask
 
-    // use various binding functions //
-    // register global functions and classes //
     if(!BindStandardFunctions(engine))
         throw Exception("BindStandardFunctions failed");
+
+    // All normal engine stuff is in the DefaultEngine access mask //
+    engine->SetDefaultAccessMask(
+        static_cast<AccessFlags>(ScriptAccess::DefaultEngine));    
 
     if(!BindOgre(engine))
         throw Exception("BindOgre failed");

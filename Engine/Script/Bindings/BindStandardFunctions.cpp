@@ -3,6 +3,8 @@
 
 #include "Define.h"
 
+#include "utf8.h"
+
 #include <algorithm>
 #include <cmath>
 #include <inttypes.h>
@@ -26,6 +28,34 @@ float SignProxy(float value)
 {
 
     return value < 0 ? -1 : 1;
+}
+
+std::string CharacterToStringProxy(int32_t character)
+{
+    try {
+
+        std::string str;
+
+        utf8::append(character, std::back_inserter(str));
+
+        return str;
+
+    } catch(const std::exception& e) {
+
+        auto ctx = asGetActiveContext();
+        if(ctx) {
+
+            ctx->SetException(("character code ' " + std::to_string(character) +
+                               "' failed to be represented as utf8 string, error: " + e.what())
+                                  .c_str());
+            // The return value cannot be read by the script so it
+            // isn't any use to return an error here
+            return "";
+        } else {
+            // Not called from script
+            throw;
+        }
+    }
 }
 
 // ------------------------------------ //
@@ -88,6 +118,15 @@ bool BindMathOperations(asIScriptEngine* engine)
     // sign
     if(engine->RegisterGlobalFunction(
            "float sign(float value)", asFUNCTION(SignProxy), asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    // ------------------------------------ //
+    // Extra string helpers
+    if(engine->RegisterGlobalFunction("string CharacterToString(int32 character)",
+           asFUNCTION(CharacterToStringProxy), asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

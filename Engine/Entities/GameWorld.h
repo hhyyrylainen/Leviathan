@@ -518,6 +518,9 @@ private:
     //! these properties are set on WorldSceneCamera
     Camera* AppliedCameraPropertiesPtr = nullptr;
 
+    //! True while in a tick. Used to prevent destroying entities or components
+    //! \todo This check needs to be added to component removal
+    bool TickInProgress = false;
 
     //! A lock for delayed delete, to allow deleting entities from physical callbacks
     Mutex DeleteMutex;

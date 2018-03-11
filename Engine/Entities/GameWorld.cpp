@@ -507,7 +507,11 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick)
         }
     }
 
+    TickInProgress = true;
+
     _RunTickSystems();
+
+    TickInProgress = false;
 
     // Sendable objects may need something to be done //
 
@@ -574,6 +578,9 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick)
 {
     // Don't have any systems, but these updates may be important for interpolation //
     _ApplyEntityUpdatePackets();
+
+    // TODO: if there are any impactful simulation done here it needs to be also inside a block
+    // where TickInProgress is set to true
 }
 
 DLLEXPORT void GameWorld::_RunTickSystems()
@@ -717,6 +724,10 @@ DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const std::string& name)
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GameWorld::DestroyEntity(ObjectID id)
 {
+    // Fail if ticking currently //
+    if(TickInProgress)
+        throw InvalidState(
+            "Cannot DestroyEntity while ticking. Use QueueDestroyEntity instead");
 
     auto end = Entities.end();
     for(auto iter = Entities.begin(); iter != end; ++iter) {
@@ -835,9 +846,6 @@ void GameWorld::_DoDestroy(ObjectID id)
         }
     }
 }
-
-
-DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id) {}
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetEntitysParent(ObjectID child, ObjectID parent)
 {
@@ -926,6 +934,17 @@ DLLEXPORT void GameWorld::_DoSystemsRelease()
     }
 
     pimpl->RegisteredScriptSystems.clear();
+}
+
+DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
+{
+    // Handle script types
+    for(auto iter = pimpl->RegisteredScriptComponents.begin();
+        iter != pimpl->RegisteredScriptComponents.end(); ++iter) {
+
+        // Just try to remove like the normal c++ components until there is a better way
+        iter->second->ReleaseComponent(id);
+    }
 }
 // ------------------------------------ //
 void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id)

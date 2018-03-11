@@ -2,7 +2,10 @@
 #include "ScriptComponentHolder.h"
 
 #include "GameWorld.h"
+#include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
+
+#include <boost/range/adaptor/map.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -121,4 +124,14 @@ DLLEXPORT asIScriptObject* ScriptComponentHolder::Find(ObjectID entity)
 
     iter->second->AddRef();
     return iter->second;
+}
+// ------------------------------------ //
+DLLEXPORT CScriptArray* ScriptComponentHolder::GetIndex() const
+{
+    asIScriptContext* ctx = asGetActiveContext();
+
+    asIScriptEngine* engine = ctx ? ctx->GetEngine() : ScriptExecutor::Get()->GetASEngine();
+
+    return ConvertIteratorToASArray((CreatedObjects | boost::adaptors::map_keys).begin(),
+        (CreatedObjects | boost::adaptors::map_keys).end(), engine, "array<ObjectID>");
 }

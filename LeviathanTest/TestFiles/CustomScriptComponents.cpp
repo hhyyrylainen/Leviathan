@@ -41,16 +41,43 @@ TEST_CASE("Script can register custom entity type and do stuff with it", "[scrip
     CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
     CHECK(returned.Value == true);
 
-    // Run the world once, and then verify //
-    world.Tick(1);
+    SECTION("Can run on CachedComponents")
+    {
+        // Run the world once, and then verify //
+        world.Tick(1);
 
-    ssetup.SetEntrypoint("VerifyRunResult");
+        ssetup.SetEntrypoint("VerifyRunResult");
 
-    auto returned2 = exec.RunScript<int>(mod, ssetup, static_cast<GameWorld*>(&world));
+        auto returned2 = exec.RunScript<int>(mod, ssetup, static_cast<GameWorld*>(&world));
 
-    CHECK(returned2.Result == SCRIPT_RUN_RESULT::Success);
-    CHECK(returned2.Value == 141);
+        CHECK(returned2.Result == SCRIPT_RUN_RESULT::Success);
+        CHECK(returned2.Value == 141);
+    }
+
+    SECTION("Destroying entity removes it")
+    {
+        // This creates the cached components //
+        world.Tick(1);
+
+        // Remove stuff //
+        ssetup.SetEntrypoint("RemoveSomeComponents");
+
+        auto returned2 = exec.RunScript<bool>(mod, ssetup, static_cast<GameWorld*>(&world));
+
+        CHECK(returned2.Result == SCRIPT_RUN_RESULT::Success);
+        CHECK(returned2.Value == true);
+
+        // Tick again to let everything update
+        world.Tick(1);
+
+        // And verify
+        ssetup.SetEntrypoint("VerifyRemoved");
+
+        returned2 = exec.RunScript<bool>(mod, ssetup, static_cast<GameWorld*>(&world));
+
+        CHECK(returned2.Result == SCRIPT_RUN_RESULT::Success);
+        CHECK(returned2.Value == true);
+    }
 
     REQUIRE_NOTHROW(world.Release());
 }
-

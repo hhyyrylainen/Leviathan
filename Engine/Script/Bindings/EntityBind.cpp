@@ -440,6 +440,12 @@ bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
            asMETHOD(ScriptComponentHolder, ReleaseComponent), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+    // This is just a wrapper for the above function
+    if(engine->RegisterObjectMethod("ScriptComponentHolder",
+            "bool Destroy(ObjectID entity)",
+            asMETHOD(ScriptComponentHolder, Destroy), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     // Not sure if scripts should be allowed to call this
     if(engine->RegisterObjectMethod("ScriptComponentHolder", "void ReleaseAllComponents()",
@@ -456,6 +462,12 @@ bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
     if(engine->RegisterObjectMethod("ScriptComponentHolder",
            "ScriptComponent@ Find(ObjectID entity)", asMETHOD(ScriptComponentHolder, Find),
            asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ScriptComponentHolder",
+            "array<ObjectID>@ GetIndex()", asMETHOD(ScriptComponentHolder, GetIndex),
+            asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

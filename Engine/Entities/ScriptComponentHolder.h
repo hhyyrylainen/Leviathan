@@ -8,6 +8,7 @@
 
 class asIScriptFunction;
 class asIScriptObject;
+class CScriptArray;
 
 namespace Leviathan {
 
@@ -46,6 +47,20 @@ public:
     //! \brief Finds a component for entity
     //! \note Increases refcount on returned object
     DLLEXPORT asIScriptObject* Find(ObjectID entity);
+
+    //! \brief Destroys a component of held type for entity
+    //! \note This is just a wrapper for ReleaseComponent to be more consistent with c++
+    //! component types
+    DLLEXPORT inline bool Destroy(ObjectID entity){
+        return ReleaseComponent(entity);
+    }
+
+    //! \brief Returns all the created components
+    //!
+    //! Caller must release reference
+    //! \todo Check can we somehow return all the keys and the objects to avoid having to call
+    //! Find from scripts after this
+    DLLEXPORT CScriptArray* GetIndex() const;
 
 
     //! \brief Returns a reference to the vector of removed elements

@@ -67,7 +67,8 @@ DLLEXPORT CEGUI::Window* BaseGuiObject::GetTargetWindow() const
 }
 // ------------------------------------ //
 DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(
-    GuiManager* owner, std::vector<BaseGuiObject*>& tempobjects, ObjectFileObject& dataforthis)
+    GuiManager* owner, std::vector<BaseGuiObject*>& tempobjects, ObjectFileObject& dataforthis,
+    const ExtraParameters& extra)
 {
     // parse fake id from prefixes //
     int fakeid = 0;
@@ -91,6 +92,16 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(
 
     auto tmpptr = std::make_unique<BaseGuiObject>(
         owner, dataforthis.GetName(), fakeid, dataforthis.GetScript());
+
+    // Apply extra flags //
+    if(tmpptr->Scripting){
+        
+        if(auto mod = tmpptr->Scripting->GetModule(); mod){
+
+            mod->AddAccessRight(extra.ExtraAccess);
+        }
+    }
+    
 
     std::shared_ptr<NamedVariableList> listenon;
 

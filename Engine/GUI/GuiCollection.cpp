@@ -135,9 +135,9 @@ DLLEXPORT void GuiCollection::UpdateState(bool newstate)
     }
 }
 // ------------------------------------ //
-bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject& data)
+bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject& data,
+    const ExtraParameters& extra)
 {
-
     // Load a GuiCollection from the structure //
 
     std::string Toggle = "";
@@ -191,6 +191,15 @@ bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject& data
 
     // copy script data over //
     cobj->Scripting = data.GetScript();
+
+    // Apply extra flags //
+    if(cobj->Scripting){
+        
+        if(auto mod = cobj->Scripting->GetModule(); mod){
+
+            mod->AddAccessRight(extra.ExtraAccess);
+        }
+    }
 
     // Add to the collection list //
     gui->AddCollection(cobj);

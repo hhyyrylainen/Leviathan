@@ -209,6 +209,7 @@ else()
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
     "GUI/AlphaHitCache.cpp" "GUI/AlphaHitCache.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
+    "GUI/GuiObjectExtraParameters.h"
     )
 
   set(GroupGUIWidgets

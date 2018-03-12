@@ -26,7 +26,8 @@ DLLEXPORT Leviathan::NewtonManager::NewtonManager(){
 
 DLLEXPORT Leviathan::NewtonManager::~NewtonManager(){
 	// reset static variable to get nice errors with pointers //
-	Staticaccess = NULL;
+    if(Staticaccess == this)
+        Staticaccess = NULL;
 
 	// release newton library //
     

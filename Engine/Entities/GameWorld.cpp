@@ -496,15 +496,17 @@ DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick)
     // Simulate physics //
     if(!WorldFrozen) {
 
-        if(IsOnServer) {
+        // TODO: a game type that is a client and server at  the same time
+        // if(IsOnServer) {
 
-            _ApplyEntityUpdatePackets();
+        _ApplyEntityUpdatePackets();
+        if(_PhysicalWorld)
             _PhysicalWorld->SimulateWorldFixed(TICKSPEED, 2);
 
-        } else {
+        // } else {
 
-            // Simulate direct control //
-        }
+        // Simulate direct control //
+        // }
     }
 
     TickInProgress = true;

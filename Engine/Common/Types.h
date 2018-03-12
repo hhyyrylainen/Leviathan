@@ -724,7 +724,7 @@ public:
     };
     DLLEXPORT inline bool operator!=(const Float3& other) const
     {
-        return X != other.X && Y != other.Y && Z != other.Z;
+        return !(*this == other);
     };
     // ------------------ Functions ------------------ //
     DLLEXPORT inline float GetX() const

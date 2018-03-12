@@ -335,6 +335,9 @@ public:
     //! \brief Destroys the physical body
     DLLEXPORT void Release();
 
+    //! \brief Sets collision when body hasn't been created yet
+    DLLEXPORT bool SetCollision(NewtonCollision* collision);
+
     //! \brief Use this to create a body for this component once Collision is set
     DLLEXPORT NewtonBody* CreatePhysicsBody(PhysicalWorld* world);
 
@@ -382,6 +385,23 @@ public:
     //! \brief Applies physical state from holder object
     DLLEXPORT void ApplyPhysicalState(const BasePhysicsData& data);
 
+    //! \brief Syncs this physics body to a changed position.
+    //!
+    //! Call after making changes to Position component if you don't want this physics
+    //! body to overwrite the change on next tick.
+    DLLEXPORT void JumpTo(Position& target);
+
+    //! \brief Moves the physical body to the specified position
+    //! \returns False if this fails because there currently is no physics body
+    //! for this component
+    DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
+
+    //! \brief Calculates the mass matrix and applies the mass parameter to the body
+    DLLEXPORT void SetMass(float mass);
+
+    //! \brief Adds a constraint to the current Body to only move in place
+    DLLEXPORT bool CreatePlaneConstraint(PhysicalWorld* world,
+        const Float3& planenormal = Float3(0, 1, 0));
 
 
     // default physics callbacks that are fine in most cases //
@@ -399,40 +419,20 @@ public:
     //! \brief Adds all applied forces together
     Float3 _GatherApplyForces(const float& mass);
 
-    //! \brief Syncs this physics body to a changed position.
-    //!
-    //! Call after making changes to Position component if you don't want this physics
-    //! body to overwrite the change on next tick.
-    DLLEXPORT void JumpTo(Position& target);
-
-    //! \brief Moves the physical body to the specified position
-    //! \returns False if this fails because there currently is no physics body
-    //! for this component
-    DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
-
-    //! \brief Calculates the mass matrix and applies the mass parameter to the body
-    DLLEXPORT void SetMass(float mass);
-
     DLLEXPORT float GetMass() const
     {
         return Mass;
     }
 
-    //! \brief Sets collision when body hasn't been created yet
-    DLLEXPORT bool SetCollision(NewtonCollision* collision);
-
     inline NewtonBody* GetBody() const
     {
-
         return Body;
     }
 
     inline NewtonCollision* GetCollision() const
     {
-
         return Collision;
     }
-
 
 private:
     NewtonCollision* Collision = nullptr;

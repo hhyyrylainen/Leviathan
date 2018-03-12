@@ -102,7 +102,7 @@ DLLEXPORT bool Physics::SetPosition(const Float3& pos, const Float4& orientation
     Ogre::Quaternion ogrerot = orientation;
     matrix.makeTransform(ogrepos, Float3(1, 1, 1), ogrerot);
 
-    Ogre::Matrix4 tmatrix = matrix.transpose();
+    Ogre::Matrix4 tmatrix = PrepareOgreMatrixForNewton(matrix);
 
     // Update body //
     NewtonBodySetMatrix(Body, &tmatrix[0][0]);
@@ -192,8 +192,8 @@ DLLEXPORT void Physics::SetVelocity(const Float3& velocities)
     NewtonBodySetVelocity(Body, &velocities.X);
 }
 
-DLLEXPORT void Physics::ClearVelocity(){
-
+DLLEXPORT void Physics::ClearVelocity()
+{
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
@@ -378,7 +378,6 @@ DLLEXPORT void Physics::SetMass(float mass)
 
 DLLEXPORT bool Physics::SetCollision(NewtonCollision* collision)
 {
-
     if(Body)
         return false;
 
@@ -389,6 +388,17 @@ DLLEXPORT bool Physics::SetCollision(NewtonCollision* collision)
 
     return true;
 }
+// ------------------------------------ //
+DLLEXPORT bool Physics::CreatePlaneConstraint(
+    PhysicalWorld* world, const Float3& planenormal /*= Float3(0, 1, 0)*/)
+{
+    if(!Body || !world)
+        return false;
+
+    world->Create2DJoint(Body, planenormal);
+    return true;
+}
+
 // ------------------ Received ------------------ //
 DLLEXPORT void Received::GetServerSentStates(
     StoredState const** first, StoredState const** second, int tick, float& progress) const

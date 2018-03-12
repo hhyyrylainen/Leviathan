@@ -29,6 +29,13 @@ DLLEXPORT inline Ogre::Matrix4 PrepareOgreMatrixForNewton(const Ogre::Matrix4 &m
     return matrix.transpose();
 }
 
+//! \brief Grabs the translation from a newton matrix without transposing
+DLLEXPORT inline Float3 ExtractNewtonMatrixTranslation(const float (&matrix)[16]){
+    // Hopefully this is right. Reference:
+    // https://stackoverflow.com/questions/10094634/4x4-matrix-last-element-significance
+    return Float3(matrix[12], matrix[13], matrix[14]);
+}
+
 }
 
 

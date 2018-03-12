@@ -10,6 +10,7 @@
 //#endif //__GNUC__
 
 #include "Common/ThreadSafe.h"
+#include "Common/Types.h"
 
 #include "OgreMatrix4.h"
 
@@ -26,6 +27,16 @@
 
 
 namespace Leviathan {
+
+//! \brief Base class for custom joint types defined for use by this class
+//! \note If these should be able to be accessed from elsewhere, move this to a new file
+class BaseCustomJoint{
+public:
+    //! This helps with allowing all custom types to be destroyed with a single callback
+    DLLEXPORT virtual ~BaseCustomJoint(){}
+
+    DLLEXPORT static void JointDestructorCallback(const NewtonJoint* joint);
+};
 
 constexpr auto UNUSED_SHAPE_ID = 0;
 
@@ -70,12 +81,21 @@ public:
     DLLEXPORT NewtonCollision* CreateSphere(
         float radius, const Ogre::Matrix4& offset = Ogre::Matrix4::IDENTITY);
 
+
+    // ------------------------------------ //
+    // Physics constraint creation
+    //! \brief Constraints body to a 2d plane of movement specified by its normal
+    DLLEXPORT NewtonJoint* Create2DJoint(NewtonBody* body, const Float3& planenormal);
+
     // ------------------------------------ //
     DLLEXPORT NewtonBody* CreateBodyFromCollision(NewtonCollision* collision);
     DLLEXPORT void DestroyBody(NewtonBody* body);
 
 
-    DLLEXPORT NewtonWorld* GetNewtonWorld();
+    DLLEXPORT inline NewtonWorld* GetNewtonWorld()
+    {
+        return World;
+    }
 
 protected:
     //! Total amount of microseconds required to be simulated

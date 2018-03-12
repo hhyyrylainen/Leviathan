@@ -147,12 +147,12 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics", "Float3 GetTorque() const",
-            asMETHODPR(Physics, GetTorque, () const, Float3), asCALL_THISCALL) < 0) {
+           asMETHODPR(Physics, GetTorque, () const, Float3), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("Physics", "void SetTorque(const Float3 &in torque)",
-            asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
+           asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -209,6 +209,15 @@ bool BindComponentTypes(asIScriptEngine* engine)
            asMETHOD(Physics, GiveImpulse), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectMethod("Physics",
+           "bool CreatePlaneConstraint(PhysicalWorld@ world, const Float3 &in planenormal = "
+           "Float3(0, 1, 0))",
+           asMETHOD(Physics, CreatePlaneConstraint), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
 
     if(!BindComponentTypeID(engine, "Physics", &PhysicsTYPEProxy))
         return false;
@@ -441,9 +450,8 @@ bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
     // This is just a wrapper for the above function
-    if(engine->RegisterObjectMethod("ScriptComponentHolder",
-            "bool Destroy(ObjectID entity)",
-            asMETHOD(ScriptComponentHolder, Destroy), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("ScriptComponentHolder", "bool Destroy(ObjectID entity)",
+           asMETHOD(ScriptComponentHolder, Destroy), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -465,9 +473,8 @@ bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("ScriptComponentHolder",
-            "array<ObjectID>@ GetIndex()", asMETHOD(ScriptComponentHolder, GetIndex),
-            asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("ScriptComponentHolder", "array<ObjectID>@ GetIndex()",
+           asMETHOD(ScriptComponentHolder, GetIndex), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

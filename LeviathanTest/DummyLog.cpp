@@ -96,6 +96,22 @@ ReporterMatchMessagesRegex::ReporterMatchMessagesRegex(
 
 }
 // ------------------------------------ //
+void ReporterMatchMessagesRegex::Write(const std::string &text){
+
+    if(!CheckWrite)
+        return;
+    
+    for(auto &messagechecker : MessagesToDetect){
+        if(messagechecker.CheckInfo){
+
+            if(std::regex_match(text, messagechecker.MatchRegex)){
+
+                ++messagechecker.MatchCount;
+            }
+        }
+    }
+}
+
 void ReporterMatchMessagesRegex::Info(const std::string &text){
     
     for(auto &messagechecker : MessagesToDetect){

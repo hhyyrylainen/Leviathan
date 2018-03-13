@@ -92,6 +92,8 @@ public:
     ReporterMatchMessagesRegex();
     ReporterMatchMessagesRegex(std::vector<MessageToLookFor>&& messages);
 
+    virtual void Write(const std::string &text) override;
+    
     virtual void Info(const std::string &text) override;
 
     virtual void Warning(const std::string &text) override;
@@ -100,6 +102,7 @@ public:
     
     std::vector<MessageToLookFor> MessagesToDetect;
 
+    bool CheckWrite = false;
 };
 
 }

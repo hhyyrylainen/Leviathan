@@ -139,6 +139,38 @@ public:
     bool WarningsCountAsErrors = false;
 };
 
+//! Version of TestLogger that requires specific messages to be printed
+class TestLogMatchMessagesRegex : public Logger, public ReporterMatchMessagesRegex {
+public:
+    TestLogMatchMessagesRegex() : Logger("Test/TestLog.txt"){
+
+        CheckWrite = true;
+    }
+
+    void Write(const std::string &data) override {
+        ReporterMatchMessagesRegex::Write(data);
+    }
+
+    void Info(const std::string &data) override {
+        ReporterMatchMessagesRegex::Info(data);
+    }
+
+    void Error(const std::string &data) override {
+        ReporterMatchMessagesRegex::Error(data);
+    }
+
+    void Warning(const std::string &data) override {
+        ReporterMatchMessagesRegex::Warning(data);
+    }
+
+    void Fatal(const std::string &text) override {
+        FAIL(text);
+        REQUIRE(false);
+    }
+    
+};
+
+
 //! \brief Partial implementation of Leviathan::Engine for tests
 template<bool UseActualInit>
 class PartialEngine : public Engine{

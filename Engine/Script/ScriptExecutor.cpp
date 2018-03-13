@@ -86,8 +86,8 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     engine->SetUserData(this);
 
     // Builtins are in this access group //
-    const auto initialMask = engine->SetDefaultAccessMask(
-        static_cast<AccessFlags>(ScriptAccess::Builtin));
+    const auto initialMask =
+        engine->SetDefaultAccessMask(static_cast<AccessFlags>(ScriptAccess::Builtin));
 
     // math functions //
     RegisterScriptMath(engine);
@@ -121,8 +121,7 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
         throw Exception("BindStandardFunctions failed");
 
     // All normal engine stuff is in the DefaultEngine access mask //
-    engine->SetDefaultAccessMask(
-        static_cast<AccessFlags>(ScriptAccess::DefaultEngine));    
+    engine->SetDefaultAccessMask(static_cast<AccessFlags>(ScriptAccess::DefaultEngine));
 
     if(!BindOgre(engine))
         throw Exception("BindOgre failed");
@@ -608,11 +607,11 @@ DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const
 }
 // ------------------------------------ //
 // CustomScriptRun
-DLLEXPORT CustomScriptRun::~CustomScriptRun(){
+DLLEXPORT CustomScriptRun::~CustomScriptRun()
+{
 
-    if(Context){
+    if(Context) {
 
         Exec->_DoneWithContext(Context);
     }
 }
-

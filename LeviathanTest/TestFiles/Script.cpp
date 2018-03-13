@@ -729,3 +729,49 @@ TEST_CASE("Pass by value objects to scripts work", "[script]")
 // asUINT CurrentASObjectID = 0;
 // TEST_CASE("Passing and returning variable argument type", "[script]")
 
+
+#ifdef ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+
+void ThrowStuff(){
+
+    throw std::runtime_error("My custom exception message");
+}
+
+TEST_CASE("Script exception errors report std::exception derived message", "[script]")
+{
+    PartialEngine<false> engine;
+    TestLogMatchMessagesRegex log;
+    log.MessagesToDetect.push_back({ReporterMatchMessagesRegex::MessageToLookFor(
+                std::regex(R"(.*My custom exception message[^]*)"))});
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    REQUIRE(exec.GetASEngine()->RegisterGlobalFunction("void ThrowStuff()",
+            asFUNCTION(ThrowStuff), asCALL_CDECL) >= 0);
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "void TestFunction(){\n"
+        "    ThrowStuff();\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup("TestFunction");
+
+    auto returned = exec.RunScript<int>(mod, ssetup);
+
+    CHECK(returned.Result != SCRIPT_RUN_RESULT::Success);
+    log.MessagesToDetect[0].CheckAndResetCountIsOne();
+}
+
+#endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+

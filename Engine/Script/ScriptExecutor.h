@@ -19,6 +19,10 @@
 #include "angelscript.h"
 
 
+#if ANGELSCRIPT_VERSION >= 23300
+#define ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+#endif
+
 namespace Leviathan {
 
 class ScriptExecutor;

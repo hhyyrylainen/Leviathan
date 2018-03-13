@@ -58,6 +58,18 @@ void ScriptMessageCallback(const asSMessageInfo* msg, void* param)
     }
 }
 
+#ifdef ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+void ScriptTranslateExceptionCallback(asIScriptContext* context, void* userdata)
+{
+    try {
+        std::rethrow_exception(std::current_exception());
+    } catch(const std::exception& e) {
+        context->SetException(
+            (std::string("Caught application exception: ") + e.what()).c_str());
+    }
+}
+#endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+
 } // namespace Leviathan
 
 
@@ -403,6 +415,12 @@ DLLEXPORT asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
         LOG_ERROR("ScriptExecutor: _GetContextForExecution: Failed to create a new context");
         return nullptr;
     }
+
+#ifdef ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+    // Set error translation callback
+    ScriptContext->SetTranslateExceptionCallback(
+        asFUNCTION(ScriptTranslateExceptionCallback), nullptr, asCALL_CDECL);
+#endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 
     return ScriptContext;
 }

@@ -485,6 +485,16 @@ DLLEXPORT void Physics::SetMass(float mass)
 
     // #ifdef CHECK_FOR_NANS
 
+    if(std::isnan(inertia.X) || std::isnan(inertia.Y) || std::isnan(inertia.Z) ||
+        std::isnan(centerofmass.X) || std::isnan(centerofmass.Y) ||
+        std::isnan(centerofmass.Z)) {
+
+        LOG_ERROR("Physics: SetMass: failed to calculate physics body intertial matrix, "
+                  "trying again");
+        SetMass(mass);
+        return;
+    }
+
     inertia.CheckForNans();
     centerofmass.CheckForNans();
 

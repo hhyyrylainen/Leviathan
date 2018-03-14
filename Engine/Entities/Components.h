@@ -416,6 +416,9 @@ public:
     //! for this component
     DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
 
+    //! \brief Same as SetPosition but only sets orientation
+    DLLEXPORT bool SetOnlyOrientation(const Float4& orientation);
+
     //! \brief Returns the full matrix representing this body's position and rotation
     DLLEXPORT Ogre::Matrix4 GetFullMatrix() const;
 

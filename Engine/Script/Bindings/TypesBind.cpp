@@ -468,7 +468,11 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-
+    if(engine->RegisterObjectMethod("Float4",
+           "Float4 Slerp(const Float4 &in other, float fraction) const",
+           asMETHOD(Float4, Slerp), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     // Direct access
     if(engine->RegisterObjectProperty("Float4", "float X", asOFFSET(Float4, X)) < 0) {
@@ -499,6 +503,13 @@ bool BindFloat4(asIScriptEngine* engine)
 
     if(engine->RegisterGlobalProperty("const Float4 IdentityQuaternion", IdentityQuaternion) <
         0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction(
+           "Float4 QuaternionLookAt(const Float3 &in sourcepoint, const Float3 &in target)",
+           asFUNCTION(Float4::QuaternionLookAt), asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

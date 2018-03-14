@@ -129,9 +129,31 @@ DLLEXPORT bool Physics::SetPosition(const Float3& pos, const Float4& orientation
     return true;
 }
 
+DLLEXPORT bool Physics::SetOnlyOrientation(const Float4& orientation)
+{
+    if(!Body)
+        return false;
+    float newtonMatrix[16];
+    NewtonBodyGetMatrix(Body, &newtonMatrix[0]);
+
+    const auto pos = ExtractNewtonMatrixTranslation(newtonMatrix);
+
+    Ogre::Matrix4 matrix;
+
+    Ogre::Vector3 ogrepos = pos;
+    Ogre::Quaternion ogrerot = orientation;
+    matrix.makeTransform(ogrepos, Float3(1, 1, 1), ogrerot);
+
+    Ogre::Matrix4 tmatrix = PrepareOgreMatrixForNewton(matrix);
+
+    // Update body //
+    NewtonBodySetMatrix(Body, &tmatrix[0][0]);
+
+    return true;
+}
+
 DLLEXPORT Ogre::Matrix4 Physics::GetFullMatrix() const
 {
-
     if(!Body)
         return Ogre::Matrix4::IDENTITY;
 
@@ -149,7 +171,18 @@ void Physics::PhysicsMovedEvent(
 
     Physics* tmp = static_cast<Physics*>(NewtonBodyGetUserData(body));
 
-    tmp->_Position.Members._Position = mat.getTrans();
+    const auto pos = mat.getTrans();
+
+    // #ifdef CHECK_FOR_NANS
+    if(std::isnan(pos.x)) {
+
+        LOG_ERROR("Physics::PhysicsMovedEvent: physics body has NaN translation");
+        tmp->JumpTo(tmp->_Position);
+        return;
+    }
+    // #endif // CHECK_FOR_NANS
+
+    tmp->_Position.Members._Position = pos;
     tmp->_Position.Members._Orientation = mat.extractQuaternion();
     tmp->_Position.Marked = true;
 
@@ -212,7 +245,7 @@ void Physics::DestroyBodyCallback(const NewtonBody* body)
 {
     // This shouldn't be required as the newton world won't be cleared while running
     // Physics* tmp = reinterpret_cast<Physics*>(NewtonBodyGetUserData(body));
-    LOG_INFO("Destroy body callback");
+    // LOG_INFO("Destroy body callback");
 
     // GUARD_LOCK_OTHER(tmp);
 
@@ -449,6 +482,13 @@ DLLEXPORT void Physics::SetMass(float mass)
 
     // Apply mass to inertia
     inertia *= Mass;
+
+    // #ifdef CHECK_FOR_NANS
+
+    inertia.CheckForNans();
+    centerofmass.CheckForNans();
+
+    // #endif // CHECK_FOR_NANS
 
     NewtonBodySetMassMatrix(Body, Mass, inertia.X, inertia.Y, inertia.Z);
     NewtonBodySetCentreOfMass(Body, &centerofmass.X);

@@ -6,6 +6,18 @@
 
 #include <cmath>
 
+// Uncomment for debugging and major slow downs
+// #define CHECK_FOR_NANS
+
+#ifdef CHECK_FOR_NANS
+#define DO_NAN_CHECK    \
+    {                   \
+        CheckForNans(); \
+    }
+#else
+#define DO_NAN_CHECK
+#endif // CHECK_FOR_NANS
+
 #ifdef LEVIATHAN_USING_OGRE
 #include "OGRE/OgreColourValue.h"
 #include "OGRE/OgreQuaternion.h"
@@ -607,16 +619,19 @@ public:
         X = x;
         Y = y;
         Z = z;
+        DO_NAN_CHECK;
     }
     DLLEXPORT Float3(Float2 floats, float z)
     {
         X = floats.X;
         Y = floats.Y;
         Z = z;
+        DO_NAN_CHECK;
     }
     DLLEXPORT explicit Float3(float data)
     {
         X = Y = Z = data;
+        DO_NAN_CHECK;
     }
     DLLEXPORT Float3(const Float3& other)
     {
@@ -624,6 +639,18 @@ public:
         X = other.X;
         Y = other.Y;
         Z = other.Z;
+
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline void CheckForNans()
+    {
+
+        if(std::isnan(X) || std::isnan(Y) || std::isnan(Z)) {
+
+            DEBUG_BREAK;
+            throw std::runtime_error("Float3 has NaNs in it!");
+        }
     }
 
     // access operator //
@@ -800,7 +827,7 @@ public:
     {
         return X * val.X + Y * val.Y + Z * val.Z;
     }
-    DLLEXPORT inline Float3 Cross(const Float3& val)
+    DLLEXPORT inline Float3 Cross(const Float3& val) const
     {
         return Float3(Y * val.Z - val.Y * Z, Z * val.X - val.Z * X, X * val.Y - val.X * Y);
     }
@@ -896,6 +923,7 @@ public:
         X = vec.x;
         Y = vec.y;
         Z = vec.z;
+        DO_NAN_CHECK;
     }
 
     DLLEXPORT inline operator Ogre::Vector3() const
@@ -910,6 +938,7 @@ public:
     float X, Y, Z;
 
     static const Float3 UnitVForward;
+    static const Float3 UnitVUp;
     static const Float3 Zeroed;
 };
 struct Float4 {
@@ -925,6 +954,7 @@ public:
         Y = f2;
         Z = f3;
         W = f4;
+        DO_NAN_CHECK;
     }
     DLLEXPORT Float4(Float2 floats, float f3, float f4)
     {
@@ -932,6 +962,7 @@ public:
         Y = floats.Y;
         Z = f3;
         W = f4;
+        DO_NAN_CHECK;
     }
     DLLEXPORT Float4(Float3 floats, float f4)
     {
@@ -939,10 +970,22 @@ public:
         Y = floats.Y;
         Z = floats.Z;
         W = f4;
+        DO_NAN_CHECK;
     }
     DLLEXPORT explicit Float4(float val)
     {
         X = Y = Z = W = val;
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline void CheckForNans()
+    {
+
+        if(std::isnan(X) || std::isnan(Y) || std::isnan(Z) || std::isnan(W)) {
+
+            DEBUG_BREAK;
+            throw std::runtime_error("Float4 has NaNs in it!");
+        }
     }
 
     // access operator //
@@ -1134,7 +1177,7 @@ public:
     }
 
     // does SPHERICAL interpolation between quaternions //
-    DLLEXPORT inline Float4 Slerp(const Float4& other, float f)
+    DLLEXPORT inline Float4 Slerp(const Float4& other, float f) const
     {
         // extra quaternion for calculations //
         Float4 quaternion3;
@@ -1261,6 +1304,7 @@ public:
         Y = quat.y;
         Z = quat.z;
         W = quat.w;
+        DO_NAN_CHECK;
     }
 
     DLLEXPORT Float4(const Ogre::ColourValue& colour)
@@ -1270,6 +1314,7 @@ public:
         Y = colour.g;
         Z = colour.b;
         W = colour.a;
+        DO_NAN_CHECK;
     }
 
     DLLEXPORT inline operator Ogre::Quaternion() const
@@ -1361,12 +1406,44 @@ public:
 
     DLLEXPORT static inline Float4 IdentityQuaternion()
     {
-
         return Float4(0, 0, 0, 1);
     }
 
+    // Math from here: https://stackoverflow.com/questions/12435671/quaternion-lookat-function
+    DLLEXPORT static inline Float4 QuaternionLookAt(
+        const Float3& sourcepoint, const Float3& target)
+    {
+        const auto forward = (target - sourcepoint).NormalizeSafe();
+        const float dot = Float3::UnitVForward.Dot(forward);
 
+        if(std::abs(dot - (-1.0f)) < 0.000001f) {
+            // Assumes up is Float3(0, 1, 0)
+            return Float4(
+                Float3::UnitVUp.X, Float3::UnitVUp.Y, Float3::UnitVUp.Z, 3.1415926535897932f);
+        }
+        if(std::abs(dot - 1.0f) < 0.000001f) {
+            return Float4::IdentityQuaternion();
+        }
 
+        const float rotAngle = std::acos(dot);
+        const Float3 rotAxis = Float3::UnitVForward.Cross(forward).Normalize();
+        return CreateQuaternionFromAxisAngle(rotAxis, rotAngle);
+    }
+
+    //! \note axis must be normalized
+    //!
+    //! This resource is a life saver:
+    //! http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+    DLLEXPORT static inline Float4 CreateQuaternionFromAxisAngle(
+        const Float3& axis, float angle)
+    {
+        const auto s = std::sin(angle / 2.0);
+        const auto x = axis.X * s;
+        const auto y = axis.Y * s;
+        const auto z = axis.Z * s;
+        const auto w = std::cos(angle / 2.0);
+        return Float4(x, y, z, w);
+    }
 
     DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3& angles)
     {

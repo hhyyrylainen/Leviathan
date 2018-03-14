@@ -224,6 +224,12 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics",
+            "bool SetOnlyOrientation(const Float4 &in orientation)",
+            asMETHOD(Physics, SetOnlyOrientation), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics",
            "void GiveImpulse(const Float3 &in deltaspeed, const Float3 &in point = Float3(0))",
            asMETHOD(Physics, GiveImpulse), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

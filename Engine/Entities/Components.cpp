@@ -149,7 +149,7 @@ void Physics::PhysicsMovedEvent(
     tmp->Marked = true;
 }
 
-void Physics::ApplyForceAndTorgueEvent(
+void Physics::ApplyForceAndTorqueEvent(
     const NewtonBody* const body, dFloat timestep, int threadIndex)
 {
     // Get object from body //
@@ -158,7 +158,7 @@ void Physics::ApplyForceAndTorgueEvent(
     // Check if physics can't apply //
     // Newton won't call this if the mass is 0
 
-    Float3 Torque(0, 0, 0);
+    Float3 Torque = tmp->SumQueuedTorque;
 
     // Get properties from newton //
     float mass;
@@ -168,8 +168,11 @@ void Physics::ApplyForceAndTorgueEvent(
 
     NewtonBodyGetMass(body, &mass, &Ixx, &Iyy, &Izz);
 
+    Float3 Force = tmp->SumQueuedForce;
+
     // get gravity force and apply mass to it //
-    Float3 Force = tmp->World->GetGravityAtPosition(tmp->_Position.Members._Position) * mass;
+    if(tmp->ApplyGravity)
+        Force += tmp->World->GetGravityAtPosition(tmp->_Position.Members._Position) * mass;
 
     // add other forces //
     if(!tmp->ApplyForceList.empty()) {
@@ -178,7 +181,19 @@ void Physics::ApplyForceAndTorgueEvent(
     }
 
     NewtonBodyAddForce(body, &Force.X);
-    NewtonBodyAddTorque(body, &Torque.X);
+
+    if(tmp->TorqueOverride) {
+
+        NewtonBodySetTorque(body, &tmp->SumQueuedTorque.X);
+        tmp->TorqueOverride = false;
+
+    } else {
+
+        NewtonBodyAddTorque(body, &Torque.X);
+    }
+
+    tmp->SumQueuedForce = Float3(0, 0, 0);
+    tmp->SumQueuedTorque = Float3(0, 0, 0);
 }
 
 void Physics::DestroyBodyCallback(const NewtonBody* body)
@@ -203,8 +218,14 @@ DLLEXPORT void Physics::GiveImpulse(const Float3& deltaspeed, const Float3& poin
     NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X, 0.1f);
 }
 
+DLLEXPORT void Physics::AddForce(const Float3& force)
+{
+    SumQueuedForce += force;
+}
+
 DLLEXPORT void Physics::SetVelocity(const Float3& velocities)
 {
+
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
@@ -217,9 +238,9 @@ DLLEXPORT void Physics::ClearVelocity()
         throw InvalidState("Physics object doesn't have a body");
 
     Float3 zeroVector(0, 0, 0);
-    NewtonBodySetForce(Body, &zeroVector.X);
-    NewtonBodySetTorque(Body, &zeroVector.X);
     NewtonBodySetVelocity(Body, &zeroVector.X);
+    // Forces are recalculated each physics update so we can't set them here
+    SetTorque(Float3(0, 0, 0));
 }
 
 DLLEXPORT Float3 Physics::GetVelocity() const
@@ -231,7 +252,25 @@ DLLEXPORT Float3 Physics::GetVelocity() const
     NewtonBodyGetVelocity(Body, &vel.X);
     return vel;
 }
+// ------------------------------------ //
+DLLEXPORT Float3 Physics::GetOmega() const
+{
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
 
+    Float3 vel(0);
+    NewtonBodyGetOmega(Body, &vel.X);
+    return vel;
+}
+
+DLLEXPORT void Physics::SetOmega(const Float3& velocities)
+{
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
+
+    NewtonBodySetOmega(Body, &velocities.X);
+}
+// ------------------------------------ //
 DLLEXPORT Float3 Physics::GetTorque() const
 {
     if(!Body)
@@ -242,12 +281,22 @@ DLLEXPORT Float3 Physics::GetTorque() const
     return torq;
 }
 
+DLLEXPORT void Physics::AddTorque(const Float3& torque)
+{
+    if(TorqueOverride) {
+
+        SumQueuedTorque = Float3(0, 0, 0);
+        TorqueOverride = false;
+    }
+
+    SumQueuedTorque += torque;
+}
+
 DLLEXPORT void Physics::SetTorque(const Float3& torque)
 {
-    if(!Body)
-        throw InvalidState("Physics object doesn't have a body");
 
-    NewtonBodySetTorque(Body, &torque.X);
+    SumQueuedTorque = torque;
+    TorqueOverride = true;
 }
 
 DLLEXPORT void Physics::SetLinearDampening(float factor /*= 0.1f*/)
@@ -346,7 +395,7 @@ DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(PhysicalWorld* world)
     // Callbacks //
     NewtonBodySetTransformCallback(Body, Physics::PhysicsMovedEvent);
 
-    NewtonBodySetForceAndTorqueCallback(Body, Physics::ApplyForceAndTorgueEvent);
+    NewtonBodySetForceAndTorqueCallback(Body, Physics::ApplyForceAndTorqueEvent);
 
     NewtonBodySetDestructorCallback(Body, Physics::DestroyBodyCallback);
 

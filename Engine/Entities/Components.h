@@ -354,7 +354,11 @@ public:
     //! default named force
     DLLEXPORT bool RemoveApplyForce(const std::string& name);
 
-    //! \brief Sets absolute velocity of the object
+    //! \brief Add force to the object
+    //! \note This is applied in ApplyForceAndTorqueEvent
+    DLLEXPORT void AddForce(const Float3& force);
+
+    //! Overrides this objects velocity in ApplyForceAndTorqueEvent
     DLLEXPORT void SetVelocity(const Float3& velocities);
 
     //! \brief Clears velocity and last frame forces (but not the applied force list)
@@ -363,8 +367,17 @@ public:
     //! \brief Gets the absolute velocity
     DLLEXPORT Float3 GetVelocity() const;
 
-    //! \brief Sets the torque of the body
-    //! \see GetBodyTorque
+    //! \brief Gets the omega (angular velocity)
+    DLLEXPORT Float3 GetOmega() const;
+
+    //! \brief Sets the omega
+    DLLEXPORT void SetOmega(const Float3& velocities);
+
+    //! \brief Adds torque to the object
+    //! \note This is applied in ApplyForceAndTorqueEvent
+    DLLEXPORT void AddTorque(const Float3& torque);
+
+    //! \brief Overrides this object's torque in ApplyForceAndTorqueEvent
     DLLEXPORT void SetTorque(const Float3& torque);
 
     //! \brief Gets the torque of the body (rotational velocity)
@@ -401,13 +414,13 @@ public:
     DLLEXPORT void SetMass(float mass);
 
     //! \brief Adds a constraint to the current Body to only move in place
-    DLLEXPORT bool CreatePlaneConstraint(PhysicalWorld* world,
-        const Float3& planenormal = Float3(0, 1, 0));
+    DLLEXPORT bool CreatePlaneConstraint(
+        PhysicalWorld* world, const Float3& planenormal = Float3(0, 1, 0));
 
 
     // default physics callbacks that are fine in most cases //
     // Don't forget to pass the user data as BaseObject if using these //
-    static void ApplyForceAndTorgueEvent(
+    static void ApplyForceAndTorqueEvent(
         const NewtonBody* const body, dFloat timestep, int threadIndex);
 
     static void DestroyBodyCallback(const NewtonBody* body);
@@ -445,11 +458,19 @@ private:
     int AppliedPhysicalMaterial = -1;
 
     //! Non-newton access to mass
+    // 0 mass means static
     float Mass = 0.f;
 
     bool ApplyGravity = true;
 
     std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
+
+    // Stores velocity and torque that should be set in the
+    // callback. These are reset after each apply
+    // If the override is true then the value is directly set
+    Float3 SumQueuedForce = Float3(0, 0, 0);
+    Float3 SumQueuedTorque = Float3(0, 0, 0);
+    bool TorqueOverride = false;
 
 public:
     //! Used to access gravity data

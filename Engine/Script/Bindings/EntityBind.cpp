@@ -130,14 +130,29 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics", "void AddForce(const Float3 &in force) const",
+           asMETHOD(Physics, AddForce), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Physics", "Float3 GetVelocity() const",
            asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectMethod("Physics",
-           "void SetVelocity(const Float3 &in velocity) const",
-           asMETHOD(Physics, SetVelocity), asCALL_THISCALL) < 0) {
+           "void SetVelocity(const Float3 &in velocity) const", asMETHOD(Physics, SetVelocity),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "Float3 GetOmega() const",
+           asMETHODPR(Physics, GetOmega, () const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "void SetOmega(const Float3 &in omega) const",
+           asMETHOD(Physics, SetOmega), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -148,6 +163,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Physics", "Float3 GetTorque() const",
            asMETHODPR(Physics, GetTorque, () const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "void AddTorque(const Float3 &in torque)",
+           asMETHOD(Physics, AddTorque), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

@@ -137,7 +137,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Physics",
            "void SetVelocity(const Float3 &in velocity) const",
-           asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
+           asMETHOD(Physics, SetVelocity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -152,7 +152,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics", "void SetTorque(const Float3 &in torque)",
-           asMETHODPR(Physics, GetVelocity, () const, Float3), asCALL_THISCALL) < 0) {
+           asMETHOD(Physics, SetTorque), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

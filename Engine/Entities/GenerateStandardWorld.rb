@@ -54,7 +54,7 @@ worldClass = GameWorldClass.new(
                                                           noRef: true)),
                               Variable.new("updatesendable", "Sendable*",
                                            noRef: true)
-                            ], usedatastruct: true)]),
+                            ], usedatastruct: true)], releaseparams: []),
     EntityComponent.new("BoxGeometry",
                         [ConstructorInfo.new(
                            [

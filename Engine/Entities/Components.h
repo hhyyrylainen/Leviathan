@@ -331,6 +331,7 @@ public:
         UpdateSendable(args.updatesendable)
     {
     }
+    DLLEXPORT ~Physics();
 
     //! \brief Destroys the physical body
     DLLEXPORT void Release();

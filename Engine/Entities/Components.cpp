@@ -86,6 +86,25 @@ DLLEXPORT void Plane::Release(Ogre::SceneManager* scene)
     Ogre::MeshManager::getSingleton().remove(GeneratedMeshName);
 }
 // ------------------ Physics ------------------ //
+DLLEXPORT Physics::~Physics()
+{
+    if(Body) {
+        LOG_ERROR("Physics: Release not called before destructor!");
+        Release();
+    }
+}
+
+DLLEXPORT void Physics::Release()
+{
+    if(Body)
+        NewtonDestroyBody(Body);
+    if(Collision)
+        NewtonDestroyCollision(Collision);
+
+    Body = NULL;
+    Collision = NULL;
+}
+// ------------------------------------ //
 DLLEXPORT void Physics::JumpTo(Position& target)
 {
     SetPosition(target.Members._Position, target.Members._Orientation);
@@ -113,7 +132,6 @@ DLLEXPORT bool Physics::SetPosition(const Float3& pos, const Float4& orientation
 void Physics::PhysicsMovedEvent(
     const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
 {
-
     // first create Ogre 4x4 matrix from the matrix //
     Ogre::Matrix4 mat = NewtonMatrixToOgre(matrix);
 
@@ -167,6 +185,7 @@ void Physics::DestroyBodyCallback(const NewtonBody* body)
 {
     // This shouldn't be required as the newton world won't be cleared while running
     // Physics* tmp = reinterpret_cast<Physics*>(NewtonBodyGetUserData(body));
+    LOG_INFO("Destroy body callback");
 
     // GUARD_LOCK_OTHER(tmp);
 
@@ -205,7 +224,6 @@ DLLEXPORT void Physics::ClearVelocity()
 
 DLLEXPORT Float3 Physics::GetVelocity() const
 {
-
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
@@ -216,7 +234,6 @@ DLLEXPORT Float3 Physics::GetVelocity() const
 
 DLLEXPORT Float3 Physics::GetTorque() const
 {
-
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
@@ -227,7 +244,6 @@ DLLEXPORT Float3 Physics::GetTorque() const
 
 DLLEXPORT void Physics::SetTorque(const Float3& torque)
 {
-
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
@@ -236,8 +252,6 @@ DLLEXPORT void Physics::SetTorque(const Float3& torque)
 
 DLLEXPORT void Physics::SetLinearDampening(float factor /*= 0.1f*/)
 {
-
-
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
@@ -264,21 +278,8 @@ Float3 Physics::_GatherApplyForces(const float& mass)
     return total;
 }
 // ------------------------------------ //
-DLLEXPORT void Physics::Release()
-{
-
-    if(Collision)
-        NewtonDestroyCollision(Collision);
-    if(Body)
-        NewtonDestroyBody(Body);
-
-    Body = NULL;
-    Collision = NULL;
-}
-// ------------------------------------ //
 DLLEXPORT void Physics::ApplyForce(ApplyForceInfo* pointertohandle)
 {
-
     // Overwrite old if found //
     for(auto iter = ApplyForceList.begin(); iter != ApplyForceList.end(); ++iter) {
 
@@ -300,8 +301,6 @@ DLLEXPORT void Physics::ApplyForce(ApplyForceInfo* pointertohandle)
 
 DLLEXPORT bool Physics::RemoveApplyForce(const std::string& name)
 {
-
-
     // Search for a matching name //
     auto end = ApplyForceList.end();
     for(auto iter = ApplyForceList.begin(); iter != end; ++iter) {
@@ -356,7 +355,6 @@ DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(PhysicalWorld* world)
 
 DLLEXPORT void Physics::SetMass(float mass)
 {
-
     if(!Body)
         return;
 

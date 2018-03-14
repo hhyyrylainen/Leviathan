@@ -154,6 +154,12 @@ DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y){
     int32_t width, height;
     GetSize(width, height);
 
+    if(width == 0 || height == 0){
+        x = 0.5f;
+        y = 0.5f;
+        return;
+    }
+
     x = static_cast<float>(xInt) / width;
     y = static_cast<float>(yInt) / height;
 }

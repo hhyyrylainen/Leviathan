@@ -146,6 +146,18 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
     y = std::clamp(globalY, 0, height);
 }
 
+DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y){
+
+    int xInt, yInt;
+    GetRelativeMouse(xInt, yInt);
+
+    int32_t width, height;
+    GetSize(width, height);
+
+    x = static_cast<float>(xInt) / width;
+    y = static_cast<float>(yInt) / height;
+}
+
 DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
     int X, Y;
     GetRelativeMouse(X, Y);

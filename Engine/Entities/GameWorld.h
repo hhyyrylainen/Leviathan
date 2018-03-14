@@ -273,6 +273,13 @@ public:
     //! \exception InvalidArgument if the object is missing required components
     DLLEXPORT void SetCamera(ObjectID object);
 
+    //! \brief Casts a ray from the active camera
+    //! \param x Normalized x coordinate (range [0, 1])
+    //! \param y Normalized y coordinate (range [0, 1])
+    //! \exception InvalidState if this world has no active camera
+    //! \see SetCamera
+    DLLEXPORT Ogre::Ray CastRayFromCamera(float x, float y) const;
+
     // Ogre get functions //
     inline Ogre::SceneManager* GetScene()
     {

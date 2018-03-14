@@ -309,12 +309,11 @@ DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeinti
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetCamera(ObjectID object)
 {
-
     CameraEntity = object;
 
     AppliedCameraPropertiesPtr = nullptr;
 
-    if(CameraEntity == 0)
+    if(CameraEntity == NULL_OBJECT)
         return;
 
     // Check components //
@@ -331,6 +330,20 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object)
 
         throw InvalidArgument("SetCamera object is missing a needed component (Position)");
     }
+}
+
+DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const {
+
+    // Fail if there is no active camera //
+    if(CameraEntity == NULL_OBJECT)
+        throw InvalidState("This world has no active CameraEntity");
+
+    if(!WorldSceneCamera)
+        throw InvalidState("This world has initialized Ogre resources");
+
+    // Read the latest set data from the camera
+    // TODO: could jump to the actual latest position here if wanted
+    return WorldSceneCamera->getCameraToViewportRay(x, y);
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveEntity(

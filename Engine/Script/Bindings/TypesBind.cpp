@@ -304,9 +304,13 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // Return value isn't actually void here
-    if(engine->RegisterObjectMethod("Float3", "void opAddAssign(const Float3 &in other)",
-           asMETHODPR(Float3, operator+=,(const Float3&), Float3*), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Float3", "Float3& opAddAssign(const Float3 &in other)",
+           asMETHODPR(Float3, operator+=,(const Float3&), Float3&), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "Float3& opSubAssign(const Float3 &in other)",
+           asMETHODPR(Float3, operator-=,(const Float3&), Float3&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -317,6 +321,11 @@ bool BindFloat3(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Float3", "Float3 opMul(float multiply) const",
            asMETHODPR(Float3, operator*,(float) const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "Float3 opMul(const Float3 &in other) const",
+           asMETHODPR(Float3, operator*,(const Float3&) const, Float3), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -349,6 +358,11 @@ bool BindFloat3(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Float3", "float Dot(const Float3 &in val) const",
            asMETHOD(Float3, Dot), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "Float3 Cross(const Float3 &in val) const",
+           asMETHOD(Float3, Cross), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

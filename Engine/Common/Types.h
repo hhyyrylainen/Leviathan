@@ -644,13 +644,21 @@ public:
     {
         return Float3(X + val.X, Y + val.Y, Z + val.Z);
     }
-    DLLEXPORT inline Float3* operator+=(const Float3& val)
+    DLLEXPORT inline Float3& operator+=(const Float3& val)
     {
         X += val.X;
         Y += val.Y;
         Z += val.Z;
-        return this;
+        return *this;
     }
+    DLLEXPORT inline Float3& operator-=(const Float3& val)
+    {
+        X -= val.X;
+        Y -= val.Y;
+        Z -= val.Z;
+        return *this;
+    }
+
     // subtracts all elements //
     DLLEXPORT inline Float3 operator-(const Float3& val) const
     {

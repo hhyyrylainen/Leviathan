@@ -156,6 +156,11 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics", "void AddOmega(const Float3 &in omega) const",
+           asMETHOD(Physics, AddOmega), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Physics", "Float3 ClearVelocity() const",
            asMETHOD(Physics, ClearVelocity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -207,12 +212,6 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-
-    if(engine->RegisterObjectMethod(
-           "Physics", "void Release()", asMETHOD(Physics, Release), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
     if(engine->RegisterObjectMethod("Physics", "void JumpTo(Position@ positiontosync)",
            asMETHOD(Physics, JumpTo), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -230,6 +229,22 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Physics", "Ogre::Matrix4 GetFullMatrix() const",
+           asMETHOD(Physics, GetFullMatrix), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics", "void SetLinearDamping(float factor = 0.1f)",
+           asMETHOD(Physics, SetLinearDamping), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Physics",
+           "void SetAngularDamping(const Float3 &in factor = Float3(0.1f))",
+           asMETHOD(Physics, SetAngularDamping), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Physics",
            "bool CreatePlaneConstraint(PhysicalWorld@ world, const Float3 &in planenormal = "
            "Float3(0, 1, 0))",
@@ -238,6 +253,10 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
 
+    if(engine->RegisterObjectMethod(
+           "Physics", "void Release()", asMETHOD(Physics, Release), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     if(!BindComponentTypeID(engine, "Physics", &PhysicsTYPEProxy))
         return false;

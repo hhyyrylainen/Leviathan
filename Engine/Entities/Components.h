@@ -373,6 +373,9 @@ public:
     //! \brief Sets the omega
     DLLEXPORT void SetOmega(const Float3& velocities);
 
+    //! \brief Add to the omega
+    DLLEXPORT void AddOmega(const Float3& velocities);
+
     //! \brief Adds torque to the object
     //! \note This is applied in ApplyForceAndTorqueEvent
     DLLEXPORT void AddTorque(const Float3& torque);
@@ -394,7 +397,10 @@ public:
     //!
     //! More on this in the Newton wiki here:
     //! http://newtondynamics.com/wiki/index.php5?title=NewtonBodySetLinearDamping
-    DLLEXPORT void SetLinearDampening(float factor = 0.1f);
+    DLLEXPORT void SetLinearDamping(float factor = 0.1f);
+
+    //! \brief Sets the angular damping.
+    DLLEXPORT void SetAngularDamping(const Float3& factor = Float3(0.1f));
 
     //! \brief Applies physical state from holder object
     DLLEXPORT void ApplyPhysicalState(const BasePhysicsData& data);
@@ -409,6 +415,9 @@ public:
     //! \returns False if this fails because there currently is no physics body
     //! for this component
     DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
+
+    //! \brief Returns the full matrix representing this body's position and rotation
+    DLLEXPORT Ogre::Matrix4 GetFullMatrix() const;
 
     //! \brief Calculates the mass matrix and applies the mass parameter to the body
     DLLEXPORT void SetMass(float mass);

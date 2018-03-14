@@ -207,6 +207,20 @@ bool BindMatrix4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Matrix4", "Vector3 getTrans() const",
+           asMETHODPR(Ogre::Matrix4, getTrans, () const, Ogre::Vector3),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectMethod("Matrix4", "Quaternion extractQuaternion() const",
+           asMETHOD(Ogre::Matrix4, extractQuaternion), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+
     if(engine->SetDefaultNamespace("Ogre::Matrix4") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -244,6 +258,42 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
                asOBJ_APP_CLASS_ALLFLOATS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 xAxis() const",
+           asMETHOD(Ogre::Quaternion, xAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 yAxis() const",
+           asMETHOD(Ogre::Quaternion, yAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 zAxis() const",
+           asMETHOD(Ogre::Quaternion, zAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Quaternion Inverse() const",
+           asMETHOD(Ogre::Quaternion, Inverse), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Vector3 opMul(const Vector3 &in vec) const",
+           asMETHODPR(Ogre::Quaternion, operator*,(const Ogre::Vector3&) const, Ogre::Vector3),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Alias to the above function
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Vector3 RotateVector(const Vector3 &in vec) const",
+           asMETHODPR(Ogre::Quaternion, operator*,(const Ogre::Vector3&) const, Ogre::Vector3),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
 
     if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT, "void f(float radians)",
            asFUNCTION(RadianProxy), asCALL_CDECL_OBJFIRST) < 0) {
@@ -313,21 +363,6 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Quaternion", "Vector3 xAxis() const",
-           asMETHOD(Ogre::Quaternion, xAxis), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("Quaternion", "Vector3 yAxis() const",
-           asMETHOD(Ogre::Quaternion, yAxis), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("Quaternion", "Vector3 zAxis() const",
-           asMETHOD(Ogre::Quaternion, zAxis), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
     return true;
 }
 
@@ -347,10 +382,10 @@ bool BindScene(asIScriptEngine* engine)
 
     // New helper method
     if(engine->RegisterObjectMethod("SceneNode", "void removeFromParent()",
-            asFUNCTION(SceneNodeRemoveFromParent), asCALL_CDECL_OBJFIRST) < 0) {
+           asFUNCTION(SceneNodeRemoveFromParent), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    
+
     if(engine->RegisterObjectMethod("SceneNode",
            "void setPosition(const Ogre::Vector3 &in pos)",
            asMETHODPR(Ogre::SceneNode, setPosition, (const Ogre::Vector3&), void),

@@ -129,6 +129,18 @@ DLLEXPORT bool Physics::SetPosition(const Float3& pos, const Float4& orientation
     return true;
 }
 
+DLLEXPORT Ogre::Matrix4 Physics::GetFullMatrix() const
+{
+
+    if(!Body)
+        return Ogre::Matrix4::IDENTITY;
+
+    float matrix[16];
+    NewtonBodyGetMatrix(Body, &matrix[0]);
+
+    return NewtonMatrixToOgre(matrix);
+}
+// ------------------------------------ //
 void Physics::PhysicsMovedEvent(
     const NewtonBody* const body, const dFloat* const matrix, int threadIndex)
 {
@@ -270,6 +282,17 @@ DLLEXPORT void Physics::SetOmega(const Float3& velocities)
 
     NewtonBodySetOmega(Body, &velocities.X);
 }
+
+DLLEXPORT void Physics::AddOmega(const Float3& velocities)
+{
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
+
+    Float3 temp;
+    NewtonBodyGetOmega(Body, &temp.X);
+    temp += velocities;
+    NewtonBodySetOmega(Body, &temp.X);
+}
 // ------------------------------------ //
 DLLEXPORT Float3 Physics::GetTorque() const
 {
@@ -299,12 +322,20 @@ DLLEXPORT void Physics::SetTorque(const Float3& torque)
     TorqueOverride = true;
 }
 
-DLLEXPORT void Physics::SetLinearDampening(float factor /*= 0.1f*/)
+DLLEXPORT void Physics::SetLinearDamping(float factor /*= 0.1f*/)
 {
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
     NewtonBodySetLinearDamping(Body, factor);
+}
+
+DLLEXPORT void Physics::SetAngularDamping(const Float3& factor /*= Float3(0.1f)*/)
+{
+    if(!Body)
+        throw InvalidState("Physics object doesn't have a body");
+
+    NewtonBodySetAngularDamping(Body, &factor.X);
 }
 // ------------------------------------ //
 Float3 Physics::_GatherApplyForces(const float& mass)

@@ -1266,8 +1266,10 @@ public:
         Float3 uv;
         Float3 uuv;
         Float3 qvec(X, Y, Z);
-        uv = qvec.Cross(vector) * (2.0f * W);
-        uuv = qvec.Cross(uv) * 2.0f;
+        uv = qvec.Cross(vector);
+        uuv = qvec.Cross(uv);
+        uv *= 2.0f * W;
+        uuv *= 2.0f;
 
         return vector + uv + uuv;
     }

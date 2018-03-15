@@ -12,6 +12,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/StringOperations.cpp
     TestFiles/ExtraAlgorithms.cpp
     TestFiles/IDFactory.cpp
+    TestFiles/MathTypes.cpp
     TestFiles/Script.cpp
     TestFiles/ScriptConversions.cpp
     TestFiles/HashTesting.cpp

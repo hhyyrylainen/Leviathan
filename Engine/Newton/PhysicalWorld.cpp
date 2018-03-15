@@ -152,13 +152,27 @@ DLLEXPORT NewtonCollision* PhysicalWorld::CreateCompoundCollision()
 DLLEXPORT NewtonCollision* PhysicalWorld::CreateSphere(
     float radius, const Ogre::Matrix4& offset /*= Ogre::Matrix4::IDENTITY*/)
 {
+#ifdef CHECK_FOR_NANS
+    bool matrixNans = false;
+    for(size_t i = 0; i < 16; ++i) {
+        if(std::isnan(*(offset[0] + i))) {
+            matrixNans = true;
+            break;
+        }
+    }
+
+    if(std::isnan(radius) || matrixNans) {
+
+        DEBUG_BREAK;
+        throw std::runtime_error("CreateSphere has NaNs in it!");
+    }
+#endif // CHECK_FOR_NANS
     const auto& prep = PrepareOgreMatrixForNewton(offset);
     return NewtonCreateSphere(World, radius, UNUSED_SHAPE_ID, prep[0]);
 }
 // ------------------------------------ //
 DLLEXPORT NewtonBody* PhysicalWorld::CreateBodyFromCollision(NewtonCollision* collision)
 {
-
     if(!collision)
         return nullptr;
 
@@ -168,7 +182,6 @@ DLLEXPORT NewtonBody* PhysicalWorld::CreateBodyFromCollision(NewtonCollision* co
 
 DLLEXPORT void PhysicalWorld::DestroyBody(NewtonBody* body)
 {
-
     NewtonDestroyBody(body);
 }
 

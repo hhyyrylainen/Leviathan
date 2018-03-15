@@ -483,7 +483,7 @@ DLLEXPORT void Physics::SetMass(float mass)
     // Apply mass to inertia
     inertia *= Mass;
 
-    // #ifdef CHECK_FOR_NANS
+#ifdef CHECK_FOR_NANS
 
     // Doesn't work. Apparently there is a chance to screw up the collision object permanently
     // if(std::isnan(inertia.X) || std::isnan(inertia.Y) || std::isnan(inertia.Z) ||
@@ -499,7 +499,7 @@ DLLEXPORT void Physics::SetMass(float mass)
     inertia.CheckForNans();
     centerofmass.CheckForNans();
 
-    // #endif // CHECK_FOR_NANS
+#endif // CHECK_FOR_NANS
 
     NewtonBodySetMassMatrix(Body, Mass, inertia.X, inertia.Y, inertia.Z);
     NewtonBodySetCentreOfMass(Body, &centerofmass.X);

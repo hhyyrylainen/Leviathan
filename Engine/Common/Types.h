@@ -1252,6 +1252,16 @@ public:
     //! Rotates a vector by this quaternion
     DLLEXPORT inline Float3 RotateVector(const Float3& vector) const
     {
+        // // Alternative from
+        // //
+        // https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaternion
+        // const auto u = Float3(X, Y, Z);
+
+        // // Complex math going on
+        // return u * 2.0f * u.Dot(vector)
+        //     + vector * (W*W - u.Dot(u))
+        //     + u.Cross(vector) * 2.0f * W;
+
         // Math taken from Ogre::Quaternion
         Float3 uv;
         Float3 uuv;

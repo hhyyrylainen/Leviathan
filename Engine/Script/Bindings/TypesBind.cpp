@@ -447,6 +447,12 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Float4",
+            "Float4 Normalize() const",
+            asMETHOD(Float4, Normalize), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod(
            "Float4", "Float3 ToAxis() const", asMETHOD(Float4, ToAxis), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

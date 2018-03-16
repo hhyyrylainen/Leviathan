@@ -21,7 +21,14 @@ void ColourValueProxy(void* memory, Ogre::Real r, Ogre::Real g, Ogre::Real b, Og
     new(memory) Ogre::ColourValue(r, g, b, a);
 }
 
-void MatrixProxy(void* memory)
+void MatrixProxy(void* memory, const Ogre::Vector3& position, const Ogre::Vector3& scale,
+    const Ogre::Quaternion& orientation)
+{
+    new(memory) Ogre::Matrix4;
+    static_cast<Ogre::Matrix4*>(memory)->makeTransform(position, scale, orientation);
+}
+
+void MatrixProxyUninitialized(void* memory)
 {
     new(memory) Ogre::Matrix4;
 }
@@ -197,13 +204,18 @@ bool BindMatrix4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Matrix4", asBEHAVE_CONSTRUCT, "void f()",
+    if(engine->RegisterObjectBehaviour("Matrix4", asBEHAVE_CONSTRUCT,
+           "void f(const Vector3 &in trans, const Vector3 &in scale = Ogre::Vector3(1, 1, 1), "
+           "const Quaternion &in orientation = Ogre::Quaternion::IDENTITY)",
            asFUNCTION(MatrixProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Matrix4", "void setTrans(const Vector3 &in trans)",
-           asMETHOD(Ogre::Matrix4, setTrans), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Matrix4",
+           "void makeTransform(const Vector3 &in trans, const Vector3 &in scale = "
+           "Ogre::Vector3(1, 1, 1), const Quaternion &in orientation = "
+           "Ogre::Quaternion::IDENTITY)",
+           asMETHOD(Ogre::Matrix4, makeTransform), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -290,6 +302,19 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
            "Vector3 RotateVector(const Vector3 &in vec) const",
            asMETHODPR(Ogre::Quaternion, operator*,(const Ogre::Vector3&) const, Ogre::Vector3),
            asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("Ogre::Quaternion") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Ogre::Quaternion IDENTITY",
+           const_cast<Ogre::Quaternion*>(&Ogre::Quaternion::IDENTITY)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("Ogre") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

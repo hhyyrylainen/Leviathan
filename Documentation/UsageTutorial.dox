@@ -81,6 +81,8 @@ These programs are needed for all platforms:
 
 - [Ruby](http://ruby-lang.org) (It is recommended to use RubyInstaller on Windows, version 2.4 or newer)
 
+- Ruby gems (check below for details)
+
 - git
 
 - svn
@@ -212,6 +214,12 @@ possible, or you (might) have a bad time.
 \subsubsection prequisite_troubleshooting_require Require file not found
 
 Make sure you have installed all of the ruby gems.
+
+This is one of the potential errors (the 'os' here is the missing gem):
+
+```
+C:/Ruby24-x64/lib/ruby/2.4.0/rubygems/core_ext/kernel_require.rb:55:in `require`: cannot load such file -- os (LoadError)
+```
 
 
 */

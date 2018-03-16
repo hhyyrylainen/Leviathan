@@ -22,7 +22,7 @@ require_relative 'RubySetupSystem/Libraries/SetupLeviathan.rb'
 THIRD_PARTY_INSTALL = File.join(ProjectDir, "build", "ThirdParty")
 
 $newton = Newton.new(
-  version: "6d76699f7533b33dc908b942d2043508d8d54bfa",
+  version: "6d9be8ccce94845d8738244f5fd9da19c53886ca",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   disableDemos: true,

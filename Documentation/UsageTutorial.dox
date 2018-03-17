@@ -145,9 +145,12 @@ ruby 2.4.1p111
   programs if they have the same name.
 
 
-- After compiling Boost make sure to set `BOOST_ROOT` to the folder
-  where you compiled boost (for example `C:\projects\boost`).  And
-  compile shared versions and use 64 bit build.
+- After compiling Boost make sure to set an environment variable
+  `BOOST_ROOT` to the folder where you compiled boost (for example
+  `C:\projects\boost`). This is different from path, you can create
+  new environment variables from the same place where you edit the
+  PATH environment variable. And compile shared versions and use 64
+  bit build.
 
   Additional tip: when running `b2` make sure you specify the toolset,
   bitness, type and the number of cores to use for compiling like

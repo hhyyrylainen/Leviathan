@@ -91,10 +91,10 @@ These programs are needed for all platforms:
 
 - cmake
 
-- boost libraries 1.65 or newer is recommended but older versions may
-work. (On **linux** the setup script will automatically use the package
-manager to install this. For **Windows** see \ref
-prerequisite_software_windows)
+- boost libraries 1.66 or newer is required on windows older versions
+  work on linux. (On **linux** the setup script will automatically use
+  the package manager to install this. For **Windows** see \ref
+  prerequisite_software_windows)
 
 - 7zip (if you want to use precompiled dependencies)
 

@@ -8,6 +8,9 @@ endif()
 
 # Find Boost
 if(USE_BOOST)
+  # Uncomment the next line to get boost debug info
+  # set(Boost_DEBUG ON)
+
   # Might be a good idea to dynamically link Boost
   set(Boost_USE_STATIC_LIBS FALSE)
 
@@ -20,6 +23,9 @@ if(USE_BOOST)
   find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})
 
   if(NOT Boost_FOUND)
+    # Automatically print stuff if it failed
+    set(Boost_DEBUG ON)
+    find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})
     message(FATAL_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})
   endif(NOT Boost_FOUND)
 

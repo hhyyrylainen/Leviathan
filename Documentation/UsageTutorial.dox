@@ -107,7 +107,9 @@ ruby 2.4.1p111
 
 \subsection prerequisite_software_windows Windows
 
-- Visual Studio 2017 Community (make sure to enable c++ support when installing)
+- Visual Studio 2017 Community (make sure to enable c++ support when installing) and install
+  to the default path in `C:/Program Files (x86)/Microsoft Visual Studio/2017/Community`
+  otherwise the setup won't find it.
 - Visual c++ 2010 runtime (This is required for yasm according to ffmpeg setup guide)
 - [Cygwin64](https://cygwin.com/install.html). When Cygwin asks for
   which packages to install make sure the at least the following are

@@ -141,7 +141,7 @@
     Then call the event sending function on the global Leviathan::EventHandler.
 
     \code
-        GetEventHandler().CallEvent(generic);
+        GetEngine().GetEventHandler().CallEvent(generic);
     \endcode
 
     \subsection angelscript_event_setting_parameters Setting event parameters

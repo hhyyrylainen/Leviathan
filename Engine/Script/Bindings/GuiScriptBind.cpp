@@ -19,21 +19,24 @@ using namespace Leviathan;
 
 // Proxies etc.
 // ------------------------------------ //
+void CEGUIWindowSetPropertyProxy(
+    CEGUI::Window* obj, const std::string& propertyname, const std::string& propertyvalue)
+{
+    obj->setProperty(propertyname, propertyvalue);
+}
+
 void CEGUIWindowSetTextProxy(CEGUI::Window* obj, const std::string& text)
 {
-
     obj->setText(text);
 }
 
 std::string CEGUIWindowGetTextProxy(CEGUI::Window* obj, const std::string& text)
 {
-
     return std::string(obj->getText().c_str());
 }
 
 CEGUI::Window* CEGUIWindowGetChildWindowProxy(CEGUI::Window* obj, const std::string& text)
 {
-
     return obj->getChild(text);
 }
 
@@ -41,27 +44,23 @@ CEGUI::Window* CEGUIWindowGetChildWindowProxy(CEGUI::Window* obj, const std::str
 void CEGUIWindowSetSizeProxy(
     CEGUI::Window* obj, float width, float widthpixels, float height, float heightpixels)
 {
-
     obj->setSize(
         CEGUI::USize(CEGUI::UDim(width, widthpixels), CEGUI::UDim(height, heightpixels)));
 }
 
 void CEGUIWindowInvalidateProxy(CEGUI::Window* obj, bool recursive)
 {
-
     obj->invalidate(recursive);
 }
 
 void CEGUIWindowSetDisabledState(CEGUI::Window* obj, bool disabled)
 {
-
     obj->setEnabled(!disabled);
 }
 
 // TODO: all these methods but allow converting to the derived classes and then call these
 bool CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index)
 {
-
     CEGUI::TabControl* convtabs = dynamic_cast<CEGUI::TabControl*>(obj);
     if(convtabs != NULL) {
 
@@ -74,7 +73,6 @@ bool CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index)
 
 bool CEGUIComboboxSetSelectedItem(CEGUI::Window* obj, const std::string& text)
 {
-
     CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
 
     if(!convbox)
@@ -97,7 +95,6 @@ bool CEGUIComboboxSetSelectedItem(CEGUI::Window* obj, const std::string& text)
 
 bool CEGUIComboboxAddItem(CEGUI::Window* obj, const std::string& text)
 {
-
     CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
 
     if(!convbox)
@@ -110,7 +107,6 @@ bool CEGUIComboboxAddItem(CEGUI::Window* obj, const std::string& text)
 
 bool CEGUIComboboxClearItems(CEGUI::Window* obj)
 {
-
     CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
 
     if(!convbox)
@@ -124,7 +120,6 @@ bool CEGUIComboboxClearItems(CEGUI::Window* obj)
 bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const std::string& filename,
     const std::string& tabname, const std::string& lookfor, const std::string& replacer)
 {
-
     // Find the file //
     const std::string onlyname =
         StringOperations::RemoveExtension<std::string>(filename, true);
@@ -213,7 +208,6 @@ namespace Leviathan {
 
 bool BindGuiCollection(asIScriptEngine* engine)
 {
-
     ANGELSCRIPT_REGISTER_REF_TYPE("GuiCollection", GUI::GuiCollection);
 
     if(engine->RegisterObjectMethod("GuiCollection", "const string& GetName()",
@@ -227,7 +221,6 @@ bool BindGuiCollection(asIScriptEngine* engine)
 
 bool BindGuiObject(asIScriptEngine* engine)
 {
-
     ANGELSCRIPT_REGISTER_REF_TYPE("GuiObject", GUI::BaseGuiObject);
 
     if(engine->RegisterObjectMethod("GuiObject", "int GetID()",
@@ -274,12 +267,17 @@ bool BindGuiObject(asIScriptEngine* engine)
 //! Binds everything in the CEGUI namespace
 bool BindCEGUI(asIScriptEngine* engine)
 {
-
     if(engine->SetDefaultNamespace("CEGUI") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectType("Window", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+           "void SetProperty(const string &in propertyname, const string &in propertyvalue)",
+           asFUNCTION(CEGUIWindowSetPropertyProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -295,6 +293,12 @@ bool BindCEGUI(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Window",
            "Window@ GetChildWindow(const string &in namepath)",
+           asFUNCTION(CEGUIWindowGetChildWindowProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Alias for GetChildWindow
+    if(engine->RegisterObjectMethod("Window", "Window@ GetChild(const string &in namepath)",
            asFUNCTION(CEGUIWindowGetChildWindowProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -406,7 +410,6 @@ bool BindWidgetTypes(asIScriptEngine* engine)
 
 bool Leviathan::BindGUI(asIScriptEngine* engine)
 {
-
     // Needed by base gui object and widget types
     if(!BindCEGUI(engine))
         return false;

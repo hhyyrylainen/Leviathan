@@ -233,6 +233,8 @@ bool BindNamedVars(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    
+
 
     return true;
 }

@@ -383,7 +383,6 @@ using namespace Leviathan;
 //        auto& manual = world->CreateManualObject(brush);
 //
 //        // Create the graphical box //
-//        manual.Object = scene->createManualObject();
 //
 //        // We do not want to update this later //
 //        manual.Object->setDynamic(false);

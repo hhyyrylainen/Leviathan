@@ -61,7 +61,12 @@ worldClass = GameWorldClass.new(
                              Variable.new("size", "Float3"),
                              Variable.new("material", "std::string")
                            ], usedatastruct: false)]),
-    EntityComponent.new("ManualObject", [ConstructorInfo.new([])]),
+    EntityComponent.new("ManualObject", [ConstructorInfo.new(
+                                           [
+                                             Variable.new("GetScene()", "",
+                                                          nonMethodParam: true),
+                                           ])],
+                        releaseparams: ["GetScene()"]),
     EntityComponent.new("Camera",
                         [ConstructorInfo.new(
                            [

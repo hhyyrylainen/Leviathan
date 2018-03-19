@@ -153,6 +153,11 @@ void Leviathan::GameWorld::_CreateOgreResources(
     // WorldsScene->setShadowFarDistance(1000.f);
     // WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
 
+    // Setup v2 rendering for the default group
+    WorldsScene->getRenderQueue()->setRenderQueueMode(
+        DEFAULT_RENDER_QUEUE, Ogre::RenderQueue::FAST);
+
+
     // create camera //
     WorldSceneCamera = WorldsScene->createCamera("Camera01");
 
@@ -332,7 +337,8 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object)
     }
 }
 
-DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const {
+DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const
+{
 
     // Fail if there is no active camera //
     if(CameraEntity == NULL_OBJECT)

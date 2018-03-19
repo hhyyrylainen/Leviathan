@@ -675,6 +675,7 @@ DLLEXPORT Model::Model(
     Component(TYPE)
 {
     GraphicalObject = scene->createItem(meshname);
+    GraphicalObject->setRenderQueueGroup(DEFAULT_RENDER_QUEUE);
     parent->attachObject(GraphicalObject);
 }
 
@@ -685,9 +686,14 @@ DLLEXPORT void Model::Release(Ogre::SceneManager* scene)
 }
 
 // ------------------ ManualObject ------------------ //
+DLLEXPORT ManualObject::ManualObject(Ogre::SceneManager* scene) : Component(TYPE)
+{
+    Object = scene->createManualObject();
+    Object->setRenderQueueGroup(DEFAULT_RENDER_QUEUE);
+}
+
 DLLEXPORT void ManualObject::Release(Ogre::SceneManager* scene)
 {
-
     if(Object) {
 
         scene->destroyManualObject(Object);

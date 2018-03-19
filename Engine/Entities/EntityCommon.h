@@ -13,6 +13,8 @@ using ObjectID = int32_t;
 // TODO: start using this everywhere
 constexpr ObjectID NULL_OBJECT = 0;
 
+constexpr auto DEFAULT_RENDER_QUEUE = 50;
+
 } // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL

@@ -503,7 +503,7 @@ public:
 
 class ManualObject : public Component {
 public:
-    inline ManualObject() : Component(TYPE) {}
+    DLLEXPORT ManualObject(Ogre::SceneManager* scene);
 
     DLLEXPORT void Release(Ogre::SceneManager* scene);
 
@@ -513,6 +513,8 @@ public:
 
     //! When not empty the ManualObject has been created into an actual mesh
     //! that needs to be destroyed on release
+    //! \note The Object can be directly added to a scene so this may be empty even
+    //! if the Object is created
     std::string CreatedMesh;
 
     static constexpr auto TYPE = COMPONENT_TYPE::ManualObject;

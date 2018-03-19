@@ -642,7 +642,7 @@ DLLEXPORT void Engine::MessagePump(){
 
             if(win){
 
-                LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
+                // LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
                 win->InjectKeyDown(event.key.keysym.sym);
             }
 
@@ -654,7 +654,7 @@ DLLEXPORT void Engine::MessagePump(){
 
             if(win){
 
-                LOG_WRITE("SDL_KEYUP: " + Convert::ToString(event.key.keysym.sym));
+                // LOG_WRITE("SDL_KEYUP: " + Convert::ToString(event.key.keysym.sym));
                 win->InjectKeyUp(event.key.keysym.sym);
             }
 
@@ -668,7 +668,7 @@ DLLEXPORT void Engine::MessagePump(){
 
                 const auto text = std::string(event.text.text);
 
-                LOG_WRITE("TextInput: " + text);
+                // LOG_WRITE("TextInput: " + text);
 
                 std::vector<uint32_t> codepoints;
 

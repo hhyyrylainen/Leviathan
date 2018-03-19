@@ -370,7 +370,7 @@ DLLEXPORT void Leviathan::Window::InjectKeyDown(int32_t sdlkey){
     if(!usedkeydown){
 
         // Then try disabling collections //
-        LOG_WRITE("TODO: check is a text box active");
+        //LOG_WRITE("TODO: check is a text box active");
         if(!OwningWindow->GetGui()->ProcessKeyDown(sdlkey, SpecialKeyModifiers)){
 
             // Finally send to a controller //

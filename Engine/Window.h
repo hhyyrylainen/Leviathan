@@ -74,6 +74,7 @@ public:
 
     DLLEXPORT void InjectCodePoint(uint32_t utf32char);
 
+    //! \todo check is a text box active
     DLLEXPORT void InjectKeyDown(int32_t sdlkey);
 
     DLLEXPORT void InjectKeyUp(int32_t sdlkey);

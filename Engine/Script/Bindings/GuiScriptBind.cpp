@@ -4,7 +4,9 @@
 #include "GUI/BaseGuiObject.h"
 #include "GUI/GuiManager.h"
 
+#include "CEGUI/widgets/ProgressBar.h"
 #include "CEGUIInclude.h"
+
 #include "FileSystem.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 
@@ -58,63 +60,41 @@ void CEGUIWindowSetDisabledState(CEGUI::Window* obj, bool disabled)
     obj->setEnabled(!disabled);
 }
 
-// TODO: all these methods but allow converting to the derived classes and then call these
-bool CEGUITabControlSetActiveTabIndex(CEGUI::Window* obj, int index)
+void CEGUITabControlSetActiveTabIndex(CEGUI::TabControl* obj, int index)
 {
-    CEGUI::TabControl* convtabs = dynamic_cast<CEGUI::TabControl*>(obj);
-    if(convtabs != NULL) {
-
-        convtabs->setSelectedTabAtIndex(index);
-        return true;
-    }
-
-    return false;
+    obj->setSelectedTabAtIndex(index);
 }
 
-bool CEGUIComboboxSetSelectedItem(CEGUI::Window* obj, const std::string& text)
+bool CEGUIComboboxSetSelectedItem(CEGUI::Combobox* obj, const std::string& text)
 {
-    CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
-
-    if(!convbox)
-        return false;
-
-    CEGUI::StandardItem* wanted = convbox->findItemWithText(CEGUI::String(text), NULL);
+    CEGUI::StandardItem* wanted = obj->findItemWithText(CEGUI::String(text), NULL);
 
     if(!wanted)
         return false;
 
     // Skip setting it as selected if it already is //
-    if(wanted == convbox->getSelectedItem())
+    if(wanted == obj->getSelectedItem())
         return true;
 
-    convbox->clearAllSelections();
-    convbox->setItemSelectState(wanted, true);
+    obj->clearAllSelections();
+    obj->setItemSelectState(wanted, true);
 
     return true;
 }
 
-bool CEGUIComboboxAddItem(CEGUI::Window* obj, const std::string& text)
+void CEGUIComboboxAddItem(CEGUI::Combobox* obj, const std::string& text)
 {
-    CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
-
-    if(!convbox)
-        return false;
-
-    convbox->addItem(new CEGUI::StandardItem(CEGUI::String(text)));
-
-    return true;
+    obj->addItem(new CEGUI::StandardItem(CEGUI::String(text)));
 }
 
-bool CEGUIComboboxClearItems(CEGUI::Window* obj)
+void CEGUIComboboxClearItems(CEGUI::Combobox* obj)
 {
-    CEGUI::Combobox* convbox = dynamic_cast<CEGUI::Combobox*>(obj);
+    obj->resetList();
+}
 
-    if(!convbox)
-        return false;
-
-    convbox->resetList();
-
-    return true;
+void CEGUIProgressBarSetProgress(CEGUI::ProgressBar* self, float progress)
+{
+    self->setProgress(progress);
 }
 
 bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const std::string& filename,
@@ -331,28 +311,59 @@ bool BindCEGUI(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // Tab stuff which should be in a derived class
-    if(engine->RegisterObjectMethod("Window", "bool SetSelectedTabIndex(int index)",
+    // ------------------------------------ //
+    // Tabcontrol
+    if(engine->RegisterObjectType("TabControl", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(
+        CEGUI::Window, "Window", CEGUI::TabControl, "TabControl");
+
+
+    if(engine->RegisterObjectMethod("TabControl", "void SetSelectedTabIndex(int index)",
            asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    // ------------------------------------ //
     // Combobox stuff
-    if(engine->RegisterObjectMethod("Window", "bool AddItem(const string &in text)",
+    if(engine->RegisterObjectType("Combobox", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(CEGUI::Window, "Window", CEGUI::Combobox, "Combobox");
+
+    if(engine->RegisterObjectMethod("Combobox", "bool AddItem(const string &in text)",
            asFUNCTION(CEGUIComboboxAddItem), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Window", "bool ClearItems()",
+    if(engine->RegisterObjectMethod("Combobox", "void ClearItems()",
            asFUNCTION(CEGUIComboboxClearItems), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Window", "bool SetSelectedItem(const string &in text)",
+    if(engine->RegisterObjectMethod("Combobox", "void SetSelectedItem(const string &in text)",
            asFUNCTION(CEGUIComboboxSetSelectedItem), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    // ------------------------------------ //
+    // ProgressBar
+    if(engine->RegisterObjectType("ProgressBar", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(
+        CEGUI::Window, "Window", CEGUI::ProgressBar, "ProgressBar");
+
+    if(engine->RegisterObjectMethod("ProgressBar", "void SetProgress(float progress)",
+           asFUNCTION(CEGUIProgressBarSetProgress), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
     // Quite an expensive method //
     if(engine->RegisterObjectMethod("Window",
            "bool LoadAndCustomizeTabFromFile(const string &in filename, "

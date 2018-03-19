@@ -60,11 +60,6 @@ void CEGUIWindowSetDisabledState(CEGUI::Window* obj, bool disabled)
     obj->setEnabled(!disabled);
 }
 
-void CEGUITabControlSetActiveTabIndex(CEGUI::TabControl* obj, int index)
-{
-    obj->setSelectedTabAtIndex(index);
-}
-
 bool CEGUIComboboxSetSelectedItem(CEGUI::Combobox* obj, const std::string& text)
 {
     CEGUI::StandardItem* wanted = obj->findItemWithText(CEGUI::String(text), NULL);
@@ -85,16 +80,6 @@ bool CEGUIComboboxSetSelectedItem(CEGUI::Combobox* obj, const std::string& text)
 void CEGUIComboboxAddItem(CEGUI::Combobox* obj, const std::string& text)
 {
     obj->addItem(new CEGUI::StandardItem(CEGUI::String(text)));
-}
-
-void CEGUIComboboxClearItems(CEGUI::Combobox* obj)
-{
-    obj->resetList();
-}
-
-void CEGUIProgressBarSetProgress(CEGUI::ProgressBar* self, float progress)
-{
-    self->setProgress(progress);
 }
 
 bool CEGUIAdvancedCreateTabFromFile(CEGUI::Window* obj, const std::string& filename,
@@ -320,9 +305,9 @@ bool BindCEGUI(asIScriptEngine* engine)
     ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF(
         CEGUI::Window, "Window", CEGUI::TabControl, "TabControl");
 
-
-    if(engine->RegisterObjectMethod("TabControl", "void SetSelectedTabIndex(int index)",
-           asFUNCTION(CEGUITabControlSetActiveTabIndex), asCALL_CDECL_OBJFIRST) < 0) {
+    ANGELSCRIPT_ASSUMED_SIZE_T;
+    if(engine->RegisterObjectMethod("TabControl", "void SetSelectedTabIndex(uint64 index)",
+           asMETHOD(CEGUI::TabControl, setSelectedTabAtIndex), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -340,7 +325,7 @@ bool BindCEGUI(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Combobox", "void ClearItems()",
-           asFUNCTION(CEGUIComboboxClearItems), asCALL_CDECL_OBJFIRST) < 0) {
+           asMETHOD(CEGUI::Combobox, resetList), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -359,7 +344,7 @@ bool BindCEGUI(asIScriptEngine* engine)
         CEGUI::Window, "Window", CEGUI::ProgressBar, "ProgressBar");
 
     if(engine->RegisterObjectMethod("ProgressBar", "void SetProgress(float progress)",
-           asFUNCTION(CEGUIProgressBarSetProgress), asCALL_CDECL_OBJFIRST) < 0) {
+           asMETHOD(CEGUI::ProgressBar, setProgress), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

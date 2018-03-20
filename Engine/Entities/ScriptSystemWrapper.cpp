@@ -287,6 +287,7 @@ inline bool TryToCreateNewCachedComponentsForEntity(ObjectID newentity, CScriptA
                 }
 
                 asIScriptObject* fullSearchResult = holder->Find(newentity);
+                holder->Release();
 
                 if(fullSearchResult) {
 

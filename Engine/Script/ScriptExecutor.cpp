@@ -336,7 +336,7 @@ DLLEXPORT std::shared_ptr<ScriptModule> ScriptExecutor::GetScriptModuleByFunctio
 {
     const char* nameStr = func->GetModuleName();
 
-    if(strlen(nameStr) <= 1)
+    if(!nameStr || strlen(nameStr) <= 1)
         return nullptr;
 
     // static_cast<ScriptModule*>(func->GetModule()->GetUserData());

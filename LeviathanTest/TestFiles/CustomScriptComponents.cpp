@@ -81,3 +81,38 @@ TEST_CASE("Script can register custom entity type and do stuff with it", "[scrip
 
     REQUIRE_NOTHROW(world.Release());
 }
+
+
+TEST_CASE("Script node helper works with multiple script classes", "[script][entity]")
+{
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // Script needs to be valid for releasing the components
+    StandardWorld world;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/CustomScriptComponentTest.as"));
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup("SetupCustomComponentsMultiple");
+
+    auto returned = exec.RunScript<bool>(mod, ssetup, static_cast<GameWorld*>(&world));
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value == true);
+
+    SECTION("Works without creating any components")
+    {
+        // Run the world once, and then verify //
+        world.Tick(1);
+    }
+
+    REQUIRE_NOTHROW(world.Release());
+}

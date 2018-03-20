@@ -171,3 +171,83 @@ bool VerifyRemoved(GameWorld@ world){
 }
 
 
+class SecondTimer : ScriptComponent{
+
+
+    int TimeValue = 0;
+};
+
+class CombinedCached{
+
+    CombinedCached(ObjectID id, SecondTimer@ first, CoolTimer@ second, Position@ third)
+    {
+        ID = id;
+        @First = first;
+        @Second = second;
+        @Third = third;
+    }
+
+    ObjectID ID;
+    SecondTimer@ First;
+    CoolTimer@ Second;
+    Position@ Third;
+};
+
+class CombinedSystem : ScriptSystem{
+
+    void Init(GameWorld@ world){
+
+        @World = cast<StandardWorld@>(world);
+    }
+
+    void Release(){
+
+    }
+
+    void Run(){
+
+        for(uint i = 0; i < CachedComponents.length(); ++i){
+
+            CombinedCached@ cached = CachedComponents[i];
+
+            cached.Second.TimeValue += int(cached.Third._Position.X) + cached.First.TimeValue;
+        }
+    }
+
+    void Clear(){
+
+        CachedComponents.resize(0);
+    }
+
+    void CreateAndDestroyNodes(){
+
+        // Delegate to helper //
+        ScriptSystemNodeHelper(World, @CachedComponents, SystemComponents);
+    }
+
+    private StandardWorld@ World;
+    private array<ScriptSystemUses> SystemComponents = {
+        ScriptSystemUses("SecondTimer"),
+        ScriptSystemUses("CoolTimer"),
+        ScriptSystemUses(Position::TYPE)
+    };
+
+    array<CombinedCached@> CachedComponents;
+};
+
+
+ScriptComponent@ SecondFactory(GameWorld@ world){
+
+    return SecondTimer();
+}
+
+
+bool SetupCustomComponentsMultiple(GameWorld@ world){
+
+    world.RegisterScriptComponentType("CoolTimer", @CoolFactory);
+    world.RegisterScriptComponentType("SecondTimer", @SecondFactory);
+    world.RegisterScriptSystem("CoolSystem", CoolSystem());
+    world.RegisterScriptSystem("CombinedSystem", CombinedSystem());
+    
+    return true;
+}

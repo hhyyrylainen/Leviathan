@@ -55,6 +55,21 @@ static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
 // ------------------------------------ //
 class GameWorld::Implementation {
 public:
+    ~Implementation()
+    {
+
+        // Check that there are no external references to these
+        for(const auto& tuple : RegisteredScriptComponents) {
+
+            if(tuple.second->GetRefCount() != 1) {
+
+                LOG_FATAL("GameWorld: ImplRelease: RegisteredScriptComponent: has external "
+                          "refs, count: " +
+                          std::to_string(tuple.second->GetRefCount()));
+            }
+        }
+    }
+
     std::map<std::string, ScriptComponentHolder::pointer> RegisteredScriptComponents;
     std::map<std::string, std::unique_ptr<ScriptSystemWrapper>> RegisteredScriptSystems;
 };
@@ -133,10 +148,17 @@ DLLEXPORT void Leviathan::GameWorld::Release()
 
         // Destroy the compositor //
         Ogre::Root& ogre = Ogre::Root::getSingleton();
-        ogre.getCompositorManager2()->removeWorkspace(WorldWorkspace);
-        WorldWorkspace = NULL;
-        ogre.destroySceneManager(WorldsScene);
-        WorldsScene = NULL;
+
+        // Allow releasing twice
+        if(WorldWorkspace) {
+            ogre.getCompositorManager2()->removeWorkspace(WorldWorkspace);
+            WorldWorkspace = NULL;
+        }
+
+        if(WorldsScene) {
+            ogre.destroySceneManager(WorldsScene);
+            WorldsScene = NULL;
+        }
     }
 
     // Let go of our these resources
@@ -947,6 +969,10 @@ DLLEXPORT void GameWorld::_DoSystemsInit()
 
 DLLEXPORT void GameWorld::_DoSystemsRelease()
 {
+    // This can be called after Releasing once already
+    if(!pimpl)
+        return;
+
     // We are responsible for script systems //
     for(auto iter = pimpl->RegisteredScriptSystems.begin();
         iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
@@ -959,6 +985,10 @@ DLLEXPORT void GameWorld::_DoSystemsRelease()
 
 DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
 {
+    // This can be called after Releasing once already
+    if(!pimpl)
+        return;
+
     // Handle script types
     for(auto iter = pimpl->RegisteredScriptComponents.begin();
         iter != pimpl->RegisteredScriptComponents.end(); ++iter) {
@@ -1344,8 +1374,11 @@ DLLEXPORT bool GameWorld::RegisterScriptComponentType(
     const std::string& name, asIScriptFunction* factory)
 {
     // Skip if already registered //
-    if(pimpl->RegisteredScriptComponents.find(name) != pimpl->RegisteredScriptComponents.end())
+    if(pimpl->RegisteredScriptComponents.find(name) !=
+        pimpl->RegisteredScriptComponents.end()) {
+        factory->Release();
         return false;
+    }
 
     // ScriptComponentHolder takes care of releasing the reference
     pimpl->RegisteredScriptComponents[name] =
@@ -1372,18 +1405,22 @@ DLLEXPORT ScriptComponentHolder* GameWorld::GetScriptComponentHolder(const std::
 DLLEXPORT bool GameWorld::RegisterScriptSystem(
     const std::string& name, asIScriptObject* system)
 {
-    // if called after release
-    if(!pimpl)
-        return false;
-
     if(!system) {
         LOG_ERROR("GameWorld: RegisterScriptSystem: passed null object as new system");
         return false;
     }
 
-    // Skip if already registered //
-    if(pimpl->RegisteredScriptSystems.find(name) != pimpl->RegisteredScriptSystems.end())
+    // if called after release
+    if(!pimpl) {
+        system->Release();
         return false;
+    }
+
+    // Skip if already registered //
+    if(pimpl->RegisteredScriptSystems.find(name) != pimpl->RegisteredScriptSystems.end()) {
+        system->Release();
+        return false;
+    }
 
     // Create a wrapper for it //
     // The wrapper handles unreferencing the handle

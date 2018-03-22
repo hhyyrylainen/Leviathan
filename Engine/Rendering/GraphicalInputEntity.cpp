@@ -175,8 +175,11 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
 
         // Notify engine to register threads to work with Ogre //
         Engine::GetEngine()->_NotifyThreadsRegisterOgre();
-        FileSystem::RegisterOGREResourceGroups();
+
+        // Hlms is needed to parse scripts etc.
         windowcreater->_LoadOgreHLMS();
+        
+        FileSystem::RegisterOGREResourceGroups();
 
         // Create the GUI system //
         CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);

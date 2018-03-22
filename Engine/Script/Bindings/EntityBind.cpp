@@ -34,6 +34,29 @@ void ScriptSystemUsesDestructorProxy(void* memory)
     static_cast<ScriptSystemUses*>(memory)->~ScriptSystemUses();
 }
 
+void SimpleAnimationConstructorProxy(void* memory, const std::string& name)
+{
+    new(memory) SimpleAnimation(name);
+}
+
+void SimpleAnimationDestructorProxy(void* memory)
+{
+    reinterpret_cast<SimpleAnimation*>(memory)->~SimpleAnimation();
+}
+
+void AnimatedAddHelper(Animated* self, const SimpleAnimation &animation){
+
+    self->Animations.push_back(animation);
+}
+
+SimpleAnimation* AnimatedGetHelper(Animated* self, uint64_t index){
+
+    if(index >= self->Animations.size())
+        return nullptr;
+
+    return &self->Animations[index];
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -72,6 +95,7 @@ static uint16_t BoxGeometryTYPEProxy = static_cast<uint16_t>(BoxGeometry::TYPE);
 static uint16_t CameraTYPEProxy = static_cast<uint16_t>(Camera::TYPE);
 static uint16_t ManualObjectTYPEProxy = static_cast<uint16_t>(ManualObject::TYPE);
 static uint16_t PlaneTYPEProxy = static_cast<uint16_t>(Plane::TYPE);
+static uint16_t AnimatedTYPEProxy = static_cast<uint16_t>(Animated::TYPE);
 
 //! Helper for BindComponentTypes
 bool BindComponentTypeID(asIScriptEngine* engine, const char* name, uint16_t* value)
@@ -224,8 +248,8 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics",
-            "bool SetOnlyOrientation(const Float4 &in orientation)",
-            asMETHOD(Physics, SetOnlyOrientation), asCALL_THISCALL) < 0) {
+           "bool SetOnlyOrientation(const Float4 &in orientation)",
+           asMETHOD(Physics, SetOnlyOrientation), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -408,6 +432,69 @@ bool BindComponentTypes(asIScriptEngine* engine)
 
     if(engine->RegisterObjectProperty(
            "Plane", "Ogre::Item@ GraphicalObject", asOFFSET(Plane, GraphicalObject)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Animated
+    if(engine->RegisterObjectType("Animated", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Animated", "bool Marked", asOFFSET(Animated, Marked)) <
+        0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(!BindComponentTypeID(engine, "Animated", &AnimatedTYPEProxy))
+        return false;
+
+    if(engine->RegisterObjectProperty("Animated", "Ogre::Item@ GraphicalObject",
+           asOFFSET(Animated, GraphicalObject)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // SimpleAnimation
+    if(engine->RegisterObjectType("SimpleAnimation", sizeof(SimpleAnimation),
+           asOBJ_VALUE | asGetTypeTraits<SimpleAnimation>()) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("SimpleAnimation", asBEHAVE_CONSTRUCT,
+           "void f(const string &in name)", asFUNCTION(SimpleAnimationConstructorProxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("SimpleAnimation", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(SimpleAnimationDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+           "SimpleAnimation", "bool Loop", asOFFSET(SimpleAnimation, Loop)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("SimpleAnimation", "float SpeedFactor",
+           asOFFSET(SimpleAnimation, SpeedFactor)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+           "SimpleAnimation", "bool Paused", asOFFSET(SimpleAnimation, Paused)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Animation helpers
+    if(engine->RegisterObjectMethod("Animated",
+            "void AddAnimation(const SimpleAnimation &in animation)",
+            asFUNCTION(AnimatedAddHelper), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Animated",
+            "SimpleAnimation& GetAnimation(uint64 index)",
+            asFUNCTION(AnimatedGetHelper), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

@@ -4,12 +4,14 @@
 #include "Define.h"
 #include "Logger.h"
 
+// For Float type conversions
+#include "Common/Types.h"
+
+#include "Animation/OgreSkeletonAnimation.h"
+#include "Animation/OgreSkeletonInstance.h"
 #include "OgreColourValue.h"
 #include "OgreItem.h"
 #include "OgreRoot.h"
-
-// For Float type conversions
-#include "Common/Types.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -92,6 +94,17 @@ void ItemSetMaterialProxy(Ogre::Item* self, const std::string& material)
 {
     if(self)
         self->setMaterialName(material);
+}
+
+Ogre::SkeletonAnimation* SkeletonInstanceGetAnimationProxy(
+    Ogre::SkeletonInstance* self, const std::string& name)
+{
+    try {
+        return self->getAnimation(name);
+    } catch(const Ogre::Exception&) {
+
+        return nullptr;
+    }
 }
 
 // This is needed because directly registering
@@ -436,6 +449,58 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Item", "SkeletonInstance@ getSkeletonInstance()",
+           asMETHOD(Ogre::Item, getSkeletonInstance), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
+bool BindSkeletons(asIScriptEngine* engine)
+{
+    // ------------------------------------ //
+    // SkeletonAnimation
+    if(engine->RegisterObjectType("SkeletonAnimation", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SkeletonAnimation",
+            "void setEnabled(bool enabled)",
+            asMETHOD(Ogre::SkeletonAnimation, setEnabled), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SkeletonAnimation",
+            "bool getEnabled()",
+            asMETHOD(Ogre::SkeletonAnimation, getEnabled), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SkeletonAnimation",
+            "void setLoop(bool loop)",
+            asMETHOD(Ogre::SkeletonAnimation, setLoop), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SkeletonAnimation",
+            "void addTime(Real time)",
+            asMETHOD(Ogre::SkeletonAnimation, addTime), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    
+    // ------------------------------------ //
+    // SkeletonInstance
+    if(engine->RegisterObjectType("SkeletonInstance", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SkeletonInstance",
+           "SkeletonAnimation@ getAnimation(const string &in name)",
+           asFUNCTION(SkeletonInstanceGetAnimationProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 
@@ -462,6 +527,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         return false;
 
     if(!BindMatrix4(engine))
+        return false;
+
+    if(!BindSkeletons(engine))
         return false;
 
     if(!BindScene(engine))

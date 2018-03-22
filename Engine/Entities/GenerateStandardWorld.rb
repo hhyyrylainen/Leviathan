@@ -87,6 +87,13 @@ worldClass = GameWorldClass.new(
                              Variable.new("size", "Float2")
                            ])
                         ]),
+    EntityComponent.new("Animated",
+                        [ConstructorInfo.new(
+                           [
+                             Variable.new("item", "Ogre::Item*",
+                                          noRef: true)
+                           ])
+                        ]),    
   ],
   systems: [
     EntitySystem.new("RenderingPositionSystem", ["RenderNode", "Position"],
@@ -95,6 +102,9 @@ worldClass = GameWorldClass.new(
                                  ]}),
     EntitySystem.new("RenderNodePropertiesSystem", [],
                      runrender: {group: 11, parameters: ["ComponentRenderNode.GetIndex()"]}),
+    EntitySystem.new("AnimationTimeAdder", [],
+                     runrender: {group: 60, parameters: ["ComponentAnimated.GetIndex()",
+                                                         "calculatedTick", "progressInTick"]}),
     EntitySystem.new("ReceivedSystem", []), 
     EntitySystem.new("SendableSystem", []), 
     EntitySystem.new("PositionStateSystem", [], runtick: {

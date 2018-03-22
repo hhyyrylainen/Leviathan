@@ -17,6 +17,9 @@
 
 #include <functional>
 
+// This is not optimal to be here but SimpleAnimation would have to
+// rehash a string each frame
+#include "OgreIdString.h"
 
 namespace Leviathan {
 
@@ -232,6 +235,60 @@ public:
     Ogre::Item* GraphicalObject = nullptr;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;
+};
+
+//! \brief Contains an nimation for Animated component
+struct SimpleAnimation {
+
+    DLLEXPORT inline SimpleAnimation(const std::string& name) : Name(name), ReadableName(name)
+    {
+    }
+
+    DLLEXPORT inline SimpleAnimation(SimpleAnimation&& other) :
+        Name(std::move(other.Name)), ReadableName(std::move(other.ReadableName))
+    {
+        Loop = other.Loop;
+        SpeedFactor = other.SpeedFactor;
+        Paused = other.Paused;
+    }
+
+    DLLEXPORT inline SimpleAnimation(const SimpleAnimation& other) :
+        Name(other.Name), ReadableName(other.ReadableName)
+    {
+        Loop = other.Loop;
+        SpeedFactor = other.SpeedFactor;
+        Paused = other.Paused;
+    }
+
+    const Ogre::IdString Name;
+
+    //! Readable version of Name as it is hashed
+    const std::string ReadableName;
+
+    //! If true the animation will automatically loop
+    bool Loop = false;
+    //! Controls how fast the animation plays
+    float SpeedFactor = 1;
+    //! If true then the animation isn't updated
+    bool Paused = false;
+};
+
+//! \brief Entity plays animations on an Ogre::Item
+class Animated : public Component {
+public:
+    DLLEXPORT Animated(Ogre::Item* item) : Component(TYPE), GraphicalObject(item) {}
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Model);
+
+    //! The entity that is played animations on
+    Ogre::Item* GraphicalObject = nullptr;
+
+    //! Playing animations
+    //! \note When adding or removing (or changing
+    //! the looping etc. properties) this needs to be marked
+    std::vector<SimpleAnimation> Animations;
+
+    static constexpr auto TYPE = COMPONENT_TYPE::Animated;
 };
 
 //! \brief Plane component

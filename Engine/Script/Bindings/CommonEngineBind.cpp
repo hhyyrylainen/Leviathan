@@ -233,8 +233,12 @@ bool BindNamedVars(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    
-
+    if(engine->RegisterObjectMethod("NamedVars",
+           "string Serialize(const string &in lineprefix = "
+           ") const",
+           asMETHOD(NamedVars, Serialize), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }

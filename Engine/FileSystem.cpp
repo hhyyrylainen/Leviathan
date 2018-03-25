@@ -12,8 +12,8 @@
 #endif
 #include "TimeIncludes.h"
 
-#include <ostream>
 #include <fstream>
+#include <ostream>
 
 #include <boost/filesystem.hpp>
 
@@ -31,7 +31,8 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-Leviathan::FileSystem::FileSystem(){
+Leviathan::FileSystem::FileSystem()
+{
     // set static access //
     Staticaccess = this;
     // set default values //
@@ -42,12 +43,13 @@ Leviathan::FileSystem::FileSystem(){
         IsSorted = IsBeingSorted = ShouldSortStop = false;
 }
 
-Leviathan::FileSystem::~FileSystem(){
+Leviathan::FileSystem::~FileSystem()
+{
 
     // Helps catch errors with tests etc.
     if(Staticaccess == this)
         Staticaccess = nullptr;
-    
+
     SAFE_DELETE_VECTOR(FileTypes);
 
     AllFiles.clear();
@@ -74,7 +76,8 @@ Leviathan::FileSystem::~FileSystem(){
     SAFE_DELETE_VECTOR(ScriptIndexes);
 }
 
-DLLEXPORT FileSystem* FileSystem::Get(){
+DLLEXPORT FileSystem* FileSystem::Get()
+{
 
     return Staticaccess;
 }
@@ -90,7 +93,8 @@ string Leviathan::FileSystem::SoundFolder = "Sound/";
 
 FileSystem* Leviathan::FileSystem::Staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::FileSystem::Init(LErrorReporter* errorreport){
+DLLEXPORT bool Leviathan::FileSystem::Init(LErrorReporter* errorreport)
+{
 
     ErrorReporter = errorreport;
 
@@ -104,36 +108,37 @@ DLLEXPORT bool Leviathan::FileSystem::Init(LErrorReporter* errorreport){
     GetFilesInDirectory(files, "./Data");
 #endif
 
-    if(files.size() < 1){
+    if(files.size() < 1) {
 
-        ErrorReporter->Error(std::string("FileSystem: SearchFiles: No files inside data folder, "
-            "cannot possibly work"));
+        ErrorReporter->Error(
+            std::string("FileSystem: SearchFiles: No files inside data folder, "
+                        "cannot possibly work"));
         return false;
     }
 
     // save to appropriate places //
-    for(size_t i = 0; i < files.size(); i++){
-        
+    for(size_t i = 0; i < files.size(); i++) {
+
         // create new object for storing this //
         auto tmpptr = make_shared<FileDefinitionType>(this, files[i]);
 
-        if(files[i].find("./Data/Textures/") == 0){
-            
+        if(files[i].find("./Data/Textures/") == 0) {
+
             // add to texture files //
             TextureFiles.push_back((tmpptr));
-            
-        } else if(files[i].find("./Data/Models/") == 0){
-            
+
+        } else if(files[i].find("./Data/Models/") == 0) {
+
             // add to texture files //
             ModelFiles.push_back(tmpptr);
-            
-        } else if(files[i].find("./Data/Sound/") == 0){
-            
+
+        } else if(files[i].find("./Data/Sound/") == 0) {
+
             // add to texture files //
             SoundFiles.push_back(tmpptr);
-            
-        } else if(files[i].find("./Data/Scripts/") == 0){
-            
+
+        } else if(files[i].find("./Data/Scripts/") == 0) {
+
             // add to texture files //
             ScriptFiles.push_back(tmpptr);
         }
@@ -142,9 +147,9 @@ DLLEXPORT bool Leviathan::FileSystem::Init(LErrorReporter* errorreport){
         AllFiles.push_back(tmpptr);
     }
     // print some info //
-    ErrorReporter->Info("FileSystem: found "+Convert::ToString(AllFiles.size())+
-        " files in Data folder with "+Convert::ToString(FileTypes.size())+
-        " different types of extensions");
+    ErrorReporter->Info("FileSystem: found " + Convert::ToString(AllFiles.size()) +
+                        " files in Data folder with " + Convert::ToString(FileTypes.size()) +
+                        " different types of extensions");
 
     // sort for quick finding //
     auto starttime = Time::GetTimeMicro64();
@@ -153,18 +158,19 @@ DLLEXPORT bool Leviathan::FileSystem::Init(LErrorReporter* errorreport){
     auto elapsed = Time::GetTimeMicro64() - starttime;
 
     // print info //
-    ErrorReporter->Info("FileSystem: vectors sorted and indexes created, took "+
-        Convert::ToString(elapsed)+" micro seconds");
+    ErrorReporter->Info("FileSystem: vectors sorted and indexes created, took " +
+                        Convert::ToString(elapsed) + " micro seconds");
 
     return true;
 }
 
-DLLEXPORT bool Leviathan::FileSystem::ReSearchFiles(){
+DLLEXPORT bool Leviathan::FileSystem::ReSearchFiles()
+{
 
     // Reset values //
     CurrentFileExtID = 25;
     IsSorted = false;
-    
+
     SAFE_DELETE_VECTOR(FileTypes);
 
     AllFiles.clear();
@@ -194,45 +200,54 @@ DLLEXPORT bool Leviathan::FileSystem::ReSearchFiles(){
     return Init(ErrorReporter);
 }
 // ------------------------------------ //
-string Leviathan::FileSystem::GetDataFolder(){
+string Leviathan::FileSystem::GetDataFolder()
+{
 
-    return( DataFolder );
+    return (DataFolder);
 }
 
-string Leviathan::FileSystem::GetModelsFolder(){
+string Leviathan::FileSystem::GetModelsFolder()
+{
 
-    return(DataFolder + ModelsFolder);
+    return (DataFolder + ModelsFolder);
 }
 
-string Leviathan::FileSystem::GetScriptsFolder(){
+string Leviathan::FileSystem::GetScriptsFolder()
+{
 
-    return(DataFolder + ScriptsFolder);
+    return (DataFolder + ScriptsFolder);
 }
 
-string Leviathan::FileSystem::GetShaderFolder(){
+string Leviathan::FileSystem::GetShaderFolder()
+{
 
-    return(DataFolder + ShaderFolder);
+    return (DataFolder + ShaderFolder);
 }
 
-string Leviathan::FileSystem::GetTextureFolder(){
+string Leviathan::FileSystem::GetTextureFolder()
+{
 
-    return(DataFolder + TextureFolder);
+    return (DataFolder + TextureFolder);
 }
 
-string Leviathan::FileSystem::GetFontFolder(){
+string Leviathan::FileSystem::GetFontFolder()
+{
 
-    return(DataFolder + FontFolder);
+    return (DataFolder + FontFolder);
 }
 
-string Leviathan::FileSystem::GetSoundFolder(){
+string Leviathan::FileSystem::GetSoundFolder()
+{
 
-    return(DataFolder + SoundFolder);
+    return (DataFolder + SoundFolder);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::FileSystem::DoesExtensionMatch(FileDefinitionType* file, const vector<int>&Ids){
+DLLEXPORT bool Leviathan::FileSystem::DoesExtensionMatch(
+    FileDefinitionType* file, const vector<int>& Ids)
+{
     // check does file contain an extension id that is in the vector //
-    for(size_t i = 0; i < Ids.size(); i++){
-        if(file->ExtensionID == Ids[i]){
+    for(size_t i = 0; i < Ids.size(); i++) {
+        if(file->ExtensionID == Ids[i]) {
             // match found //
             return true;
         }
@@ -242,7 +257,8 @@ DLLEXPORT bool Leviathan::FileSystem::DoesExtensionMatch(FileDefinitionType* fil
 
 // ------------------------------------ //
 #ifdef _WIN32
-void Leviathan::FileSystem::GetWindowsFolder(wstring &path){
+void Leviathan::FileSystem::GetWindowsFolder(wstring& path)
+{
     wchar_t winddir[MAX_PATH];
     if(GetWindowsDirectoryW(winddir, MAX_PATH) > 0)
         path = winddir;
@@ -250,7 +266,8 @@ void Leviathan::FileSystem::GetWindowsFolder(wstring &path){
         path += L'/';
 }
 
-void Leviathan::FileSystem::GetSpecialFolder(wstring &path, int specialtype){
+void Leviathan::FileSystem::GetSpecialFolder(wstring& path, int specialtype)
+{
     wchar_t directory[MAX_PATH];
     SHGetSpecialFolderPathW(NULL, directory, specialtype, false);
     path = directory;
@@ -259,57 +276,62 @@ void Leviathan::FileSystem::GetSpecialFolder(wstring &path, int specialtype){
 }
 #endif
 // ------------------------------------ //
-DLLEXPORT void Leviathan::FileSystem::SetDataFolder(const string &folder){
+DLLEXPORT void Leviathan::FileSystem::SetDataFolder(const string& folder)
+{
 
     DataFolder = folder;
 }
 
-void Leviathan::FileSystem::SetModelsFolder(const string &folder){
+void Leviathan::FileSystem::SetModelsFolder(const string& folder)
+{
 
     ModelsFolder = folder;
 }
 
-void Leviathan::FileSystem::SetScriptsFolder(const string &folder){
+void Leviathan::FileSystem::SetScriptsFolder(const string& folder)
+{
 
     ScriptsFolder = folder;
 }
 
-void Leviathan::FileSystem::SetShaderFolder(const string &folder){
+void Leviathan::FileSystem::SetShaderFolder(const string& folder)
+{
 
     ShaderFolder = folder;
 }
 
-void Leviathan::FileSystem::SetTextureFolder(const string &folder){
+void Leviathan::FileSystem::SetTextureFolder(const string& folder)
+{
 
     TextureFolder = folder;
 }
 // ------------------ File handling ------------------ //
-DLLEXPORT bool FileSystem::LoadDataDump(const string &file,
+DLLEXPORT bool FileSystem::LoadDataDump(const string& file,
     vector<shared_ptr<NamedVariableList>>& vec, LErrorReporter* errorreport)
 {
     // Get data //
     ifstream stream(file);
-    
-    if(!stream.good()){
+
+    if(!stream.good()) {
         // no file ! //
-        errorreport->Error("FileSystem: LoadDataDump: Failed to read file: "+file);
+        errorreport->Error("FileSystem: LoadDataDump: Failed to read file: " + file);
         return false;
     }
-    
+
     // count length //
     stream.seekg(0, ios::end);
     auto length = stream.tellg();
     stream.seekg(0, ios::beg);
-    
-    if(length == std::streampos(0)){
-        
+
+    if(length == std::streampos(0)) {
+
         // empty file ! //
         return false;
     }
 
     // TODO: directly copy into the string
-    unique_ptr<char[]> Buff(new char[(size_t)length+1]);
-    
+    unique_ptr<char[]> Buff(new char[(size_t)length + 1]);
+
     // set null terminator, just in case
     (Buff.get())[length] = '\0';
 
@@ -324,8 +346,8 @@ DLLEXPORT bool FileSystem::LoadDataDump(const string &file,
 }
 
 #ifdef _WIN32
-DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
-    const string &dirpath, const string &pattern, bool recursive /*= true*/)
+DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string>& files,
+    const string& dirpath, const string& pattern, bool recursive /*= true*/)
 {
     string FilePath;
     string Pattern;
@@ -335,16 +357,16 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
     Pattern = dirpath + pattern;
 
     hFile = ::FindFirstFileA(Pattern.c_str(), &FileInfo);
-    if(hFile != INVALID_HANDLE_VALUE){
-        do{
+    if(hFile != INVALID_HANDLE_VALUE) {
+        do {
 
-            if(FileInfo.cFileName[0] != '.'){
+            if(FileInfo.cFileName[0] != '.') {
                 FilePath.erase();
-                FilePath = dirpath + FileInfo.cFileName+"/";
+                FilePath = dirpath + FileInfo.cFileName + "/";
 
-                if(FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY){
+                if(FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 
-                    if(recursive){
+                    if(recursive) {
                         // call self to search subdirectory
                         int retr = GetFilesInDirectory(files, FilePath, pattern, recursive);
                         if(!retr)
@@ -352,10 +374,10 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
                     }
                 } else {
                     // save file
-                    files.push_back(dirpath+FileInfo.cFileName);
+                    files.push_back(dirpath + FileInfo.cFileName);
                 }
             }
-        }while(::FindNextFileA(hFile, &FileInfo) == 1);
+        } while(::FindNextFileA(hFile, &FileInfo) == 1);
 
         // close handle //
         FindClose(hFile);
@@ -364,8 +386,8 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
     return true;
 }
 #else
-DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
-    const string &dirpath, const string &pattern /*= "*.*"*/, bool recursive /*= true*/)
+DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string>& files,
+    const string& dirpath, const string& pattern /*= "*.*"*/, bool recursive /*= true*/)
 {
     dirent* ent;
     struct stat st;
@@ -373,13 +395,13 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
     // Start searching //
     DIR* dir = opendir(dirpath.c_str());
 
-    if(!dir){
+    if(!dir) {
 
         // Non-existant directory
         return false;
     }
-    
-    while((ent = readdir(dir)) != NULL){
+
+    while((ent = readdir(dir)) != NULL) {
         const string file_name = ent->d_name;
 
         // Ignore if starts with a '.' //
@@ -393,9 +415,9 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
             continue;
 
         // Check if it is a dirpath //
-        if((st.st_mode & S_IFDIR) != 0){
+        if((st.st_mode & S_IFDIR) != 0) {
             // Go into dirpath if recursive search //
-            if(recursive){
+            if(recursive) {
                 // \todo fix performance //
                 GetFilesInDirectory(files, full_file_name, pattern, recursive);
             }
@@ -404,19 +426,20 @@ DLLEXPORT bool Leviathan::FileSystem::GetFilesInDirectory(vector<string> &files,
 
         files.push_back(full_file_name);
     }
-    
+
     closedir(dir);
 
     return true;
 }
 #endif
 // ------------------ File operations ------------------ //
-size_t Leviathan::FileSystem::GetFileLength(const string &name){
+size_t Leviathan::FileSystem::GetFileLength(const string& name)
+{
 
     ifstream file(name, ios::binary);
 
-    if(file.good()){
-        
+    if(file.good()) {
+
         file.seekg(0, ios::end);
         auto returnval = file.tellg();
         file.close();
@@ -430,15 +453,17 @@ size_t Leviathan::FileSystem::GetFileLength(const string &name){
 #endif
 }
 
-DLLEXPORT bool Leviathan::FileSystem::FileExists(const string &name){
+DLLEXPORT bool Leviathan::FileSystem::FileExists(const string& name)
+{
 
     return boost::filesystem::exists(name);
 }
 
-bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filename){
+bool Leviathan::FileSystem::WriteToFile(const string& data, const string& filename)
+{
     ofstream file(filename, ios::binary);
-    if(file.is_open()){
-        
+    if(file.is_open()) {
+
         file << data;
 
         file.close();
@@ -449,13 +474,14 @@ bool Leviathan::FileSystem::WriteToFile(const string &data, const string &filena
     return false;
 }
 
-bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &filename){
+bool Leviathan::FileSystem::WriteToFile(const wstring& data, const wstring& filename)
+{
 #ifdef _WIN32
     wofstream file(filename, ios::binary);
 #else
     wofstream file(Convert::Utf16ToUtf8(filename), ios::binary);
 #endif
-    if (file.is_open()){
+    if(file.is_open()) {
         file << data;
 
         file.close();
@@ -466,12 +492,13 @@ bool Leviathan::FileSystem::WriteToFile(const wstring &data, const wstring &file
     return false;
 }
 
-bool Leviathan::FileSystem::AppendToFile(const string &data, const string &filepath){
+bool Leviathan::FileSystem::AppendToFile(const string& data, const string& filepath)
+{
 
     ofstream file(filepath, ofstream::app | ios::binary);
 
-    if(file.is_open()){
-        
+    if(file.is_open()) {
+
         file << data;
 
         file.close();
@@ -482,15 +509,15 @@ bool Leviathan::FileSystem::AppendToFile(const string &data, const string &filep
     return false;
 }
 
-DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
-    wstring &resultreceiver)
+DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(
+    const wstring& file, wstring& resultreceiver)
 {
 #ifdef _WIN32
     wifstream reader(file, ios::in | ios::binary);
 #else
     wifstream reader(Convert::Utf16ToUtf8(file), ios::in | ios::binary);
 #endif
-    if(reader){
+    if(reader) {
 
         // go to end to count length //
         reader.seekg(0, ios::end);
@@ -499,7 +526,7 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
 
         // cannot be loaded //
         LEVIATHAN_ASSERT(std::numeric_limits<streamoff>::max() >= rpos, "file is too large");
-        
+
         resultreceiver.resize(static_cast<size_t>(rpos));
         // back to start //
         reader.seekg(0, ios::beg);
@@ -514,13 +541,13 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const wstring &file,
     return false;
 }
 
-DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const string &file,
-    string &resultreceiver)
+DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(
+    const string& file, string& resultreceiver)
 {
 
     ifstream reader(file, ios::in | ios::binary);
 
-    if(reader){
+    if(reader) {
 
         // go to end to count length //
         reader.seekg(0, ios::end);
@@ -541,11 +568,12 @@ DLLEXPORT bool Leviathan::FileSystem::ReadFileEntirely(const string &file,
         reader.close();
         return true;
     }
-    
+
     return false;
 }
 // ------------------ Non static part ------------------ //
-DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
+DLLEXPORT void Leviathan::FileSystem::SortFileVectors()
+{
     // check if already sorted //
     if(IsSorted)
         return;
@@ -555,9 +583,9 @@ DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
     IsBeingSorted = true;
 
     // looping so that other thread can cancel the action before it is finished //
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < 5; i++) {
         // switch on index and call std sort //
-        switch(i){
+        switch(i) {
         case 0: sort(AllFiles.begin(), AllFiles.end(), FileDefSorter()); break;
         case 1: sort(TextureFiles.begin(), TextureFiles.end(), FileDefSorter()); break;
         case 2: sort(ModelFiles.begin(), ModelFiles.end(), FileDefSorter()); break;
@@ -566,7 +594,7 @@ DLLEXPORT void Leviathan::FileSystem::SortFileVectors(){
         }
 
         // check for end
-        if(ShouldSortStop){
+        if(ShouldSortStop) {
             // asked to stop //
             goto end;
         }
@@ -578,9 +606,10 @@ end:
     IsBeingSorted = false;
 }
 
-DLLEXPORT void Leviathan::FileSystem::CreateIndexesForVecs(bool forcerecreation /*= false*/){
+DLLEXPORT void Leviathan::FileSystem::CreateIndexesForVecs(bool forcerecreation /*= false*/)
+{
     // check are vectors sorted, if not call sort //
-    if(!IsSorted){
+    if(!IsSorted) {
 
         SortFileVectors();
     }
@@ -592,9 +621,10 @@ DLLEXPORT void Leviathan::FileSystem::CreateIndexesForVecs(bool forcerecreation 
     _CreateIndexesIfMissing(ScriptFiles, ScriptIndexes, IsScriptIndexed, forcerecreation);
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const string &extension){
+DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const string& extension)
+{
     // check does it exist //
-    for(size_t i = 0; i < FileTypes.size(); i++){
+    for(size_t i = 0; i < FileTypes.size(); i++) {
         if(StringOperations::CompareInsensitive(FileTypes[i]->Name, extension))
             return FileTypes[i]->ID;
     }
@@ -606,120 +636,113 @@ DLLEXPORT int Leviathan::FileSystem::RegisterExtension(const string &extension){
     return CurrentFileExtID;
 }
 
-void Leviathan::FileSystem::GetExtensionIDS(const string& extensions, vector<int>& ids){
+void Leviathan::FileSystem::GetExtensionIDS(const string& extensions, vector<int>& ids)
+{
     // generate info about the extensions //
     vector<string> Exts;
     StringOperations::CutString(extensions, string("|"), Exts);
-    if(Exts.size() == 0){
+    if(Exts.size() == 0) {
         // just one extension //
         ids.push_back(RegisterExtension(extensions));
         return;
     }
 
-    for(size_t i = 0; i < Exts.size(); i++){
+    for(size_t i = 0; i < Exts.size(); i++) {
         ids.push_back(RegisterExtension(Exts[i]));
     }
 }
 
-DLLEXPORT const string& Leviathan::FileSystem::GetExtensionName(int id) const{
+DLLEXPORT const string& Leviathan::FileSystem::GetExtensionName(int id) const
+{
     // Look for it //
-    for(size_t i = 0; i < FileTypes.size(); i++){
+    for(size_t i = 0; i < FileTypes.size(); i++) {
         if(FileTypes[i]->ID == id)
             return FileTypes[i]->Name;
     }
-    
-    // Not found //
+
+        // Not found //
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
     throw NotFound("No extension corresponds with id");
 #else
     LEVIATHAN_ASSERT(0, "No extension corresponds with id");
     return FileTypes[0]->Name;
-#endif //ALTERNATIVE_EXCEPTIONS_FATAL
+#endif // ALTERNATIVE_EXCEPTIONS_FATAL
 }
 // ------------------------------------ //
-DLLEXPORT string Leviathan::FileSystem::SearchForFile(FILEGROUP which, const string& name, const string& extensions,
-    bool searchall /*= true*/)
+DLLEXPORT string Leviathan::FileSystem::SearchForFile(
+    FILEGROUP which, const string& name, const string& extensions, bool searchall /*= true*/)
 {
     if(name.empty())
         return "";
-    
+
     // generate info about the search file //
     vector<int> ExtensionIDS;
     GetExtensionIDS(extensions, ExtensionIDS);
 
-    switch(which){
-    case FILEGROUP_MODEL:
-        {
-            shared_ptr<FileDefinitionType> result = _SearchForFileInVec(ModelFiles, ExtensionIDS,
-                name, IsModelIndexed, &ModelIndexes);
-            if(result.get() != NULL){
-                // found //
-                return result.get()->RelativePath;
-            }
+    switch(which) {
+    case FILEGROUP_MODEL: {
+        shared_ptr<FileDefinitionType> result =
+            _SearchForFileInVec(ModelFiles, ExtensionIDS, name, IsModelIndexed, &ModelIndexes);
+        if(result.get() != NULL) {
+            // found //
+            return result.get()->RelativePath;
         }
-    break;
-    case FILEGROUP_TEXTURE:
-        {
-            shared_ptr<FileDefinitionType> result = _SearchForFileInVec(TextureFiles,
-                ExtensionIDS, name, IsTextureIndexed, &TextureIndexes);
-            
-            if(result.get() != NULL){
-                // found //
-                return result.get()->RelativePath;
-            }
+    } break;
+    case FILEGROUP_TEXTURE: {
+        shared_ptr<FileDefinitionType> result = _SearchForFileInVec(
+            TextureFiles, ExtensionIDS, name, IsTextureIndexed, &TextureIndexes);
+
+        if(result.get() != NULL) {
+            // found //
+            return result.get()->RelativePath;
         }
-        break;
-    case FILEGROUP_SOUND:
-        {
-            shared_ptr<FileDefinitionType> result = _SearchForFileInVec(SoundFiles, ExtensionIDS,
-                name, IsSoundIndexed, &SoundIndexes);
-            if(result.get() != NULL){
-                // found //
-                return result.get()->RelativePath;
-            }
+    } break;
+    case FILEGROUP_SOUND: {
+        shared_ptr<FileDefinitionType> result =
+            _SearchForFileInVec(SoundFiles, ExtensionIDS, name, IsSoundIndexed, &SoundIndexes);
+        if(result.get() != NULL) {
+            // found //
+            return result.get()->RelativePath;
         }
-        break;
-    case FILEGROUP_SCRIPT:
-        {
-            shared_ptr<FileDefinitionType> result = _SearchForFileInVec(ScriptFiles, ExtensionIDS,
-                name, IsScriptIndexed, &ScriptIndexes);
-            if(result.get() != NULL){
-                // found //
-                return result.get()->RelativePath;
-            }
+    } break;
+    case FILEGROUP_SCRIPT: {
+        shared_ptr<FileDefinitionType> result = _SearchForFileInVec(
+            ScriptFiles, ExtensionIDS, name, IsScriptIndexed, &ScriptIndexes);
+        if(result.get() != NULL) {
+            // found //
+            return result.get()->RelativePath;
         }
-    break;
-    case FILEGROUP_OTHER:
-        {
-            shared_ptr<FileDefinitionType> result = _SearchForFileInVec(AllFiles, ExtensionIDS,
-                name, IsAllIndexed, &AllIndexes);
-            if(result.get() != NULL){
-                // found //
-                return result.get()->RelativePath;
-            }
+    } break;
+    case FILEGROUP_OTHER: {
+        shared_ptr<FileDefinitionType> result =
+            _SearchForFileInVec(AllFiles, ExtensionIDS, name, IsAllIndexed, &AllIndexes);
+        if(result.get() != NULL) {
+            // found //
+            return result.get()->RelativePath;
         }
-    break;
+    } break;
     }
 
 
     // still not found, if searchall specified search all files vector //
-    if(searchall){
-        shared_ptr<FileDefinitionType> result = _SearchForFileInVec(AllFiles, ExtensionIDS, name,
-            IsAllIndexed, &AllIndexes);
-        if(result.get() != NULL){
+    if(searchall) {
+        shared_ptr<FileDefinitionType> result =
+            _SearchForFileInVec(AllFiles, ExtensionIDS, name, IsAllIndexed, &AllIndexes);
+        if(result.get() != NULL) {
             // found //
             return result.get()->RelativePath;
         }
     }
     // not found return empty and if debug build warn //
 
-    ErrorReporter->Error("FileSystem: File not found: "+name+"."+extensions);
+    ErrorReporter->Error("FileSystem: File not found: " + name + "." + extensions);
 
     return "";
 }
 
-DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(FILEGROUP which,
-    const string& regexname, const string &extensions, bool searchall /*= true*/)
+DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllMatchingFiles(
+    FILEGROUP which, const string& regexname, const string& extensions,
+    bool searchall /*= true*/)
 {
     // generate info about the search file //
     vector<int> ExtensionIDS;
@@ -730,7 +753,7 @@ DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllM
 
     vector<shared_ptr<FileDefinitionType>> foundfiles;
 
-    if(searchall){
+    if(searchall) {
 
         _SearchForFilesInVec(AllFiles, foundfiles, ExtensionIDS, usedregex);
 
@@ -738,36 +761,25 @@ DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllM
         // specific vector //
         vector<shared_ptr<FileDefinitionType>>* targetvector = NULL;
 
-        switch(which){
-        case FILEGROUP_MODEL:
-            {
-                targetvector = &ModelFiles;
-            }
-            break;
-        case FILEGROUP_TEXTURE:
-            {
-                targetvector = &TextureFiles;
-            }
-            break;
-        case FILEGROUP_SOUND:
-            {
-                targetvector = &SoundFiles;
-            }
-            break;
-        case FILEGROUP_SCRIPT:
-            {
-                targetvector = &ScriptFiles;
-            }
-            break;
-        case FILEGROUP_OTHER:
-            {
-                targetvector = &AllFiles;
-            }
-            break;
+        switch(which) {
+        case FILEGROUP_MODEL: {
+            targetvector = &ModelFiles;
+        } break;
+        case FILEGROUP_TEXTURE: {
+            targetvector = &TextureFiles;
+        } break;
+        case FILEGROUP_SOUND: {
+            targetvector = &SoundFiles;
+        } break;
+        case FILEGROUP_SCRIPT: {
+            targetvector = &ScriptFiles;
+        } break;
+        case FILEGROUP_OTHER: {
+            targetvector = &AllFiles;
+        } break;
         }
 
         _SearchForFilesInVec(*targetvector, foundfiles, ExtensionIDS, usedregex);
-
     }
 
     // return what we found //
@@ -776,36 +788,40 @@ DLLEXPORT vector<shared_ptr<FileDefinitionType>> Leviathan::FileSystem::FindAllM
 
 
 // ------------------------------------ //
-vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetModelFiles(){
+vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetModelFiles()
+{
     return ModelFiles;
 }
 
-vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetSoundFiles(){
+vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetSoundFiles()
+{
     return SoundFiles;
 }
 
-vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetAllFiles(){
+vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetAllFiles()
+{
     return AllFiles;
 }
 
-vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetScriptFiles(){
+vector<shared_ptr<FileDefinitionType>>& Leviathan::FileSystem::GetScriptFiles()
+{
     return ScriptFiles;
 }
 // ------------------------------------ //
-shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector<shared_ptr<FileDefinitionType>>& vec,
-    vector<int>& extensions, const string& name, bool UseIndexVector,
-    vector<CharWithIndex*>* Index)
+shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(
+    vector<shared_ptr<FileDefinitionType>>& vec, vector<int>& extensions, const string& name,
+    bool UseIndexVector, vector<CharWithIndex*>* Index)
 {
     size_t StartSpot = 0;
 
     // use index to get start spot for faster searching //
-    if(UseIndexVector){
+    if(UseIndexVector) {
         char startchar = name[0];
         bool Found = false;
 
         // find matching char //
-        for(unsigned int i = 0; i < Index->size(); i++){
-            if(Index->at(i)->Char == startchar){
+        for(unsigned int i = 0; i < Index->size(); i++) {
+            if(Index->at(i)->Char == startchar) {
                 Found = true;
                 StartSpot = Index->at(i)->Index;
                 break;
@@ -816,9 +832,9 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
             return NULL;
     }
 
-    for(size_t i = StartSpot; i < vec.size(); i++){
+    for(size_t i = StartSpot; i < vec.size(); i++) {
         // if no extension specified skip checking them //
-        if(extensions.size() > 0){
+        if(extensions.size() > 0) {
             // check does extension(s) match //
             if(!DoesExtensionMatch(vec[i].get(), extensions))
                 continue;
@@ -835,18 +851,19 @@ shared_ptr<FileDefinitionType> Leviathan::FileSystem::_SearchForFileInVec(vector
 }
 
 void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitionType>>& vec,
-    vector<shared_ptr<FileDefinitionType>>& results, vector<int> &extensions, const regex &regex)
+    vector<shared_ptr<FileDefinitionType>>& results, vector<int>& extensions,
+    const regex& regex)
 {
-    for(size_t i = 0; i < vec.size(); i++){
+    for(size_t i = 0; i < vec.size(); i++) {
         // if no extension specified skip checking them //
-        if(extensions.size() > 0){
+        if(extensions.size() > 0) {
             // check does extension(s) match //
-            if(!DoesExtensionMatch(vec[i].get(), extensions)){
+            if(!DoesExtensionMatch(vec[i].get(), extensions)) {
                 continue;
             }
         }
         // extensions match check name //
-        if(!regex_match(vec[i]->Name, regex)){
+        if(!regex_match(vec[i]->Name, regex)) {
             continue;
         }
 
@@ -855,11 +872,12 @@ void Leviathan::FileSystem::_SearchForFilesInVec(vector<shared_ptr<FileDefinitio
     }
 }
 
-void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefinitionType>> &vec,
-    vector<CharWithIndex*> &resultvec, bool &indexed, const bool &force /*= false*/)
+void Leviathan::FileSystem::_CreateIndexesIfMissing(
+    vector<shared_ptr<FileDefinitionType>>& vec, vector<CharWithIndex*>& resultvec,
+    bool& indexed, const bool& force /*= false*/)
 {
     // we'll need to delete old ones if index creation is forced //
-    if(force){
+    if(force) {
         indexed = false;
         SAFE_DELETE_VECTOR(resultvec);
     }
@@ -871,8 +889,8 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
     // changes add it to index
     char curchar = '!';
 
-    for(size_t i = 0; i < vec.size(); i++){
-        if(vec[i]->Name[0] != curchar){
+    for(size_t i = 0; i < vec.size(); i++) {
+        if(vec[i]->Name[0] != curchar) {
             // beginning character changed, push to indexes //
             curchar = vec[i]->Name[0];
             resultvec.push_back(new CharWithIndex(curchar, i));
@@ -886,39 +904,43 @@ void Leviathan::FileSystem::_CreateIndexesIfMissing(vector<shared_ptr<FileDefini
 #ifdef LEVIATHAN_USING_OGRE
 
 //! Ogre recursive resource groups don't work so we hack around it with this
-void RegisterSubFolders(Ogre::ResourceGroupManager& manager, const std::string &groupname,
-    const Ogre::String &basefolder)
+void RegisterSubFolders(Ogre::ResourceGroupManager& manager, const std::string& groupname,
+    const Ogre::String& basefolder)
 {
-    if(!boost::filesystem::is_directory(basefolder)){
+    if(!boost::filesystem::is_directory(basefolder)) {
         LOG_ERROR("FileSystem: register folder doesn't exist: " + basefolder);
         return;
     }
 
     manager.addResourceLocation(basefolder, "FileSystem", "LeviathanInternal");
-        
+
     boost::filesystem::recursive_directory_iterator dir{boost::filesystem::path(basefolder)};
-    
+
     for(const auto& i : dir) {
-        if (boost::filesystem::is_directory(i)) {
+        if(boost::filesystem::is_directory(i)) {
 
             manager.addResourceLocation(i.path().string(), "FileSystem", "LeviathanInternal");
         }
     }
 }
 
-DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /*= false*/){
+DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /*= false*/)
+{
     // get the resource managing singleton //
     Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
 
     // Internal resources
     manager.createResourceGroup("LeviathanInternal");
     RegisterSubFolders(manager, "LeviathanInternal", "CoreOgreScripts");
-    
+
+    // All generated stuff can be dumped here
+    manager.createResourceGroup("Generated");
+
 
     // Models folder //
     manager.createResourceGroup("MainModelsFolder");
     RegisterSubFolders(manager, "MainModelsFolder", DataFolder + ModelsFolder);
-    
+
     // Textures folder //
     manager.createResourceGroup("MainTexturesFolder");
     RegisterSubFolders(manager, "MainTexturesFolder", DataFolder + TextureFolder);
@@ -929,7 +951,7 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /
 
     // Scripts folder //
     manager.createResourceGroup("GuiScripts");
-    if(boost::filesystem::exists(DataFolder + ScriptsFolder + "GUI")){
+    if(boost::filesystem::exists(DataFolder + ScriptsFolder + "GUI")) {
         // Uppercase
         RegisterSubFolders(manager, "GuiScripts", DataFolder + ScriptsFolder + "GUI");
     } else {
@@ -938,11 +960,11 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /
         RegisterSubFolders(manager, "GuiScripts", DataFolder + ScriptsFolder + "gui");
     }
 
-   
+
     // shaders //
     manager.createResourceGroup("ShadersFolder");
     RegisterSubFolders(manager, "ShadersFolder", DataFolder + ShaderFolder);
-    
+
     // // Terrain group //
     // manager.createResourceGroup("Terrain");
 
@@ -958,34 +980,35 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /
     // Fonts group //
     manager.createResourceGroup("Fonts");
     RegisterSubFolders(manager, "Fonts", DataFolder + FontFolder);
-    
+
     // possibly register addon folders //
 
-    
+
     // initialize the groups //
-    if(testload){
-        
+    if(testload) {
+
         LOG_INFO("FileSystem: RegisterOGREResourceGroups: doing test load, skipping parsing");
-        
+
     } else {
 
         manager.initialiseAllResourceGroups(true);
     }
 
     // load the groups //
-    //manager.loadResourceGroup("MainModelsFolder");
+    // manager.loadResourceGroup("MainModelsFolder");
 }
 
-DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string &location){
+DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceLocation(const string& location)
+{
 
     Ogre::ResourceGroupManager& manager = Ogre::ResourceGroupManager::getSingleton();
 
-    Ogre::String groupname = location+"_group";
+    Ogre::String groupname = location + "_group";
 
     // check does it exist //
     auto groups = manager.getResourceGroups();
 
-    for(size_t i = 0; i < groups.size(); i++){
+    for(size_t i = 0; i < groups.size(); i++) {
         if(groups[i] == groupname)
             return;
     }
@@ -998,7 +1021,7 @@ DLLEXPORT  void Leviathan::FileSystem::RegisterOGREResourceLocation(const string
 }
 #endif // LEVIATHAN_USING_OGRE
 // ------------------ FileDefinitionType ------------------ //
-Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const string &path) :
+Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const string& path) :
     RelativePath(path)
 {
     // get extension //
@@ -1011,17 +1034,17 @@ Leviathan::FileDefinitionType::FileDefinitionType(FileSystem* instance, const st
     Name = StringOperations::RemoveExtension<std::string>(path, true);
 }
 
-bool Leviathan::FileDefinitionType::operator<(const FileDefinitionType& other) const{
+bool Leviathan::FileDefinitionType::operator<(const FileDefinitionType& other) const
+{
     return this->Name < other.Name;
 }
 
-Leviathan::FileDefinitionType::~FileDefinitionType(){
+Leviathan::FileDefinitionType::~FileDefinitionType() {}
 
-}
-
-std::string Leviathan::FileDefinitionType::GetNameWithExtension() const{
+std::string Leviathan::FileDefinitionType::GetNameWithExtension() const
+{
     // Add the extension text to the end of the name //
-    return Name+"."+FileSystem::Get()->GetExtensionName(ExtensionID);
+    return Name + "." + FileSystem::Get()->GetExtensionName(ExtensionID);
 }
 // ------------------ FileDefSorter ------------------ //
 bool Leviathan::FileDefSorter::operator()(const std::shared_ptr<FileDefinitionType>& first,
@@ -1030,16 +1053,12 @@ bool Leviathan::FileDefSorter::operator()(const std::shared_ptr<FileDefinitionTy
     return (*first.get()) < *(second).get();
 }
 // ------------------ CharWithIndex ------------------ //
-CharWithIndex::CharWithIndex(){
+CharWithIndex::CharWithIndex()
+{
     Char = L' ';
     Index = -1;
 }
 
-CharWithIndex::CharWithIndex(char character, size_t index) : Char(character), Index(index){
-    
-}
+CharWithIndex::CharWithIndex(char character, size_t index) : Char(character), Index(index) {}
 // ------------------ FileTypeHolder ------------------ //
-FileTypeHolder::FileTypeHolder(int id, const std::string &name) : ID(id), Name(name){
-
-}
-
+FileTypeHolder::FileTypeHolder(int id, const std::string& name) : ID(id), Name(name) {}

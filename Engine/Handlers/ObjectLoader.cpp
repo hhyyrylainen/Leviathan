@@ -1,25 +1,25 @@
 // ------------------------------------ //
 #include "ObjectLoader.h"
 
+#include "../Common/StringOperations.h"
 #include "../Entities/GameWorld.h"
+#include "Exceptions.h"
 #include "FileSystem.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "OgreBillboardChain.h"
 #include "OgreEntity.h"
 #include "OgreManualObject.h"
+#include "OgreMatrix4.h"
+#include "OgreRibbonTrail.h"
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
-#include "ObjectFiles/ObjectFileProcessor.h"
-#include "Exceptions.h"
-#include "OgreMatrix4.h"
 #include <Newton.h>
-#include "OgreBillboardChain.h"
-#include "OgreRibbonTrail.h"
-#include "../Common/StringOperations.h"
 using namespace Leviathan;
 // ------------------------------------ //
 
 
 
-//void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
+// void ObjectLoader::_CreatePropCommon(GameWorld* world, Lock &worldlock,
 //    ObjectID prop, const std::string &ogrefile, Model &model, bool hidden)
 //{
 //
@@ -49,7 +49,7 @@ using namespace Leviathan;
 //    }
 //}
 //
-//void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &model,
+// void ObjectLoader::_CreatePropPhysics(GameWorld* world, Lock &worldlock, Model &model,
 //    Physics &physics, Position &position, ObjectFileList* proplist, const std::string &path,
 //    int materialid)
 //{
@@ -237,7 +237,7 @@ using namespace Leviathan;
 //    }
 //}
 //
-//DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
+// DLLEXPORT bool ObjectLoader::LoadNetworkProp(GameWorld* world, Lock &worldlock,
 //    ObjectID id, const std::string &modelfile, int materialid,
 //    const Position::PositionData &pos, bool hidden)
 //{
@@ -258,7 +258,8 @@ using namespace Leviathan;
 //
 //    string ogrefile;
 //
-//	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
+//	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(),
+//"Model-Graphical",
 //        ogrefile, "", Logger::Get(), "Prop: Init: no model file");
 //
 //
@@ -290,7 +291,8 @@ using namespace Leviathan;
 //
 //        } else {
 //
-//            Logger::Get()->Warning("Model file "+path+" has PhysicalModel but no properties list");
+//            Logger::Get()->Warning("Model file "+path+" has PhysicalModel but no properties
+//            list");
 //        }
 //	}
 //
@@ -300,7 +302,8 @@ using namespace Leviathan;
 //    return true;
 //}
 //
-//DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lock &worldlock,
+// DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadPropToWorld(GameWorld* world, Lock
+// &worldlock,
 //    const std::string &name, int materialid, const Position::PositionData &pos)
 //{
 //    // Get relative path //
@@ -319,9 +322,10 @@ using namespace Leviathan;
 //
 //    string ogrefile;
 //
-//	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(), "Model-Graphical",
+//	ObjectFileProcessor::LoadValueFromNamedVars<string>(file->GetVariables(),
+//"Model-Graphical",
 //        ogrefile, "", Logger::Get(), "Prop: Init: no model file");
-//    
+//
 //
 //	// Setup the model //
 //    auto& sendable = world->CreateSendable(prop, SENDABLE_TYPE_PROP);
@@ -350,7 +354,8 @@ using namespace Leviathan;
 //
 //        } else {
 //
-//            Logger::Get()->Warning("Model file "+path+" has PhysicalModel but no properties list");
+//            Logger::Get()->Warning("Model file "+path+" has PhysicalModel but no properties
+//            list");
 //        }
 //	}
 //
@@ -360,7 +365,7 @@ using namespace Leviathan;
 //	return prop;
 //}
 //// ------------------------------------ //
-//void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
+// void ObjectLoader::_CreateBrushModel(GameWorld* world, Lock &worldlock, ObjectID brush,
 //    Physics &physics, BoxGeometry &box, Position &position, float mass, const Float3 &size,
 //    bool hidden)
 //{
@@ -429,13 +434,13 @@ using namespace Leviathan;
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
 //        manual.Object->normal(Ogre::Vector3(0.f, 0.f, -1.f));
 //
-//        
+//
 //        // right up //
 //        // first is bottom or top face //
 //        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
 //        manual.Object->normal(Ogre::Vector3(0.f, -1.f, 0.f));
-//        
+//
 //        // second is the face that is on the right when looking from the corner
 //        // to the center of the cube
 //        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/2.f);
@@ -446,7 +451,7 @@ using namespace Leviathan;
 //        manual.Object->position(size.X/2.f, size.Y/-2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
 //        manual.Object->normal(Ogre::Vector3(1.f, 0.f, 0.f));
-//        
+//
 //
 //        // left up //
 //        // first is bottom or top face //
@@ -459,7 +464,7 @@ using namespace Leviathan;
 //        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(0.f, 1.f));
 //        manual.Object->normal(Ogre::Vector3(-1.f, 0.f, 0.f));
-//        
+//
 //        // and third is on the left when looking to the center //
 //        manual.Object->position(size.X/-2.f, size.Y/-2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 1.f));
@@ -502,7 +507,7 @@ using namespace Leviathan;
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
 //        manual.Object->normal(Ogre::Vector3(0.f, 0.f, -1.f));
 //
-//        
+//
 //        // right up //
 //        // first is bottom or top face //
 //        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/2.f);
@@ -519,7 +524,7 @@ using namespace Leviathan;
 //        manual.Object->position(size.X/2.f, size.Y/2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
 //        manual.Object->normal(Ogre::Vector3(1.f, 0.f, 0.f));
-//        
+//
 //
 //        // left up //
 //        // first is bottom or top face //
@@ -532,7 +537,7 @@ using namespace Leviathan;
 //        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(0.f, 0.f));
 //        manual.Object->normal(Ogre::Vector3(-1.f, 0.f, 0.f));
-//        
+//
 //        // and third is on the left when looking to the center //
 //        manual.Object->position(size.X/-2.f, size.Y/2.f, size.Z/2.f);
 //        manual.Object->textureCoord(Ogre::Vector2(1.f, 0.f));
@@ -588,7 +593,8 @@ using namespace Leviathan;
 //        Ogre::Matrix4 offset = Ogre::Matrix4::IDENTITY;
 //        Ogre::Matrix4 toffset = offset.transpose();
 //
-//        physics.Collision = NewtonCreateBox(tmpworld, size.X, size.Y, size.Z, 0, &toffset[0][0]);
+//        physics.Collision = NewtonCreateBox(tmpworld, size.X, size.Y, size.Z, 0,
+//        &toffset[0][0]);
 //
 //        Ogre::Matrix4 matrix;
 //        matrix.makeTransform(position._Position, Float3(1, 1, 1), position._Orientation);
@@ -596,7 +602,7 @@ using namespace Leviathan;
 //        Ogre::Matrix4 tmatrix = matrix.transpose();
 //
 //        physics.Body = NewtonCreateDynamicBody(tmpworld, physics.Collision, &tmatrix[0][0]);
-//    
+//
 //        // Add this as user data //
 //        NewtonBodySetUserData(physics.Body, &physics);
 //
@@ -616,7 +622,8 @@ using namespace Leviathan;
 //            NewtonBodySetMassMatrix(physics.Body, mass, inertia.X, inertia.Y, inertia.Z);
 //            NewtonBodySetCentreOfMass(physics.Body, &centerofmass.X);
 //
-//            NewtonBodySetForceAndTorqueCallback(physics.Body, Physics::ApplyForceAndTorgueEvent);
+//            NewtonBodySetForceAndTorqueCallback(physics.Body,
+//            Physics::ApplyForceAndTorgueEvent);
 //
 //        }
 //
@@ -626,7 +633,7 @@ using namespace Leviathan;
 //    }
 //}
 //
-//DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
+// DLLEXPORT bool ObjectLoader::LoadNetworkBrush(GameWorld* world, Lock &worldlock,
 //    ObjectID id, const std::string &material, const Float3 &size, const float &mass,
 //    int materialid, const Position::PositionData &pos, bool hidden)
 //{
@@ -652,7 +659,8 @@ using namespace Leviathan;
 //    return true;
 //}
 //
-//DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, Lock &worldlock,
+// DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadBrushToWorld(GameWorld* world, Lock
+// &worldlock,
 //    const std::string &material, const Float3 &size, const float &mass, int materialid,
 //    const Position::PositionData &pos)
 //{
@@ -663,7 +671,8 @@ using namespace Leviathan;
 //
 //    auto& position = world->CreatePosition(brush, pos._Position, pos._Orientation);
 //
-//    auto& box = world->CreateBoxGeometry(brush, size, material.size() ? material: "BaseWhiteNoLighting");
+//    auto& box = world->CreateBoxGeometry(brush, size, material.size() ? material:
+//    "BaseWhiteNoLighting");
 //
 //    auto& sendable = world->CreateSendable(brush, SENDABLE_TYPE_BRUSH);
 //
@@ -681,7 +690,7 @@ using namespace Leviathan;
 //	return brush;
 //}
 //// ------------------------------------ //
-//DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld* world,
+// DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrackControllerToWorld(GameWorld* world,
 //    Lock &worldlock, std::vector<Position::PositionData> &initialtrack)
 //{
 //
@@ -699,19 +708,20 @@ using namespace Leviathan;
 //        auto created = world->CreateEntity(worldlock);
 //
 //        auto& pos = world->CreatePosition(created, iter->_Position, iter->_Orientation);
-//        
+//
 //		// Add position //
 //		owner.Add(created, pos);
 //	}
-//    
-//    
+//
+//
 //    // Notify that it has been created //
 //    world->NotifyEntityCreate(worldlock, controller);
-//    
+//
 //	return controller;
 //}
 //
-//DLLEXPORT  bool Leviathan::ObjectLoader::LoadNetworkTrackController(GameWorld* world, Lock &worldlock,
+// DLLEXPORT  bool Leviathan::ObjectLoader::LoadNetworkTrackController(GameWorld* world, Lock
+// &worldlock,
 //    ObjectID id, size_t reachednode, float nodeprogress, float changespeed, float applyforce,
 //    const Parent::Data &childrendata, const PositionMarkerOwner::Data &positions)
 //{
@@ -726,11 +736,12 @@ using namespace Leviathan;
 //
 //    // Notify that it has been created //
 //    world->NotifyEntityCreate(worldlock, controller);
-//    
+//
 //	return true;
 //}
 //// ------------------------------------ //
-//DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, Lock &worldlock,
+// DLLEXPORT ObjectID Leviathan::ObjectLoader::LoadTrailToWorld(GameWorld* world, Lock
+// &worldlock,
 //    const std::string &material, const Trail::Properties &properties, bool allowupdatelater,
 //    const Position::PositionData &pos)
 //{
@@ -747,7 +758,7 @@ using namespace Leviathan;
 //    if(scene){
 //
 //        auto& rendernode = world->CreateRenderNode(entity);
-//        
+//
 //        auto& trail = world->CreateTrail(entity, &rendernode, material, properties);
 //
 //        rendernode.Node = scene->getRootSceneNode()->createChildSceneNode();
@@ -767,7 +778,7 @@ using namespace Leviathan;
 //
 //        // Apply the settings, this also adds the node to the trail //
 //        trail.SetTrailProperties(properties, true);
-//        
+//
 //    } else {
 //
 //        world->CreateTrail(entity, nullptr, material, properties);
@@ -775,7 +786,7 @@ using namespace Leviathan;
 //
 //    // Notify that it has been created //
 //    world->NotifyEntityCreate(worldlock, entity);
-//    
+//
 //	return entity;
 //}
 // ------------------------------------ //

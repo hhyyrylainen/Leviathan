@@ -532,6 +532,9 @@ class GameWorldClass < OutputClass
 
     if opts.include?(:impl)
       f.puts "{"
+
+      f.puts @BaseClass + "::_ResetOrReleaseComponents();"
+      
       f.puts "// Reset all component holders //"
       @ComponentTypes.each{|c|
         if c.Release
@@ -553,6 +556,7 @@ class GameWorldClass < OutputClass
 
     if opts.include?(:impl)
       f.puts "{"
+      f.puts @BaseClass + "::_ResetSystems();"
       f.puts "// Reset all system nodes //"
       @Systems.each{|s|
 

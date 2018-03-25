@@ -599,6 +599,10 @@ DLLEXPORT void GameWorld::ClearAddedAndRemoved()
 // ------------------------------------ //
 DLLEXPORT void GameWorld::_ResetSystems()
 {
+    // Skip double Release
+    if(!pimpl)
+        return;
+
     // We are responsible for script systems //
     for(auto iter = pimpl->RegisteredScriptSystems.begin();
         iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
@@ -609,6 +613,10 @@ DLLEXPORT void GameWorld::_ResetSystems()
 
 DLLEXPORT void GameWorld::_ResetOrReleaseComponents()
 {
+    // Skip double Release
+    if(!pimpl)
+        return;
+
     // We are responsible for script components //
     for(auto iter = pimpl->RegisteredScriptComponents.begin();
         iter != pimpl->RegisteredScriptComponents.end(); ++iter) {

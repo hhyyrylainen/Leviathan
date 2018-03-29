@@ -23,6 +23,11 @@ void ColourValueProxy(void* memory, Ogre::Real r, Ogre::Real g, Ogre::Real b, Og
     new(memory) Ogre::ColourValue(r, g, b, a);
 }
 
+void ColourValueVector4Proxy(void* memory, const Ogre::Vector4& values)
+{
+    new(memory) Ogre::ColourValue(values.x, values.y, values.z, values.w);
+}
+
 void MatrixProxy(void* memory, const Ogre::Vector3& position, const Ogre::Vector3& scale,
     const Ogre::Quaternion& orientation)
 {
@@ -185,6 +190,12 @@ bool BindColour(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectBehaviour("ColourValue", asBEHAVE_CONSTRUCT,
+           "void f(const Vector4 &in values)", asFUNCTION(ColourValueVector4Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectProperty(
            "ColourValue", "float r", asOFFSET(Ogre::ColourValue, r)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -202,6 +213,18 @@ bool BindColour(asIScriptEngine* engine)
 
     if(engine->RegisterObjectProperty(
            "ColourValue", "float a", asOFFSET(Ogre::ColourValue, a)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ColourValue",
+           "void getHSB(Real &out hue, Real &out saturation, Real &out brightness) const",
+           asMETHOD(Ogre::ColourValue, getHSB), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("ColourValue",
+           "void setHSB(Real hue, Real saturation, Real brightness)",
+           asMETHOD(Ogre::ColourValue, getHSB), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -465,30 +488,26 @@ bool BindSkeletons(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("SkeletonAnimation",
-            "void setEnabled(bool enabled)",
-            asMETHOD(Ogre::SkeletonAnimation, setEnabled), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("SkeletonAnimation", "void setEnabled(bool enabled)",
+           asMETHOD(Ogre::SkeletonAnimation, setEnabled), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("SkeletonAnimation",
-            "bool getEnabled()",
-            asMETHOD(Ogre::SkeletonAnimation, getEnabled), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("SkeletonAnimation", "bool getEnabled()",
+           asMETHOD(Ogre::SkeletonAnimation, getEnabled), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("SkeletonAnimation",
-            "void setLoop(bool loop)",
-            asMETHOD(Ogre::SkeletonAnimation, setLoop), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("SkeletonAnimation", "void setLoop(bool loop)",
+           asMETHOD(Ogre::SkeletonAnimation, setLoop), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("SkeletonAnimation",
-            "void addTime(Real time)",
-            asMETHOD(Ogre::SkeletonAnimation, addTime), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("SkeletonAnimation", "void addTime(Real time)",
+           asMETHOD(Ogre::SkeletonAnimation, addTime), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    
+
     // ------------------------------------ //
     // SkeletonInstance
     if(engine->RegisterObjectType("SkeletonInstance", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {

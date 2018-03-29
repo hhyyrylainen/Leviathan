@@ -49,7 +49,7 @@ bool SoundDevice::Init(bool simulatesound /*= false*/, bool noconsolelog /*= fal
     LOG_INFO("Detected audio devices: ");
 
     for(const auto& dev : devices)
-        LOG_INFO(" > " + dev);
+        LOG_INFO("> " + dev);
 
     LOG_INFO("End of devices");
 

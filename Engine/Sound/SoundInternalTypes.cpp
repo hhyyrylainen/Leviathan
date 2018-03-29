@@ -151,7 +151,11 @@ DLLEXPORT int ProceduralSoundStream::getCurrentCompressedPosition()
 
 DLLEXPORT cAudio::cAudioString ProceduralSoundStream::getType() const
 {
+#ifdef _WIN32
+	return L"Leviathan::ProceduralSoundStream";
+#else
     return "Leviathan::ProceduralSoundStream";
+#endif
 }
 
 DLLEXPORT void ProceduralSoundStream::onStreamEnded()

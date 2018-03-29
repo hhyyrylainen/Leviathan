@@ -217,7 +217,11 @@ DLLEXPORT std::vector<std::string> SoundDevice::GetAudioDevices(
             *indexofdefault = i;
         }
 
+#ifdef _WIN32
+	    result.push_back(Convert::Utf16ToUtf8(deviceName));
+#else
         result.push_back(deviceName);
+#endif
     }
 
     CAUDIO_DELETE devices;

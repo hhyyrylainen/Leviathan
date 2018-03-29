@@ -177,7 +177,16 @@ void Physics::PhysicsMovedEvent(
     if(std::isnan(pos.x)) {
 
         LOG_ERROR("Physics::PhysicsMovedEvent: physics body has NaN translation");
-        tmp->JumpTo(tmp->_Position);
+        // Would really like to find a fix instead of this hack
+        if(std::isnan(tmp->_Position.Members._Position.X)) {
+            LOG_ERROR("Even Position.X is NaN");
+            tmp->SetPosition(Float3(0, 0, 0), Ogre::Quaternion::IDENTITY);
+        } else {
+            // Doesn't seem to work
+            // tmp->JumpTo(tmp->_Position);
+            tmp->SetPosition(Float3(0, 0, 0), Ogre::Quaternion::IDENTITY);
+        }
+
         return;
     }
     // #endif // CHECK_FOR_NANS

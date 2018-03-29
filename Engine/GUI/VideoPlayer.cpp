@@ -823,8 +823,6 @@ size_t VideoPlayer::ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, s
     std::vector<uint8_t> newData;
     newData.resize(dataVector.size() - leftSize);
 
-    LEVIATHAN_ASSERT((newData.size() == leftSize + movedDataCount), "Math assumption failed");
-
     std::copy(dataVector.begin() + leftSize, dataVector.end(), newData.begin());
 
     dataVector = newData;

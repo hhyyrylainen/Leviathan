@@ -15,6 +15,8 @@ if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeImage.rb'
 
   require_relative 'RubySetupSystem/Libraries/SetupSDL.rb'
+
+  require_relative 'RubySetupSystem/Libraries/SetupOpenALSoft.rb'
 end
 
 require_relative 'RubySetupSystem/Libraries/SetupLeviathan.rb'
@@ -139,23 +141,29 @@ if OS.windows?
     noInstallSudo: true,
     version: "release-2.0.6"
   )
+
+  $openalsoft = OpenALSoft.new(
+    installPath: THIRD_PARTY_INSTALL,
+    noInstallSudo: true,
+    version: "master"
+  )
 end
 
 
 $leviathanLibList =
-  [$newton, $angelscript, $sfml, $caudio, $ffmpeg]
+  [$newton, $angelscript, $sfml, $ffmpeg]
 
 # This if for testing one single dependency compiling
 #$leviathanLibList = [$ffmpeg]
 #$leviathanLibList = []
 
-# Ogre windows deps
+# Ogre windows deps and other windows only deps
 # sdl is also used by Leviathan directly
 if OS.windows?
-  $leviathanLibList += [$zlib, $freeimage, $sdl, $freetype]
+  $leviathanLibList += [$zlib, $freeimage, $sdl, $freetype, $openalsoft]
 end
 
-$leviathanLibList += [$ogre, $cegui]
+$leviathanLibList += [$caudio, $ogre, $cegui]
 
 
 

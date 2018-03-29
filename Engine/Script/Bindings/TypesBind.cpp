@@ -181,6 +181,11 @@ Float4 ConvertQuaternionToFloat4(Ogre::Quaternion* self)
     return Float4(*self);
 }
 
+void Vector4Float4Proxy(void* memory, const Float4& values)
+{
+    new(memory) Ogre::Vector4(values);
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -447,9 +452,13 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Float4",
-            "Float4 Normalize() const",
-            asMETHOD(Float4, Normalize), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Float4", "Float4 opMul(const Float4 &in other) const",
+           asMETHODPR(Float4, operator*,(const Float4&) const, Float4), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float4", "Float4 Normalize() const",
+           asMETHOD(Float4, Normalize), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -670,6 +679,12 @@ bool BindOgreConversions(asIScriptEngine* engine)
 {
     if(engine->RegisterObjectBehaviour("Ogre::Vector3", asBEHAVE_CONSTRUCT,
            "void f(const Float3 &in vector)", asFUNCTION(Vector3Float3Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Ogre::Vector4", asBEHAVE_CONSTRUCT,
+           "void f(const Float4 &in values)", asFUNCTION(Vector4Float4Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

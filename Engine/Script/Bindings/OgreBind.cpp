@@ -78,8 +78,12 @@ void QuaternionProxyAroundAxis(
 
 void Vector3Proxy(void* memory, Ogre::Real x, Ogre::Real y, Ogre::Real z)
 {
-
     new(memory) Ogre::Vector3(x, y, z);
+}
+
+void Vector4Proxy(void* memory, Ogre::Real x, Ogre::Real y, Ogre::Real z, Ogre::Real w)
+{
+    new(memory) Ogre::Vector4(x, y, z, w);
 }
 
 void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child)
@@ -99,6 +103,12 @@ void ItemSetMaterialProxy(Ogre::Item* self, const std::string& material)
 {
     if(self)
         self->setMaterialName(material);
+}
+
+void ItemSetCustomParameterProxy(Ogre::Item* self, int index, const Ogre::Vector4& value)
+{
+    if(self->getSubItem(0))
+        self->getSubItem(0)->setCustomParameter(index, value);
 }
 
 Ogre::SkeletonAnimation* SkeletonInstanceGetAnimationProxy(
@@ -172,6 +182,39 @@ bool BindVector3(asIScriptEngine* engine)
     if(engine->RegisterObjectProperty("Vector3", "Real z", asOFFSET(Ogre::Vector3, z)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+    return true;
+}
+
+bool BindVector4(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Vector4", sizeof(Ogre::Vector4),
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Vector4>() | asOBJ_POD |
+               asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Vector4", asBEHAVE_CONSTRUCT,
+           "void f(Real x, Real y, Real z, Real w)", asFUNCTION(Vector4Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector4", "Real x", asOFFSET(Ogre::Vector4, x)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector4", "Real y", asOFFSET(Ogre::Vector4, y)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector4", "Real z", asOFFSET(Ogre::Vector4, z)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Vector4", "Real w", asOFFSET(Ogre::Vector4, w)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 
@@ -472,6 +515,12 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Item",
+           "void setCustomParameter(int index, const Ogre::Vector4 &in value)",
+           asFUNCTION(ItemSetCustomParameterProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Item", "SkeletonInstance@ getSkeletonInstance()",
            asMETHOD(Ogre::Item, getSkeletonInstance), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -537,6 +586,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         return false;
 
     if(!BindVector3(engine))
+        return false;
+
+    if(!BindVector4(engine))
         return false;
 
     if(!BindColour(engine))

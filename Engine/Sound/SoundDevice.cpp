@@ -1,104 +1,107 @@
 // ------------------------------------ //
 #include "SoundDevice.h"
 
-#include "SFML/Audio/Listener.hpp"
+#include "SoundInternalTypes.h"
+
+#include "Application/AppDefine.h"
+#include "Common/StringOperations.h"
+#include "Engine.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+
+#include "cAudio/cAudio.h"
+
+#include <algorithm>
 using namespace Leviathan;
+using namespace Leviathan::Sound;
 // ------------------------------------ //
 
-// might as well resize space for maximum number of playing sounds //
-SoundDevice::SoundDevice(){
-
-	// set instance //
-	Instance = this;
-
-}
-SoundDevice::~SoundDevice(){
-	// reset instance and let smart pointers take care of rest //
-	Instance = NULL;
-}
-
-DLLEXPORT SoundDevice* SoundDevice::Get(){
-    return Instance;
-}
-
-SoundDevice* SoundDevice::Instance = NULL;
+SoundDevice::SoundDevice() {}
+SoundDevice::~SoundDevice() {}
 // ------------------------------------ //
-bool SoundDevice::Init(){
-
-	// setup global volume //
-	SetGlobalVolume(100.f);
-
-    sf::Listener::setUpVector(0, 1, 0);
-
-	return true;
-}
-void SoundDevice::Release(){
-	//LoadedSoundObjects.clear();
-}
-// ------------------------------ //
-void SoundDevice::Tick(int PassedMs){
-	// we can probably mark sounds that should be recycled in the future //
-	bool delmore = true;
-
-	// for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
-
-	// 	if(!LoadedSoundObjects[i])
-	// 		continue;
-
-	// 	LoadedSoundObjects[i]->PassTimeIfNotPlaying(PassedMs);
-
-	// 	if(delmore){
-
-	// 		// very old sounds should be marked as re-use for something else //
-	// 		if(LoadedSoundObjects[i]->GetUnusedTime() >= SOUND_UNLOAD_UNUSEDTIME){
-	// 			// delete this sound //
-	// 			LoadedSoundObjects.erase(LoadedSoundObjects.begin()+i);
-	// 			// should be fine to stop here //
-	// 			delmore = false;
-	// 		}
-	// 	}
-	// }
-}
-
-// DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(const string &file){
-// 	// loop all and get an empty one or if some already has it return it (if not active) //
-// 	for(size_t i = 0; i < LoadedSoundObjects.size(); i++){
-// 		if(LoadedSoundObjects[i]){
-// 			// check is linked //
-// 			if(!LoadedSoundObjects[i]->IsConnected()){
-// 				// we can probably just return this one //
-// 				// TODO: add find same file for efficiency //
-// 				return LoadedSoundObjects[i];
-// 			}
-
-// 		} else {
-// 			// add new //
-// 			LoadedSoundObjects[i] = std::shared_ptr<SoundPlayingSlot>(new SoundPlayingSlot());
-// 			return LoadedSoundObjects[i];
-// 		}
-// 	}
-// 	// cannot find space for new one //
-// 	// TODO: clear old ones here //
-
-// 	return NULL;
-// }
-
-// DLLEXPORT std::shared_ptr<SoundPlayingSlot> Leviathan::SoundDevice::GetSlotForSound(){
-    
-// 	throw std::runtime_error("not implemented");
-// }
-
-DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &pos,
-    const Float4 &orientation)
+bool SoundDevice::Init(bool simulatesound /*= false*/)
 {
-    //LOG_WRITE("TODO: SetSoundListenerPosition");
-    
-	// we need to create a vector from the angles //
-	// Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
+
+    AudioManager = cAudio::createAudioManager(
+        true, (StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false) +
+                  "cAudioLog.html")
+                  .c_str());
+
+    LEVIATHAN_ASSERT(AudioManager, "Failed to create cAudio manager");
+
+    size_t defaultDevice = 0;
+    const auto devices = GetAudioDevices(&defaultDevice);
+
+    if(simulatesound == true) {
+
+        LOG_WARNING("SoundDevice: simulating not having a playing device");
+        return true;
+    }
+
+    if(devices.empty() || defaultDevice >= devices.size()) {
+
+        LOG_ERROR("SoundDevice: no sound devices detected");
+        return false;
+    }
+
+    LOG_INFO("Detected audio devices: ");
+
+    for(const auto& dev : devices)
+        LOG_WRITE(" " + dev);
+
+    LOG_WRITE("");
+
+    std::string selectedDevice;
+    ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
+        Engine::Get()->GetDefinition()->GetValues(), "AudioDevice", selectedDevice,
+        devices[defaultDevice], Logger::Get(), "SoundDevice: Init: ");
+
+    if(std::find(devices.begin(), devices.end(), selectedDevice) == devices.end()) {
+        LOG_ERROR("SoundDevice: selected audio device \"" + selectedDevice +
+                  "\" doesn't exists. Using default");
+        selectedDevice = devices[defaultDevice];
+    }
+
+    LOG_INFO("SoundDevice: Initializing sound with device: " + selectedDevice);
+
+    if(!AudioManager->initialize(selectedDevice.c_str())) {
+
+        LOG_ERROR("SoundDevice: initializing failed");
+        return false;
+    }
+
+    ListeningPosition = AudioManager->getListener();
+
+    // setup global volume //
+    SetGlobalVolume(1.f);
+
+    ListeningPosition->setUpVector(cAudio::cVector3(0, 1, 0));
+
+    return true;
+}
+void SoundDevice::Release()
+{
+    if(AudioManager) {
+
+        cAudio::destroyAudioManager(AudioManager);
+        AudioManager = nullptr;
+    }
+}
+// ------------------------------------ //
+void SoundDevice::Tick(int PassedMs) {}
+
+DLLEXPORT void SoundDevice::SetSoundListenerPosition(
+    const Float3& pos, const Float4& orientation)
+{
+    LOG_WRITE("TODO: SetSoundListenerPosition");
+
+    // we need to create a vector from the angles //
+    // Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
     //     sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));
 
-    
-    sf::Listener::setPosition(pos.X, pos.Y, pos.Z);
+    if(!ListeningPosition)
+        return;
+
+    ListeningPosition->move(cAudio::cVector3(pos.X, pos.Y, pos.Z));
 
     Ogre::Quaternion quaternion(orientation);
 
@@ -106,20 +109,62 @@ DLLEXPORT void Leviathan::SoundDevice::SetSoundListenerPosition(const Float3 &po
     Ogre::Vector3 direction;
 
     quaternion.ToAngleAxis(angle, direction);
-    
-    sf::Listener::setDirection(direction.x, direction.y, direction.z);
+
+    ListeningPosition->setDirection(cAudio::cVector3(direction.x, direction.y, direction.z));
 }
 
-DLLEXPORT void Leviathan::SoundDevice::SetGlobalVolume(const float &vol){
+DLLEXPORT void SoundDevice::SetGlobalVolume(float vol)
+{
+    if(!AudioManager)
+        return;
 
-    sf::Listener::setGlobalVolume(vol);
+    std::clamp(vol, 0.f, 1.f);
+
+    AudioManager->setMasterVolume(vol);
 }
+// ------------------------------------ //
+DLLEXPORT AudioSource::pointer SoundDevice::CreateProceduralSound(
+    ProceduralSoundData::pointer data, const char* soundname)
+{
+    if(!AudioManager || !data)
+        return nullptr;
 
-// ------------------------------ //
-DLLEXPORT bool SoundDevice::PlaySoundEffect(const std::string &file){
-
-    DEBUG_BREAK;
-    return false;
+    return AudioSource::MakeShared<AudioSource>(
+        AudioManager->createFromAudioDecoder(soundname, data->Properties.SourceName.c_str(),
+            CAUDIO_NEW ProceduralSoundStream(data)),
+        this);
 }
+// ------------------------------------ //
+DLLEXPORT std::vector<std::string> SoundDevice::GetAudioDevices(
+    size_t* indexofdefault /*= nullptr*/)
+{
+    std::vector<std::string> result;
 
+    cAudio::IAudioDeviceList* devices = cAudio::createAudioDeviceList();
 
+    if(!devices) {
+        LOG_ERROR("SoundDevice: GetAudioDevices: failed to get audio device list");
+        return {};
+    }
+
+    const auto deviceCount = devices->getDeviceCount();
+    result.reserve(deviceCount);
+
+    const auto defaultDeviceName = devices->getDefaultDeviceName();
+
+    for(size_t i = 0; i < deviceCount; ++i) {
+
+        const auto deviceName = devices->getDeviceName(i);
+
+        if(deviceName.compare(defaultDeviceName) == 0 && indexofdefault) {
+
+            *indexofdefault = i;
+        }
+
+        result.push_back(deviceName);
+    }
+
+    CAUDIO_DELETE devices;
+
+    return result;
+}

@@ -311,7 +311,7 @@ DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeinti
 
         if(properties.SoundPerceiver) {
 
-            SoundDevice::Get()->SetSoundListenerPosition(
+            Engine::Get()->GetSoundDevice()->SetSoundListenerPosition(
                 position.Members._Position, position.Members._Orientation);
         }
 

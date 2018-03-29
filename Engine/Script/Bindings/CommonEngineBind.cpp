@@ -605,11 +605,11 @@ bool BindSound(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("SoundDevice",
-           "bool PlaySoundEffect(const string &in file)",
-           asMETHOD(SoundDevice, PlaySoundEffect), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectMethod("SoundDevice",
+    //        "bool PlaySoundEffect(const string &in file)",
+    //        asMETHOD(SoundDevice, PlaySoundEffect), asCALL_THISCALL) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     return true;
 }

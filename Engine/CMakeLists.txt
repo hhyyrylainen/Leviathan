@@ -246,8 +246,9 @@ else()
   file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
   set(GroupSound
     "Sound/SoundDevice.cpp" "Sound/SoundDevice.h"
-    "Sound/SoundPlayingSlot.cpp" "Sound/SoundPlayingSlot.h"
-    "Sound/SoundStream.h" "Sound/SoundStream.cpp"
+    "Sound/AudioSource.h" "Sound/AudioSource.cpp"
+    "Sound/ProceduralSound.h" "Sound/ProceduralSound.cpp"
+    "Sound/SoundInternalTypes.h" "Sound/SoundInternalTypes.cpp"
     )
 
   file(GLOB GroupInput "Input/*.cpp" "Input/*.h")

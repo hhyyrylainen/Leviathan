@@ -1,24 +1,30 @@
 // Leviathan Game Engine
 // Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
+#include "Define.h"
 // ------------------------------------ //
+#include "AudioSource.h"
+#include "ProceduralSound.h"
+
 #include "Common/Types.h"
-#include <memory>
-#include <vector>
-// #include "SoundPlayingSlot.h"
 
+namespace cAudio {
 
-// #define SOUND_UNLOAD_UNUSEDTIME		30000
-// #define MAX_CONCURRENT_SOUNDS		256
+class IAudioManager;
+class IListener;
+} // namespace cAudio
 
-namespace Leviathan{
+namespace Leviathan {
 
-class SoundDevice{
+//! \brief Manages loading the audio library and provides some helpers
+class SoundDevice {
 public:
     DLLEXPORT SoundDevice();
     DLLEXPORT ~SoundDevice();
 
-    DLLEXPORT bool Init();
+    //! \param simulatenosound If true the sound device isn't initialized to simulate not
+    //! having a valid audio device (or if the user just doesn't want sound)
+    DLLEXPORT bool Init(bool simulatesound = false);
     DLLEXPORT void Release();
 
     DLLEXPORT void Tick(int PassedMs);
@@ -29,27 +35,37 @@ public:
     //! from the file and destroyed once it finishes
     //! \returns False if the file doesn't exist or the sound couldn't be played for
     //! some other reason
-    DLLEXPORT bool PlaySoundEffect(const std::string &file);
+    // DLLEXPORT bool PlaySoundEffect(const std::string& file);
 
-    DLLEXPORT void SetSoundListenerPosition(const Float3 &pos, const Float4 &orientation);
-    DLLEXPORT void SetGlobalVolume(const float &vol);
-    // Getting proper sound stream functions //
+    DLLEXPORT void SetSoundListenerPosition(const Float3& pos, const Float4& orientation);
 
-    // DLLEXPORT std::shared_ptr<SoundPlayingSlot> GetSlotForSound(const std::string &file);
-    // // used for streams //
-    // DLLEXPORT std::shared_ptr<SoundPlayingSlot> GetSlotForSound();
-
-    DLLEXPORT static SoundDevice* Get();
-private:
-
+    //! \param vol The volume [0.f, 1.f]
+    DLLEXPORT void SetGlobalVolume(float vol);
 
 
     // ------------------------------------ //
-    //std::vector<std::shared_ptr<SoundPlayingSlot>> LoadedSoundObjects;
+    // Audio playing functions
+
+    //! \brief Opens an audio source from a procedural data stream
+    //! \param soundname Name for this audio source. Should be at least somewhat unique
+    DLLEXPORT AudioSource::pointer CreateProceduralSound(
+        ProceduralSoundData::pointer data, const char* soundname);
 
 
-    static SoundDevice* Instance;
+    // ------------------------------------ //
+    DLLEXPORT inline cAudio::IAudioManager* GetAudioManager()
+    {
+        return AudioManager;
+    }
+
+    //! \brief Returns a list of audio playback devices
+    //! \param indexofdefault Returns the index of the default device (if not null)
+    DLLEXPORT static std::vector<std::string> GetAudioDevices(
+        size_t* indexofdefault = nullptr);
+
+private:
+    cAudio::IAudioManager* AudioManager = nullptr;
+    cAudio::IListener* ListeningPosition = nullptr;
 };
 
-}
-
+} // namespace Leviathan

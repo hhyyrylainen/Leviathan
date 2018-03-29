@@ -8,7 +8,6 @@
 #include "Arena.h"
 #include "Entities/Components.h"
 #include "Entities/GameWorld.h"
-#include "Entities/Objects/ViewerCameraPos.h"
 #include "Events/EventHandler.h"
 #include "GameInputController.h"
 #include "GUI/GuiManager.h"

@@ -78,9 +78,10 @@ if(LEVIATHAN_FULL_BUILD)
     OgreMain OgreHlmsUnlit OgreHlmsPbs
     CEGUIBase-9999 CEGUICommonDialogs-9999
     # CEGUICoreWindowRendererSet CEGUIExpatParser CEGUISILLYImageCodec
-    CEGUIOgreRenderer-9999 sfml-system sfml-audio sfml-network
+    CEGUIOgreRenderer-9999 sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
+    cAudio
     ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons)
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)

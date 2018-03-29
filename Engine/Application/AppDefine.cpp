@@ -7,6 +7,7 @@
 #include "GameConfiguration.h"
 #include "KeyConfiguration.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Sound/SoundDevice.h"
 
 #include <iostream>
 using namespace Leviathan;
@@ -174,36 +175,57 @@ DLLEXPORT bool AppDef::FillDefaultEngineConf(NamedVars& variables)
         changed = true;
         variables.Add(std::make_shared<NamedVariableList>("Vsync", false));
     }
-    
+
     if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("FSAA")) {
         changed = true;
         variables.Add(std::make_shared<NamedVariableList>("FSAA", 4));
     }
-    
+
     if(variables.ShouldAddValueIfNotFoundOrWrongType<std::string>("FullScreen")) {
         changed = true;
         variables.Add(
             std::make_shared<NamedVariableList>("FullScreen", new StringBlock("no")));
     }
-    
+
     if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("DisplayNumber")) {
         changed = true;
         variables.Add(std::make_shared<NamedVariableList>("DisplayNumber", 0));
     }
-    
+
     if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("Width")) {
         changed = true;
         variables.Add(std::make_shared<NamedVariableList>("Width", 1280));
     }
-    
+
     if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("Height")) {
         changed = true;
         variables.Add(std::make_shared<NamedVariableList>("Height", 720));
     }
-    
+
     if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("MaxFPS")) {
         changed = true;
         variables.Add(std::make_shared<NamedVariableList>("MaxFPS", 120));
+    }
+
+    if(variables.ShouldAddValueIfNotFoundOrWrongType<std::string>("AudioDevice")) {
+
+        LOG_INFO("AppDefine: Detecting default audio device for creating default config");
+
+        size_t defaultDevice = 0;
+        const auto devices = SoundDevice::GetAudioDevices(&defaultDevice);
+
+        if(devices.empty() || defaultDevice >= devices.size()) {
+
+            LOG_ERROR("AppDefine: Couldn't detect default audio device");
+
+        } else {
+
+            LOG_INFO("AppDefine: default audio device is: " + devices[defaultDevice]);
+
+            changed = true;
+            variables.Add(
+                std::make_shared<NamedVariableList>("AudioDevice", devices[defaultDevice]));
+        }
     }
 
     return changed;

@@ -1,9 +1,9 @@
 // ------------------------------------ //
 #include "Engine.h"
 
-#include "Statistics/TimingMonitor.h"
 #include "Application/AppDefine.h"
 #include "Application/Application.h"
+#include "Application/ConsoleInput.h"
 #include "Common/DataStoring/DataStore.h"
 #include "Common/StringOperations.h"
 #include "Common/Types.h"
@@ -11,9 +11,13 @@
 #include "Entities/GameWorldFactory.h"
 #include "Entities/Serializers/EntitySerializer.h"
 #include "Events/EventHandler.h"
+#include "FileSystem.h"
+#include "GUI/AlphaHitCache.h"
+#include "GUI/GuiManager.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
+#include "Iterators/StringIterator.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
 #include "Newton/NewtonManager.h"
@@ -24,15 +28,11 @@
 #include "Script/Console.h"
 #include "Sound/SoundDevice.h"
 #include "Statistics/RenderingStatistics.h"
-#include "Threading/ThreadingManager.h"
+#include "Statistics/TimingMonitor.h"
 #include "Threading/QueuedTask.h"
-#include "Utility/Random.h"
+#include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
-#include "FileSystem.h"
-#include "GUI/GuiManager.h"
-#include "GUI/AlphaHitCache.h"
-#include "Iterators/StringIterator.h"
-#include "Application/ConsoleInput.h"
+#include "Utility/Random.h"
 
 #include "utf8.h"
 
@@ -53,8 +53,7 @@ using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 
-DLLEXPORT Engine::Engine(LeviathanApplication* owner) :
-    Owner(owner)
+DLLEXPORT Engine::Engine(LeviathanApplication* owner) : Owner(owner)
 {
     // This makes sure that uninitialized engine will have at least some last frame time //
     LastTickTime = Time::GetTimeMs64();
@@ -62,7 +61,8 @@ DLLEXPORT Engine::Engine(LeviathanApplication* owner) :
     instance = this;
 }
 
-DLLEXPORT Engine::~Engine(){
+DLLEXPORT Engine::~Engine()
+{
     // Reset the instance ptr //
     instance = nullptr;
 
@@ -71,20 +71,22 @@ DLLEXPORT Engine::~Engine(){
 
 DLLEXPORT Engine* Engine::instance = nullptr;
 
-Engine* Engine::GetEngine(){
+Engine* Engine::GetEngine()
+{
     return instance;
 }
 
-DLLEXPORT Engine* Engine::Get(){
+DLLEXPORT Engine* Engine::Get()
+{
     return instance;
 }
 // ------------------------------------ //
-DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
-    NetworkInterface* packethandler)
+DLLEXPORT bool Engine::Init(
+    AppDef* definition, NETWORKED_TYPE ntype, NetworkInterface* packethandler)
 {
-    
+
     GUARD_LOCK();
-    
+
     // Get the  time, for monitoring how long loading takes //
     auto InitStartTime = Time::GetTimeMs64();
 
@@ -94,14 +96,14 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
     IsClient = ntype == NETWORKED_TYPE::Client;
 
     // Create all the things //
-    
+
     OutOMemory = new OutOfMemoryHandler();
 
     IDDefaultInstance = new IDFactory();
 
     // Create threading facilities //
     _ThreadingManager = new ThreadingManager();
-    if(!_ThreadingManager->Init()){
+    if(!_ThreadingManager->Init()) {
 
         Logger::Get()->Error("Engine: Init: cannot start threading");
         return false;
@@ -112,25 +114,25 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
     MainRandom->SetAsMain();
 
     // Console might be the first thing we want //
-    if(!NoSTDInput){
+    if(!NoSTDInput) {
 
         _ConsoleInput = std::make_unique<ConsoleInput>();
 
-        if(!_ConsoleInput->Init(std::bind(&Engine::_ReceiveConsoleInput, this,
-                    std::placeholders::_1), NoGui ? true : false))
-        {
+        if(!_ConsoleInput->Init(
+               std::bind(&Engine::_ReceiveConsoleInput, this, std::placeholders::_1),
+               NoGui ? true : false)) {
             Logger::Get()->Error("Engine: Init: failed to read stdin, perhaps pass --nocin");
             return false;
         }
     }
-    
-    if(NoGui){
+
+    if(NoGui) {
 
         // Tell window title //
-        Logger::Get()->Write("// ----------- "+Define->GetWindowDetails().Title+
-            " ----------- //");
+        Logger::Get()->Write(
+            "// ----------- " + Define->GetWindowDetails().Title + " ----------- //");
     }
-    
+
 
     // We could immediately receive a remote console request so this should be
     // ready when networking is started
@@ -139,7 +141,7 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
     // We want to send a request to the master server as soon as possible //
     {
         Lock lock(NetworkHandlerLock);
-        
+
         _NetworkHandler = new NetworkHandler(ntype, packethandler);
 
         _NetworkHandler->Init(Define->GetMasterServerInfo());
@@ -149,7 +151,7 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
     // File change listener //
     _ResourceRefreshHandler = new ResourceRefreshHandler();
-    if(!_ResourceRefreshHandler->Init()){
+    if(!_ResourceRefreshHandler->Init()) {
 
         Logger::Get()->Error("Engine: Init: cannot start resource monitor");
         return false;
@@ -157,7 +159,7 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
     // Data storage //
     Mainstore = new DataStore(true);
-    if(!Mainstore){
+    if(!Mainstore) {
 
         Logger::Get()->Error("Engine: Init: failed to create main data store");
         return false;
@@ -165,13 +167,13 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
     // Search data folder for files //
     MainFileHandler = new FileSystem();
-    if(!MainFileHandler){
+    if(!MainFileHandler) {
 
         Logger::Get()->Error("Engine: Init: failed to create FileSystem");
         return false;
     }
 
-    if(!MainFileHandler->Init(Logger::Get())){
+    if(!MainFileHandler->Init(Logger::Get())) {
 
         Logger::Get()->Error("Engine: Init: failed to init FileSystem");
         return false;
@@ -182,20 +184,20 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
     // Main program wide event dispatcher //
     MainEvents = new EventHandler();
-    if(!MainEvents){
+    if(!MainEvents) {
 
         Logger::Get()->Error("Engine: Init: failed to create MainEvents");
         return false;
     }
 
-    if(!MainEvents->Init()){
+    if(!MainEvents->Init()) {
 
         Logger::Get()->Error("Engine: Init: failed to init MainEvents");
         return false;
     }
 
     // Check is threading properly started //
-    if(!_ThreadingManager->CheckInit()){
+    if(!_ThreadingManager->CheckInit()) {
 
         Logger::Get()->Error("Engine: Init: threading start failed");
         return false;
@@ -203,48 +205,47 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
     // create script interface before renderer //
     std::promise<bool> ScriptInterfaceResult;
-    
+
     // Ref is OK to use since this task finishes before this function //
-    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
-                    std::promise<bool> &returnvalue, Engine* engine) -> void
-        {
-            try{
+    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
+        [](std::promise<bool>& returnvalue, Engine* engine) -> void {
+            try {
                 engine->MainScript = new ScriptExecutor();
-            } catch(const Exception&){
+            } catch(const Exception&) {
 
                 Logger::Get()->Error("Engine: Init: failed to create ScriptInterface");
                 returnvalue.set_value(false);
-                return;                
+                return;
             }
 
             // create console after script engine //
             engine->MainConsole = new ScriptConsole();
-            if(!engine->MainConsole){
+            if(!engine->MainConsole) {
 
                 Logger::Get()->Error("Engine: Init: failed to create ScriptConsole");
                 returnvalue.set_value(false);
                 return;
             }
 
-            if(!engine->MainConsole->Init(engine->MainScript)){
+            if(!engine->MainConsole->Init(engine->MainScript)) {
 
                 Logger::Get()->Error("Engine: Init: failed to initialize Console, "
-                    "continuing anyway");
+                                     "continuing anyway");
             }
 
             returnvalue.set_value(true);
-        }, std::ref(ScriptInterfaceResult), this)));
+        },
+        std::ref(ScriptInterfaceResult), this)));
 
     // create newton manager before any newton resources are needed //
     std::promise<bool> NewtonManagerResult;
-    
+
     // Ref is OK to use since this task finishes before this function //
-    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
-                    std::promise<bool> &returnvalue, Engine* engine) -> void
-        {
+    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
+        [](std::promise<bool>& returnvalue, Engine* engine) -> void {
 
             engine->_NewtonManager = new NewtonManager();
-            if(!engine->_NewtonManager){
+            if(!engine->_NewtonManager) {
 
                 Logger::Get()->Error("Engine: Init: failed to create NewtonManager");
                 returnvalue.set_value(false);
@@ -253,7 +254,7 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
             // next force application to load physical surface materials //
             engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
-            if(!engine->PhysMaterials){
+            if(!engine->PhysMaterials) {
 
                 Logger::Get()->Error("Engine: Init: failed to create PhysicsMaterialManager");
                 returnvalue.set_value(false);
@@ -263,51 +264,51 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
             engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
 
             returnvalue.set_value(true);
-        }, std::ref(NewtonManagerResult), this)));
+        },
+        std::ref(NewtonManagerResult), this)));
 
     // Create the default serializer //
     _EntitySerializer = std::make_unique<EntitySerializer>();
-    if(!_EntitySerializer){
+    if(!_EntitySerializer) {
 
         Logger::Get()->Error("Engine: Init: failed to instantiate entity serializer");
         return false;
     }
-    
+
     // Check if we don't want a window //
-    if(NoGui){
+    if(NoGui) {
 
         Logger::Get()->Info("Engine: Init: starting in console mode "
-            "(won't allocate graphical objects) ");
+                            "(won't allocate graphical objects) ");
 
-        if(!_ConsoleInput->IsAttachedToConsole()){
+        if(!_ConsoleInput->IsAttachedToConsole()) {
 
-            Logger::Get()->Error("Engine: Init: in nogui mode and no input terminal connected, "
+            Logger::Get()->Error(
+                "Engine: Init: in nogui mode and no input terminal connected, "
                 "quitting");
             return false;
         }
-        
+
     } else {
 
-        ObjectFileProcessor::LoadValueFromNamedVars<int>(Define->GetValues(), "MaxFPS",
-            FrameLimit, 120, Logger::Get(), "Graphics: Init:");
+        ObjectFileProcessor::LoadValueFromNamedVars<int>(
+            Define->GetValues(), "MaxFPS", FrameLimit, 120, Logger::Get(), "Graphics: Init:");
 
         Graph = new Graphics();
-
     }
 
     // We need to wait for all current tasks to finish //
     _ThreadingManager->WaitForAllTasksToFinish();
 
     // Check return values //
-    if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get())
-    {
+    if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get()) {
 
         Logger::Get()->Error("Engine: Init: one or more queued tasks failed");
         return false;
     }
 
-    // We can queue some more tasks //
-    // create leap controller //
+        // We can queue some more tasks //
+        // create leap controller //
 #ifdef LEVIATHAN_USES_LEAP
 
     // Disable leap if in non-gui mode //
@@ -315,32 +316,35 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
         NoLeap = true;
 
     std::thread leapinitthread;
-    if(!NoLeap){
-        
+    if(!NoLeap) {
+
         Logger::Get()->Info("Engine: will try to create Leap motion connection");
 
         // Seems that std::threads are joinable when constructed with default constructor
-        leapinitthread = std::thread(std::bind<void>([](Engine* engine) -> void{
+        leapinitthread = std::thread(std::bind<void>(
+            [](Engine* engine) -> void {
 
-            engine->LeapData = new LeapManager(engine);
-            if(!engine->LeapData){
-                Logger::Get()->Error("Engine: Init: failed to create LeapManager");
-                return;
-            }
-            // try here just in case //
-            try{
-                if(!engine->LeapData->Init()){
-
-                    Logger::Get()->Info("Engine: Init: No Leap controller found, not using one");
+                engine->LeapData = new LeapManager(engine);
+                if(!engine->LeapData) {
+                    Logger::Get()->Error("Engine: Init: failed to create LeapManager");
+                    return;
                 }
-            }
-            catch(...){
-                // threw something //
-                Logger::Get()->Error("Engine: Init: Leap threw something, even without leap "
-                    "this shouldn't happen; continuing anyway");
-            }
+                // try here just in case //
+                try {
+                    if(!engine->LeapData->Init()) {
 
-        }, this));
+                        Logger::Get()->Info(
+                            "Engine: Init: No Leap controller found, not using one");
+                    }
+                } catch(...) {
+                    // threw something //
+                    Logger::Get()->Error(
+                        "Engine: Init: Leap threw something, even without leap "
+                        "this shouldn't happen; continuing anyway");
+                }
+
+            },
+            this));
     }
 #endif
 
@@ -348,51 +352,49 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
     // sound device //
     std::promise<bool> SoundDeviceResult;
     // Ref is OK to use since this task finishes before this function //
-    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>([](
-                    std::promise<bool> &returnvalue, Engine* engine) -> void
-        {
-                    
-            if(!engine->NoGui){
+    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
+        [](std::promise<bool>& returnvalue, Engine* engine) -> void {
+
+            if(!engine->NoGui) {
                 engine->Sound = new SoundDevice();
-                            
-                if(!engine->Sound){
+
+                if(!engine->Sound) {
                     Logger::Get()->Error("Engine: Init: failed to create Sound");
                     returnvalue.set_value(false);
                     return;
                 }
 
-                if(!engine->Sound->Init()){
+                if(!engine->Sound->Init()) {
 
-                    Logger::Get()->Error("Engine: Init: failed to init SoundDevice");
-                    returnvalue.set_value(false);
-                    return;
+                    Logger::Get()->Error(
+                        "Engine: Init: failed to init SoundDevice. Continuing anyway");
                 }
             }
 
-            if(!engine->NoGui){
+            if(!engine->NoGui) {
                 // measuring //
                 engine->RenderTimer = new RenderingStatistics();
-                if(!engine->RenderTimer){
-                    Logger::Get()->Error(
-                        "Engine: Init: failed to create RenderingStatistics");
-                            
+                if(!engine->RenderTimer) {
+                    Logger::Get()->Error("Engine: Init: failed to create RenderingStatistics");
+
                     returnvalue.set_value(false);
                     return;
                 }
             }
 
             returnvalue.set_value(true);
-        }, std::ref(SoundDeviceResult), this)));
+        },
+        std::ref(SoundDeviceResult), this)));
 
-    if(!NoGui){
-        if(!Graph){
+    if(!NoGui) {
+        if(!Graph) {
 
             Logger::Get()->Error("Engine: Init: failed to create instance of Graphics");
             return false;
         }
 
         // call init //
-        if(!Graph->Init(definition)){
+        if(!Graph->Init(definition)) {
             Logger::Get()->Error("Failed to init Engine, Init graphics failed! Aborting");
             return false;
         }
@@ -403,7 +405,7 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
         GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
     }
 
-    if(!SoundDeviceResult.get_future().get()){
+    if(!SoundDeviceResult.get_future().get()) {
 
         Logger::Get()->Error("Engine: Init: sound device queued tasks failed");
         return false;
@@ -411,15 +413,15 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
 #ifdef LEVIATHAN_USES_LEAP
     // We can probably assume here that leap creation has stalled if the thread is running //
-    if(!NoLeap){
+    if(!NoLeap) {
 
         auto start = WantedClockType::now();
-        
-        while(leapinitthread.joinable()){
+
+        while(leapinitthread.joinable()) {
 
             auto elapsed = WantedClockType::now() - start;
 
-            if(elapsed > std::chrono::milliseconds(150)){
+            if(elapsed > std::chrono::milliseconds(150)) {
 
                 Logger::Get()->Warning("LeapController creation would have stalled the game!");
                 Logger::Get()->Write("TODO: allow increasing wait period");
@@ -434,24 +436,25 @@ DLLEXPORT bool Engine::Init(AppDef* definition, NETWORKED_TYPE ntype,
 
     PostLoad();
 
-    Logger::Get()->Info("Engine init took " + Convert::ToString(Time::GetTimeMs64()
-            - InitStartTime) + " ms");
-    
+    Logger::Get()->Info(
+        "Engine init took " + Convert::ToString(Time::GetTimeMs64() - InitStartTime) + " ms");
+
     return true;
 }
 
-void Engine::PostLoad(){
+void Engine::PostLoad()
+{
     // increase start count //
     int startcounts = 0;
 
-    if(Mainstore->GetValueAndConvertTo<int>("StartCount", startcounts)){
+    if(Mainstore->GetValueAndConvertTo<int>("StartCount", startcounts)) {
         // increase //
-        Mainstore->SetValue("StartCount", new VariableBlock(new IntBlock(startcounts+1)));
+        Mainstore->SetValue("StartCount", new VariableBlock(new IntBlock(startcounts + 1)));
     } else {
 
-        Mainstore->AddVar(std::make_shared<NamedVariableList>("StartCount",
-                new VariableBlock(1)));
-        
+        Mainstore->AddVar(
+            std::make_shared<NamedVariableList>("StartCount", new VariableBlock(1)));
+
         // set as persistent //
         Mainstore->SetPersistance("StartCount", true);
     }
@@ -459,27 +462,28 @@ void Engine::PostLoad(){
     // Check if we are attached to a terminal //
 
     ClearTimers();
-    
+
     // get time //
     LastTickTime = Time::GetTimeMs64();
 
     ExecuteCommandLine();
-    
+
     // Run startup command line //
     _RunQueuedConsoleCommands();
 }
 // ------------------------------------ //
-DLLEXPORT void Engine::PreRelease(){
+DLLEXPORT void Engine::PreRelease()
+{
     GUARD_LOCK();
     if(PreReleaseWaiting || PreReleaseCompleted)
         return;
-    
+
     PreReleaseWaiting = true;
     // This will stay true until the end of times //
     PreReleaseCompleted = true;
 
     // Stop command handling first //
-    if(_ConsoleInput){
+    if(_ConsoleInput) {
 
         _ConsoleInput->Release(false);
         Logger::Get()->Info("Successfully stopped command handling");
@@ -491,7 +495,7 @@ DLLEXPORT void Engine::PreRelease(){
     // Then kill the network //
     {
         Lock lock(NetworkHandlerLock);
-        
+
         _NetworkHandler->GetInterface()->CloseDown();
     }
 
@@ -504,7 +508,7 @@ DLLEXPORT void Engine::PreRelease(){
     // Close all connections //
     {
         Lock lock(NetworkHandlerLock);
-        
+
         SAFE_RELEASEDEL(_NetworkHandler);
     }
 
@@ -513,8 +517,8 @@ DLLEXPORT void Engine::PreRelease(){
     // Set worlds to empty //
     {
         Lock lock(GameWorldsLock);
-        
-        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
+
+        for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter) {
             // Set all objects to release //
             (*iter)->MarkForClear();
         }
@@ -527,7 +531,8 @@ DLLEXPORT void Engine::PreRelease(){
     Logger::Get()->Info("Engine: prerelease done, waiting for a tick");
 }
 
-void Engine::Release(bool forced){
+void Engine::Release(bool forced)
+{
     GUARD_LOCK();
 
     if(!forced)
@@ -536,24 +541,23 @@ void Engine::Release(bool forced){
     // Destroy worlds //
     {
         Lock lock(GameWorldsLock);
-        
-        while(GameWorlds.size()){
+
+        while(GameWorlds.size()) {
 
             GameWorlds[0]->Release();
             GameWorlds.erase(GameWorlds.begin());
         }
-
     }
 
     if(_NetworkHandler)
         _NetworkHandler->ShutdownCache();
-    
+
     // Wait for tasks to finish //
     if(!forced)
-       _ThreadingManager->WaitForAllTasksToFinish();
+        _ThreadingManager->WaitForAllTasksToFinish();
 
     // Make windows clear their stored objects //
-    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
         AdditionalGraphicalEntities[i]->ReleaseLinked();
         SAFE_DELETE(AdditionalGraphicalEntities[i]);
@@ -562,7 +566,7 @@ void Engine::Release(bool forced){
     AdditionalGraphicalEntities.clear();
 
     // Finally the main window //
-    if(GraphicalEntity1){
+    if(GraphicalEntity1) {
 
         GraphicalEntity1->ReleaseLinked();
     }
@@ -599,7 +603,7 @@ void Engine::Release(bool forced){
 
     // Stop threads //
     SAFE_RELEASEDEL(_ThreadingManager);
-    
+
     SAFE_RELEASEDEL(Graph);
 
     SAFE_RELEASEDEL(MainEvents);
@@ -623,24 +627,24 @@ void Engine::Release(bool forced){
     Logger::Get()->Write("Goodbye cruel world!");
 }
 // ------------------------------------ //
-DLLEXPORT void Engine::MessagePump(){
+DLLEXPORT void Engine::MessagePump()
+{
 
     Ogre::WindowEventUtilities::messagePump();
 
     SDL_Event event;
-    while(SDL_PollEvent(&event)){
-        
-        switch(event.type){
+    while(SDL_PollEvent(&event)) {
+
+        switch(event.type) {
         case SDL_QUIT:
             LOG_INFO("SDL_QUIT received, marked as closing");
             MarkQuit();
             break;
 
-        case SDL_KEYDOWN:
-        {
+        case SDL_KEYDOWN: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.key.windowID);
 
-            if(win){
+            if(win) {
 
                 // LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
                 win->InjectKeyDown(event.key.keysym.sym);
@@ -648,11 +652,10 @@ DLLEXPORT void Engine::MessagePump(){
 
             break;
         }
-        case SDL_KEYUP:
-        {
+        case SDL_KEYUP: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.key.windowID);
 
-            if(win){
+            if(win) {
 
                 // LOG_WRITE("SDL_KEYUP: " + Convert::ToString(event.key.keysym.sym));
                 win->InjectKeyUp(event.key.keysym.sym);
@@ -660,11 +663,10 @@ DLLEXPORT void Engine::MessagePump(){
 
             break;
         }
-        case SDL_TEXTINPUT:
-        {
+        case SDL_TEXTINPUT: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.text.windowID);
 
-            if(win){
+            if(win) {
 
                 const auto text = std::string(event.text.text);
 
@@ -672,34 +674,32 @@ DLLEXPORT void Engine::MessagePump(){
 
                 std::vector<uint32_t> codepoints;
 
-                utf8::utf8to32(std::begin(text), std::end(text),
-                    std::back_inserter(codepoints));
+                utf8::utf8to32(
+                    std::begin(text), std::end(text), std::back_inserter(codepoints));
 
                 // LOG_WRITE("Codepoints(" + Convert::ToString(codepoints.size()) + "): ");
                 // for(auto codepoint : codepoints)
                 //     LOG_WRITE(" " + Convert::ToString(codepoint));
-                for(auto codepoint : codepoints){
+                for(auto codepoint : codepoints) {
 
                     win->InjectCodePoint(codepoint);
                 }
             }
-            
+
             break;
         }
         // TODO: implement this
-        //case SDL_TEXTEDITING: (https://wiki.libsdl.org/Tutorials/TextInput)
-        case SDL_MOUSEBUTTONDOWN:
-        {
+        // case SDL_TEXTEDITING: (https://wiki.libsdl.org/Tutorials/TextInput)
+        case SDL_MOUSEBUTTONDOWN: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);
 
             if(win)
                 win->InjectMouseButtonDown(event.button.button);
-            
+
             break;
         }
 
-        case SDL_MOUSEBUTTONUP:
-        {
+        case SDL_MOUSEBUTTONUP: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);
 
             if(win)
@@ -708,8 +708,7 @@ DLLEXPORT void Engine::MessagePump(){
             break;
         }
 
-        case SDL_MOUSEMOTION:
-        {
+        case SDL_MOUSEMOTION: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.motion.windowID);
 
             if(win)
@@ -718,8 +717,7 @@ DLLEXPORT void Engine::MessagePump(){
             break;
         }
 
-        case SDL_MOUSEWHEEL:
-        {
+        case SDL_MOUSEWHEEL: {
             GraphicalInputEntity* win = GetWindowFromSDLID(event.motion.windowID);
 
             if(win)
@@ -728,43 +726,40 @@ DLLEXPORT void Engine::MessagePump(){
             break;
         }
 
-        case SDL_WINDOWEVENT:
-        {
-            switch(event.window.event){
+        case SDL_WINDOWEVENT: {
+            switch(event.window.event) {
 
-            case SDL_WINDOWEVENT_RESIZED:
-            {
+            case SDL_WINDOWEVENT_RESIZED: {
                 GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
 
-                if(win){
+                if(win) {
 
                     int32_t width, height;
                     win->GetWindow()->GetSize(width, height);
 
                     LOG_INFO("SDL window resize: " + Convert::ToString(width) + "x" +
-                        Convert::ToString(height));
-                    
+                             Convert::ToString(height));
+
                     win->OnResize(width, height);
                 }
-                
+
                 break;
             }
-            case SDL_WINDOWEVENT_CLOSE:
-            {
+            case SDL_WINDOWEVENT_CLOSE: {
                 LOG_INFO("SDL window close");
-                
+
                 GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
 
                 GUARD_LOCK();
-                
+
                 // Detect closed windows //
-                if(win == GraphicalEntity1){
+                if(win == GraphicalEntity1) {
                     // Window closed //
                     ReportClosedWindow(guard, GraphicalEntity1);
                 }
-   
-                for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
-                    if(AdditionalGraphicalEntities[i] == win){
+
+                for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
+                    if(AdditionalGraphicalEntities[i] == win) {
 
                         ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
                         break;
@@ -773,22 +768,20 @@ DLLEXPORT void Engine::MessagePump(){
 
                 break;
             }
-            case SDL_WINDOWEVENT_FOCUS_GAINED:
-            {
+            case SDL_WINDOWEVENT_FOCUS_GAINED: {
                 GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
 
                 if(win)
                     win->OnFocusChange(true);
-                
+
                 break;
             }
-            case SDL_WINDOWEVENT_FOCUS_LOST:
-            {
+            case SDL_WINDOWEVENT_FOCUS_LOST: {
                 GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
 
                 if(win)
                     win->OnFocusChange(false);
-                
+
                 break;
             }
             }
@@ -797,30 +790,28 @@ DLLEXPORT void Engine::MessagePump(){
     }
 
     // Reset input states //
-    if(GraphicalEntity1){
+    if(GraphicalEntity1) {
 
         GraphicalEntity1->InputEnd();
     }
 
     for(auto iter = AdditionalGraphicalEntities.begin();
-        iter != AdditionalGraphicalEntities.end(); ++iter)
-    {
+        iter != AdditionalGraphicalEntities.end(); ++iter) {
         (*iter)->InputEnd();
     }
 }
 
-DLLEXPORT GraphicalInputEntity* Engine::GetWindowFromSDLID(uint32_t sdlid){
+DLLEXPORT GraphicalInputEntity* Engine::GetWindowFromSDLID(uint32_t sdlid)
+{
 
     if(GraphicalEntity1 && GraphicalEntity1->GetWindow() &&
-        GraphicalEntity1->GetWindow()->GetSDLID() == sdlid)
-    {
+        GraphicalEntity1->GetWindow()->GetSDLID() == sdlid) {
         return GraphicalEntity1;
     }
 
     for(auto iter = AdditionalGraphicalEntities.begin();
-        iter != AdditionalGraphicalEntities.end(); ++iter)
-    {
-        if((*iter)->GetWindow() && (*iter)->GetWindow()->GetSDLID() == sdlid){
+        iter != AdditionalGraphicalEntities.end(); ++iter) {
+        if((*iter)->GetWindow() && (*iter)->GetWindow()->GetSDLID() == sdlid) {
 
             return *iter;
         }
@@ -829,31 +820,31 @@ DLLEXPORT GraphicalInputEntity* Engine::GetWindowFromSDLID(uint32_t sdlid){
     return nullptr;
 }
 // ------------------------------------ //
-void Engine::Tick(){
+void Engine::Tick()
+{
 
     // Always try to update networking //
     {
         Lock lock(NetworkHandlerLock);
-        
+
         if(_NetworkHandler)
             _NetworkHandler->UpdateAllConnections();
-        
     }
 
     // And handle invokes //
     ProcessInvokes();
-    
+
     GUARD_LOCK();
 
-    if(PreReleaseWaiting){
+    if(PreReleaseWaiting) {
 
         PreReleaseWaiting = false;
         PreReleaseDone = true;
 
         Logger::Get()->Info("Engine: performing final release tick");
 
-        
-        
+
+
         // Call last tick event //
 
         return;
@@ -861,10 +852,10 @@ void Engine::Tick(){
 
     // Get the passed time since the last update //
     auto CurTime = Time::GetTimeMs64();
-    TimePassed = (int)(CurTime-LastTickTime);
+    TimePassed = (int)(CurTime - LastTickTime);
 
 
-    if((TimePassed < TICKSPEED)){
+    if((TimePassed < TICKSPEED)) {
         // It's not tick time yet //
         return;
     }
@@ -879,16 +870,16 @@ void Engine::Tick(){
         LeapData->OnTick(TimePassed);
 #endif
 
-    if(!NoGui){
+    if(!NoGui) {
         // sound tick //
         if(Sound)
-           Sound->Tick(TimePassed);
+            Sound->Tick(TimePassed);
 
         // update windows //
         if(GraphicalEntity1)
             GraphicalEntity1->Tick(TimePassed);
 
-        for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+        for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
             AdditionalGraphicalEntities[i]->Tick(TimePassed);
         }
@@ -901,20 +892,20 @@ void Engine::Tick(){
 
         // This will also update physics //
         auto end = GameWorlds.end();
-        for(auto iter = GameWorlds.begin(); iter != end; ++iter){
+        for(auto iter = GameWorlds.begin(); iter != end; ++iter) {
 
             (*iter)->Tick(TickCount);
         }
     }
-    
-    
+
+
     // Some dark magic here //
-    if(TickCount % 25 == 0){
+    if(TickCount % 25 == 0) {
         // update values
         Mainstore->SetTickCount(TickCount);
         Mainstore->SetTickTime(TickTime);
 
-        if(!NoGui){
+        if(!NoGui) {
             // send updated rendering statistics //
             RenderTimer->ReportStats(Mainstore);
         }
@@ -927,26 +918,28 @@ void Engine::Tick(){
     // Send the tick event //
     if(MainEvents)
         MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new IntegerEventData(TickCount)));
-    
+
     // Call the default app tick //
     Owner->Tick(TimePassed);
-    
-    TickTime = (int)(Time::GetTimeMs64()-CurTime);
+
+    TickTime = (int)(Time::GetTimeMs64() - CurTime);
 }
 
-DLLEXPORT void Engine::PreFirstTick(){
-    
+DLLEXPORT void Engine::PreFirstTick()
+{
+
     GUARD_LOCK();
 
     if(_ThreadingManager)
         _ThreadingManager->NotifyQueuerThread();
 
     ClearTimers();
-    
+
     Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
 }
 // ------------------------------------ //
-void Engine::RenderFrame(){
+void Engine::RenderFrame()
+{
     // We want to totally ignore this if we are in text mode //
     if(NoGui)
         return;
@@ -955,8 +948,8 @@ void Engine::RenderFrame(){
     GUARD_LOCK();
 
     // limit check //
-    if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)){
-        
+    if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)) {
+
         // fps would go too high //
         return;
     }
@@ -969,14 +962,14 @@ void Engine::RenderFrame(){
     // advanced statistic start monitoring //
     RenderTimer->RenderingStart();
 
-    MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN,
-            new IntegerEventData(SinceLastFrame)));
+    MainEvents->CallEvent(
+        new Event(EVENT_TYPE_FRAME_BEGIN, new IntegerEventData(SinceLastFrame)));
 
     // Calculate parameters for GameWorld frame rendering systems //
     int64_t timeintick = Time::GetTimeMs64() - LastTickTime;
     int moreticks = 0;
 
-    while(timeintick > TICKSPEED){
+    while(timeintick > TICKSPEED) {
 
         timeintick -= TICKSPEED;
         moreticks++;
@@ -986,13 +979,13 @@ void Engine::RenderFrame(){
 
     // Render //
     if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame, TickCount + moreticks,
-            static_cast<int>(timeintick)))
+                               static_cast<int>(timeintick)))
         shouldrender = true;
 
-    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-        if(AdditionalGraphicalEntities[i]->Render(SinceLastFrame, TickCount + moreticks,
-                static_cast<int>(timeintick)))
+        if(AdditionalGraphicalEntities[i]->Render(
+               SinceLastFrame, TickCount + moreticks, static_cast<int>(timeintick)))
             shouldrender = true;
     }
 
@@ -1007,29 +1000,31 @@ void Engine::RenderFrame(){
     RenderTimer->RenderingEnd();
 }
 // ------------------------------------ //
-DLLEXPORT void Engine::SaveScreenShot(){
+DLLEXPORT void Engine::SaveScreenShot()
+{
     LEVIATHAN_ASSERT(!NoGui, "really shouldn't try to screenshot in text-only mode");
     GUARD_LOCK();
 
-    const string fileprefix = MainFileHandler->GetDataFolder()+"Screenshots/Captured_frame_";
+    const string fileprefix = MainFileHandler->GetDataFolder() + "Screenshots/Captured_frame_";
 
     GraphicalEntity1->SaveScreenShot(fileprefix);
 }
 
-DLLEXPORT int Engine::GetWindowOpenCount(){
+DLLEXPORT int Engine::GetWindowOpenCount()
+{
     int openwindows = 0;
 
     // If we are in text only mode always return 1 //
     if(NoGui)
         return 1;
-    
+
     GUARD_LOCK();
-    
+
 
     if(GraphicalEntity1 && GraphicalEntity1->GetWindow())
         openwindows++;
 
-    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
         if(AdditionalGraphicalEntities[i]->GetWindow())
             openwindows++;
@@ -1038,50 +1033,49 @@ DLLEXPORT int Engine::GetWindowOpenCount(){
     return openwindows;
 }
 // ------------------------------------ //
-DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow(){
+DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow()
+{
 
     AppDef winparams;
 
     winparams.SetWindowDetails(WindowDataDetails("My Second window", 1280, 720, "no",
-            Define->GetWindowDetails().VSync,
-            // Opens on same display as the other window
-            // TODO: open on next display
-            Define->GetWindowDetails().DisplayNumber,
-            Define->GetWindowDetails().FSAA, true,
+        Define->GetWindowDetails().VSync,
+        // Opens on same display as the other window
+        // TODO: open on next display
+        Define->GetWindowDetails().DisplayNumber, Define->GetWindowDetails().FSAA, true,
 #ifdef _WIN32
-            NULL,
-#endif            
-            NULL));
-    
-    
+        NULL,
+#endif
+        NULL));
+
+
     auto newwindow = std::make_unique<GraphicalInputEntity>(Graph, &winparams);
 
     GUARD_LOCK();
-    
+
     AdditionalGraphicalEntities.push_back(newwindow.get());
-    
+
     return newwindow.release();
 }
 
-DLLEXPORT void Engine::ReportClosedWindow(Lock &guard,
-    GraphicalInputEntity* windowentity)
+DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, GraphicalInputEntity* windowentity)
 {
 
     windowentity->ReleaseLinked();
 
-    if(GraphicalEntity1 == windowentity){
+    if(GraphicalEntity1 == windowentity) {
 
         SAFE_DELETE(GraphicalEntity1);
         return;
     }
 
-    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++){
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-        if(AdditionalGraphicalEntities[i] == windowentity){
-            
+        if(AdditionalGraphicalEntities[i] == windowentity) {
+
             SAFE_DELETE(AdditionalGraphicalEntities[i]);
-            AdditionalGraphicalEntities.erase(AdditionalGraphicalEntities.begin()+i);
-            
+            AdditionalGraphicalEntities.erase(AdditionalGraphicalEntities.begin() + i);
+
             return;
         }
     }
@@ -1090,23 +1084,26 @@ DLLEXPORT void Engine::ReportClosedWindow(Lock &guard,
     Logger::Get()->Error("Engine: couldn't find closing GraphicalInputEntity");
 }
 
-DLLEXPORT void Engine::MarkQuit(){
+DLLEXPORT void Engine::MarkQuit()
+{
 
     if(Owner)
         Owner->MarkAsClosing();
 }
 // ------------------------------------ //
-DLLEXPORT void Engine::Invoke(const std::function<void()> &function){
+DLLEXPORT void Engine::Invoke(const std::function<void()>& function)
+{
 
     RecursiveLock lock(InvokeLock);
     InvokeQueue.push_back(function);
 }
 
-DLLEXPORT void Engine::ProcessInvokes(){
+DLLEXPORT void Engine::ProcessInvokes()
+{
 
     RecursiveLock lock(InvokeLock);
 
-    while(!InvokeQueue.empty()){
+    while(!InvokeQueue.empty()) {
 
         const auto& func = InvokeQueue.front();
 
@@ -1117,9 +1114,10 @@ DLLEXPORT void Engine::ProcessInvokes(){
     }
 }
 
-DLLEXPORT void Engine::RunOnMainThread(const std::function<void()> &function){
+DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
+{
 
-    if(!IsOnMainThread()){
+    if(!IsOnMainThread()) {
 
         Invoke(function);
     } else {
@@ -1128,43 +1126,46 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()> &function){
     }
 }
 
-DLLEXPORT inline void Engine::AssertIfNotMainThread() const{
+DLLEXPORT inline void Engine::AssertIfNotMainThread() const
+{
 
     LEVIATHAN_ASSERT(IsOnMainThread(), "AssertIfNotMainThread: not on main thread");
 };
 
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow){
-    
+DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow)
+{
+
     auto tmp = GameWorldFactory::Get()->CreateNewWorld();
-    
-    tmp->Init(_NetworkHandler->GetNetworkType(), owningwindow,
-        NoGui ? NULL: Graph->GetOgreRoot());
-    
+
+    tmp->Init(
+        _NetworkHandler->GetNetworkType(), owningwindow, NoGui ? NULL : Graph->GetOgreRoot());
+
     if(owningwindow)
         owningwindow->LinkObjects(tmp);
 
     Lock lock(GameWorldsLock);
-    
+
     GameWorlds.push_back(tmp);
     return GameWorlds.back();
 }
 
-DLLEXPORT void Engine::DestroyWorld(const shared_ptr<GameWorld> &world){
+DLLEXPORT void Engine::DestroyWorld(const shared_ptr<GameWorld>& world)
+{
 
     if(!world)
         return;
-    
+
     // Release the world first //
     world->Release();
 
     // Then delete it //
     Lock lock(GameWorldsLock);
-    
-    auto end = GameWorlds.end();
-    for(auto iter = GameWorlds.begin(); iter != end; ++iter){
 
-        if((*iter).get() == world.get()){
+    auto end = GameWorlds.end();
+    for(auto iter = GameWorlds.begin(); iter != end; ++iter) {
+
+        if((*iter).get() == world.get()) {
 
             GameWorlds.erase(iter);
             return;
@@ -1172,18 +1173,19 @@ DLLEXPORT void Engine::DestroyWorld(const shared_ptr<GameWorld> &world){
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Engine::ClearTimers(){
+DLLEXPORT void Engine::ClearTimers()
+{
     Lock lock(GameWorldsLock);
 
-    for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter){
-
+    for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter) {
     }
 }
 // ------------------------------------ //
-void Engine::_NotifyThreadsRegisterOgre(){
+void Engine::_NotifyThreadsRegisterOgre()
+{
     if(NoGui)
         return;
-    
+
     // Register threads to use graphical objects //
     _ThreadingManager->MakeThreadsWorkWithOgre();
 }
@@ -1191,22 +1193,24 @@ void Engine::_NotifyThreadsRegisterOgre(){
 DLLEXPORT int64_t Leviathan::Engine::GetTimeSinceLastTick() const
 {
 
-    return Time::GetTimeMs64()-LastTickTime;
+    return Time::GetTimeMs64() - LastTickTime;
 }
 
-DLLEXPORT int Engine::GetCurrentTick() const {
+DLLEXPORT int Engine::GetCurrentTick() const
+{
 
     return TickCount;
 }
 // ------------------------------------ //
-void Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
+void Engine::_AdjustTickClock(int amount, bool absolute /*= true*/)
+{
 
     GUARD_LOCK();
-    
-    if(!absolute){
 
-        Logger::Get()->Info("Engine: adjusted tick timer by "+Convert::ToString(amount));
-        
+    if(!absolute) {
+
+        Logger::Get()->Info("Engine: adjusted tick timer by " + Convert::ToString(amount));
+
         LastTickTime += amount;
         return;
     }
@@ -1216,7 +1220,7 @@ void Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
 
     int64_t curtime = Time::GetTimeMs64();
 
-    while(curtime-templasttick >= TICKSPEED){
+    while(curtime - templasttick >= TICKSPEED) {
 
         templasttick += TICKSPEED;
     }
@@ -1231,70 +1235,71 @@ void Engine::_AdjustTickClock(int amount, bool absolute /*= true*/){
     LastTickTime += changeamount;
 }
 
-void Engine::_AdjustTickNumber(int tickamount, bool absolute){
+void Engine::_AdjustTickNumber(int tickamount, bool absolute)
+{
 
     GUARD_LOCK();
 
-    if(!absolute){
+    if(!absolute) {
 
         TickCount += tickamount;
 
-        Logger::Get()->Info("Engine: adjusted tick by "+Convert::ToString(tickamount)
-            +", tick is now "+Convert::ToString(TickCount));
-        
+        Logger::Get()->Info("Engine: adjusted tick by " + Convert::ToString(tickamount) +
+                            ", tick is now " + Convert::ToString(TickCount));
+
         return;
     }
 
     TickCount = tickamount;
 
-    Logger::Get()->Info("Engine: tick set to "+Convert::ToString(TickCount));
+    Logger::Get()->Info("Engine: tick set to " + Convert::ToString(TickCount));
 }
 // ------------------------------------ //
-int TestCrash(int writenum){
+int TestCrash(int writenum)
+{
 
     int* target = nullptr;
     (*target) = writenum;
-    
+
     Logger::Get()->Write("It didn't crash...");
     return 42;
 }
 
-bool Engine::ParseSingleCommand(StringIterator &itr, int &argindex, const int argcount,
-    char* args[])
+bool Engine::ParseSingleCommand(
+    StringIterator& itr, int& argindex, const int argcount, char* args[])
 {
-    
+
     // Split all flags and check for some flags that might be set //
     unique_ptr<string> splitval;
 
-    while((splitval = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE
-                | UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS))
-        != NULL)
-    {
-        if(*splitval == "--nogui"){
+    while((splitval = itr.GetNextCharacterSequence<string>(
+               UNNORMALCHARACTER_TYPE_WHITESPACE |
+               UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS)) != NULL) {
+        if(*splitval == "--nogui") {
             NoGui = true;
             Logger::Get()->Info("Engine starting in non-GUI mode");
             continue;
         }
-        if(*splitval == "--noleap"){
+        if(*splitval == "--noleap") {
             NoLeap = true;
 
-        #ifdef LEVIATHAN_USES_LEAP
+#ifdef LEVIATHAN_USES_LEAP
             Logger::Get()->Info("Engine starting with LeapMotion disabled");
-        #endif
+#endif
             continue;
         }
-        if(*splitval == "--nocin"){
+        if(*splitval == "--nocin") {
 
             NoSTDInput = true;
             Logger::Get()->Info("Engine not listening for terminal commands");
             continue;
         }
-        if(*splitval == "--nonothing"){
+        if(*splitval == "--nonothing") {
             // Shouldn't try to open the console on windows //
             DEBUG_BREAK;
         }
-        if(*splitval == "--crash"){
-            
+        if(*splitval == "--crash") {
+
             Logger::Get()->Info("Engine testing crash handling");
             // TODO: write a file that disables crash handling
             // Make the log say something useful //
@@ -1302,49 +1307,49 @@ bool Engine::ParseSingleCommand(StringIterator &itr, int &argindex, const int ar
 
             // Test crashing //
             TestCrash(12);
-            
+
             continue;
         }
-        if(*splitval == "--cmd" || *splitval == "cmd"){
+        if(*splitval == "--cmd" || *splitval == "cmd") {
 
             if(itr.GetCharacter() == '=')
                 itr.MoveToNext();
 
             auto cmd = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
 
-            
 
-            if(!cmd || cmd->empty()){
 
-                if(argindex + 1 < argcount){
+            if(!cmd || cmd->empty()) {
+
+                if(argindex + 1 < argcount) {
 
                     // Next argument is the command //
                     ++argindex;
                     cmd = std::make_unique<std::string>(args[argindex]);
-                    
+
                 } else {
 
                     LOG_ERROR("Engine: command line parsing failed, no command "
-                        "after '--cmd'");
+                              "after '--cmd'");
                     continue;
                 }
             }
 
-            if(StringOperations::IsCharacterQuote(cmd->at(0))){
+            if(StringOperations::IsCharacterQuote(cmd->at(0))) {
 
                 StringIterator itr2(cmd.get());
 
                 auto withoutquotes = itr2.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
 
-                if(withoutquotes){
+                if(withoutquotes) {
 
                     QueuedConsoleCommands.push_back(std::move(withoutquotes));
-                    
+
                 } else {
 
                     LOG_WARNING("Engine: command line '--cmd' command in quotes is empty");
                 }
-                
+
             } else {
 
                 // cmd is the final command
@@ -1353,7 +1358,7 @@ bool Engine::ParseSingleCommand(StringIterator &itr, int &argindex, const int ar
 
             continue;
         }
-        
+
         // Add (if not processed already) //
         PassedCommands.push_back(std::move(splitval));
     }
@@ -1361,31 +1366,31 @@ bool Engine::ParseSingleCommand(StringIterator &itr, int &argindex, const int ar
     return true;
 }
 
-DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[]){
+DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
+{
 
     if(argcount < 1)
         return true;
 
     LOG_INFO("Engine: Command line: " + std::string(args[0]));
 
-    for(int i = 1; i < argcount; ++i){
+    for(int i = 1; i < argcount; ++i) {
 
         LOG_WRITE("\t> " + std::string(args[i]));
     }
 
     int argindex = 0;
 
-    while(argindex < argcount){
+    while(argindex < argcount) {
 
         StringIterator itr(args[argindex]);
 
-        while(!itr.IsOutOfBounds()){
+        while(!itr.IsOutOfBounds()) {
 
-            if(!ParseSingleCommand(itr, argindex, argcount, args)){
+            if(!ParseSingleCommand(itr, argindex, argcount, args)) {
 
                 return false;
             }
-            
         }
 
         ++argindex;
@@ -1394,13 +1399,14 @@ DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[]){
     return true;
 }
 
-DLLEXPORT void Engine::ExecuteCommandLine(){
+DLLEXPORT void Engine::ExecuteCommandLine()
+{
 
     StringIterator itr;
 
     // Iterate over the commands and process them //
-    for(size_t i = 0; i < PassedCommands.size(); i++){
-        
+    for(size_t i = 0; i < PassedCommands.size(); i++) {
+
         itr.ReInit(PassedCommands[i].get());
         // Skip the preceding '-'s //
         itr.SkipCharacters('-');
@@ -1409,18 +1415,18 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
         auto firstpart = itr.GetUntilNextCharacterOrAll<string>(':');
 
         // Execute the wanted command //
-        if(StringOperations::CompareInsensitive<string>(*firstpart, "RemoteConsole")){
-            
+        if(StringOperations::CompareInsensitive<string>(*firstpart, "RemoteConsole")) {
+
             // Get the next command //
             auto commandpart = itr.GetUntilNextCharacterOrAll<string>(L':');
 
-            if(*commandpart == "CloseIfNone"){
+            if(*commandpart == "CloseIfNone") {
                 // Set the command //
                 _RemoteConsole->SetCloseIfNoRemoteConsole(true);
                 Logger::Get()->Info("Engine will close when no active/waiting remote console "
-                    "sessions");
+                                    "sessions");
 
-            } else if(*commandpart == "OpenTo"){
+            } else if(*commandpart == "OpenTo") {
                 // Get the to part //
                 auto topart = itr.GetStringInQuotes<string>(QUOTETYPE_BOTH);
 
@@ -1428,20 +1434,21 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
 
                 auto numberpart = itr.GetNextNumber<string>(DECIMALSEPARATORTYPE_NONE);
 
-                if(numberpart->size() == 0){
+                if(numberpart->size() == 0) {
 
                     Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
-                        "no token number provided");
+                                           "no token number provided");
                     continue;
                 }
                 // Convert to a real number. Maybe we could see if the token is
                 // complex enough here, but that isn't necessary
                 token = Convert::StringTo<int>(*numberpart);
 
-                if(token == 0){
+                if(token == 0) {
                     // Invalid number? //
                     Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
-                        "couldn't parse token number, " + *numberpart);
+                                           "couldn't parse token number, " +
+                                           *numberpart);
                     continue;
                 }
 
@@ -1450,24 +1457,25 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
                     _NetworkHandler->OpenConnectionTo(*topart);
 
                 // Tell remote console to open a command to it //
-                if(tmpconnection){
+                if(tmpconnection) {
 
-                    _RemoteConsole->OfferConnectionTo(tmpconnection, "AutoOpen",
-                        token);
+                    _RemoteConsole->OfferConnectionTo(tmpconnection, "AutoOpen", token);
 
                 } else {
                     // Something funky happened... //
                     Logger::Get()->Warning("Engine: ExecuteCommandLine: RemoteConsole: "
-                        "couldn't open connection to "+*topart+", couldn't resolve address");
+                                           "couldn't open connection to " +
+                                           *topart + ", couldn't resolve address");
                 }
 
             } else {
                 // Unknown command //
                 Logger::Get()->Warning("Engine: ExecuteCommandLine: unknown RemoteConsole "
-                    "command: "+*commandpart+", whole argument: "+*PassedCommands[i]);
+                                       "command: " +
+                                       *commandpart +
+                                       ", whole argument: " + *PassedCommands[i]);
             }
         }
-
     }
 
 
@@ -1477,25 +1485,25 @@ DLLEXPORT void Engine::ExecuteCommandLine(){
     // _RemoteConsole might be NULL //
     if(_RemoteConsole)
         _RemoteConsole->SetAllowClose();
-
 }
 // ------------------------------------ //
-void Engine::_RunQueuedConsoleCommands(){
+void Engine::_RunQueuedConsoleCommands()
+{
 
     if(QueuedConsoleCommands.empty())
         return;
 
-    if(!MainConsole){
+    if(!MainConsole) {
 
         LOG_FATAL("Engine: MainConsole has not been created before running command line "
-            "passed commands");
+                  "passed commands");
         return;
     }
 
     LOG_INFO("Engine: Running PostStartup command line. Commands: " +
-        Convert::ToString(QueuedConsoleCommands.size()));
+             Convert::ToString(QueuedConsoleCommands.size()));
 
-    for(auto& command : QueuedConsoleCommands){
+    for(auto& command : QueuedConsoleCommands) {
 
         LOG_INFO("Engine: Running \"" + *command + "\"");
         MainConsole->RunConsoleCommand(*command);
@@ -1504,22 +1512,22 @@ void Engine::_RunQueuedConsoleCommands(){
     QueuedConsoleCommands.clear();
 }
 // ------------------------------------ //
-bool Engine::_ReceiveConsoleInput(const std::string &command){
+bool Engine::_ReceiveConsoleInput(const std::string& command)
+{
 
-    Invoke([=](){
+    Invoke([=]() {
 
-            if(MainConsole){
+        if(MainConsole) {
 
-                MainConsole->RunConsoleCommand(command);
+            MainConsole->RunConsoleCommand(command);
 
-            } else {
-        
-                LOG_WARNING("No console handler attached, cannot run command");
-            }            
-        });
-    
+        } else {
+
+            LOG_WARNING("No console handler attached, cannot run command");
+        }
+    });
+
     // Listening thread quits if PreReleaseWaiting is true
     return PreReleaseWaiting;
 }
 // ------------------------------------ //
-

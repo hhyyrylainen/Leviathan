@@ -7,6 +7,7 @@ require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
 require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEGUI.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
+require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -107,6 +108,13 @@ $cegui = CEGUI.new(
   noInstallSudo: true
 )
 
+$caudio = CAudio.new(
+  version: "master",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  noTutorials: true
+)
+
 $leviathanSelfLib = Leviathan.new({})
 
 if OS.windows?
@@ -135,7 +143,7 @@ end
 
 
 $leviathanLibList =
-  [$newton, $angelscript, $sfml, $ffmpeg]
+  [$newton, $angelscript, $sfml, $caudio, $ffmpeg]
 
 # This if for testing one single dependency compiling
 #$leviathanLibList = [$ffmpeg]

@@ -92,8 +92,6 @@ void SoundDevice::Tick(int PassedMs) {}
 DLLEXPORT void SoundDevice::SetSoundListenerPosition(
     const Float3& pos, const Float4& orientation)
 {
-    LOG_WRITE("TODO: SetSoundListenerPosition");
-
     // we need to create a vector from the angles //
     // Float3 vec = Float3(-sin(pitchyawroll.X*DEGREES_TO_RADIANS),
     //     sin(pitchyawroll.Y*DEGREES_TO_RADIANS), -cos(pitchyawroll.X*DEGREES_TO_RADIANS));

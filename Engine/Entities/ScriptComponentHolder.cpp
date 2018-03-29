@@ -34,12 +34,6 @@ DLLEXPORT bool ScriptComponentHolder::ReleaseComponent(ObjectID entity)
     if(iter == CreatedObjects.end())
         return false;
 
-    // TODO: call release on the actual script object to let it do shutdown stuff
-    // Release our reference to let the object be destroyed once all references are released
-    iter->second->Release();
-
-    CreatedObjects.erase(iter);
-
     Removed.push_back(std::make_tuple(iter->second, entity));
 
     // Remove from added if there //
@@ -52,6 +46,12 @@ DLLEXPORT bool ScriptComponentHolder::ReleaseComponent(ObjectID entity)
             break;
         }
     }
+
+    // TODO: call release on the actual script object to let it do shutdown stuff
+    // Release our reference to let the object be destroyed once all references are released
+    iter->second->Release();
+
+    CreatedObjects.erase(iter);
 
     return true;
 }

@@ -52,6 +52,9 @@
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
+//! Used to detect when accessed from main thread
+static thread_local int MainThreadMagic = 0;
+constexpr auto THREAD_MAGIC = 42;
 
 DLLEXPORT Engine::Engine(LeviathanApplication* owner) : Owner(owner)
 {
@@ -80,12 +83,18 @@ DLLEXPORT Engine* Engine::Get()
 {
     return instance;
 }
+
+DLLEXPORT bool Engine::IsOnMainThread() const
+{
+    return MainThreadMagic == THREAD_MAGIC;
+}
 // ------------------------------------ //
 DLLEXPORT bool Engine::Init(
     AppDef* definition, NETWORKED_TYPE ntype, NetworkInterface* packethandler)
 {
-
     GUARD_LOCK();
+
+    MainThreadMagic = THREAD_MAGIC;
 
     // Get the  time, for monitoring how long loading takes //
     auto InitStartTime = Time::GetTimeMs64();
@@ -1116,22 +1125,15 @@ DLLEXPORT void Engine::ProcessInvokes()
 
 DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
 {
-
     if(!IsOnMainThread()) {
 
         Invoke(function);
+
     } else {
 
         function();
     }
 }
-
-DLLEXPORT inline void Engine::AssertIfNotMainThread() const
-{
-
-    LEVIATHAN_ASSERT(IsOnMainThread(), "AssertIfNotMainThread: not on main thread");
-};
-
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow)
 {

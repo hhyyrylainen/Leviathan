@@ -128,6 +128,18 @@ ScriptSafeVariableBlock* ScriptSafeVariableBlockFactoryGeneric(
     return new ScriptSafeVariableBlock(new DataBlock<TType>(value), blockname);
 }
 
+// Sound
+AudioSource* SoundDevicePlay2DProxy(
+    SoundDevice* self, const std::string& filename, bool looping, bool startpaused)
+{
+    auto source = self->Play2DSound(filename, looping, startpaused);
+
+    if(source)
+        source->AddRef();
+
+    return source.get();
+}
+
 // ------------------------------------ //
 static std::string GetLeviathanVersionProxy()
 {
@@ -598,18 +610,44 @@ bool BindDelegates(asIScriptEngine* engine)
     return true;
 }
 
+bool BindAudioSource(asIScriptEngine* engine)
+{
+    ANGELSCRIPT_REGISTER_REF_TYPE("AudioSource", AudioSource);
+
+    if(engine->RegisterObjectMethod("AudioSource", "bool Play2D()",
+           asMETHOD(AudioSource, Play2D), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(
+           "AudioSource", "void Stop()", asMETHOD(AudioSource, Play2D), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 bool BindSound(asIScriptEngine* engine)
 {
+    if(!BindAudioSource(engine))
+        return false;
 
     if(engine->RegisterObjectType("SoundDevice", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // if(engine->RegisterObjectMethod("SoundDevice",
-    //        "bool PlaySoundEffect(const string &in file)",
-    //        asMETHOD(SoundDevice, PlaySoundEffect), asCALL_THISCALL) < 0) {
-    //     ANGELSCRIPT_REGISTERFAIL;
-    // }
+    if(engine->RegisterObjectMethod("SoundDevice",
+           "void Play2DSoundEffect(const string &in filename)",
+           asMETHOD(SoundDevice, Play2DSoundEffect), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SoundDevice",
+           "AudioSource@ Play2DSound(const string &in filename, bool looping, bool "
+           "startpaused)",
+           asFUNCTION(SoundDevicePlay2DProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }

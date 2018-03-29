@@ -84,6 +84,8 @@ bool SoundDevice::Init(bool simulatesound /*= false*/, bool noconsolelog /*= fal
 }
 void SoundDevice::Release()
 {
+    HandledAudioSources.clear();
+
     if(AudioManager) {
 
         cAudio::destroyAudioManager(AudioManager);
@@ -91,7 +93,16 @@ void SoundDevice::Release()
     }
 }
 // ------------------------------------ //
-void SoundDevice::Tick(int PassedMs) {}
+void SoundDevice::Tick(int PassedMs)
+{
+    for(auto iter = HandledAudioSources.begin(); iter != HandledAudioSources.end(); ++iter) {
+
+        if(!(*iter)->Get()->isPlaying()) {
+
+            iter = HandledAudioSources.erase(iter);
+        }
+    }
+}
 
 DLLEXPORT void SoundDevice::SetSoundListenerPosition(
     const Float3& pos, const Float4& orientation)
@@ -125,6 +136,42 @@ DLLEXPORT void SoundDevice::SetGlobalVolume(float vol)
     AudioManager->setMasterVolume(vol);
 }
 // ------------------------------------ //
+DLLEXPORT void SoundDevice::Play2DSoundEffect(const std::string& filename)
+{
+    if(!AudioManager)
+        return;
+
+    cAudio::IAudioSource* source = AudioManager->play2D(filename.c_str(), false, false);
+
+    if(source) {
+
+        LOG_ERROR("SoundDevice: Play2DSoundEffect: shouldn't return a source but it did. "
+                  "Babysitting it");
+
+        Engine::Get()->RunOnMainThread(
+            [=]() { this->BabysitAudio(AudioSource::MakeShared<AudioSource>(source, this)); });
+    }
+}
+
+DLLEXPORT AudioSource::pointer SoundDevice::Play2DSound(
+    const std::string& filename, bool looping, bool startpaused)
+{
+    if(!AudioManager)
+        return nullptr;
+
+    if(!looping && !startpaused)
+        LOG_WARNING("SoundDevice: Play2DSoundEffect: called with same settings that "
+                    "Play2DSoundEffect uses");
+
+    cAudio::IAudioSource* source =
+        AudioManager->play2D(filename.c_str(), looping, startpaused);
+
+    if(!source)
+        return nullptr;
+
+    return AudioSource::MakeShared<AudioSource>(source, this);
+}
+
 DLLEXPORT AudioSource::pointer SoundDevice::CreateProceduralSound(
     ProceduralSoundData::pointer data, const char* soundname)
 {
@@ -135,6 +182,13 @@ DLLEXPORT AudioSource::pointer SoundDevice::CreateProceduralSound(
         AudioManager->createFromAudioDecoder(soundname, data->Properties.SourceName.c_str(),
             CAUDIO_NEW ProceduralSoundStream(data)),
         this);
+}
+// ------------------------------------ //
+DLLEXPORT void SoundDevice::BabysitAudio(AudioSource::pointer audio)
+{
+    Engine::Get()->AssertIfNotMainThread();
+
+    HandledAudioSources.push_back(audio);
 }
 // ------------------------------------ //
 DLLEXPORT std::vector<std::string> SoundDevice::GetAudioDevices(

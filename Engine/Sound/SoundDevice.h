@@ -66,6 +66,9 @@ public:
 private:
     cAudio::IAudioManager* AudioManager = nullptr;
     cAudio::IListener* ListeningPosition = nullptr;
+
+    //! Needs to be kept around as cAudio doesn't copy the string
+    std::string AudioLogPath;
 };
 
 } // namespace Leviathan

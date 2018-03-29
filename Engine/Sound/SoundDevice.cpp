@@ -20,11 +20,14 @@ SoundDevice::~SoundDevice() {}
 // ------------------------------------ //
 bool SoundDevice::Init(bool simulatesound /*= false*/)
 {
+    AudioLogPath = StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false) +
+                   "cAudioLog.html";
 
     AudioManager = cAudio::createAudioManager(
-        true, (StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false) +
-                  "cAudioLog.html")
-                  .c_str());
+        // No default init, we want to select the device
+        false,
+        // And write to a program specific log file
+        AudioLogPath.c_str());
 
     LEVIATHAN_ASSERT(AudioManager, "Failed to create cAudio manager");
 

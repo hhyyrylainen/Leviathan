@@ -24,7 +24,7 @@ public:
 
     //! \param simulatenosound If true the sound device isn't initialized to simulate not
     //! having a valid audio device (or if the user just doesn't want sound)
-    DLLEXPORT bool Init(bool simulatesound = false);
+    DLLEXPORT bool Init(bool simulatesound = false, bool noconsolelog = false);
     DLLEXPORT void Release();
 
     DLLEXPORT void Tick(int PassedMs);

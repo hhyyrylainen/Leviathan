@@ -67,8 +67,14 @@ TEST_CASE("CEGUI Image property is correctly parsed", "[gui][xrequired]"){
 TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired]"){
     
     // TODO: add leviathan intro video that can be attempted to be opened
-    PartialEngineWithOgre engine;
+
+    // Requires audio
+    SoundDevice sound;
+    
+    PartialEngineWithOgre engine(nullptr, &sound);
     engine.Log.IgnoreWarnings = true;
+
+    REQUIRE(sound.Init(false, true));
     
     VideoPlayer player;
 
@@ -81,4 +87,6 @@ TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired]"){
     CHECK(player.IsStreamValid());
 
     player.Stop();
+
+    sound.Release();
 }

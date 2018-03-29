@@ -18,7 +18,7 @@ using namespace Leviathan::Sound;
 SoundDevice::SoundDevice() {}
 SoundDevice::~SoundDevice() {}
 // ------------------------------------ //
-bool SoundDevice::Init(bool simulatesound /*= false*/)
+bool SoundDevice::Init(bool simulatesound /*= false*/, bool noconsolelog /*= false*/)
 {
     AudioLogPath = StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false) +
                    "cAudioLog.html";
@@ -27,7 +27,7 @@ bool SoundDevice::Init(bool simulatesound /*= false*/)
         // No default init, we want to select the device
         false,
         // And write to a program specific log file
-        AudioLogPath.c_str());
+        AudioLogPath.c_str(), noconsolelog);
 
     LEVIATHAN_ASSERT(AudioManager, "Failed to create cAudio manager");
 
@@ -49,14 +49,15 @@ bool SoundDevice::Init(bool simulatesound /*= false*/)
     LOG_INFO("Detected audio devices: ");
 
     for(const auto& dev : devices)
-        LOG_WRITE(" " + dev);
+        LOG_INFO(" > " + dev);
 
-    LOG_WRITE("");
+    LOG_INFO("End of devices");
 
     std::string selectedDevice;
+    // There's no print error here if missing to make tests run
     ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
         Engine::Get()->GetDefinition()->GetValues(), "AudioDevice", selectedDevice,
-        devices[defaultDevice], Logger::Get(), "SoundDevice: Init: ");
+        devices[defaultDevice]);
 
     if(std::find(devices.begin(), devices.end(), selectedDevice) == devices.end()) {
         LOG_ERROR("SoundDevice: selected audio device \"" + selectedDevice +

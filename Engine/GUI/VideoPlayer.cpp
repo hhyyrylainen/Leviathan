@@ -3,6 +3,8 @@
 
 #include "Common/DataStoring/DataBlock.h"
 
+#include "Engine.h"
+
 #include "OgreHardwarePixelBuffer.h"
 #include "OgrePixelBox.h"
 #include "OgrePixelFormat.h"
@@ -409,6 +411,9 @@ bool VideoPlayer::FFMPEGLoadFile()
                 return this->ReadAudioData(static_cast<uint8_t*>(output), amount);
             },
             std::move(properties));
+
+        AudioStream = Engine::Get()->GetSoundDevice()->CreateProceduralSound(
+            AudioStreamData, VideoFile.c_str());
     }
 
     DumpInfo();
@@ -908,7 +913,7 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
             LOG_INFO("VideoPlayer: Starting audio playback from the video...");
 
-            AudioStream->Play();
+            AudioStream->Play2D();
             IsPlayingAudio = true;
         }
 

@@ -35,10 +35,11 @@ public:
 
     // ------------------------------------ //
     // Proxies for some of the common audio functions
-    DLLEXPORT inline void Play()
+    DLLEXPORT inline bool Play2D()
     {
         if(Source)
-            Source->play();
+            return Source->play2d();
+        return false;
     }
 
     DLLEXPORT inline void Stop()

@@ -6,13 +6,13 @@
 #include "Application/Application.h"
 #include "Engine.h"
 #include "Events/EventHandler.h"
-#include "TimeIncludes.h"
 #include "Networking/NetworkClientInterface.h"
 #include "Networking/NetworkHandler.h"
+#include "TimeIncludes.h"
 
 #include "FileSystem.h"
-#include "OgreRoot.h"
 #include "OgreLogManager.h"
+#include "OgreRoot.h"
 
 #include "Utility/Random.h"
 
@@ -22,35 +22,31 @@
 
 #include "DummyLog.h"
 
-namespace Leviathan{
-namespace Test{
+namespace Leviathan { namespace Test {
 
 //! \brief Implementation for application for tests
-class PartialApplication : public LeviathanApplication{
+class PartialApplication : public LeviathanApplication {
 public:
-
-    NETWORKED_TYPE GetProgramNetType() const override {
+    NETWORKED_TYPE GetProgramNetType() const override
+    {
 
         // Don't want to mimic either client or server to make testing easier
         return NETWORKED_TYPE::Master;
     }
 
     //! Not used
-    NetworkInterface* _GetApplicationPacketHandler() override{
+    NetworkInterface* _GetApplicationPacketHandler() override
+    {
 
         return nullptr;
     }
 
-    void _ShutdownApplicationPacketHandler() override{
-
-    }
+    void _ShutdownApplicationPacketHandler() override {}
 };
 
-class PartialClient : public NetworkClientInterface{
+class PartialClient : public NetworkClientInterface {
 public:
-    void _OnStartApplicationConnect() override{
-        
-    }
+    void _OnStartApplicationConnect() override {}
 };
 
 
@@ -58,21 +54,24 @@ public:
 //! prints it if a test fails
 class TestLogger : public Logger {
 public:
-    TestLogger(const std::string &file) : Logger(file){ }
-    TestLogger() : Logger("Test/TestLog.txt"){ }
+    TestLogger(const std::string& file) : Logger(file) {}
+    TestLogger() : Logger("Test/TestLog.txt") {}
 
-    void Info(const std::string &data) override {
+    void Info(const std::string& data) override
+    {
 
         INFO(data);
     }
 
-    void Error(const std::string &data) override {
+    void Error(const std::string& data) override
+    {
 
         Logger::Error(data);
         FAIL(data);
     }
 
-    void Warning(const std::string &data) override {
+    void Warning(const std::string& data) override
+    {
 
         Logger::Warning(data);
 
@@ -80,7 +79,8 @@ public:
             FAIL(data);
     }
 
-    void Fatal(const std::string &text) override {
+    void Fatal(const std::string& text) override
+    {
 
         FAIL(text);
         REQUIRE(false);
@@ -92,44 +92,50 @@ public:
 //! Version of TestLogger that needs an error to be reported
 class TestLogRequireError : public Logger {
 public:
-    TestLogRequireError(const std::string &file) : Logger(file){ }
-    TestLogRequireError() : Logger("Test/TestLog.txt"){ }
+    TestLogRequireError(const std::string& file) : Logger(file) {}
+    TestLogRequireError() : Logger("Test/TestLog.txt") {}
 
-    ~TestLogRequireError(){
+    ~TestLogRequireError()
+    {
 
         CHECK(ErrorOccured);
     }
 
-    void Write(const std::string &data) override {
+    void Write(const std::string& data) override
+    {
 
         INFO(data);
     }
 
-    void Info(const std::string &data) override {
+    void Info(const std::string& data) override
+    {
 
         INFO(data);
     }
 
-    void Error(const std::string &data) override {
+    void Error(const std::string& data) override
+    {
 
         ErrorOccured = true;
     }
 
-    void Warning(const std::string &data) override {
+    void Warning(const std::string& data) override
+    {
 
-        if(WarningsCountAsErrors){
-            
+        if(WarningsCountAsErrors) {
+
             ErrorOccured = true;
-            
+
         } else {
-        
+
             Logger::Warning(data);
 
             INFO(data);
         }
     }
 
-    void Fatal(const std::string &text) override {
+    void Fatal(const std::string& text) override
+    {
 
         FAIL(text);
         REQUIRE(false);
@@ -142,55 +148,60 @@ public:
 //! Version of TestLogger that requires specific messages to be printed
 class TestLogMatchMessagesRegex : public Logger, public ReporterMatchMessagesRegex {
 public:
-    TestLogMatchMessagesRegex() : Logger("Test/TestLog.txt"){
+    TestLogMatchMessagesRegex() : Logger("Test/TestLog.txt")
+    {
 
         CheckWrite = true;
     }
 
-    void Write(const std::string &data) override {
+    void Write(const std::string& data) override
+    {
         ReporterMatchMessagesRegex::Write(data);
     }
 
-    void Info(const std::string &data) override {
+    void Info(const std::string& data) override
+    {
         ReporterMatchMessagesRegex::Info(data);
     }
 
-    void Error(const std::string &data) override {
+    void Error(const std::string& data) override
+    {
         ReporterMatchMessagesRegex::Error(data);
     }
 
-    void Warning(const std::string &data) override {
+    void Warning(const std::string& data) override
+    {
         ReporterMatchMessagesRegex::Warning(data);
     }
 
-    void Fatal(const std::string &text) override {
+    void Fatal(const std::string& text) override
+    {
         FAIL(text);
         REQUIRE(false);
     }
-    
 };
 
 
 //! \brief Partial implementation of Leviathan::Engine for tests
 template<bool UseActualInit>
-class PartialEngine : public Engine{
+class PartialEngine : public Engine {
 public:
-
-    PartialEngine(NetworkHandler* handler = nullptr) : Engine(&App), Log("Test/TestLog.txt"){
+    PartialEngine(NetworkHandler* handler = nullptr) : Engine(&App), Log("Test/TestLog.txt")
+    {
 
         // Configure for test use //
         NoGui = true;
         NoLeap = true;
         NoSTDInput = true;
-        
+
         // Setup some core values //
-        if(UseActualInit){
+        if(UseActualInit) {
 
             REQUIRE(handler);
             bool succeeded = Init(&Def, handler->GetNetworkType(), nullptr);
 
             REQUIRE(succeeded);
-            
+
         } else {
 
             Define = &Def;
@@ -205,11 +216,12 @@ public:
         instance = this;
     }
 
-    ~PartialEngine(){
+    ~PartialEngine()
+    {
 
         Log.Save();
-        
-        if(UseActualInit){
+
+        if(UseActualInit) {
 
             Release();
             return;
@@ -217,7 +229,7 @@ public:
 
         // This wasn't initialized //
         SAFE_DELETE(_NetworkHandler);
-            
+
         SAFE_RELEASEDEL(MainEvents);
 
         SAFE_DELETE(IDDefaultInstance);
@@ -226,16 +238,18 @@ public:
     }
 
     //! Creates random support
-    void InitRandomForTest(){
+    void InitRandomForTest()
+    {
 
         // Always same number to have reproducible tests
         MainRandom = new Random(42);
         MainRandom->SetAsMain();
     }
 
-    void ResetClock(int mstoset){
+    void ResetClock(int mstoset)
+    {
 
-        LastTickTime = Time::GetTimeMs64()-mstoset;
+        LastTickTime = Time::GetTimeMs64() - mstoset;
     }
 
     PartialApplication App;
@@ -244,30 +258,31 @@ public:
 };
 
 //! Partial Engine with window-less Ogre for GUI and other tests that need Ogre components
-class PartialEngineWithOgre : public PartialEngine<false>{
+class PartialEngineWithOgre : public PartialEngine<false> {
 public:
-    PartialEngineWithOgre(NetworkHandler* handler = nullptr) : PartialEngine(handler){
-
+    PartialEngineWithOgre(NetworkHandler* handler = nullptr, SoundDevice* sound = nullptr) :
+        PartialEngine(handler)
+    {
         // TODO: allow the Graphics object to be used here
         // Suppress log
-        Ogre::Log* ogreLog = OgreLogManager.createLog("Test/TestOgreLog.txt", true, false,
-            false);
+        Ogre::Log* ogreLog =
+            OgreLogManager.createLog("Test/TestOgreLog.txt", true, false, false);
 
         REQUIRE(ogreLog == OgreLogManager.getDefaultLog());
-        
+
         root = new Ogre::Root("", "", "");
 
         Ogre::String renderSystemName = "RenderSystem_GL3Plus";
 
-    #ifdef _DEBUG
+#ifdef _DEBUG
         renderSystemName->append("_d");
-    #endif // _DEBUG
+#endif // _DEBUG
 
-    #ifndef _WIN32            
+#ifndef _WIN32
         // On platforms where rpath works plugins are in the lib subdirectory
-        renderSystemName = "lib/" + renderSystemName; 
-    #endif
-        
+        renderSystemName = "lib/" + renderSystemName;
+#endif
+
         root->loadPlugin(renderSystemName);
         const auto& renderers = root->getAvailableRenderers();
         REQUIRE(renderers.size() > 0);
@@ -281,9 +296,12 @@ public:
 
         // Register resources to Ogre //
         MainFileHandler->RegisterOGREResourceGroups(true);
+
+        Sound = sound;
     }
 
-    ~PartialEngineWithOgre(){
+    ~PartialEngineWithOgre()
+    {
 
         SAFE_DELETE(MainFileHandler);
         SAFE_DELETE(root);
@@ -293,5 +311,4 @@ public:
     Ogre::Root* root;
 };
 
-}
-}
+}} // namespace Leviathan::Test

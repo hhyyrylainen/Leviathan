@@ -21,7 +21,7 @@ namespace Leviathan {
 template<class ElementType>
 class BasicPool {
 public:
-    BasicPool() : Elements(sizeof(ElementType), 100, 200) {}
+    BasicPool() : Elements(sizeof(ElementType), 16) {}
 
     ~BasicPool() {}
 
@@ -70,7 +70,7 @@ template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPool {
 public:
     //! \todo Figure out the optimal value for the Elements constructor (initial size)
-    ObjectPool() : Elements(sizeof(ElementType), 50, 100) {}
+    ObjectPool() : Elements(sizeof(ElementType), 16) {}
 
     ~ObjectPool()
     {
@@ -266,7 +266,7 @@ protected:
 template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPoolTracked {
 public:
-    ObjectPoolTracked() : Elements(sizeof(ElementType), 100, 200) {}
+    ObjectPoolTracked() : Elements(sizeof(ElementType), 16) {}
 
     ~ObjectPoolTracked()
     {
@@ -361,7 +361,7 @@ public:
 
         if(!object)
             throw NotFound("id not in pool");
-        
+
         _ReleaseCommon(object, id, addtoremoved, std::forward<Args>(args)...);
     }
 

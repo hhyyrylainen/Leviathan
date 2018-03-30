@@ -48,6 +48,13 @@ public:
             Source->stop();
     }
 
+    DLLEXPORT inline bool IsPlaying() const
+    {
+        if(Source)
+            return Source->isPlaying();
+        return false;
+    }
+
     REFERENCE_COUNTED_PTR_TYPE(AudioSource);
 
 private:

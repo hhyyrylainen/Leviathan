@@ -610,6 +610,270 @@ bool BindDelegates(asIScriptEngine* engine)
     return true;
 }
 
+bool BindcAudio(asIScriptEngine* engine)
+{
+    if(engine->SetDefaultNamespace("cAudio") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectType("IAudioSource", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool play()",
+           asMETHOD(cAudio::IAudioSource, play), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool play2d(const bool &in toLoop)",
+           asMETHOD(cAudio::IAudioSource, play2d), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // bool play3d(const cVector3& position, const float& soundstr = 1.0, const bool& toLoop =
+    // false) = 0;
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool pause()",
+           asMETHOD(cAudio::IAudioSource, pause), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "void stop()",
+           asMETHOD(cAudio::IAudioSource, stop), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "void loop(const bool &in toLoop)",
+           asMETHOD(cAudio::IAudioSource, loop), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "bool seek(const float &in seconds, bool relative = false)",
+           asMETHOD(cAudio::IAudioSource, seek), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getTotalAudioTime()",
+           asMETHOD(cAudio::IAudioSource, getTotalAudioTime), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "int getTotalAudioSize()",
+           asMETHOD(cAudio::IAudioSource, getTotalAudioSize), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "int getCompressedAudioSize()",
+           asMETHOD(cAudio::IAudioSource, getCompressedAudioSize), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getCurrentAudioTime()",
+           asMETHOD(cAudio::IAudioSource, getCurrentAudioTime), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "int getCurrentAudioPosition()",
+           asMETHOD(cAudio::IAudioSource, getCurrentAudioPosition), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "int getCurrentCompressedAudioPosition()",
+           asMETHOD(cAudio::IAudioSource, getCurrentCompressedAudioPosition),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool isValid() const",
+           asMETHOD(cAudio::IAudioSource, isValid), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool isPlaying() const",
+           asMETHOD(cAudio::IAudioSource, isPlaying), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool isPaused() const",
+           asMETHOD(cAudio::IAudioSource, isPaused), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool isStopped() const",
+           asMETHOD(cAudio::IAudioSource, isStopped), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool isLooping() const",
+           asMETHOD(cAudio::IAudioSource, isLooping), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // void setPosition(const cVector3& position) = 0;
+
+    // void setVelocity(const cVector3& velocity) = 0;
+
+    // void setDirection(const cVector3& direction) = 0;
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setRolloffFactor(const float &in rolloff)",
+           asMETHOD(cAudio::IAudioSource, setRolloffFactor), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setStrength(const float &in soundstrength)",
+           asMETHOD(cAudio::IAudioSource, setStrength), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setMinDistance(const float &in minDistance)",
+           asMETHOD(cAudio::IAudioSource, setMinDistance), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setMaxAttenuationDistance(const float &in maxDistance)",
+           asMETHOD(cAudio::IAudioSource, setMaxAttenuationDistance), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "void setPitch(const float &in pitch)",
+           asMETHOD(cAudio::IAudioSource, setPitch), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "void setVolume(const float &in volume)",
+           asMETHOD(cAudio::IAudioSource, setVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setMinVolume(const float &in minVolume)",
+           asMETHOD(cAudio::IAudioSource, setMinVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setMaxVolume(const float &in maxVolume)",
+           asMETHOD(cAudio::IAudioSource, setMaxVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setInnerConeAngle(const float &in innerAngle)",
+           asMETHOD(cAudio::IAudioSource, setInnerConeAngle), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setOuterConeAngle(const float &in outerAngle)",
+           asMETHOD(cAudio::IAudioSource, setOuterConeAngle), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setOuterConeVolume(const float &in outerVolume)",
+           asMETHOD(cAudio::IAudioSource, setOuterConeVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource",
+           "void setDopplerStrength(const float &in dstrength)",
+           asMETHOD(cAudio::IAudioSource, setDopplerStrength), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    // void setDopplerVelocity(const cVector3& dvelocity) = 0;
+
+    // void move(const cVector3& position) = 0;
+    // cVector3 getPosition() const = 0;
+    // cVector3 getVelocity() const = 0;
+    // cVector3 getDirection() const = 0;
+
+    if(engine->RegisterObjectMethod("IAudioSource", "bool isRelative() const",
+           asMETHOD(cAudio::IAudioSource, isRelative), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getRolloffFactor() const",
+           asMETHOD(cAudio::IAudioSource, getRolloffFactor), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getStrength() const",
+           asMETHOD(cAudio::IAudioSource, getStrength), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getMinDistance() const",
+           asMETHOD(cAudio::IAudioSource, getMinDistance), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getMaxDistance() const",
+           asMETHOD(cAudio::IAudioSource, getMaxDistance), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float calculateGain() const",
+           asMETHOD(cAudio::IAudioSource, calculateGain), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getPitch() const",
+           asMETHOD(cAudio::IAudioSource, getPitch), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getVolume() const",
+           asMETHOD(cAudio::IAudioSource, getVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getMinVolume() const",
+           asMETHOD(cAudio::IAudioSource, getMinVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getMaxVolume() const",
+           asMETHOD(cAudio::IAudioSource, getMaxVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getInnerConeAngle() const",
+           asMETHOD(cAudio::IAudioSource, getInnerConeAngle), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getOuterConeAngle() const",
+           asMETHOD(cAudio::IAudioSource, getOuterConeAngle), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getOuterConeVolume() const",
+           asMETHOD(cAudio::IAudioSource, getOuterConeVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("IAudioSource", "float getDopplerStrength() const",
+           asMETHOD(cAudio::IAudioSource, getDopplerStrength), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // cVector3 getDopplerVelocity() const = 0;
+
+    if(engine->SetDefaultNamespace("") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 bool BindAudioSource(asIScriptEngine* engine)
 {
     ANGELSCRIPT_REGISTER_REF_TYPE("AudioSource", AudioSource);
@@ -621,6 +885,16 @@ bool BindAudioSource(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod(
            "AudioSource", "void Stop()", asMETHOD(AudioSource, Play2D), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("AudioSource", "bool IsPlaying() const",
+           asMETHOD(AudioSource, IsPlaying), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("AudioSource", "cAudio::IAudioSource& Get()",
+           asMETHOD(AudioSource, Get), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -716,6 +990,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         return false;
 
     if(!BindEvents(engine))
+        return false;
+
+    if(!BindcAudio(engine))
         return false;
 
     if(!BindSound(engine))

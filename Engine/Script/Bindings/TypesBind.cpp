@@ -186,6 +186,16 @@ void Vector4Float4Proxy(void* memory, const Float4& values)
     new(memory) Ogre::Vector4(values);
 }
 
+void ColourValueFloat4Proxy(void* memory, const Float4& values)
+{
+    new(memory) Ogre::ColourValue(values);
+}
+
+void Float4ColourValueProxy(void* memory, const Ogre::ColourValue& values)
+{
+    new(memory) Float4(values);
+}
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -689,6 +699,12 @@ bool BindOgreConversions(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectBehaviour("Ogre::ColourValue", asBEHAVE_CONSTRUCT,
+           "void f(const Float4 &in values)", asFUNCTION(ColourValueFloat4Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
            "void f(const Ogre::Vector3 &in vector)", asFUNCTION(Float3Vector3Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
@@ -708,6 +724,12 @@ bool BindOgreConversions(asIScriptEngine* engine)
 
     if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
            "void f(const Ogre::Quaternion &in quat)", asFUNCTION(Float4QuaternionProxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
+           "void f(const Ogre::ColourValue &in colour)", asFUNCTION(Float4ColourValueProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

@@ -99,15 +99,16 @@ public:
 
             auto& node = *iter->second;
 
-			if (node.Marked) {
-				// TODO: would it be faster to first check have these
-				// changed or is it better to just set them as Ogre might
-				// also check have the value changed
-				node.Node->setVisible(!node.Hidden);
-				node.Node->setScale(node.Scale);
+            if(!node.Marked)
+                continue;
 
-				node.Marked = false;
-			}
+            // TODO: would it be faster to first check have these
+            // changed or is it better to just set them as Ogre might
+            // also check have the value changed
+            node.Node->setVisible(!node.Hidden);
+            node.Node->setScale(node.Scale);
+
+            node.Marked = false;
         }
     }
 };
@@ -138,7 +139,7 @@ public:
             auto& node = *iter->second;
 
             if(!node.Marked)
-                return;
+                continue;
 
             HandleNode(iter->first, node, world);
 

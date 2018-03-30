@@ -267,7 +267,7 @@ bool BindColour(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("ColourValue",
            "void setHSB(Real hue, Real saturation, Real brightness)",
-           asMETHOD(Ogre::ColourValue, getHSB), asCALL_THISCALL) < 0) {
+           asMETHOD(Ogre::ColourValue, setHSB), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

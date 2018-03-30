@@ -95,21 +95,19 @@ class RenderNodePropertiesSystem {
 public:
     void Run(GameWorld& world, std::unordered_map<ObjectID, RenderNode*>& index)
     {
-
         for(auto iter = index.begin(); iter != index.end(); ++iter) {
 
             auto& node = *iter->second;
 
-            if(!node.Marked)
-                return;
+			if (node.Marked) {
+				// TODO: would it be faster to first check have these
+				// changed or is it better to just set them as Ogre might
+				// also check have the value changed
+				node.Node->setVisible(!node.Hidden);
+				node.Node->setScale(node.Scale);
 
-            // TODO: would it be faster to first check have these
-            // changed or is it better to just set them as Ogre might
-            // also check have the value changed
-            node.Node->setVisible(!node.Hidden);
-            node.Node->setScale(node.Scale);
-
-            node.Marked = false;
+				node.Marked = false;
+			}
         }
     }
 };

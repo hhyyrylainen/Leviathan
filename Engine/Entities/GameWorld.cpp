@@ -75,12 +75,12 @@ public:
 };
 
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameWorld::GameWorld() :
+DLLEXPORT GameWorld::GameWorld() :
     pimpl(std::make_unique<Implementation>()), ID(IDFactory::GetID())
 {
 }
 
-DLLEXPORT Leviathan::GameWorld::~GameWorld()
+DLLEXPORT GameWorld::~GameWorld()
 {
 
     (*WorldDestroyed) = true;
@@ -96,7 +96,7 @@ DLLEXPORT Leviathan::GameWorld::~GameWorld()
     _PhysicalWorld.reset();
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::Init(
+DLLEXPORT bool GameWorld::Init(
     NETWORKED_TYPE type, GraphicalInputEntity* renderto, Ogre::Root* ogre)
 {
     IsOnServer = (type == NETWORKED_TYPE::Server);
@@ -125,7 +125,7 @@ DLLEXPORT bool Leviathan::GameWorld::Init(
     return true;
 }
 
-DLLEXPORT void Leviathan::GameWorld::Release()
+DLLEXPORT void GameWorld::Release()
 {
     _DoSystemsRelease();
 
@@ -165,8 +165,7 @@ DLLEXPORT void Leviathan::GameWorld::Release()
     pimpl.reset();
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::_CreateOgreResources(
-    Ogre::Root* ogre, GraphicalInputEntity* rendertarget)
+void GameWorld::_CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget)
 {
     // create scene manager //
     WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2,
@@ -212,35 +211,13 @@ void Leviathan::GameWorld::_CreateOgreResources(
         rendertarget->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SetSkyBox(const std::string& materialname)
-{
-    try {
-        WorldsScene->setSkyBox(true, materialname);
-    } catch(const Ogre::InvalidParametersException& e) {
-
-        Logger::Get()->Error("[EXCEPTION] " + e.getFullDescription());
-    }
-}
-// ------------------------------------ //
-DLLEXPORT void GameWorld::SetSkyPlane(const std::string& material, const Ogre::Plane& plane
-    /*= Ogre::Plane(1, 1, 1, 1)*/)
-{
-    WorldsScene->setSkyPlane(true, plane, material);
-}
-
-DLLEXPORT void GameWorld::DisableSkyPlane()
-{
-
-    WorldsScene->setSkyPlaneEnabled(false);
-}
-// ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SetFog()
+DLLEXPORT void GameWorld::SetFog()
 {
     WorldsScene->setFog(Ogre::FOG_LINEAR, Ogre::ColourValue(0.7f, 0.7f, 0.8f), 0, 4000, 10000);
     WorldsScene->setFog(Ogre::FOG_NONE);
 }
 
-DLLEXPORT void Leviathan::GameWorld::SetSunlight()
+DLLEXPORT void GameWorld::SetSunlight()
 {
     // create/update things if they are NULL //
     if(!Sunlight) {
@@ -265,7 +242,7 @@ DLLEXPORT void Leviathan::GameWorld::SetSunlight()
     SunLightNode->setOrientation(quat);
 }
 
-DLLEXPORT void Leviathan::GameWorld::RemoveSunlight()
+DLLEXPORT void GameWorld::RemoveSunlight()
 {
     if(SunLightNode) {
         SunLightNode->detachAllObjects();
@@ -275,7 +252,22 @@ DLLEXPORT void Leviathan::GameWorld::RemoveSunlight()
     }
 }
 
-DLLEXPORT void Leviathan::GameWorld::Render(int mspassed, int tick, int timeintick)
+DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
+    const Ogre::ColourValue& specular, const Ogre::Quaternion& direction)
+{
+    if(!Sunlight || !SunLightNode) {
+
+        LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
+        return;
+    }
+
+    Sunlight->setDiffuseColour(diffuse);
+    Sunlight->setSpecularColour(specular);
+    SunLightNode->setOrientation(direction);
+}
+
+// ------------------------------------ //
+DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
 {
     RunFrameRenderSystems(tick, timeintick);
 
@@ -374,7 +366,7 @@ DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const
     return WorldSceneCamera->getCameraToViewportRay(x, y);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::ShouldPlayerReceiveEntity(
+DLLEXPORT bool GameWorld::ShouldPlayerReceiveEntity(
     Position& atposition, Connection& connection)
 {
 
@@ -507,7 +499,7 @@ DLLEXPORT void GameWorld::SendToAllPlayers(
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::Tick(int currenttick)
+DLLEXPORT void GameWorld::Tick(int currenttick)
 {
     TickNumber = currenttick;
 
@@ -644,12 +636,12 @@ DLLEXPORT void GameWorld::_RunTickSystems()
     }
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::GameWorld::GetTickNumber() const
+DLLEXPORT int GameWorld::GetTickNumber() const
 {
     return TickNumber;
 }
 
-DLLEXPORT float Leviathan::GameWorld::GetTickProgress() const
+DLLEXPORT float GameWorld::GetTickProgress() const
 {
     float progress = Engine::Get()->GetTimeSinceLastTick() / (float)TICKSPEED;
 
@@ -729,7 +721,7 @@ DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id)
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::ClearEntities()
+DLLEXPORT void GameWorld::ClearEntities()
 {
     // Release objects //
     Entities.clear();
@@ -759,21 +751,21 @@ DLLEXPORT void Leviathan::GameWorld::ClearEntities()
     }
 }
 // ------------------------------------ //
-DLLEXPORT Float3 Leviathan::GameWorld::GetGravityAtPosition(const Float3& pos)
+DLLEXPORT Float3 GameWorld::GetGravityAtPosition(const Float3& pos)
 {
     // \todo take position into account //
     // create force without mass applied //
     return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::GameWorld::GetPhysicalMaterial(const std::string& name)
+DLLEXPORT int GameWorld::GetPhysicalMaterial(const std::string& name)
 {
 
     return PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
         name, _PhysicalWorld->GetNewtonWorld());
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::DestroyEntity(ObjectID id)
+DLLEXPORT void GameWorld::DestroyEntity(ObjectID id)
 {
     // Fail if ticking currently //
     if(TickInProgress)
@@ -792,14 +784,14 @@ DLLEXPORT void Leviathan::GameWorld::DestroyEntity(ObjectID id)
     }
 }
 
-DLLEXPORT void Leviathan::GameWorld::QueueDestroyEntity(ObjectID id)
+DLLEXPORT void GameWorld::QueueDestroyEntity(ObjectID id)
 {
 
     Lock lock(DeleteMutex);
     DelayedDeleteIDS.push_back(id);
 }
 
-void Leviathan::GameWorld::_HandleDelayedDelete()
+void GameWorld::_HandleDelayedDelete()
 {
 
     // We might want to delete everything //
@@ -1006,7 +998,7 @@ DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
     }
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id)
+void GameWorld::_ReportEntityDestruction(ObjectID id)
 {
 
     SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
@@ -1014,7 +1006,7 @@ void Leviathan::GameWorld::_ReportEntityDestruction(ObjectID id)
 }
 
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen)
+DLLEXPORT void GameWorld::SetWorldPhysicsFrozenState(bool frozen)
 {
     // Skip if set to the same //
     if(frozen == WorldFrozen)
@@ -1031,8 +1023,7 @@ DLLEXPORT void Leviathan::GameWorld::SetWorldPhysicsFrozenState(bool frozen)
         RECEIVE_GUARANTEE::Critical);
 }
 
-DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHit(
-    const Float3& from, const Float3& to)
+DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHit(const Float3& from, const Float3& to)
 {
     // Create a data object for the ray cast //
     RayCastData data(1, from, to);
@@ -1074,18 +1065,18 @@ dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
     return intersectParam;
 }
 
-DLLEXPORT RayCastHitEntity* Leviathan::GameWorld::CastRayGetFirstHitProxy(
+DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHitProxy(
     const Float3& from, const Float3& to)
 {
     return CastRayGetFirstHit(from, to);
 }
 
-DLLEXPORT void Leviathan::GameWorld::MarkForClear()
+DLLEXPORT void GameWorld::MarkForClear()
 {
     ClearAllEntities = true;
 }
 // ------------------------------------ //
-void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer& ply)
+void GameWorld::UpdatePlayersPositionData(ConnectedPlayer& ply)
 {
     // Get the position for this player in this world //
     ObjectID id = ply.GetPositionInWorld(this);
@@ -1107,7 +1098,7 @@ void Leviathan::GameWorld::UpdatePlayersPositionData(ConnectedPlayer& ply)
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameWorld::SendEntityToConnection(
+DLLEXPORT bool GameWorld::SendEntityToConnection(
     ObjectID id, std::shared_ptr<Connection> connection)
 {
     // First create a packet which will be the object's data //
@@ -1136,7 +1127,7 @@ DLLEXPORT bool Leviathan::GameWorld::SendEntityToConnection(
                false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::HandleEntityInitialPacket(
+DLLEXPORT void GameWorld::HandleEntityInitialPacket(
     std::shared_ptr<NetworkResponse> message, ResponseEntityCreation* data)
 {
     if(!data)
@@ -1170,8 +1161,7 @@ void GameWorld::_ApplyInitialEntityPackets()
     InitialEntityPackets.clear();
 }
 
-DLLEXPORT void Leviathan::GameWorld::HandleEntityUpdatePacket(
-    std::shared_ptr<NetworkResponse> message)
+DLLEXPORT void GameWorld::HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message)
 {
     if(message->GetType() == NETWORK_RESPONSE_TYPE::EntityUpdate)
         return;
@@ -1233,7 +1223,7 @@ DLLEXPORT void GameWorld::ApplyQueuedPackets()
         _ApplyEntityUpdatePackets();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data)
+DLLEXPORT void GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data)
 {
 
     Logger::Get()->Info(
@@ -1248,7 +1238,7 @@ DLLEXPORT void Leviathan::GameWorld::HandleClockSyncPacket(RequestWorldClockSync
         Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data)
+DLLEXPORT void GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data)
 {
 
     Logger::Get()->Info(

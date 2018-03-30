@@ -87,6 +87,24 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    // ------------------------------------ //
+    // Somewhat questionable Ogre shortcuts that should probably be component types
+    if(engine->RegisterObjectMethod(classname, "void SetSunlight()",
+           asMETHOD(WorldType, SetSunlight), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname, "void RemoveSunlight()",
+           asMETHOD(WorldType, RemoveSunlight), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
+           "void SetLightProperties(const Ogre::ColourValue &in diffuse, const "
+           "Ogre::ColourValue &in specular, const Ogre::Quaternion &in direction)",
+           asMETHOD(WorldType, SetLightProperties), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     // ------------------------------------ //
     // These are inefficient versions of the get methods, prefer the ones in derived classes

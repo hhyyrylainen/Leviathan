@@ -348,24 +348,13 @@ public:
 
     //! \todo Expose the parameters and make this activate the fog
     DLLEXPORT void SetFog();
-    DLLEXPORT void SetSkyBox(const std::string& materialname);
-
-    //! \brief Alternative to skybox This is a (possibly curved) plane
-    //! attached to the camera that can be used to render a background or
-    //! a sky
-    DLLEXPORT void SetSkyPlane(const std::string& material, const Ogre::Plane& plane
-        // = Ogre::Plane(1, 1, 1, 1)
-    );
-
-    //! \brief Disables sky plane
-    //! \pre SetSkyPlane has been used to set a sky plane
-    //! \post The sky plane is disabled
-    DLLEXPORT void DisableSkyPlane();
-
 
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();
-
+    //! \brief Sets the sunlight properties
+    //! \pre SetSunlight has been called
+    DLLEXPORT void SetLightProperties(const Ogre::ColourValue& diffuse,
+        const Ogre::ColourValue& specular, const Ogre::Quaternion& direction);
 
     // ------------------------------------ //
     // Script proxies for script system implementation (don't use from c++ systems)

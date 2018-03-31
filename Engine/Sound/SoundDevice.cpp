@@ -160,8 +160,9 @@ DLLEXPORT AudioSource::pointer SoundDevice::Play2DSound(
         return nullptr;
 
     if(!looping && !startpaused)
-        LOG_WARNING("SoundDevice: Play2DSoundEffect: called with same settings that "
-                    "Play2DSoundEffect uses");
+        LOG_WARNING("SoundDevice: Play2DSound: called with same settings that "
+                    "Play2DSoundEffect uses. looping or startpaused must be true to return an "
+                    "AudioSource.");
 
     cAudio::IAudioSource* source =
         AudioManager->play2D(filename.c_str(), looping, startpaused);

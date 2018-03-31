@@ -9,17 +9,19 @@
 #include "../Input/Key.h"
 #include "../ObjectFiles/ObjectFile.h"
 #include "../Script/ScriptScript.h"
+#include "Events/EventableScriptObject.h"
 
 namespace Leviathan { namespace GUI {
 
 
-class GuiCollection : public ReferenceCounted {
+class GuiCollection : public ReferenceCounted, public EventableScriptObject {
 public:
     GuiCollection(const std::string& name, GuiManager* manager, int id,
         const std::string& toggle, std::vector<std::unique_ptr<std::string>>& inanimations,
-        std::vector<std::unique_ptr<std::string>>& outanimations, bool strict = false,
-        bool enabled = true, bool keepgui = false, bool allowenable = true,
-        const std::string& autotarget = "", bool applyanimstochildren = false);
+        std::vector<std::unique_ptr<std::string>>& outanimations,
+        std::shared_ptr<ScriptScript> scripting, bool strict = false, bool enabled = true,
+        bool keepgui = false, bool allowenable = true, const std::string& autotarget = "",
+        bool applyanimstochildren = false);
 
     ~GuiCollection();
 
@@ -74,6 +76,10 @@ public:
 
     REFERENCE_COUNTED_PTR_TYPE(GuiCollection);
 
+protected:
+    virtual ScriptRunResult<int> _DoCallWithParams(
+        ScriptRunningSetup& sargs, Event* event, GenericEvent* event2) override;
+
 private:
     void _PlayAnimations(const std::vector<std::unique_ptr<std::string>>& anims);
 
@@ -99,8 +105,6 @@ private:
 
     GKey Toggle;
     GuiManager* OwningManager;
-
-    std::shared_ptr<ScriptScript> Scripting;
 };
 
 }} // namespace Leviathan::GUI

@@ -9,8 +9,9 @@
 #include <boost/filesystem.hpp>
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameModule::GameModule(const std::string& modulename,
-    const std::string& ownername, const std::string& extension /*= "txt|levgm"*/) :
+DLLEXPORT GameModule::GameModule(const std::string& modulename, const std::string& ownername,
+    const std::string& extension /*= "txt|levgm"*/) :
+    EventableScriptObject(nullptr),
     OwnerName(ownername)
 {
     std::string file = modulename + ".levgm";
@@ -127,7 +128,7 @@ DLLEXPORT Leviathan::GameModule::GameModule(const std::string& modulename,
     LEVIATHAN_ASSERT(!SourceFiles.empty(), "GameModule: empty source files");
 }
 
-DLLEXPORT Leviathan::GameModule::~GameModule()
+DLLEXPORT GameModule::~GameModule()
 {
     UnRegisterAllEvents();
 
@@ -137,7 +138,7 @@ DLLEXPORT Leviathan::GameModule::~GameModule()
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::GameModule::Init()
+DLLEXPORT bool GameModule::Init()
 {
     // Compile a new module //
     ScriptModule* mod = NULL;
@@ -176,21 +177,26 @@ DLLEXPORT bool Leviathan::GameModule::Init()
         return false;
     }
 
+    RegisterStandardScriptEvents(containedlisteners);
+
     for(size_t i = 0; i < containedlisteners.size(); i++) {
         // Bind generic event //
         if(containedlisteners[i]->GenericTypeName &&
             containedlisteners[i]->GenericTypeName->size() > 0) {
 
-            // custom event listener //
-            RegisterForEvent(*containedlisteners[i]->GenericTypeName);
+            // Registered in RegisterStandardScriptEvents
             continue;
         }
 
-        // look for global events //
+        // Skip global events
         EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
+
+        // Skip types that we handle ourselves //
+        if(etype == EVENT_TYPE_ERROR)
+            etype = GetCommonEventType(*containedlisteners[i]->ListenerName);
+
         if(etype != EVENT_TYPE_ERROR) {
 
-            RegisterForEvent(etype);
             continue;
         }
 
@@ -210,7 +216,7 @@ DLLEXPORT bool Leviathan::GameModule::Init()
     return true;
 }
 
-DLLEXPORT void Leviathan::GameModule::ReleaseScript()
+DLLEXPORT void GameModule::ReleaseScript()
 {
     // Call release callback and destroy everything //
     // fire an event //
@@ -226,50 +232,20 @@ DLLEXPORT void Leviathan::GameModule::ReleaseScript()
     ScriptExecutor::Get()->DeleteModuleIfNoExternalReferences(tmpid);
 }
 // ------------------------------------ //
-DLLEXPORT std::string Leviathan::GameModule::GetDescription(bool full /*= false*/)
+DLLEXPORT std::string GameModule::GetDescription(bool full /*= false*/)
 {
     return "GameModule(" + Name + (full ? " v" + Version + ") " : ") ") +
            " owned by: " + OwnerName +
            (full ? ", loaded from file: " + LoadedFromFile + "." : ".");
 }
 // ------------------------------------ //
-void Leviathan::GameModule::_CallScriptListener(Event* event, GenericEvent* event2)
+ScriptRunResult<int> GameModule::_DoCallWithParams(
+    ScriptRunningSetup& sargs, Event* event, GenericEvent* event2)
 {
-
-    ScriptModule* mod = Scripting->GetModule();
-
-    if(event) {
-        // Get the listener name from the event type //
-        std::string listenername = GetListenerNameFromType(event->GetType());
-
-        // check does the script contain right listeners //
-        if(mod->DoesListenersContainSpecificListener(listenername)) {
-
-            ScriptRunningSetup ssetup;
-            ssetup.SetEntrypoint(mod->GetListeningFunctionName(listenername));
-
-            // run the script //
-            if(Scripting) {
-                ScriptExecutor::Get()->RunScript<void>(
-                    Scripting->GetModuleSafe(), ssetup, this, event);
-                // do something with result //
-            }
-
-            // Do something with the result //
-        }
-    } else {
-        // generic event is passed //
-        if(mod->DoesListenersContainSpecificListener("", event2->GetTypePtr())) {
-
-            ScriptRunningSetup ssetup;
-            ssetup.SetEntrypoint(mod->GetListeningFunctionName("", event2->GetTypePtr()));
-
-            // run the script //
-            if(Scripting) {
-                ScriptExecutor::Get()->RunScript<void>(
-                    Scripting->GetModuleSafe(), ssetup, this, event2);
-                // do something with result //
-            }
-        }
-    }
+    if(event)
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event);
+    else
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event2);
 }

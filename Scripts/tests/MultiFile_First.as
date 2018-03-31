@@ -2,7 +2,7 @@ int CalledInListener = 0;
 
 
 [@Listener="OnInit"]
-void InitListener(){
+int InitListener(){
 
     CalledInListener = 42;
 
@@ -13,6 +13,7 @@ void InitListener(){
         FirstTestRunSuccessFlag = 0;
 
     CalledInListener = 0;
+    return 0;
 }
 
 int RandomFuncInFirst(){

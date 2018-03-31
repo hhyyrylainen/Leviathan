@@ -29,7 +29,7 @@ class BaseGuiObject : public ReferenceCounted,
 
 public:
     DLLEXPORT BaseGuiObject(GuiManager* owner, const std::string& name, int fakeid,
-        std::shared_ptr<ScriptScript> script = NULL);
+        std::shared_ptr<ScriptScript> script = nullptr);
     DLLEXPORT virtual ~BaseGuiObject();
 
     DLLEXPORT ScriptSafeVariableBlock* GetAndPopFirstUpdated()
@@ -102,10 +102,11 @@ public:
     REFERENCE_COUNTED_PTR_TYPE_NAMED(BaseGuiObject, GuiObject);
 
 protected:
+    virtual ScriptRunResult<int> _DoCallWithParams(
+        ScriptRunningSetup& sargs, Event* event, GenericEvent* event2) override;
+
     // this function will try to hook all wanted listeners to CEGUI elements //
     void _HookListeners();
-    //! \todo Store the callbacks as asIScriptFunction instead of by name for performance
-    virtual void _CallScriptListener(Event* event, GenericEvent* event2) override;
 
     //! \brief Registers for an event if it is a CEGUI event
     bool _HookCEGUIEvent(const std::string& listenername);

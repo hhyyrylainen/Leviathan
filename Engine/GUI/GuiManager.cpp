@@ -696,8 +696,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(
         if(tmphandler) {
 
             // \todo Detect if the files are in different folders and start multiple listeners
-            std::vector<const string*> targetfiles =
-                boost::assign::list_of(&file)(&relativepath);
+            std::vector<const string*> targetfiles = {&file, &relativepath};
 
             tmphandler->ListenForFileChanges(targetfiles,
                 std::bind(&GuiManager::_FileChanged, this, placeholders::_1, placeholders::_2),

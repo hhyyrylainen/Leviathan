@@ -612,6 +612,10 @@ private:
                             std::string(typeid(ReturnT).name()) + " id: " +
                             std::to_string(AngelScriptTypeIDResolver<ReturnT>::Get(this)));
                     }
+
+                    LOG_INFO(
+                        "ScriptExecutor: while running function: " +
+                        (func ? std::string(func->GetDeclaration()) : setup.Entryfunction));
                 }
 
                 // Rely on 0 being a valid value for pointer etc.

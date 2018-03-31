@@ -62,10 +62,11 @@ public:
 
     REFERENCE_COUNTED_PTR_TYPE(GameModule);
 
-private:
-    void _CallScriptListener(Event* event, GenericEvent* event2) override;
-    // ------------------------------------ //
+protected:
+    virtual ScriptRunResult<int> _DoCallWithParams(
+        ScriptRunningSetup& sargs, Event* event, GenericEvent* event2) override;
 
+private:
     AccessFlags ExtraAccess = 0;
 
     std::string OwnerName;

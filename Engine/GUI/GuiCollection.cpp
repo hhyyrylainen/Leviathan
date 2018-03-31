@@ -13,12 +13,14 @@ using namespace std;
 // ------------------------------------ //
 GuiCollection::GuiCollection(const std::string& name, GuiManager* manager, int id,
     const std::string& toggle, std::vector<unique_ptr<std::string>>& inanimations,
-    std::vector<unique_ptr<std::string>>& outanimations, bool strict /*= false*/,
-    bool enabled /*= true*/, bool keepgui /*= false*/, bool allowenable /*= true*/,
+    std::vector<unique_ptr<std::string>>& outanimations,
+    std::shared_ptr<ScriptScript> scripting, bool strict /*= false*/, bool enabled /*= true*/,
+    bool keepgui /*= false*/, bool allowenable /*= true*/,
     const std::string& autotarget /*= ""*/, bool applyanimstochildren) :
-    Name(name),
-    ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui), AllowEnable(allowenable),
-    AutoTarget(autotarget), AutoAnimationOnEnable(std::move(inanimations)),
+    EventableScriptObject(scripting),
+    Name(name), ID(id), Enabled(enabled), Strict(strict), KeepsGuiOn(keepgui),
+    AllowEnable(allowenable), AutoTarget(autotarget),
+    AutoAnimationOnEnable(std::move(inanimations)),
     AutoAnimationOnDisable(std::move(outanimations)),
     ApplyAnimationsToChildren(applyanimstochildren), OwningManager(manager)
 {
@@ -39,6 +41,7 @@ GuiCollection::GuiCollection(const std::string& name, GuiManager* manager, int i
 
 GuiCollection::~GuiCollection()
 {
+    UnRegisterAllEvents();
     // release script //
 
     // release reference //
@@ -62,81 +65,59 @@ DLLEXPORT void GuiCollection::UpdateState(bool newstate)
 
         // Play the animations //
         _PlayAnimations(AutoAnimationOnEnable);
-        return;
 
     } else if(!Enabled && !AutoAnimationOnDisable.empty()) {
 
         // Play the animations //
         _PlayAnimations(AutoAnimationOnDisable);
-        return;
-    }
+    } else {
 
-    // Set the auto target visibility if the target is set //
-    if(!AutoTarget.empty()) {
+        // Set the auto target visibility if the target is set //
+        if(!AutoTarget.empty()) {
 
-        // Find it and set it //
-        // Find the CEGUI object //
-        CEGUI::Window* foundobject = NULL;
-        try {
+            // Find it and set it //
+            // Find the CEGUI object //
+            CEGUI::Window* foundobject = NULL;
+            try {
 
-            foundobject =
-                OwningManager->GetMainContext()->getRootWindow()->getChild(AutoTarget);
+                foundobject =
+                    OwningManager->GetMainContext()->getRootWindow()->getChild(AutoTarget);
 
-        } catch(const CEGUI::UnknownObjectException& e) {
+            } catch(const CEGUI::UnknownObjectException& e) {
 
-            // Not found //
-            LOG_ERROR("GuiCollection: couldn't find an AutoTarget CEGUI window with "
-                      " name: " +
-                      AutoTarget + ":");
+                // Not found //
+                LOG_ERROR("GuiCollection: couldn't find an AutoTarget CEGUI window with "
+                          " name: " +
+                          AutoTarget + ":");
 
-            LOG_WRITE("\t> " + string(e.what()));
+                LOG_WRITE("\t> " + string(e.what()));
+            }
+
+            if(foundobject) {
+
+                // Set it's visible flag //
+                foundobject->setVisible(Enabled);
+
+
+            } else {
+
+                // Call script?
+            }
         }
-
-        if(foundobject) {
-
-            // Set it's visible flag //
-            foundobject->setVisible(Enabled);
-
-
-        } else {
-
-            // Call script?
-        }
-
-        return;
     }
-
 
     // Call the script //
-    ScriptScript* tmpscript = Scripting.get();
+    if(Scripting) {
 
-    if(tmpscript) {
-        // check does the script contain right listeners //
-        ScriptModule* mod = tmpscript->GetModule();
-
-        const std::string& listenername = newstate ? LISTENERNAME_ONSHOW : LISTENERNAME_ONHIDE;
-
-        if(mod->DoesListenersContainSpecificListener(listenername)) {
-            // create event to use //
-            Event* onevent = new Event(EVENT_TYPE_SHOW, new ShowEventData(newstate));
-
-            // call it //
-            ScriptRunningSetup sargs;
-            sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername));
-
-            auto result = ScriptExecutor::Get()->RunScript<void>(
-                tmpscript->GetModuleSafe(), sargs, this, onevent);
-
-            if(result.Result != SCRIPT_RUN_RESULT::Success)
-                LOG_WARNING("GuiCollection: script event callback failed to run");
-
-            onevent->Release();
-        }
+        // Attempt to call the thing
+        Event* onevent = new Event(newstate ? EVENT_TYPE_SHOW : EVENT_TYPE_HIDE, nullptr);
+        _CallScriptListener(onevent, nullptr);
+        onevent->Release();
     }
 }
 // ------------------------------------ //
-bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject& data,
-    const ExtraParameters& extra)
+bool GuiCollection::LoadCollection(
+    GuiManager* gui, const ObjectFileObject& data, const ExtraParameters& extra)
 {
     // Load a GuiCollection from the structure //
 
@@ -185,20 +166,24 @@ bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject& data
 
 
     // allocate new Collection object //
-    GuiCollection* cobj =
-        new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle, autoinanimation,
-            autooutanimation, Strict, Enabled, GuiOn, allowenable, autotarget, recursiveanims);
-
-    // copy script data over //
-    cobj->Scripting = data.GetScript();
+    GuiCollection* cobj = new GuiCollection(data.GetName(), gui, IDFactory::GetID(), Toggle,
+        autoinanimation, autooutanimation, data.GetScript(), Strict, Enabled, GuiOn,
+        allowenable, autotarget, recursiveanims);
 
     // Apply extra flags //
-    if(cobj->Scripting){
-        
-        if(auto mod = cobj->Scripting->GetModule(); mod){
+    if(cobj->Scripting) {
+
+        if(auto mod = cobj->Scripting->GetModule(); mod) {
 
             mod->AddAccessRight(extra.ExtraAccess);
         }
+
+        // This builds the listener list and register generic events
+        // The module is also built here so this has to be after the access rights
+        std::vector<std::shared_ptr<ValidListenerData>> listeners;
+        cobj->Scripting->GetModule()->GetListOfListeners(listeners);
+
+        cobj->RegisterStandardScriptEvents(listeners);
     }
 
     // Add to the collection list //
@@ -211,6 +196,17 @@ bool GuiCollection::LoadCollection(GuiManager* gui, const ObjectFileObject& data
 DLLEXPORT void GuiCollection::UpdateAllowEnable(bool newstate)
 {
     AllowEnable = newstate;
+}
+// ------------------------------------ //
+ScriptRunResult<int> GuiCollection::_DoCallWithParams(
+    ScriptRunningSetup& sargs, Event* event, GenericEvent* event2)
+{
+    if(event)
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event);
+    else
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event2);
 }
 // ------------------------------------ //
 void GuiCollection::_PlayAnimations(const std::vector<unique_ptr<std::string>>& anims)

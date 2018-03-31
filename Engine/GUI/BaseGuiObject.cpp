@@ -66,8 +66,8 @@ DLLEXPORT CEGUI::Window* BaseGuiObject::GetTargetWindow() const
     return TargetElement;
 }
 // ------------------------------------ //
-DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(
-    GuiManager* owner, std::vector<BaseGuiObject*>& tempobjects, ObjectFileObject& dataforthis,
+DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(GuiManager* owner,
+    std::vector<BaseGuiObject*>& tempobjects, ObjectFileObject& dataforthis,
     const ExtraParameters& extra)
 {
     // parse fake id from prefixes //
@@ -94,14 +94,14 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(
         owner, dataforthis.GetName(), fakeid, dataforthis.GetScript());
 
     // Apply extra flags //
-    if(tmpptr->Scripting){
-        
-        if(auto mod = tmpptr->Scripting->GetModule(); mod){
+    if(tmpptr->Scripting) {
+
+        if(auto mod = tmpptr->Scripting->GetModule(); mod) {
 
             mod->AddAccessRight(extra.ExtraAccess);
         }
     }
-    
+
 
     std::shared_ptr<NamedVariableList> listenon;
 
@@ -167,14 +167,14 @@ void BaseGuiObject::_HookListeners()
     // Allow the module to hot-reload our files //
     _BondWithModule(mod);
 
+    RegisterStandardScriptEvents(containedlisteners);
 
     for(size_t i = 0; i < containedlisteners.size(); i++) {
         // Generics cannot be CEGUI events //
         if(containedlisteners[i]->GenericTypeName &&
             containedlisteners[i]->GenericTypeName->size() > 0) {
             // custom event listener //
-            RegisterForEvent(*containedlisteners[i]->GenericTypeName);
-
+            // Registered in RegisterStandardScriptEvents
             continue;
         }
 
@@ -182,12 +182,15 @@ void BaseGuiObject::_HookListeners()
         if(_HookCEGUIEvent(*containedlisteners[i]->ListenerName))
             continue;
 
-
-        // look for global events //
+        // Skip global events
         EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
+
+        // Skip types that we handle ourselves //
+        if(etype == EVENT_TYPE_ERROR)
+            etype = GetCommonEventType(*containedlisteners[i]->ListenerName);
+
         if(etype != EVENT_TYPE_ERROR) {
 
-            RegisterForEvent(etype);
             continue;
         }
 
@@ -204,51 +207,15 @@ DLLEXPORT bool BaseGuiObject::IsCEGUIEventHooked() const
     return !CEGUIRegisteredEvents.empty();
 }
 // ------------------------------------ //
-void BaseGuiObject::_CallScriptListener(Event* event, GenericEvent* event2)
+ScriptRunResult<int> BaseGuiObject::_DoCallWithParams(
+    ScriptRunningSetup& sargs, Event* event, GenericEvent* event2)
 {
-    if(!Scripting)
-        return;
-
-    ScriptModule* mod = Scripting->GetModule();
-
-    if(event) {
-        // Get the listener name from the event type //
-        const std::string& listenername = GetListenerNameFromType(event->GetType());
-
-        // check does the script contain right listeners //
-        if(mod->DoesListenersContainSpecificListener(listenername)) {
-
-            ScriptRunningSetup sargs;
-            sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername));
-
-            // Run the script //
-            if(Scripting) {
-
-                auto result = ScriptExecutor::Get()->RunScript<void>(
-                    Scripting->GetModuleSafe(), sargs, this, event);
-
-                if(result.Result != SCRIPT_RUN_RESULT::Success)
-                    LOG_WARNING("BaseGuiObject: failed to run script listener");
-            }
-        }
-    } else {
-        // generic event is passed //
-        if(mod->DoesListenersContainSpecificListener("", event2->GetTypePtr())) {
-
-            ScriptRunningSetup sargs;
-            sargs.SetEntrypoint(mod->GetListeningFunctionName("", event2->GetTypePtr()));
-
-            // Run the script //
-            if(Scripting) {
-
-                auto result = ScriptExecutor::Get()->RunScript<void>(
-                    Scripting->GetModuleSafe(), sargs, this, event2);
-
-                if(result.Result != SCRIPT_RUN_RESULT::Success)
-                    LOG_WARNING("BaseGuiObject: failed to run script listener");
-            }
-        }
-    }
+    if(event)
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event);
+    else
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event2);
 }
 // ------------------------------------ //
 DLLEXPORT std::unique_ptr<ScriptRunningSetup> BaseGuiObject::GetParametersForInit()
@@ -460,7 +427,7 @@ bool BaseGuiObject::_CallCEGUIListener(const std::string& name,
 
         // TODO: similarly to ScriptModule args bridge this needs redoing
         DEBUG_BREAK;
-        //extraparam(Args);
+        // extraparam(Args);
     }
 
     ScriptRunningSetup sargs;

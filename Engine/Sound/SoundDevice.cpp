@@ -10,6 +10,8 @@
 
 #include "cAudio/cAudio.h"
 
+#include <boost/filesystem.hpp>
+
 #include <algorithm>
 using namespace Leviathan;
 using namespace Leviathan::Sound;
@@ -167,8 +169,15 @@ DLLEXPORT AudioSource::pointer SoundDevice::Play2DSound(
     cAudio::IAudioSource* source =
         AudioManager->play2D(filename.c_str(), looping, startpaused);
 
-    if(!source)
+    if(!source) {
+        LOG_ERROR(
+            "SoundDevice: Play2DSound: failed to create IAudioSource from file: " + filename);
+
+        if(!boost::filesystem::is_regular(filename))
+            LOG_INFO("SoundDevice: file '" + filename + "' doesn't exist");
+
         return nullptr;
+    }
 
     return AudioSource::MakeShared<AudioSource>(source, this);
 }

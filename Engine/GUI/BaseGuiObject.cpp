@@ -412,6 +412,10 @@ bool BaseGuiObject::_CallCEGUIListener(const std::string& name,
     std::function<void(std::vector<std::shared_ptr<NamedVariableBlock>>&)> extraparam
     /*= NULL*/)
 {
+    if(!Scripting) {
+        return false;
+    }
+
     // There should be one as it is registered //
     ScriptModule* mod = Scripting->GetModule();
 
@@ -421,7 +425,6 @@ bool BaseGuiObject::_CallCEGUIListener(const std::string& name,
         return false;
     }
 
-
     // A calling function might want to add extra parameters //
     if(extraparam) {
 
@@ -430,25 +433,19 @@ bool BaseGuiObject::_CallCEGUIListener(const std::string& name,
         // extraparam(Args);
     }
 
-    ScriptRunningSetup sargs;
-    sargs.SetEntrypoint(mod->GetListeningFunctionName(name));
+    ScriptRunningSetup sargs(mod->GetListeningFunctionName(name));
 
     // Run the script //
-    if(Scripting) {
-        auto result =
-            ScriptExecutor::Get()->RunScript<bool>(Scripting->GetModuleSafe(), sargs, this);
+    auto result =
+        ScriptExecutor::Get()->RunScript<bool>(Scripting->GetModuleSafe(), sargs, this);
 
-        if(result.Result != SCRIPT_RUN_RESULT::Success) {
+    if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
-            return false;
-        }
-
-        // Return the value returned by the script //
-        return result.Value;
-
-    } else {
         return false;
     }
+
+    // Return the value returned by the script //
+    return result.Value;
 }
 // ------------------------------------ //
 bool BaseGuiObject::EventDestroyWindow(const CEGUI::EventArgs& args)

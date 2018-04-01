@@ -11,6 +11,7 @@
 #include "Animation/OgreSkeletonInstance.h"
 #include "OgreColourValue.h"
 #include "OgreItem.h"
+#include "OgreMesh2.h"
 #include "OgreRoot.h"
 
 using namespace Leviathan;
@@ -111,6 +112,11 @@ void ItemSetCustomParameterProxy(Ogre::Item* self, int index, const Ogre::Vector
         self->getSubItem(0)->setCustomParameter(index, value);
 }
 
+Ogre::Mesh* ItemGetMeshProxy(Ogre::Item* self)
+{
+    return self->getMesh().get();
+}
+
 Ogre::SkeletonAnimation* SkeletonInstanceGetAnimationProxy(
     Ogre::SkeletonInstance* self, const std::string& name)
 {
@@ -120,6 +126,11 @@ Ogre::SkeletonAnimation* SkeletonInstanceGetAnimationProxy(
 
         return nullptr;
     }
+}
+
+std::string MeshGetNameProxy(Ogre::Mesh* self)
+{
+    return self->getName();
 }
 
 // This is needed because directly registering
@@ -526,6 +537,11 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Item", "Mesh@ getMesh()", asFUNCTION(ItemGetMeshProxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 
@@ -572,6 +588,23 @@ bool BindSkeletons(asIScriptEngine* engine)
     return true;
 }
 
+bool BindMeshes(asIScriptEngine* engine)
+{
+    // ------------------------------------ //
+    // Mesh
+    if(engine->RegisterObjectType("Mesh", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Mesh", "string getName()", asFUNCTION(MeshGetNameProxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    return true;
+}
+
 } // namespace Leviathan
 // ------------------------------------ //
 bool Leviathan::BindOgre(asIScriptEngine* engine)
@@ -601,6 +634,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         return false;
 
     if(!BindSkeletons(engine))
+        return false;
+
+    if(!BindMeshes(engine))
         return false;
 
     if(!BindScene(engine))

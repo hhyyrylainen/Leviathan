@@ -94,6 +94,10 @@ public:
     DLLEXPORT NewtonBody* CreateBodyFromCollision(NewtonCollision* collision);
     DLLEXPORT void DestroyBody(NewtonBody* body);
 
+    DLLEXPORT inline GameWorld* GetGameWorld()
+    {
+        return OwningWorld;
+    }
 
     DLLEXPORT inline NewtonWorld* GetNewtonWorld()
     {

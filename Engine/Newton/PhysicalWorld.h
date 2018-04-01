@@ -30,10 +30,10 @@ namespace Leviathan {
 
 //! \brief Base class for custom joint types defined for use by this class
 //! \note If these should be able to be accessed from elsewhere, move this to a new file
-class BaseCustomJoint{
+class BaseCustomJoint {
 public:
     //! This helps with allowing all custom types to be destroyed with a single callback
-    DLLEXPORT virtual ~BaseCustomJoint(){}
+    DLLEXPORT virtual ~BaseCustomJoint() {}
 
     DLLEXPORT static void JointDestructorCallback(const NewtonJoint* joint);
 };
@@ -80,6 +80,9 @@ public:
 
     DLLEXPORT NewtonCollision* CreateSphere(
         float radius, const Ogre::Matrix4& offset = Ogre::Matrix4::IDENTITY);
+
+    DLLEXPORT NewtonCollision* CreateBox(float xdimension, float ydimension, float zdimension,
+        const Ogre::Matrix4& offset = Ogre::Matrix4::IDENTITY);
 
 
     // ------------------------------------ //

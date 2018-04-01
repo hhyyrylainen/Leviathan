@@ -170,6 +170,15 @@ DLLEXPORT NewtonCollision* PhysicalWorld::CreateSphere(
     const auto& prep = PrepareOgreMatrixForNewton(offset);
     return NewtonCreateSphere(World, radius, UNUSED_SHAPE_ID, prep[0]);
 }
+
+DLLEXPORT NewtonCollision* PhysicalWorld::CreateBox(float xdimension, float ydimension,
+    float zdimension, const Ogre::Matrix4& offset /*= Ogre::Matrix4::IDENTITY*/)
+{
+    const auto& prep = PrepareOgreMatrixForNewton(offset);
+
+    return NewtonCreateBox(
+        World, xdimension, ydimension, zdimension, UNUSED_SHAPE_ID, prep[0]);
+}
 // ------------------------------------ //
 DLLEXPORT NewtonBody* PhysicalWorld::CreateBodyFromCollision(NewtonCollision* collision)
 {

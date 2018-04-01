@@ -44,12 +44,14 @@ void SimpleAnimationDestructorProxy(void* memory)
     reinterpret_cast<SimpleAnimation*>(memory)->~SimpleAnimation();
 }
 
-void AnimatedAddHelper(Animated* self, const SimpleAnimation &animation){
+void AnimatedAddHelper(Animated* self, const SimpleAnimation& animation)
+{
 
     self->Animations.push_back(animation);
 }
 
-SimpleAnimation* AnimatedGetHelper(Animated* self, uint64_t index){
+SimpleAnimation* AnimatedGetHelper(Animated* self, uint64_t index)
+{
 
     if(index >= self->Animations.size())
         return nullptr;
@@ -211,7 +213,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics",
-           "NewtonBody@ CreatePhysicsBody(PhysicalWorld@ world)",
+           "NewtonBody@ CreatePhysicsBody(PhysicalWorld@ world, int physicsmaterialid = -1)",
            asMETHOD(Physics, CreatePhysicsBody), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -487,14 +489,13 @@ bool BindComponentTypes(asIScriptEngine* engine)
 
     // Animation helpers
     if(engine->RegisterObjectMethod("Animated",
-            "void AddAnimation(const SimpleAnimation &in animation)",
-            asFUNCTION(AnimatedAddHelper), asCALL_CDECL_OBJFIRST) < 0) {
+           "void AddAnimation(const SimpleAnimation &in animation)",
+           asFUNCTION(AnimatedAddHelper), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Animated",
-            "SimpleAnimation& GetAnimation(uint64 index)",
-            asFUNCTION(AnimatedGetHelper), asCALL_CDECL_OBJFIRST) < 0) {
+    if(engine->RegisterObjectMethod("Animated", "SimpleAnimation& GetAnimation(uint64 index)",
+           asFUNCTION(AnimatedGetHelper), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

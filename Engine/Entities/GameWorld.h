@@ -152,6 +152,7 @@ public:
 
 
     //! \brief Fetches the physical material ID from the material manager
+    //! \returns -1 if not found. The id otherwise
     DLLEXPORT int GetPhysicalMaterial(const std::string& name);
 
 

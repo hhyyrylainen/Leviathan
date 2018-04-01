@@ -43,6 +43,12 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     if(engine->RegisterObjectMethod(classname,
+           "int GetPhysicalMaterial(const string &in name)",
+           asMETHOD(WorldType, GetPhysicalMaterial), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
            "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
            asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

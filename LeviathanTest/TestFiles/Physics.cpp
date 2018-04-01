@@ -115,14 +115,35 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
     world.Release();
 }
 
-TEST_CASE("2D plane constraints work", "[physics][entity]")
+std::atomic<int> TestHit = 0;
+
+int TestAABBCallback(const NewtonMaterial* material, const NewtonBody* body0,
+    const NewtonBody* body1, int threadIndex)
 {
+    ++TestHit;
+    return 1;
+}
+
+TEST_CASE("Physical material callbacks work", "[physics][entity]")
+{
+    TestHit = 0;
 
     PartialEngine<false> engine;
 
     NewtonManager newtonInstance;
 
     PhysicsMaterialManager physMan(&newtonInstance);
+
+    // Setup materials
+    auto planeMaterial = std::make_shared<Leviathan::PhysicalMaterial>("PlaneMaterial");
+    auto boxMaterial = std::make_shared<Leviathan::PhysicalMaterial>("BoxMaterial");
+
+    // Set callbacks //
+    planeMaterial->FormPairWith(*boxMaterial).SetCallbacks(TestAABBCallback, nullptr);
+
+    physMan.LoadedMaterialAdd(planeMaterial);
+    physMan.LoadedMaterialAdd(boxMaterial);
+
 
     REQUIRE(NewtonManager::Get());
     StandardWorld world;
@@ -132,27 +153,43 @@ TEST_CASE("2D plane constraints work", "[physics][entity]")
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
 
-    auto object1 = world.CreateEntity();
+    const auto boxMaterialID = world.GetPhysicalMaterial("BoxMaterial");
+    const auto planeMaterialID = world.GetPhysicalMaterial("PlaneMaterial");
 
-    auto& pos = world.Create_Position(object1, Float3(0, 10, 0), Float4::IdentityQuaternion());
-    auto& physics = world.Create_Physics(object1, &world, pos, nullptr);
-    physics.SetCollision(physWorld->CreateSphere(1));
-    physics.CreatePhysicsBody(physWorld);
-    physics.SetMass(10);
+    CHECK(boxMaterialID >= 0);
+    CHECK(planeMaterialID >= 0);
+    
+    auto box = world.CreateEntity();
 
-    // Position needs to be set before the constraint is created (otherwise it is stuck at y =
-    // 0)
-    physics.JumpTo(pos);
+    auto& pos1 = world.Create_Position(box, Float3(0, 5, 0), Float4::IdentityQuaternion());
+    auto& physics1 = world.Create_Physics(box, &world, pos1, nullptr);
+    physics1.SetCollision(physWorld->CreateSphere(1));
+    physics1.CreatePhysicsBody(physWorld, boxMaterialID);
+    physics1.SetMass(10);
+    physics1.JumpTo(pos1);
 
-    // Setup a contraint that prevents y movement //
-    CHECK(physics.CreatePlaneConstraint(physWorld, Float3(0, 1, 0)));
+    auto plane = world.CreateEntity();
+
+    auto& pos2 = world.Create_Position(plane, Float3(0, 0, 0), Float4::IdentityQuaternion());
+    auto& physics2 = world.Create_Physics(plane, &world, pos2, nullptr);
+    physics2.SetCollision(physWorld->CreateBox(10, 1, 10));
+    physics2.CreatePhysicsBody(physWorld, planeMaterialID);
+    physics2.JumpTo(pos2);
+
+    CHECK(TestHit == 0);
 
     // Let it run a bit
     world.Tick(1);
-    world.Tick(2);
 
-    // And check that it hasn't fallen a bit
-    CHECK(pos.Members._Position.Y == 10.0f);
+    // Actually it needs to run for quite a while so run physics here
+    world.GetPhysicalWorld()->SimulateWorldFixed(1000, 10);
+
+    // Box should fall //
+    CHECK(pos1.Members._Position != Float3(0, 5, 0));
+    CHECK(pos1.Members._Position.Y < 2.f);
+
+    // And check that it has hit
+    CHECK(TestHit > 0);
 
     world.Release();
 }

@@ -397,7 +397,9 @@ public:
     DLLEXPORT bool SetCollision(NewtonCollision* collision);
 
     //! \brief Use this to create a body for this component once Collision is set
-    DLLEXPORT NewtonBody* CreatePhysicsBody(PhysicalWorld* world);
+    //! \param physicsmaterialid Retrieve from the same world with
+    //! `GameWorld::GetPhysicalMaterial`. -1 to use default material
+    DLLEXPORT NewtonBody* CreatePhysicsBody(PhysicalWorld* world, int physicsmaterialid = -1);
 
     DLLEXPORT void GiveImpulse(const Float3& deltaspeed, const Float3& point = Float3(0));
 

@@ -760,7 +760,6 @@ DLLEXPORT Float3 GameWorld::GetGravityAtPosition(const Float3& pos)
 // ------------------------------------ //
 DLLEXPORT int GameWorld::GetPhysicalMaterial(const std::string& name)
 {
-
     return PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
         name, _PhysicalWorld->GetNewtonWorld());
 }

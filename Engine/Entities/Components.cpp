@@ -448,7 +448,8 @@ DLLEXPORT void Physics::SetPhysicalMaterialID(int ID)
     NewtonBodySetMaterialGroupID(Body, ID);
 }
 // ------------------------------------ //
-DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(PhysicalWorld* world)
+DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(
+    PhysicalWorld* world, int physicsmaterialid /*= -1*/)
 {
     if(!world || !Collision)
         return nullptr;
@@ -471,6 +472,10 @@ DLLEXPORT NewtonBody* Physics::CreatePhysicsBody(PhysicalWorld* world)
     NewtonBodySetForceAndTorqueCallback(Body, Physics::ApplyForceAndTorqueEvent);
 
     NewtonBodySetDestructorCallback(Body, Physics::DestroyBodyCallback);
+
+    // And material //
+    if(physicsmaterialid != -1)
+        NewtonBodySetMaterialGroupID(Body, physicsmaterialid);
 
     return Body;
 }

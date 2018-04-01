@@ -271,6 +271,9 @@ public:
         return engine;
     }
 
+    //! \brief Does a full garbage collection cycle
+    DLLEXPORT void CollectGarbage();
+
     //! \brief Prints exception info and stacktrace to a logger
     DLLEXPORT static void PrintExceptionInfo(asIScriptContext* ctx, LErrorReporter& output,
         asIScriptFunction* func = nullptr, ScriptModule* scrptmodule = nullptr);

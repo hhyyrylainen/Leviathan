@@ -624,6 +624,11 @@ DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const
     return engine->GetTypeInfoById(type);
 }
 // ------------------------------------ //
+DLLEXPORT void ScriptExecutor::CollectGarbage()
+{
+    engine->GarbageCollect(asGC_FULL_CYCLE);
+}
+// ------------------------------------ //
 // CustomScriptRun
 DLLEXPORT CustomScriptRun::~CustomScriptRun()
 {

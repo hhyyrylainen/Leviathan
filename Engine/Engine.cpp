@@ -547,6 +547,9 @@ void Engine::Release(bool forced)
     if(!forced)
         LEVIATHAN_ASSERT(PreReleaseDone, "PreReleaseDone must be done before actual release!");
 
+    // Force garbase collection //
+    MainScript->CollectGarbage();
+
     // Destroy worlds //
     {
         Lock lock(GameWorldsLock);

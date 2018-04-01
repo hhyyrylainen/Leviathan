@@ -82,7 +82,6 @@ DLLEXPORT GameWorld::GameWorld() :
 
 DLLEXPORT GameWorld::~GameWorld()
 {
-
     (*WorldDestroyed) = true;
 
     // Assert if all objects haven't been released already.
@@ -90,10 +89,6 @@ DLLEXPORT GameWorld::~GameWorld()
     // This can be hit in tests quite easily if something throws an exception
     LEVIATHAN_ASSERT(
         Entities.empty(), "GameWorld: Entities not empty in destructor. Was Release called?");
-
-    // This should be relatively cheap if the newton threads don't deadlock while waiting
-    // for each other
-    _PhysicalWorld.reset();
 }
 // ------------------------------------ //
 DLLEXPORT bool GameWorld::Init(
@@ -160,6 +155,10 @@ DLLEXPORT void GameWorld::Release()
             WorldsScene = NULL;
         }
     }
+
+    // This should be relatively cheap if the newton threads don't deadlock while waiting
+    // for each other
+    _PhysicalWorld.reset();
 
     // Let go of our these resources
     pimpl.reset();

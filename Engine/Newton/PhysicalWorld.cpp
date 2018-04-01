@@ -32,12 +32,10 @@ DLLEXPORT Leviathan::PhysicalWorld::PhysicalWorld(GameWorld* owner) : OwningWorl
 
 DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld()
 {
-
-    NewtonWorldSetUserData(World, NULL);
-
-    // finally destroy the newton world
-
+    //  Destroy the newton world
     NewtonDestroy(World);
+
+    // NewtonWorldSetUserData(World, NULL);
 
     auto physmanager = PhysicsMaterialManager::Get();
 
@@ -49,7 +47,6 @@ DLLEXPORT Leviathan::PhysicalWorld::~PhysicalWorld()
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorld(int maxruns /*= -1*/)
 {
-
     if(maxruns <= 0) {
 
         // TODO: report error?
@@ -107,7 +104,6 @@ DLLEXPORT void Leviathan::PhysicalWorld::SimulateWorldFixed(
 int Leviathan::SingleBodyUpdate(
     const NewtonWorld* const newtonWorld, const void* islandHandle, int bodyCount)
 {
-
     PhysicalWorld* pworld =
         reinterpret_cast<PhysicalWorld*>(NewtonWorldGetUserData(newtonWorld));
 
@@ -132,14 +128,12 @@ DLLEXPORT void Leviathan::PhysicalWorld::ClearTimers()
 // ------------------------------------ //
 DLLEXPORT void Leviathan::PhysicalWorld::AdjustClock(int milliseconds)
 {
-
     // Convert from milliseconds (10^-3) to micro seconds (10^-6) //
     LastSimulatedTime -= 1000 * milliseconds;
 }
 // ------------------------------------ //
 DLLEXPORT void PhysicalWorld::DestroyCollision(NewtonCollision* collision)
 {
-
     NewtonDestroyCollision(collision);
 }
 

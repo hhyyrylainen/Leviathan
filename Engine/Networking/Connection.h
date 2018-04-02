@@ -263,14 +263,14 @@ protected:
 
     //! \brief Returns acks to be sent with a normal packet, or null if no acks to send
     //! \param autoaddtosent If true the generated ack field is added to SentAckPackets
-    std::shared_ptr<NetworkAckField> _GetAcksToSend(uint32_t localpacketid,
+    DLLEXPORT std::shared_ptr<NetworkAckField> _GetAcksToSend(uint32_t localpacketid,
         bool autoaddtosent = true);
 
     //! \brief Marks a remote id as received
     //!
     //! This function will also store the packetid for later checks
     //! \returns True If already received a packet with the id
-    bool _MarkNewAsReceived(uint32_t remotepacketid);
+    // bool _MarkNewAsReceived(uint32_t remotepacketid);
 
 protected:
     

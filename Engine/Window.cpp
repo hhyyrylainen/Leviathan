@@ -13,7 +13,6 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "Math/CommonMath.h"
 #include <algorithm>
 
 using namespace std;
@@ -71,6 +70,13 @@ DLLEXPORT Leviathan::Window::~Window(){
     if(MouseCaptured){
 
         SDL_SetRelativeMouseMode(SDL_FALSE);
+    }
+
+    // Un fullscreen to make sure nothing is screwed up
+    if(SDL_GetWindowFlags(SDLWindow) & SDL_WINDOW_FULLSCREEN_DESKTOP){
+
+        LOG_INFO("Window: unfullscreened before quit");
+        SDL_SetWindowFullscreen(SDLWindow, 0);
     }
 
     LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
@@ -136,8 +142,26 @@ DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y){
     int32_t width, height;
     GetSize(width, height);
     
-    x = Leviathan::clamp(globalX, 0, width);
-    y = Leviathan::clamp(globalY, 0, height);
+    x = std::clamp(globalX, 0, width);
+    y = std::clamp(globalY, 0, height);
+}
+
+DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y){
+
+    int xInt, yInt;
+    GetRelativeMouse(xInt, yInt);
+
+    int32_t width, height;
+    GetSize(width, height);
+
+    if(width == 0 || height == 0){
+        x = 0.5f;
+        y = 0.5f;
+        return;
+    }
+
+    x = static_cast<float>(xInt) / width;
+    y = static_cast<float>(yInt) / height;
 }
 
 DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea(){
@@ -245,9 +269,9 @@ DLLEXPORT void Leviathan::Window::GatherInput(CEGUI::InputAggregator* receiver){
 
     // Set the modifier keys to the input receiver //
     if(inputreceiver)
-        inputreceiver->setModifierKeys(SpecialKeyModifiers & KEYSPECIAL_SHIFT,
-            SpecialKeyModifiers & KEYSPECIAL_ALT,
-            SpecialKeyModifiers & KEYSPECIAL_CTRL);
+        inputreceiver->setModifierKeys((SpecialKeyModifiers & KEYSPECIAL_SHIFT) != 0,
+            (SpecialKeyModifiers & KEYSPECIAL_ALT) != 0,
+            (SpecialKeyModifiers & KEYSPECIAL_CTRL) != 0);
 
     
     // Handle mouse capture
@@ -346,7 +370,7 @@ DLLEXPORT void Leviathan::Window::InjectKeyDown(int32_t sdlkey){
     if(!usedkeydown){
 
         // Then try disabling collections //
-        LOG_WRITE("TODO: check is a text box active");
+        //LOG_WRITE("TODO: check is a text box active");
         if(!OwningWindow->GetGui()->ProcessKeyDown(sdlkey, SpecialKeyModifiers)){
 
             // Finally send to a controller //

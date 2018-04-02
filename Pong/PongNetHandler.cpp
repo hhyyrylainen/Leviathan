@@ -83,7 +83,8 @@ void Pong::PongNetHandler::_OnStartApplicationConnect(){
 }
 // ------------------------------------ //
 void Pong::PongNetHandler::_OnNewConnectionStatusMessage(const string &message){
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    Engine::Get()->GetEventHandler()->CallEvent(
+        new Leviathan::GenericEvent("ConnectStatusMessage",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(
         new NamedVariableList("Message", new VariableBlock(message))))));
 }
@@ -99,12 +100,13 @@ void Pong::PongNetHandler::_OnDisconnectFromServer(const string &reasonstring, b
     Logger::Get()->Info("The server kicked us, showing the reason");
 
     // Disable the lobby screen //
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
+    Engine::Get()->GetEventHandler()->CallEvent(new Leviathan::GenericEvent("LobbyScreenState",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(
         new NamedVariableList("State", new VariableBlock(string("Off")))))));
 
 
-    EventHandler::Get()->CallEvent(new Leviathan::GenericEvent("ConnectStatusMessage",
+    Engine::Get()->GetEventHandler()->CallEvent(
+        new Leviathan::GenericEvent("ConnectStatusMessage",
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(
                     new NamedVariableList("Message", new VariableBlock(
                             string("Server kicked us, reason: "+reasonstring)))))));

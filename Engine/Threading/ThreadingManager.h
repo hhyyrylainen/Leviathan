@@ -74,10 +74,14 @@ DLLEXPORT void UnregisterOgreOnThread();
 
 		//! \brief Blocks until all queued tasks are finished
 		//!
-		//! \warning This function will ignore MustBeRanBefore return value by passing TASK_MUSTBERAN_BEFORE_EXIT
+		//! \warning This function will ignore MustBeRanBefore return value by
+        //! passing TASK_MUSTBERAN_BEFORE_EXIT
 		//! \bug This doesn't properly handle tasks that are repeating
-		//! \todo Maybe add a global thread that runs the queuer once in a while
 		DLLEXPORT void WaitForAllTasksToFinish();
+
+
+        //! \brief Blocks until all threads are empty
+        DLLEXPORT void WaitForWorkersToEmpty(Lock &guard);
 
 
 		//! \brief Notifies the queuer thread to check task setting

@@ -9,26 +9,12 @@
 
 namespace Leviathan{
 
-template<class T, class Compare>
-    constexpr const T& clamp( const T& v, const T& lo, const T& hi, Compare comp )
-{
-    return assert( !comp(hi, lo) ),
-        comp(v, lo) ? lo : comp(hi, v) ? hi : v;
-}
-
-template<class T>
-    constexpr const T& clamp( const T& v, const T& lo, const T& hi )
-{
-    return clamp( v, lo, hi, std::less<>() );
-}
-
 class mpuint;
 
 class MMath{
 public:
     static DLLEXPORT float CoordinateDistance(float x1, float x2,float y1, float y2);
     static DLLEXPORT double AngleBetweenPoints(float x1, float x2,float y1, float y2);
-    static DLLEXPORT float RandomNumber(float Min, float Max);
 
     DLLEXPORT static bool IsPointInsidePolygon(const std::vector<Float3>& polygon,
         const Float3& point);

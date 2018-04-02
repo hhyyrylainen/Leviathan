@@ -1,5 +1,5 @@
 
-Copyright (c) 2012-2017 Henri Hyyryläinen
+Leviathan Game Engine Copyright (c) 2012-2018 Henri Hyyryläinen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,10 @@ THE SOFTWARE.
         
 --Library licenses--
 
+    Additional libraries may be included in binary releases purely for the convenience of the users.
+    Such binaries are parts redistributed from system libraries that may not be common or are compiler
+    specific required files (msvcp140.dll).
+
     Newton Game Dynamics: zlib license
     
     Boost libraries: Boost libraries license v1
@@ -38,6 +42,10 @@ THE SOFTWARE.
     JsonCpp: MIT license
 
     ffmpeg: LGPL v2.1+
+
+    cAudio: zlib license
+
+    OpenAL Soft: LGPL v2
         
     Google Breakpad:
 
@@ -128,6 +136,9 @@ THE SOFTWARE.
     *
     *  Distributed under the Boost Software License, Version 1.0. (See accompanying
     *  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+    
+    
+    Additional libraries and their licenses are listed at the end.
     
 -- Additional code --
 
@@ -1001,6 +1012,114 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 
+glm:
+
+The MIT License
+
+Copyright (c) 2005 - 2013 G-Truc Creation
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+SFML
+----
+
+SFML - Copyright (C) 2007-2017 Laurent Gomila - laurent@sfml-dev.org
+
+This software is provided 'as-is', without any express or
+implied warranty. In no event will the authors be held
+liable for any damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute
+it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented;
+   you must not claim that you wrote the original software.
+   If you use this software in a product, an acknowledgment
+   in the product documentation would be appreciated but
+   is not required.
+
+2. Altered source versions must be plainly marked as such,
+   and must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any
+   source distribution.
+
+
+/**
+ * OpenAL cross platform audio library
+ * Copyright (C) 1999-2007 by authors.
+ * This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ *  License along with this library; if not, write to the
+ *  Free Software Foundation, Inc.,
+ *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * Or go to http://www.gnu.org/copyleft/lgpl.html
+ */
+
+cAudio:
+The zlib/libpng License
+
+Copyright (c) <2008> <DeathTouchStudios>
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+    1. The origin of this software must not be misrepresented; you must not
+    claim that you wrote the original software. If you use this software
+    in a product, an acknowledgment in the product documentation would be
+    appreciated but is not required.
+
+    2. Altered source versions must be plainly marked as such, and must not be
+    misrepresented as being the original software.
+
+    3. This notice may not be removed or altered from any source
+distribution.
+
+
+External libraries used by SFML
+-------------------------------
+
+* OpenAL-Soft is under the LGPL license
+* libjpeg is public domain
+* stb_image and stb_image_write are public domain
+* freetype is under the FreeType license or the GPL license
+* libogg is under the BSD license
+* libvorbis is under the BSD license
+* libflac is under the BSD license
+
+
 
 ffmpeg:
 
@@ -1506,4 +1625,3 @@ necessary.  Here is a sample; alter the names:
   Ty Coon, President of Vice
 
 That's all there is to it!
-

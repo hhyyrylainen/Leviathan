@@ -6,6 +6,7 @@
 namespace Leviathan{
 
 //! \brief Logger class for all text output
+//! \todo Allow logs that don't save to a file
 class Logger : public LErrorReporter{
 public:
         
@@ -36,6 +37,9 @@ public:
     //! \brief Adds raw data to the queue unmodified
     //! \note You will need to add new lines '\n' manually
     DLLEXPORT void DirectWriteBuffer(const std::string &data);
+
+    //! \brief Gets the file the log is being written to
+    DLLEXPORT std::string GetLogFile() const;
 
 
     DLLEXPORT static Logger* Get();

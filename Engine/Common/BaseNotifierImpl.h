@@ -176,10 +176,8 @@ void Leviathan::BaseNotifier<ParentType, ChildType>::_OnNotifiableConnected(
 }
 // ------------------------------------ //
 template<class ParentType, class ChildType>
-void Leviathan::BaseNotifier<ParentType, ChildType>::NotifyAll(){
+void Leviathan::BaseNotifier<ParentType, ChildType>::NotifyAll(Lock &guard){
 	// Notify all the children //
-	GUARD_LOCK();
-
     auto* actualptr = GetActualPointerToNotifierObject();
 
 	auto end = ConnectedChildren.end();

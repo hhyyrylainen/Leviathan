@@ -3,6 +3,7 @@
 
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Application/AppDefine.h"
+#include "Common/StringOperations.h"
 #include "FileSystem.h"
 
 using namespace Leviathan;
@@ -75,7 +76,7 @@ DataStore* Leviathan::DataStore::Get(){
 void Leviathan::DataStore::Load(){
     // load //
     vector<shared_ptr<NamedVariableList>> tempvec;
-    FileSystem::LoadDataDump(AppDef::GetDefault()->GetLogFile()+"Persist.txt", tempvec,
+    FileSystem::LoadDataDump(GetPersistStorageFile(), tempvec,
         Logger::Get());
 
     Values.SetVec(tempvec);
@@ -109,7 +110,7 @@ void Leviathan::DataStore::Save(){
 
     }
 
-    FileSystem::WriteToFile(tosave, AppDef::GetDefault()->GetLogFile()+"Persist.txt");
+    FileSystem::WriteToFile(tosave, GetPersistStorageFile());
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::DataStore::GetValue(const std::string &name, VariableBlock &receiver) const{
@@ -509,8 +510,16 @@ DLLEXPORT int Leviathan::DataStore::GetFontSizeMultiplier() const{
 DLLEXPORT void Leviathan::DataStore::SetFontSizeMultiplier(int newval){
     FontSizeMultiplier = newval;
 }
+// ------------------------------------ //
+DLLEXPORT std::string DataStore::GetPersistStorageFile(){
 
+    std::string logName = StringOperations::RemoveEnding<std::string>(
+        StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false), "Log");
+    
+    return logName + "Persist.txt";
+}
 // ----------------------------------------------- //
+// DataListener
 DLLEXPORT Leviathan::DataListener::DataListener(){
     ListenIndex = -1;
     ListenOnIndex = false;
@@ -523,3 +532,5 @@ DLLEXPORT Leviathan::DataListener::DataListener(int index, bool onindex, const s
     ListenOnIndex = onindex;
     VarName = var;
 }
+// ------------------------------------ //
+

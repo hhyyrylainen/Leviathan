@@ -2,16 +2,11 @@
 #include "ScriptRunningSetup.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Leviathan::ScriptRunningSetup::ScriptRunningSetup() :
-    Parameters(), PrintErrors(true), FullDeclaration(false), ErrorOnNonExistingFunction(true),
-    RunType(SCRIPT_RUNTYPE_BREAKONERROR), ScriptExisted(false), Entryfunction("")
+DLLEXPORT ScriptRunningSetup::ScriptRunningSetup() {}
+
+DLLEXPORT ScriptRunningSetup::ScriptRunningSetup(const std::string& entrypoint) :
+    Entryfunction(entrypoint)
 {
-
 }
 
-DLLEXPORT Leviathan::ScriptRunningSetup::~ScriptRunningSetup(){
-
-}
-
-
-
+DLLEXPORT ScriptRunningSetup::~ScriptRunningSetup() {}

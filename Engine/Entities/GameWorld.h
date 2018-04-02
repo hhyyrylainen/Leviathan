@@ -3,41 +3,62 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include <type_traits>
-
+#include "Common/ReferenceCounted.h"
+#include "Common/ThreadSafe.h"
+#include "Component.h"
 #include "Networking/CommonNetwork.h"
 
-#include "Systems.h"
-#include "Components.h"
+#include <type_traits>
 
-#include "Objects/ViewerCameraPos.h"
-#include "Newton/PhysicalWorld.h"
-#include "Common/ReferenceCounted.h"
+#define PHYSICS_BASE_GRAVITY -9.81f
 
+class NewtonBody;
 
-#define PHYSICS_BASE_GRAVITY		-9.81f
+class CScriptArray;
+class asIScriptObject;
+class asIScriptFunction;
 
-namespace Ogre{
+namespace Ogre {
 
 class CompositorWorkspace;
-}
+class Plane;
+} // namespace Ogre
 
-namespace Leviathan{
+namespace Leviathan {
+
+class Camera;
+class PhysicalWorld;
+class ScriptComponentHolder;
+
+template<class StateT>
+class StateHolder;
+
+struct ComponentTypeInfo {
+
+    inline ComponentTypeInfo(uint16_t ltype, int astype) :
+        LeviathanType(ltype), AngelScriptType(astype)
+    {
+    }
+
+    uint16_t LeviathanType;
+    int AngelScriptType;
+};
 
 
 #define WORLD_CLOCK_SYNC_PACKETS 12
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
-    
-// Holds the returned object that was hit during ray casting //
-class RayCastHitEntity : public ReferenceCounted{
+
+//! Holds the returned entity that was hit during ray casting
+//! \todo Move to a new file
+class RayCastHitEntity : public ReferenceCounted {
 public:
-    DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = NULL, const float &tvar = 0.f,
-        RayCastData* ownerptr = NULL);
+    DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = nullptr, const float& tvar = 0.f,
+        RayCastData* ownerptr = nullptr);
 
-    DLLEXPORT RayCastHitEntity& operator =(const RayCastHitEntity& other);
+    DLLEXPORT RayCastHitEntity& operator=(const RayCastHitEntity& other);
 
-    // Compares the hit entity with NULL //
+    // Compares the hit entity with nullptr //
     DLLEXPORT bool HasHit();
 
     DLLEXPORT Float3 GetPosition();
@@ -54,8 +75,8 @@ public:
 };
 
 // Internal object in ray casts //
-struct RayCastData{
-    DLLEXPORT RayCastData(int maxcount, const Float3 &from, const Float3 &to);
+struct RayCastData {
+    DLLEXPORT RayCastData(int maxcount, const Float3& from, const Float3& to);
     DLLEXPORT ~RayCastData();
 
     // All hit entities that pass checks //
@@ -67,35 +88,44 @@ struct RayCastData{
 };
 
 //! \brief Represents a world that contains entities
-//! \note Only ConnectedPlayer object may be linked with the world through Notifier
-class GameWorld : public ThreadSafe{
+//!
+//! This is the base class from which worlds that support different components are derived from
+//! Custom worls should derive from StandardWorld which has all of the standard components
+//! supported. See the GenerateStandardWorld.rb file to figure out how to generate world
+//! classes
+class GameWorld {
+    class Implementation;
+
 public:
-    DLLEXPORT GameWorld(NETWORKED_TYPE type);
+    DLLEXPORT GameWorld();
     DLLEXPORT ~GameWorld();
 
-
     //! \brief Returns the unique ID of this world
-    DLLEXPORT inline int GetID() const{
+    DLLEXPORT inline int GetID() const
+    {
         return ID;
     }
 
     //! \brief Creates resources for the world to work
     //! \post The world can be used after this
-    DLLEXPORT bool Init(GraphicalInputEntity* renderto, Ogre::Root* ogre);
+    DLLEXPORT bool Init(NETWORKED_TYPE type, GraphicalInputEntity* renderto, Ogre::Root* ogre);
 
     //! Release to not use Ogre when deleting
     DLLEXPORT void Release();
 
-    //! \brief Marks all objects to be deleted
+    //! \brief Marks all entities to be deleted
     DLLEXPORT void MarkForClear();
 
-    // clears all objects from the world //
-    DLLEXPORT void ClearObjects(Lock &guard);
+    //! Clears all objects from the world
+    DLLEXPORT void ClearEntities();
 
     //! \brief Returns the number of ObjectIDs this world keeps track of
-    //! \note There may actually be more objects as it is possible to create components
-    //! for ids that are not created
-    DLLEXPORT size_t GetObjectCount() const;
+    //! \note There may actually be more entities as it is possible to create components
+    //! for ids that are not created (this is not recommended but it isn't enforced)
+    DLLEXPORT size_t GetEntityCount() const
+    {
+        return Entities.size();
+    }
 
 
     //! \brief Used to keep track of passed ticks and trigger timed triggers
@@ -104,184 +134,199 @@ public:
     //! events that need to happen at certain game world times this is ideal
     DLLEXPORT void Tick(int currenttick);
 
+    //! \brief Runs systems required for a rendering run. Also updates camera positions
+    //! \todo Allow script systems to specify their type
+    DLLEXPORT void Render(int mspassed, int tick, int timeintick);
+
     //! \brief Returns the current tick
     DLLEXPORT int GetTickNumber() const;
 
     //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
     DLLEXPORT float GetTickProgress() const;
 
-    //! \brief Handles added entities and components
-    DLLEXPORT void HandleAdded(Lock &guard);
+    //! \brief Returns a tuple of the current tick number and how long
+    //! it has passed since last tick
+    //!
+    //! The tick number is always adjusted so that the time since last tick is < TICKSPEED
+    DLLEXPORT std::tuple<int, int> GetTickAndTime() const;
 
-    //! \brief Called by engine before frame rendering
-    //! \todo Only call on worlds that contain cameras that are connected
-    //! to GraphicalInputEntities
-    DLLEXPORT void RunFrameRenderSystems(int tick, int timeintick);
-        
 
     //! \brief Fetches the physical material ID from the material manager
-    DLLEXPORT int GetPhysicalMaterial(const std::string &name);
-
-    DLLEXPORT void SetFog();
-    DLLEXPORT void SetSkyBox(const std::string &materialname);
-
-    DLLEXPORT void SetSunlight();
-    DLLEXPORT void RemoveSunlight();
-
-    DLLEXPORT FORCE_INLINE void UpdateCameraLocation(int mspassed,
-        ViewerCameraPos* camerapos)
-    {
-        GUARD_LOCK();
-        UpdateCameraLocation(mspassed, camerapos, guard);
-    }
-        
-    DLLEXPORT void UpdateCameraLocation(int mspassed, ViewerCameraPos* camerapos,
-        Lock &guard);
+    //! \returns -1 if not found. The id otherwise
+    DLLEXPORT int GetPhysicalMaterial(const std::string& name);
 
 
     //! \brief Casts a ray from point along a vector and returns the first physical
     //! object it hits
     //! \warning You need to call Release on the returned object once done
-    FORCE_INLINE RayCastHitEntity* CastRayGetFirstHit(const Float3 &from,
-        const Float3 &to)
-    {
-        GUARD_LOCK();
-        return CastRayGetFirstHit(from, to, guard);
-    }
-
-    //! \brief Actual implementation of CastRayGetFirsHit
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3 &from, const Float3 &to,
-        Lock &guard);
+    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3& from, const Float3& to);
 
     //! \brief Creates a new empty entity and returns its id
-    DLLEXPORT ObjectID CreateEntity(Lock &guard);
-
-    inline ObjectID CreateEntity(){
-
-        GUARD_LOCK();
-        return CreateEntity(guard);
-    }
+    //! \todo Make this have a per world counter
+    DLLEXPORT ObjectID CreateEntity();
 
     //! \brief Destroys an entity and all of its components
-    //! \todo Make this less expensive
-    DLLEXPORT void DestroyObject(ObjectID id);
+    //! \warning This destroyes the entity immediately. If called during a system update this
+    //! will cause issues as required components may be destroyed and cached components will
+    //! only be updated at the start of next tick. So use QueueDestroyEntity instead. \todo
+    //! Make this less expensive
+    DLLEXPORT void DestroyEntity(ObjectID id);
 
     //! \brief Deletes an entity during the next tick
-    DLLEXPORT void QueueDestroyObject(ObjectID id);
+    DLLEXPORT void QueueDestroyEntity(ObjectID id);
+
+    //! \brief Makes child entity be deleted when parent is deleted
+    //! \note Doesn't check that the entitiy ids exist
+    DLLEXPORT void SetEntitysParent(ObjectID child, ObjectID parent);
 
     //! \brief Notifies others that we have created a new entity
     //! \note This is called after all components are set up and it is ready to be sent to
     //! other players
     //! \note Clients should also call this function
     //! \todo Allow to set the world to queue objects and send them in
-    //!big bunches to players
-    DLLEXPORT void NotifyEntityCreate(Lock &guard, ObjectID id);
+    //! big bunches to players
+    DLLEXPORT void NotifyEntityCreate(ObjectID id);
 
-    inline void NotifyEntityCreate(ObjectID id){
 
-        GUARD_LOCK();
-        NotifyEntityCreate(guard, id);
+    //! \brief Removes all components from an entity
+    DLLEXPORT virtual void DestroyAllIn(ObjectID id);
+
+    //! Helper for getting component of type. This is much slower than
+    //! direct lookups with the actual implementation class' GetComponent_Position etc.
+    //! methods
+    //! \exception NotFound if entity has no component of the wanted type
+    template<class TComponent>
+    TComponent& GetComponent(ObjectID id)
+    {
+
+        std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
+
+        if(!std::get<1>(component))
+            throw InvalidArgument("Unrecognized component type as template parameter");
+
+        void* ptr = std::get<0>(component);
+
+        if(!ptr)
+            throw NotFound("Component for entity with id was not found");
+
+        return *static_cast<TComponent*>(ptr);
     }
 
+    //! \brief Gets a component of type or returns nullptr
+    //!
+    //! \returns Tuple of pointer to component and boolean indicating if the type is known
+    DLLEXPORT virtual std::tuple<void*, bool> GetComponent(ObjectID id, COMPONENT_TYPE type);
 
-    //! \brief Returns a reference to a component of wanted type
-    //! \exception NotFound when the specified entity doesn't have a component of the wanted
-    //! type
-    template<class ComponentType>
-        ComponentType& GetComponent(ObjectID id){
-            
-        static_assert(std::is_same<ComponentType, std::false_type>::value,
-            "Trying to use a component type that is missing a template specialization");
+    //! \brief Gets a component of type or returns nullptr
+    //!
+    //! \returns Tuple of pointer to component and boolean indicating if the type is known
+    DLLEXPORT virtual std::tuple<void*, ComponentTypeInfo, bool> GetComponentWithType(
+        ObjectID id, COMPONENT_TYPE type);
+
+    //! Helper for getting component state holder for type. This is much slower than
+    //! direct lookups with the actual implementation class' GetStatesFor_Position etc.
+    //! methods
+    //! \exception NotFound if entity has no component of the wanted type
+    template<class TComponent>
+    StateHolder<typename TComponent::StateT>& GetStatesFor()
+    {
+
+        std::tuple<void*, bool> stateHolder = GetStatesFor(TComponent::TYPE);
+
+        if(!std::get<1>(stateHolder))
+            throw InvalidArgument("Unrecognized component type as template parameter for "
+                                  "state holder");
+
+        void* ptr = std::get<0>(stateHolder);
+
+        return *static_cast<StateHolder<typename TComponent::StateT>*>(ptr);
     }
 
-    //! \brief Destroys a component belonging to an entity
-    //! \return True when destroyed, false if the entity didn't have a component of this type
-    template<class ComponentType>
-        bool RemoveComponent(ObjectID id){
+    //! \brief Gets a component states of type or returns nullptr
+    //!
+    //! \returns Tuple of pointer to component and boolean indicating if the type is known
+    DLLEXPORT virtual std::tuple<void*, bool> GetStatesFor(COMPONENT_TYPE type);
 
-        static_assert(std::is_same<ComponentType, std::false_type>::value,
-            "Trying to use a component type that is missing a template specialization");
-        return false;
-    }
+    //! \brief Gets a list of destroyed components of type
+    //!
+    //! \returns True if the type is known and no further base classes need to be checked
+    DLLEXPORT virtual bool GetRemovedFor(
+        COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& result);
 
-    //! \brief Creates a new component for entity
-    //! \exception Exception if the component failed to init or it already exists
-    template<typename... Args>
-        Position& CreatePosition(ObjectID id, Args&&... args){
+    //! \brief Variant of GetRemovedFor for script defined types
+    DLLEXPORT bool GetRemovedForScriptDefined(
+        const std::string& name, std::vector<std::tuple<asIScriptObject*, ObjectID>>& result);
 
-        return *ComponentPosition.ConstructNew(id, args...);
-    }
+    //! \brief Gets a list of created components of type
+    //! \see GetRemovedFor
+    //! \todo Find a better way than having to have the component type specified here. This is
+    //! only used by script node proxy, so this has to be somewhere for it to access
+    DLLEXPORT virtual bool GetAddedFor(COMPONENT_TYPE type,
+        std::vector<std::tuple<void*, ObjectID, ComponentTypeInfo>>& result);
 
-#define QUICK_CREATE_COMPONENT(type) template<typename... Args> type&   \
- Create ## type (ObjectID id, Args&&... args){                          \
- return *Component ## type .ConstructNew(id, args...); }
+    //! \brief Variant of GetAddedFor for script defined types
+    DLLEXPORT bool GetAddedForScriptDefined(const std::string& name,
+        std::vector<std::tuple<asIScriptObject*, ObjectID, ScriptComponentHolder*>>& result);
 
-    QUICK_CREATE_COMPONENT(RenderNode);
-    QUICK_CREATE_COMPONENT(Sendable);
-    QUICK_CREATE_COMPONENT(Received);
+    //! \brief Sets the entity that acts as a camera.
+    //!
+    //! The entity needs atleast Position and Camera components
+    //! \exception InvalidArgument if the object is missing required components
+    DLLEXPORT void SetCamera(ObjectID object);
 
-    QUICK_CREATE_COMPONENT(Model);
-    QUICK_CREATE_COMPONENT(Physics);
-    QUICK_CREATE_COMPONENT(BoxGeometry);
-    QUICK_CREATE_COMPONENT(ManualObject);
+    //! \brief Casts a ray from the active camera
+    //! \param x Normalized x coordinate (range [0, 1])
+    //! \param y Normalized y coordinate (range [0, 1])
+    //! \exception InvalidState if this world has no active camera
+    //! \see SetCamera
+    DLLEXPORT Ogre::Ray CastRayFromCamera(float x, float y) const;
 
     // Ogre get functions //
-    inline Ogre::SceneManager* GetScene(){
+    inline Ogre::SceneManager* GetScene()
+    {
         return WorldsScene;
     }
-    
-    // physics functions //
-    DLLEXPORT Float3 GetGravityAtPosition(const Float3 &pos);
 
-    inline PhysicalWorld* GetPhysicalWorld(){
+    // physics functions //
+    DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
+
+    inline PhysicalWorld* GetPhysicalWorld()
+    {
         return _PhysicalWorld.get();
     }
 
     //! \todo Synchronize this over the network
-    DLLEXPORT void SetWorldPhysicsFrozenState(Lock &guard, bool frozen);
+    DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 
-    inline void SetWorldPhysicsFrozenState(bool frozen){
-
-        GUARD_LOCK();
-        SetWorldPhysicsFrozenState(guard, frozen);
-    }
-
-    // Ray callbacks //
-    static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
-        const NewtonCollision* const shapeHit, const dFloat* const hitContact,
-        const dFloat* const hitNormal, dLong collisionID, void* const userData,
-        dFloat intersectParam);
-		
     // Script proxies //
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3 &from, const Float3 &to);
+    DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3& from, const Float3& to);
 
     //! \brief Returns true when the player matching the connection should receive updates
-    //! about an object
+    //! about an entity
     //! \todo Implement this
-    DLLEXPORT bool ShouldPlayerReceiveObject(Position &atposition,
-        Connection &connection);
+    DLLEXPORT bool ShouldPlayerReceiveEntity(Position& atposition, Connection& connection);
 
     //! \brief Returns true if a player with the given connection is receiving updates for
     //! this world
-    DLLEXPORT bool IsConnectionInWorld(Connection &connection) const;
+    DLLEXPORT bool IsConnectionInWorld(Connection& connection) const;
 
     //! \brief Verifies that player is receiving this world
     DLLEXPORT void SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply);
 
     //! \brief Sends a packet to all connected players
-    DLLEXPORT void SendToAllPlayers(const std::shared_ptr<NetworkResponse> &response,
-        RECEIVE_GUARANTEE guarantee) const;
+    DLLEXPORT void SendToAllPlayers(
+        const std::shared_ptr<NetworkResponse>& response, RECEIVE_GUARANTEE guarantee) const;
 
-    //! \brief Sends an object to a connection and sets everything up
-    //! \post The connection will receive updates from the object
+    //! \brief Sends an entity to a connection and sets everything up
+    //! \post The connection will receive updates from the entity
     //! \return True when a packet was sent false otherwise
-    DLLEXPORT bool SendObjectToConnection(Lock &guard, ObjectID obj,
-        std::shared_ptr<Connection> connection);
-        
+    DLLEXPORT bool SendEntityToConnection(
+        ObjectID obj, std::shared_ptr<Connection> connection);
+
     //! \brief Creates a new entity from initial entity response
     //! \note This should only be called on the client
-    DLLEXPORT void HandleEntityInitialPacket(std::shared_ptr<NetworkResponse> message,
-        ResponseEntityCreation* data);
+    DLLEXPORT void HandleEntityInitialPacket(
+        std::shared_ptr<NetworkResponse> message, ResponseEntityCreation* data);
 
     //! \brief Applies an update packet
     //!
@@ -300,39 +345,125 @@ public:
     DLLEXPORT void HandleWorldFrozenPacket(ResponseWorldFrozen* data);
 
     //! \brief Applies packets that have been received after the last call to this
-    DLLEXPORT void ApplyQueuedPackets(Lock &guard);
+    DLLEXPORT void ApplyQueuedPackets();
 
-    //! \brief Called when a component is destroyed, used to destroy nodes
-    DLLEXPORT void _OnComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
+    //! \todo Expose the parameters and make this activate the fog
+    DLLEXPORT void SetFog();
 
-    //! \brief Use this to register destruction events for child classes
-    DLLEXPORT virtual void _OnCustomComponentDestroyed(ObjectID id, COMPONENT_TYPE type);
+    DLLEXPORT void SetSunlight();
+    DLLEXPORT void RemoveSunlight();
+    //! \brief Sets the sunlight properties
+    //! \pre SetSunlight has been called
+    DLLEXPORT void SetLightProperties(const Ogre::ColourValue& diffuse,
+        const Ogre::ColourValue& specular, const Ogre::Quaternion& direction);
+
+    // ------------------------------------ //
+    // Script proxies for script system implementation (don't use from c++ systems)
+
+    //! \brief Returns a list of ObjectIDs that have been removed from
+    //! any of the specified component types
+    DLLEXPORT CScriptArray* GetRemovedIDsForComponents(CScriptArray* componenttypes);
+
+    //! \brief Returns a list of ObjectIDs that have been removed from
+    //! any of the script registered component types specified by typeNames
+    DLLEXPORT CScriptArray* GetRemovedIDsForScriptComponents(CScriptArray* typenames);
+
+    //! \brief Registers a component type from scripts.
+    DLLEXPORT bool RegisterScriptComponentType(
+        const std::string& name, asIScriptFunction* factory);
+
+    //! \brief Retrieves a script registered component type holder
+    //! \note Increments refcount on return value
+    DLLEXPORT ScriptComponentHolder* GetScriptComponentHolder(const std::string& name);
+
+    //! \brief Registers a new system defined in a script. Must
+    //! implement the ScriptSystem interface
+    DLLEXPORT bool RegisterScriptSystem(const std::string& name, asIScriptObject* system);
+
+    //! \brief Returns the underlying angelscript object that implements a script system
+    //! \note Increases refcount on returned object
+    DLLEXPORT asIScriptObject* GetScriptSystem(const std::string& name);
+
+
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(GameWorld);
+
+
+protected:
+    //! \brief Called by Render which is called from a
+    //! GraphicalInputEntity if this is linked to one
+    DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
+
+    //! \brief Called by Tick
+    //!
+    //! Derived worls should run their systems that need to be ran before the basic systems
+    //! and then call this and finally run systems that need to be ran after the base
+    //! class' systems (if any)
+    DLLEXPORT virtual void _RunTickSystems();
+
+    //! \brief Handles added entities and components
+    //!
+    //! Construct new nodes based on components values. This is split
+    //! into multiple parts to support child classes using the same
+    //! Component types in additional nodes
+    DLLEXPORT virtual void HandleAddedAndDeleted();
+
+    //! \brief Clears the added components. Call after HandleAddedAndDeleted
+    DLLEXPORT virtual void ClearAddedAndRemoved();
+
+    //! \brief Resets stored nodes in systems. Used together with _ResetComponents
+    DLLEXPORT virtual void _ResetSystems();
+
+    //! \brief Resets components in holders. Used together with _ResetSystems
+    DLLEXPORT virtual void _ResetOrReleaseComponents();
+
+    //! \brief Called in Init when systems should run their initialization logic
+    DLLEXPORT virtual void _DoSystemsInit();
+
+    //! \brief Called in Release when systems should run their shutdown logic
+    DLLEXPORT virtual void _DoSystemsRelease();
 
 private:
-
     //! \brief Updates a players position info in this world
-    void UpdatePlayersPositionData(Lock &guard, ConnectedPlayer &ply);
+    void UpdatePlayersPositionData(ConnectedPlayer& ply);
 
     void _CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget);
-    void _HandleDelayedDelete(Lock &guard);
+    void _HandleDelayedDelete();
 
     //! \brief Reports an entity deletion to clients
     //! \todo Potentially send these in a big blob
-    void _ReportEntityDestruction(Lock &guard, ObjectID id);
+    void _ReportEntityDestruction(ObjectID id);
 
     //! \brief Implementation of doing actual destroy part of removing an entity
-    void _DoDestroy(Lock &guard, ObjectID id);
+    //! \note The caller has to remove the id from Entities
+    void _DoDestroy(ObjectID id);
 
     //! \brief Sends sendable updates to all clients
-    void _SendEntityUpdates(Lock &guard, ObjectID id, Sendable &sendable, int tick);
+    void _SendEntityUpdates(ObjectID id, Sendable& sendable, int tick);
 
 
     // Packet apply functions //
-    void _ApplyInitialEntityPackets(Lock &guard);
+    void _ApplyInitialEntityPackets();
 
-    void _ApplyEntityUpdatePackets(Lock &guard);
+    void _ApplyEntityUpdatePackets();
 
-    // ------------------------------------ //
+protected:
+    //! \brief If false a graphical Ogre window hasn't been created
+    //! and purely graphical stuff should be skipped
+    //!
+    //! Used on dedicated servers and other headless applications
+    bool GraphicalMode = false;
+
+    //! Bool flag telling whether this is a master world (on a server) or
+    //! a mirroring world (client)
+    bool IsOnServer = false;
+
+private:
+    // pimpl to reduce need of including tons of headers (this causes
+    // a double pointer dereference so don't put performance critical
+    // stuff here)
+    std::unique_ptr<Implementation> pimpl;
+
     Ogre::Camera* WorldSceneCamera = nullptr;
     Ogre::SceneManager* WorldsScene = nullptr;
 
@@ -349,25 +480,25 @@ private:
 
     //! The world can be frozen to stop physics
     bool WorldFrozen = false;
-    bool GraphicalMode = false;
 
-    //! Marks all objects to be released
-    bool ClearAllObjects = false;
+
+    //! Marks all entities to be released
+    bool ClearAllEntities = false;
 
     //! Holds the players who are receiving this worlds updates and their corresponding
     //! location entities (if any)
     //! \todo Change this to an object that holds more than the player pointer
     std::vector<std::shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
-    // objects //
-    std::vector<ObjectID> Objects;
+    // Entities //
+    std::vector<ObjectID> Entities;
+
+    // Parented entities, used to destroy children
+    // First is the parent, second is child
+    std::vector<std::tuple<ObjectID, ObjectID>> Parents;
 
     //! The unique ID
     int ID;
-
-    //! Bool flag telling whether this is a master world (on a server) or
-    //! a mirroring world (client)
-    bool IsOnServer = false;
 
     //! The current tick number
     //! This should be the same on all clients as closely as possible
@@ -376,9 +507,21 @@ private:
     //! A funky name for this world, if any
     std::string DecoratedName;
 
-    //! A lock for delayed delete, to allow deleting objects from physical callbacks
+    //! If not zero controls the position and properties of WorldSceneCamera
+    ObjectID CameraEntity = 0;
+
+    //! The currently applied properties on WorldSceneCamera if the
+    //! Camera component of CameraEntity changes (or it is Marked)
+    //! these properties are set on WorldSceneCamera
+    Camera* AppliedCameraPropertiesPtr = nullptr;
+
+    //! True while in a tick. Used to prevent destroying entities or components
+    //! \todo This check needs to be added to component removal
+    bool TickInProgress = false;
+
+    //! A lock for delayed delete, to allow deleting entities from physical callbacks
     Mutex DeleteMutex;
-        
+
     //! This vector is used for delayed deletion
     std::vector<ObjectID> DelayedDeleteIDS;
 
@@ -398,46 +541,11 @@ private:
 
     //! Waiting update packets
     std::vector<std::shared_ptr<NetworkResponse>> EntityUpdatePackets;
-
-
-    // Components //
-    ComponentHolder<Position> ComponentPosition;
-    ComponentHolder<RenderNode> ComponentRenderNode;
-    ComponentHolder<Sendable> ComponentSendable;
-    ComponentHolder<Model> ComponentModel;
-    ComponentHolder<Physics> ComponentPhysics;
-    ComponentHolder<BoxGeometry> ComponentBoxGeometry;
-    ComponentHolder<ManualObject> ComponentManualObject;
-    ComponentHolder<Received> ComponentReceived;
-
-    
-
-    // Systems //
-    ReceivedSystem _ReceivedSystem;
-    RenderingPositionSystem _RenderingPositionSystem;
-    SendableSystem _SendableSystem;
-    RenderNodeHiderSystem _RenderNodeHiderSystem;
 };
 
-#define ADDCOMPONENTFUNCTIONSTOGAMEWORLD(type, holder)     \
-template<> DLLEXPORT type& GameWorld::GetComponent<type>(ObjectID id);  \
-                                                                        \
- template<> DLLEXPORT bool GameWorld::RemoveComponent<type>(ObjectID id);
-    
-
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Position, ComponentPosition);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(RenderNode, ComponentRenderNode);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Sendable, ComponentSendable);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Physics, ComponentPhysics);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(BoxGeometry, ComponentBoxGeometry);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Model, ComponentModel);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(Received, ComponentReceived);
-ADDCOMPONENTFUNCTIONSTOGAMEWORLD(ManualObject, ComponentManualObject);
-    
-}
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::GameWorld;
 using Leviathan::ObjectID;
 #endif
-

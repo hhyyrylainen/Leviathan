@@ -55,12 +55,17 @@ endif()
 
 # Copy engine lib
 if(WIN32)
-  file(COPY "${LEVIATHAN_SRC}/build/bin/libEngine.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
+  file(COPY "${LEVIATHAN_SRC}/build/bin/Engine.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
+  file(COPY "${LEVIATHAN_SRC}/build/bin/Engine.pdb" DESTINATION "${CMAKE_BINARY_DIR}/bin")
 else()
   file(COPY "${LEVIATHAN_SRC}/build/bin/libEngine.so" DESTINATION "${CMAKE_BINARY_DIR}/bin")
 endif()
 
+# Link own bin directory
 link_directories("${CMAKE_BINARY_DIR}/bin")
+
+# And engine
+link_directories("${LEVIATHAN_SRC}/build/bin")
 
 # Version
 set(PROGRAM_VERSION_STABLE 0)
@@ -143,9 +148,10 @@ set(PROGRAMCHECKKEYCONFIGFUNCNAME	"Client::CheckGameKeyConfigVariables")
 set(WINDOWTITLEGENFUNCTION			"Client::GenerateWindowTitle()")
 set(USERREADABLEIDENTIFICATION		"\"Game_Name client version \" GAME_VERSIONS")
 
-# Configure the main file
-configure_file("${LEVIATHAN_SRC}/File Templates/BaseLeviathanProjectMain.cpp.in" 
-  "${PROJECT_SOURCE_DIR}/${BaseSubFolder}/Main.cpp")
+# Configure the files
+StandardConfigureExecutableMainAndInclude("${BaseIncludeFileName}" "Main.cpp"
+  "${BaseSubFolder}" "${PROJECT_SOURCE_DIR}/${BaseSubFolder}")
+
 
 file(GLOB CoreGroup "*.cpp" "*.h")
 

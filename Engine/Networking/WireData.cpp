@@ -11,6 +11,7 @@
 #include "SFML/Network/Packet.hpp"
 
 #include <limits>
+#include <array>
 
 using namespace Leviathan;
 // ------------------------------------ //

@@ -1,8 +1,10 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "../Common/ThreadSafe.h"
+
 #include <memory>
 
 namespace CEGUI{
@@ -35,12 +37,11 @@ public:
     DLLEXPORT void Tick(int mspassed);
 
     // This function uses the LinkObjects function objects //
-    DLLEXPORT bool Render(int mspassed);
+    DLLEXPORT bool Render(int mspassed, int tick, int timeintick);
 
     // object linking //
     // This function also updates the camera aspect ratio //
-    DLLEXPORT void LinkObjects(std::shared_ptr<ViewerCameraPos> camera,
-        std::shared_ptr<GameWorld> world);
+    DLLEXPORT void LinkObjects(std::shared_ptr<GameWorld> world);
 
     // returns true if succeeds, false if another window has input //
     DLLEXPORT bool SetMouseCapture(bool state);
@@ -85,7 +86,7 @@ public:
     DLLEXPORT void InjectKeyUp(int32_t sdlkey);
 
     // graphics related //
-    DLLEXPORT float GetViewportAspectRatio();
+    // DLLEXPORT float GetViewportAspectRatio();
     DLLEXPORT void SaveScreenShot(const std::string &filename);
 
     DLLEXPORT void OnResize(int width, int height);
@@ -98,9 +99,6 @@ public:
     }
     DLLEXPORT inline InputController* GetInputController(){
         return TertiaryReceiver.get();
-    }
-    DLLEXPORT inline std::shared_ptr<ViewerCameraPos> GetLinkedCamera(){
-        return LinkedCamera;
     }
     DLLEXPORT void OnFocusChange(bool focused);
 
@@ -122,9 +120,6 @@ public:
 
     //! \brief Overwrites the default InputController with a
     //! custom one
-    //! \warning The controller will be deleted by this
-    //! and there is no way to release it without deleting after
-    //! this call
     DLLEXPORT void SetCustomInputController(std::shared_ptr<InputController> controller);
 
 
@@ -157,13 +152,12 @@ protected:
     bool InputStarted = false;
 
     std::shared_ptr<GameWorld> LinkedWorld;
-    std::shared_ptr<ViewerCameraPos> LinkedCamera;
         
     //! this count variable is needed to parse resource groups after first window
     static int GlobalWindowCount;
 
     static Mutex GlobalCountMutex;
-		
+        
     //! Keeps track of how many windows in total have been created
     static int TotalCreatedWindows;
 

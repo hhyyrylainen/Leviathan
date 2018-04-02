@@ -21,7 +21,7 @@ DLLEXPORT int IDFactory::ProduceID(){
     const auto result = GlobalID.fetch_add(1, std::memory_order_relaxed);
             
     if(result == INT_MAX){
-                
+        
         Logger::Get()->Error("IDFactory ID overflow");
     }
 

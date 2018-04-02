@@ -18,6 +18,10 @@ if not File.exists? "RubySetupSystem/RubySetupSystem.rb"
           "Please make sure git is in path and " +
           "you have an ssh key setup for your github account")
   end
+else
+  # Make sure RubySetupSystem is up to date
+  # This may make debugging RubySetupSystem harder so feel free to comment out
+  system "git submodule update"
 end
 
 require 'fileutils'
@@ -62,7 +66,7 @@ require_relative 'LeviathanLibraries.rb'
 
 # All the objects
 installer = Installer.new(
-  [$newton, $angelscript, $sfml, $ffmpeg, $ogre, $cegui]
+  $leviathanLibList
 )
 
 if GetBreakpad
@@ -91,7 +95,8 @@ end
 Dir.chdir(ProjectDir) do
   
   # Assets svn
-  if FetchAssets and not SkipPullUpdates
+  # Always updated for continuous integration stuff
+  if FetchAssets # and not SkipPullUpdates
     
     info "Checking out assets svn"
 
@@ -132,14 +137,15 @@ info "Compiling Leviathan"
 Dir.chdir(File.join(ProjectDir, "build")) do
 
   if !runCMakeConfigure [
-       "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+       # This is done automatically
+       # "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
        "-DOGRE_HOME=#{THIRD_PARTY_INSTALL}",
        "-DUSE_BREAKPAD=OFF"
      ]
     onError "Failed to configure Leviathan"
   end
   
-  if !runCompiler $compileThreads
+  if !TC.runCompiler
     onError "Failed to compile Leviathan"
   end
   

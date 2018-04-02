@@ -11,9 +11,9 @@ DLLEXPORT StringIterator::StringIterator()
 
 }
 
-DLLEXPORT Leviathan::StringIterator::StringIterator(StringDataIterator* iterator,
-    bool TakesOwnership) : 
-	HandlesDelete(TakesOwnership), DataIterator(iterator)
+DLLEXPORT Leviathan::StringIterator::StringIterator(
+    std::unique_ptr<StringDataIterator>&& iterator) : 
+	HandlesDelete(true), DataIterator(iterator.release())
 {
 
 }
@@ -53,9 +53,8 @@ DLLEXPORT Leviathan::StringIterator::~StringIterator(){
 	}
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::StringIterator::ReInit(StringDataIterator* iterator,
-    bool TakesOwnership /*= false*/)
-{
+DLLEXPORT void StringIterator::ReInit(std::unique_ptr<StringDataIterator>&& iterator){
+    
 	// Remove the last iterator //
 	if(HandlesDelete){
 
@@ -64,8 +63,8 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(StringDataIterator* iterator,
 
     ITR_COREDEBUG("ReInit")
 
-	HandlesDelete = TakesOwnership;
-	DataIterator = iterator;
+	HandlesDelete = true;
+	DataIterator = iterator.release();
 
 	// Reset everything //
 	CurrentCharacter = -1;
@@ -77,19 +76,19 @@ DLLEXPORT void Leviathan::StringIterator::ReInit(StringDataIterator* iterator,
 }
 
 DLLEXPORT void Leviathan::StringIterator::ReInit(const wstring &text){
-	ReInit(new StringClassDataIterator<wstring>(text), true);
+	ReInit(std::make_unique<StringClassDataIterator<wstring>>(text));
 }
 
 DLLEXPORT void Leviathan::StringIterator::ReInit(const string &text){
-	ReInit(new StringClassDataIterator<string>(text), true);
+	ReInit(std::make_unique<StringClassDataIterator<string>>(text));
 }
 
 DLLEXPORT void Leviathan::StringIterator::ReInit(const wstring* text){
-	ReInit(new StringClassPointerIterator<wstring>(text), true);
+	ReInit(std::make_unique<StringClassPointerIterator<wstring>>(text));
 }
 
 DLLEXPORT void Leviathan::StringIterator::ReInit(const string* text){
-	ReInit(new StringClassPointerIterator<string>(text), true);
+	ReInit(std::make_unique<StringClassPointerIterator<string>>(text));
 }
 // ------------------------------------ //
 DLLEXPORT int Leviathan::StringIterator::GetPreviousCharacter() {

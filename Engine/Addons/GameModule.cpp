@@ -1,245 +1,251 @@
 // ------------------------------------ //
 #include "GameModule.h"
 
-#include "ObjectFiles/ObjectFileProcessor.h"
-#include "FileSystem.h"
 #include "Common/StringOperations.h"
+#include "FileSystem.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 #include "Script/ScriptExecutor.h"
+
+#include <boost/filesystem.hpp>
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
-DLLEXPORT Leviathan::GameModule::GameModule(const std::string &modulename,
-    const std::string &ownername, const std::string &extension /*= "txt|levgm"*/) :
-    OwnerName(ownername), LoadedFromFile(modulename)
+DLLEXPORT GameModule::GameModule(const std::string& modulename, const std::string& ownername,
+    const std::string& extension /*= "txt|levgm"*/) :
+    EventableScriptObject(nullptr),
+    OwnerName(ownername)
 {
-	// Find the actual file //
-	std::string file = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, modulename, extension,
-        false);
+    std::string file = modulename + ".levgm";
 
-	if(file.size() == 0){
-		// Couldn't find file //
+    if(!boost::filesystem::is_regular_file(file)) {
+        // Find the actual file //
+        file =
+            FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, modulename, extension, false);
 
-		throw InvalidArgument("File not found");
-	}
+        if(file.size() == 0) {
 
-	// Load the file //
-	auto ofile = ObjectFileProcessor::ProcessObjectFile(file, Logger::Get());
+            // One more search attempt //
+            file = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT,
+                StringOperations::RemoveExtension(modulename), extension, false);
+        }
 
-	if(!ofile){
+        if(file.size() == 0) {
+            // Couldn't find file //
 
-		throw InvalidArgument("File is invalid");
-	}
+            throw InvalidArgument("File doesn't exist and full search also failed for "
+                                  "module '" +
+                                  modulename + "'");
+        }
+    }
 
-	// Process the objects //
-	if(ofile->GetTotalObjectCount() != 1){
+    LoadedFromFile = file;
 
-		throw InvalidArgument("File contains invalid number of objects, single GameModule "
-            "expected");
-	}
+    // Load the file //
+    auto ofile = ObjectFileProcessor::ProcessObjectFile(file, Logger::Get());
 
-	// Get various data from the header //
-	ObjectFileProcessor::LoadValueFromNamedVars<std::string>(ofile->GetVariables(), "Version",
-        Name, "-1", Logger::Get(), "GameModule:");
+    if(!ofile) {
 
-	auto gmobject = ofile->GetObjectFromIndex(0);
+        throw InvalidArgument("File is invalid");
+    }
 
-	Name = gmobject->GetName();
+    // Process the objects //
+    if(ofile->GetTotalObjectCount() != 1) {
 
-	// handle the single object //
-	ObjectFileList* properties = gmobject->GetListWithName("properties");
-	ObjectFileTextBlock* sources = gmobject->GetTextBlockWithName("sourcefiles");
+        throw InvalidArgument("File contains invalid number of objects, single GameModule "
+                              "expected");
+    }
 
-	if(!properties || !sources){
+    // Get various data from the header //
+    ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
+        ofile->GetVariables(), "Version", Name, "-1", Logger::Get(), "GameModule:");
 
-		throw InvalidArgument("File contains invalid GameModule, properties or sourcefiles not "
-            "found");
-	}
+    auto gmobject = ofile->GetObjectFromIndex(0);
 
-	// Copy data //
-	if(sources->GetLineCount() < 1){
+    Name = gmobject->GetName();
 
-		throw InvalidArgument("At least one source file expected in sourcefiles");
-	}
+    // handle the single object //
+    ObjectFileList* properties = gmobject->GetListWithName("properties");
+    ObjectFileTextBlock* sources = gmobject->GetTextBlockWithName("sourcefiles");
+
+    if(!properties || !sources) {
+
+        throw InvalidArgument("File contains invalid GameModule, properties or "
+                              "sourcefiles not found");
+    }
+
+    // Copy data //
+    if(sources->GetLineCount() < 1) {
+
+        throw InvalidArgument("At least one source file expected in sourcefiles");
+    }
+
+    const std::string moduleFilePath =
+        boost::filesystem::path(StringOperations::GetPath(LoadedFromFile)).generic_string();
+
+    // Resolve all files to their actual paths //
+    for(size_t i = 0; i < sources->GetLineCount(); ++i) {
+
+        // Skip empty lines to allow commenting out things //
+        if(sources->GetLine(i).empty())
+            continue;
+
+        const std::string codeFile =
+            ScriptModule::ResolvePathToScriptFile(sources->GetLine(i), moduleFilePath);
+
+        if(codeFile.empty()) {
+            throw InvalidArgument("GameModule(" + LoadedFromFile +
+                                  ") can't find "
+                                  "source file: " +
+                                  sources->GetLine(i));
+        } else {
+
+            SourceFiles.push_back(codeFile);
+        }
+    }
+
+    // Read properties //
+    if(auto* data = properties->GetVariables().GetValueDirectRaw("ExtraAccess");
+        data != nullptr) {
+
+        std::string flags;
+        if(data->GetVariableCount() != 1 ||
+            !data->GetValue().ConvertAndAssingToVariable(flags)) {
+
+            throw InvalidArgument(
+                "GameModule(" + LoadedFromFile +
+                ") has an invalid value for property 'ExtraAccess': not string");
+        }
+
+        try {
+            ExtraAccess = ParseScriptAccess(flags);
+        } catch(const InvalidArgument& e) {
+            throw InvalidArgument(
+                "GameModule(" + LoadedFromFile +
+                ") has an invalid value for property 'ExtraAccess': " + e.what());
+        }
+    }
 
 
-	std::string sourcefilename = StringOperations::RemoveExtensionString(sources->GetLine(0),
-        true);
-	std::string extensions = StringOperations::GetExtensionString(sources->GetLine(0));
-
-	SourceFile = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT, sourcefilename, extensions,
-        false);
+    LEVIATHAN_ASSERT(!SourceFiles.empty(), "GameModule: empty source files");
 }
 
-DLLEXPORT Leviathan::GameModule::~GameModule(){
-
-}
-// ------------------------------------ //
-DLLEXPORT bool Leviathan::GameModule::Init(){
-	// Compile a new module //
-	ScriptModule* mod = NULL;
-
-	if(!Scripting){
-
-		Scripting = std::shared_ptr<ScriptScript>(new
-            ScriptScript(ScriptExecutor::Get()->CreateNewModule(
-                    "GameModule("+Name+") ScriptModule", SourceFile)));
-
-		// Get the newly created module //
-		mod = Scripting->GetModule();
-
-		mod->AddScriptSegmentFromFile(SourceFile);
-		mod->SetBuildState(SCRIPTBUILDSTATE_READYTOBUILD);
-
-
-	} else {
-        
-		// Get already created module //
-		mod = Scripting->GetModule();
-	}
-
-	// Build the module (by creating a callback list) //
-	std::vector<shared_ptr<ValidListenerData>> containedlisteners;
-
-	mod->GetListOfListeners(containedlisteners);
-
-	if(mod->GetModule() == NULL){
-		// Fail to build //
-		Logger::Get()->Error("GameModule: Init: failed to build AngelScript module");
-		return false;
-	}
-
-	for(size_t i = 0; i < containedlisteners.size(); i++){
-		// Bind generic event //
-		if(containedlisteners[i]->GenericTypeName &&
-            containedlisteners[i]->GenericTypeName->size() > 0)
-        {
-
-			// custom event listener //
-			RegisterForEvent(*containedlisteners[i]->GenericTypeName);
-			continue;
-		}
-
-		// look for global events //
-		EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
-		if(etype != EVENT_TYPE_ERROR){
-
-			RegisterForEvent(etype);
-			continue;
-		}
-
-		Logger::Get()->Warning("GameModule: unknown event type "+
-            *containedlisteners[i]->ListenerName+", did you intent to use Generic type?");
-	}
-
-	// Call init callbacks //
-
-	// fire an event //
-	Event* tmpevent = new Event(EVENT_TYPE_INIT, NULL);
-
-	OnEvent(&tmpevent);
-
-	tmpevent->Release();
-	return true;
-}
-
-DLLEXPORT void Leviathan::GameModule::ReleaseScript(){
-	// Call release callback and destroy everything //
-	// fire an event //
-	Event* tmpevent = new Event(EVENT_TYPE_RELEASE, NULL);
-
-	OnEvent(&tmpevent);
-
-	tmpevent->Release();
-
-	// Remove our reference //
-	int tmpid = Scripting->GetModule()->GetID();
-	Scripting.reset();
-
-	ScriptExecutor::Get()->DeleteModuleIfNoExternalReferences(tmpid);
-}
-// ------------------------------------ //
-DLLEXPORT std::string Leviathan::GameModule::GetDescription(bool full /*= false*/){
-	return "GameModule("+Name+(full ? " v"+Version+") ": ") ")+" owned by: "+OwnerName+
-        (full ? ", loaded from file: "+LoadedFromFile+".": ".");
-}
-// ------------------------------------ //
-void Leviathan::GameModule::_CallScriptListener(Event** pEvent, GenericEvent** event2){
-
-	ScriptModule* mod = Scripting->GetModule();
-
-	if(pEvent){
-		// Get the listener name from the event type //
-		std::string listenername = GetListenerNameFromType((*pEvent)->GetType());
-
-		// check does the script contain right listeners //
-		if(mod->DoesListenersContainSpecificListener(listenername)){
-			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
-                NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))
-				(new NamedVariableBlock(new VoidPtrBlock(*pEvent), "Event"));
-			// we are returning ourselves so increase refcount
-			AddRef();
-			(*pEvent)->AddRef();
-
-			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName(listenername)).SetArguments(Args);
-            
-			// run the script //
-			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
-                Scripting.get(), &sargs);
-            
-			// Do something with the result //
-		}
-	} else {
-		// generic event is passed //
-		if(mod->DoesListenersContainSpecificListener("", (*event2)->GetTypePtr())){
-			// setup parameters //
-			vector<shared_ptr<NamedVariableBlock>> Args = boost::assign::list_of(new
-                NamedVariableBlock(new VoidPtrBlock(this), "GameModule"))
-				(new NamedVariableBlock(new VoidPtrBlock(*event2), "GenericEvent"));
-            
-			// we are returning ourselves so increase refcount
-			AddRef();
-			(*event2)->AddRef();
-
-			ScriptRunningSetup sargs;
-			sargs.SetEntrypoint(mod->GetListeningFunctionName("", (*event2)->GetTypePtr())).
-                SetArguments(Args);
-            
-			// run the script //
-			shared_ptr<VariableBlock> result = ScriptExecutor::Get()->RunSetUp(
-                Scripting.get(), &sargs);
-			// do something with result //
-		}
-	}
-}
-// ------------------ Being an actual module ------------------ //
-DLLEXPORT std::shared_ptr<VariableBlock> Leviathan::GameModule::ExecuteOnModule(
-    const string &entrypoint,
-    std::vector<shared_ptr<NamedVariableBlock>> &otherparams, bool &existed,
-    bool fulldeclaration /*= false*/)
+DLLEXPORT GameModule::~GameModule()
 {
-	// Add this as parameter //
-	otherparams.insert(otherparams.begin(), std::shared_ptr<NamedVariableBlock>(new
-            NamedVariableBlock(new VoidPtrBlock(this), "GameModule")));
+    UnRegisterAllEvents();
 
-	// we are returning ourselves so increase refcount
-	AddRef();
+    if(Scripting) {
 
-	ScriptRunningSetup setup;
-	setup.SetArguments(otherparams).SetEntrypoint(entrypoint).SetUseFullDeclaration(
-        fulldeclaration);
-
-	auto result = ScriptExecutor::Get()->RunSetUp(Scripting.get(), &setup);
-
-	existed = setup.ScriptExisted;
-
-	return result;
+        LOG_FATAL("GameModule: 'ReleaseScript' not called before destructor");
+    }
 }
-// ------------------ Script proxies ------------------ //
+// ------------------------------------ //
+DLLEXPORT bool GameModule::Init()
+{
+    // Compile a new module //
+    ScriptModule* mod = NULL;
 
+    if(!Scripting) {
 
+        Scripting = std::shared_ptr<ScriptScript>(
+            new ScriptScript(ScriptExecutor::Get()->CreateNewModule(
+                "GameModule(" + Name + ") ScriptModule", LoadedFromFile)));
 
+        // Get the newly created module //
+        mod = Scripting->GetModule();
 
+        for(const auto& file : SourceFiles) {
+            mod->AddScriptSegmentFromFile(file);
+        }
 
+    } else {
 
+        // Get already created module //
+        mod = Scripting->GetModule();
+    }
+
+    // Set access flags //
+    if(ExtraAccess != 0)
+        mod->AddAccessRight(ExtraAccess);
+
+    // Build the module (by creating a callback list) //
+    std::vector<std::shared_ptr<ValidListenerData>> containedlisteners;
+
+    mod->GetListOfListeners(containedlisteners);
+
+    if(mod->GetModule() == nullptr) {
+        // Fail to build //
+        Logger::Get()->Error("GameModule: Init: failed to build AngelScript module");
+        return false;
+    }
+
+    RegisterStandardScriptEvents(containedlisteners);
+
+    for(size_t i = 0; i < containedlisteners.size(); i++) {
+        // Bind generic event //
+        if(containedlisteners[i]->GenericTypeName &&
+            containedlisteners[i]->GenericTypeName->size() > 0) {
+
+            // Registered in RegisterStandardScriptEvents
+            continue;
+        }
+
+        // Skip global events
+        EVENT_TYPE etype = ResolveStringToType(*containedlisteners[i]->ListenerName);
+
+        // Skip types that we handle ourselves //
+        if(etype == EVENT_TYPE_ERROR)
+            etype = GetCommonEventType(*containedlisteners[i]->ListenerName);
+
+        if(etype != EVENT_TYPE_ERROR) {
+
+            continue;
+        }
+
+        Logger::Get()->Warning("GameModule: unknown event type " +
+                               *containedlisteners[i]->ListenerName +
+                               ", did you intent to use Generic type?");
+    }
+
+    // Call init callbacks //
+
+    // fire an event //
+    Event* initEvent = new Event(EVENT_TYPE_INIT, nullptr);
+    OnEvent(initEvent);
+    // Release our initial reference
+    initEvent->Release();
+
+    return true;
+}
+
+DLLEXPORT void GameModule::ReleaseScript()
+{
+    // Call release callback and destroy everything //
+    // fire an event //
+    Event* releaseEvent = new Event(EVENT_TYPE_RELEASE, nullptr);
+    OnEvent(releaseEvent);
+    // Release our initial reference
+    releaseEvent->Release();
+
+    // Remove our reference //
+    int tmpid = Scripting->GetModule()->GetID();
+    Scripting.reset();
+
+    ScriptExecutor::Get()->DeleteModuleIfNoExternalReferences(tmpid);
+}
+// ------------------------------------ //
+DLLEXPORT std::string GameModule::GetDescription(bool full /*= false*/)
+{
+    return "GameModule(" + Name + (full ? " v" + Version + ") " : ") ") +
+           " owned by: " + OwnerName +
+           (full ? ", loaded from file: " + LoadedFromFile + "." : ".");
+}
+// ------------------------------------ //
+ScriptRunResult<int> GameModule::_DoCallWithParams(
+    ScriptRunningSetup& sargs, Event* event, GenericEvent* event2)
+{
+    if(event)
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event);
+    else
+        return ScriptExecutor::Get()->RunScript<int>(
+            Scripting->GetModuleSafe(), sargs, this, event2);
+}

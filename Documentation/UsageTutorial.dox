@@ -1,310 +1,380 @@
-/*! \page tutorials Tutorials index
+/*! \page tutorials Tutorials
     \tableofcontents
     \section gettingstartedsection Getting started
-    See first: \subpage prerequisites.
+    See first: \subpage prerequisites and \subpage compiling_leviathan.
     
     Then you can move on to the tutorials.
     \note It is recommended that you work through the tutorials in order.
     
     \subsection beginnertutorials Beginner tutorials
+    \subpage tutorial0
+
+
     \subpage tutorial1
+
+    \subsection tutorials_link_toscripts Information about scripting
+
+    \ref angelscript_main
     
 */
 
+/*! \page tutorial0 Running the samples
+
+\section tutorial0_linux On Linux
+
+First go to the `build` folder and make sure everything is compiled by
+running `cmake .. && make -j numberofcores`. If that succeeds you can
+go to `build/bin` folder and run `./Pong` to run the sample pong
+game. You can run tests with make like this (make sure to be in the
+`build` folder): `cmake .. && make check -j numberofcores`.
+
+\section tutorial0_windows On Windows
+
+Start by opening `build/Leviathan.sln`. Then make sure you have
+selected `RelWithDebInfo` as the active configuration (and make sure
+arch is `x64`) in visual studio and then to run the Pong sample right
+click the project and set as startup project then press the green
+arrow in "Local Windows Debugger" or press F5. You can also run
+LeviathanTest like this to verify that individual tests of the engine
+run correctly.
+
+\see \ref tutorial1
+
+*/
+
 /*! \page tutorial1 Getting started tutorial
+
+
+    \section tutorial1recompiling Recompiling
+
+    To save time you shouldn't run the setup script every time you
+    have made changes. Instead on linux you should run `make -j
+    numberofcores` in `project/build` folder and on Windows compile
+    from visual studio.
+
+    <b>Important</b>: when updating the scripts or assets of a game
+    you must re-run cmake to make it copy the changed assets to the
+    game binary folder. On Windows you should have cmd.exe (or
+    powershell) open in the folder that has the solution file and run
+    `cmake ..` in that when you change the assets (visual studio may
+    ask you to reload the project you have open after running
+    cmake. You should always reload the solution when asked). On linux
+    you should combine the cmake command to make (it shouldn't do
+    anything if nothing has changed) so in the build folder compile
+    and run like this:
+    \code{sh}
+    cmake .. && make -j numberofcores && (cd bin && ./GameName)
+    \endcode
+
+    \section tutorial1setup Setup a new project using Leviathan
     \todo Create tutorials
+
 */
 
 /*! \page prerequisites Prerequisites
     
-\section prerequisites_universal Building Leviathan
+\section prerequisite_software Required Software
 
-\note Linux instructions provided here may not be complete
+\subsection prerequisite_software_common Common
 
-\note Only supported configuration on linux is RelWithDebInfo (and Release), Debug configuration can potentially
-crash immediately and not work.
+These programs are needed for all platforms:
 
-Before starting make sure you have git, mercurial and svn version control systems installed and a recent cmake version.
-You will of course need build tools for your system, gcc is recommended for linux users and the latest (2013) community
-edition of visual studio for windows users. On windows with older visual studio versions you need to install direct x sdk.
-On windows you will also need python2.
-(To make boost be found correctly by cmake you might have to run ./b2 install and then copy all libraries to a lib folder
-in the distribution root)
-(Also if the names start with lib "libboost_system-vc120-mt-1_57.lib" it may be required to remove the lib prefix
-Bulk rename and remove first 3 letters to make boost be found correctly)
+- [Ruby](http://ruby-lang.org) (It is recommended to use RubyInstaller on Windows, version 2.4 or newer)
 
-You will also need to have a recent version of boost libraries (and their development packages) version 1.53 and up should
-work. If you don't have boost installed you might want to search how to install it for your system.
+- Ruby gems (check below for details)
 
-\subsection downloading_libs Downloading Libraries
-First create a folder for the projects (Here I use `C:\projects` on windows and `~/Projects` on linux)
+- git
 
-Then open a cmd/terminal to the folder and run these commands to get all the required dependencies
+- svn
 
-    git clone https://github.com/MADEAPPS/newton-dynamics.git
+- mercurial
 
-You will need to manually download AngelScript sdk version 2.29.2 and unzip it to your build folder.
-I usually rename the sdk folder to something like AngelScript_2_30.
+- cmake
 
-If you want to use Leap Motion controller you need to sign up for their sdk and unzip it to the Leap folder in the
-leviathan folder we will create in the next section.
+- boost libraries 1.66 or newer is required on windows older versions
+  work on linux. (On **linux** the setup script will automatically use
+  the package manager to install this. For **Windows** see \ref
+  prerequisite_software_windows)
 
-Install SFML 2 to your system. On linux use your package manager. On windows download an installer from here:
-`http://www.sfml-dev.org/download.php`
-Download the 32 bit version as currently 64 bit builds aren't tested on windows.
-Unzip the SFML 2.2 folder to `C:/Program Files(x86)/` (or some other folder)
-You may need to set the environment variable SFML_ROOT to the folder you extracted.
-(On windows I ended up moving the SFML-2.2 folder to the projects folder and setting the environment variable `SFML_ROOT` to
-`C:\projects\SFML-2.2`)
+- 7zip (if you want to use precompiled dependencies)
 
-Next up CEGUI. First clone the repository from
-     hg clone https://bitbucket.org/cegui/cegui
-And the dependencies (on windows, on linux use your package manager to install them)
-(On linux you need to read the output from configuring CEGUI cmake build and install the packages that are missing)
-The version you are using should be the default branch as currently that is the only one supporting Ogre 2.0.
-    hg checkout default
-
-The final dependency, Ogre, is a bit more involved.
-
-The way I like to do it is create a folder called OgreBuild.
-Then copy the following into a file CMakeLists.txt in the OgreBuild folder
-
-\code
-cmake_minimum_required(VERSION 2.8.11)
-
-# Dependencies first
-add_subdirectory("Dependencies")
-
-# actual ogre
-add_subdirectory("Ogre")
-
-# own fork for developing
-#add_subdirectory("ogre-fork")
+You can check whether a program is in PATH by opening a command 
+prompt/terminal and running the program by typing its name. 
+For example `ruby -v` this shouldn't print an error instead you should get something like this:
+\code{sh}
+ruby 2.4.1p111
 \endcode
 
-After creating the file get a link to Ogre from top right corner on this page https://bitbucket.org/sinbad/ogre
+\subsection prerequisite_software_windows Windows
 
-It should look like this: `https://name@bitbucket.org/sinbad/ogre`
-And then run
-    hg clone https://name@bitbucket.org/sinbad/ogre Ogre
-\note On windows you might be using TortoiseHg in which case you should create folder 'Ogre', right click it and choose
-mercurial clone.
+- Visual Studio 2017 Community (make sure to enable c++ support when installing) and install
+  to the default path in `C:/Program Files (x86)/Microsoft Visual Studio/2017/Community`
+  otherwise the setup won't find it.
+- Visual c++ 2010 runtime (This is required for yasm according to ffmpeg setup guide)
+- [Cygwin64](https://cygwin.com/install.html). When Cygwin asks for
+  which packages to install make sure the at least the following are
+  selected (and to save space don't install the debug variants):
+  
+  - coreutils
+  - make
+  - bash
+  - tar (with gzip support)
+ 
+  You can also optionally install git and svn (the package is called
+  subversion) with cygwin. But cmake has to be the Windows version,
+  otherwise it won't properly generate visual studio project files.
+  
+  Then add `C:\cygwin64\bin` to the system
+  path to make everything visible to the script
 
-I had much trouble cloning the repository so I did the following:
-      mkdir Ogre
-      hg init
-      hg pull -r 1 https://name@bitbucket.org/sinbad/ogre
-and then gradually increased the value after -r to avoid getting `abort: connection ended unexpectedly`
+  If you have issues with not getting everything installed you can
+  reference these images (that have additional packages installed, but
+  also all the required ones):
+  <a href="https://leviathanengine.com/images/setup_list_1.png">cygwin list 1</a>,
+  <a href="https://leviathanengine.com/images/setup_list_2.png">cygwin list 2</a>,
+  <a href="https://leviathanengine.com/images/setup_list_3.png">cygwin list 3</a>,
+  <a href="https://leviathanengine.com/images/setup_list_4.png">cygwin list 4</a>,
+  <a href="https://leviathanengine.com/images/setup_list_5.png">cygwin list 5</a>.
 
-
-Other solution: clone the repository on linux and move it to a location windows can access and then clone from that local
-copy on windows
-
-The required version should be in v2-0 branch change to it
-    cd Ogre
-    hg checkout v2-0
-
-Before building you need to download ogre dependencies, see 
-`http://www.ogre3d.org/tikiwiki/tiki-index.php?page=Prerequisites` for details.
-On linux you can use your package manager to install required libraries. On windows clone this mercurial repository
-to a folder called Dependencies. On the command line like this
-
-      hg clone https://name@bitbucket.org/cabalistic/ogredeps Dependencies
-
-\note https://bitbucket.org/cabalistic/ogredeps Remember to get your own link!
-
-
-Or with tortoiseHg like in previous step.
-Linux: you will need to install these packages + devel versions of them and you can leave the dependencies folder blank.
-
-If you intent to create a release that can create error reports you need to install google breakpad.
-If you don't want to do that you need to pass `-DUSE_BREAKPAD=OFF` when configuring leviathan cmake.
-First step in our projects folder run
-      svn checkout http://google-breakpad.googlecode.com/svn/trunk/ google-breakpad
-At this point make sure that running
-   python --version
-returns 2.x otherwise building breakpad will not work on windows.
-
-Then it's time to compile the dependencies
-
-\noteOn windows all the resulting DLL files from all the build steps need to be copied to `leviathan/bin/ThirdParty` for
-debugging and distribution packages to work correctly.
-
-\section compile_all_deps Compiling Dependencies
-
-\subsection Newton_compile Newton
-To compile newton go to the newton folder called 'newton-dynamics/packages/projects/' and on windows open the sln file
-in visualStudio_2013_dll and on linux open posix64 and run make.
-Then copy the resulting newton.so or newton.dll (It's easiest to find by searching) to `leviathan/Newton/lib`
-
-\subsection AngelScript_compile AngelScript
-After unzipping angelscript open the proper project files in `sdk/angelscript/projects/gnuc` or 
-`sdk/angelscript/projects/msvc2013` build the static configuration which creates a .a file on linux and .lib on windows.
-On windows before trying to link leviathan to AngelScript you need to make sure that you compiled AngelScript with the right
-runtime library. To check this right click the angelscript project in visual studio and select properties and from the pop-up
-window browse to `C/C++/Code Generation` and the field `Runtime Library` and verify that it is set to `Multi-threaded DLL (/MD)`.
-Next click apply/use and switch the configuration from the top left from Release to Debug. And now verify that the setting is
-now `Multi-threaded Debug DLL (/MDd)` finally click ok and build both the debug and release configurations. Now the resulting
-libraries should be compatible with default leviathan build settings.
-Then copy the resulting file in `angelscript/lib/angelscript.lib` or `angelscript/lib/angelscript.a` (and optionally the
-debug version on windows) to `leviathan/AngelScript/lib` (you may need to create the target folder if it doesn't exist)
-
-\subsection Ogre_compile Ogre
-To compile Ogre go to the ogre folder and run these commands
-   mkdir build
-   cd build
-On Windows:
-   cmake .. -DCMAKE_INSTALL_PREFIX=sdk
-On Linux:
-   cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-
-then run make or on windows open the .sln file.
-Windows: After compiling create an environment variable `OGRE_HOME` pointing to the sdk folder `OgreBuild/Ogre/sdk`
-\note You may also need to create a variable OIS_HOME pointing to the same folder,
-mine is set to `C:/projects/OgreBuild/build/sdk`
+  Additionally if you have a lot of entires in your system path there
+  may be conflicting names with executables from cygwin. This results
+  in weird errors during ffmpeg compilation with the install
+  etc. commands not accepting the parameters they are given. This can
+  be fixed in two ways: either delete the conflicting programs OR make
+  cygwin be the first thing in your path to let it override other
+  programs if they have the same name.
 
 
-On linux run
-   sudo make install
-To install Ogre so that it can be found by leviathan.
+- After compiling Boost make sure to set an environment variable
+  `BOOST_ROOT` to the folder where you compiled boost (for example
+  `C:\projects\boost`). This is different from path, you can create
+  new environment variables from the same place where you edit the
+  PATH environment variable. And compile shared versions and use 64
+  bit build.
 
-\subsection CEGUI_compile CEGUI
-To compile CEGUI go to first the CEGUI dependencies folder (on windows, on linux use your package manager to install the
-dependencies and their devel versions)
-mkdir build
-cd build
-cmake .. -DCEGUI_BUILD_PYTHON_MODULES=OFF
-Then open the solution and build at least the Release configuration and Debug optionally also compile RelWithDebInfo if you
-want to debug the release builds.
-(If you want to use CEED you need to set -DCEGUI_BUILD_PYTHON_MODULES=ON)
-(If you are using a new boost release 1.57 and up you may need to install cmake 3.2 to have a up to date FindBoost.cmake)
-Then after building the windows dependencies copy the folder
-cegui-dependencies/build/dependencies to cegui/
+  Additional tip: when running `b2` make sure you specify the toolset,
+  bitness, type and the number of cores to use for compiling like
+  this: `.\b2 --toolset=msvc link=shared,static address-model=64
+  --with-system --with-filesystem -j numberofcores`. Note: replace
+  numberofcores with how many cores you have for optimal compilation
+  time. Also if you plan on using boost with other projects as well
+  remove the `--with-` options to compile all of the components, which
+  takes a long time.
 
-Then both on windows and linux go to the main CEGUI folder and
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-On windows again compile all the required configurations.
-On linux you can only have debug or release. It is recommended to compile RelWithDebInfo, though, so you can debug and do
-release versions.
-make
+  If msvc isn't detected correctly, open "Developer Command Prompt for
+  Visual Studio 2017" and run again in that. That should make boost
+  detect visual studio.
 
-And then on windows run the install configuration to install CEGUI so that leviathan can find it.
-On linux run
-sudo make install
+  <a
+  href="http://www.boost.org/doc/libs/1_66_0/more/getting_started/windows.html#prepare-to-use-a-boost-library-binary">official
+  boost guide</a>
 
-\subsection breakpad_compile Breakpad
-To compile google breakpad in the top level breakpad folder run
-Linux: run
-       ./configure && make
-in the main breakpad directory
-Windows:
-    src\tools\gyp\gyp.bat src\client\windows\breakpad_client.gyp
-\note Make sure you have python 2 in use, python --version to check
+- 7zip. Download the <a
+  href="http://www.7-zip.org/download.html">official</a> installer
+  release and then once installed add the installed folder (where
+  `7z.exe` is) to path.
 
+\subsection prerequisite_software_linux Linux
 
-After running the command on windows open the resulting sln file in src/client/windows and build it
-in debug and release configurations.
+- lsb_release
 
-If you get gyp: Cycles in .gyp file dependency graph detected see https://code.google.com/p/google-breakpad/issues/detail?id=406
-or just try running this command instead:
-   src\tools\gyp\gyp.bat --no-circular-check src\client\windows\breakpad_client.gyp
+- GCC 7+ or clang 5+ (clang is untested, but probably works...)
 
-To process crash reports you need to compile the tools separately. On linux they are already compiled but on windows
-you need to run src/tools/windows/refrech_binaries.bat
-\note Also you might need to do this, for me, though, it created just an empty project
-src\tools\gyp\gyp.bat src\tools\tools.gyp
-Then compile the solution in src/tools/tools.sln
-In release configuration.
+- 7zip. Use your package manager to install, it is probably named `p7zip`.
 
+\subsection prerequisite_software_gems Ruby Gems
 
-You cannot compile the processor on windows so you need a linux installation to compile the processor for
-processing the user-submitted crash reports.
-To make the resulting libraries the right type you need to change all the projects to use Multi-threaded DLL (/MD) as in
-before we have modified a project to do this. After this make sure you have compiled a new version to avoid linker errors.
+- os
+- colorize
+- rubyzip
+- json
+- sha3
 
-\subsection Leviathan_compile Leviathan
-Next up we will actually compile Leviathan.
-Get the code from bitbucket: `https://bitbucket.org/hhyyrylainen/leviathan` copy the link from the top right corner.
-It should look like this: `https://username@bitbucket.org/hhyyrylainen/leviathan.git`
-then run (with your link from the previous step)
-     git clone https://username@bitbucket.org/hhyyrylainen/leviathan.git
+These can be installed by running `gem install os colorize
+rubyzip json sha3`. Running with sudo is probably not required. If you get
+errors installing the gems you should try updating your ruby version.
 
-If you are planning to contribute you will want to fork the repository on the website.
+If you have trouble installing sha3 on windows: make sure you have
+ruby 2.4 or newer installed with ruby installer for windows. Then run
+`ridk install` and try all of the options. The third option at least
+should reinstall all the ruby development tools, including gmp, which
+is needed for sha3. After that your ruby native extension build tools
+should be installed and the gem installation should work.
 
-You will want to checkout a recent version. Currently most recent versions are in the branch Networking, but in
-the future it might be in the master branch.
-
-run this in the new 'leviathan' folder
-
-    git pull origin Networking
-    git checkout Networking
-
-And maybe in the future
-
-    (git checkout master)
-
-Copy the path to your breakpad main folder, mine is `C:\projects\google-breakpad`
-and put it in the cmake command, if you are using breakpad.
-
-You will also need to copy the glm directory if you are on windows.
-Copy the path to cegui-dependencies\src\glm-0.9.4.5 folder or other version cegui-dependencies comes with.
-Mine is C:\projects\cegui-dependencies\src\glm-0.9.4.5
-
-Then setup a build folder
-
-     mkdir build
-     cd build
-     cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=Install -DBREAKPAD_DIR=C:\projects\google-breakpad -DGLM_BASE_DIR=C:\projects\cegui-dependencies\src\glm-0.9.4.5
-
-\note If not using breakpad add -DUSE_BREAKPAD=OFF to the above command. Also for local debugging it's better to keep breakpad off
-
-If cmake succeeds you have all the dependencies compiled and installed properly. If it fails you might have missed a
-dependency or cmake failed to find the install folder.
-
-Now we can build the project.
-On windows open the generated .sln file. On linux run 'make' in the build folder.
-If the build succeeds the binaries will be placed in `build/bin/` you can run the sample Pong(.exe) from the folder or
-from visual studio.
-\note Currently you cannot start a server from the Pong gui so you need to run PongServer(.exe) separately
+If it still doesn't work run `ridk exec pacman -S gmp-devel` and then
+run `ridk install` again.
 
 
-For the one last step you will need to set the environment variable `LEVIATHAN_HOME` to the root 'leviathan' folder.
-On windows search online 'how to set environment variable' on linux add the definition to your bash setup file 
-(possibly called '.bashrc')
-\code{.sh}
-LEVIATHAN_HOME=/home/hhyyrylainen/Projects/leviathan
+\subsection prerequisite_what_next Next
+To compile Leviathan see \ref compiling_leviathan
 
-export PATH LEVIATHAN_HOME
+\subsection prerequisite_troubleshooting Troubleshooting
+
+\subsubsection prequisite_troubleshooting_linux_previous Linux previously installed libraries
+
+Old versions of Ogre (pre 2.0) are known to cause issues compiling or
+running Leviathan. So uninstall these old versions before starting if
+possible, or you (might) have a bad time.
+
+\subsubsection prequisite_troubleshooting_require Require file not found
+
+Make sure you have installed all of the ruby gems.
+
+This is one of the potential errors (the 'os' here is the missing gem):
+
+```
+C:/Ruby24-x64/lib/ruby/2.4.0/rubygems/core_ext/kernel_require.rb:55:in `require`: cannot load such file -- os (LoadError)
+```
+
+
+*/
+
+/*! \page compiling_leviathan Compiling Leviathan
+
+\note Before the latest setup script the prerequisites section described manual
+setup for all required libraries. But now that has been replaced with
+the automatic setup script. If you want to read the old version
+checkout an older commit of Leviathan,
+`bba062c07a952c170a16c5f9e2608896d3d09821` for example.
+
+Make sure you have installed \ref prerequisites first.
+
+\section compiling_clone Cloning Leviathan
+
+If you haven't used git to clone the Leviathan repository yet. Run
+this command to clone Leviathan to a new folder:
+\code{sh}
+git clone https://bitbucket.org/hhyyrylainen/leviathan.git
+cd leviathan
+git submodule init
 \endcode
 
-\note This step is required because the .lib files are in different folders than the dlls. The cmake file copy could be changed to
-look for the dlls automatically
+Windows tip: shift right-click in a folder and select "Open command
+prompt here" or "Open powershell here" to open a cmd window to the
+folder where you want to build Leviathan. If building fails you should
+try a path without a space in it.
 
-This step can be skipped on linux
+\section compiling_script Running Setup
 
-Just one last thing: make sure you have copied all the dlls like CEGUIBase-9999.dll and OgreMain.dll to leviathan/bin/ThirdParty
-Create the folder if it doesn't exist already.
-If you haven't already go to these locations to get the files:
-(you should copy all the dlls to avoid issues even if some are unnecessary)
-(Also you should copy release versions over debug versions if they have same names like cg.dll)
-      C:\Program Files (x86)\cegui\bin
-      C:\projects\newton-dynamics\coreLibrary_300\projects\windows\project_vs2013_dll\Win32\newton\Debug
-      C:\projects\newton-dynamics\coreLibrary_300\projects\windows\project_vs2013_dll\Win32\newton\release
-      C:\projects\SFML-2.2\bin
-      C:\projects\cegui-dependencies\build\dependencies\bin
-Note: you may want to copy the OgreMeshUpgrader.exe and OgreXMLConverter.exe to leviathan/bin from this next location.
-C:\projects\OgreBuild\build\sdk\bin\Release
+Now move to the Leviathan folder and run the setup script:
+\code{sh}
+cd leviathan
+ruby Setup.rb
+\endcode
 
-When debugging you will want to set cmake .. -DCOPY_DEBUG_LIBS=ON to copy debug libs. Turn this back off when doing releases
-or the debug versions (might) end up in the distribution package otherwise.
+If the script runs correctly you can move to the next
+section. Otherwise see \ref compile_troubleshooting.
 
 
-(Your paths may vary if you installed projects in different folders)
+\section compile_done Done
 
-\subsection compile_done Done
+You can run tests on linux by running `make check -j numberofcores` in
+the build folder. And on Windows by running the LeviathanTest project
+in visual studio debugger. Note: when you open `build/Leviathan.sln` make sure
+you select `RelWithDebInfo` as the active configuration as the debug
+builds are known to be broken very often.
+
+For a tutorial on what to do next see \ref tutorial0.
 Now, if the samples runs correctly, you are all set to start your own project.
 
-For a tutorial on what to do next see \ref tutorial1.
+\see \ref tutorials
+
+\section compile_troubleshooting Troubleshooting
+
+Here are some common fixes for issues you might have with the setup script.
+
+If none of these work please open an issue here: [Leviathan
+repository](https://bitbucket.org/hhyyrylainen/leviathan/issues).
+
+\subsection troubleshooting_submodules Submodules out of date
+
+If you have pulled updates or changed branches your downloaded
+submodules might be out of date. To fix this run:
+
+\code{sh}
+cd leviathan
+git submodule update
+\endcode
+
+
+\subsection troubleshooting_missing_pr Missing command `pr`
+
+If you get an error about `pr` being an unkown command or missing try
+installing Cygwin64 'coreutils' package. If that doesn't work either 
+install the default set of cygwin packages.
+
+\subsection troubleshooting_ffmpeg_line_ends  Incorrect ffmpeg makefile line endings
+
+If you get an error "missing separator. Stop" in common.mak when
+trying to build ffmpeg on windows, this is probably caused by line
+endings being incorrect.
+
+To fix these change to the FFMPEG FOLDER and run these commands to fix the line endings:
+\code{sh}
+git config core.autocrlf false
+\endcode
+Delete all files except ".git" folder. And then:
+\code{sh}
+git checkout .
+\endcode
+
+Warning: this will discard all changes in the git repo this is ran in,
+so make sure you are in the right folder.
+
+
+It is also possible to globally change the autocrlf setting but that
+isn't recommended to avoid accidentally committing windows line
+endings.
+
+
+\subsection troubleshooting_ffmpeg Issues compiling ffmpeg
+
+First, make sure that you are using the standard Windows command
+prompt. Using a MinGW shell or equivalent is known to cause
+issues. You may need to delete the ffmpeg folder after this to make
+sure that there are no cached values or other things messing things
+up.
+
+
+Then make sure that nothing is overriding the programs in cygwin. You
+should start by making sure cygwin is the first thing in PATH. And
+then that the specific programs are from cygwin. This can be done by
+renaming the executables in cygwin/bin, for example renaming `awk.exe`
+or `make.exe` to `testawk.exe` and then verifying that the setup
+script starts complaining about missing that specific program. If it
+doesn't start complaining then this confirms that something is messing
+with your PATH and overriding the cygwin tools.  Either delete the
+offending things (MSYS, MinGW) or remove them from PATH (and make sure
+once again that you are using plain `cmd.exe` to run the setup and not
+some other shell).
+
+\subsubsection troubleshoothing_ffmpeg_more ffmpeg build is still failing
+
+For other ffmpeg building issues see these guides:
+[windows guide](https://trac.ffmpeg.org/wiki/CompilationGuide/MSVC),
+[all guides](https://trac.ffmpeg.org/wiki/CompilationGuide)
+
+
+\subsubsection troubleshoothing_no_files_found LeviathanTest or sample games don't find files
+
+Make sure you are running them in the correct directory
+(`build/bin`). On Windows check the debugging startup directory in
+Visual Studio project settings.
+
+\section compile_manually Manually Compiling
+
+This is very much not recommended as the dependencies need to be built
+with complex options and additional dependencies. Then the resulting
+files need to be installed into `leviathan/build/ThirdParty`. Then
+running the main cmake configure should succeed and you can try
+building. You will still need ruby for generating some C++ files so
+you can't skip the ruby dependency even with trying to build manually.
+
+For a good starting point see the note at the top of this page about older setup
+instructions.
+
+The old instructions will most likely not work anymore but provide a
+good starting point for building some of the Leviathan dependencies.
+
+
 */

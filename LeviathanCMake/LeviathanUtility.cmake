@@ -87,3 +87,34 @@ macro(GlobAllVariants InputList Output)
 
 endmacro(GlobAllVariants InputList Output)
 
+# Configures leviathan executable header and source file
+# so that they are read only in the source directory
+# UniquePrefix makes sure that the include files in the binary dir have unique names
+macro(StandardConfigureExecutableMainAndInclude IncludeFileName MainFileName UniquePrefix
+    TargetFolder)
+
+  # Configure the includes file
+  configure_file("${LEVIATHAN_SRC}/File Templates/BaseLeviathanProjectIncludes.h.in" 
+    "${PROJECT_BINARY_DIR}/${UniquePrefix}/${IncludeFileName}")
+
+  # Make a readonly copy of it
+  file(COPY "${PROJECT_BINARY_DIR}/${UniquePrefix}/${IncludeFileName}"
+    DESTINATION "${TargetFolder}"
+    NO_SOURCE_PERMISSIONS
+    FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+  
+  # Configure the main file
+  configure_file("${LEVIATHAN_SRC}/File Templates/BaseLeviathanProjectMain.cpp.in"
+    "${PROJECT_BINARY_DIR}/${UniquePrefix}/${MainFileName}")
+  
+  # Make a readonly copy of it
+  file(COPY "${PROJECT_BINARY_DIR}/${UniquePrefix}/${MainFileName}"
+    DESTINATION "${TargetFolder}"
+    NO_SOURCE_PERMISSIONS
+    FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
+  
+endmacro()
+
+
+
+

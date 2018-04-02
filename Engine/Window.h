@@ -35,15 +35,18 @@ public:
 
     DLLEXPORT void SetHideCursor(bool toset);
 
+    //! \note This is clamped to range [0, width / height]
     DLLEXPORT void GetRelativeMouse(int& x, int& y);
+    //! \returns The normalized mouse x and y positions (in range [0, 1])
+    DLLEXPORT void GetNormalizedRelativeMouse(float& x, float& y);
     DLLEXPORT void SetMouseToCenter();
     DLLEXPORT bool IsMouseOutsideWindowClientArea();
 
     //! \brief Translates a client space coordinate to screen coordinate
     //! \exception ExceptionNotFound If the window is not found (the internal translate fails)
     //! \note Doesn't work on linux, returns the input point
-    DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
-				
+    // DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
+                
     //! \brief Captures input for this window and passes it on
     DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
 
@@ -71,6 +74,7 @@ public:
 
     DLLEXPORT void InjectCodePoint(uint32_t utf32char);
 
+    //! \todo check is a text box active
     DLLEXPORT void InjectKeyDown(int32_t sdlkey);
 
     DLLEXPORT void InjectKeyUp(int32_t sdlkey);

@@ -461,64 +461,6 @@ TEST_CASE("Example file segments that cause errors", "[objectfile]") {
     }
 }
 
-//! \brief Matches line numbers for ReporterLineNumberChecker
-//!
-//! First capture group is the line number
-static const std::regex LineNumRegex {R"(\S:(\d+)\s*$)"};
-
-class ReporterLineNumberChecker : public LErrorReporter{
-public:
-    
-    virtual void Write(const std::string &text) override{
-    }
-
-    virtual void WriteLine(const std::string &text) override{
-    }
-
-    virtual void Info(const std::string &text) override{
-            
-        INFO(text);
-    }
-
-    virtual void Warning(const std::string &text) override{
-            
-        INFO(text);
-        
-        if(AlsoWarnings)
-            GetLine(text);
-    }
-
-    virtual void Error(const std::string &text) override{
-            
-        INFO(text);
-        GetLine(text);
-    }
-
-    virtual void Fatal(const std::string &text) override{
-            
-        INFO(text);
-    }
-
-    //! Captures error line number and saves it in ErrorLines
-    void GetLine(const std::string &text){
-
-        std::smatch lineMatch;
-
-        if(std::regex_search(text, lineMatch, LineNumRegex)){
-
-            if(lineMatch.size() == 2){
-
-                ErrorLines.push_back(Convert::StringTo<int>(lineMatch[1]));
-            }
-        }
-    }
-
-    bool AlsoWarnings {false};
-
-    //! \see GetLine
-    std::vector<int> ErrorLines;
-};
-
 TEST_CASE("ReporterLineNumberChecker test"){
 
     SECTION("Can read 'missing the closing '}', file: issue:6'"){
@@ -579,3 +521,134 @@ TEST_CASE("Objectfile line error numbers are correct", "[objectfile]"){
         CHECK(reporter.ErrorLines[0] == 9);
     }
 }
+
+TEST_CASE("ObjectFile parser reports unclosed quotes", "[objectfile]"){
+
+    ReporterMatchMessagesRegex reporter({ReporterMatchMessagesRegex::MessageToLookFor(
+                std::regex(R"(.*unclosed.*quotes.*)"))});
+
+    SECTION("Single quote"){
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("\"",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+
+    SECTION("Simple cases"){
+
+        // This should be an error but isn't
+        // auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("var1 = \"my thing;",
+        //     "parse_unclosed_quotes_simple1", &reporter);
+        
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("o \"obj1\"{\n"
+            "s{\n"
+            "\"\n"
+            "}\n"
+            "}",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+
+    SECTION("Full examples"){
+        
+        constexpr auto fileText = "o \"thing\"{\n"
+            "    s{\n"
+            "        // User skips the video\n"
+            "        [\"Listener=\"Generic\",@Type=\"MainMenuIntroSkipEvent\"]\n"
+            "        int onSkipVideoEvent(){\n"
+            "            OnVideoEnded();\n"
+            "        }\n"
+            "    @%};\n"
+            "}";
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(fileText,
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+    
+}
+
+TEST_CASE("ObjectFile parser reports unclosed comments", "[objectfile]"){
+
+    ReporterMatchMessagesRegex reporter({ReporterMatchMessagesRegex::MessageToLookFor(
+                std::regex(R"(.*unclosed.*comment.*)"))});
+    
+    SECTION("Simple case"){
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("o \"thing\"{\n/*\n}",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        // Parsing fails
+        REQUIRE(!ofile);
+
+        reporter.MessagesToDetect[0].CheckAndResetCountIsOne();
+    }
+
+    SECTION("Ending with // doesn't cause errors"){
+
+        auto ofile = ObjectFileProcessor::ProcessObjectFileFromString("var = thing; \n//",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        REQUIRE(ofile);
+
+        REQUIRE(reporter.MessagesToDetect[0].MatchCount == 0);
+
+        ofile = ObjectFileProcessor::ProcessObjectFileFromString("//",
+            "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+        REQUIRE(reporter.MessagesToDetect[0].MatchCount == 0);
+    }
+
+    // No examples currently
+    // SECTION("Full examples"){
+        
+        
+    // }
+}
+
+
+TEST_CASE("Preceeeding and trailing spaces don't matter in text blocks", "[objectfile]"){
+
+    DummyReporter reporter;
+
+    // Try to parse a minimal syntax file //
+    auto ofile = ObjectFileProcessor::ProcessObjectFileFromString(
+        "o \"obj\"{\n"
+        "t block{\n"
+        " this is text   \n"
+        "this is more text\n"
+        "}}",
+        "ObjectFiles.cpp" + std::to_string(__LINE__), &reporter);
+
+    REQUIRE(ofile != nullptr);
+    
+    // Validate the output //
+    ObjectFileObject* obj = ofile->GetObjectFromIndex(0);
+
+    REQUIRE(obj != nullptr);
+
+    CHECK(obj->GetName() == "obj");
+
+    ObjectFileTextBlock* text = obj->GetTextBlock(0);
+
+    REQUIRE(text != nullptr);
+
+    REQUIRE(text->GetLineCount() == 2);
+
+    CHECK(text->GetLine(0) == "this is text");
+    CHECK(text->GetLine(1) == "this is more text");
+}
+
+

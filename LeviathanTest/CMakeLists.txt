@@ -7,11 +7,14 @@ if(LEVIATHAN_FULL_BUILD)
     PartialEngine.h PartialEngine.cpp
     NetworkTestHelpers.h
 
+    TestFiles/ReferenceCounted.cpp
     TestFiles/StringIterator.cpp
     TestFiles/StringOperations.cpp
     TestFiles/ExtraAlgorithms.cpp
     TestFiles/IDFactory.cpp
+    TestFiles/MathTypes.cpp
     TestFiles/Script.cpp
+    TestFiles/ScriptConversions.cpp
     TestFiles/HashTesting.cpp
     TestFiles/ObjectFiles.cpp
     TestFiles/Floats.cpp
@@ -27,6 +30,14 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/GuiTests.cpp
     TestFiles/Delegate.cpp
     TestFiles/Task.cpp
+    TestFiles/Key.cpp
+    TestFiles/Events.cpp
+    TestFiles/GameModule.cpp
+    TestFiles/Physics.cpp
+    TestFiles/Entities.cpp
+    TestFiles/CustomScriptComponents.cpp
+    
+    TestFiles/CoreEngineTests.cpp
     )
 else()
   # Just a few tests required
@@ -60,13 +71,21 @@ include(LeviathanCoreProject)
 # testing
 
 if(WIN32)
+  # TODO: debug target (can't use the linux approach as visual studio
+  # can switch between the build types without invoking cmake)
   add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest.exe"
     DEPENDS LeviathanTest
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 else()
-  add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest"
-    DEPENDS LeviathanTest
-    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTestD"
+      DEPENDS LeviathanTest
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+  else()
+    add_custom_target(check COMMAND "${PROJECT_BINARY_DIR}/bin/LeviathanTest"
+      DEPENDS LeviathanTest
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+  endif()
 endif()
 
 

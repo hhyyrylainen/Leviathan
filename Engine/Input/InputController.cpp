@@ -13,8 +13,9 @@ DLLEXPORT Leviathan::InputController::~InputController(){
     for(size_t i = 0; i < ConnectedReceivers.size(); i++){
         // call disconnect function first //
         ConnectedReceivers[i]->_OnDisconnect(this);
-        ConnectedReceivers.erase(ConnectedReceivers.begin()+i);
     }
+    
+    ConnectedReceivers.clear();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::InputController::StartInputGather(){
@@ -76,8 +77,11 @@ DLLEXPORT void Leviathan::InputController::SendMouseMovement(int xmoved, int ymo
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::InputController::LinkReceiver(Lock &guard, InputReceiver* object){
-    // just add to list and call link function //
+DLLEXPORT void Leviathan::InputController::LinkReceiver(std::shared_ptr<InputReceiver> object){
+
+    GUARD_LOCK();
+    
+    // Just add to list and call link function //
     object->_OnConnected(this);
 
     ConnectedReceivers.push_back(object);
@@ -85,7 +89,7 @@ DLLEXPORT void Leviathan::InputController::LinkReceiver(Lock &guard, InputReceiv
 // ------------------------------------ //
 DLLEXPORT void Leviathan::InputController::_OnChildUnlink(Lock &guard, InputReceiver* child){
     for(size_t i = 0; i < ConnectedReceivers.size(); i++){
-        if(ConnectedReceivers[i] == child){
+        if(ConnectedReceivers[i].get() == child){
             // call disconnect function first //
             ConnectedReceivers[i]->_OnDisconnect(this);
             ConnectedReceivers.erase(ConnectedReceivers.begin()+i);
@@ -94,7 +98,7 @@ DLLEXPORT void Leviathan::InputController::_OnChildUnlink(Lock &guard, InputRece
     }
 }
 // ------------------ InputReceiver ------------------ //
-DLLEXPORT Leviathan::InputReceiver::InputReceiver() : ConnectedTo(NULL){
+DLLEXPORT Leviathan::InputReceiver::InputReceiver() : ConnectedTo(nullptr){
 
 }
 

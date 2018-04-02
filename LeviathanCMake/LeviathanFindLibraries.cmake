@@ -1,23 +1,39 @@
 # Leviathan cmake component for setting up linking against all dependencies
 include(LeviathanUtility)
 
+# Windows fix for SDL2 (and maybe other library finds, too)
+if(WIN32)
+  set(CMAKE_PREFIX_PATH "${LEVIATHAN_SRC}/build/ThirdParty")
+endif()
+
 # Find Boost
 if(USE_BOOST)
+  # Uncomment the next line to get boost debug info
+  # set(Boost_DEBUG ON)
+
   # Might be a good idea to dynamically link Boost
   set(Boost_USE_STATIC_LIBS FALSE)
 
-  set(Boost_ADDITIONAL_VERSIONS "1.55" "1.53")
+  set(Boost_ADDITIONAL_VERSIONS "1.66")
 
   # Other than these that are required are header-only libraries
-  set(LEVIATHAN_BOOST_COMPONENTS chrono system filesystem)
+  set(LEVIATHAN_BOOST_COMPONENTS system filesystem)
   
-  find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS} QUIET)
+  # set(Boost_DEBUG ON)  
+  find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})
 
   if(NOT Boost_FOUND)
-    message(SEND_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})
+    # Automatically print stuff if it failed
+    set(Boost_DEBUG ON)
+    find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})
+    message(FATAL_ERROR "Failed to find Boost libraries: " ${REQUIRED_BOOST_COMPONENTS})
   endif(NOT Boost_FOUND)
 
   # Boost is found or the configuration has already failed
+
+  # Needed for file copy
+  set(LEVIATHAN_BOOST_FILECOPY ${Boost_SYSTEM_LIBRARY_RELEASE}
+        ${Boost_FILESYSTEM_LIBRARY_RELEASE})
 
   # Set up referencing of Boost
   include_directories(${Boost_INCLUDE_DIR})
@@ -40,34 +56,43 @@ if(LEVIATHAN_FULL_BUILD)
 
   # Set the setup script result directories
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib")
+  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib64")
+  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/bin")
   
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/newton")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/cegui-9999")
 
+  # Windows fix for GLM include missing in CEGUI
+  # This is now in the third party include folder
+
   # Find SDL2
   if(USE_SDL2)
-    # TODO windows version
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIR})
   endif()
 
 
-  set(LEVIATHAN_ENGINE_LIBRARIES Newton angelscript OgreMain CEGUIBase-9999
-    CEGUICommonDialogs-9999
+  set(LEVIATHAN_ENGINE_LIBRARIES Newton
+    OgreMain OgreHlmsUnlit OgreHlmsPbs
+    CEGUIBase-9999 CEGUICommonDialogs-9999
     # CEGUICoreWindowRendererSet CEGUIExpatParser CEGUISILLYImageCodec
-    CEGUIOgreRenderer-9999 sfml-system sfml-audio sfml-network
+    CEGUIOgreRenderer-9999 sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
-    ${Boost_LIBRARIES} ${SDL2_LIBRARY})
+    cAudio
+    ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons)
 
+  # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
+  # Now it is named the same as we are using the cmake build for angelscript
   if(WIN32)
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript64)
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES debug angelscript64d)
+    # When using angelscript on windows /LTCG should be specified as a flag
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES debug angelscriptd)
     
   else()
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES optimized angelscript)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES angelscript)
   endif()
 
   if(USING_LEAP)
@@ -76,7 +101,8 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
   
   # Leviathan application libraries
-  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES})
+  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
+    sfml-system sfml-network AngelScriptAddons)
   
 else()
 

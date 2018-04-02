@@ -1,5 +1,6 @@
 #include "../PartialEngine.h"
 
+#include "Generated/StandardWorld.h"
 #include "Entities/GameWorld.h"
 #include "Entities/Components.h"
 #include "Common/SFMLPackets.h"
@@ -17,8 +18,8 @@ TEST_CASE("Sendable get correct server states", "[entity][networking]"){
     PartialEngine<false> engine;
 
 
-    GameWorld world(NETWORKED_TYPE::Client);
-    world.Init(nullptr, nullptr);
+    StandardWorld world;
+    world.Init(NETWORKED_TYPE::Client, nullptr, nullptr);
 
 
 

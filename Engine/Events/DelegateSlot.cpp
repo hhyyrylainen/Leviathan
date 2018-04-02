@@ -6,45 +6,44 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 
-Delegate::Delegate(){
+DLLEXPORT Delegate::Delegate() {}
 
-}
+DLLEXPORT Delegate::~Delegate()
+{
 
-Delegate::~Delegate(){
-
+    // Allow having pointers to delegates from application, but give errors if used as a value
+    // and a script keeps a handle around
+    LEVIATHAN_ASSERT(GetRefCount() == 1 || GetRefCount() == 0,
+        "Delegate still has active references, scripts "
+        "shouldn't store these");
 }
 // ------------------------------------ //
-void Delegate::Call(NamedVars::pointer values) const{
+DLLEXPORT void Delegate::Call(const NamedVars::pointer& values) const
+{
 
     GUARD_LOCK();
 
     for(const auto& callback : AttachedCallbacks)
         callback->OnCalled(values);
 }
-// ------------------------------------ //
-void Delegate::Register(BaseDelegateSlot::pointer callback){
+
+DLLEXPORT void Delegate::Call(NamedVars* values) const
+{
 
     GUARD_LOCK();
 
-    AttachedCallbacks.push_back(std::move(callback));
+    for(const auto& callback : AttachedCallbacks)
+        callback->OnCalled(values);
+
+    values->Release();
 }
+// ------------------------------------ //
+DLLEXPORT void Delegate::Register(const BaseDelegateSlot::pointer& callback)
+{
 
-void Delegate::Register(BaseDelegateSlot* callback){
+    GUARD_LOCK();
 
-    if(!callback)
-        return;
-
-    Register(BaseDelegateSlot::pointer(callback));
+    AttachedCallbacks.push_back(callback);
 }
 // ------------------------------------ //
 // LambdaDelegateSlot
-LambdaDelegateSlot::LambdaDelegateSlot(
-    std::function<void (const NamedVars::pointer &values)> callback) :
-    Callback(callback)
-{
-}
-
-void LambdaDelegateSlot::OnCalled(const NamedVars::pointer &values){
-
-    Callback(values);
-}

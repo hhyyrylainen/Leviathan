@@ -1,21 +1,68 @@
-/*! \page angelscript_main AngelScript reference index
+/*! \page angelscript_main Scripting Documentation
     \tableofcontents
 
-    Put a link to AngelScript tutorials here.
+    \section angelscript_tutorials_list AngelScript Tutorials
 
-    Also see the manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
+    \subpage angelscript_tutorial_handles
+
+    Also see the official  manual: http://www.angelcode.com/angelscript/sdk/docs/manual/index.html
+
+    specifically these are important pages:
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_dictionary.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_arrays.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_addon_math.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_class.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_as_vs_cpp_types.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_ref.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_expressions.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_strings.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_datatypes_funcptr.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_class_ops.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_func_retref.html
+
+    And for writing bindings:
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_register_type.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_as_vs_cpp_types.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_generic.html
+    - http://www.angelcode.com/angelscript/sdk/docs/manual/doc_addon_handle.html
+
+    \section angelscript_common_tasks Common Tasks
+
+    \subpage eventinscripts Adding a new event type to AngelScript
+
+    To convert a character in a string back to a string call `CharacterToString`
+
+    \code
+    string stringCode = "my string";
+    for(uint i = 0; i < stringCode.length(); ++i){
+        const auto letter = CharacterToString(stringCode[i]);
+    }
+    \endcode
+
+    \note \code auto c = str[1]; string newStr = "" + c; \endcode doesn't work
 
     \section angelscript_reference_list Script class references
-    \subsection angelscript_events Events
+    
+    \subpage angelscript_events
+    
+    \subpage angelscript_namedvars
+    
+    \subpage angelscript_delegate
 
-    \subsubsection angelscript_event_listening Listening for events in scripts
+    \subpage angelscript_invoking
+    
+*/
+
+/*! \page angelscript_events Events
+
+    \section angelscript_event_listening Listening for events in scripts
     Standalone scripts can create a listener object
     \code
         // This example creates a new listener object //
         
         int OnChangedControlScheme(GenericEvent@ event){
 
-            NamedVars@ tempvalues = @event.GetNamedVars();
+            NamedVars@ tempvalues = event.GetNamedVars();
             string player = string(tempvalues.GetSingleValueByName("Player"));
             string controlsname = string(tempvalues.GetSingleValueByName("ControlsName"));
         
@@ -29,7 +76,7 @@
         }
         // Could be defined and the following null replaced with it to listen for predefined events
 
-        EventListener@ OnChangedEvents = @EventListener(null, OnChangedControlScheme);
+        EventListener@ OnChangedEvents = EventListener(null, OnChangedControlScheme);
 
         // The only parameter is the name of the GenericEvent to listen for
         OnChangedEvents.RegisterForEvent("GuiChangePLayerControls");
@@ -56,7 +103,7 @@
 
     \endcode
 
-    \subsubsection angelscript_event_getting_values_from_generic Getting values from GenericEvent
+    \subsection angelscript_event_getting_values_from_generic Getting values from GenericEvent
     To get values from a GenericEvent you first need to get the underlying Leviathan::NamedVars
     and retrieve values from there
 
@@ -64,7 +111,7 @@
         int OnChangedControlScheme(GenericEvent@ event){
 
             // Getting the NamedVars //
-            NamedVars@ tempvalues = @event.GetNamedVars();
+            NamedVars@ tempvalues = event.GetNamedVars();
 
             // Getting a value and casting it to a type and assignong it to a variable //
             string player = string(tempvalues.GetSingleValueByName("Player"));
@@ -77,15 +124,15 @@
     \endcode
     \see \ref angelscript_namedvars    
 
-    \subsubsection angelscript_event_firing Firing events
+    \section angelscript_event_firing Firing events
     To fire an event from AngelScript you first need to create an event object
     \code
         // Create a GenericEvent like this //
-        GenericEvent@ generic = @GenericEvent("NameOfEvent");
+        GenericEvent@ generic = GenericEvent("NameOfEvent");
 
         // Create an Event like this //
         // Note: only events which don't take additional data parameters can be created like this
-        Event@ event = @Event(EVENT_TYPE_INIT);
+        Event@ event = Event(EVENT_TYPE_INIT);
 
     \endcode
     \see Leviathan::EVENT_TYPE for possible types
@@ -94,14 +141,14 @@
     Then call the event sending function on the global Leviathan::EventHandler.
 
     \code
-        GetEventHandler().CallEvent(generic);
+        GetEngine().GetEventHandler().CallEvent(generic);
     \endcode
 
-    \subsubsection angelscript_event_setting_parameters Setting event parameters
+    \subsection angelscript_event_setting_parameters Setting event parameters
     To set the data contained within a GenericEvent, you first need to access the event's Leviathan::NamedVars
 
     \code
-        NamedVars@ vars = @generic.GetNamedVars();
+        NamedVars@ vars = generic.GetNamedVars();
     \endcode
 
     And add variables there.
@@ -109,12 +156,15 @@
 
     \todo Allow scripts to create data for Leviathan::Event objects
 
-    \subsection angelscript_namedvars NamedVars
-    \subsubsection angelscript_namedvars_access_values Accessing values
+*/
+
+
+/*! \page angelscript_namedvars NamedVars
+    \section angelscript_namedvars_access_values Accessing values
     Single values (nonlist values) can be accessed with `GetSingleValueByName`
 
     \code
-        ScriptSafeVariableBlock@ var = @vars.GetSingleValueByName("PlayerName");
+        ScriptSafeVariableBlock@ var = vars.GetSingleValueByName("PlayerName");
     \endcode
     \see Leviathan::NamedVars::GetScriptCompatibleValue
 
@@ -125,11 +175,11 @@
         int8 initial = int8(var);
     \endcode
 
-    \subsubsection angelscript_namedvars_adding_values Adding values
+    \section angelscript_namedvars_adding_values Adding values
     To add values first create a ScriptSafeVariableBlock.
 
     \code
-        ScriptSafeVariableBlock@ block = @ScriptSafeVariableBlock("PlayerName", "Boost");
+        ScriptSafeVariableBlock@ block = ScriptSafeVariableBlock("PlayerName", "Boost");
     \endcode
     \see \ref angelscript_scriptsafevariableblock
 
@@ -143,16 +193,18 @@
 
     \see Leviathan::NamedVars::AddScriptCompatibleValue
 
-    \subsection angelscript_scriptsafevariableblock Variable blocks in scripts (ScriptSafeVariableBlock)
+    \section angelscript_scriptsafevariableblock Variable blocks in scripts (ScriptSafeVariableBlock)
+    \todo This needs redoing
+    
     An AngelScript safe version of Leviathan::NamedVariableBlock
 
     First parameter is the name and the second is the value. Supported types are: string, int, float, double, int8, bool.
 
     \code
-        ScriptSafeVariableBlock@ var = @ScriptSafeVariableBlock("My value!", 2.5f);
+        ScriptSafeVariableBlock@ var = ScriptSafeVariableBlock("My value!", 2.5f);
     \endcode
 
-    \subsubsection angelscript_scriptsafevariableblock_getting_primites Getting primitive values
+    \subsection angelscript_scriptsafevariableblock_getting_primites Getting primitive values
     Getting primite types works by casting to the primite type like in these examples.
     \code
         ScriptSafeVariableBlock@ var;
@@ -161,27 +213,49 @@
         int val = int(var);
         int8 initial = int8(var);        
     \endcode
+*/
 
-    \subsection angelscript_ainetworkcache AINetworkCache in scripts
-    \subsubsection angelscript_ainetworkcache_setting_values Setting and reading values
-    Getting a variable with a name is done by calling `GetVariable` on the global instance of Leviathan::AINetworkCache.
+/*! \page angelscript_delegate Delegates in scripts
+
+    Registering to a delegate and firing it works like this:
+
     \code
-        ScriptSafeVariableBlock@ value = GetAINetworkCache().GetVariable("Name of variable");
+        // Receive this Delegate from somewhere
+        Delegate@ delegate;
 
-        // Casting to a primitive
-        float target = float(value);
+        void Callback(NamedVars@ variables){
+             // Read provided values from variables and do something
+             LOG_INFO("Delegate fired");
+        }
+
+        // Registering
+        delegate.Register(@Callback);
+
+        // Firing the delegate
+        NamedVars@ variables = NamedVars();
+        // Add parameters to variables if needed
+        // variables.AddValue(ScriptSafeVariableBlock("param1", 1));
+        delegate.Call(variables);
     \endcode
 
-    Setting a new value is done by calling `SetVariable` with the ScriptSafeVariableBlock. The value won't
-    be actually updated unless it has changed.
+    \note Some C++ classes directly own a Leviathan::Delegate. This
+    means that handles to delegates are not safe to store. So register
+    your callback and let go of the handle.
+
+*/
+
+/*! \page angelscript_invoking Invoking From Scripts
+    
+    Invoking is used to queue some function or method to be ran later,
+    for example form a background thread. This can be done from
+    scripts like this:
+    
     \code
-        GetAINetworkCache().SetVariable(ScriptSafeVariableBlock("Name of value", "COMMAND_SHOOT"));
+        void Callback(){
+
+             LOG_INFO("In callback");
+        }
+
+        GetEngine().Invoke(@Callback);
     \endcode
-    
-
-    \see Leviathan::AINetworkCache \ref angelscript_scriptsafevariableblock
-
-    \section angelscript_common_tasks AngelScript common tasks
-    \ref eventinscripts Adding a new event type to AngelScript
-    
 */

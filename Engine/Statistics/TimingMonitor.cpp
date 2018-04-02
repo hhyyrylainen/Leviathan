@@ -50,7 +50,7 @@ int Leviathan::TimingMonitor::StopTiming(const std::string& name, bool printoutp
     return -1;
 }
 // ------------------------------------ //
-int Leviathan::TimingMonitor::GetCurrentTimerCount(){
+size_t Leviathan::TimingMonitor::GetCurrentTimerCount(){
     return Timers.size();
 }
 // ------------------------------------ //

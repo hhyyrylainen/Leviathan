@@ -136,7 +136,6 @@ class CommandSender;
 class CommandHandler;
     
 class ScriptArgumentsProviderBridge;
-struct FunctionParameterInfo;
     
 class ResourceFolderListener;
 class ResourceRefreshHandler;

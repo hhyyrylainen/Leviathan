@@ -37,7 +37,7 @@ public:
     //! \brief Notifies all the parents of this object about something
     //!
     //! This will call the BaseNotifier::OnNotified on all the child objects
-    //! \param guard Lock for this object that can be safely unlocked
+    //! \param guard Lock for this object that needs to be able to be safely unlocked
     virtual void NotifyAll(Lock &guard);
 
     //! \brief Disconnects this from a previously connected notifier

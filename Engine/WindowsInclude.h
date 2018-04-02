@@ -25,6 +25,7 @@
 #undef GetNextSibling
 #undef GetFirstChild
 #undef GetObject
+#undef GetCurrentTime
 
 #undef min
 #undef max

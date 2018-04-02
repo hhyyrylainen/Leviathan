@@ -17,31 +17,33 @@ using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
 
-AlphaHitCache::AlphaHitCache(){
+DLLEXPORT AlphaHitCache::AlphaHitCache(){
 
     LEVIATHAN_ASSERT(!StaticInstance, "AlphaHitCache::StaticInstance not null");
     StaticInstance = this;
 }
 
-AlphaHitCache::~AlphaHitCache(){
+DLLEXPORT AlphaHitCache::~AlphaHitCache(){
 
     StaticInstance = nullptr;
 }
 
-AlphaHitCache* AlphaHitCache::Get(){
+DLLEXPORT AlphaHitCache* AlphaHitCache::Get(){
     return StaticInstance;
 }
 
 AlphaHitCache* AlphaHitCache::StaticInstance = nullptr;
 // ------------------------------------ //
-bool AlphaHitCache::PreLoadImage(const std::string &imageproperty){
+DLLEXPORT bool AlphaHitCache::PreLoadImage(const std::string &imageproperty){
 
     auto loaded = GetDataForImageProperty(imageproperty);
 
     return loaded.operator bool();
 }
 // ------------------------------------ //
-std::shared_ptr<AlphaHitLoadedTexture> AlphaHitCache::GetImageData(const std::string &name){
+DLLEXPORT std::shared_ptr<AlphaHitLoadedTexture> AlphaHitCache::GetImageData(
+    const std::string &name)
+{
 
     const auto existing = LoadedFullImages.find(name);
 
@@ -99,7 +101,7 @@ std::shared_ptr<AlphaHitLoadedTexture> AlphaHitCache::GetImageData(const std::st
     return newImage;
 }
 // ------------------------------------ //
-std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty(
+DLLEXPORT std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty(
     const std::string &str)
 {
     // First return a cached image if one exists //
@@ -150,7 +152,8 @@ std::shared_ptr<AlpaHitStoredTextureData> AlphaHitCache::GetDataForImageProperty
     return newImage;
 }
 // ------------------------------------ //
-std::tuple<std::string, std::string> AlphaHitCache::ParseImageProperty(const std::string &str){
+DLLEXPORT std::tuple<std::string, std::string> AlphaHitCache::ParseImageProperty(
+    const std::string &str){
     
     // Extract the part of name after /.
     // Here's an example: ThriveGeneric/MenuNormal
@@ -165,7 +168,7 @@ std::tuple<std::string, std::string> AlphaHitCache::ParseImageProperty(const std
     return std::make_tuple(schema, name);
 }
 
-ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
+DLLEXPORT ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
     const std::tuple<std::string, std::string> &schemaandname)
 {
     const auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_SCRIPT,
@@ -212,7 +215,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
             StringIterator itr;
 
             // Height
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("height");
 
             auto str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -221,7 +224,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 height = Convert::StringTo<uint32_t>(*str);
 
             // Width
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("width");
 
             str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -230,7 +233,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 width = Convert::StringTo<uint32_t>(*str);
 
             // X
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("xPos");
 
             str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -239,7 +242,7 @@ ImageSetSubImage AlphaHitCache::LoadImageAreaFromImageSet(
                 x = Convert::StringTo<uint32_t>(*str);
 
             // Y
-            itr.ReInit(new UTF8PointerDataIterator(line));
+            itr.ReInit(std::make_unique<UTF8PointerDataIterator>(line));
             itr.GetUntilCharacterSequence<std::string>("yPos");
 
             str = itr.GetNextNumber<std::string>(DECIMALSEPARATORTYPE_NONE);
@@ -293,7 +296,7 @@ AlpaHitStoredTextureData::AlpaHitStoredTextureData(uint32_t xoffset, uint32_t yo
             "the data");
 }
 // ------------------------------------ //
-uint8_t AlpaHitStoredTextureData::GetPixel(uint32_t x, uint32_t y) const{
+DLLEXPORT uint8_t AlpaHitStoredTextureData::GetPixel(uint32_t x, uint32_t y) const{
 
     if(x >= Width || y >= Height)
         throw InvalidArgument("AlpaHitStoredTextureData: GetPixel: x or y out of range");    
@@ -309,7 +312,7 @@ uint8_t AlpaHitStoredTextureData::GetPixel(uint32_t x, uint32_t y) const{
     return values[arrayIndex];
 }
 // ------------------------------------ //
-bool AlpaHitStoredTextureData::HasNonZeroPixels() const{
+DLLEXPORT bool AlpaHitStoredTextureData::HasNonZeroPixels() const{
 
     const auto& values = TextureData->AlphaValues;
     

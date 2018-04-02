@@ -6,24 +6,23 @@
 #include "Common/ThreadSafe.h"
 #include "Events/CallableObject.h"
 #include "Events/DelegateSlot.h"
-#include "Sound/SoundStream.h"
+#include "Sound/SoundDevice.h"
 
 #include "OgreTexture.h"
 
 #include <chrono>
 #include <vector>
 
-extern "C"{
+extern "C" {
 // FFMPEG includes
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
-#include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+#include <libswscale/swscale.h>
 }
 
-namespace Leviathan{
-namespace GUI{
+namespace Leviathan { namespace GUI {
 
 //! \brief VideoPlayer that uses ffmpeg to play videos on Ogre
 //!
@@ -32,48 +31,48 @@ namespace GUI{
 //! ogre-ffmpeg-videoplayer, but all original ogre-ffmpeg-videoplayer
 //! code has been removed in course of all the rewrites.
 //! \todo Implement pausing and seeking
-class VideoPlayer : public CallableObject{
+class VideoPlayer : public CallableObject {
 protected:
-
     using ClockType = std::chrono::steady_clock;
 
-    enum class PacketReadResult{
+    enum class PacketReadResult {
 
         Ended,
         Ok,
         QueueFull
     };
 
-    enum class DecodePriority{
+    enum class DecodePriority {
 
         Video,
         Audio
     };
 
     //! Holds converted audio data that could not be immediately returned by ReadAudioData
-    struct ReadAudioPacket{
+    struct ReadAudioPacket {
 
         std::vector<uint8_t> DecodedData;
     };
 
     //! Holds raw packets before sending
-    struct ReadPacket{
+    struct ReadPacket {
 
-        ReadPacket(AVPacket* src){
+        ReadPacket(AVPacket* src)
+        {
 
             av_packet_move_ref(&packet, src);
         }
 
-        ~ReadPacket(){
+        ~ReadPacket()
+        {
 
             av_packet_unref(&packet);
         }
 
         AVPacket packet;
     };
-    
-public:
 
+public:
     DLLEXPORT VideoPlayer();
     DLLEXPORT ~VideoPlayer();
 
@@ -82,22 +81,24 @@ public:
     //! \brief Starts playing the video file
     //! \returns True if successfully started
     //! \note Acquires the Ogre texture, a sound player and ffmpeg resources
-    DLLEXPORT bool Play(const std::string &videofile);
+    DLLEXPORT bool Play(const std::string& videofile);
 
     //! \brief Stops playing and unloads the current playback objects
     DLLEXPORT void Stop();
 
     // ------------------------------------ //
     // Stream info
-    
+
     //! \returns True if currently loaded file has an audio stream
-    DLLEXPORT bool HasAudio() const{
+    DLLEXPORT bool HasAudio() const
+    {
         return AudioCodec != nullptr;
     }
 
     //! \returns Current playback position, in seconds
     //! The return value is directly read from the last decoded frame timestamp
-    DLLEXPORT float GetCurrentTime() const{
+    DLLEXPORT float GetCurrentTime() const
+    {
         return CurrentlyDecodedTimeStamp;
     }
 
@@ -105,34 +106,40 @@ public:
     DLLEXPORT float GetDuration() const;
 
     //! \returns Width of the current video
-    DLLEXPORT int32_t GetVideoWidth() const{
+    DLLEXPORT int32_t GetVideoWidth() const
+    {
         return FrameWidth;
     }
 
     //! \returns Height of the current video
-    DLLEXPORT int32_t GetVideoHeight() const{
+    DLLEXPORT int32_t GetVideoHeight() const
+    {
         return FrameHeight;
     }
 
 
     //! \returns The number of audio channels
-    DLLEXPORT int GetAudioChannelCount() const{
+    DLLEXPORT int GetAudioChannelCount() const
+    {
         return ChannelCount;
     }
 
     //! \returns The number of samples per second of the audio stream
     //! or -1 if no audio streams exist
-    DLLEXPORT int GetAudioSampleRate() const{
+    DLLEXPORT int GetAudioSampleRate() const
+    {
         return SampleRate;
     }
 
     //! \returns true if all the ffmpeg stream objects are valid for playback
-    DLLEXPORT bool IsStreamValid() const{
+    DLLEXPORT bool IsStreamValid() const
+    {
 
         return StreamValid && VideoCodec && ConvertedFrameBuffer;
     }
 
-    DLLEXPORT auto GetTextureName() const{
+    DLLEXPORT auto GetTextureName() const
+    {
 
         return TextureName;
     }
@@ -144,16 +151,13 @@ public:
     DLLEXPORT static void LoadFFMPEG();
 
 public:
-
     //! \brief Reads audio data to the buffer
     //! \returns The number of bytes read
     //! \param amount The maximum number of bytes to read
-    //! \param ended True if stream has ended
     //! \protected
-    size_t ReadAudioData(uint8_t* output, size_t amount, bool &ended);
+    size_t ReadAudioData(uint8_t* output, size_t amount);
 
 protected:
-
     //! After loading the video this creates the output texture + material for it
     //! \returns false if the setup fails
     //! \todo Rename to CreateOutputTexture
@@ -180,7 +184,7 @@ protected:
 
     //! \brief Reads already decoded audio data. The audio data vector must be locked
     //! before calling this
-    size_t ReadDataFromAudioQueue(Lock &audiolocked, uint8_t* output, size_t amount);
+    size_t ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, size_t amount);
 
     //! \brief Resets timers. Call when playback start or resumes
     void ResetClock();
@@ -194,14 +198,12 @@ protected:
     DLLEXPORT void SeekVideo(float time);
 
 public:
-
     // CallableObject
-    DLLEXPORT int OnEvent(Event** event) override;
-    DLLEXPORT int OnGenericEvent(GenericEvent** event) override;
-    
-    
+    DLLEXPORT int OnEvent(Event* event) override;
+    DLLEXPORT int OnGenericEvent(GenericEvent* event) override;
+
+
 protected:
-    
     std::string VideoFile;
 
     // The target texture
@@ -214,11 +216,11 @@ protected:
     // AVIOContext* ResourceReader = nullptr;
 
     // This seems to be not be used anymore
-    //AVCodecContext* Context = nullptr;
+    // AVCodecContext* Context = nullptr;
     AVFormatContext* FormatContext = nullptr;
 
 
-    //AVCodecParserContext* VideoParser = nullptr;
+    // AVCodecParserContext* VideoParser = nullptr;
     AVCodecContext* VideoCodec = nullptr;
     int VideoIndex = 0;
 
@@ -226,7 +228,7 @@ protected:
     //! How many timestamp units are in a second in the video stream
     float VideoTimeBase = 1.f;
 
-    //AVCodecParserContext* AudioParser = nullptr;
+    // AVCodecParserContext* AudioParser = nullptr;
     AVCodecContext* AudioCodec = nullptr;
     int AudioIndex = 0;
 
@@ -250,7 +252,7 @@ protected:
     SwrContext* AudioConverter = nullptr;
 
     //! Audio sample rate
-    int SampleRate = 0; 
+    int SampleRate = 0;
     int ChannelCount = 0;
 
     std::list<std::unique_ptr<ReadAudioPacket>> ReadAudioDataBuffer;
@@ -260,7 +262,8 @@ protected:
     bool IsPlayingAudio = false;
 
     //! Audio output
-    std::unique_ptr<SoundStream> AudioStream = nullptr;
+    AudioSource::pointer AudioStream;
+    ProceduralSoundData::pointer AudioStreamData;
 
     // Timing control
     float PassedTimeSeconds = 0.f;
@@ -278,15 +281,12 @@ protected:
     std::list<std::unique_ptr<ReadPacket>> WaitingAudioPackets;
 
 public:
-
     //! Called when current video stops player
     Delegate OnPlayBackEnded;
-    
-protected:
 
+protected:
     //! Sequence number for video textures
     static std::atomic<int> TextureSequenceNumber;
 };
 
-}
-}
+}} // namespace Leviathan::GUI

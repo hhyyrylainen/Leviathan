@@ -11,6 +11,14 @@
 "file " __FILE__ " on line " + std::to_string(__LINE__));                             \
  return false;
 
+// Maybe this could be avoided by typedefing the right thing to size_t in angelscript
+// initialization based on size of size_t
+//! Put this anywhere it is assumed that angelscript type uint64 is the same as size_t
+#define ANGELSCRIPT_ASSUMED_SIZE_T static_assert(sizeof(size_t) ==       \
+sizeof(uint64_t), "Script register for size_t assumes it is " \
+ "equivalent to uint64_t in angelscript");
+
+
 namespace Leviathan{
 
 // ------------------ Dynamic cast proxies ------------------ //
@@ -152,6 +160,41 @@ if(engine->RegisterObjectMethod(base_as, derived_as "@ opCast()",       \
  }                                                                      \
  if(engine->RegisterObjectMethod(derived_as,                            \
          "const " base_as "@ opImplCast() const",                       \
+         asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
+                 base>)),                                               \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }
+
+
+#define ANGLESCRIPT_BASE_CLASS_CASTS_NO_REF_STRING(base, base_as, derived, derived_as) \
+if(engine->RegisterObjectMethod(base_as.c_str(), (derived_as +          \
+            "@ opCast()").c_str(),                                      \
+        asFUNCTION((Leviathan::DoReferenceCastDynamicNoRef<base,        \
+                derived>)),                                             \
+        asCALL_CDECL_OBJFIRST) < 1)                                     \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(                                       \
+         derived_as.c_str(), (base_as + "@ opImplCast()").c_str(),      \
+         asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
+                 base>)),                                               \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(base_as.c_str(),                       \
+         ("const " + derived_as + "@ opCast() const").c_str(),          \
+         asFUNCTION((Leviathan::DoReferenceCastDynamicNoRef<base,       \
+                 derived>)),                                            \
+         asCALL_CDECL_OBJFIRST) < 1)                                    \
+ {                                                                      \
+     ANGELSCRIPT_REGISTERFAIL;                                          \
+ }                                                                      \
+ if(engine->RegisterObjectMethod(derived_as.c_str(),                    \
+         ("const " + base_as + "@ opImplCast() const").c_str(),         \
          asFUNCTION((Leviathan::DoReferenceCastStaticNoRef<derived,     \
                  base>)),                                               \
          asCALL_CDECL_OBJFIRST) < 1)                                    \

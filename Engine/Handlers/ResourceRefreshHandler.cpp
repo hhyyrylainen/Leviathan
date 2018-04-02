@@ -169,11 +169,11 @@ Leviathan::ResourceFolderListener::ResourceFolderListener(
 		if(i == 0){
 
 			
-			TargetFolder = StringOperations::GetPathString(*filestowatch[i]);
+			TargetFolder = StringOperations::GetPath<std::string>(*filestowatch[i]);
 		}
 
 		ListenedFiles[i] = make_unique<std::string>(
-                StringOperations::RemovePathString(*filestowatch[i]));
+            StringOperations::RemovePath<std::string>(*filestowatch[i]));
 	}
 
 }

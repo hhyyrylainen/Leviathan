@@ -51,7 +51,7 @@ else()
   
   set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
     "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ObjectPool.h"
+    "Common/ObjectPool.h" "Common/ObjectPoolThreadSafe.h"
     "Common/ReferenceCounted.h"
     "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
@@ -77,12 +77,40 @@ else()
     "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
     "Common/DataStoring/DataStore.cpp" "Common/DataStoring/DataStore.h"
     )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.cpp"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
+    )
+
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.h"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.cpp"
+    #"${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStatesBindings.h"
+    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
+    "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates"
+    #"${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
+    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
+    )  
   
   set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
     "Entities/Components.cpp" "Entities/Components.h"
-    "Entities/Component.h" "Entities/EntityCommon.h"
+    "Entities/Component.h" "Entities/ComponentState.h" 
+    "Entities/StateHolder.h" "Entities/StateHolder.cpp" 
+    "Entities/StateInterpolator.h"
+    "Entities/EntityCommon.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
+    "Entities/ScriptComponentHolder.cpp" "Entities/ScriptComponentHolder.h"
+    "Entities/ScriptSystemWrapper.cpp" "Entities/ScriptSystemWrapper.h"
     "Entities/System.h" "Entities/Systems.cpp" "Entities/Systems.h"
+    "Entities/GameWorldFactory.h" "Entities/GameWorldFactory.cpp"
+    "Generated/StandardWorld.h" "Generated/StandardWorld.cpp"
+    "Generated/ComponentStates.h" "Generated/ComponentStates.cpp"
     )
   
   file(GLOB GroupApplication "Application/AppDefine.cpp" "Application/AppDefine.h"
@@ -99,12 +127,14 @@ else()
     COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
     DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
 
   add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
     COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
     DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
 
   
@@ -140,22 +170,35 @@ else()
     "Script/Console.cpp" "Script/Console.h"
     "Script/ScriptArgumentsProvider.cpp" "Script/ScriptArgumentsProvider.h"
     "Script/ScriptExecutor.cpp" "Script/ScriptExecutor.h"
+    "Script/ScriptTypeResolver.cpp" "Script/ScriptTypeResolver.h"
     "Script/ScriptModule.cpp" "Script/ScriptModule.h"
     "Script/ScriptNotifiers.cpp" "Script/ScriptNotifiers.h"
     "Script/ScriptRunningSetup.cpp" "Script/ScriptRunningSetup.h"
     "Script/ScriptScript.cpp" "Script/ScriptScript.h"
+    "Script/AccessMask.cpp" "Script/AccessMask.h"
+    "Script/AddonTypes.h"
+    "Script/ScriptCallingHelpers.h"
+    "Script/CustomScriptRunHelpers.h"
+    "Script/ScriptConversionHelpers.h"
+    "Script/MSVCAlternativeConstexprStuff.h"
     )
 
   set(GroupScriptInterface
-    "Script/Interface/ScriptEventListener.h" "Script/Interface/ScriptLock.h"
+    "Script/Interface/ScriptEventListener.h"
+    "Script/Interface/ScriptLock.h"
+    "Script/Interface/ScriptDelegateSlot.h"
     )
 
   set(GroupScriptBindings  
     "Script/Bindings/BindHelpers.h"
+    "Script/Bindings/BindStandardFunctions.h" "Script/Bindings/BindStandardFunctions.cpp"
     "Script/Bindings/CommonEngineBind.h" "Script/Bindings/CommonEngineBind.cpp"
+    "Script/Bindings/OgreBind.h" "Script/Bindings/OgreBind.cpp"
+    "Script/Bindings/NewtonBind.h" "Script/Bindings/NewtonBind.cpp"
     "Script/Bindings/GuiScriptBind.h" "Script/Bindings/GuiScriptBind.cpp"
     "Script/Bindings/TypesBind.h" "Script/Bindings/TypesBind.cpp"
-    "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"    
+    "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"
+    "Script/Bindings/StandardWorldBindHelper.h" "Generated/StandardWorldBindings.h"
     )
   
 
@@ -166,6 +209,7 @@ else()
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
     "GUI/AlphaHitCache.cpp" "GUI/AlphaHitCache.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
+    "GUI/GuiObjectExtraParameters.h"
     )
 
   set(GroupGUIWidgets
@@ -175,7 +219,13 @@ else()
 
 
   
-  file(GLOB GroupNewton "Newton/*.cpp" "Newton/*.h")
+  file(GLOB GroupNewton 
+    "Newton/NewtonConversions.h"
+    "Newton/NewtonManager.cpp" "Newton/NewtonManager.h"
+    "Newton/PhysicalMaterial.cpp" "Newton/PhysicalMaterial.h"
+    "Newton/PhysicalWorld.cpp" "Newton/PhysicalWorld.h"
+    "Newton/PhysicsMaterialManager.cpp" "Newton/PhysicsMaterialManager.h"
+  )
 
 
   file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
@@ -196,8 +246,9 @@ else()
   file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
   set(GroupSound
     "Sound/SoundDevice.cpp" "Sound/SoundDevice.h"
-    "Sound/SoundPlayingSlot.cpp" "Sound/SoundPlayingSlot.h"
-    "Sound/SoundStream.h" "Sound/SoundStream.cpp"
+    "Sound/AudioSource.h" "Sound/AudioSource.cpp"
+    "Sound/ProceduralSound.h" "Sound/ProceduralSound.cpp"
+    "Sound/SoundInternalTypes.h" "Sound/SoundInternalTypes.cpp"
     )
 
   file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
@@ -254,6 +305,10 @@ if(USE_ANGELSCRIPT)
     message(SEND_ERROR "AngelScript add_on files haven't been installed to the "
       "ThirdParty/include directory")
   endif()
+
+  add_library(AngelScriptAddons ${GroupScriptAddons})
+  set_target_properties(AngelScriptAddons PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+  
 endif()
 
 # set groups
@@ -313,7 +368,7 @@ endif()
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupMath} ${GroupSound}
-  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}  ${GroupScriptAddons} 
+  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}  # ${GroupScriptAddons} 
   ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
   ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
   ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
@@ -343,14 +398,25 @@ else()
 endif()
 
 # Link the engine against dependencies
-target_link_libraries(Engine ${LEVIATHAN_ENGINE_LIBRARIES})
+target_link_libraries(Engine PRIVATE ${LEVIATHAN_ENGINE_LIBRARIES})
 
 if(NOT WIN32)
   # Link with X11 and threads
-  target_link_libraries(Engine ${X11_LIBRARIES} ${X11_Xmu_LIB}
+  target_link_libraries(Engine PRIVATE ${X11_LIBRARIES} ${X11_Xmu_LIB}
     ${CMAKE_THREAD_LIBS_INIT})
   
 endif(NOT WIN32)
+
+if(WIN32 AND LEVIATHAN_FULL_BUILD)
+  
+  # Angelscript needs /LTCG flag
+  # It now actually doesn't with the new build setup stuff
+  # set_target_properties(Engine PROPERTIES LINK_FLAGS "/LTCG")
+  
+endif()
+
+set_property(TARGET Engine PROPERTY CXX_STANDARD 17)
+set_property(TARGET Engine PROPERTY CXX_EXTENSIONS OFF)
 
 # Avoid Xlib headers and windows header in the precompiled header to avoid macros destroying everything
 set_target_properties(Engine PROPERTIES 

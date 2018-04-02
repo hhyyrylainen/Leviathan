@@ -129,8 +129,7 @@ enum ITERATORFLAG_SET{
 class StringIterator{
 public:
     //! \brief Creates a iterator from the iterating object
-    //! \param TakesOwnership Set to true when iterator should be deleted by this object
-    DLLEXPORT StringIterator(StringDataIterator* iterator, bool TakesOwnership = false);	
+    DLLEXPORT StringIterator(std::unique_ptr<StringDataIterator>&& iterator);
 
     //! \brief Helper constructor for common string type
     DLLEXPORT StringIterator(const std::wstring &text);
@@ -152,7 +151,7 @@ public:
     DLLEXPORT virtual ~StringIterator();
 
     //! \brief Changes the current iterator to the new iterator and goes to the beginning
-    DLLEXPORT void ReInit(StringDataIterator* iterator, bool TakesOwnership = false);
+    DLLEXPORT void ReInit(std::unique_ptr<StringDataIterator>&& iterator);
     //! \brief Helper function for ReInit for common string type
     DLLEXPORT void ReInit(const std::wstring &text);
     //! \brief Helper function for ReInit for common string type
@@ -584,6 +583,17 @@ public:
     inline bool IsOutOfBounds(){
 
         return !DataIterator->IsPositionValid();
+    }
+
+    // Flag checking methods for outside callers //
+    inline bool IsInsideString(){
+
+        return CurrentFlags & ITERATORFLAG_SET_INSIDE_STRING;
+    }
+
+    inline bool IsInsideComment(){
+
+        return CurrentFlags & ITERATORFLAG_SET_INSIDE_CCOMMENT;
     }
 
     //! \brief Returns substring from the wanted indexes

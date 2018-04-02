@@ -251,48 +251,56 @@ skipfirstwaitforthreadslabel:
 
 DLLEXPORT void Leviathan::ThreadingManager::WaitForAllTasksToFinish(){
 	// Use this lock the entire function //
-	GUARD_LOCK_NAME(lockit);
-
-    // TODO: this could also be done by joining the task queuer thread and returning from there
-    // and then restarting the queuer thread
+	GUARD_LOCK();
     
 	// See if empty right now and loop until it is //
-	while(!WaitingTasks.empty()){
+	while(true){
 
+        WaitForWorkersToEmpty(guard);
+
+        // Unlock us for a second
+        guard.unlock();
 		// Make the queuer run //
 		TaskQueueNotify.notify_all();
+        guard.lock();
 
-		// Wait for some time //
-        TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(10));
+        WaitForWorkersToEmpty(guard);        
+        WaitForWorkersToEmpty(guard);        
+
+        if(WaitingTasks.empty())
+            return;
 	}
 
-	// Wait for threads to empty up //
-	bool allavailable = false;
-
-	// We want to skip wait on loop //
-	goto skipfirstwaitforthreadslabel2;
-
-	while(!allavailable){
-
-		// Wait for tasks to update //
-        TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(1));
-
-skipfirstwaitforthreadslabel2:
-
-
-		// Set to true until a thread is busy //
-		allavailable = true;
-
-		for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
-			if((*iter)->HasRunningTask()){
-				allavailable = false;
-				break;
-			}
-		}
-	}
-
+    WaitForWorkersToEmpty(guard);
 }
 
+DLLEXPORT void ThreadingManager::WaitForWorkersToEmpty(Lock &guard){
+
+    // Wait for threads to empty up //
+    bool allavailable = false;
+    
+    // We want to skip wait on loop //
+    goto skipfirstwaitforthreadslabel2;
+    
+    while(!allavailable){
+        
+        // Wait for tasks to update //
+        TaskQueueNotify.wait_for(guard, std::chrono::milliseconds(1));
+        
+    skipfirstwaitforthreadslabel2:
+        
+        // Set to true until a thread is busy //
+        allavailable = true;
+        
+        for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter){
+            if((*iter)->HasRunningTask()){
+                allavailable = false;
+                break;
+            }
+        }
+    }
+}
+// ------------------------------------ //
 DLLEXPORT void Leviathan::ThreadingManager::NotifyTaskFinished(shared_ptr<QueuedTask> task){
 	// We need locking for re-adding it //
 	if(task->IsRepeating()){

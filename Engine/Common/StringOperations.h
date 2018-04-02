@@ -33,7 +33,7 @@ constexpr char UNIVERSAL_LINE_SEPARATOR[] = "\n";
 class StringOperations{
 public:
     template<typename CharType>
-		static bool IsCharacterWhitespace(CharType character){
+        static bool IsCharacterWhitespace(CharType character){
         if((int)character <= 32)
             return true;
 
@@ -44,7 +44,7 @@ public:
     }
 
     template<typename CharType>
-		static bool IsCharacterQuote(CharType character){
+        static bool IsCharacterQuote(CharType character){
 
         if(character == '"' || character == '\'')
             return true;
@@ -76,10 +76,9 @@ public:
 
     // ------------------ Path related operations ------------------ //
     template<class StringTypeN>
-		static const StringTypeN RemoveExtension(const StringTypeN &filepath,
+        static const StringTypeN RemoveExtension(const StringTypeN &filepath,
             bool delpath = true)
     {
-
         size_t startcopy = 0;
         size_t endcopy;
 
@@ -121,7 +120,7 @@ public:
     }
 
     template<class StringTypeN>
-		static const StringTypeN GetExtension(const StringTypeN &filepath){
+        static const StringTypeN GetExtension(const StringTypeN &filepath){
         size_t startcopy = 0;
         size_t endcopy = filepath.size()-1;
 
@@ -143,7 +142,7 @@ public:
     }
 
     template<class StringTypeN>
-		static const StringTypeN ChangeExtension(const StringTypeN& filepath,
+        static const StringTypeN ChangeExtension(const StringTypeN& filepath,
             const StringTypeN &newext)
     {
         size_t startcopy = 0;
@@ -169,7 +168,7 @@ public:
     }
 
     template<class StringTypeN>
-		static const StringTypeN RemovePath(const StringTypeN &filepath){
+        static const StringTypeN RemovePath(const StringTypeN &filepath){
         size_t startcopy = 0;
         size_t endcopy = filepath.size()-1;
 
@@ -193,7 +192,7 @@ public:
         // Return empty if no data is valid //
         if(startcopy > endcopy || startcopy >= filepath.size() || endcopy >= filepath.size())
             return StringTypeN();
-			
+            
 
         // return the wanted part //
         return filepath.substr(startcopy, endcopy-startcopy+1);
@@ -201,7 +200,7 @@ public:
 
     //! \brief Returns the path part of a path+filename
     template<class StringTypeN>
-		static const StringTypeN GetPath(const StringTypeN &filepath){
+        static const StringTypeN GetPath(const StringTypeN &filepath){
         size_t startcopy = 0;
         size_t endcopy = filepath.size()-1;
 
@@ -239,29 +238,37 @@ public:
 
     //! \brief Returns the protocol from a URL
     //! \example URLProtocol("http://google.fi/index.html") = "http"
-    static std::string URLProtocol(const std::string &url);
+    DLLEXPORT static std::string URLProtocol(const std::string &url);
 
     //! \brief Returns the base hostname from a URL
     //! \example BaseHostName("http://google.fi/index.html") = "http://google.fi/"
-    static std::string BaseHostName(const std::string &url);
+    DLLEXPORT static std::string BaseHostName(const std::string &url);
 
     //! \brief Returns the path of an url
     //!
     //! This returns everything after what BaseHostName would have returned
     //! \example URLPath("http://google.fi/index.html") = "index.html"
-    static std::string URLPath(const std::string &url);
+    DLLEXPORT static std::string URLPath(const std::string &url);
 
     //! \brief Combines a URL with another (relative) URL
     //! \example CombineURL("http://google.fi/index.html", "img.jpg") =
     //! "http://google.fi/img.jpg"
-    static std::string CombineURL(const std::string &first, const std::string &second);
-    
+    DLLEXPORT static std::string CombineURL(const std::string &first,
+        const std::string &second);
 
+    //! \brief Removes multiple hostnames from an address
+    //!
+    //! \example RemovePartsBeforeAbsoluteURLParts(
+    //! "http://example.com//a.example.com/img.png") = "http://a.example.com/img.png"
+    DLLEXPORT static std::string RemovePartsBeforeAbsoluteURLParts(const std::string &url);
+
+    //! \brief Returns true if string looks like a top level domain
+    DLLEXPORT static bool IsURLDomain(const std::string &str);
 
 
     //! \brief Changes all line separators to Windows line separators
     template<class StringTypeN>
-		static const StringTypeN ChangeLineEndsToWindows(const StringTypeN &input){
+        static const StringTypeN ChangeLineEndsToWindows(const StringTypeN &input){
 
         StringTypeN results;
             
@@ -290,7 +297,7 @@ public:
 
                 continue;
             }
-				
+                
             if (!copyparts.Start)
                 copyparts.Start = i;
 
@@ -306,7 +313,7 @@ public:
 
     //! \brief Changes all line separators to universal line separators
     template<class StringTypeN>
-		static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN &input){
+        static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN &input){
 
         StringTypeN results;
 
@@ -405,7 +412,7 @@ public:
 
     // ------------------ General string operations ------------------ //
     template<class StringTypeN>
-		static bool CutString(const StringTypeN &strtocut, const StringTypeN &separator,
+        static bool CutString(const StringTypeN &strtocut, const StringTypeN &separator,
             std::vector<StringTypeN>& vec)
     {
         // scan the input and gather positions for string copying //
@@ -456,6 +463,13 @@ public:
             }
         }
 
+        // Return empty string if there is nothing here //
+        if(CopyOperations.empty()){
+
+            vec.push_back(StringTypeN());
+            return false;
+        }
+
         // make sure final position has end //
         if(!CopyOperations.back().End)
             CopyOperations.back().End = strtocut.length();
@@ -490,7 +504,7 @@ public:
     }
 
     template<class StringTypeN>
-		static int CountOccuranceInString(const StringTypeN &data,
+        static int CountOccuranceInString(const StringTypeN &data,
             const StringTypeN &lookfor)
     {
 
@@ -530,7 +544,7 @@ public:
     }
 
     template<class StringTypeN>
-		static StringTypeN Replace(const StringTypeN &data,
+        static StringTypeN Replace(const StringTypeN &data,
             const StringTypeN &toreplace, const StringTypeN &replacer)
     {
         // We construct an output string from the wanted bits //
@@ -606,7 +620,7 @@ public:
 
 
     template<class StringTypeN>
-		static StringTypeN ReplaceSingleCharacter(const StringTypeN &data,
+        static StringTypeN ReplaceSingleCharacter(const StringTypeN &data,
             const StringTypeN &toreplace, int replacer = ' ')
     {
         // Copy the string and then modify it //
@@ -634,7 +648,7 @@ public:
     }
 
     template<class StringTypeN>
-		static StringTypeN RemoveCharacters(const StringTypeN &data,
+        static StringTypeN RemoveCharacters(const StringTypeN &data,
             const StringTypeN &toremove)
     {
         StringTypeN out;
@@ -664,7 +678,7 @@ public:
     }
 
     template<class StringTypeN>
-		static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
+        static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
 
         size_t firstpos = 0;
         // Find the copy start position //
@@ -697,7 +711,7 @@ public:
     }
 
     template<class StringTypeN>
-		static StringTypeN StitchTogether(const std::vector<StringTypeN*> &data,
+        static StringTypeN StitchTogether(const std::vector<StringTypeN*> &data,
             const StringTypeN &separator)
     {
         StringTypeN ret;
@@ -711,7 +725,7 @@ public:
         }
             
         totalcharacters += separator.length()*data.size();
-			
+            
         // By reserving space we don't have to allocate more memory
         // during copying which might be faster
         ret.reserve(totalcharacters);
@@ -727,7 +741,7 @@ public:
     }
 
     template<class StringTypeN>
-		static StringTypeN StitchTogether(const std::vector<StringTypeN> &data,
+        static StringTypeN StitchTogether(const std::vector<StringTypeN> &data,
             const StringTypeN &separator)
     {
         StringTypeN ret;
@@ -741,7 +755,7 @@ public:
         }
         
         totalcharacters += separator.length()*data.size();
-			
+            
         // By reserving space we don't have to allocate more memory
         // during copying which might be faster
         ret.reserve(totalcharacters);
@@ -758,7 +772,7 @@ public:
 
 
     template<class StringTypeN>
-		static StringTypeN StitchTogether(
+        static StringTypeN StitchTogether(
             const std::vector<std::shared_ptr<StringTypeN>> &data,
             const StringTypeN &separator)
     {
@@ -788,7 +802,7 @@ public:
     }
 
     template<class StringTypeN>
-		static void RemovePreceedingTrailingSpaces(StringTypeN &str){
+        static void RemovePreceedingTrailingSpaces(StringTypeN &str){
         StartEndIndex CutPositions;
 
         // search the right part of the string //
@@ -847,7 +861,7 @@ public:
     }
 
     template<class StringTypeN>
-		static bool CompareInsensitive(const StringTypeN &data,
+        static bool CompareInsensitive(const StringTypeN &data,
             const StringTypeN &second)
     {
         if(data.size() != second.size())
@@ -880,7 +894,7 @@ public:
     }
 
     template<class StringTypeN>
-		static bool StringStartsWith(const StringTypeN &data,
+        static bool StringStartsWith(const StringTypeN &data,
             const StringTypeN &tomatch)
     {
         size_t foundstop = data.find(tomatch);
@@ -888,7 +902,7 @@ public:
     }
     
     template<class StringTypeN>
-		static bool IsStringNumeric(const StringTypeN &data){
+        static bool IsStringNumeric(const StringTypeN &data){
         for(size_t i = 0; i < data.size(); i++){
             if((data[i] < FIRST_NUMBER ||
                     data[i] > LAST_NUMBER) &&
@@ -938,8 +952,8 @@ public:
 
     //! \brief Appends spaces number of spaces to each line in str and returns the result
     template<class StringTypeN>
-        static StringTypeN IndentLines(const StringTypeN &str, size_t spaces) {
-
+    static StringTypeN IndentLines(const StringTypeN &str, size_t spaces){
+        
         const auto indentstr = Indent<StringTypeN>(spaces);
 
         StringTypeN result;
@@ -983,6 +997,17 @@ public:
         return result;
     }
 
+    template<class StringTypeN>
+    static StringTypeN RemoveEnding(const StringTypeN &str, const StringTypeN &ending){
+
+        const auto pos = str.rfind(ending);
+
+        if(pos != StringTypeN::npos && str.length() - pos == ending.length())
+            return str.substr(0, pos);
+        
+        return str;
+    }
+
     //! \returns True if a character is a line terminating character
     static bool IsLineTerminator(int32_t codepoint) {
 
@@ -1008,99 +1033,9 @@ public:
         return false;
     }
 
-    // ------------------ Named non-template versions ------------------ //
-    FORCE_INLINE static const std::wstring GetExtensionWstring(
-        const std::wstring &filepath)
-    {
-        return GetExtension<std::wstring>(filepath);
-    }
-        
-    FORCE_INLINE static const std::string GetExtensionString(
-        const std::string &filepath)
-    {
-        return GetExtension<std::string>(filepath);
-    }
-
-    FORCE_INLINE static const std::wstring GetPathWstring(
-        const std::wstring &filepath)
-    {
-        return GetPath<std::wstring>(filepath);
-    }
-        
-    FORCE_INLINE static const std::string GetPathString(const std::string &filepath){
-            
-        return GetPath<std::string>(filepath);
-    }
-
-    FORCE_INLINE static const std::wstring RemoveExtensionWstring(
-        const std::wstring &filepath, bool delpath = true)
-    {
-        return RemoveExtension<std::wstring>(filepath, delpath);
-    }
-        
-    FORCE_INLINE static const std::string RemoveExtensionString(
-        const std::string &filepath, bool delpath = true)
-    {
-        return RemoveExtension<std::string>(filepath, delpath);
-    }
-
-    FORCE_INLINE static const std::wstring ChangeExtensionWstring(
-        const std::wstring &filepath, const std::wstring &newext)
-    {
-        return ChangeExtension<std::wstring>(filepath, newext);
-    }
-        
-    FORCE_INLINE static const std::string ChangeExtensionString(
-        const std::string &filepath, const std::string &newext)
-    {
-        return ChangeExtension<std::string>(filepath, newext);
-    }
-
-    FORCE_INLINE static const std::wstring RemovePathWstring(
-        const std::wstring &filepath)
-    {
-        return RemovePath<std::wstring>(filepath);
-    }
-        
-    FORCE_INLINE static const std::string RemovePathString(
-        const std::string &filepath)
-    {
-        return RemovePath<std::string>(filepath);
-    }
-
-    FORCE_INLINE static const std::wstring ChangeLineEndsToUniversalWstring(
-        const std::wstring &input)
-    {
-        return ChangeLineEndsToUniversal<std::wstring>(input);
-    }
-        
-    FORCE_INLINE static const std::string ChangeLineEndsToUniversalString(
-        const std::string &input)
-    {
-        return ChangeLineEndsToUniversal<std::string>(input);
-    }
-
-    FORCE_INLINE static const std::wstring ChangeLineEndsToWindowsWstring(
-        const std::wstring &input)
-    {
-        return ChangeLineEndsToWindows<std::wstring>(input);
-    }
-        
-    FORCE_INLINE static const std::string ChangeLineEndsToWindowsString(
-        const std::string &input)
-    {
-        return ChangeLineEndsToWindows<std::string>(input);
-    }
-
-    FORCE_INLINE static std::string IndentLinesString(const std::string &str,
-        size_t spaces)
-    {
-        return IndentLines<std::string>(str, spaces);
-    }
-
 private:
-    StringOperations();
-    ~StringOperations();
+    StringOperations() = delete;
+    ~StringOperations() = delete;
 };
 
 

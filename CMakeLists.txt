@@ -1,5 +1,10 @@
 # CMake file for generating all project files
-cmake_minimum_required(VERSION 2.8.3)
+# Newer version required for VS_DEBUGGER_WORKING_DIRECTORY
+if(WIN32)
+  cmake_minimum_required(VERSION 3.10)
+else()
+  cmake_minimum_required(VERSION 3.6)
+endif()
 
 project(Leviathan)
 
@@ -148,9 +153,9 @@ if(NOT ONLY_DOCUMENTATION)
 endif()
 
 # Configure engine include file
-configure_file("${PROJECT_SOURCE_DIR}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
+configure_file("${LEVIATHAN_SRC}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
 # Make a readonly copy of it
-file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "${PROJECT_SOURCE_DIR}/Engine"
+file(COPY "${PROJECT_BINARY_DIR}/Include.h" DESTINATION "${LEVIATHAN_SRC}/Engine"
   NO_SOURCE_PERMISSIONS
   FILE_PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
 
@@ -211,6 +216,10 @@ if(NOT ONLY_DOCUMENTATION)
     install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
     
   endif()
+
+  # Set the tests as the default startup project
+  set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY
+    VS_STARTUP_PROJECT LeviathanTest)
 endif()
 
 ##### All symbol creating target

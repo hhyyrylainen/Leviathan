@@ -25,7 +25,7 @@ public:
         LErrorReporter* reporterror);
 
     static DLLEXPORT std::unique_ptr<ObjectFile> ProcessObjectFileFromString(
-        std::string filecontents,  const std::string &filenameforerrors,
+        const std::string &filecontents, const std::string &filenameforerrors,
         LErrorReporter* reporterror);
 
 

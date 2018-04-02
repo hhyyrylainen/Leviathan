@@ -2,17 +2,26 @@
     
     \section intro_sec Introduction
 
-    See next: \ref tutorials
+    Leviathan is a 3D game engine based on open source libraries Ogre, CEGUI and others.
+
+    [Main repository](https://bitbucket.org/hhyyrylainen/leviathan)
+    [Website](https://leviathanengine.com/)
+
+    See next: \ref tutorials and \ref angelscript_main
+
+    \section mainlinktoclasslist Full Reference
+
+    See this page: \ref Leviathan
     
     \section design_choices Design choices
 
-    \ref object_locking How Leviathan handless thread-safety
+    \ref networkformat packet format
 
-    \ref networkformat Leviathan packet format
+    \ref object_locking How Leviathan handless thread-safety
 
     \section references_list References
 
-    \ref angelscript_main AngelScript scripting reference
+    \ref angelscript_main scripting reference
     
     \section generaltopics General topics
     

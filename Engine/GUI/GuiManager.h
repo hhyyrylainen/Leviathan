@@ -1,31 +1,30 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "../Application/AppDefine.h"
 #include "BaseGuiObject.h"
+
+#include "../Application/AppDefine.h"
 #include "../Common/ThreadSafe.h"
 #include "../TimeIncludes.h"
 
 #include "OgreRenderQueueListener.h"
 
-namespace Leviathan{
-namespace GUI{
+namespace Leviathan { namespace GUI {
 
 //! \brief A class for handling system clipboard interaction
 class GuiClipboardHandler;
 
 //! \brief Holds the state of some collections stored by name
-struct GuiCollectionStates{
+struct GuiCollectionStates {
 private:
     //! \brief Helper struct that allows keeping all the data in a single vector
-    struct SingleCollectionEntry{
+    struct SingleCollectionEntry {
         //! \brief Constructs a new entry for a single GuiCollection
-        SingleCollectionEntry(const std::string &name, bool enabled) :
+        SingleCollectionEntry(const std::string& name, bool enabled) :
             IsEnabled(enabled), Name(new std::string(name))
         {
-
         }
 
         bool IsEnabled;
@@ -34,15 +33,17 @@ private:
 
 public:
     //! \brief Creates an empty list of GUI state
-    GuiCollectionStates(size_t expectedcount = 0){
+    GuiCollectionStates(size_t expectedcount = 0)
+    {
         CollectionNames.reserve(expectedcount);
     }
 
     //! \brief Adds a new entry to the list
-    inline void AddNewEntry(const std::string &name, bool state){
+    inline void AddNewEntry(const std::string& name, bool state)
+    {
 
-        CollectionNames.push_back(std::unique_ptr<SingleCollectionEntry>(
-                    new SingleCollectionEntry(name, state)));
+        CollectionNames.push_back(
+            std::unique_ptr<SingleCollectionEntry>(new SingleCollectionEntry(name, state)));
     }
 
 
@@ -52,7 +53,7 @@ public:
 
 //! \brief Main GUI controller
 //! \todo Add GUI window objects to this which are associated with different windows
-class GuiManager{
+class GuiManager {
 public:
     DLLEXPORT GuiManager();
     DLLEXPORT ~GuiManager();
@@ -78,7 +79,8 @@ public:
     DLLEXPORT bool ProcessKeyDown(int32_t key, int specialmodifiers);
 
     //! \todo Actually pass this to Views
-    DLLEXPORT inline void SetVisible(bool visible){
+    DLLEXPORT inline void SetVisible(bool visible)
+    {
         Visible = visible;
     }
     //! \brief Notifies internal browsers
@@ -98,19 +100,20 @@ public:
     //! \brief Returns the main GUI context
     DLLEXPORT CEGUI::GUIContext* GetMainContext();
 
-    DLLEXPORT CEGUI::InputAggregator* GetContextInput(){
+    DLLEXPORT CEGUI::InputAggregator* GetContextInput()
+    {
         return ContextInput;
     }
 
     // function split into peaces //
-    DLLEXPORT bool LoadCollection(std::vector<std::shared_ptr<ObjectFileObject>> &data,
-        ObjectFileObject &collectiondata);
+    DLLEXPORT bool LoadCollection(std::vector<std::shared_ptr<ObjectFileObject>>& data,
+        ObjectFileObject& collectiondata);
 
     // file loading //
 
     //! \brief Loads a GUI file
-    DLLEXPORT bool LoadGUIFile(const std::string &file, bool nochangelistener = false,
-        int iteration = 0);
+    DLLEXPORT bool LoadGUIFile(
+        const std::string& file, bool nochangelistener = false, int iteration = 0);
 
     //! \brief Unloads the currently loaded file
     DLLEXPORT void UnLoadGUIFile();
@@ -126,22 +129,23 @@ public:
 
 
     //! set to "none" to use default
-    DLLEXPORT void SetMouseTheme(const std::string &tname);
+    DLLEXPORT void SetMouseTheme(const std::string& tname);
 
     //! Sets the tooltip type to use
-    DLLEXPORT void SetTooltipType(const std::string &type);
+    DLLEXPORT void SetTooltipType(const std::string& type);
 
     // collection managing //
     DLLEXPORT void AddCollection(GuiCollection* add);
-        
-    DLLEXPORT GuiCollection* GetCollection(const int &id, const std::string &name = "");
 
-    DLLEXPORT void SetCollectionState(const std::string &name, bool state);
-    DLLEXPORT void SetCollectionAllowEnableState(const std::string &name, bool allow = true);
-    DLLEXPORT inline void PossiblyGUIMouseDisable(){
+    DLLEXPORT GuiCollection* GetCollection(const int& id, const std::string& name = "");
+
+    DLLEXPORT void SetCollectionState(const std::string& name, bool state);
+    DLLEXPORT void SetCollectionAllowEnableState(const std::string& name, bool allow = true);
+    DLLEXPORT inline void PossiblyGUIMouseDisable()
+    {
         GuiMouseUseUpdated = true;
     }
-        
+
     // called when mouse cannot be captured (should force at least one collection on) //
     DLLEXPORT void OnForceGUIOn();
 
@@ -150,7 +154,7 @@ public:
 
     //! \brief Returns a single CEGUI::Window matching the name
     //! \todo Allow error reporting
-    DLLEXPORT CEGUI::Window* GetWindowByStringName(const std::string &namepath);
+    DLLEXPORT CEGUI::Window* GetWindowByStringName(const std::string& namepath);
 
 
     //! \brief Returns a string containing names of types that don't look good/break
@@ -158,27 +162,28 @@ public:
     //!
     //! For use with PlayAnimationOnWindow the ignoretypenames parameter if you just want
     //! to avoid breaking some rendering
-    DLLEXPORT FORCE_INLINE static std::string GetCEGUITypesWithBadAnimations(){
+    DLLEXPORT FORCE_INLINE static std::string GetCEGUITypesWithBadAnimations()
+    {
         return "";
     }
 
 
     //! \brief Creates and plays an animation on a CEGUI Window
     //! \param applyrecursively Applies the same animation to the child windows
-    DLLEXPORT bool PlayAnimationOnWindow(const std::string &windowname,
-        const std::string &animationname, bool applyrecursively = false,
-        const std::string &ignoretypenames = "");
+    DLLEXPORT bool PlayAnimationOnWindow(const std::string& windowname,
+        const std::string& animationname, bool applyrecursively = false,
+        const std::string& ignoretypenames = "");
 
-        
+
     //! \brief Proxy overload for PlayAnimationOnWindow
-    DLLEXPORT bool PlayAnimationOnWindowProxy(const std::string &windowname,
-        const std::string &animationname);
+    DLLEXPORT bool PlayAnimationOnWindowProxy(
+        const std::string& windowname, const std::string& animationname);
 
 
     //! \brief Stops the Gui from capturing the mouse when
     //! no Gui on-keeping collections are active
     DLLEXPORT void SetDisableMouseCapture(bool newvalue);
-        
+
     //! \brief Tries to inject a paste request to CEGUI
     DLLEXPORT bool InjectPasteRequest();
 
@@ -190,40 +195,36 @@ public:
 
     //! \brief Loads a GUI scheme file
     //! \exception If can't load
-    DLLEXPORT static void LoadGUITheme(const std::string &filename); 
-    
-protected:
+    DLLEXPORT static void LoadGUITheme(const std::string& filename);
 
+protected:
     //! Is called by folder listeners to notify of Gui file changes
-    void _FileChanged(const std::string &file, ResourceFolderListener &caller);
-        
+    void _FileChanged(const std::string& file, ResourceFolderListener& caller);
+
 
 private:
-
     //! The implementation of PlayAnimationOnWindow
-    void _PlayAnimationOnWindow(CEGUI::Window* targetwind,
-        CEGUI::Animation* animdefinition, bool recurse,
-        const std::string &ignoretypenames);
+    void _PlayAnimationOnWindow(CEGUI::Window* targetwind, CEGUI::Animation* animdefinition,
+        bool recurse, const std::string& ignoretypenames);
 
     // Static animation files //
-    static bool IsAnimationFileLoaded(const std::string &file);
+    static bool IsAnimationFileLoaded(const std::string& file);
 
     //! \warning Won't check if the file is already in the vector,
     //! use IsAnimationFileLoaded
-    static void SetAnimationFileLoaded(const std::string &file);
-    
-private:
+    static void SetAnimationFileLoaded(const std::string& file);
 
+private:
     bool Visible = true;
 
     //! Used to determine when to scan collections for active ones
     bool GuiMouseUseUpdated = true;
-        
+
     //! Set when containing window of the GUI shouldn't be allowed to capture mouse
     bool GuiDisallowMouseCapture = true;
 
     GraphicalInputEntity* ThisWindow = nullptr;
-        
+
     //! Gui elements
     std::vector<BaseGuiObject*> Objects;
 
@@ -265,8 +266,6 @@ private:
     //! Holds the loaded animation files, used to prevent loading a single file
     //! multiple times
     static std::vector<std::string> LoadedAnimationFiles;
-        
 };
 
-}}
-
+}} // namespace Leviathan::GUI

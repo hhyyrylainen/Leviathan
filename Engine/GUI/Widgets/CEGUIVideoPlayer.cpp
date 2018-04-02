@@ -116,5 +116,11 @@ float CEGUIVideoPlayer::GetCurrentTime() const{
 
     return Player.GetCurrentTime();
 }
+// ------------------------------------ //
+Delegate* CEGUIVideoPlayer::GetOnPlaybackEnded(){
+
+    Player.OnPlayBackEnded.AddRef();
+    return &Player.OnPlayBackEnded;
+}
 
 

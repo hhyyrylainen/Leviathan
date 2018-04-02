@@ -38,10 +38,10 @@ public:
 
     //! \returns The alpha value of pixel at x, y. 0 means fully transparent
     //! \exception InvalidArgument if x or y out of range
-    uint8_t GetPixel(uint32_t x, uint32_t y) const;
+    DLLEXPORT uint8_t GetPixel(uint32_t x, uint32_t y) const;
 
     //! \brief Verifies that at least one alpha pixel is > 0
-    bool HasNonZeroPixels() const;
+    DLLEXPORT bool HasNonZeroPixels() const;
 
 protected:
 
@@ -81,8 +81,8 @@ struct ImageSetSubImage{
 class AlphaHitCache{
 public:
 
-    AlphaHitCache();
-    ~AlphaHitCache();
+    DLLEXPORT AlphaHitCache();
+    DLLEXPORT ~AlphaHitCache();
 
     //! \brief 
     //! \note This is recommended to be called before the game is
@@ -93,29 +93,31 @@ public:
     //! like calling GetDataForImageProperty but that might change in the future so using this
     //! is recommended.
     //! \returns True if loading was successful. False if imageproperty couldn't be loaded
-    bool PreLoadImage(const std::string &imageproperty);
+    DLLEXPORT bool PreLoadImage(const std::string &imageproperty);
 
     //! \brief Loads the image data from image name
     //! \param image The name of the image. For example "TaharezLook"
-    std::shared_ptr<AlphaHitLoadedTexture> GetImageData(const std::string &name);
+    DLLEXPORT std::shared_ptr<AlphaHitLoadedTexture> GetImageData(const std::string &name);
 
     //! \brief Handles loading image data for the specific Image property
-    std::shared_ptr<AlpaHitStoredTextureData> GetDataForImageProperty(const std::string &str);
+    DLLEXPORT std::shared_ptr<AlpaHitStoredTextureData> GetDataForImageProperty(
+        const std::string &str);
 
     
     //! \brief Helper for parsing CEGUI image names
     //!
     //! \returns Tuple schema, name. If the string is not properly formed these can be empty
-    static std::tuple<std::string, std::string> ParseImageProperty(const std::string &str);
+    DLLEXPORT static std::tuple<std::string, std::string> ParseImageProperty(
+        const std::string &str);
 
     //! \brief Helper for finding images matching parsed CEGUI names
     //! \returns The image area. Name and sizes will be empty if it wasn't found
     //! \todo Parse imagefile="TaharezLook.png" in case the iamge is not the same name
     //! as the imageset
-    static ImageSetSubImage LoadImageAreaFromImageSet(
+    DLLEXPORT static ImageSetSubImage LoadImageAreaFromImageSet(
         const std::tuple<std::string, std::string> &schemaandname);
 
-    static AlphaHitCache* Get();
+    DLLEXPORT static AlphaHitCache* Get();
     
 protected:
 

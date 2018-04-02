@@ -59,7 +59,7 @@ void Leviathan::ObjectFileProcessor::Initialize(){
 
 	if(iter == RegisteredValues.end()){
 
-		LOG_ERROR("ObjectFileProcessor: RegisteredValues are messed up, "
+		LOG_FATAL("ObjectFileProcessor: RegisteredValues are messed up, "
             "DATAINDEX_TICKTIME is not defined, check the macros!");
         
 		return;
@@ -118,7 +118,7 @@ DLLEXPORT std::unique_ptr<ObjectFile> Leviathan::ObjectFileProcessor::ProcessObj
 
 DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
     ObjectFileProcessor::ProcessObjectFileFromString(
-    std::string filecontents, const std::string &filenameforerrors,
+    const std::string &filecontents, const std::string &filenameforerrors,
     LErrorReporter* reporterror) 
 {
     // Create the target object //
@@ -127,7 +127,7 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
     bool succeeded = true;
 
     // Create an UTF8 supporting iterator //
-    StringIterator itr(new UTF8DataIterator(filecontents), true);
+    StringIterator itr(std::make_unique<UTF8PointerDataIterator>(filecontents));
 
     while(!itr.IsOutOfBounds()){
         
@@ -226,7 +226,19 @@ DLLEXPORT std::unique_ptr<Leviathan::ObjectFile>
         // It failed //
         LogError("parsing file failed. Parsing ended",
             filenameforerrors, itr.GetCurrentLine(), reporterror);
-                        
+
+        // Notify about unended strings and comments //
+
+        if(itr.IsInsideString()){
+            LogError("parsing ended inside unclosed quotes",
+                filenameforerrors, itr.GetCurrentLine(), reporterror);
+        }
+
+        if(itr.IsInsideComment()){
+            LogError("parsing ended inside unclosed comment",
+                filenameforerrors, itr.GetCurrentLine(), reporterror);
+        }
+        
         return nullptr;
     }
 
@@ -394,7 +406,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 		}
 	}
 
-	StringIterator quoteremover(nullptr, false);
+	StringIterator quoteremover;
 
 	// Remove any quotes from the arguments //
 	for(size_t i = 0; i < templateargs.size(); i++){
@@ -404,7 +416,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 		if(chartype == '"' || chartype == '\''){
             
 			// Remove the quotes //
-			quoteremover.ReInit(new UTF8DataIterator(*templateargs[i]), true);
+			quoteremover.ReInit(std::make_unique<UTF8DataIterator>(*templateargs[i]));
 			auto newstr = quoteremover.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
             
 			if(!newstr || newstr->empty()){
@@ -509,7 +521,7 @@ bool Leviathan::ObjectFileProcessor::TryToHandleTemplate(const std::string &file
 
 			if(chartype == '"' || chartype == '\''){
 				// Remove the quotes //
-				quoteremover.ReInit(new UTF8DataIterator(*instanceargs[i]), true);
+				quoteremover.ReInit(std::make_unique<UTF8DataIterator>(*instanceargs[i]));
 				auto newstr = quoteremover.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
                 
 				if(!newstr || newstr->empty()){
@@ -917,6 +929,8 @@ bool Leviathan::ObjectFileProcessor::TryToLoadTextBlock(const std::string &file,
             auto linething = itr.GetUntilLineEnd<std::string>();
 
             // Add it to us //
+            // But make sure we strip also trailing spaces
+            StringOperations::RemovePreceedingTrailingSpaces(*linething);
             ourobj->AddTextLine(*linething);
         }
 	}

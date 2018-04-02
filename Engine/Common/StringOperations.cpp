@@ -15,7 +15,7 @@ template<>
         str[i] = (wchar_t)characters[i];
 }
 
-std::string StringOperations::URLProtocol(const std::string &url){
+DLLEXPORT std::string StringOperations::URLProtocol(const std::string &url){
 
     const auto colonpos = url.find_first_of(':');
 
@@ -25,7 +25,7 @@ std::string StringOperations::URLProtocol(const std::string &url){
     return url.substr(0, colonpos);
 }
 
-std::string StringOperations::BaseHostName(const std::string &url){
+DLLEXPORT std::string StringOperations::BaseHostName(const std::string &url){
 
     if(url.empty())
         return "";
@@ -57,7 +57,7 @@ std::string StringOperations::BaseHostName(const std::string &url){
     return url.substr(0, length);
 }
 
-std::string StringOperations::URLPath(const std::string &url){
+DLLEXPORT std::string StringOperations::URLPath(const std::string &url){
 
     if(url.empty())
         return "";
@@ -88,32 +88,96 @@ std::string StringOperations::URLPath(const std::string &url){
     return url.substr(startCopy, url.size() - startCopy);
 }
 
-std::string StringOperations::CombineURL(const std::string &first, const std::string &second){
-
+DLLEXPORT std::string StringOperations::CombineURL(const std::string &first, 
+    const std::string &second)
+{
+    // To fix messed up urls we always do this cleanup
+    const auto cleanedUpSecond = RemovePartsBeforeAbsoluteURLParts(second);
+    
     if(first.empty())
-        return second;
+        return cleanedUpSecond;
 
-    if(second.empty())
+    if(cleanedUpSecond.empty())
         return first;
 
     // If second is an absolute URL just return it //
-    if(second.find("://") != std::string::npos)
-        return second;
+    if(cleanedUpSecond.find("://") != std::string::npos)
+        return cleanedUpSecond;
 
     // Simplest case: first ends with '/' and second doesn't begin with '/'
-    if(first.back() == '/' && second.front() != '/')
-        return first + second;
+    if(first.back() == '/' && cleanedUpSecond.front() != '/')
+        return first + cleanedUpSecond;
 
     // Second begins with '/': trim the first to the base url and then append the second
-    if(second.front() == '/')
-        return BaseHostName(first) + second.substr(1);
+    if(cleanedUpSecond.front() == '/')
+        return BaseHostName(first) + cleanedUpSecond.substr(1);
 
     // An error catching function
     // If first is the basehostname then just combine them
     if(first.back() != '/' && BaseHostName(first).length() == first.length() + 1)
-        return first + "/" + second;
+        return first + "/" + cleanedUpSecond;
 
     // Most complex case: trim from the end of first until the last '/' and then append second
     const auto lastpos = first.find_last_of('/');
-    return first.substr(0, lastpos + 1) + second;
+    return first.substr(0, lastpos + 1) + cleanedUpSecond;
 }
+// TODO: remove
+#include <iostream>
+DLLEXPORT std::string StringOperations::RemovePartsBeforeAbsoluteURLParts(
+    const std::string &url)
+{
+    // Detect two '//'s in a path
+    const auto colonPos = url.find_first_of(':');
+
+    if(colonPos != std::string::npos){
+
+        // First double slash
+        auto firstDouble = url.find("//", colonPos + 3);
+        // Second
+        const auto secondDouble = url.find("//", firstDouble + 2);
+
+        if(firstDouble != std::string::npos && secondDouble != std::string::npos){
+
+            // If the part between the double slashes looks like a
+            // domain then we cut the part between the protocol and
+            // the first double slash
+            firstDouble += 2;
+
+            if(IsURLDomain(url.substr(firstDouble, secondDouble - firstDouble))){
+
+                return URLProtocol(url) + "://" +
+                    url.substr(firstDouble, secondDouble - firstDouble) + "/" +
+                    url.substr(secondDouble + 2);
+            }
+        }
+    }
+
+    return url;
+}
+
+DLLEXPORT bool StringOperations::IsURLDomain(const std::string &str){
+
+    // Must have a dot
+    bool dotSeen = false;
+
+    for(char c : str){
+        if(c == '.'){
+            dotSeen = true;
+            continue;
+        }
+
+        if(c >= '0' && c <= '9')
+            continue;
+
+        if(c >= 'A' && c <= 'Z')
+            continue;
+        
+        if(c >= 'a' && c <= 'z')
+            continue;
+        
+        return false;
+    }
+    
+    return dotSeen;
+}
+

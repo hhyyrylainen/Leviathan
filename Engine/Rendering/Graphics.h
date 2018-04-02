@@ -1,5 +1,6 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "GraphicalInputEntity.h"
@@ -7,7 +8,6 @@
 #include "OgreFrameListener.h"
 
 namespace Leviathan{
-// forward declarations to avoid having tons of headers here that aren't necessary //
 namespace Rendering{
         
 class ShaderManager;
@@ -15,6 +15,7 @@ class FontManager;
 }
 
 class Graphics : Ogre::FrameListener{
+    friend GraphicalInputEntity;
 public:
     DLLEXPORT Graphics();
     DLLEXPORT ~Graphics();
@@ -40,7 +41,14 @@ public:
 private:
 
     bool InitializeOgre(AppDef* appdef);
-    // ------------------------ //
+
+    //! \brief Load all the new required hlms stuff
+    //! \warning This must be called after an Ogre window has been created
+    //!
+    //! This is called by the first created GraphicalInputEntity
+    void _LoadOgreHLMS();
+
+private:
     bool Initialized = false;
 
     AppDef* AppDefinition = nullptr;

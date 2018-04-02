@@ -25,6 +25,13 @@ namespace Leviathan{
 		DLLEXPORT int GetNumber();
 		DLLEXPORT int GetNumber(int min, int max);
 		DLLEXPORT float GetNumber(float min, float max);
+        //! Basically the same as GetNumber but avoids requiring
+        //! explicit casts to get the float variant
+        DLLEXPORT inline float GetFloat(float min, float max){
+
+            return GetNumber(min, max);
+        }
+        
 		DLLEXPORT float SymmetricRandom();
 
 		// more advanced functions, should not be actually used //

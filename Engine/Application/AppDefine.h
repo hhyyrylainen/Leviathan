@@ -1,8 +1,8 @@
-// ------------------------------------ //
+// Leviathan Game Engine
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-
 #include "Networking/MasterServerInfo.h"
 
 #include "Common/ThreadSafe.h"
@@ -13,38 +13,42 @@
 #include "WindowsInclude.h"
 #endif // _WIN32
 
-namespace Leviathan{
+namespace Leviathan {
 
 class NamedVars;
 
-struct WindowDataDetails{
+struct WindowDataDetails {
     WindowDataDetails();
 #ifdef _WIN32
-    WindowDataDetails(const std::string &title, const int &width, const int &height,
-        const bool &windowed, const bool &windowborder, HICON icon,
-        LeviathanApplication* appvirtualptr);
+    WindowDataDetails(const std::string& title, const int& width, const int& height,
+        const std::string& fullscreen, bool vsync, int displaynumber, int FSAA,
+        const bool& windowborder, HICON icon, LeviathanApplication* appvirtualptr);
 
     void ApplyIconToHandle(HWND hwnd) const;
 
 
     HICON Icon;
 #else
-    WindowDataDetails(const std::string &title, const int &width, const int &height,
-        const bool &windowed, const bool &windowborder,
-        LeviathanApplication* appvirtualptr);
+    WindowDataDetails(const std::string& title, const int& width, const int& height,
+        const std::string& fullscreen, bool vsync, int displaynumber, int fsaa,
+        const bool& windowborder, LeviathanApplication* appvirtualptr);
 
 #endif
     std::string Title;
     int Height;
     int Width;
-    bool Windowed;
+    std::string FullScreen;
+    bool VSync;
+    int DisplayNumber;
+    int FSAA;
 };
 
 
-class AppDef{
+class AppDef {
     friend Engine;
+
 public:
-    DLLEXPORT AppDef(const bool &isdef = false);
+    DLLEXPORT AppDef(const bool& isdef = false);
     DLLEXPORT ~AppDef();
 
 
@@ -52,71 +56,77 @@ public:
 
     // named constructor functions //
 #ifdef _WIN32
-    DLLEXPORT AppDef& SetHInstance(HINSTANCE instance){
+    DLLEXPORT AppDef& SetHInstance(HINSTANCE instance)
+    {
 
         HInstance = instance;
         return *this;
     }
 
-    DLLEXPORT HINSTANCE GetHInstance(){
+    DLLEXPORT HINSTANCE GetHInstance()
+    {
 
         return HInstance;
     }
 #else
     // \todo linux equivalent
 #endif
-    DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails &det){
+    DLLEXPORT AppDef& SetWindowDetails(const WindowDataDetails& det)
+    {
 
         WDetails = det;
         return *this;
     }
 
-    DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation &info){
+    DLLEXPORT AppDef& SetMasterServerParameters(const MasterServerInformation& info)
+    {
 
         MasterServerInfo = info;
         return *this;
     }
-    // Sets the version information of the application, leviathan version is set automatically //
-    DLLEXPORT AppDef& SetApplicationIdentification(const std::string &userreadable,
-        const std::string &gamename, const std::string &gameversion);
+    // Sets the version information of the application, leviathan version is set automatically
+    // //
+    DLLEXPORT AppDef& SetApplicationIdentification(const std::string& userreadable,
+        const std::string& gamename, const std::string& gameversion);
 
-    DLLEXPORT WindowDataDetails& GetWindowDetails(){
-
+    DLLEXPORT WindowDataDetails& GetWindowDetails()
+    {
         return WDetails;
     }
-    DLLEXPORT MasterServerInformation& GetMasterServerInfo(){
-
+    DLLEXPORT MasterServerInformation& GetMasterServerInfo()
+    {
         return MasterServerInfo;
     }
-    DLLEXPORT inline static AppDef* GetDefault(){
+    DLLEXPORT inline static AppDef* GetDefault()
+    {
         return Defaultconf;
     }
-    DLLEXPORT bool GetVSync();
 
-    DLLEXPORT const std::string& GetLogFile(){
-        return LogFile;
-    }
+    DLLEXPORT static AppDef* GenerateAppdefine(const std::string& engineconfigfile,
+        const std::string& gameconfig, const std::string& keyconfig,
+        std::function<void(Lock& guard, GameConfiguration* configobj)> configchecker,
+        std::function<void(Lock& guard, KeyConfiguration* keysobject)> keychecker);
 
-    DLLEXPORT static AppDef* GenerateAppdefine(const std::string &logfile,
-        const std::string &engineconfigfile, const std::string &gameconfig,
-        const std::string &keyconfig, 
-        std::function<void (Lock &guard, GameConfiguration* configobj)> configchecker,
-        std::function<void (Lock &guard, KeyConfiguration* keysobject)> keychecker);
-        
 #ifdef _WIN32
-    DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
+    DLLEXPORT void StoreWindowDetails(const std::string& title, const bool& windowborder,
         HICON icon, LeviathanApplication* appvirtualptr);
 #else
-    DLLEXPORT void StoreWindowDetails(const std::string &title, const bool &windowborder,
+    DLLEXPORT void StoreWindowDetails(const std::string& title, const bool& windowborder,
         LeviathanApplication* appvirtualptr);
 #endif
 
 
-    DLLEXPORT void GetGameIdentificationData(std::string &userreadable, std::string &gamename,
-        std::string &gameversion);
+    DLLEXPORT void GetGameIdentificationData(
+        std::string& userreadable, std::string& gamename, std::string& gameversion);
+
+    //! \brief This is called then the engine config file isn't found to fill the options
+    //! with default values
+    //!
+    //! This is also used to fill existing configs with missing values
+    //! \returns True if options need to be saved (changes were made)
+    DLLEXPORT virtual bool FillDefaultEngineConf(NamedVars& variables);
 
 protected:
-
     std::unique_ptr<NamedVars> ConfigurationValues;
 #ifdef _WIN32
     HINSTANCE HInstance;
@@ -134,7 +144,6 @@ protected:
     GameConfiguration* _GameConfiguration = nullptr;
     KeyConfiguration* _KeyConfiguration = nullptr;
 
-    std::string LogFile;
     Logger* Mainlog = nullptr;
 
 
@@ -150,11 +159,9 @@ protected:
     // ------------------------------------ //
     static AppDef* Defaultconf;
 };
-}
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::AppDef;
 using Leviathan::MasterServerInformation;
 #endif
-
-

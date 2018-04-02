@@ -22,49 +22,49 @@
 #define BASETIMERNAME_FOR_SCROPE_TIMER	"Scopetimer_for_id_:"
 
 namespace Leviathan{
-	struct TimingMonitorClock{
-	public:
-		TimingMonitorClock(const std::string& name, int style);
-		int EndMonitoring();
+    struct TimingMonitorClock{
+    public:
+        TimingMonitorClock(const std::string& name, int style);
+        int EndMonitoring();
 
         std::string Name;
-		int64_t StartTime;
-		int64_t EndTime;
-		int CurrentElapsed;
-		int Style;
+        int64_t StartTime;
+        int64_t EndTime;
+        int CurrentElapsed;
+        int Style;
 
-	};
+    };
 
 
-	class TimingMonitor{
-	public:
-		DLLEXPORT static void StartTiming(const std::string &name,
+    class TimingMonitor{
+    public:
+        DLLEXPORT static void StartTiming(const std::string &name,
             int style = TIMINGMONITOR_STYLE_RESULT_DEFAULT);
-		DLLEXPORT static int GetCurrentElapsed(const std::string &name);
-		DLLEXPORT static int StopTiming(const std::string &name, bool printoutput = true);
+        DLLEXPORT static int GetCurrentElapsed(const std::string &name);
+        DLLEXPORT static int StopTiming(const std::string &name, bool printoutput = true);
 
-		DLLEXPORT static int GetCurrentTimerCount();
-		DLLEXPORT static void ClearTimers();
+        DLLEXPORT static size_t GetCurrentTimerCount();
+        DLLEXPORT static void ClearTimers();
 
-	private:
-		TimingMonitor();
-		TimingMonitor(const TimingMonitor& other);
-		~TimingMonitor();
+    private:
+        TimingMonitor();
+        TimingMonitor(const TimingMonitor& other);
+        ~TimingMonitor();
 
-		// ---------------------- //
-		static std::vector<std::shared_ptr<TimingMonitorClock>> Timers;
-	};
+        // ---------------------- //
+        static std::vector<std::shared_ptr<TimingMonitorClock>> Timers;
+    };
 
-	class ScopeTimer{
-	public:
-		DLLEXPORT ScopeTimer(const std::string &source);
-		DLLEXPORT ~ScopeTimer();
-	protected:
-		std::string TimerName;
-		std::string Source;
+    class ScopeTimer{
+    public:
+        DLLEXPORT ScopeTimer(const std::string &source);
+        DLLEXPORT ~ScopeTimer();
+    protected:
+        std::string TimerName;
+        std::string Source;
 
-		static int CurID;
-	};
+        static int CurID;
+    };
 }
 
 #ifdef LEAK_INTO_GLOBAL

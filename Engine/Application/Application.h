@@ -55,8 +55,6 @@ public:
 
     // callback functions called during engine initialization at appropriate times //
     DLLEXPORT virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
-    DLLEXPORT virtual void RegisterCustomScriptTypes(asIScriptEngine* engine,
-        std::map<int, std::string> &typeids);
         
     DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(
         PhysicsMaterialManager* manager);

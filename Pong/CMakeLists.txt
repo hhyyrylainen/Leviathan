@@ -21,6 +21,9 @@ set(ProgramIncludesHeader "${BaseIncludeFileName}")
 set(ProgramAppHeader "PongGame.h")
 set(ProgramNamespace Pong)
 
+set(WorldFactoryClass "GameWorldFactory")
+set(WorldFactoryInclude "Entities/GameWorldFactory.h")
+
 # ------------------ ProgramConfiguration ------------------ #
 set(PROGRAMCLASSNAME				PongGame)
 set(PROGRAMLOG						Pong)
@@ -37,14 +40,9 @@ set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 
 
-# Configure the includes file
-configure_file("${PROJECT_SOURCE_DIR}/File Templates/BaseLeviathanProjectIncludes.h.in" 
-    "${PROJECT_SOURCE_DIR}/${BaseSubFolder}/${BaseIncludeFileName}")
-
-# Configure the main file
-configure_file("${PROJECT_SOURCE_DIR}/File Templates/BaseLeviathanProjectMain.cpp.in" 
-    "${PROJECT_SOURCE_DIR}/${BaseSubFolder}/Main.cpp")
-
+# Configure the files
+StandardConfigureExecutableMainAndInclude("${BaseIncludeFileName}" "Main.cpp"
+  "${BaseSubFolder}" "${PROJECT_SOURCE_DIR}/${BaseSubFolder}")
 
 # get all files in their groups
 file(GLOB PSourceFiles "*.cpp")

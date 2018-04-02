@@ -79,8 +79,8 @@ namespace Pong{
             return GameInputHandler.get();
         }
 
-        virtual int OnEvent(Event** pEvent) override;
-        virtual int OnGenericEvent(GenericEvent** pevent) override{
+        virtual int OnEvent(Event* event) override;
+        virtual int OnGenericEvent(GenericEvent* event) override{
             return -1;
         }
         
@@ -118,8 +118,6 @@ namespace Pong{
         virtual void DoSpecialPostLoad() override;
         virtual void CustomizedGameEnd() override;
         virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) override;
-        virtual void MoreCustomScriptRegister(asIScriptEngine* engine,
-            std::map<int, string> &typeids) override;
 
 
         //! \brief Sends updates to the GUI

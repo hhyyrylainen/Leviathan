@@ -13,6 +13,7 @@
 #include "Networking/NetworkHandler.h"
 #include "Threading/ThreadingManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "Entities/Components.h"
 using namespace Pong;
 // ------------------------------------ //
 // Put this here, since nowhere else to put it //
@@ -75,22 +76,18 @@ void Pong::PongServer::Tick(int mspassed){
                 if(slotptr->GetControlType() == PLAYERCONTROLS_AI && slotptr->IsSlotActive()){
 
                     // Set the slot ptr as the argument and call function based on difficulty //
-                    std::vector<shared_ptr<NamedVariableBlock>> scriptargs(2);
-                    scriptargs[0] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
-                            new VoidPtrBlock(slotptr), "PlayerSlot"));
-                    scriptargs[1] = shared_ptr<NamedVariableBlock>(new NamedVariableBlock(
-                            new IntBlock(mspassed), "MSPassed"));
-
                     if(GameAI){
-                        bool ran;
-
                         // The identifier defines the AI type and they are set in the database //
+                        ScriptRunningSetup setup;
                         switch(slotptr->GetControlIdentifier()){
-                            case 1: GameAI->ExecuteOnModule("BallTrackerAI", scriptargs, ran); break;
-                            case 2: GameAI->ExecuteOnModule("CombinedAI", scriptargs, ran); break;
-                            case 0: default:
-                                GameAI->ExecuteOnModule("SimpleAI", scriptargs, ran);
+                        case 1: setup.SetEntrypoint("BallTrackerAI"); break;
+                        case 2: setup.SetEntrypoint("CombinedAI"); break;
+                        case 0:
+                        default:
+                            setup.SetEntrypoint("SimpleAI"); break;
                         }
+
+                        GameAI->ExecuteOnModule<void>(setup, true, slotptr, mspassed);
                     }
 
                 }
@@ -104,18 +101,19 @@ void Pong::PongServer::Tick(int mspassed){
         ObjectID ball = GameArena->GetBall();
 
         try{
-            auto& pos = WorldOfPong->GetComponent<Position>(ball).Members;
+            DEBUG_BREAK;
+            // auto& pos = WorldOfPong->GetComponent<Leviathan::Position>(ball).Members;
 
-            const auto& ballcurpos = pos._Position;
+            // const auto& ballcurpos = pos._Position;
 
-            if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
+            // if(ballcurpos.HAddAbs() > 100 * BASE_ARENASCALE){
 
-                _DisposeOldBall();
+            //     _DisposeOldBall();
 
-                // Serve new ball //
-                GameArena->ServeBall();
-                return;
-            }
+            //     // Serve new ball //
+            //     GameArena->ServeBall();
+            //     return;
+            // }
 
         } catch(const NotFound&){
             
@@ -132,8 +130,9 @@ void Pong::PongServer::Tick(int mspassed){
         bool ballstuck = false;
         
         try{
+            
             // Check is the ball stuck on the dead axis (where no paddle can hit it) //
-            auto& physics = WorldOfPong->GetComponent<Physics>(ball);
+            auto& physics = WorldOfPong->GetComponent<Leviathan::Physics>(ball);
             
             Float3 ballspeed = physics.GetVelocity();
             ballspeed.X = abs(ballspeed.X);
@@ -246,41 +245,44 @@ void Pong::PongServer::CheckForGameEnd(){
 
             // Do various activities related to winning the game //
 
-            // Set the camera location //
-            auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
+            // // Set the camera location //
+            // auto cam = Engine::GetEngine()->GetWindowEntity()->GetLinkedCamera();
 
-            switch(i){
-            case 0:
-                {
-                    cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
-                    cam->SetRotation(Float3(-90.f, -30.f, 0.f));
-                }
-                break;
-            case 1:
-                {
-                    cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
-                    cam->SetRotation(Float3(-180.f, -30.f, 0.f));
-                }
-                break;
-            case 2:
-                {
-                    cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
-                    cam->SetRotation(Float3(90.f, -30.f, 0.f));
-                }
-                break;
-            case 3:
-                {
-                    cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
-                    cam->SetRotation(Float3(0.f, -30.f, 0.f));
-                }
-                break;
-            }
+            DEBUG_BREAK;
+            // switch(i){
+            // case 0:
+            //     {
+            //         cam->SetPos(Float3(4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+            //         cam->SetRotation(Float3(-90.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // case 1:
+            //     {
+            //         cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+            //         cam->SetRotation(Float3(-180.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // case 2:
+            //     {
+            //         cam->SetPos(Float3(-4.f*BASE_ARENASCALE, 2.f*BASE_ARENASCALE, 0.f));
+            //         cam->SetRotation(Float3(90.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // case 3:
+            //     {
+            //         cam->SetPos(Float3(0.f, 2.f*BASE_ARENASCALE, 4.f*BASE_ARENASCALE));
+            //         cam->SetRotation(Float3(0.f, -30.f, 0.f));
+            //     }
+            //     break;
+            // }
 
             Logger::Get()->Info("TODO: make clients move the camera around");
 
             // Send the game end event which should trigger proper menus //
-            Leviathan::EventHandler::Get()->CallEvent(new Leviathan::GenericEvent(new string("MatchEnded"),
-                    new NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("WinningTeam",
+            Leviathan::Engine::Get()->GetEventHandler()->CallEvent(
+                new Leviathan::GenericEvent(new string("MatchEnded"),
+                    new NamedVars(shared_ptr<NamedVariableList>(
+                            new NamedVariableList("WinningTeam",
                                 new Leviathan::VariableBlock((int)i))))));
 
             // And finally destroy the ball //
@@ -367,12 +369,6 @@ bool Pong::PongServer::MoreCustomScriptTypes(asIScriptEngine* engine){
     return true;
 }
 
-void Pong::PongServer::MoreCustomScriptRegister(asIScriptEngine* engine,
-    std::map<int, string> &typeids)
-{
-    typeids.insert(make_pair(engine->GetTypeIdByDecl("PongServer"), "PongServer"));
-}
-
 void Pong::PongServer::PreFirstTick(){
 
     ServerInterface->SetServerAllowPlayers(true);
@@ -382,12 +378,8 @@ void Pong::PongServer::PreFirstTick(){
 void Pong::PongServer::OnStartPreMatch(){
 
     // Setup the world first as that can fail //
-    {
-        GUARD_LOCK_OTHER_NAME(WorldOfPong, lock);
-        WorldOfPong->ClearObjects(lock);
-        WorldOfPong->SetWorldPhysicsFrozenState(lock, true);
-
-    }
+    WorldOfPong->ClearEntities();
+    WorldOfPong->SetWorldPhysicsFrozenState(true);
 
     // Setup the objects in the world //
     if(!GameArena->GenerateArena(this, _PlayerList)){

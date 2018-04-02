@@ -180,6 +180,8 @@ namespace Pong{
             return InputObj;
         }
 
+        REFERENCE_HANDLE_UNCOUNTED_TYPE(PlayerSlot);
+
 	private:
 
 		//! \brief Updates other client's objects, should be called when this is updated

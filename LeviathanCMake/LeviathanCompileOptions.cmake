@@ -10,7 +10,7 @@ endif(CMAKE_BUILD_TYPE STREQUAL "")
 if(NOT WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # Not recommended configuration
   message(STATUS "Configuration is set to: " ${CMAKE_BUILD_TYPE})
-  message(SEND_WARNING "On linux you should only try to build with Release or RelWithDebInfo")
+  message(WARNING "On linux the Debug configuration may not work!")
   
 endif()
 
@@ -25,10 +25,25 @@ if(WIN32)
   # and exceptions from floating point operations, 
   # higher memory for compiling precompiled headers
   # Currently it seems that Zm250 should be enough but it might not be
-  add_definitions(-DUNICODE -D_UNICODE -fp:except -Zm250)
+  # -Zm250 is probably no longer needed
+  add_definitions(-DUNICODE -D_UNICODE)
+
+  # According to https://developercommunity.visualstudio.com/content/problem/162020/c3199-including-in-155.html
+  # this has already been fixed, but we need to wait for a new visual studio release
+  # -fp:except causes issues with c++17 enabled
+  # error C3199: invalid use of floating-point pragmas: exceptions are
+  # not supported in non-precise mode
   
   # program database flag for debug
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /ZI -Gm /W3")
+
+  # Multi core compilation
+  add_definitions("/MP")
+
+  # Enable c++17
+  # This is instead set per target by set_property(TARGET target PROPERTY CXX_STANDARD 17) and
+  # set_property(TARGET target PROPERTY CXX_EXTENSIONS OFF)
+  # add_definitions("/stdc:c++17")
   
   # A policy is needed for launchers to work correctly
   
@@ -44,8 +59,8 @@ else(WIN32)
   # add_definitions(-fextended-identifiers)
 
   # Has to be on one line or else ';'s will be included
-  # C++14
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wl,--no-allow-shlib-undefined -Wno-pragma-once-outside-header")
+  # C++17
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wl,--no-allow-shlib-undefined -Wno-pragma-once-outside-header")
   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
   
   # We need X11 on linux for window class to work

@@ -6,13 +6,13 @@
 
 namespace Leviathan{
 
-	class ServerApplication : public LeviathanApplication{
-	public:
-		DLLEXPORT ServerApplication();
-		DLLEXPORT ~ServerApplication();
+    class ServerApplication : public LeviathanApplication{
+    public:
+        DLLEXPORT ServerApplication();
+        DLLEXPORT ~ServerApplication();
 
         //! Makes sure doesn't start in GUI mode
-        bool PassCommandLine(int argcount, char* args[]) override;
+        DLLEXPORT bool PassCommandLine(int argcount, char* args[]) override;
 
         NETWORKED_TYPE GetProgramNetType() const override {
             
@@ -20,9 +20,9 @@ namespace Leviathan{
         }
 
 
-	protected:
+    protected:
 
-	};
+    };
 
 }
 

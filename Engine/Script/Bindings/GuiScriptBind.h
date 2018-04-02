@@ -4,12 +4,7 @@
 // ------------------------------------ //
 #include "BindHelpers.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
 bool BindGUI(asIScriptEngine* engine);
-void RegisterGUI(asIScriptEngine* engine, std::map<int, std::string> &typeids);
-
 }
-
-
-

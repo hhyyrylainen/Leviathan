@@ -20,7 +20,7 @@ DLLEXPORT Leviathan::StringDataIterator::~StringDataIterator(){
 
 }
 // ------------------------------------ //
-bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos,
+DLLEXPORT bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos,
     std::string &receiver)
 {
     DEBUG_BREAK;
@@ -30,7 +30,7 @@ bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endp
     return false;
 }
 
-bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos,
+DLLEXPORT bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endpos,
     std::wstring &receiver)
 {
     DEBUG_BREAK;
@@ -39,15 +39,15 @@ bool Leviathan::StringDataIterator::ReturnSubString(size_t startpos, size_t endp
     return false;
 }
 // ------------------------------------ //
-size_t Leviathan::StringDataIterator::GetCurrentCharacterNumber() const{
+DLLEXPORT size_t Leviathan::StringDataIterator::GetCurrentCharacterNumber() const{
     return CurrentCharacterNumber;
 }
 
-size_t Leviathan::StringDataIterator::GetCurrentLineNumber() const{
+DLLEXPORT size_t Leviathan::StringDataIterator::GetCurrentLineNumber() const{
     return CurrentLineNumber;
 }
 
-void Leviathan::StringDataIterator::CheckLineChange() {
+DLLEXPORT void Leviathan::StringDataIterator::CheckLineChange() {
 
     int32_t checkchar;
 
@@ -65,7 +65,7 @@ void Leviathan::StringDataIterator::CheckLineChange() {
 
 // ------------------------------------ //
 // UTF8PointerDataIterator
-UTF8PointerDataIterator::UTF8PointerDataIterator(const char* begin, const char* end) :
+DLLEXPORT UTF8PointerDataIterator::UTF8PointerDataIterator(const char* begin, const char* end) :
     Current(begin), End(end), BeginPos(Current)
 {
     // If the first character is a newline the line number needs to be
@@ -74,15 +74,15 @@ UTF8PointerDataIterator::UTF8PointerDataIterator(const char* begin, const char* 
         CheckLineChange();
 }
 
-UTF8PointerDataIterator::UTF8PointerDataIterator(const std::string &fromstr) :
+DLLEXPORT UTF8PointerDataIterator::UTF8PointerDataIterator(const std::string &fromstr) :
     UTF8PointerDataIterator(fromstr.c_str(), fromstr.c_str() + fromstr.size())
 {
 
 }
 
-
-bool UTF8PointerDataIterator::GetNextCharCode(int &codepointreceiver, size_t forward){
-
+DLLEXPORT bool UTF8PointerDataIterator::GetNextCharCode(int &codepointreceiver, 
+    size_t forward)
+{
     // Check is it out of range
     if(Current + forward >= End)
         return false;
@@ -128,7 +128,7 @@ bool UTF8PointerDataIterator::GetNextCharCode(int &codepointreceiver, size_t for
     return true;
 }
 
-bool UTF8PointerDataIterator::GetPreviousCharacter(int &receiver){
+DLLEXPORT bool UTF8PointerDataIterator::GetPreviousCharacter(int &receiver){
     
     // Try to get the prior code point //
     auto shouldbepos = Current;
@@ -158,7 +158,7 @@ bool UTF8PointerDataIterator::GetPreviousCharacter(int &receiver){
     return true;
 }
 // ------------------------------------ //
-void UTF8PointerDataIterator::MoveToNextCharacter(){
+DLLEXPORT void UTF8PointerDataIterator::MoveToNextCharacter(){
 
     if (!IsPositionValid())
         return;
@@ -184,19 +184,19 @@ void UTF8PointerDataIterator::MoveToNextCharacter(){
     CheckLineChange();
 }
 // ------------------------------------ //
-size_t UTF8PointerDataIterator::CurrentIteratorPosition() const{
+DLLEXPORT size_t UTF8PointerDataIterator::CurrentIteratorPosition() const{
     return std::distance(BeginPos, Current);
 }
 
-bool UTF8PointerDataIterator::IsPositionValid() const{
+DLLEXPORT bool UTF8PointerDataIterator::IsPositionValid() const{
     return Current != End;
 }
 // ------------------------------------ //
-size_t UTF8PointerDataIterator::GetLastValidIteratorPosition() const{
+DLLEXPORT size_t UTF8PointerDataIterator::GetLastValidIteratorPosition() const{
     return static_cast<size_t>((End - 1) - BeginPos);
 }
 // ------------------------------------ //
-bool UTF8PointerDataIterator::ReturnSubString(size_t startpos, size_t endpos,
+DLLEXPORT bool UTF8PointerDataIterator::ReturnSubString(size_t startpos, size_t endpos,
     std::string &receiver)
 {
     if(startpos >= static_cast<size_t>(End - BeginPos) ||
@@ -213,7 +213,7 @@ bool UTF8PointerDataIterator::ReturnSubString(size_t startpos, size_t endpos,
 
 // ------------------------------------ //
 // UTF8DataIterator
-UTF8DataIterator::UTF8DataIterator(const std::string &str) :
+DLLEXPORT UTF8DataIterator::UTF8DataIterator(const std::string &str) :
     UTF8PointerDataIterator(nullptr, nullptr), OurString(str)
 {
     // This is a bit hacky

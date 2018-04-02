@@ -39,8 +39,10 @@ public:
     // and nothing set
 
 
-    virtual bool ReturnSubString(size_t startpos, size_t endpos, std::string &receiver);
-    virtual bool ReturnSubString(size_t startpos, size_t endpos, std::wstring &receiver);
+    DLLEXPORT virtual bool ReturnSubString(size_t startpos, size_t endpos, 
+        std::string &receiver);
+    DLLEXPORT virtual bool ReturnSubString(size_t startpos, size_t endpos, 
+        std::wstring &receiver);
 
 
     //! \brief Gets the position of the iterator, for use with ReturnSubString and others
@@ -58,16 +60,16 @@ public:
     // Basic functions that should all be the same //
 
     //! Returns the 0 based character number (NOT position, number of characters)
-    virtual size_t GetCurrentCharacterNumber() const;
+    DLLEXPORT virtual size_t GetCurrentCharacterNumber() const;
 
     //! Returns the 1 based line number
-    virtual size_t GetCurrentLineNumber() const;
+    DLLEXPORT virtual size_t GetCurrentLineNumber() const;
 
 
 protected:
 
     //! Updates CurrentLineNumber if currently on a line break
-    void CheckLineChange();
+    DLLEXPORT void CheckLineChange();
 
 protected:
 
@@ -84,13 +86,13 @@ protected:
 
 //! Iterator for string types
 template<class STRType>
-	class StringClassDataIterator : public StringDataIterator{
+    class StringClassDataIterator : public StringDataIterator{
     typedef size_t ITType;
 public:
 
     //! Wraps a string reference for StringIterator
     //! \note The string should not be changed while the iterator is used
-    DLLEXPORT StringClassDataIterator(const STRType &str) : OurString(str), Current(0), End(str.size()){
+    StringClassDataIterator(const STRType &str) : OurString(str), Current(0), End(str.size()){
         // If the first character is a newline the line number needs to be incremented immediately //
         if(OurString.size() && OurString[0] == '\n'){
 
@@ -162,13 +164,13 @@ protected:
 
 //! Iterator that doesn't hold own copy of a string
 template<class STRType>
-	class StringClassPointerIterator : public StringDataIterator{
+    class StringClassPointerIterator : public StringDataIterator{
     typedef size_t ITType;
 public:
 
     //! Wraps a string reference for StringIterator
     //! \note The string should not be changed while the iterator is used
-    DLLEXPORT StringClassPointerIterator(const STRType* str) : OurString(str), Current(0){
+    StringClassPointerIterator(const STRType* str) : OurString(str), Current(0){
         End = str ? str->size(): 0;
 
         // If the first character is a newline the line number needs to be incremented immediately //
@@ -245,25 +247,27 @@ public:
     //!  ^-begin          ^-end
     //! meaning the null terminator is optional
     //! \note Child classes may pass null pointers here as long as they call CheckLineChange
-    // in their constructors
-    UTF8PointerDataIterator(const char* begin, const char* end);
+    //! in their constructors (to not miss line changes if the first character is a
+    //! line change, see UTF8DataIterator(const std::string &str) constructor)
+    DLLEXPORT UTF8PointerDataIterator(const char* begin, const char* end);
 
     //! Helper for creating from strings
-    UTF8PointerDataIterator(const std::string &fromstr);
+    DLLEXPORT UTF8PointerDataIterator(const std::string &fromstr);
     
-    virtual bool GetNextCharCode(int &codepointreceiver, size_t forward);
+    DLLEXPORT virtual bool GetNextCharCode(int &codepointreceiver, size_t forward);
 
-    virtual bool GetPreviousCharacter(int &receiver);
+    DLLEXPORT virtual bool GetPreviousCharacter(int &receiver);
 
-    virtual void MoveToNextCharacter();
+    DLLEXPORT virtual void MoveToNextCharacter();
 
-    virtual size_t CurrentIteratorPosition() const;
+    DLLEXPORT virtual size_t CurrentIteratorPosition() const;
 
-    virtual bool IsPositionValid() const;
+    DLLEXPORT virtual bool IsPositionValid() const;
 
-    virtual size_t GetLastValidIteratorPosition() const;
+    DLLEXPORT virtual size_t GetLastValidIteratorPosition() const;
 
-    virtual bool ReturnSubString(size_t startpos, size_t endpos, std::string &receiver);
+    DLLEXPORT virtual bool ReturnSubString(size_t startpos, size_t endpos, 
+        std::string &receiver);
 
 protected:
 

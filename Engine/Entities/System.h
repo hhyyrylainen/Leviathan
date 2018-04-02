@@ -1,11 +1,12 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "Define.h"
 
 #include "Component.h"
 #include "EntityCommon.h"
+#include "StateHolder.h"
 
 #include "Common/ObjectPool.h"
 #include "Exceptions.h"
@@ -13,127 +14,208 @@
 
 namespace Leviathan{
 
-template<class NodeType>
-    class NodeHolder : public ObjectPool<NodeType, ObjectID>{
+//! This holds many CachedComponentCollections which are a list of
+//! components that are important for a system, and this avoids
+//! looking them up on each tick
+template<class T>
+class CachedComponentCollectionHolder : public ObjectPool<T, ObjectID>{};
+
+//! This is split from System to allow easily creation of systems that
+//! have multiple CachedComponentCollection types
+template<class UsedCachedComponentCollectionT>
+class SystemCachedComponentCollectionStorage{
 public:
 
+    using HolderType = CachedComponentCollectionHolder<UsedCachedComponentCollectionT>;
+
+    void Clear(){
+
+        CachedComponents.Clear();
+    }
+
+    auto GetCachedComponentCollectionCount() const{
+        return CachedComponents.GetObjectCount();
+    }
+
+    // TODO: do something about the amount of copy pasting done here
+
+
+    //! \brief Helper function for creating nodes based on std::tuple
+    //! \todo Also figure out if "CachedComponentCollections.Find(id) != nullptr" should
+    //! be before _TupleHelperGetIfComponentExists
+    template<class FirstType, class SecondType>
+    static void TupleCachedComponentCollectionHelper(
+        ObjectPool<std::tuple<FirstType&, SecondType&>, ObjectID> &CachedComponentCollections,
+        const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
+        const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
+        const ComponentHolder<FirstType> &firstholder,
+        const ComponentHolder<SecondType> &secondholder) 
+    {
+        // First way around //
+        for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
+
+            const auto id = std::get<1>(*iter);
+            SecondType* other = _TupleHelperGetIfComponentExists(id, seconddata, secondholder);
+            
+            // Create node if required components where found and it doesn't exist already //
+            if(!other || CachedComponentCollections.Find(id) != nullptr)
+                continue;
+
+            CachedComponentCollections.ConstructNew(id, *std::get<0>(*iter), *other);
+        }
+
+        // And the other way around //
+        for(auto iter = seconddata.begin(); iter != seconddata.end(); ++iter){
+
+            const auto id = std::get<1>(*iter);
+            FirstType* other = _TupleHelperGetIfComponentExists(id, firstdata, firstholder);
+
+            // Create node if required components where found and it doesn't exist already //
+            if(!other || CachedComponentCollections.Find(id) != nullptr)
+                continue;
+
+            CachedComponentCollections.ConstructNew(id, *other, *std::get<0>(*iter));
+        }
+    }
+
+    //! \brief Tree part component TupleCachedComponentCollectionHelper
+    template<class FirstType, class SecondType, class ThirdType>
+    static void TupleCachedComponentCollectionHelper(
+        ObjectPool<std::tuple<FirstType&, SecondType&, ThirdType&>, ObjectID>
+        &CachedComponentCollections,
+        const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
+        const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
+        const std::vector<std::tuple<ThirdType*, ObjectID>> &thirddata,
+        const ComponentHolder<FirstType> &firstholder,
+        const ComponentHolder<SecondType> &secondholder,
+        const ComponentHolder<ThirdType> &thirdholder)
+    {
+        // First way around //
+        for(auto iter = firstdata.begin(); iter != firstdata.end(); ++iter){
+
+            const auto id = std::get<1>(*iter);
+            SecondType* other2 = _TupleHelperGetIfComponentExists(id, seconddata,
+                secondholder);
+            ThirdType* other3 = _TupleHelperGetIfComponentExists(id, thirddata, thirdholder);
+            
+            // Create node if required components where found and it doesn't exist already //
+            if(!other2 || !other3 || CachedComponentCollections.Find(id) != nullptr)
+                continue;
+
+            CachedComponentCollections.ConstructNew(id, *std::get<0>(*iter), *other2, *other3);
+        }
+
+        // And the other way around //
+        for(auto iter = seconddata.begin(); iter != seconddata.end(); ++iter){
+
+            const auto id = std::get<1>(*iter);
+            FirstType* other1 = _TupleHelperGetIfComponentExists(id, firstdata, firstholder);
+            ThirdType* other3 = _TupleHelperGetIfComponentExists(id, thirddata, thirdholder);
+
+            // Create node if required components where found and it doesn't exist already //
+            if(!other1 || !other3 || CachedComponentCollections.Find(id) != nullptr)
+                continue;
+
+            CachedComponentCollections.ConstructNew(id, *other1, *std::get<0>(*iter), *other3);
+        }
+        
+        // Third way around //
+        for(auto iter = thirddata.begin(); iter != thirddata.end(); ++iter){
+
+            const auto id = std::get<1>(*iter);
+            FirstType* other1 = _TupleHelperGetIfComponentExists(id, firstdata, firstholder);
+            SecondType* other2 = _TupleHelperGetIfComponentExists(id, seconddata,
+                secondholder);
+
+            // Create node if required components where found and it doesn't exist already //
+            if(!other1 || !other2 || CachedComponentCollections.Find(id) != nullptr)
+                continue;
+
+            CachedComponentCollections.ConstructNew(id, *other1, *other2, *std::get<0>(*iter));
+        }        
+    }
+
+protected:
+
+    // Helpers for TupleCachedComponentCollectionHelper //
+    template<class T>
+    static inline T* _TupleHelperGetIfComponentExists(ObjectID id,
+        const std::vector<std::tuple<T*, ObjectID>> &addedlist,
+        const ComponentHolder<T> &holder)
+    {
+        // First search added //
+        for(auto iter = addedlist.begin(); iter != addedlist.end(); ++iter){
+
+            if(std::get<1>(*iter) == id){
+
+                return std::get<0>(*iter);
+            }
+        }
+
+        // This full search returns a nullptr if not found //
+        return holder.Find(id);
+    }
+    
+public:
+    
+    HolderType CachedComponents;
 };
 
 //! \brief Base for all entity component related systems
 //!
 //! For ones that use nodes. Not for ones that directly use a single component type
-template<class UsedNode>
-class System {
-public:
-
-    using HolderType = NodeHolder<UsedNode>;
-
-    //! \brief Runs this system on its nodes
-    //!
-    //! \note The nodes need to be updated before calling this, otherwise some entities
-    //! might not be picked up
-    virtual void Run(GameWorld &world) = 0;
-
-protected:
-
-    //! \brief Helper for Run
-    //!
-    //! Goes through all nodes and calls func on them
-    template <class T, void(T::*F)(UsedNode &node, ObjectID nodesobject)>
-    void RunAllNodes(T &instance) {
-        auto& index = Nodes.GetIndex();
-        for (auto iter = index.begin(); iter != index.end(); ++iter) {
-
-            (instance.*F)(*iter->second, iter->first);
-        }
-    }
-
-
-    //! \brief Helper function for creating nodes based on std::tuple 
-    template<class FirstType, class SecondType>
-    void TupleNodeHelper(
-        ObjectPool<std::tuple<FirstType&, SecondType&>, ObjectID> &Nodes,
-        const std::vector<std::tuple<FirstType*, ObjectID>> &firstdata,
-        const std::vector<std::tuple<SecondType*, ObjectID>> &seconddata,
-        const ComponentHolder<FirstType> &firstholder, Lock &firstlock,
-        const ComponentHolder<SecondType> &secondholder, Lock &secondlock) 
-    {
-        GUARD_LOCK_OTHER(Nodes);
-
-        for (auto iter = firstdata.begin(); iter != firstdata.end(); ++iter) {
-
-            SecondType* other = nullptr;
-            const auto id = std::get<1>(*iter);
-
-            for (auto iter2 = seconddata.begin(); iter2 != seconddata.end(); ++iter2) {
-
-                if (std::get<1>(*iter2) == id) {
-
-                    other = std::get<0>(*iter2);
-                    break;
-                }
-            }
-
-            if (!other) {
-
-                // Full search //
-                other = secondholder.Find(secondlock, id);
-            }
-
-            if (!other)
-                continue;
-
-            // Create node if it doesn't exist already //
-            if (Nodes.Find(guard, id))
-                continue;
-
-            Nodes.ConstructNew(guard, id, *std::get<0>(*iter), *other);
-        }
-
-        // And the other way around //
-        for (auto iter = seconddata.begin(); iter != seconddata.end(); ++iter) {
-
-            FirstType* other = nullptr;
-            const auto id = std::get<1>(*iter);
-
-            for (auto iter2 = firstdata.begin(); iter2 != firstdata.end(); ++iter2) {
-
-                if (std::get<1>(*iter2) == id) {
-
-                    other = std::get<0>(*iter2);
-                    break;
-                }
-            }
-
-            if (!other) {
-
-                // Full search //
-                other = firstholder.Find(firstlock, id);
-            }
-
-            if (!other)
-                continue;
-
-            // Create node if it doesn't exist already //
-            if (Nodes.Find(guard, id))
-                continue;
-
-            Nodes.ConstructNew(guard, id, *other, *std::get<0>(*iter));
-        }
-    }
-    
+//! \todo It would bemore efficient to directly create nodes as entities are created instead
+//! of running CreateCachedComponentCollections (implemented in subclasses of this)
+template<class UsedCachedComponentCollection>
+class System : public SystemCachedComponentCollectionStorage<UsedCachedComponentCollection>{
 public:
     
-    HolderType Nodes;
+    /* Template for node run method, copy-paste and fill in the parameters
+
+        void Run(GameWorld &world){
+        
+        auto& index = CachedComponents.GetIndex();
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
+
+            this->ProcessCachedComponents(*iter->second, iter->first, );
+        }
+    */
 };
 
 //! \brief Base class for systems that use a single component directly
+//! \note This basically has nothing so this doesn't need to be used
 template<class UsedComponent>
 class SingleSystem{
 public:
-    virtual void Run(std::unordered_map<ObjectID, UsedComponent*> &Index,
-        GameWorld &world) = 0;
+    // Example run method
+    // void Run(GameWorld &world, std::unordered_map<ObjectID, UsedComponent*> &index);
 };
+
+//! \brief Base class for all systems that create states from changed components
+template<class UsedComponent, class ComponentState>
+class StateCreationSystem{
+public:
+    void Run(GameWorld &world, std::unordered_map<ObjectID, UsedComponent*> &index,
+        StateHolder<ComponentState> &heldstates, int worldtick)
+    {
+        for(auto iter = index.begin(); iter != index.end(); ++iter){
+
+            auto& component = *iter->second;
+            
+            if(!component.Marked)
+                continue;
+
+            // Needs a new state //
+            if(heldstates.CreateStateIfChanged(iter->first, component, worldtick)){
+
+                component.StateMarked = true;
+            }
+
+            component.Marked = false;
+        }
+    }
+};
+
 
 }
 

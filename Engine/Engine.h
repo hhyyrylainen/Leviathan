@@ -6,19 +6,20 @@
 #include "Common/ThreadSafe.h"
 #include "Networking/CommonNetwork.h"
 
+#include <functional>
 #include <inttypes.h>
+#include <list>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
-#include <memory>
-#include <functional>
 
 
-namespace Leviathan{
+namespace Leviathan {
 
 class LeviathanApplication;
 
-namespace GUI{
+namespace GUI {
 class AlphaHitCache;
 }
 
@@ -26,19 +27,20 @@ class AlphaHitCache;
 //!
 //! Allocates a lot of classes and performs almost all startup operations.
 //! \note Should be thread safe, but might not actually be
-class Engine : public ThreadSafe{
-		
+class Engine : public ThreadSafe {
+
     friend GraphicalInputEntity;
     friend GUI::GuiManager;
     friend GameWorld;
     friend LeviathanApplication;
+
 public:
     DLLEXPORT Engine(LeviathanApplication* owner);
     DLLEXPORT ~Engine();
 
-    DLLEXPORT bool Init(AppDef* definition, NETWORKED_TYPE ntype,
-        NetworkInterface* packethandler);
-    
+    DLLEXPORT bool Init(
+        AppDef* definition, NETWORKED_TYPE ntype, NetworkInterface* packethandler);
+
     //! \todo Add a thread that monitors if the thing gets stuck on a task
     DLLEXPORT void Release(bool forced = false);
 
@@ -48,7 +50,8 @@ public:
 
     //! \brief Checks if PreRelease is done and Release can be called
     //! \pre PreRelease is called
-    DLLEXPORT inline bool HasPreReleaseBeenDone() const{
+    DLLEXPORT inline bool HasPreReleaseBeenDone() const
+    {
         return PreReleaseDone;
     }
 
@@ -59,12 +62,10 @@ public:
     //! \brief Returns the number of tick that was last simulated
     DLLEXPORT int GetCurrentTick() const;
 
-    DLLEXPORT static void DumpMemoryLeaks();
-
     //! \brief Processes queued messages from Ogre, SDL and input
     DLLEXPORT void MessagePump();
-    
-    
+
+
     DLLEXPORT void Tick();
     DLLEXPORT void RenderFrame();
     DLLEXPORT void PreFirstTick();
@@ -82,20 +83,25 @@ public:
 
     //! \brief Runs function on the main thread before the next tick
     //!
-    //! This is provided to be able to 
-    DLLEXPORT void Invoke(const std::function<void(Engine&)> &function){}
-
-    DLLEXPORT void Invoke(const std::function<void()> &function){}
+    //! This is provided to be able to
+    //! \note This maybe called after preshutdown has started before final tick.
+    //! This means that some objects may no longer be valid so check the result of
+    //! any Get functions called in the invoke
+    DLLEXPORT void Invoke(const std::function<void()>& function);
 
     //! \brief Runs the function now if on the main thread otherwise calls Invoke
-    DLLEXPORT void RunOnMainThread(const std::function<void()> &function){}
+    DLLEXPORT void RunOnMainThread(const std::function<void()>& function);
 
     //! \brief Returns true if called on the main thread
-    DLLEXPORT bool IsOnMainThread() const{LEVIATHAN_ASSERT(false, "TODO");}
+    DLLEXPORT bool IsOnMainThread() const;
 
     //! \brief Asserts if not called on the main thread
-    DLLEXPORT inline void AssertIfNotMainThread() const{};
-    
+    DLLEXPORT inline void AssertIfNotMainThread() const
+    {
+        LEVIATHAN_ASSERT(
+            IsOnMainThread(), "Function not called on main thread (AssertIfNotMainThread)");
+    }
+
 
     // ------------------------------------ //
     //! Passes the commands and preprocesses them
@@ -103,16 +109,17 @@ public:
     //! Also interprets commands like --nogui
     //! \returns False if invalid command line and the game should quit instantly
     DLLEXPORT bool PassCommandLine(int argcount, char* args[]);
-        
+
     //! \brief Creates a GameWorld for placing entities into
-    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow,
-        std::shared_ptr<ViewerCameraPos> worldscamera);
+    //! \note To actually move the world camera you need to use
+    //! Leviathan::ObjectLoader::LoadCamera to create a camera entity
+    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy.
     //! \post The World will have been released and removed from Engine's internal list and
-    //! the world pointer will be NULL
-    DLLEXPORT void DestroyWorld(std::shared_ptr<GameWorld> &world);
+    //! when all other holders of the pointer release it will be deleted
+    DLLEXPORT void DestroyWorld(const std::shared_ptr<GameWorld>& world);
 
     //! \brief Opens a new window
     //! \note The window may become broken if the main window is closed
@@ -120,50 +127,109 @@ public:
     DLLEXPORT GraphicalInputEntity* OpenNewWindow();
 
     //! \brief Returns the main window
-    DLLEXPORT GraphicalInputEntity* GetWindowEntity(){ return GraphicalEntity1; };
+    DLLEXPORT GraphicalInputEntity* GetWindowEntity()
+    {
+        return GraphicalEntity1;
+    };
 
     //! \brief Removes an closed window from the engine
-    DLLEXPORT void ReportClosedWindow(Lock &guard, GraphicalInputEntity* windowentity);
+    DLLEXPORT void ReportClosedWindow(Lock& guard, GraphicalInputEntity* windowentity);
 
-    DLLEXPORT inline void ReportClosedWindow(GraphicalInputEntity* windowentity){
+    DLLEXPORT inline void ReportClosedWindow(GraphicalInputEntity* windowentity)
+    {
 
         GUARD_LOCK();
         ReportClosedWindow(guard, windowentity);
     }
-        
+
     DLLEXPORT void SaveScreenShot();
 
-    inline Graphics* GetGraphics(){ return Graph; };
-    inline EventHandler* GetEventHandler(){ return MainEvents; };
-    inline RenderingStatistics* GetRenderingStatistics(){ return RenderTimer;};
-    inline ScriptConsole* GetScriptConsole(){ return MainConsole;};
-    inline FileSystem* GetFileSystem(){ return MainFileHandler; };
-    inline AppDef* GetDefinition(){ return Define;};
-    inline NewtonManager* GetNewtonManager(){ return _NewtonManager; };
-    inline LeviathanApplication* GetOwningApplication(){ return Owner; };
-    inline PhysicsMaterialManager* GetPhysicalMaterialManager(){ return PhysMaterials; };
-    inline NetworkHandler* GetNetworkHandler(){ return _NetworkHandler; };
-    inline ThreadingManager* GetThreadingManager(){ return _ThreadingManager; };
-    inline ResourceRefreshHandler* GetResourceRefreshHandler(){
-        return _ResourceRefreshHandler; };
-    inline EntitySerializer* GetEntitySerializer(){ return _EntitySerializer.get(); };
-    inline RemoteConsole* GetRemoteConsole() {
+    inline Graphics* GetGraphics()
+    {
+        return Graph;
+    };
+    inline EventHandler* GetEventHandler()
+    {
+        return MainEvents;
+    };
+    inline RenderingStatistics* GetRenderingStatistics()
+    {
+        return RenderTimer;
+    };
+    inline ScriptConsole* GetScriptConsole()
+    {
+        return MainConsole;
+    };
+    inline FileSystem* GetFileSystem()
+    {
+        return MainFileHandler;
+    };
+    inline AppDef* GetDefinition()
+    {
+        return Define;
+    };
+    inline NewtonManager* GetNewtonManager()
+    {
+        return _NewtonManager;
+    };
+    inline LeviathanApplication* GetOwningApplication()
+    {
+        return Owner;
+    };
+    inline PhysicsMaterialManager* GetPhysicalMaterialManager()
+    {
+        return PhysMaterials;
+    };
+    inline NetworkHandler* GetNetworkHandler()
+    {
+        return _NetworkHandler;
+    };
+    inline ThreadingManager* GetThreadingManager()
+    {
+        return _ThreadingManager;
+    };
+    inline SoundDevice* GetSoundDevice()
+    {
+        return Sound;
+    };
+    inline ResourceRefreshHandler* GetResourceRefreshHandler()
+    {
+        return _ResourceRefreshHandler;
+    };
+    inline EntitySerializer* GetEntitySerializer()
+    {
+        return _EntitySerializer.get();
+    };
+    inline RemoteConsole* GetRemoteConsole()
+    {
         return _RemoteConsole;
     }
-    inline GUI::AlphaHitCache* GetAlphaHitCache(){
+    inline GUI::AlphaHitCache* GetAlphaHitCache()
+    {
         return _AlphaHitCache.get();
+    }
+    inline Random* GetRandom()
+    {
+        return MainRandom;
     }
 
     DLLEXPORT GraphicalInputEntity* GetWindowFromSDLID(uint32_t sdlid);
-    
+
 #ifdef LEVIATHAN_USES_LEAP
-    inline LeapManager* GetLeapManager(){ return LeapData; };
+    inline LeapManager* GetLeapManager()
+    {
+        return LeapData;
+    };
 #endif
 
-    inline bool GetNoGui(){ return NoGui; };
+    inline bool GetNoGui()
+    {
+        return NoGui;
+    };
 
     // Command line settings can only be set before initializing //
-    inline void SetNoGUI(){
+    inline void SetNoGUI()
+    {
 
         NoGui = true;
     }
@@ -196,22 +262,25 @@ protected:
     //! \note Should only be called on the client as this may break some simulations
     void _AdjustTickNumber(int tickamount, bool absolute);
 
+    //! \brief Handles InvokeQueue
+    DLLEXPORT void ProcessInvokes();
+
     //! Console input comes through this
-    bool _ReceiveConsoleInput(const std::string &command);
+    bool _ReceiveConsoleInput(const std::string& command);
 
     //! Runs all commands in QueuedConsoleCommands
     void _RunQueuedConsoleCommands();
 
     //! Helper for PassCommandLine
-    bool ParseSingleCommand(StringIterator &itr, int &argindex, const int argcount,
-        char* args[]);
-        
+    bool ParseSingleCommand(
+        StringIterator& itr, int& argindex, const int argcount, char* args[]);
+
     // ------------------------------------ //
     AppDef* Define = nullptr;
 
     RenderingStatistics* RenderTimer = nullptr;
     Graphics* Graph = nullptr;
-        
+
     GraphicalInputEntity* GraphicalEntity1 = nullptr;
     std::vector<GraphicalInputEntity*> AdditionalGraphicalEntities;
 
@@ -229,7 +298,7 @@ protected:
     ThreadingManager* _ThreadingManager = nullptr;
     RemoteConsole* _RemoteConsole = nullptr;
     ResourceRefreshHandler* _ResourceRefreshHandler = nullptr;
-        
+
     std::unique_ptr<ConsoleInput> _ConsoleInput;
     std::unique_ptr<EntitySerializer> _EntitySerializer;
     std::unique_ptr<GUI::AlphaHitCache> _AlphaHitCache;
@@ -241,7 +310,7 @@ protected:
 
     IDFactory* IDDefaultInstance = nullptr;
     LeviathanApplication* Owner = nullptr;
-        
+
     //! List of current worlds
     std::vector<std::shared_ptr<GameWorld>> GameWorlds;
 
@@ -253,7 +322,7 @@ protected:
 
     // data //
     int64_t LastTickTime;
-        
+
     int TimePassed = 0;
     int FrameLimit = 0;
     int TickCount = 0;
@@ -262,7 +331,7 @@ protected:
 
     //! Set when PreRelease is called and Tick has happened
     bool PreReleaseDone = false;
-        
+
     //! Set when PreRelease called and waiting for Tick
     //! see PreReleaseDone
     bool PreReleaseWaiting = false;
@@ -281,14 +350,17 @@ protected:
     bool PreReleaseCompleted = false;
 
 
+    // Invoke store //
+    RecursiveMutex InvokeLock;
+    std::list<std::function<void()>> InvokeQueue;
+
     // Stores the command line before running it //
     std::vector<std::unique_ptr<std::string>> PassedCommands;
 
     //! Stores console commands that came from the command line
     std::vector<std::unique_ptr<std::string>> QueuedConsoleCommands;
 
-    static Engine* instance;
+    DLLEXPORT static Engine* instance;
 };
 
-}
-
+} // namespace Leviathan

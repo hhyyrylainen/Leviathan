@@ -90,6 +90,8 @@ DLLEXPORT bool KeyConfiguration::AddKeyIfMissing(
         keys->push_back(GKey::GenerateKeyFromString(key));
 
     KeyConfigurations[name] = keys;
+
+    Marked = true;
     return true;
 }
 

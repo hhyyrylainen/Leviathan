@@ -106,6 +106,12 @@ void ItemSetMaterialProxy(Ogre::Item* self, const std::string& material)
         self->setMaterialName(material);
 }
 
+void ItemSetDataBlockProxy(Ogre::Item* self, const std::string& datablock)
+{
+    if(self)
+        self->setDatablock(datablock);
+}
+
 void ItemSetCustomParameterProxy(Ogre::Item* self, int index, const Ogre::Vector4& value)
 {
     if(self->getSubItem(0))
@@ -523,6 +529,11 @@ bool BindScene(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Item", "void setMaterial(const string &in materialname)",
            asFUNCTION(ItemSetMaterialProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Item", "void setDatablock(const string &in datablock)",
+           asFUNCTION(ItemSetDataBlockProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

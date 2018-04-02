@@ -97,6 +97,17 @@ public:
     {
         return MasterServerInfo;
     }
+
+    DLLEXPORT inline auto* GetGameConfiguration()
+    {
+        return _GameConfiguration;
+    }
+
+    DLLEXPORT inline auto* GetKeyConfiguration()
+    {
+        return _KeyConfiguration;
+    }
+
     DLLEXPORT inline static AppDef* GetDefault()
     {
         return Defaultconf;

@@ -401,6 +401,7 @@ public:
     //! `GameWorld::GetPhysicalMaterial`. -1 to use default material
     DLLEXPORT NewtonBody* CreatePhysicsBody(PhysicalWorld* world, int physicsmaterialid = -1);
 
+    //! \exception InvalidArgument if deltaspeed or point has non-finite values
     DLLEXPORT void GiveImpulse(const Float3& deltaspeed, const Float3& point = Float3(0));
 
     //! \brief Adds an apply force
@@ -473,6 +474,7 @@ public:
     //! \brief Moves the physical body to the specified position
     //! \returns False if this fails because there currently is no physics body
     //! for this component
+    //! \exception InvalidArgument if pos or orientation has non-finite values
     DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
 
     //! \brief Same as SetPosition but only sets orientation

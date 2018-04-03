@@ -260,6 +260,11 @@ bool BindFloat2(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Float2", "bool HasInvalidValues() const",
+           asMETHOD(Float2, HasInvalidValues), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // Direct access
     if(engine->RegisterObjectProperty("Float2", "float X", asOFFSET(Float2, X)) < 0) {
 
@@ -381,6 +386,11 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Float3", "bool HasInvalidValues() const",
+           asMETHOD(Float3, HasInvalidValues), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // Direct access
     if(engine->RegisterObjectProperty("Float3", "float X", asOFFSET(Float3, X)) < 0) {
 
@@ -496,6 +506,11 @@ bool BindFloat4(asIScriptEngine* engine)
     if(engine->RegisterObjectMethod("Float4",
            "Float4 Slerp(const Float4 &in other, float fraction) const",
            asMETHOD(Float4, Slerp), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float4", "bool HasInvalidValues() const",
+           asMETHOD(Float4, HasInvalidValues), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

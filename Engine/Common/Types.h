@@ -386,10 +386,29 @@ public:
     {
         X = x;
         Y = y;
+        DO_NAN_CHECK;
     }
     DLLEXPORT inline explicit Float2(float both)
     {
         X = Y = both;
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline bool HasInvalidValues() const
+    {
+        if(!std::isfinite(X) || !std::isfinite(Y)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    DLLEXPORT inline void CheckForNans()
+    {
+        if(HasInvalidValues()) {
+            DEBUG_BREAK;
+            throw std::runtime_error("Float2 has NaNs (or infinites in it) in it!");
+        }
     }
 
     // access operator //
@@ -438,11 +457,12 @@ public:
         return Float2(X * f, Y * f);
     }
 
-    DLLEXPORT inline Float2* operator*=(float f)
+    DLLEXPORT inline Float2& operator*=(float f)
     {
         X *= f;
         Y *= f;
-        return this;
+        DO_NAN_CHECK;
+        return *this;
     }
     // divides all elements //
     DLLEXPORT inline Float2 operator/(const Float2& val) const
@@ -492,10 +512,12 @@ public:
     DLLEXPORT inline void SetX(const float& val)
     {
         X = val;
+        DO_NAN_CHECK;
     };
     DLLEXPORT inline void SetY(const float& val)
     {
         Y = val;
+        DO_NAN_CHECK;
     };
 
     // add all elements together //
@@ -643,13 +665,20 @@ public:
         DO_NAN_CHECK;
     }
 
+    DLLEXPORT inline bool HasInvalidValues() const
+    {
+        if(!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z)) {
+            return true;
+        }
+
+        return false;
+    }
+
     DLLEXPORT inline void CheckForNans()
     {
-
-        if(std::isnan(X) || std::isnan(Y) || std::isnan(Z)) {
-
+        if(HasInvalidValues()) {
             DEBUG_BREAK;
-            throw std::runtime_error("Float3 has NaNs in it!");
+            throw std::runtime_error("Float3 has NaNs (or infinites in it) in it!");
         }
     }
 
@@ -711,6 +740,7 @@ public:
         X /= val;
         Y /= val;
         Z /= val;
+        DO_NAN_CHECK;
         return *this;
     }
     // multiply  by scalar f //
@@ -723,6 +753,7 @@ public:
         X *= f;
         Y *= f;
         Z *= f;
+        DO_NAN_CHECK;
         return *this;
     }
     // divides all elements //
@@ -777,14 +808,17 @@ public:
     DLLEXPORT inline void SetX(const float& val)
     {
         X = val;
+        DO_NAN_CHECK;
     };
     DLLEXPORT inline void SetY(const float& val)
     {
         Y = val;
+        DO_NAN_CHECK;
     };
     DLLEXPORT inline void SetZ(const float& val)
     {
         Z = val;
+        DO_NAN_CHECK;
     };
 
     // add all elements together //
@@ -978,13 +1012,20 @@ public:
         DO_NAN_CHECK;
     }
 
+    DLLEXPORT inline bool HasInvalidValues() const
+    {
+        if(!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z) || !std::isfinite(W)) {
+            return true;
+        }
+
+        return false;
+    }
+
     DLLEXPORT inline void CheckForNans()
     {
-
-        if(std::isnan(X) || std::isnan(Y) || std::isnan(Z) || std::isnan(W)) {
-
+        if(HasInvalidValues()) {
             DEBUG_BREAK;
-            throw std::runtime_error("Float4 has NaNs in it!");
+            throw std::runtime_error("Float4 has NaNs (or infinites in it) in it!");
         }
     }
 
@@ -1083,18 +1124,22 @@ public:
     DLLEXPORT inline void SetX(const float& val)
     {
         X = val;
+        DO_NAN_CHECK;
     };
     DLLEXPORT inline void SetY(const float& val)
     {
         Y = val;
+        DO_NAN_CHECK;
     };
     DLLEXPORT inline void SetZ(const float& val)
     {
         Z = val;
+        DO_NAN_CHECK;
     };
     DLLEXPORT inline void SetW(const float& val)
     {
         W = val;
+        DO_NAN_CHECK;
     };
 
     // add all elements together //

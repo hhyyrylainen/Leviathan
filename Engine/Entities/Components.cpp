@@ -2,14 +2,12 @@
 #include "Components.h"
 
 #include "CommonStateObjects.h"
-
-#include "Handlers/IDFactory.h"
-
-#include "Newton/NewtonConversions.h"
-
 #include "GameWorld.h"
+#include "Handlers/IDFactory.h"
 #include "Networking/Connection.h"
 #include "Networking/SentNetworkThing.h"
+#include "Newton/NewtonConversions.h"
+#include "Utility/Convert.h"
 
 #include "OgreBillboardChain.h"
 #include "OgreItem.h"
@@ -115,6 +113,16 @@ DLLEXPORT bool Physics::SetPosition(const Float3& pos, const Float4& orientation
     if(!Body)
         return false;
 
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(pos.HasInvalidValues() || orientation.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "SetPosition call had at least one value with non-finite value, pos: "
+            << Convert::ToString(pos) << " orientation: " << Convert::ToString(orientation);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
+
     Ogre::Matrix4 matrix;
 
     Ogre::Vector3 ogrepos = pos;
@@ -133,6 +141,18 @@ DLLEXPORT bool Physics::SetOnlyOrientation(const Float4& orientation)
 {
     if(!Body)
         return false;
+
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(orientation.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "SetOnlyOrientation call had at least one value with non-finite value,  "
+               "orientation: "
+            << Convert::ToString(orientation);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
+
     float newtonMatrix[16];
     NewtonBodyGetMatrix(Body, &newtonMatrix[0]);
 
@@ -174,7 +194,7 @@ void Physics::PhysicsMovedEvent(
     const auto pos = mat.getTrans();
 
     // #ifdef CHECK_FOR_NANS
-    if(std::isnan(pos.x)) {
+    if(!std::isfinite(pos.x)) {
 
         LOG_ERROR("Physics::PhysicsMovedEvent: physics body has NaN translation");
         // Would really like to find a fix instead of this hack
@@ -184,6 +204,7 @@ void Physics::PhysicsMovedEvent(
         } else {
             // Doesn't seem to work
             // tmp->JumpTo(tmp->_Position);
+            // This doesn't work either
             tmp->SetPosition(Float3(0, 0, 0), Ogre::Quaternion::IDENTITY);
         }
 
@@ -234,20 +255,46 @@ void Physics::ApplyForceAndTorqueEvent(
         Force += tmp->_GatherApplyForces(mass);
     }
 
+#ifdef CHECK_FOR_NANS
+    if(Force.HasInvalidValues()) {
+
+        LOG_ERROR("Physics::ApplyForceAndTorqueEvent: Force was calculated to have a "
+                  "non-finite value in it. Skipping applying");
+
+        return;
+    }
+#endif // CHECK_FOR_NANS
+
     NewtonBodyAddForce(body, &Force.X);
+
+    tmp->SumQueuedForce = Float3(0, 0, 0);
+
+    // Torque applying //
+    Float3 torque;
 
     if(tmp->TorqueOverride) {
 
-        NewtonBodySetTorque(body, &tmp->SumQueuedTorque.X);
+        torque = tmp->SumQueuedTorque;
         tmp->TorqueOverride = false;
+        tmp->SumQueuedTorque = Float3(0, 0, 0);
 
     } else {
 
-        NewtonBodyAddTorque(body, &Torque.X);
+        torque = Torque;
     }
 
-    tmp->SumQueuedForce = Float3(0, 0, 0);
-    tmp->SumQueuedTorque = Float3(0, 0, 0);
+
+#ifdef CHECK_FOR_NANS
+    if(Force.HasInvalidValues()) {
+
+        LOG_ERROR("Physics::ApplyForceAndTorqueEvent: Torque was calculated to have a "
+                  "non-finite value in it. Skipping applying");
+
+        return;
+    }
+#endif // CHECK_FOR_NANS
+
+    NewtonBodyAddTorque(body, &torque.X);
 }
 
 void Physics::DestroyBodyCallback(const NewtonBody* body)
@@ -268,20 +315,49 @@ DLLEXPORT void Physics::GiveImpulse(const Float3& deltaspeed, const Float3& poin
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(deltaspeed.HasInvalidValues() || point.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "GiveImpulse call had at least one value with non-finite value, deltaspeed: "
+            << Convert::ToString(deltaspeed) << " point: " << Convert::ToString(point);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
+
     // No clue what the delta step should be
     NewtonBodyAddImpulse(Body, &deltaspeed.X, &point.X, 0.1f);
 }
 
 DLLEXPORT void Physics::AddForce(const Float3& force)
 {
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(force.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "AddForce call had at least one value with non-finite value, force: "
+            << Convert::ToString(force);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
+
     SumQueuedForce += force;
 }
 
 DLLEXPORT void Physics::SetVelocity(const Float3& velocities)
 {
-
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
+
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(velocities.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "SetVelocity call had at least one value with non-finite value, velocities: "
+            << Convert::ToString(velocities);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
 
     NewtonBodySetVelocity(Body, &velocities.X);
 }
@@ -322,6 +398,16 @@ DLLEXPORT void Physics::SetOmega(const Float3& velocities)
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
 
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(velocities.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "SetOmega call had at least one value with non-finite value, velocities: "
+            << Convert::ToString(velocities);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
+
     NewtonBodySetOmega(Body, &velocities.X);
 }
 
@@ -329,6 +415,16 @@ DLLEXPORT void Physics::AddOmega(const Float3& velocities)
 {
     if(!Body)
         throw InvalidState("Physics object doesn't have a body");
+
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(velocities.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "AddOmega call had at least one value with non-finite value, velocities: "
+            << Convert::ToString(velocities);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
 
     Float3 temp;
     NewtonBodyGetOmega(Body, &temp.X);
@@ -348,6 +444,16 @@ DLLEXPORT Float3 Physics::GetTorque() const
 
 DLLEXPORT void Physics::AddTorque(const Float3& torque)
 {
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(torque.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "AddTorque call had at least one value with non-finite value, torque: "
+            << Convert::ToString(torque);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
+
     if(TorqueOverride) {
 
         SumQueuedTorque = Float3(0, 0, 0);
@@ -359,6 +465,15 @@ DLLEXPORT void Physics::AddTorque(const Float3& torque)
 
 DLLEXPORT void Physics::SetTorque(const Float3& torque)
 {
+    // Safety check. Can be disabled in release builds if this is a performance issue
+    if(torque.HasInvalidValues()) {
+
+        std::stringstream msg;
+        msg << "SetTorque call had at least one value with non-finite value, torque: "
+            << Convert::ToString(torque);
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
 
     SumQueuedTorque = torque;
     TorqueOverride = true;
@@ -484,6 +599,16 @@ DLLEXPORT void Physics::SetMass(float mass)
 {
     if(!Body)
         return;
+
+    // Safety check. Shouldn't be disabled
+    if(!std::isfinite(mass)) {
+
+        std::stringstream msg;
+        msg << "SetMass mass is invalid value: " << Convert::ToString(mass)
+            << " (use 0 for immovable)";
+        LOG_ERROR("Physics: " + msg.str());
+        throw InvalidArgument(msg.str());
+    }
 
     Mass = mass;
 

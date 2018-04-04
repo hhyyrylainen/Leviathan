@@ -195,7 +195,6 @@ void GuiManager::Release()
 
 DLLEXPORT void GuiManager::EnableStandardGUIThemes()
 {
-
     if(MainGuiManager) {
         // Load the taharez look //
         LoadGUITheme("TaharezLook.scheme");
@@ -248,7 +247,6 @@ DLLEXPORT void GuiManager::SetCollectionState(const string& name, bool state)
 DLLEXPORT void GuiManager::SetCollectionAllowEnableState(
     const string& name, bool allow /*= true*/)
 {
-
     // find collection with name and set it's allow enable state //
     for(size_t i = 0; i < Collections.size(); i++) {
         if(Collections[i]->GetName() == name) {
@@ -265,8 +263,6 @@ DLLEXPORT void GuiManager::SetCollectionAllowEnableState(
 // ------------------------------------ //
 void GuiManager::GuiTick(int mspassed)
 {
-
-
     if(ReloadQueued) {
 
         ReloadQueued = false;
@@ -313,6 +309,7 @@ void GuiManager::GuiTick(int mspassed)
             if(GuiDisallowMouseCapture) {
                 // disable mouse capture //
                 ThisWindow->SetMouseCapture(false);
+                GuiContext->getCursor().show();
 
             } else {
 
@@ -329,6 +326,9 @@ void GuiManager::GuiTick(int mspassed)
                         OnForceGUIOn();
                         GuiDisallowMouseCapture = true;
                         GuiMouseUseUpdated = true;
+                    } else {
+                        // Success, hide CEGUI cursor
+                        GuiContext->getCursor().hide();
                     }
                 }
             }
@@ -343,7 +343,6 @@ DLLEXPORT void GuiManager::OnForceGUIOn()
 // ------------------------------------ //
 DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
 {
-
     DisableGuiMouseCapture = newvalue;
     // This will cause the capture state to be checked next tick
     GuiMouseUseUpdated = true;

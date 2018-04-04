@@ -50,7 +50,7 @@ cscope.out
 cscope.po.out
 rcscope.sh
 .idea
-bin/Data/
+bin/
 Leap/head_sha.txt
 Leap/include
 Leap/util

@@ -2,10 +2,9 @@
 #include "ScriptExecutor.h"
 
 #include "AccessMask.h"
-
 #include "Application/Application.h"
 #include "Iterators/StringIterator.h"
-
+#include "ScriptModule.h"
 #include "ScriptNotifiers.h"
 
 #include <add_on/datetime/datetime.h>
@@ -20,8 +19,6 @@
 #include <add_on/scriptstdstring/scriptstdstring.h>
 #include <add_on/weakref/weakref.h>
 
-#include "ScriptModule.h"
-
 // Bindings
 #include "Bindings/BindStandardFunctions.h"
 #include "Bindings/CommonEngineBind.h"
@@ -30,6 +27,10 @@
 #include "Bindings/NewtonBind.h"
 #include "Bindings/OgreBind.h"
 #include "Bindings/TypesBind.h"
+
+// Exception support
+#include "CEGUI/Exceptions.h"
+#include "OgreException.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -63,16 +64,42 @@ void ScriptTranslateExceptionCallback(asIScriptContext* context, void* userdata)
 {
     try {
         std::rethrow_exception(std::current_exception());
+
+    } catch(const Leviathan::InvalidAccess& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::InvalidAccess exception: ") + e.what()).c_str());
+    } catch(const Leviathan::InvalidArgument& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::InvalidArgument exception: ") + e.what()).c_str());
+    } catch(const Leviathan::InvalidState& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::InvalidState exception: ") + e.what()).c_str());
+    } catch(const Leviathan::InvalidType& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::InvalidType exception: ") + e.what()).c_str());
+    } catch(const Leviathan::NotFound& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::NotFound exception: ") + e.what()).c_str());
+    } catch(const Leviathan::NULLPtr& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::NULLPtr exception: ") + e.what()).c_str());
+    } catch(const Leviathan::Exception& e) {
+        context->SetException(
+            (std::string("Caught Leviathan::Exception: ") + e.what()).c_str());
+    } catch(const Ogre::Exception& e) {
+        context->SetException((std::string("Caught Ogre::Exception: ") + e.what()).c_str());
+    } catch(const CEGUI::Exception& e) {
+        context->SetException((std::string("Caught CEGUI::Exception: ") + e.what()).c_str());
     } catch(const std::exception& e) {
         context->SetException(
-            (std::string("Caught application exception: ") + e.what()).c_str());
+            (std::string("Caught (unknown type) application exception: ") + e.what()).c_str());
+    } catch(...) {
+        // Use default message
     }
 }
 #endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 
 } // namespace Leviathan
-
-
 
 ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 {
@@ -96,6 +123,13 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 
     // The ScriptExecutor can be retrieved from asIScriptEngine user data
     engine->SetUserData(this);
+
+#ifdef ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+    // Set error translation callback
+    engine->SetTranslateAppExceptionCallback(
+        asFUNCTION(ScriptTranslateExceptionCallback), nullptr, asCALL_CDECL);
+#endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+
 
     // Builtins are in this access group //
     const auto initialMask =
@@ -199,15 +233,13 @@ ScriptExecutor::~ScriptExecutor()
     }
 
     // release AngelScript //
-    SAFE_RELEASE(engine);
-
-    instance = nullptr;
-
     if(engine) {
 
         engine->Release();
         engine = nullptr;
     }
+
+    instance = nullptr;
 }
 
 DLLEXPORT ScriptExecutor* Leviathan::ScriptExecutor::Get()
@@ -415,12 +447,6 @@ DLLEXPORT asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
         LOG_ERROR("ScriptExecutor: _GetContextForExecution: Failed to create a new context");
         return nullptr;
     }
-
-#ifdef ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
-    // Set error translation callback
-    ScriptContext->SetTranslateExceptionCallback(
-        asFUNCTION(ScriptTranslateExceptionCallback), nullptr, asCALL_CDECL);
-#endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 
     return ScriptContext;
 }

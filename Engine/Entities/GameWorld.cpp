@@ -167,16 +167,20 @@ DLLEXPORT void GameWorld::Release()
 void GameWorld::_CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget)
 {
     // create scene manager //
-    WorldsScene = ogre->createSceneManager(Ogre::ST_EXTERIOR_FAR, 2,
+    // Let's do what the Ogre samples do and use a bunch of threads for culling
+    const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
+
+    // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
+    WorldsScene = ogre->createSceneManager(Ogre::ST_GENERIC, threads,
         Ogre::INSTANCING_CULLING_THREADED, "MainSceneManager_" + Convert::ToString(ID));
 
-    // WorldsScene->setShadowFarDistance(1000.f);
-    // WorldsScene->setShadowDirectionalLightExtrusionDistance(10000.f);
+    // These are a bit higher than the Ogre "sane" values of 500.0f
+    WorldsScene->setShadowDirectionalLightExtrusionDistance(1000.f);
+    WorldsScene->setShadowFarDistance(1000.f);
 
     // Setup v2 rendering for the default group
     WorldsScene->getRenderQueue()->setRenderQueueMode(
         DEFAULT_RENDER_QUEUE, Ogre::RenderQueue::FAST);
-
 
     // create camera //
     WorldSceneCamera = WorldsScene->createCamera("Camera01");
@@ -187,6 +191,7 @@ void GameWorld::_CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* ren
     WorldSceneCamera->setFOVy(Ogre::Degree(60));
     WorldSceneCamera->setNearClipDistance(0.1f);
     WorldSceneCamera->setFarClipDistance(50000.f);
+    WorldSceneCamera->setAutoAspectRatio(true);
 
     // enable infinite far clip distance if supported //
     if(ogre->getRenderSystem()->getCapabilities()->hasCapability(

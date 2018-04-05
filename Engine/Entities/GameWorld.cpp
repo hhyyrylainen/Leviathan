@@ -200,12 +200,7 @@ void GameWorld::_CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* ren
         WorldSceneCamera->setFarClipDistance(0);
     }
 
-    // set scene ambient colour //
-    // TODO: update this to the PBR HLMS system
-    // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
-    //     Ogre::ColourValue(0.2f, 0.2f, 0.2f), Ogre::Vector3(0.1f, 1.f, 0.085f));
-
-    // // default sun //
+    // default sun //
     SetSunlight();
 
     // Create the workspace for this scene //
@@ -229,10 +224,6 @@ DLLEXPORT void GameWorld::SetSunlight()
         Sunlight->setName("sunlight");
     }
 
-    Sunlight->setType(Ogre::Light::LT_DIRECTIONAL);
-    Sunlight->setDiffuseColour(0.98f, 1.f, 0.95f);
-    Sunlight->setSpecularColour(1.f, 1.f, 1.f);
-
     if(!SunLightNode) {
 
         SunLightNode = WorldsScene->getRootSceneNode()->createChildSceneNode();
@@ -241,9 +232,18 @@ DLLEXPORT void GameWorld::SetSunlight()
         SunLightNode->attachObject(Sunlight);
     }
 
-    Ogre::Quaternion quat;
-    quat.FromAngleAxis(Ogre::Radian(1.f), Float3(0.55f, -0.3f, 0.75f));
-    SunLightNode->setOrientation(quat);
+    Sunlight->setType(Ogre::Light::LT_DIRECTIONAL);
+    // Sunlight->setDiffuseColour(0.98f, 1.f, 0.95f);
+    Sunlight->setDiffuseColour(1.f, 1.f, 1.f);
+    Sunlight->setSpecularColour(1.f, 1.f, 1.f);
+    Sunlight->setDirection(Float3(-1, -1, -1).Normalize());
+    Sunlight->setPowerScale(1.0f);
+
+    // Set scene ambient colour //
+    // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
+    WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
+        Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
+        -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
 }
 
 DLLEXPORT void GameWorld::RemoveSunlight()

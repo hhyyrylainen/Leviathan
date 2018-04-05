@@ -150,19 +150,6 @@ void Sample1::Start(Leviathan::StandardWorld& world)
     Ogre::Light* light = sceneManager->createLight();
     Ogre::SceneNode* lightNode = rootNode->createChildSceneNode();
     lightNode->attachObject(light);
-    light->setPowerScale(1.0f);
-    light->setType(Ogre::Light::LT_DIRECTIONAL);
-    light->setDirection(Ogre::Vector3(-1, -1, -1).normalisedCopy());
-
-    // mLightNodes[0] = lightNode;
-
-    sceneManager->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
-        Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
-        -light->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
-
-    light = sceneManager->createLight();
-    lightNode = rootNode->createChildSceneNode();
-    lightNode->attachObject(light);
     light->setDiffuseColour(0.8f, 0.4f, 0.2f); // Warm
     light->setSpecularColour(0.8f, 0.4f, 0.2f);
     light->setPowerScale(Ogre::Math::PI);

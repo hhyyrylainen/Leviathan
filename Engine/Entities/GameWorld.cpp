@@ -137,7 +137,7 @@ DLLEXPORT void GameWorld::Release()
 
     if(GraphicalMode) {
         // TODO: notify our window that it no longer has a world workspace
-        LinkedToWindow = NULL;
+        LinkedToWindow = nullptr;
 
         // release Ogre resources //
 
@@ -147,12 +147,12 @@ DLLEXPORT void GameWorld::Release()
         // Allow releasing twice
         if(WorldWorkspace) {
             ogre.getCompositorManager2()->removeWorkspace(WorldWorkspace);
-            WorldWorkspace = NULL;
+            WorldWorkspace = nullptr;
         }
 
         if(WorldsScene) {
             ogre.destroySceneManager(WorldsScene);
-            WorldsScene = NULL;
+            WorldsScene = nullptr;
         }
     }
 
@@ -218,7 +218,7 @@ DLLEXPORT void GameWorld::SetFog()
 
 DLLEXPORT void GameWorld::SetSunlight()
 {
-    // create/update things if they are NULL //
+    // create/update things if they are nullptr //
     if(!Sunlight) {
         Sunlight = WorldsScene->createLight();
         Sunlight->setName("sunlight");
@@ -247,7 +247,7 @@ DLLEXPORT void GameWorld::RemoveSunlight()
         SunLightNode->detachAllObjects();
         // might be safe to delete
         OGRE_DELETE SunLightNode;
-        SunLightNode = NULL;
+        SunLightNode = nullptr;
     }
 }
 
@@ -1022,7 +1022,7 @@ DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHit(const Float3& from, co
 
     // Call the actual ray firing function //
     NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X,
-        RayCallbackDataCallbackClosest, &data, NULL, 0);
+        RayCallbackDataCallbackClosest, &data, nullptr, 0);
 
     // Check the result //
     if(data.HitEntities.size() == 0) {
@@ -1166,7 +1166,7 @@ void GameWorld::_ApplyEntityUpdatePackets()
 
     for(auto& response : EntityUpdatePackets) {
 
-        // Data cannot be NULL here //
+        // Data cannot be nullptr here //
         ResponseEntityUpdate* data = static_cast<ResponseEntityUpdate*>(response.get());
 
         bool found = false;
@@ -1435,7 +1435,7 @@ DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
 }
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(
-    const NewtonBody* ptr /*= NULL*/, const float& tvar, RayCastData* ownerptr) :
+    const NewtonBody* ptr /*= nullptr*/, const float& tvar, RayCastData* ownerptr) :
     HitEntity(ptr),
     HitVariable(tvar)
 {
@@ -1448,7 +1448,7 @@ DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(
 
 DLLEXPORT bool Leviathan::RayCastHitEntity::HasHit()
 {
-    return HitEntity != NULL;
+    return HitEntity != nullptr;
 }
 
 DLLEXPORT bool Leviathan::RayCastHitEntity::DoesBodyMatchThisHit(NewtonBody* other)

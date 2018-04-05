@@ -1,21 +1,22 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "GraphicalInputEntity.h"
 #include "Application/AppDefine.h"
+#include "GraphicalInputEntity.h"
+
 #include "OgreFrameListener.h"
 
-namespace Leviathan{
-namespace Rendering{
-        
-class ShaderManager;
-class FontManager;
-}
+namespace Leviathan {
+namespace Rendering {
 
-class Graphics : Ogre::FrameListener{
+class FontManager;
+} // namespace Rendering
+
+class Graphics : Ogre::FrameListener {
     friend GraphicalInputEntity;
+
 public:
     DLLEXPORT Graphics();
     DLLEXPORT ~Graphics();
@@ -27,19 +28,22 @@ public:
 
     virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-    DLLEXPORT inline Rendering::FontManager* GetFontManager(){
+    DLLEXPORT inline Rendering::FontManager* GetFontManager()
+    {
         return Fonts.get();
     }
-    DLLEXPORT inline AppDef* GetDefinitionObject(){
+    DLLEXPORT inline AppDef* GetDefinitionObject()
+    {
         return AppDefinition;
     }
-    DLLEXPORT inline Ogre::Root* GetOgreRoot(){
+    DLLEXPORT inline Ogre::Root* GetOgreRoot()
+    {
         return ORoot.get();
     }
 
     DLLEXPORT static Graphics* Get();
-private:
 
+private:
     bool InitializeOgre(AppDef* appdef);
 
     //! \brief Load all the new required hlms stuff
@@ -61,5 +65,4 @@ private:
     // static //
     static Graphics* Staticaccess;
 };
-}
-
+} // namespace Leviathan

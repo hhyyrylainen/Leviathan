@@ -1055,6 +1055,8 @@ DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow()
         // Opens on same display as the other window
         // TODO: open on next display
         Define->GetWindowDetails().DisplayNumber, Define->GetWindowDetails().FSAA, true,
+        // no gamma
+        false,
 #ifdef _WIN32
         NULL,
 #endif

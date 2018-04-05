@@ -1,6 +1,6 @@
 // ------------------------------------ //
 #include "GraphicalInputEntity.h"
-// ------------------------------------ //
+
 #include "../CEGUIInclude.h"
 
 #include "Compositor/OgreCompositorManager2.h"
@@ -26,7 +26,6 @@
 #include "OgreVector4.h"
 #include "Rendering/Graphics.h"
 #include "Window.h"
-#include <thread>
 
 #include "OgreRenderWindow.h"
 #include "OgreWindowEventUtilities.h"
@@ -36,10 +35,10 @@
 #include <SDL_syswm.h>
 #endif
 
-using namespace Leviathan;
-using namespace std;
-// ------------------------------------ //
+#include <thread>
 
+using namespace Leviathan;
+// ------------------------------------ //
 constexpr auto CLEAR_WORKSPACE_NAME = "GraphicalInputEntity_clear_workspace";
 
 namespace Leviathan {
@@ -52,7 +51,6 @@ public:
 
     ~GEntityAutoClearResources()
     {
-
         Root->getCompositorManager2()->removeWorkspace(WorldWorkspace);
         WorldWorkspace = nullptr;
 
@@ -60,7 +58,6 @@ public:
         WorldsScene = nullptr;
         WorldSceneCamera = nullptr;
     }
-
 
     Ogre::Camera* WorldSceneCamera = nullptr;
     Ogre::SceneManager* WorldsScene = nullptr;
@@ -76,7 +73,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
     Graphics* windowcreater, AppDef* windowproperties) :
     ID(IDFactory::GetID())
 {
-    // create window //
+    // Create window //
 
     const WindowDataDetails& WData = windowproperties->GetWindowDetails();
 
@@ -88,6 +85,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
 
     WParams["FSAA"] = fsaastr;
     WParams["vsync"] = WData.VSync ? "true" : "false";
+    WParams["gamma"] = WData.UseGamma ? "true" : "false";
 
     Ogre::String wcaption = WData.Title;
 
@@ -178,7 +176,7 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
 
         // Hlms is needed to parse scripts etc.
         windowcreater->_LoadOgreHLMS();
-        
+
         FileSystem::RegisterOGREResourceGroups();
 
         // Create the GUI system //
@@ -210,17 +208,15 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
     }
 
     // Store this window's number
-    {
-        Lock lock(TotalCountMutex);
-        WindowNumber = ++TotalCreatedWindows;
-    }
+    WindowNumber = ++TotalCreatedWindows;
 
     OWindow = tmpwindow;
 
     // create the actual window //
     DisplayWindow = new Window(sdlWindow, this);
 
-    _CreateOverlayScene();
+    // Shouldn't be created before starting auto clearing
+    // _CreateOverlayScene();
 
 #ifdef _WIN32
     // Fetch the windows handle from SDL //
@@ -252,10 +248,9 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
 
     if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)) {
 
-        Logger::Get()->Error("GraphicalInputEntity: Gui init failed");
+        LOG_ERROR("GraphicalInputEntity: Gui init failed");
         throw NULLPtr("invalid GUI manager");
     }
-
 
     // create receiver interface //
     TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
@@ -269,8 +264,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity()
     // Do teardown //
     // Release Ogre resources //
     // Release the scene //
-    Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
-    OverlayScene = NULL;
+    // Ogre::Root::getSingleton().destroySceneManager(OverlayScene);
+    // OverlayScene = nullptr;
 
     StopAutoClearing();
 
@@ -298,27 +293,25 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity()
     // Destory CEGUI if we are the last window //
     if(windowsafter == 0) {
 
-        FirstCEGUIRenderer = NULL;
+        FirstCEGUIRenderer = nullptr;
         CEGUI::OgreRenderer::destroySystem();
 
         Logger::Get()->Info("GraphicalInputEntity: all windows have been closed, "
                             "should quit soon");
     }
 
-    CEGUIRenderer = NULL;
+    CEGUIRenderer = nullptr;
 }
 
-GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = NULL;
+GraphicalInputEntity* Leviathan::GraphicalInputEntity::InputCapturer = nullptr;
 
 int Leviathan::GraphicalInputEntity::GlobalWindowCount = 0;
 
 Mutex Leviathan::GraphicalInputEntity::GlobalCountMutex;
 
-int Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
+std::atomic<int> Leviathan::GraphicalInputEntity::TotalCreatedWindows = 0;
 
-Mutex Leviathan::GraphicalInputEntity::TotalCountMutex;
-
-CEGUI::OgreRenderer* Leviathan::GraphicalInputEntity::FirstCEGUIRenderer = NULL;
+CEGUI::OgreRenderer* Leviathan::GraphicalInputEntity::FirstCEGUIRenderer = nullptr;
 
 bool Leviathan::GraphicalInputEntity::AutoClearResourcesCreated = false;
 Mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
@@ -412,8 +405,14 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::CreateAutoClearWorkspaceDefIfNot
     AutoClearResourcesCreated = true;
 }
 
-DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string& skyboxmaterial)
+DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(
+    const std::string& skyboxmaterial)
 {
+    // This is broken
+    DEBUG_BREAK;
+    LEVIATHAN_ASSERT(false, "This is broken");
+
+    _CreateOverlayScene();
 
     // Skip if already doing this //
     if(AutoClearResources)
@@ -457,8 +456,8 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::SetAutoClearing(const string& sk
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing()
 {
-
-    AutoClearResources.reset();
+    if(AutoClearResources)
+        AutoClearResources.reset();
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(std::shared_ptr<GameWorld> world)
@@ -546,11 +545,11 @@ DLLEXPORT void GraphicalInputEntity::InputEnd()
     }
 
     // Everything is now processed //
-    DisplayWindow->inputreceiver = NULL;
+    DisplayWindow->inputreceiver = nullptr;
     InputStarted = false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const string& filename)
+DLLEXPORT void Leviathan::GraphicalInputEntity::SaveScreenShot(const std::string& filename)
 {
     // uses render target's capability to save it's contents //
     GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
@@ -598,11 +597,11 @@ DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state)
 
         // reset pointer to indicate that this object no longer captures mouse to this window
         // //
-        InputCapturer = NULL;
+        InputCapturer = nullptr;
 
     } else {
 
-        if(InputCapturer != this && InputCapturer != NULL) {
+        if(InputCapturer != this && InputCapturer != nullptr) {
             // another window has input //
             MouseCaptureState = false;
             return false;

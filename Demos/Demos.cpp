@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "Demos.h"
 
+#include "Sample1.h"
+
 #include "Application/GameConfiguration.h"
 #include "Application/KeyConfiguration.h"
 #include "Events/EventHandler.h"
@@ -90,7 +92,11 @@ void DemosApplication::CustomizeEnginePostLoad()
     // window1->SetCustomInputController(GameInputHandler);
 }
 
-void DemosApplication::EnginePreShutdown() {}
+void DemosApplication::EnginePreShutdown()
+{
+    // Release current sample
+    CurrentSample.reset();
+}
 // ------------------------------------ //
 void DemosApplication::PlaySample1()
 {
@@ -101,11 +107,14 @@ void DemosApplication::PlaySample1()
         std::make_shared<NamedVariableList>("Sample", new StringBlock("Sample1")));
 
     GetEngine()->GetEventHandler()->CallEvent(event);
+
+    CurrentSample = std::make_unique<Sample1>();
+
+    CurrentSample->Start(*World);
 }
 // ------------------------------------ //
 std::string GetDemosVersionProxy()
 {
-
     return Demos_VERSIONS;
 }
 

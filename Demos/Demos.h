@@ -5,6 +5,7 @@
 // ------------------------------------ //
 #include "DemoNetHandler.h"
 #include "DemoVersion.h"
+#include "SampleCommon.h"
 
 #include "Application/Application.h"
 #include "Generated/StandardWorld.h"
@@ -46,6 +47,8 @@ protected:
     std::unique_ptr<DemosNetHandler> ClientInterface;
 
     std::shared_ptr<Leviathan::StandardWorld> World;
+
+    std::unique_ptr<SampleCommon> CurrentSample;
 
     static DemosApplication* StaticGame;
 };

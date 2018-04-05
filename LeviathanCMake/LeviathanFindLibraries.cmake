@@ -102,6 +102,7 @@ if(LEVIATHAN_FULL_BUILD)
   
   # Leviathan application libraries
   set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
+    OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network AngelScriptAddons)
   
 else()

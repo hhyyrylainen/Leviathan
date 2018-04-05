@@ -45,22 +45,30 @@ StandardConfigureExecutableMainAndInclude("${BaseIncludeFileName}" "Main.cpp"
   "${BaseSubFolder}" "${PROJECT_SOURCE_DIR}/${BaseSubFolder}")
 
 # get all files in their groups
-file(GLOB DemoSourceFiles "*.cpp")
-file(GLOB DemoHeaderFiles "*.h") 
+set(DemoCoreFiles
+  "DemoNetHandler.cpp" "DemoNetHandler.h"
+  "Demos.cpp" "Demos.h"
+  "DemoVersion.h"
+  "SampleCommon.h"
+  "Main.cpp"
+  )
+
+set(DemoSample1
+  "Sample1.cpp" "Sample1.h"
+  ) 
 
 # resource files
 file(GLOB DemoResourceFiles "resource.h" "*.rc")
 
 # file grouping
-# source_group("Source" FILES ${PSourceFiles})
-# source_group("Header" FILES ${PHeaderFiles})
-
+source_group("Core" FILES ${DemoCoreFiles})
+source_group("Sample1" FILES ${DemoSample1})
 source_group("resources" FILES ${PResourceFiles})
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})
 
 # all files in one list
-set(AllProjectFiles ${DemoSourceFiles} ${DemoHeaderFiles} ${DemoResourceFiles} )
+set(AllProjectFiles ${DemoCoreFiles} ${DemoSample1} ${DemoResourceFiles} )
 
 set(CurrentProjectName Demos)
 

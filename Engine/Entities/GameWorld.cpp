@@ -784,7 +784,6 @@ DLLEXPORT void GameWorld::DestroyEntity(ObjectID id)
 
 DLLEXPORT void GameWorld::QueueDestroyEntity(ObjectID id)
 {
-
     Lock lock(DeleteMutex);
     DelayedDeleteIDS.push_back(id);
 }
@@ -849,8 +848,7 @@ void GameWorld::_HandleDelayedDelete()
 
 void GameWorld::_DoDestroy(ObjectID id)
 {
-
-    Logger::Get()->Info("GameWorld destroying object " + Convert::ToString(id));
+    // LOG_INFO("GameWorld destroying object " + Convert::ToString(id));
 
     if(IsOnServer)
         _ReportEntityDestruction(id);
@@ -890,13 +888,11 @@ void GameWorld::_DoDestroy(ObjectID id)
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetEntitysParent(ObjectID child, ObjectID parent)
 {
-
     Parents.push_back(std::make_tuple(parent, child));
 }
 // ------------------------------------ //
 DLLEXPORT std::tuple<void*, bool> GameWorld::GetComponent(ObjectID id, COMPONENT_TYPE type)
 {
-
     return std::make_tuple(nullptr, false);
 }
 
@@ -908,7 +904,6 @@ DLLEXPORT std::tuple<void*, ComponentTypeInfo, bool> GameWorld::GetComponentWith
 
 DLLEXPORT std::tuple<void*, bool> GameWorld::GetStatesFor(COMPONENT_TYPE type)
 {
-
     return std::make_tuple(nullptr, false);
 }
 
@@ -998,7 +993,6 @@ DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
 // ------------------------------------ //
 void GameWorld::_ReportEntityDestruction(ObjectID id)
 {
-
     SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
         RECEIVE_GUARANTEE::Critical);
 }
@@ -1136,7 +1130,6 @@ DLLEXPORT void GameWorld::HandleEntityInitialPacket(
 
 void GameWorld::_ApplyInitialEntityPackets()
 {
-
     auto serializer = Engine::Get()->GetEntitySerializer();
 
     for(auto& response : InitialEntityPackets) {
@@ -1169,7 +1162,6 @@ DLLEXPORT void GameWorld::HandleEntityUpdatePacket(std::shared_ptr<NetworkRespon
 
 void GameWorld::_ApplyEntityUpdatePackets()
 {
-
     auto serializer = Engine::Get()->GetEntitySerializer();
 
     for(auto& response : EntityUpdatePackets) {
@@ -1213,7 +1205,6 @@ void GameWorld::_ApplyEntityUpdatePackets()
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ApplyQueuedPackets()
 {
-
     if(!InitialEntityPackets.empty())
         _ApplyInitialEntityPackets();
 
@@ -1223,7 +1214,6 @@ DLLEXPORT void GameWorld::ApplyQueuedPackets()
 // ------------------------------------ //
 DLLEXPORT void GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data)
 {
-
     Logger::Get()->Info(
         "GameWorld: adjusting our clock: Absolute: " + Convert::ToString(data->Absolute) +
         ", tick: " + Convert::ToString(data->Ticks) +
@@ -1238,7 +1228,6 @@ DLLEXPORT void GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data)
 // ------------------------------------ //
 DLLEXPORT void GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data)
 {
-
     Logger::Get()->Info(
         "GameWorld(" + Convert::ToString(ID) +
         "): frozen state updated, now: " + Convert::ToString<int>(data->Frozen) +

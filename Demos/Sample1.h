@@ -9,11 +9,10 @@
 //! materials works
 
 namespace Demos {
-class Sample1 : public SampleCommon{
+//! Sample1 based on the Ogre sample PbsMaterials
+class Sample1 : public SampleCommon {
 public:
-    
     void Start(Leviathan::StandardWorld& world);
-    
 };
 
-}
+} // namespace Demos

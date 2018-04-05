@@ -17,7 +17,8 @@ using namespace Demos;
 // ------------------------------------ //
 void Sample1::Start(Leviathan::StandardWorld& world)
 {
-    // TODO: rewrite to not just use copy pasted code from Ogre
+    // This method contains code directly copied from Ogre see License.txt for the Ogre
+    // license. This code has been modified
     Ogre::SceneManager* sceneManager = world.GetScene();
 
     const float armsLength = 2.5f;
@@ -80,10 +81,9 @@ void Sample1::Start(Leviathan::StandardWorld& world)
             size_t idx = i * 4 + j;
 
             Ogre::SceneNode* node = sceneManager->getRootSceneNode(Ogre::SCENE_DYNAMIC)
-                                  ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
+                                        ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
 
-            node->setPosition(
-                (i - 1.5f) * armsLength, 2.0f, (j - 1.5f) * armsLength);
+            node->setPosition((i - 1.5f) * armsLength, 2.0f, (j - 1.5f) * armsLength);
             node->setScale(0.65f, 0.65f, 0.65f);
 
             node->roll(Ogre::Radian((Ogre::Real)idx));
@@ -92,6 +92,7 @@ void Sample1::Start(Leviathan::StandardWorld& world)
         }
     }
 
+    // TODO: make this work
     // {
     //     int mNumSpheres = 0;
     //     Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
@@ -115,7 +116,8 @@ void Sample1::Start(Leviathan::StandardWorld& world)
     //                 "Test" + Ogre::StringConverter::toString(mNumSpheres++);
     //             Ogre::HlmsPbsDatablock* datablock = static_cast<Ogre::HlmsPbsDatablock*>(
     //                 hlmsPbs->createDatablock(datablockName, datablockName,
-    //                     Ogre::HlmsMacroblock(), Ogre::HlmsBlendblock(), Ogre::HlmsParamVec()));
+    //                     Ogre::HlmsMacroblock(), Ogre::HlmsBlendblock(),
+    //                     Ogre::HlmsParamVec()));
 
     //             Ogre::HlmsTextureManager::TextureLocation texLocation =
     //                 hlmsTextureManager->createOrRetrieveTexture("SaintPetersBasilica.dds",
@@ -125,8 +127,8 @@ void Sample1::Start(Leviathan::StandardWorld& world)
     //                 Ogre::PBSM_REFLECTION, texLocation.xIdx, texLocation.texture);
     //             datablock->setDiffuse(Ogre::Vector3(0.0f, 1.0f, 0.0f));
 
-    //             datablock->setRoughness(std::max(0.02f, x / Ogre::max(1, (float)(numX - 1))));
-    //             datablock->setFresnel(
+    //             datablock->setRoughness(std::max(0.02f, x / Ogre::max(1, (float)(numX -
+    //             1)))); datablock->setFresnel(
     //                 Ogre::Vector3(z / Ogre::max(1, (float)(numZ - 1))), false);
 
     //             Ogre::Item* item = sceneManager->createItem("Sphere1000.mesh",

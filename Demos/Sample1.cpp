@@ -36,7 +36,7 @@ void Sample1::Start(Leviathan::StandardWorld& world)
 
     {
         Ogre::Item* item = sceneManager->createItem(planeMesh, Ogre::SCENE_DYNAMIC);
-        item->setDatablock("Marble");
+        item->setDatablock("OakFloorboards1");
         Ogre::SceneNode* sceneNode = sceneManager->getRootSceneNode(Ogre::SCENE_DYNAMIC)
                                          ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         sceneNode->setPosition(0, -1, 0);
@@ -64,17 +64,19 @@ void Sample1::Start(Leviathan::StandardWorld& world)
             Ogre::String meshName;
 
             if(i == j)
-                meshName = "Sphere1000.mesh";
+                meshName = "UnitSphere.mesh";
             else
-                meshName = "Cube_d.mesh";
+                meshName = "UnitCube.mesh";
 
             Ogre::Item* item = sceneManager->createItem(meshName,
                 Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,
                 Ogre::SCENE_DYNAMIC);
-            if(i % 2 == 0)
-                item->setDatablock("Rocks");
-            else
-                item->setDatablock("Marble");
+
+            // The mesh default textures are fine
+            // if(i % 2 == 0)
+            //     item->setDatablock("Bathroomtile2");
+            // else
+            //     item->setDatablock("PatchyCement1");
 
             item->setVisibilityFlags(0x000000001);
 

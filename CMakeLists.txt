@@ -207,6 +207,9 @@ if(NOT ONLY_DOCUMENTATION)
 
     # pong example game
     add_subdirectory(Pong)
+
+    # demo examples
+    add_subdirectory(Demos)
   endif()
   
   # Strip symbols

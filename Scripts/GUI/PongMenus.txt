@@ -98,7 +98,7 @@ o GuiObject "MenuWindow/PongVersion"{
             
             string newtext = GetPongVersion();
            
-            instance.GetTargetElement().SetText(newtext);
+            instance.GetTargetWindow().SetText(newtext);
             
             return 1;
         }
@@ -113,7 +113,7 @@ o GuiObject "MenuWindow/LeviathanVersion"{
             // Set the text as the current version //
             string newtext = "Leviathan "+GetLeviathanVersion();
             
-            instance.GetTargetElement().SetText(newtext);
+            instance.GetTargetWindow().SetText(newtext);
             
             
             return 1;
@@ -136,7 +136,7 @@ o GuiObject "FPSDisplay"{
                 return 0;
                 
             // Set the value //
-            instance.GetTargetElement().SetText(string(newvalue));
+            instance.GetTargetWindow().SetText(string(newvalue));
             
             return 1;
         }
@@ -226,7 +226,7 @@ o GuiObject "ConnectionScreen/Status"{
             
             
             // Set it as the current text //
-            instance.GetTargetElement().SetText(message);
+            instance.GetTargetWindow().SetText(message);
             return 1;
         }
     @%};
@@ -242,7 +242,7 @@ o GuiObject "ConnectionScreen/ServerName"{
             
             
             // Set it as the current text //
-            instance.GetTargetElement().SetText(message);
+            instance.GetTargetWindow().SetText(message);
             return 1;
         }
     @%};
@@ -300,16 +300,16 @@ o GuiObject "LobbyScreen/LobbyTabs"{
         int CreateTabs(GuiObject@ instance, Event@ event){
             
             // Set the texts //
-            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnInfoTab").SetText("Info");
-            instance.GetTargetElement().GetChildWindow("__auto_TabPane__Buttons/__auto_btnPlayersTab").SetText("Players");
+            instance.GetTargetWindow().GetChildWindow("__auto_TabPane__Buttons/__auto_btnInfoTab").SetText("Info");
+            instance.GetTargetWindow().GetChildWindow("__auto_TabPane__Buttons/__auto_btnPlayersTab").SetText("Players");
             
-            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team0", "TNumber", "0");
-            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team1", "TNumber", "1");
-            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team2", "TNumber", "2");
-            instance.GetTargetElement().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team3", "TNumber", "3");
+            instance.GetTargetWindow().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team0", "TNumber", "0");
+            instance.GetTargetWindow().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team1", "TNumber", "1");
+            instance.GetTargetWindow().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team2", "TNumber", "2");
+            instance.GetTargetWindow().LoadAndCustomizeTabFromFile("PongLobbyTabTemplate.layout", "Team3", "TNumber", "3");
             
             // Fix the size issues //
-            instance.GetTargetElement().SetSelectedTabIndex(0);
+            instance.GetTargetWindow().SetSelectedTabIndex(0);
             
             //instance.PrintWindowsRecursive();
             

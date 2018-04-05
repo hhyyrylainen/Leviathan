@@ -431,6 +431,12 @@ bool Leviathan::BindGUI(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("GuiManager",
+           "void SetCollectionAllowEnableState(const string &in name, bool allow = true)",
+           asMETHOD(GUI::GuiManager, SetCollectionAllowEnableState), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()",
            asMETHOD(GUI::BaseGuiObject, GetOwningManager), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

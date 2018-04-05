@@ -1,0 +1,133 @@
+GUIBaseFile = "DemosMenu.layout";
+GUIAnimations = [["PongMenus.anims"]];
+RequireCEGUIHooked = true;
+
+// ------------------ Main menu objects ------------------ //
+o GuiCollection "MainMenu"{
+    l params{
+        Enabled = true;
+        KeepsGUIOn = true;
+        AutoTarget = "MenuWindow";
+        AutoAnimateChildren = true;
+        AutoAnimationIn = [[AutoTarget], [FadeIn]];
+        AutoAnimationOut = [[AutoTarget], [FadeOut]];
+    }
+}
+
+o GuiObject "_GuiStateSetter"{
+    s{
+        [@Listener="Generic", @Type="SampleChanged"]
+        int ChangeGUIState(GuiObject@ instance, GenericEvent@ event){
+            NamedVars@ vars = event.GetNamedVars();
+            auto sample = string(vars.GetSingleValueByName("Sample"));
+
+            LOG_INFO("Switching GUI to sample: " + sample);
+
+            if(sample == "Menu"){
+                instance.GetOwningManager().SetCollectionState("MainMenu", true);
+                instance.GetOwningManager().SetCollectionState("PauseMenu", false);
+                instance.GetOwningManager().SetCollectionAllowEnableState("PauseMenu", false);
+                
+            } else {
+
+                instance.GetOwningManager().SetCollectionState("MainMenu", false);
+                instance.GetOwningManager().SetCollectionAllowEnableState("PauseMenu", true);
+
+                // Sample GUIs
+            }
+
+            return 1;
+        }
+    @%};
+}
+
+// Quit the game //
+o GuiObject "MenuWindow/TopLevelMenu/Scroll/QuitGameButton"{
+    s{
+        [@Listener="OnClick"]
+        bool QuitIt(GuiObject@ instance){
+            // Close the game //
+            GetEngine().MarkQuit();
+            return true;
+        }
+    @%};
+}
+
+// Sample 1 //
+o GuiObject "MenuWindow/TopLevelMenu/Scroll/Sample1"{
+    s{
+        [@Listener="OnClick"]
+        bool PlayIt(GuiObject@ instance){
+            // Close the game //
+            GetDemosApplication().PlaySample1();
+            return true;
+        }
+    @%};
+}
+
+// ------------------ Version numbers ------------------ //
+o GuiObject "MenuWindow/DemosVersion"{
+    s{
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+            // Set the text as the current Pong version //
+            
+            string newtext = GetDemosVersion();
+           
+            instance.GetTargetWindow().SetText(newtext);
+            
+            return 1;
+        }
+    @%};
+}
+
+o GuiObject "LeviathanVersion"{
+    s{
+        [@Listener="OnInit"]
+        int SetVersion(GuiObject@ instance, Event@ event){
+        
+            // Set the text as the current version //
+            string newtext = "Leviathan "+GetLeviathanVersion();
+            
+            instance.GetTargetWindow().SetText(newtext);
+            
+            
+            return 1;
+        }
+    @%};
+}
+// ------------------ Debug helpers ------------------ //
+// The FPS display //
+o GuiObject "FPSDisplay"{
+    l params{
+        
+        ListenOn = DATAINDEX_FPS;
+    }
+    s{
+        [@Listener="OnListenUpdate"]
+        int UpdateFPS(GuiObject@ instance, Event@ event){
+            // The new FPS is the first value //
+            ScriptSafeVariableBlock@ newvalue = instance.GetAndPopFirstUpdated();
+            if(newvalue is null)
+                return 0;
+                
+            // Set the value //
+            instance.GetTargetWindow().SetText(string(newvalue));
+            
+            return 1;
+        }
+    @%};
+}
+
+// ------------------ Pause menu objects ------------------ //
+o GuiCollection "PauseMenu"{
+    l params{
+        Enabled = false;
+        AllowEnable = false;
+        ToggleOn = "ESCAPE";
+        KeepsGUIOn = true;
+        AutoTarget = "PauseMenu";
+        AllowForceOn = true;
+    }
+}
+

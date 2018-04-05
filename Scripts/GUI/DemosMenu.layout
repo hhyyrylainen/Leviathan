@@ -1,0 +1,190 @@
+<?xml version="1.0"?>
+<GUILayout version="4">
+  <Window name="GUIRoot" type="DefaultWindow">
+    
+    <!-- The main window for all stuff considered menu items -->
+    <Window name="MenuWindow" type="DefaultWindow">
+
+      <!-- The huge texts in the corners of all menus -->
+      <!-- Name of the game -->
+      <Window name="HugeDemos" type="TaharezLook/StaticText">
+        
+        <Property name="Visible" value="True"/>
+        <Property name="BackgroundEnabled" value="False"/>
+        <Property name="FrameEnabled" value="False"/>
+        
+        <Property name="Text" value="Leviathan Demos"/>
+        <Property name="Font" value="Simonetta-Black-Title"/>
+        <Property name="TextColours" value="tl:FFFFFFFF tr:FFFFFFFF bl:FFA0A0A0 br:FFA0A0A0"/>
+        
+        <Property name="Position" value="{{0, 20}, {0, 5}}"/>
+        <Property name="Size" value="{{0.85, 0}, {0.23, 0}}"/>
+        <Property name="VertFormatting" value="TopAligned"/>
+        
+      </Window>
+      
+      <!-- The Demos version number -->
+      <Window name="DemosVersion" type="TaharezLook/StaticText">
+        
+        <Property name="Visible" value="True"/>
+        <Property name="BackgroundEnabled" value="False"/>
+        <Property name="FrameEnabled" value="False"/>
+        <Property name="AlwaysOnTop" value="True"/>
+        
+        <Property name="Text" value="0.0.0.0"/>
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+        
+        <Property name="Position" value="{{0, 35}, {0.18, 5}}"/>
+        <Property name="HorzFormatting" value="LeftAligned"/>
+        <Property name="VertFormatting" value="TopAligned"/>
+        
+      </Window>
+            
+      <!-- The main menu screen -->
+      <Window name="TopLevelMenu" type="TaharezLook/FrameWindow">
+          
+        <Property name="Visible" value="True"/>
+        <Property name="CloseButtonEnabled" value="False"/>
+        <Property name="RollUpEnabled" value="False"/>
+        <Property name="SizingEnabled" value="True"/>
+        <Property name="SizingBorderThickness" value="3.0"/>
+        <Property name="AlwaysOnTop" value="True"/>
+        <Property name="DragMovingEnabled" value="True"/>
+
+        <Property name="Font" value="Simonetta-Regular"/>
+        
+        
+        <Property name="Text" value="Select Demo"/>
+          
+        <Property name="Size" value="{{0.55, 0}, {0.7, 0}}"/>
+        <Property name="Position" value="{{0.20, 0}, {0.2, 0}}"/>
+
+        <Window type="TaharezLook/ScrollablePane" name="Scroll">
+          <Property name="Area" value="{{0.0,0},{0.0,0},{1.0,0},{1.0,0}}" />
+          <!-- <Property name="Area" value="{{0.0,0},{0.0,0},{0,500},{1.0,0}}" /> -->
+          <!-- <Property name="ContentArea" value="l:0 t:0 r:500 b:900" /> -->
+          <!-- <Property name="ForceVertScrollbar" value="true" /> -->
+          <Property name="HorizontalAlignment" value="Centre"/>
+          
+          <!-- Main menu buttons -->
+          <Window name="Sample1" type="TaharezLook/Button">
+            
+            <Property name="Area" value="{{0, 25}, {0, 15}, {0, 655}, {0, 90}}"/>
+            <Property name="Font" value="Simonetta-Black-Large-NS"/>
+            
+            <Property name="Text" value="Sample 1 (PBR and Walking)"/>
+            <Property name="TooltipText" value="In this sample you can walk around and look at cool PBR materials"/>
+          </Window>
+          <Window name="Sample2" type="TaharezLook/Button">
+            
+            <Property name="Area" value="{{0, 25}, {0, 100}, {0, 655}, {0, 175}}"/>
+            <Property name="Disabled" value="True"/>
+            
+            <Property name="Font" value="Simonetta-Black-Large-NS"/>
+            
+            <Property name="Text" value="Sample2"/>
+          </Window>
+          <Window name="Sample3" type="TaharezLook/Button">
+            
+            <Property name="Area" value="{{0, 25}, {0, 185}, {0, 655}, {0, 260}}"/>
+            <Property name="Disabled" value="True"/>
+            
+            <Property name="Font" value="Simonetta-Black-Large-NS"/>
+            
+            <Property name="Text" value="Sample3"/>
+          </Window>
+          <Window name="Sample4" type="TaharezLook/Button">
+            
+            <Property name="Area" value="{{0, 25}, {0, 270}, {0, 655}, {0, 345}}"/>
+            <Property name="Disabled" value="True"/>
+            
+            <Property name="Font" value="Simonetta-Black-Large-NS"/>
+            
+            <Property name="Text" value="Sample4"/>
+          </Window>
+          <Window name="QuitGameButton" type="TaharezLook/Button">
+            
+            <Property name="Area" value="{{0, 25}, {0, 355}, {0, 655}, {0, 430}}"/>
+            
+            <Property name="Font" value="Simonetta-Black-Large-NS"/>
+            
+            <Property name="Text" value="Quit"/>
+            <Property name="TooltipText" value="Going so soon?"/>
+          </Window>
+          
+        </Window>
+      </Window>
+    </Window>
+
+    <!-- The Leviathan version number -->
+    <Window name="LeviathanVersion" type="TaharezLook/StaticText">
+      
+      <Property name="Visible" value="True"/>
+      <Property name="BackgroundEnabled" value="False"/>
+      <Property name="FrameEnabled" value="False"/>
+      
+      <Property name="Text" value="Leviathan 0.0.0.0"/>
+      <Property name="Font" value="Simonetta-Regular"/>
+      <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+      <Property name="HorizontalAlignment" value="Right"/>
+      <Property name="VerticalAlignment" value="Bottom"/>
+      
+      <Property name="HorzFormatting" value="RightAligned"/>
+      <Property name="VertFormatting" value="BottomAligned"/>
+      
+      <Property name="Size" value="{{0.11, 0}, {0.04, 0}}"/>
+    </Window>    
+    
+    <!-- The FPS counter -->
+    <Window name="FPSDisplay" type="TaharezLook/StaticText">
+      
+      <Property name="Visible" value="True"/>
+      <Property name="BackgroundEnabled" value="False"/>
+      <Property name="FrameEnabled" value="False"/>
+      <Property name="AlwaysOnTop" value="True"/>
+      
+      <Property name="Text" value="0"/>
+      <Property name="Font" value="Simonetta-Regular-Large"/>
+      <Property name="TextColours" value="tl:FF808080 tr:FF808080 bl:FFC0C0C0 br:FFC0C0C0"/>
+      
+      <Property name="VerticalAlignment" value="Top"/>
+      <Property name="HorizontalAlignment" value="Right"/>
+      <Property name="HorzFormatting" value="RightAligned"/>
+      <Property name="VertFormatting" value="TopAligned"/>
+      
+      <Property name="Size" value="{{0.05, 0}, {0.1, 0}}"/>
+    </Window>
+    
+
+    <!-- The sample 01 GUI -->
+    <Window name="Sample01" type="DefaultWindow">
+      
+      <Property name="Visible" value="False"/>
+	</Window>
+
+    <!-- The pause screen -->
+    <Window name="PauseMenu" type="DefaultWindow">
+
+      <Property name="Visible" value="False"/>
+
+      <Window name="MainLabel" type="TaharezLook/StaticText">
+
+        <Property name="Size" value="{{0.325, 0}, {0.35, 0}}"/>
+        <Property name="Position" value="{{0.05, 0}, {0, 0}}"/>
+        
+        <Property name="HorzFormatting" value="LeftAligned"/>
+        
+        <Property name="HorizontalAlignment" value="Left"/>
+        <Property name="VerticalAlignment" value="Top"/>
+
+        
+        <Property name="FrameEnabled" value="False"/>
+        <Property name="BackgroundEnabled" value="True"/>
+        <Property name="Font" value="Simonetta-Black"/>
+        <Property name="Text" value="Paused (doesn't actually pause yet)"/>
+      </Window>
+
+    </Window>
+  </Window>
+</GUILayout>

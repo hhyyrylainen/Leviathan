@@ -1,18 +1,17 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "TimeIncludes.h"
 #include "NetworkInterface.h"
+#include "TimeIncludes.h"
 
 #include <memory>
 #include <vector>
 
-namespace Leviathan{
+namespace Leviathan {
 
 class SentRequest;
-
 
 //! \brief Class that encapsulates common networking functionality required by
 //! client programs
@@ -20,9 +19,8 @@ class SentRequest;
 //! More specific version of NetworkInterface and should be included
 //! additionally in client network interface classes.
 //! \see NetworkInterface
-class NetworkClientInterface : public NetworkInterface{
+class NetworkClientInterface : public NetworkInterface {
 public:
-    
     enum class CLIENT_CONNECTION_STATE {
 
         //! Not connected to a server
@@ -38,17 +36,17 @@ public:
         //! Client is leaving a server
         Closed
     };
-    
+
 public:
     DLLEXPORT NetworkClientInterface();
     DLLEXPORT virtual ~NetworkClientInterface();
 
 
-    DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
-        Connection &connection) override;
+    DLLEXPORT virtual void HandleRequestPacket(
+        std::shared_ptr<NetworkRequest> request, Connection& connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection &connection) override;
+        std::shared_ptr<NetworkResponse> message, Connection& connection) override;
 
     //! \brief Connects the client to a server
     //! \return Returns true when successfully started the join process,
@@ -59,15 +57,15 @@ public:
 
     //! \brief Disconnects the client from the server or does nothing
     //! \todo Add a check to not close the connection if it is used by RemoteConsole
-    DLLEXPORT void DisconnectFromServer(const std::string &reason,
-        bool connectiontimedout = false);
+    DLLEXPORT void DisconnectFromServer(
+        const std::string& reason, bool connectiontimedout = false);
 
-    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>& GetClientConnections() 
-        override;
+    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>&
+        GetClientConnections() override;
 
     //! \brief Called directly by SyncedVariables to update the status string
-    DLLEXPORT void OnUpdateFullSynchronizationState(size_t variablesgot,
-        size_t expectedvariables);
+    DLLEXPORT void OnUpdateFullSynchronizationState(
+        size_t variablesgot, size_t expectedvariables);
 
 
     //! \brief Sends a command string to the server
@@ -78,7 +76,7 @@ public:
     //! \exception ExceptionInvalidState if not connected to a server
     //! The maximum length is MAX_SERVERCOMMAND_LENGTH should be around 550 characters.
     //! \exception ExceptionInvalidArgument when the message string is too long
-    DLLEXPORT void SendCommandStringToServer(const std::string &messagestr);
+    DLLEXPORT void SendCommandStringToServer(const std::string& messagestr);
 
 
     //! \brief Closes all client related things
@@ -101,28 +99,29 @@ public:
     DLLEXPORT void MarkForNotifyReceivedStates();
 
     //! \brief Updates status of the client to server connections
-    //!  
+    //!
     //! \note Should be called by NetworkInterface::TickIt
     DLLEXPORT void TickIt() override;
 
-    auto GetServerConnectionState() const{
-
+    auto GetServerConnectionState() const
+    {
         return ConnectState;
     }
 
 protected:
-
     // Callbacks for child classes to implement //
-    DLLEXPORT virtual void _OnDisconnectFromServer(const std::string &reasonstring,
-        bool donebyus){}
-    DLLEXPORT virtual void _OnStartConnectToServer(){}
-    DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string &reason){}
-    DLLEXPORT virtual void _OnSuccessfullyConnectedToServer(){}
-    
-    DLLEXPORT virtual void _OnCloseDown(){}
+    DLLEXPORT virtual void _OnDisconnectFromServer(
+        const std::string& reasonstring, bool donebyus)
+    {
+    }
+    DLLEXPORT virtual void _OnStartConnectToServer() {}
+    DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string& reason) {}
+    DLLEXPORT virtual void _OnSuccessfullyConnectedToServer() {}
+
+    DLLEXPORT virtual void _OnCloseDown() {}
 
     //! \brief Called when this class generates a new update message
-    DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string &message){}
+    DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string& message) {}
 
     //! \brief Called when the server has confirmed the join and we are a player on the server
     //!
@@ -137,23 +136,22 @@ protected:
     //! \note Here the application's connect data should be sent. The application
     //! specific connection routine should be done here
     DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
-    
+
 
 private:
-
     //! \brief Helper for TickIt to handle server connection state
     //! \todo Why are both heartbeats and keepalives used?
     void _TickServerConnectionState();
-        
+
     //! \brief Handles succeeded requests, removes clutter from other places
-    void _ProcessCompletedRequest(std::shared_ptr<SentRequest> tmpsendthing,
-        std::shared_ptr<NetworkResponse> response);
+    void _ProcessCompletedRequest(
+        std::shared_ptr<SentRequest> tmpsendthing, std::shared_ptr<NetworkResponse> response);
 
     //! \brief Handles failed requests, removes clutter from other places
     //! Only requests that aren't always sent as RECEIVE_GUARANTEE::Critical are handled here.
     //! That's because those will immediately drop the connection if they fail.
-    void _ProcessFailedRequest(std::shared_ptr<SentRequest> tmpsendthing, 
-        std::shared_ptr<NetworkResponse> response);
+    void _ProcessFailedRequest(
+        std::shared_ptr<SentRequest> tmpsendthing, std::shared_ptr<NetworkResponse> response);
 
     //! \brief Internally called when server has accepted us
     //! \todo Call variable syncing from here
@@ -171,7 +169,6 @@ private:
     void _UpdateHeartbeats();
 
 protected:
-
     //! This vector holds the made requests to allow using the response to do stuff
     std::vector<std::shared_ptr<SentRequest>> OurSentRequests;
 
@@ -199,9 +196,8 @@ protected:
     int OurPlayerID = -1;
 };
 
-}
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::NetworkClientInterface;
 #endif
-

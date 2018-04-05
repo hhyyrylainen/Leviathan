@@ -30,6 +30,27 @@
             <KeyFrame position="0" value="True"/>
         </Affector>
     </AnimationDefinition>
+
+    <AnimationDefinition name="FadeOut" duration="0.4" replayMode="once">
+        <Affector property="Alpha" interpolator="float">
+            <KeyFrame position="0" value="1"/>
+            <KeyFrame position="0.3" value="0.25" progression="quadratic accelerating"/>
+        </Affector>
+        <Affector property="Visible" interpolator="bool">
+            <KeyFrame position="0" value="True"/>
+            <KeyFrame position="0.3" value="False" progression="discrete"/>
+        </Affector>
+    </AnimationDefinition>
+    
+    <AnimationDefinition name="FadeIn" duration="0.3" replayMode="once">
+        <Affector property="Alpha" interpolator="float">
+            <KeyFrame position="0" value="0.25"/>
+            <KeyFrame position="0.3" value="1" progression="quadratic decelerating"/>
+        </Affector>
+        <Affector property="Visible" interpolator="bool">
+            <KeyFrame position="0" value="True"/>
+        </Affector>
+    </AnimationDefinition>
     
     
 </Animations>

@@ -42,11 +42,6 @@ endif()
 if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
 
   # The bin-folder files
-  file(GLOB RootFolderFiles "${LEVIATHAN_SRC}/bin/*.conf" "${LEVIATHAN_SRC}/bin/*.txt")
-  
-  file(COPY ${RootFolderFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin")
-  install(FILES ${RootFolderFiles} DESTINATION bin)  
-  
   file(GLOB DataMoveFiles "${LEVIATHAN_SRC}/bin/Data/*")
   file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
 
@@ -66,14 +61,15 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   # Copy data from the scripts folder to the bin folder
   file(GLOB ScriptsMoveFiles "${LEVIATHAN_SRC}/Scripts/*")
   file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
+
+  # Copy the crucial Ogre scripts
+  file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/bin/CoreOgreScripts/*")
+  file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION
+    "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
+  install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreScripts")
   
 endif()
 
-
-# Copy the crucial Ogre scripts
-file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/CoreOgreScripts/*")
-file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
-install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreScripts")
 
 # Boost files
 # If we are not using static linking we need to copy everything

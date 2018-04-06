@@ -261,7 +261,9 @@ DLLEXPORT void GameWorld::RemoveSunlight()
 }
 
 DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
-    const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power)
+    const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
+    const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
+    const Ogre::Vector3& hemispheredir, float envmapscale /*= 1.0f*/)
 {
     if(!Sunlight || !SunLightNode) {
 
@@ -274,10 +276,7 @@ DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
     Sunlight->setDirection(direction);
     Sunlight->setPowerScale(power);
 
-    // TODO: allow changing this colour
-    WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
-        Ogre::ColourValue(0.2f, 0.2f, 0.2f), /*Ogre::Vector3(0.1f, 1.f, 0.085f),*/
-        -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
+    WorldsScene->setAmbientLight(upperhemisphere, lowerhemisphere, hemispheredir, envmapscale);
 }
 
 // ------------------------------------ //

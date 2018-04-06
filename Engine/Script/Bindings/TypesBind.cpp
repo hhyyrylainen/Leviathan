@@ -196,6 +196,8 @@ void Float4ColourValueProxy(void* memory, const Ogre::ColourValue& values)
     new(memory) Float4(values);
 }
 
+static auto UnitVUpProxy = Float3::UnitVUp;
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -319,6 +321,11 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Float3", "Float3 opNeg() const",
+           asMETHODPR(Float3, operator-,() const, Float3), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Float3", "bool opEquals(const Float3 &in other) const",
            asMETHODPR(Float3, operator==,(const Float3&) const, bool), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -406,6 +413,24 @@ bool BindFloat3(asIScriptEngine* engine)
 
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+
+    // ------------------------------------ //
+    // Named ones
+    if(engine->SetDefaultNamespace("Float3") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Float3 UnitVUp", &UnitVUpProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
 
     return true;
 }

@@ -236,13 +236,17 @@ DLLEXPORT void GameWorld::SetSunlight()
     // Sunlight->setDiffuseColour(0.98f, 1.f, 0.95f);
     Sunlight->setDiffuseColour(1.f, 1.f, 1.f);
     Sunlight->setSpecularColour(1.f, 1.f, 1.f);
-    Sunlight->setDirection(Float3(-1, -1, -1).Normalize());
-    Sunlight->setPowerScale(1.0f);
+    // Sunlight->setDirection(Float3(-1, -1, -1).Normalize());
+    Sunlight->setDirection(Float3(0.55f, -0.3f, 0.75f).Normalize());
+    Sunlight->setPowerScale(7.0f);
 
     // Set scene ambient colour //
     // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
-    WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
-        Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
+    // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
+    //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
+    //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
+    WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
+        Ogre::ColourValue(0.2f, 0.2f, 0.2f), /*Ogre::Vector3(0.1f, 1.f, 0.085f),*/
         -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
 }
 
@@ -257,7 +261,7 @@ DLLEXPORT void GameWorld::RemoveSunlight()
 }
 
 DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
-    const Ogre::ColourValue& specular, const Ogre::Quaternion& direction)
+    const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power)
 {
     if(!Sunlight || !SunLightNode) {
 
@@ -267,7 +271,13 @@ DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
 
     Sunlight->setDiffuseColour(diffuse);
     Sunlight->setSpecularColour(specular);
-    SunLightNode->setOrientation(direction);
+    Sunlight->setDirection(direction);
+    Sunlight->setPowerScale(power);
+
+    // TODO: allow changing this colour
+    WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
+        Ogre::ColourValue(0.2f, 0.2f, 0.2f), /*Ogre::Vector3(0.1f, 1.f, 0.085f),*/
+        -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
 }
 
 // ------------------------------------ //

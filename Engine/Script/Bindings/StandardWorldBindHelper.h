@@ -107,7 +107,7 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
 
     if(engine->RegisterObjectMethod(classname,
            "void SetLightProperties(const Ogre::ColourValue &in diffuse, const "
-           "Ogre::ColourValue &in specular, const Ogre::Quaternion &in direction)",
+           "Ogre::ColourValue &in specular, const Ogre::Vector3 &in direction, float power)",
            asMETHOD(WorldType, SetLightProperties), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

@@ -355,7 +355,7 @@ public:
     //! \brief Sets the sunlight properties
     //! \pre SetSunlight has been called
     DLLEXPORT void SetLightProperties(const Ogre::ColourValue& diffuse,
-        const Ogre::ColourValue& specular, const Ogre::Quaternion& direction);
+        const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power);
 
     // ------------------------------------ //
     // Script proxies for script system implementation (don't use from c++ systems)

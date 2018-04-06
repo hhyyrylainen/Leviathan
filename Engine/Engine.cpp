@@ -571,7 +571,7 @@ void Engine::Release(bool forced)
     // Make windows clear their stored objects //
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-        AdditionalGraphicalEntities[i]->ReleaseLinked();
+        AdditionalGraphicalEntities[i]->UnlinkAll();
         SAFE_DELETE(AdditionalGraphicalEntities[i]);
     }
 
@@ -580,7 +580,7 @@ void Engine::Release(bool forced)
     // Finally the main window //
     if(GraphicalEntity1) {
 
-        GraphicalEntity1->ReleaseLinked();
+        GraphicalEntity1->UnlinkAll();
     }
 
     // Destroy windows //
@@ -1074,8 +1074,7 @@ DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow()
 
 DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, GraphicalInputEntity* windowentity)
 {
-
-    windowentity->ReleaseLinked();
+    windowentity->UnlinkAll();
 
     if(GraphicalEntity1 == windowentity) {
 
@@ -1145,8 +1144,7 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* o
 
     auto tmp = GameWorldFactory::Get()->CreateNewWorld();
 
-    tmp->Init(
-        _NetworkHandler->GetNetworkType(), owningwindow, NoGui ? NULL : Graph->GetOgreRoot());
+    tmp->Init(_NetworkHandler->GetNetworkType(), NoGui ? nullptr : Graph->GetOgreRoot());
 
     if(owningwindow)
         owningwindow->LinkObjects(tmp);

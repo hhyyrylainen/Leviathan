@@ -316,12 +316,6 @@ CEGUI::OgreRenderer* Leviathan::GraphicalInputEntity::FirstCEGUIRenderer = nullp
 bool Leviathan::GraphicalInputEntity::AutoClearResourcesCreated = false;
 Mutex Leviathan::GraphicalInputEntity::AutoClearResourcesMutex;
 // ------------------------------------ //
-DLLEXPORT void Leviathan::GraphicalInputEntity::ReleaseLinked()
-{
-    // release world and object references //
-    LinkedWorld.reset();
-}
-// ------------------------------------ //
 DLLEXPORT bool Leviathan::GraphicalInputEntity::Render(int mspassed, int tick, int timeintick)
 {
     GUARD_LOCK();
@@ -462,7 +456,17 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::StopAutoClearing()
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GraphicalInputEntity::LinkObjects(std::shared_ptr<GameWorld> world)
 {
+    if(LinkedWorld) {
+
+        LinkedWorld->OnUnLinkedFromWindow(this, Graphics::Get()->GetOgreRoot());
+    }
+
     LinkedWorld = world;
+
+    if(LinkedWorld) {
+
+        LinkedWorld->OnLinkToWindow(this, Graphics::Get()->GetOgreRoot());
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void GraphicalInputEntity::SetCustomInputController(
@@ -577,7 +581,7 @@ DLLEXPORT void Leviathan::GraphicalInputEntity::OnResize(int width, int height)
 
 DLLEXPORT void Leviathan::GraphicalInputEntity::UnlinkAll()
 {
-    LinkedWorld.reset();
+    LinkObjects(nullptr);
 }
 
 DLLEXPORT bool Leviathan::GraphicalInputEntity::SetMouseCapture(bool state)

@@ -19,7 +19,7 @@ TEST_CASE("Sendable get correct server states", "[entity][networking]"){
 
 
     StandardWorld world;
-    world.Init(NETWORKED_TYPE::Client, nullptr, nullptr);
+    world.Init(NETWORKED_TYPE::Client, nullptr);
 
 
 

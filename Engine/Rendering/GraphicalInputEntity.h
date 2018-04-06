@@ -44,8 +44,6 @@ public:
     // returns true if succeeds, false if another window has input //
     DLLEXPORT bool SetMouseCapture(bool state);
 
-    DLLEXPORT void ReleaseLinked();
-
     DLLEXPORT void UnlinkAll();
 
     //! Returns how many windows have been created

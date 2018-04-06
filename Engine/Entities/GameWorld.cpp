@@ -91,22 +91,19 @@ DLLEXPORT GameWorld::~GameWorld()
         Entities.empty(), "GameWorld: Entities not empty in destructor. Was Release called?");
 }
 // ------------------------------------ //
-DLLEXPORT bool GameWorld::Init(
-    NETWORKED_TYPE type, GraphicalInputEntity* renderto, Ogre::Root* ogre)
+DLLEXPORT bool GameWorld::Init(NETWORKED_TYPE type, Ogre::Root* ogre)
 {
     IsOnServer = (type == NETWORKED_TYPE::Server);
-
-    LinkedToWindow = renderto;
 
     // Detecting non-GUI mode //
     if(ogre) {
 
-        if(!renderto)
+        if(!ogre)
             return false;
 
         GraphicalMode = true;
         // these are always required for worlds //
-        _CreateOgreResources(ogre, renderto);
+        _CreateOgreResources(ogre);
     }
 
     // Acquire physics engine world //
@@ -164,7 +161,7 @@ DLLEXPORT void GameWorld::Release()
     pimpl.reset();
 }
 // ------------------------------------ //
-void GameWorld::_CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget)
+void GameWorld::_CreateOgreResources(Ogre::Root* ogre)
 {
     // create scene manager //
     // Let's do what the Ogre samples do and use a bunch of threads for culling
@@ -202,12 +199,6 @@ void GameWorld::_CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* ren
 
     // default sun //
     SetSunlight();
-
-    // Create the workspace for this scene //
-    // Which will be rendered before the overlay workspace but after potential
-    // clearing workspace
-    WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
-        rendertarget->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetFog()
@@ -282,6 +273,13 @@ DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
 {
+    if(InBackground) {
+
+        LOG_ERROR("GameWorld: Render: called while world is in the background (not attached "
+                  "to a window)");
+        return;
+    }
+
     RunFrameRenderSystems(tick, timeintick);
 
     // Read camera entity and update position //
@@ -514,6 +512,9 @@ DLLEXPORT void GameWorld::SendToAllPlayers(
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Tick(int currenttick)
 {
+    if(InBackground && !TickWhileInBackground)
+        return;
+
     TickNumber = currenttick;
 
     // Apply queued packets //
@@ -990,6 +991,11 @@ DLLEXPORT void GameWorld::_DoSystemsRelease()
     pimpl->RegisteredScriptSystems.clear();
 }
 
+DLLEXPORT void GameWorld::_DoSuspendSystems() {}
+
+DLLEXPORT void GameWorld::_DoResumeSystems() {}
+
+// ------------------------------------ //
 DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
 {
     // This can be called after Releasing once already
@@ -1447,6 +1453,48 @@ DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
 
     return iter->second->GetASImplementationObject();
 }
+// ------------------------------------ //
+DLLEXPORT void GameWorld::OnUnLinkedFromWindow(GraphicalInputEntity* window, Ogre::Root* ogre)
+{
+    if(window != LinkedToWindow) {
+
+        throw InvalidArgument("GameWorld attempted to be unlinked from window that wasn't the "
+                              "one it was linked to");
+    }
+
+    ogre->getCompositorManager2()->removeWorkspace(WorldWorkspace);
+    WorldWorkspace = nullptr;
+    LinkedToWindow = nullptr;
+
+    InBackground = true;
+}
+
+DLLEXPORT void GameWorld::OnLinkToWindow(GraphicalInputEntity* window, Ogre::Root* ogre)
+{
+    LEVIATHAN_ASSERT(WorldsScene, "World is not initialized");
+
+    if(LinkedToWindow || WorldWorkspace) {
+
+        throw InvalidArgument(
+            "GameWorld attempted to be linked to a window while it is already linked");
+    }
+
+    LinkedToWindow = window;
+
+    // Create the workspace for this scene //
+    // Which will be rendered before the overlay workspace but after potential
+    // clearing workspace
+    WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
+        LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
+
+    InBackground = false;
+}
+
+DLLEXPORT void GameWorld::SetRunInBackground(bool tickinbackground)
+{
+    TickWhileInBackground = tickinbackground;
+}
+
 // ------------------ RayCastHitEntity ------------------ //
 DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(
     const NewtonBody* ptr /*= nullptr*/, const float& tvar, RayCastData* ownerptr) :

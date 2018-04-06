@@ -61,8 +61,9 @@ TEST_CASE("Physics world creates collisions", "[physics]")
 
     REQUIRE(NewtonManager::Get());
     StandardWorld world;
+    world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr, nullptr));
+    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
@@ -90,8 +91,9 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
 
     REQUIRE(NewtonManager::Get());
     StandardWorld world;
+    world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr, nullptr));
+    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
@@ -147,8 +149,9 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
 
     REQUIRE(NewtonManager::Get());
     StandardWorld world;
+    world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr, nullptr));
+    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
@@ -158,7 +161,7 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
 
     CHECK(boxMaterialID >= 0);
     CHECK(planeMaterialID >= 0);
-    
+
     auto box = world.CreateEntity();
 
     auto& pos1 = world.Create_Position(box, Float3(0, 5, 0), Float4::IdentityQuaternion());

@@ -180,6 +180,10 @@ bool BindGuiCollection(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("GuiCollection", "void UpdateState(bool newstate)",
+           asMETHOD(GUI::GuiCollection, UpdateState), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }
@@ -439,6 +443,11 @@ bool Leviathan::BindGUI(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("GuiObject", "GuiManager& GetOwningManager()",
            asMETHOD(GUI::BaseGuiObject, GetOwningManager), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("GuiCollection", "GuiManager& GetOwningManager()",
+           asMETHOD(GUI::GuiCollection, GetOwningManager), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

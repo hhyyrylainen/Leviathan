@@ -108,7 +108,7 @@ public:
 
     //! \brief Creates resources for the world to work
     //! \post The world can be used after this
-    DLLEXPORT bool Init(NETWORKED_TYPE type, GraphicalInputEntity* renderto, Ogre::Root* ogre);
+    DLLEXPORT bool Init(NETWORKED_TYPE type, Ogre::Root* ogre);
 
     //! Release to not use Ogre when deleting
     DLLEXPORT void Release();
@@ -347,7 +347,7 @@ public:
     //! \brief Applies packets that have been received after the last call to this
     DLLEXPORT void ApplyQueuedPackets();
 
-    //! \todo Expose the parameters and make this activate the fog
+    //! \todo Fix this for Ogre 2.1
     DLLEXPORT void SetFog();
 
     DLLEXPORT void SetSunlight();
@@ -386,10 +386,23 @@ public:
     //! \note Increases refcount on returned object
     DLLEXPORT asIScriptObject* GetScriptSystem(const std::string& name);
 
+    // ------------------------------------ //
+    // Background worlds (used to stop ticking etc.)
+
+    //! \brief Used to detect that this world is in the background and should not tick
+    //! \note Removes the workspace created in OnLinkToWindow
+    DLLEXPORT virtual void OnUnLinkedFromWindow(
+        GraphicalInputEntity* window, Ogre::Root* ogre);
+
+    //! \brief Called when this is added to a GraphicalInputEntity
+    //! \note This creates a compositor workspace that renders this world's scene to the window
+    DLLEXPORT virtual void OnLinkToWindow(GraphicalInputEntity* window, Ogre::Root* ogre);
+
+    //! \brief Configures this world to run tick even when not attached to a window
+    DLLEXPORT virtual void SetRunInBackground(bool tickinbackground);
 
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(GameWorld);
-
 
 protected:
     //! \brief Called by Render which is called from a
@@ -425,11 +438,19 @@ protected:
     //! \brief Called in Release when systems should run their shutdown logic
     DLLEXPORT virtual void _DoSystemsRelease();
 
+    //! \brief Called when this is put in the background and systems (the sound system) should
+    //! suspend their active objects
+    //! \todo allow script systems to receive this
+    DLLEXPORT virtual void _DoSuspendSystems();
+
+    //! \brief Opposite of _DoSuspendSystems
+    DLLEXPORT virtual void _DoResumeSystems();
+
 private:
     //! \brief Updates a players position info in this world
     void UpdatePlayersPositionData(ConnectedPlayer& ply);
 
-    void _CreateOgreResources(Ogre::Root* ogre, GraphicalInputEntity* rendertarget);
+    void _CreateOgreResources(Ogre::Root* ogre);
     void _HandleDelayedDelete();
 
     //! \brief Reports an entity deletion to clients
@@ -520,6 +541,16 @@ private:
     //! True while in a tick. Used to prevent destroying entities or components
     //! \todo This check needs to be added to component removal
     bool TickInProgress = false;
+
+    //! If true this will keep running while not attached to a window
+    bool TickWhileInBackground = false;
+
+    //! Set by OnLinkToWindow when this is added to a GraphicalInputEntity
+    //! \note This must be added to the same one that Init was called with
+    //! \todo Determine if worlds could be linked to a different GraphicalInputEntity than the
+    //! one it was created with
+    //! \see GraphicalInputEntity::LinkObjects
+    bool InBackground = true;
 
     //! A lock for delayed delete, to allow deleting entities from physical callbacks
     Mutex DeleteMutex;

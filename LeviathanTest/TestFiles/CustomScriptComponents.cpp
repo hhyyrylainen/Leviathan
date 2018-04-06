@@ -25,6 +25,7 @@ TEST_CASE("Script can register custom entity type and do stuff with it", "[scrip
 
     // Script needs to be valid for releasing the components
     StandardWorld world;
+    world.SetRunInBackground(true);
 
     // setup the script //
     auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
@@ -92,6 +93,7 @@ TEST_CASE("Script node helper works with multiple script classes", "[script][ent
 
     // Script needs to be valid for releasing the components
     StandardWorld world;
+    world.SetRunInBackground(true);
 
     // setup the script //
     auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();

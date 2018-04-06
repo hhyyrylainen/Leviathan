@@ -65,6 +65,11 @@ public:
         return Name;
     }
 
+    DLLEXPORT inline GuiManager* GetOwningManager()
+    {
+        return OwningManager;
+    }
+
     std::string GetNameProxy()
     {
         return Name;

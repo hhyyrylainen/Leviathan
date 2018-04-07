@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -113,7 +113,8 @@ public:
     //! \brief Creates a GameWorld for placing entities into
     //! \note To actually move the world camera you need to use
     //! Leviathan::ObjectLoader::LoadCamera to create a camera entity
-    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(GraphicalInputEntity* owningwindow);
+    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(
+        GraphicalInputEntity* owningwindow, int worldtype);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy.

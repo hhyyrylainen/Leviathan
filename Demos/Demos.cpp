@@ -55,7 +55,8 @@ void DemosApplication::CustomizeEnginePostLoad()
     GraphicalInputEntity* window1 = engine->GetWindowEntity();
 
     // Create game world //
-    World = std::dynamic_pointer_cast<Leviathan::StandardWorld>(engine->CreateWorld(window1));
+    World =
+        std::dynamic_pointer_cast<Leviathan::StandardWorld>(engine->CreateWorld(window1, 0));
 
     LEVIATHAN_ASSERT(World, "World creation failed");
 

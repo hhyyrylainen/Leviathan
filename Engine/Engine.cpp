@@ -1139,10 +1139,10 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
     }
 }
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(GraphicalInputEntity* owningwindow)
+DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(
+    GraphicalInputEntity* owningwindow, int worldtype)
 {
-
-    auto tmp = GameWorldFactory::Get()->CreateNewWorld();
+    auto tmp = GameWorldFactory::Get()->CreateNewWorld(worldtype);
 
     tmp->Init(_NetworkHandler->GetNetworkType(), NoGui ? nullptr : Graph->GetOgreRoot());
 

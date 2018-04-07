@@ -991,9 +991,25 @@ DLLEXPORT void GameWorld::_DoSystemsRelease()
     pimpl->RegisteredScriptSystems.clear();
 }
 
-DLLEXPORT void GameWorld::_DoSuspendSystems() {}
+DLLEXPORT void GameWorld::_DoSuspendSystems()
+{
+    // We are responsible for script systems //
+    for(auto iter = pimpl->RegisteredScriptSystems.begin();
+        iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
 
-DLLEXPORT void GameWorld::_DoResumeSystems() {}
+        iter->second->Suspend();
+    }
+}
+
+DLLEXPORT void GameWorld::_DoResumeSystems()
+{
+    // We are responsible for script systems //
+    for(auto iter = pimpl->RegisteredScriptSystems.begin();
+        iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
+
+        iter->second->Resume();
+    }
+}
 
 // ------------------------------------ //
 DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
@@ -1466,12 +1482,19 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(GraphicalInputEntity* window, Ogr
     WorldWorkspace = nullptr;
     LinkedToWindow = nullptr;
 
+    if(!TickWhileInBackground) {
+        _DoSuspendSystems();
+    }
+
     InBackground = true;
 }
 
 DLLEXPORT void GameWorld::OnLinkToWindow(GraphicalInputEntity* window, Ogre::Root* ogre)
 {
     LEVIATHAN_ASSERT(WorldsScene, "World is not initialized");
+
+    if(!window)
+        throw InvalidArgument("GameWorld attempted to be linked to a nullptr window");
 
     if(LinkedToWindow || WorldWorkspace) {
 
@@ -1486,6 +1509,10 @@ DLLEXPORT void GameWorld::OnLinkToWindow(GraphicalInputEntity* window, Ogre::Roo
     // clearing workspace
     WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
         LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
+
+    if(!TickWhileInBackground) {
+        _DoResumeSystems();
+    }
 
     InBackground = false;
 }

@@ -67,6 +67,11 @@ public:
 
     DLLEXPORT void Clear();
 
+    DLLEXPORT void Suspend();
+
+    DLLEXPORT void Resume();
+
+
     const std::string Name;
 
 protected:

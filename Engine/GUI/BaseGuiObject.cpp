@@ -147,7 +147,8 @@ DLLEXPORT bool BaseGuiObject::LoadFromFileStructure(GuiManager* owner,
     tmpptr->_HookListeners();
 
     // Call the Init function //
-    tmpptr->OnEvent(new Event(EVENT_TYPE_INIT, nullptr));
+    auto event = Event::MakeShared<Event>(EVENT_TYPE_INIT, nullptr);
+    tmpptr->OnEvent(event.get());
 
     tempobjects.push_back(tmpptr.release());
     return true;

@@ -184,6 +184,10 @@ bool GuiCollection::LoadCollection(
         cobj->Scripting->GetModule()->GetListOfListeners(listeners);
 
         cobj->RegisterStandardScriptEvents(listeners);
+
+        // Call the Init function //
+        auto event = Event::MakeShared<Event>(EVENT_TYPE_INIT, nullptr);
+        cobj->OnEvent(event.get());
     }
 
     // Add to the collection list //

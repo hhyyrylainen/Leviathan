@@ -2,6 +2,7 @@
 #include "CommonEngineBind.h"
 
 #include "Addons/GameModule.h"
+#include "Application/Application.h"
 #include "Entities/Components.h"
 #include "Entities/GameWorld.h"
 #include "Events/CallableObject.h"
@@ -10,19 +11,19 @@
 #include "Events/EventHandler.h"
 #include "FileSystem.h"
 #include "Networking/NetworkCache.h"
-#include "Script/ScriptExecutor.h"
-#include "Sound/SoundDevice.h"
-#include "Utility/DataHandling/SimpleDatabase.h"
-#include "Utility/Random.h"
-#include "add_on/autowrapper/aswrappedcall.h"
-
-#include "Application/Application.h"
-
 #include "Script/Interface/ScriptDelegateSlot.h"
 #include "Script/Interface/ScriptEventListener.h"
 #include "Script/Interface/ScriptLock.h"
+#include "Script/ScriptExecutor.h"
+#include "Sound/SoundDevice.h"
+#include "Threading/ThreadingManager.h"
+#include "Utility/DataHandling/SimpleDatabase.h"
+#include "Utility/Random.h"
 
 #include "Engine.h"
+
+#include "add_on/autowrapper/aswrappedcall.h"
+
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -183,7 +184,6 @@ static NamedVars* NamedVarsFactory()
 
 static void InvokeProxy(Engine* obj, asIScriptFunction* callback)
 {
-
     obj->Invoke([=]() {
 
         try {
@@ -202,6 +202,37 @@ static void InvokeProxy(Engine* obj, asIScriptFunction* callback)
         callback->Release();
     });
 }
+
+
+static void QueueTaskDelayed(
+    ThreadingManager* self, asIScriptFunction* callback, int milliseconds)
+{
+    // This is wrapped to ensure that if the task is never run but discarded that the resource
+    // is cleanly released
+    // TODO: as is said in BindThreadingManager exposing custom task types to script would be
+    // better
+    auto wrapped = std::shared_ptr<asIScriptFunction>(
+        callback, [](asIScriptFunction* obj) { obj->Release(); });
+
+    self->QueueTask(std::make_shared<DelayedTask>(
+        [wrapped]() {
+            try {
+                ScriptRunningSetup ssetup;
+                auto result =
+                    ScriptExecutor::Get()->RunScript<void>(wrapped.get(), nullptr, ssetup);
+
+                if(result.Result != SCRIPT_RUN_RESULT::Success)
+                    LOG_WARNING("Script queued task: failed to run script callback");
+
+            } catch(...) {
+
+                LOG_ERROR("Queued task proxy passing exception up the call chain");
+                throw;
+            }
+        },
+        MillisecondDuration(milliseconds)));
+}
+
 // ------------------------------------ //
 static float PIProxy = PI;
 
@@ -452,7 +483,26 @@ bool BindRandom(asIScriptEngine* engine)
 
     return true;
 }
+// ------------------------------------ //
+bool BindThreadingManager(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("ThreadingManager", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
+    if(engine->RegisterFuncdef("void BackgroundThreadTask()") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // TODO: allow constructing task wrappers
+    if(engine->RegisterObjectMethod("ThreadingManager",
+           "void QueueTaskDelayed(BackgroundThreadTask@ callback, int milliseconds)",
+           asFUNCTION(QueueTaskDelayed), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
 // ------------------------------------ //
 bool BindEngine(asIScriptEngine* engine)
 {
@@ -488,6 +538,11 @@ bool BindEngine(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Engine", "FileSystem& GetFileSystem()",
            asMETHOD(Engine, GetFileSystem), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Engine", "ThreadingManager& GetThreadingManager()",
+           asMETHOD(Engine, GetThreadingManager), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -999,6 +1054,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         return false;
 
     if(!BindFileSystem(engine))
+        return false;
+
+    if(!BindThreadingManager(engine))
         return false;
 
     if(!BindEngine(engine))

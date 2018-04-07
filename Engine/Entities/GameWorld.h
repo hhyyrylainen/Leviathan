@@ -440,7 +440,8 @@ protected:
 
     //! \brief Called when this is put in the background and systems (the sound system) should
     //! suspend their active objects
-    //! \todo allow script systems to receive this
+    //! \note Only called if TickWhileInBackground is false (and won't be called if that is
+    //! changed while this is in the background)
     DLLEXPORT virtual void _DoSuspendSystems();
 
     //! \brief Opposite of _DoSuspendSystems

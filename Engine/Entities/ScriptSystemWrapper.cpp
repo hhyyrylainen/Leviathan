@@ -161,6 +161,47 @@ DLLEXPORT void ScriptSystemWrapper::Clear()
         return;
     }
 }
+
+DLLEXPORT void ScriptSystemWrapper::Suspend()
+{
+    asIScriptFunction* func =
+        ImplementationObject->GetObjectType()->GetMethodByName("Suspend");
+
+    // This is optional
+    if(!func)
+        return;
+
+    ScriptRunningSetup setup;
+    auto result =
+        static_cast<ScriptExecutor*>(ImplementationObject->GetEngine()->GetUserData())
+            ->RunScriptMethod<void>(setup, func, ImplementationObject);
+
+    if(result.Result != SCRIPT_RUN_RESULT::Success) {
+
+        LOG_ERROR("Script system(" + Name + "): failed to call Suspend");
+        return;
+    }
+}
+
+DLLEXPORT void ScriptSystemWrapper::Resume()
+{
+    asIScriptFunction* func = ImplementationObject->GetObjectType()->GetMethodByName("Resume");
+
+    // This is optional
+    if(!func)
+        return;
+
+    ScriptRunningSetup setup;
+    auto result =
+        static_cast<ScriptExecutor*>(ImplementationObject->GetEngine()->GetUserData())
+            ->RunScriptMethod<void>(setup, func, ImplementationObject);
+
+    if(result.Result != SCRIPT_RUN_RESULT::Success) {
+
+        LOG_ERROR("Script system(" + Name + "): failed to call Resume");
+        return;
+    }
+}
 // ------------------------------------ //
 DLLEXPORT void ScriptSystemWrapper::_ReleaseCachedFunctions()
 {

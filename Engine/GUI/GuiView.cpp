@@ -125,7 +125,7 @@ DLLEXPORT void View::ReleaseResources()
     Texture.setNull();
 
     // Destroy the manual object //
-    DEBUG_BREAK;
+    LOG_WRITE("TODO: release the quad rendering");
 }
 // ------------------------------------ //
 DLLEXPORT void View::NotifyWindowResized()

@@ -91,8 +91,7 @@ void GuiManager::GuiTick(int mspassed)
             ThisWindow->SetMouseCapture(false);
 
             // Show the cursor
-            // TODO: this needs some property when a custom cursor is used
-            DEBUG_BREAK;
+            LOG_WRITE("TODO: this needs some property when a custom cursor is used");
             ThisWindow->GetWindow()->SetHideCursor(false);
 
         } else {
@@ -158,9 +157,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     // Create the view //
     boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow->GetWindow()));
 
-    DEBUG_BREAK;
-    // TODO: check should we release the initial reference as intrusive_ptr increments
-    // automatically
+    loadingView->AddRef();
 
     // Create the final page //
     std::string finalpath;

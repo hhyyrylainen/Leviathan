@@ -537,7 +537,7 @@ DLLEXPORT void GraphicalInputEntity::InputEnd()
     if(!InputStarted) {
 
         // DisplayWindow->ReadInitialMouse(WindowsGui->GetContextInput());
-        DEBUG_BREAK;
+        // LOG_WRITE("TODO: input end read mouse");
     }
 
     // Everything is now processed //

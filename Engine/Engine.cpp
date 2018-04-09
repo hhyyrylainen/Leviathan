@@ -1371,20 +1371,24 @@ bool Engine::ParseSingleCommand(
 
 DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
 {
-
     if(argcount < 1)
         return true;
 
-    LOG_INFO("Engine: Command line: " + std::string(args[0]));
+    LOG_INFO("Engine: Command line: " + (args[0] ? std::string(args[0]) : std::string()));
 
     for(int i = 1; i < argcount; ++i) {
 
-        LOG_WRITE("\t> " + std::string(args[i]));
+        LOG_WRITE("\t> " + (args[i] ? std::string(args[i]) : std::string()));
     }
 
     int argindex = 0;
 
     while(argindex < argcount) {
+
+        if(!args[argindex]) {
+            ++argindex;
+            continue;
+        }
 
         StringIterator itr(args[argindex]);
 

@@ -98,6 +98,8 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
     settings.windowless_rendering_enabled = true;
 
+    settings.single_process = false;
+
 #ifdef _WIN32
     // Let's try to speed things up //
     // Only works on windows

@@ -27,13 +27,13 @@ DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateScreenSpaceQuad(
 
     // This is a fullscreen quad in screenspace (so no transform matrix is used)
     float vertexData[] = {// First vertex
-        x, y, 0, 0, 0,
+        x, y, 0, 0, 1,
         // Second
-        x + width, y, 0, 1, 0,
+        x + width, y, 0, 1, 1,
         // Third
-        x + width, y + width, 0, 1, 1,
+        x + width, y + width, 0, 1, 0,
         // Fourth
-        x, y + width, 0, 0, 1};
+        x, y + width, 0, 0, 0};
 
     Ogre::VertexBufferPacked* vertexBuffer = vaoManager->createVertexBuffer(
         vertexElements, 4, Ogre::BT_IMMUTABLE, &vertexData, false);

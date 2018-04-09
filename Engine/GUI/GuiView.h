@@ -228,16 +228,42 @@ public:
     //! \brief Passes generic events to the render process
     DLLEXPORT int OnGenericEvent(GenericEvent* event) override;
 
-    virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override;
-    virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override;
-    virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() override;
-    virtual CefRefPtr<CefDragHandler> GetDragHandler() override;
-    virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override;
-    virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override;
-    virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override;
-    virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override;
-    virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override;
-
+    virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefDragHandler> GetDragHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefLifeSpanHandler> GetLifeSpanHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override
+    {
+        return this;
+    }
+    virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override
+    {
+        return this;
+    }
 
     //! \brief Uses jQuery toggle method on target DOM element
     DLLEXPORT void ToggleElement(const std::string& name);

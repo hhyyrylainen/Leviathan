@@ -45,8 +45,9 @@ public:
     //! This function will check command line arguments and possibly just run a subprocess or
     //! continue with the main application Passing command line argument of "--nogui" will skip
     //! this step and CEF initialization
-    DLLEXPORT static bool CEFFirstCheckChildProcess(int argcount, char* args[],
-        int& returnvalue, std::shared_ptr<CEFSandboxInfoKeeper>& keeper
+    DLLEXPORT static bool CEFFirstCheckChildProcess(
+        int argcount, char* args[], int& returnvalue,
+        std::shared_ptr<CEFSandboxInfoKeeper>& keeper, const std::string& logname
 #ifdef _WIN32
         ,
         HINSTANCE hInstance

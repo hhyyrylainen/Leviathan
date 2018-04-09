@@ -245,8 +245,8 @@ DLLEXPORT Window::~Window()
 
     LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
               "GLX plugin uninstall");
-    SDL_DestroyWindow(SDLWindow);
-    // SDL_HideWindow(SDLWindow);
+    // SDL_DestroyWindow(SDLWindow);
+    SDL_HideWindow(SDLWindow);
     SDLWindow = nullptr;
 }
 // ------------------------------------ //
@@ -635,6 +635,7 @@ DLLEXPORT void Window::_StartGatherInput()
 DLLEXPORT void Window::InputEnd()
 {
     InputGatherStarted = false;
+    inputreceiver = nullptr;
 }
 
 void Window::_CheckMouseVisibilityStates()
@@ -672,6 +673,9 @@ DLLEXPORT int Window::GetCEFButtonFromSdlMouseButton(uint32_t whichbutton)
 // ------------------ Input listener functions ------------------ //
 void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
 {
+    if(!inputreceiver)
+        return;
+
     CefKeyEvent cef_event;
 
     cef_event.modifiers = CEFSpecialKeyModifiers;
@@ -734,8 +738,14 @@ void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
 
 DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     // Only pass this data if we aren't going to pass our own captured mouse //
     if(!MouseCaptured) {
+
+        if(!inputreceiver)
+            return;
 
         CefMouseEvent cevent;
         cevent.modifiers = CEFSpecialKeyModifiers;
@@ -750,7 +760,13 @@ DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
 
 DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     if(!MouseCaptured) {
+
+        if(!inputreceiver)
+            return;
 
         CefMouseEvent cevent;
         cevent.modifiers = CEFSpecialKeyModifiers;
@@ -763,7 +779,13 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
 
 DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     if(!MouseCaptured) {
+
+        if(!inputreceiver)
+            return;
 
         CefMouseEvent cevent;
         cevent.modifiers = CEFSpecialKeyModifiers;
@@ -782,7 +804,13 @@ DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
 
 DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     if(!MouseCaptured) {
+
+        if(!inputreceiver)
+            return;
 
         CefMouseEvent cevent;
         cevent.modifiers = CEFSpecialKeyModifiers;
@@ -801,7 +829,13 @@ DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
 
 DLLEXPORT void Window::InjectCodePoint(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     if(!MouseCaptured) {
+
+        if(!inputreceiver)
+            return;
 
         DEBUG_BREAK;
 
@@ -815,6 +849,9 @@ DLLEXPORT void Window::InjectCodePoint(const SDL_Event& event)
 
 DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     bool SentToController = false;
 
     // Try to pass to CEF //
@@ -841,6 +878,9 @@ DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
 
 DLLEXPORT void Window::InjectKeyUp(const SDL_Event& event)
 {
+    if(!InputGatherStarted)
+        _StartGatherInput();
+
     // Send to CEF if GUI is active //
     DEBUG_BREAK;
     // DoCEFInputPass(sdlkey, false);

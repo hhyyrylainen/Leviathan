@@ -91,6 +91,10 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     Ogre::MaterialPtr baseMaterial =
         Ogre::MaterialManager::getSingleton().getByName("GUIOverlay");
 
+    if(!baseMaterial)
+        LOG_FATAL("GuiView: GUIOverlay material doesn't exists! are the core Leviathan "
+                  "materials and shaders copied?");
+
     // TODO: find a way for the species to manage this to
     // avoid having tons of materials Maybe Use the species's
     // name instead. and let something like the
@@ -107,7 +111,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
 
     // Setup render queue for it
     // TODO: different queues for different GUIs
-    scene->getRenderQueue()->setRenderQueueMode(0, Ogre::RenderQueue::FAST);
+    scene->getRenderQueue()->setRenderQueueMode(1, Ogre::RenderQueue::FAST);
 
     QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
     QuadItem->setCastShadows(false);
@@ -123,14 +127,18 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
 
     // We use our own window things //
     // This should be using transparent painting automatically
-    info.SetAsWindowless(Wind->GetNativeHandle());
+    // TODO:
+    // info.SetAsWindowless(Wind->GetNativeHandle());
+    info.SetAsWindowless(0);
 
     // Customize the settings //
     CefBrowserSettings settings;
 
+    // Created synchronously but the pointer is still linked there
     // Created asynchronously, the pointer will be linked in the OnAfterCreated function //
-    // loads google just for fun //
-    CefBrowserHost::CreateBrowser(info, this, filetoload, settings, NULL);
+    // TODO: determine which is better
+    // CefBrowserHost::CreateBrowserSync(info, this, filetoload, settings, nullptr);
+    CefBrowserHost::CreateBrowser(info, this, filetoload, settings, nullptr);
 
     return true;
 }
@@ -404,51 +412,6 @@ DLLEXPORT void View::CheckRender()
     }
 }
 // ------------------------------------ //
-CefRefPtr<CefRenderHandler> View::GetRenderHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefRequestHandler> View::GetRequestHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefLoadHandler> View::GetLoadHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefLifeSpanHandler> View::GetLifeSpanHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefKeyboardHandler> View::GetKeyboardHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefDragHandler> View::GetDragHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefDownloadHandler> View::GetDownloadHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefDisplayHandler> View::GetDisplayHandler()
-{
-    return this;
-}
-
-CefRefPtr<CefContextMenuHandler> View::GetContextMenuHandler()
-{
-    return this;
-}
-// ------------------------------------ //
 void View::OnProtocolExecution(
     CefRefPtr<CefBrowser> browser, const CefString& url, bool& allow_os_execution)
 {
@@ -465,6 +428,8 @@ void View::OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     ErrorCode errorCode, const CefString& errorText, const CefString& failedUrl)
 {
     // A frame has failed to load content...
+    LOG_ERROR("[CEF] Load error(" + std::to_string(errorCode) +
+              "): " + std::string(errorText) + ", url: " + std::string(failedUrl));
 }
 
 void View::OnLoadEnd(

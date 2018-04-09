@@ -87,7 +87,8 @@ if(NOT ONLY_DOCUMENTATION)
   file(COPY ${CEF_BLOBS} DESTINATION "${PROJECT_BINARY_DIR}/bin/")
   file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
     DESTINATION "${PROJECT_BINARY_DIR}/bin")
-  file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/Resources"
+  file(GLOB CEF_RESOURCES "${LEVIATHAN_SRC}/build/ThirdParty/Resources/*")
+  file(COPY ${CEF_RESOURCES}
     DESTINATION "${PROJECT_BINARY_DIR}/bin/")
 
 endif()

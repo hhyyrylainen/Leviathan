@@ -1,8 +1,6 @@
 // ------------------------------------ //
 #include "GlobalCEFHandler.h"
 
-using namespace Leviathan;
-// ------------------------------------ //
 #include "GUI/GuiCEFApplication.h"
 
 #include "include/cef_app.h"
@@ -11,9 +9,14 @@ using namespace Leviathan;
 #include "include/cef_sandbox_win.h"
 #endif
 
+#include <boost/filesystem.hpp>
+using namespace Leviathan;
+// ------------------------------------ //
+
 
 DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
-    int argcount, char* args[], int& returnvalue, std::shared_ptr<CEFSandboxInfoKeeper>& keeper
+    int argcount, char* args[], int& returnvalue,
+    std::shared_ptr<CEFSandboxInfoKeeper>& keeper, const std::string& logname
 #ifdef _WIN32
     ,
     HINSTANCE hInstance
@@ -61,12 +64,45 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     // Specify CEF global settings here.
     CefSettings settings;
 
-#ifndef CEF_ENABLE_SANDBOX
+    // Apparently this "just works" on non-windows platforms
+#if defined(CEF_ENABLE_SANDBOX) && defined(_WIN32)
     settings.no_sandbox = true;
 #endif
 
+    try {
+        CefString(&settings.locales_dir_path) =
+            boost::filesystem::canonical("locales").wstring();
+
+        const auto currentCanonical = boost::filesystem::canonical("./").wstring();
+
+        CefString(&settings.resources_dir_path) = currentCanonical;
+
+        CefString(&settings.log_file) =
+            currentCanonical + Convert::Utf8ToUtf16("/" + logname + "LogCEF.txt");
+
+        const auto cachePath = currentCanonical + L"/Data/Cache/CEF";
+        boost::filesystem::create_directories(cachePath);
+
+        CefString(&settings.cache_path) = cachePath;
+
+    } catch(const boost::filesystem::filesystem_error& e) {
+
+        std::cout << "Error missing file or accessing cache location: " << e.what()
+                  << std::endl;
+        abort();
+    }
+
+    // TODO: log_severity
+
+    // TODO: user agent
+
+    settings.windowless_rendering_enabled = true;
+
+#ifdef _WIN32
     // Let's try to speed things up //
+    // Only works on windows
     settings.multi_threaded_message_loop = true;
+#endif
 
     // Initialize CEF.
     CefInitialize(main_args, settings, keeper->CEFApp.get(), sandbox_info);
@@ -91,9 +127,12 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::CEFLastThingInProgram()
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GlobalCEFHandler::DoCEFMessageLoopWork()
 {
-    if(!CEFInitialized)
+    if(!CEFInitialized) {
+        LOG_ERROR("DoCEFMessageLoopWork called before CEF is initialized");
         return;
-    // CefDoMessageLoopWork();
+    }
+
+    CefDoMessageLoopWork();
 }
 // ------------------------------------ //
 DLLEXPORT CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects()

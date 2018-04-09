@@ -85,10 +85,6 @@ int main(int argcount, char* args[]){
 #ifdef _WIN32
     int argcount = 1;
     char* args[] = { lpCmdLine };
-#else
-    // We need to skip the program name
-    args += 1;
-    --argcount;
 #endif
     
     int Return = 0;
@@ -97,7 +93,8 @@ int main(int argcount, char* args[]){
     std::shared_ptr<Leviathan::CEFSandboxInfoKeeper> KeepThisSafe;
     
     // The default CEF handling needs to be the first thing in the program //
-    if(Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(argcount, args, Return, KeepThisSafe
+    if(Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(argcount, args, Return,
+            KeepThisSafe, "@PROGRAMLOG@"
         #ifdef _WIN32
             , hInstance
         #endif
@@ -107,6 +104,12 @@ int main(int argcount, char* args[]){
         return Return;
     }
     // This is the main process, continue normally //
+    
+#ifndef _WIN32
+    // We need to skip the program name
+    args += 1;
+    --argcount;
+#endif // _WIN32
     
 #ifdef _WIN32
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);

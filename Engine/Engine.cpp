@@ -13,6 +13,7 @@
 #include "Events/EventHandler.h"
 #include "FileSystem.h"
 #include "GUI/GuiManager.h"
+#include "GlobalCEFHandler.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
 #include "Handlers/ResourceRefreshHandler.h"
@@ -545,7 +546,8 @@ void Engine::Release(bool forced)
         LEVIATHAN_ASSERT(PreReleaseDone, "PreReleaseDone must be done before actual release!");
 
     // Force garbase collection //
-    MainScript->CollectGarbage();
+    if(MainScript)
+        MainScript->CollectGarbage();
 
     // Destroy worlds //
     {
@@ -637,6 +639,11 @@ DLLEXPORT void Engine::MessagePump()
 {
 
     Ogre::WindowEventUtilities::messagePump();
+
+    // CEF events (not on windows as that uses multi_threaded_message_loop
+#ifndef _WIN32
+    GlobalCEFHandler::DoCEFMessageLoopWork();
+#endif //_WIN32
 
     SDL_Event event;
     while(SDL_PollEvent(&event)) {
@@ -827,7 +834,6 @@ DLLEXPORT Window* Engine::GetWindowFromSDLID(uint32_t sdlid)
 // ------------------------------------ //
 void Engine::Tick()
 {
-
     // Always try to update networking //
     {
         Lock lock(NetworkHandlerLock);

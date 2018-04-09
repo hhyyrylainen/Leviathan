@@ -170,6 +170,8 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
         finalpath = "file:///" + urlorpath;
     }
 
+    LOG_INFO("GuiManager: loading GUI: " + finalpath);
+
     // TODO: extra configuration
     NamedVars varlist;
 

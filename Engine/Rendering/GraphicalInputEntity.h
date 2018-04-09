@@ -4,7 +4,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
-
+#include <atomic>
 #include <memory>
 
 namespace CEGUI {

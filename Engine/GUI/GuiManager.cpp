@@ -199,11 +199,11 @@ DLLEXPORT void GuiManager::UnLoadGUIFile()
     DEBUG_BREAK;
 }
 // ------------------------------------ //
-DLLEXPORT CefBrowserHost* GuiManager::GetPrimaryInputReceiver()
+DLLEXPORT CefRefPtr<CefBrowserHost> GuiManager::GetPrimaryInputReceiver()
 {
     for(size_t i = 0; i < ThissViews.size(); i++) {
 
-        return ThissViews[i]->GetBrowserHost().get();
+        return ThissViews[i]->GetBrowserHost();
     }
 
     return nullptr;

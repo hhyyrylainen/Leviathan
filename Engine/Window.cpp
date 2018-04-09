@@ -748,7 +748,6 @@ DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
             return;
 
         CefMouseEvent cevent;
-        cevent.modifiers = CEFSpecialKeyModifiers;
         cevent.x = event.motion.x;
         cevent.y = event.motion.y;
 
@@ -768,12 +767,17 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
         if(!inputreceiver)
             return;
 
-        CefMouseEvent cevent;
-        cevent.modifiers = CEFSpecialKeyModifiers;
-        cevent.x = 0;
-        cevent.y = 0;
+        int x = event.wheel.x;
+        int y = event.wheel.y;
 
-        inputreceiver->SendMouseWheelEvent(cevent, 0, event.wheel.y);
+        if(SDL_MOUSEWHEEL_FLIPPED == event.wheel.direction) {
+            y *= -1;
+        } else {
+            x *= -1;
+        }
+
+        CefMouseEvent cevent;
+        inputreceiver->SendMouseWheelEvent(cevent, x, y);
     }
 }
 
@@ -788,7 +792,6 @@ DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
             return;
 
         CefMouseEvent cevent;
-        cevent.modifiers = CEFSpecialKeyModifiers;
         cevent.x = event.button.x;
         cevent.y = event.button.y;
 
@@ -813,7 +816,6 @@ DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
             return;
 
         CefMouseEvent cevent;
-        cevent.modifiers = CEFSpecialKeyModifiers;
         cevent.x = event.button.x;
         cevent.y = event.button.y;
 

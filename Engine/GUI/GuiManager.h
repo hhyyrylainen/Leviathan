@@ -6,9 +6,9 @@
 #include "Application/AppDefine.h"
 #include "Common/ThreadSafe.h"
 
-#include <boost/intrusive_ptr.hpp>
+#include "include/cef_browser.h"
 
-class CefBrowserHost;
+#include <boost/intrusive_ptr.hpp>
 
 namespace Leviathan { namespace GUI {
 
@@ -52,7 +52,7 @@ public:
 
     //! \todo This needs to support multiple views somehow (maybe send to one the mouse is
     //! over?)
-    DLLEXPORT CefBrowserHost* GetPrimaryInputReceiver();
+    DLLEXPORT CefRefPtr<CefBrowserHost> GetPrimaryInputReceiver();
 
 protected:
     //! Is called by folder listeners to notify of Gui file changes

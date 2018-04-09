@@ -6,6 +6,8 @@
 #include "Common/ThreadSafe.h"
 #include "Common/Types.h"
 
+#include "include/cef_browser.h"
+
 #include <atomic>
 #include <memory>
 
@@ -198,7 +200,7 @@ private:
     SDL_Window* SDLWindow = nullptr;
 
     //! This is temporarily stored during input gathering
-    CefBrowserHost* inputreceiver = nullptr;
+    CefRefPtr<CefBrowserHost> inputreceiver = nullptr;
 
     //! Allows CEF to report whether a key input was handled
     //! Set by ReportKeyEventAsUsed

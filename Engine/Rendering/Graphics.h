@@ -9,10 +9,6 @@
 #include "OgreFrameListener.h"
 
 namespace Leviathan {
-namespace Rendering {
-
-class FontManager;
-} // namespace Rendering
 
 class Graphics : Ogre::FrameListener {
     friend GraphicalInputEntity;
@@ -28,10 +24,6 @@ public:
 
     virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
 
-    DLLEXPORT inline Rendering::FontManager* GetFontManager()
-    {
-        return Fonts.get();
-    }
     DLLEXPORT inline AppDef* GetDefinitionObject()
     {
         return AppDefinition;
@@ -60,7 +52,6 @@ private:
     // OGRE //
     std::unique_ptr<Ogre::Root> ORoot;
     Ogre::Log* OLog = nullptr;
-    std::unique_ptr<Rendering::FontManager> Fonts;
 
     // static //
     static Graphics* Staticaccess;

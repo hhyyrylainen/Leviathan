@@ -69,9 +69,7 @@ void DemosApplication::CustomizeEnginePostLoad()
 
     GuiManager* guiManager = window1->GetGui();
 
-    guiManager->EnableStandardGUIThemes();
-
-    if(!guiManager->LoadGUIFile("./Data/Scripts/GUI/DemosMenus.txt")) {
+    if(!guiManager->LoadGUIFile("https://www.google.fi")) {
 
         Logger::Get()->Error("Demos: failed to load the GuiFile, quitting");
         LeviathanApplication::Get()->StartRelease();

@@ -1,7 +1,7 @@
 // ------------------------------------ //
 #include "GraphicalInputEntity.h"
 
-#include "../CEGUIInclude.h"
+#include "TimeIncludes.h"
 
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNode.h"
@@ -15,7 +15,6 @@
 #include "Entities/GameWorld.h"
 #include "Exceptions.h"
 #include "FileSystem.h"
-#include "GUI/FontManager.h"
 #include "GUI/GuiManager.h"
 #include "Handlers/IDFactory.h"
 #include "Input/InputController.h"
@@ -179,19 +178,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
 
         FileSystem::RegisterOGREResourceGroups();
 
-        // Create the GUI system //
-        CEGUI::OgreRenderer& guirenderer = CEGUI::OgreRenderer::bootstrapSystem(*tmpwindow);
-        CEGUIRenderer = &guirenderer;
-
-        FirstCEGUIRenderer = &guirenderer;
-
-        // Print the used renderer //
-        Logger::Get()->Info(std::string("GUI using CEGUI renderer: ") +
-                            guirenderer.getIdentifierString().c_str());
-
-        // Load the GUI fonts //
-        windowcreater->GetFontManager()->LoadAllFonts();
-
     } else {
 
         // Wait for the first window to initialize //
@@ -203,8 +189,8 @@ DLLEXPORT Leviathan::GraphicalInputEntity::GraphicalInputEntity(
             std::this_thread::sleep_for(MillisecondDuration(10));
         }
 
-        // Create a new renderer //
-        CEGUIRenderer = &CEGUI::OgreRenderer::registerWindow(*FirstCEGUIRenderer, *tmpwindow);
+        // This is probably broken again
+        DEBUG_BREAK;
     }
 
     // Store this window's number
@@ -294,8 +280,6 @@ DLLEXPORT Leviathan::GraphicalInputEntity::~GraphicalInputEntity()
     if(windowsafter == 0) {
 
         FirstCEGUIRenderer = nullptr;
-        CEGUI::OgreRenderer::destroySystem();
-
         Logger::Get()->Info("GraphicalInputEntity: all windows have been closed, "
                             "should quit soon");
     }
@@ -483,14 +467,16 @@ DLLEXPORT int Leviathan::GraphicalInputEntity::GetWindowNumber() const
     return WindowNumber;
 }
 // ------------------------------------ //
-#define COMMON_INPUT_START                                         \
-    if(!InputStarted) {                                            \
-        InputStarted = true;                                       \
-        DisplayWindow->GatherInput(WindowsGui->GetContextInput()); \
+#define COMMON_INPUT_START                                             \
+    if(!InputStarted) {                                                \
+        InputStarted = true;                                           \
+        /*DisplayWindow->GatherInput(WindowsGui->GetContextInput());*/ \
     }
 
 DLLEXPORT void GraphicalInputEntity::InjectMouseMove(int xpos, int ypos)
 {
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
 
     COMMON_INPUT_START;
     DisplayWindow->InjectMouseMove(xpos, ypos);
@@ -498,42 +484,48 @@ DLLEXPORT void GraphicalInputEntity::InjectMouseMove(int xpos, int ypos)
 
 DLLEXPORT void GraphicalInputEntity::InjectMouseWheel(int xamount, int yamount)
 {
-
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
     COMMON_INPUT_START;
     DisplayWindow->InjectMouseWheel(xamount, yamount);
 }
 
 DLLEXPORT void GraphicalInputEntity::InjectMouseButtonDown(int32_t whichbutton)
 {
-
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
     COMMON_INPUT_START;
     DisplayWindow->InjectMouseButtonDown(whichbutton);
 }
 
 DLLEXPORT void GraphicalInputEntity::InjectMouseButtonUp(int32_t whichbutton)
 {
-
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
     COMMON_INPUT_START;
     DisplayWindow->InjectMouseButtonUp(whichbutton);
 }
 
 DLLEXPORT void GraphicalInputEntity::InjectCodePoint(uint32_t utf32char)
 {
-
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
     COMMON_INPUT_START;
     DisplayWindow->InjectCodePoint(utf32char);
 }
 
 DLLEXPORT void GraphicalInputEntity::InjectKeyDown(int32_t sdlkey)
 {
-
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
     COMMON_INPUT_START;
     DisplayWindow->InjectKeyDown(sdlkey);
 }
 
 DLLEXPORT void GraphicalInputEntity::InjectKeyUp(int32_t sdlkey)
 {
-
+    // TODO: pass in SDL event
+    DEBUG_BREAK;
     COMMON_INPUT_START;
     DisplayWindow->InjectKeyUp(sdlkey);
 }
@@ -541,11 +533,11 @@ DLLEXPORT void GraphicalInputEntity::InjectKeyUp(int32_t sdlkey)
 
 DLLEXPORT void GraphicalInputEntity::InputEnd()
 {
-
     // Force first mouse pos update //
     if(!InputStarted) {
 
-        DisplayWindow->ReadInitialMouse(WindowsGui->GetContextInput());
+        // DisplayWindow->ReadInitialMouse(WindowsGui->GetContextInput());
+        DEBUG_BREAK;
     }
 
     // Everything is now processed //

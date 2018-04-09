@@ -6,7 +6,6 @@
 #include "Common/StringOperations.h"
 #include "Engine.h"
 #include "FileSystem.h"
-#include "GUI/FontManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Threading/ThreadingManager.h"
 
@@ -26,7 +25,6 @@
 
 #include <SDL.h>
 using namespace Leviathan;
-using namespace Rendering;
 using namespace std;
 // ------------------------------------ //
 #define OGRE_ALLOW_USEFULLOUTPUT
@@ -65,9 +63,6 @@ bool Graphics::Init(AppDef* appdef)
 
 DLLEXPORT void Leviathan::Graphics::Release()
 {
-
-    Fonts.reset();
-
     ORoot.reset();
 
     if(Initialized) {
@@ -251,18 +246,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef)
 
     // Ogre::TextureManager::getSingleton().setDefaultNumMipmaps(5);
 
-    std::promise<bool> fontLoadResult;
-
-    // Load fonts before Gui //
-    ThreadingManager::Get()->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
-        [](std::promise<bool>& returnvalue, Graphics* us) -> void {
-            us->Fonts = std::make_unique<Rendering::FontManager>();
-
-            returnvalue.set_value(true);
-
-        },
-        std::ref(fontLoadResult), this)));
-
     int displays = SDL_GetNumVideoDisplays();
 
     LOG_INFO("SDL: display count: " + Convert::ToString(displays));
@@ -311,12 +294,6 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef)
 
         //     LOG_WRITE(" " + mode);
         // }
-    }
-
-    if(!fontLoadResult.get_future().get()) {
-
-        LOG_ERROR("Graphics: failed to load fonts");
-        return false;
     }
 
     // clear events that might have queued A LOT while starting up //

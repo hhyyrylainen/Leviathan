@@ -2,28 +2,18 @@
 // that need to be included (or forward declared)
 #pragma once
 
-#include "Include.h"
-
 #include <cstdint>
 
 // Newton things
 class NewtonJoint;
 
-namespace Ogre{
+namespace Ogre {
 
 class SceneManager;
 class SceneNode;
-}
+} // namespace Ogre
 
-namespace CEGUI{
-
-class InputAggregator;
-class Window;
-class Animation;
-class GUIContext;
-}
-
-namespace Leviathan{
+namespace Leviathan {
 
 // Core systems //
 class Logger;
@@ -53,10 +43,14 @@ class Visitable;
 class InputReceiver;
 class InputController;
 
-namespace GUI{
-        
+namespace GUI {
+
 class GuiManager;
-}
+class View;
+class LeviathanJavaScriptAsync;
+class JSAsyncCustom;
+class CefApplication;
+} // namespace GUI
 
 // Entities //
 
@@ -87,11 +81,11 @@ class NetworkCache;
 
 // Constraints //
 class BaseConstraint;
-    
+
 
 // DeltaStates //
 
-    
+
 
 // Exceptions //
 class Exception;
@@ -134,23 +128,24 @@ class NetworkCache;
 class ConnectedPlayer;
 class CommandSender;
 class CommandHandler;
-    
+
 class ScriptArgumentsProviderBridge;
-    
+
 class ResourceFolderListener;
 class ResourceRefreshHandler;
-    
+
 class UTF8DataIterator;
-template<class DTypeName> class SyncedPrimitive;
+template<class DTypeName>
+class SyncedPrimitive;
 class SyncedResource;
-    
+
 class ViewerCameraPos;
 class NewtonManager;
 class SoundDevice;
 class PhysicsMaterialManager;
 class NewtonManager;
 class ScriptConsole;
-    
+
 class LeapManager;
 class LeapListener;
 
@@ -173,8 +168,10 @@ class BaseNotifiableAll;
 class BaseNotifierAll;
 class BaseNotifierEntity;
 class BaseNotifiableEntity;
-template<class ParentType, class ChildType> class BaseNotifier;
-template<class ParentType, class ChildType> class BaseNotifiable;
+template<class ParentType, class ChildType>
+class BaseNotifier;
+template<class ParentType, class ChildType>
+class BaseNotifiable;
 class GameConfiguration;
 class KeyConfiguration;
 class Engine;
@@ -197,64 +194,64 @@ class TimingMonitor;
 class ScopeTimer;
 class GameModule;
 struct MasterServerInformation;
-}
+class GlobalCEFHandler;
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::Locker;
 
-using Leviathan::Logger;
-using Leviathan::FileSystem;
-using Leviathan::Engine;
-using Leviathan::GUI::GuiManager;
-using Leviathan::GameWorld;
 using Leviathan::AppDef;
-using Leviathan::MasterServerInformation;
-using Leviathan::Convert;
-using Leviathan::EventHandler;
-using Leviathan::Event;
-using Leviathan::GenericEvent;
-using Leviathan::LeviathanApplication;
-using Leviathan::StringIterator;
-using Leviathan::NetworkRequest;
-using Leviathan::NetworkResponse;
-using Leviathan::Connection;
-using Leviathan::VariableBlock;
-using Leviathan::TimingMonitor;
-using Leviathan::ScopeTimer;
-using Leviathan::GameModule;
-using Leviathan::GameConfiguration;
-using Leviathan::KeyConfiguration;
-using Leviathan::NamedVars;
-using Leviathan::NamedVariableList;
-using Leviathan::NetworkClientInterface;
-using Leviathan::SyncedValue;
-using Leviathan::GameSpecificPacketData;
-using Leviathan::SentNetworkThing;
-using Leviathan::QueuedTask;
-using Leviathan::SyncedResource;
-using Leviathan::SyncedPrimitive;
-using Leviathan::UTF8DataIterator;
 using Leviathan::BaseNotifiableAll;
 using Leviathan::BaseNotifierAll;
-using Leviathan::CommandSender;
 using Leviathan::CommandHandler;
-
-
-using Leviathan::ThreadingManager;
+using Leviathan::CommandSender;
+using Leviathan::Connection;
+using Leviathan::Convert;
+using Leviathan::Engine;
+using Leviathan::Event;
+using Leviathan::EventHandler;
+using Leviathan::FileSystem;
+using Leviathan::GUI::GuiManager;
+using Leviathan::GameConfiguration;
+using Leviathan::GameModule;
+using Leviathan::GameSpecificPacketData;
+using Leviathan::GameWorld;
+using Leviathan::GenericEvent;
+using Leviathan::KeyConfiguration;
+using Leviathan::LeviathanApplication;
+using Leviathan::Logger;
+using Leviathan::MasterServerInformation;
+using Leviathan::NamedVariableList;
+using Leviathan::NamedVars;
+using Leviathan::NetworkClientInterface;
+using Leviathan::NetworkRequest;
+using Leviathan::NetworkResponse;
 using Leviathan::QueuedTask;
-using Leviathan::DelayedTask;
-using Leviathan::ConditionalTask;
+using Leviathan::ScopeTimer;
+using Leviathan::SentNetworkThing;
+using Leviathan::StringIterator;
+using Leviathan::SyncedPrimitive;
+using Leviathan::SyncedResource;
+using Leviathan::SyncedValue;
+using Leviathan::TimingMonitor;
+using Leviathan::UTF8DataIterator;
+using Leviathan::VariableBlock;
+
+
 using Leviathan::ConditionalDelayedTask;
-using Leviathan::RepeatingDelayedTask;
+using Leviathan::ConditionalTask;
+using Leviathan::DelayedTask;
+using Leviathan::QueuedTask;
 using Leviathan::RepeatCountedDelayedTask;
+using Leviathan::RepeatingDelayedTask;
+using Leviathan::ThreadingManager;
 
 
 using Leviathan::GameWorld;
 
 using Leviathan::Exception;
-using Leviathan::InvalidArgument;
-using Leviathan::InvalidType;
-using Leviathan::InvalidState;
 using Leviathan::InvalidAccess;
+using Leviathan::InvalidArgument;
+using Leviathan::InvalidState;
+using Leviathan::InvalidType;
 #endif
-

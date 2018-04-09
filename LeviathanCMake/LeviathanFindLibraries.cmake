@@ -60,6 +60,8 @@ if(LEVIATHAN_FULL_BUILD)
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/bin")
   
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include")
+  # Needed for CEF
+  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/newton")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/cegui-9999")
@@ -82,7 +84,8 @@ if(LEVIATHAN_FULL_BUILD)
     # ffmpeg
     avcodec avformat avutil swresample swscale
     cAudio
-    ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons)
+    ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons
+    cef cef_dll_wrapper)
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   # Now it is named the same as we are using the cmake build for angelscript

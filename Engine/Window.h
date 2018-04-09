@@ -1,37 +1,40 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/Types.h"
-#include "CEGUI/InputEvent.h"
 
 struct SDL_Window;
+struct SDL_Keysym;
+class CefBrowserHost;
 
-namespace Leviathan{
+namespace Leviathan {
 
 class GraphicalInputEntity;
 
 //! window class
 //! \todo Implement global lock for input handling
-class Window{
+class Window {
     friend GraphicalInputEntity;
-public:
 
+public:
     DLLEXPORT Window(SDL_Window* sdlwindow, GraphicalInputEntity* owner);
     DLLEXPORT ~Window();
 
-    DLLEXPORT inline float GetAspectRatio() const{
+    DLLEXPORT inline float GetAspectRatio() const
+    {
 
         int32_t width, height;
         GetSize(width, height);
-        
+
         return (static_cast<float>(width)) / height;
     }
 
-    DLLEXPORT void GetSize(int32_t &width, int32_t &height) const;
+    DLLEXPORT void GetSize(int32_t& width, int32_t& height) const;
 
-    
+    DLLEXPORT void GetPosition(int32_t& x, int32_t& y) const;
+
 
     DLLEXPORT void SetHideCursor(bool toset);
 
@@ -46,14 +49,16 @@ public:
     //! \exception ExceptionNotFound If the window is not found (the internal translate fails)
     //! \note Doesn't work on linux, returns the input point
     // DLLEXPORT Int2 TranslateClientPointToScreenPoint(const Int2 &point) const;
-                
-    //! \brief Captures input for this window and passes it on
-    DLLEXPORT void GatherInput(CEGUI::InputAggregator* receiver);
 
-    //! \brief Passes initial mouse position to CEGUI
-    DLLEXPORT void ReadInitialMouse(CEGUI::InputAggregator* receiver);
+    //! \brief Captures input for this window and passes it on
+    DLLEXPORT void GatherInput(CefBrowserHost* browserinput);
+
+    //! \brief Passes initial mouse position to gui
+    DLLEXPORT void ReadInitialMouse(CefBrowserHost* browserinput);
 
     DLLEXPORT uint32_t GetSDLID() const;
+
+    DLLEXPORT uint32_t GetNativeHandle() const;
 
     // \todo add a way to force only one window to have mouse captured //
     DLLEXPORT void SetCaptureMouse(bool state);
@@ -78,35 +83,52 @@ public:
     DLLEXPORT void InjectKeyDown(int32_t sdlkey);
 
     DLLEXPORT void InjectKeyUp(int32_t sdlkey);
-    
 
-    DLLEXPORT static CEGUI::MouseButton SDLToCEGUIMouseButton(int sdlbutton);
-    
+#ifdef __linux
+    DLLEXPORT void SetX11Cursor(int cursor);
+#endif //__linux
 
-    DLLEXPORT static int32_t ConvertStringToKeyCode(const std::string &str);
-    DLLEXPORT static std::string ConvertKeyCodeToString(const int32_t &code);
+    //! Called from GuiView when it has consumed the event that was passed to it
+    DLLEXPORT inline void ReportKeyEventAsUsed()
+    {
+        InputProcessedByCEF = true;
+    }
+
+    DLLEXPORT static int GetCEFButtonFromSdlMouseButton(uint32_t whichbutton);
+
+    // DLLEXPORT static CEGUI::MouseButton SDLToCEGUIMouseButton(int sdlbutton);
+
+
+    DLLEXPORT static int32_t ConvertStringToKeyCode(const std::string& str);
+    DLLEXPORT static std::string ConvertKeyCodeToString(const int32_t& code);
 
 protected:
-
     void _CheckMouseVisibilityStates();
 
     void _FirstInputCheck();
-    
-private:
 
+    void DoCEFInputPass(const SDL_Keysym& arg, bool down);
+
+private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
-        
+
     GraphicalInputEntity* OwningWindow = nullptr;
 
     //! This is temporarily stored during input gathering
-    CEGUI::InputAggregator* inputreceiver = nullptr;
+    CefBrowserHost* inputreceiver = nullptr;
 
     bool ThisFrameHandledCreate = false;
     int LastFrameDownMouseButtons = 0;
-    
+
+    //! Allows CEF to report whether a key input was handled
+    //! Set by ReportKeyEventAsUsed
+    bool InputProcessedByCEF;
+
     // this is updated every time input is gathered //
     int SpecialKeyModifiers = 0;
+    //! Contains the modifier keys with the CEF flags
+    int CEFSpecialKeyModifiers = 0;
     bool Focused = true;
     bool ApplicationWantCursorState;
     bool ForceMouseVisible = false;
@@ -118,5 +140,4 @@ private:
 };
 
 
-}
-
+} // namespace Leviathan

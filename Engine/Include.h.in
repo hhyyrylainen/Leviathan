@@ -21,6 +21,13 @@
 
 #else
 
+// Sandbox is only used on windows
+#ifndef _WIN32
+#undef CEF_ENABLE_SANDBOB
+#else
+#define CEF_ENABLE_SANDBOX
+#endif //_WIN32
+
 // If defined some select classes are leaked into global namespace
 #define LEAK_INTO_GLOBAL
 #define ALLOW_INTERNAL_EXCEPTIONS

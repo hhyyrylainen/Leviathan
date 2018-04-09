@@ -1,13 +1,5 @@
 # engine library Cmake file
 
-# Generate additional source files
-# This is here as an example to make this work later
-#add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h
-#   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h\"" 
-#   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h\""
-#   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h"
-#)
-
 # get all files in their groups
 if(CREATE_UE4_PLUGIN)
 
@@ -40,6 +32,22 @@ if(CREATE_UE4_PLUGIN)
   set(GroupEntities "Entities/EntityCommon.h")
 
 else()
+  # Generate additional source files
+  # This is here as an example to make this work later
+  #add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h
+  #   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h\"" 
+  #   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h\""
+  #   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h"
+  #)
+
+  # Generate additional source files
+  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h
+    COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
+    "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
+    DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"
+    )
+
+  
   set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h"
     "ForwardDeclarations.h"
     "Logger.cpp" "Logger.h" "ErrorReporter.h"
@@ -47,6 +55,7 @@ else()
     "Exceptions.h" "Exceptions.cpp"
     "TimeIncludes.h" "TimeIncludes.cpp"
     "CEGUIInclude.h" "WindowsInclude.h"
+    "GlobalCEFHandler.cpp" "GlobalCEFHandler.h"
     )
   
   set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
@@ -165,7 +174,6 @@ else()
   
   
   file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
-  file(GLOB GroupRenderingGUI "Rendering/GUI/*.cpp" "Rendering/GUI/*.h")
   set(GroupScript
     "Script/Console.cpp" "Script/Console.h"
     "Script/ScriptArgumentsProvider.cpp" "Script/ScriptArgumentsProvider.h"
@@ -204,18 +212,14 @@ else()
 
 
   set(GroupGUI 
-    "GUI/BaseGuiObject.cpp" "GUI/BaseGuiObject.h"
-    "GUI/GuiCollection.cpp" "GUI/GuiCollection.h"
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
-    "GUI/AlphaHitCache.cpp" "GUI/AlphaHitCache.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
-    "GUI/GuiObjectExtraParameters.h"
+    "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
+    "GUI/GuiView.cpp" "GUI/GuiView.h"
+    "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
+    "GUI/JSEventInterface.cpp" "GUI/JSEventInterface.h"
+    "GUI/LeviathanJavaScriptAsync.cpp" "GUI/LeviathanJavaScriptAsync.h"
     )
-
-  set(GroupGUIWidgets
-    "GUI/Widgets/AlphaHit.h" "GUI/Widgets/AlphaHit.cpp"
-    "GUI/Widgets/CEGUIVideoPlayer.h" "GUI/Widgets/CEGUIVideoPlayer.cpp"    
-    )  
 
 
   
@@ -263,6 +267,9 @@ else()
   file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
   file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
 
+  # Generated files
+  set(GroupGeneratedFiles "Generated/LeviathanV8CoreExt.h")
+  
   if(USING_LEAP)
     file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
   endif()
@@ -290,10 +297,6 @@ if(NOT CREATE_UE4_PLUGIN)
 endif()
 
 file(GLOB Grouputf8 "utf8/*.h" "utf8/*.cpp")
-
-# Generated files
-set(GroupGeneratedFiles)
-#set(GroupGeneratedFiles ${GroupGeneratedFiles} "${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h")
 
 # AngelScript addon sources
 if(USE_ANGELSCRIPT)
@@ -341,7 +344,6 @@ source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
 source_group("Utility\\DataHandling" FILES ${GroupUtilityData})
 
 source_group("GUI" FILES ${GroupGUI})
-source_group("GUI\\Widgets" FILES ${GroupGUIWidgets})
 
 source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})
@@ -378,7 +380,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupGameplay} 
   ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
   ${GeneratorInput} ${GroupGeneratedFiles}
-  ${Grouputf8}
+  ${Grouputf8} ${GroupGeneratedFiles}
   )
 
 if(USE_LEAP)

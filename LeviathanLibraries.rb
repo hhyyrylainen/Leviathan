@@ -5,9 +5,9 @@ require_relative 'RubySetupSystem/Libraries/SetupNewton.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
 require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
 require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
-require_relative 'RubySetupSystem/Libraries/SetupCEGUI.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
+require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -102,16 +102,14 @@ $ogre = Ogre.new(
   noInstallSudo: true
 )
 
-$cegui = CEGUI.new(
-  version: "878623056b5c",
-  installPath: THIRD_PARTY_INSTALL,
-  # Find Ogre in our search path
-  extraOptions: ["-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"],
-  noInstallSudo: true
-)
-
 $caudio = CAudio.new(
   version: "master",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  noTutorials: true
+)
+
+$cef = CEF.new(
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   noTutorials: true
@@ -151,7 +149,7 @@ end
 
 
 $leviathanLibList =
-  [$newton, $angelscript, $sfml, $ffmpeg]
+  [$newton, $angelscript, $sfml, $cef, $ffmpeg]
 
 # This if for testing one single dependency compiling
 #$leviathanLibList = [$ffmpeg]
@@ -163,7 +161,7 @@ if OS.windows?
   $leviathanLibList += [$zlib, $freeimage, $sdl, $freetype, $openalsoft]
 end
 
-$leviathanLibList += [$caudio, $ogre, $cegui]
+$leviathanLibList += [$caudio, $ogre]
 
 
 

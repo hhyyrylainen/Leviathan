@@ -12,7 +12,6 @@
 #include "Entities/Serializers/EntitySerializer.h"
 #include "Events/EventHandler.h"
 #include "FileSystem.h"
-#include "GUI/AlphaHitCache.h"
 #include "GUI/GuiManager.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/OutOfMemoryHandler.h"
@@ -33,6 +32,7 @@
 #include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
 #include "Utility/Random.h"
+#include "Window.h"
 
 #include "utf8.h"
 
@@ -408,8 +408,6 @@ DLLEXPORT bool Engine::Init(
             return false;
         }
 
-        _AlphaHitCache = std::make_unique<GUI::AlphaHitCache>();
-
         // create window //
         GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
     }
@@ -621,9 +619,6 @@ void Engine::Release(bool forced)
     SAFE_RELEASEDEL(MainEvents);
     // delete randomizer last, for obvious reasons //
     SAFE_DELETE(MainRandom);
-
-    GUI::GuiManager::KillGlobalCache();
-    _AlphaHitCache.reset();
 
     ObjectFileProcessor::Release();
     SAFE_DELETE(MainFileHandler);

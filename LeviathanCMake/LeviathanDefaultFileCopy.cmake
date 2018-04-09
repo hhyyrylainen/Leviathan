@@ -38,14 +38,6 @@ else()
   list(APPEND ALL_DYNAMIC_LIBRARIES ${LINUX_LIBS_IN64})
 endif()
 
-# Copy additional CEF stuff
-file(GLOB CEF_BLOBS "${LEVIATHAN_SRC}/build/ThirdParty/cefextrablobs/*.bin")
-file(COPY ${CEF_BLOBS} DESTINATION "${PROJECT_BINARY_DIR}/bin/")
-file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
-  DESTINATION "${PROJECT_BINARY_DIR}/bin/")
-file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/Resources"
-  DESTINATION "${PROJECT_BINARY_DIR}/bin/")
-
 # copy data directory
 if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
 
@@ -89,7 +81,15 @@ if(NOT ONLY_DOCUMENTATION)
     "${PROJECT_BINARY_DIR}/bin/Data/Materials/")
   install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/Materials/CoreMaterials" DESTINATION
     "bin/Data/Materials/")
-  
+
+  # Copy additional CEF stuff
+  file(GLOB CEF_BLOBS "${LEVIATHAN_SRC}/build/ThirdParty/cefextrablobs/*.bin")
+  file(COPY ${CEF_BLOBS} DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+  file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
+    DESTINATION "${PROJECT_BINARY_DIR}/bin")
+  file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/Resources"
+    DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+
 endif()
 
 # Boost files

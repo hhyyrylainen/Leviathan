@@ -8,6 +8,8 @@
 
 #include <boost/intrusive_ptr.hpp>
 
+class CefBrowserHost;
+
 namespace Leviathan { namespace GUI {
 
 class View;
@@ -20,7 +22,7 @@ public:
     DLLEXPORT ~GuiManager();
 
     //! \param ismain Set to true for first created GuiManager
-    DLLEXPORT bool Init(Graphics* graph, GraphicalInputEntity* window, bool ismain);
+    DLLEXPORT bool Init(Graphics* graph, Window* window, bool ismain);
     DLLEXPORT void Release();
 
     DLLEXPORT void GuiTick(int mspassed);
@@ -48,6 +50,10 @@ public:
     //! activation buttons)
     DLLEXPORT void SetDisableMouseCapture(bool newvalue);
 
+    //! \todo This needs to support multiple views somehow (maybe send to one the mouse is
+    //! over?)
+    DLLEXPORT CefBrowserHost* GetPrimaryInputReceiver();
+
 protected:
     //! Is called by folder listeners to notify of Gui file changes
     void _FileChanged(const std::string& file, ResourceFolderListener& caller);
@@ -59,7 +65,7 @@ private:
     //! True when GuiDisallowMouseCapture has been changed and the change needs to be applied
     bool GuiMouseUseUpdated = true;
 
-    GraphicalInputEntity* ThisWindow = nullptr;
+    Window* ThisWindow = nullptr;
 
     //! The main file of the GUI from which it is loaded from
     std::string MainGUIFile;

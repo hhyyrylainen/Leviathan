@@ -17,15 +17,13 @@
 
 namespace Leviathan {
 
-class LeviathanApplication;
-
 //! \brief The main class of the Leviathan Game Engine
 //!
 //! Allocates a lot of classes and performs almost all startup operations.
 //! \note Should be thread safe, but might not actually be
 class Engine : public ThreadSafe {
 
-    friend GraphicalInputEntity;
+    friend Window;
     friend GUI::GuiManager;
     friend GameWorld;
     friend LeviathanApplication;
@@ -109,8 +107,7 @@ public:
     //! \brief Creates a GameWorld for placing entities into
     //! \note To actually move the world camera you need to use
     //! Leviathan::ObjectLoader::LoadCamera to create a camera entity
-    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(
-        GraphicalInputEntity* owningwindow, int worldtype);
+    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(Window* owningwindow, int worldtype);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy.
@@ -121,20 +118,19 @@ public:
     //! \brief Opens a new window
     //! \note The window may become broken if the main window is closed
     //! \todo Allow changing the parameters
-    DLLEXPORT GraphicalInputEntity* OpenNewWindow();
+    DLLEXPORT Window* OpenNewWindow();
 
     //! \brief Returns the main window
-    DLLEXPORT GraphicalInputEntity* GetWindowEntity()
+    DLLEXPORT Window* GetWindowEntity()
     {
         return GraphicalEntity1;
     };
 
     //! \brief Removes an closed window from the engine
-    DLLEXPORT void ReportClosedWindow(Lock& guard, GraphicalInputEntity* windowentity);
+    DLLEXPORT void ReportClosedWindow(Lock& guard, Window* windowentity);
 
-    DLLEXPORT inline void ReportClosedWindow(GraphicalInputEntity* windowentity)
+    DLLEXPORT inline void ReportClosedWindow(Window* windowentity)
     {
-
         GUARD_LOCK();
         ReportClosedWindow(guard, windowentity);
     }
@@ -144,59 +140,59 @@ public:
     inline Graphics* GetGraphics()
     {
         return Graph;
-    };
+    }
     inline EventHandler* GetEventHandler()
     {
         return MainEvents;
-    };
+    }
     inline RenderingStatistics* GetRenderingStatistics()
     {
         return RenderTimer;
-    };
+    }
     inline ScriptConsole* GetScriptConsole()
     {
         return MainConsole;
-    };
+    }
     inline FileSystem* GetFileSystem()
     {
         return MainFileHandler;
-    };
+    }
     inline AppDef* GetDefinition()
     {
         return Define;
-    };
+    }
     inline NewtonManager* GetNewtonManager()
     {
         return _NewtonManager;
-    };
+    }
     inline LeviathanApplication* GetOwningApplication()
     {
         return Owner;
-    };
+    }
     inline PhysicsMaterialManager* GetPhysicalMaterialManager()
     {
         return PhysMaterials;
-    };
+    }
     inline NetworkHandler* GetNetworkHandler()
     {
         return _NetworkHandler;
-    };
+    }
     inline ThreadingManager* GetThreadingManager()
     {
         return _ThreadingManager;
-    };
+    }
     inline SoundDevice* GetSoundDevice()
     {
         return Sound;
-    };
+    }
     inline ResourceRefreshHandler* GetResourceRefreshHandler()
     {
         return _ResourceRefreshHandler;
-    };
+    }
     inline EntitySerializer* GetEntitySerializer()
     {
         return _EntitySerializer.get();
-    };
+    }
     inline RemoteConsole* GetRemoteConsole()
     {
         return _RemoteConsole;
@@ -206,19 +202,19 @@ public:
         return MainRandom;
     }
 
-    DLLEXPORT GraphicalInputEntity* GetWindowFromSDLID(uint32_t sdlid);
+    DLLEXPORT Window* GetWindowFromSDLID(uint32_t sdlid);
 
 #ifdef LEVIATHAN_USES_LEAP
     inline LeapManager* GetLeapManager()
     {
         return LeapData;
-    };
+    }
 #endif
 
     inline bool GetNoGui()
     {
         return NoGui;
-    };
+    }
 
     // Command line settings can only be set before initializing //
     inline void SetNoGUI()
@@ -274,8 +270,8 @@ protected:
     RenderingStatistics* RenderTimer = nullptr;
     Graphics* Graph = nullptr;
 
-    GraphicalInputEntity* GraphicalEntity1 = nullptr;
-    std::vector<GraphicalInputEntity*> AdditionalGraphicalEntities;
+    Window* GraphicalEntity1 = nullptr;
+    std::vector<Window*> AdditionalGraphicalEntities;
 
     SoundDevice* Sound = nullptr;
     DataStore* Mainstore = nullptr;

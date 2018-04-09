@@ -8,7 +8,6 @@
 #include "GuiView.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/ResourceRefreshHandler.h"
-#include "Rendering/GraphicalInputEntity.h"
 #include "Rendering/Graphics.h"
 #include "Window.h"
 
@@ -20,13 +19,13 @@ using namespace Leviathan::GUI;
 GuiManager::GuiManager() : ID(IDFactory::GetID()) {}
 GuiManager::~GuiManager() {}
 // ------------------------------------ //
-bool GuiManager::Init(Graphics* graph, GraphicalInputEntity* window, bool ismain)
+bool GuiManager::Init(Graphics* graph, Window* window, bool ismain)
 {
     ThisWindow = window;
     MainGuiManager = ismain;
 
     // All rendering is now handled by individual Views and the
-    // GraphicalInputEntity full screen compositor passes
+    // Window full screen compositor passes
 
     return true;
 }
@@ -48,7 +47,7 @@ void GuiManager::Release()
 
     // Default mouse back //
     // show default window cursor //
-    ThisWindow->GetWindow()->SetHideCursor(false);
+    ThisWindow->SetHideCursor(false);
 
     // Destroy the views //
     for(size_t i = 0; i < ThissViews.size(); i++) {
@@ -92,7 +91,7 @@ void GuiManager::GuiTick(int mspassed)
 
             // Show the cursor
             LOG_WRITE("TODO: this needs some property when a custom cursor is used");
-            ThisWindow->GetWindow()->SetHideCursor(false);
+            ThisWindow->SetHideCursor(false);
 
         } else {
 
@@ -104,7 +103,7 @@ void GuiManager::GuiTick(int mspassed)
                 GuiMouseUseUpdated = true;
             } else {
                 // Success, hide GUI cursor
-                ThisWindow->GetWindow()->SetHideCursor(true);
+                ThisWindow->SetHideCursor(true);
                 DEBUG_BREAK;
                 // GuiContext->getCursor().hide();
             }
@@ -155,7 +154,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     MainGUIFile = urlorpath;
 
     // Create the view //
-    boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow->GetWindow()));
+    boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow));
 
     loadingView->AddRef();
 
@@ -189,13 +188,23 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     ThissViews.push_back(loadingView);
 
     // Set focus to the new View //
-    ThissViews.back()->NotifyFocusUpdate(ThisWindow->GetWindow()->IsWindowFocused());
+    ThissViews.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
     return true;
 }
 
 DLLEXPORT void GuiManager::UnLoadGUIFile()
 {
     DEBUG_BREAK;
+}
+// ------------------------------------ //
+DLLEXPORT CefBrowserHost* GuiManager::GetPrimaryInputReceiver()
+{
+    for(size_t i = 0; i < ThissViews.size(); i++) {
+
+        return ThissViews[i]->GetBrowserHost().get();
+    }
+
+    return nullptr;
 }
 // ------------------------------------ //
 void GuiManager::_FileChanged(const std::string& file, ResourceFolderListener& caller)

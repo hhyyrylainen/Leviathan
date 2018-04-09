@@ -22,7 +22,6 @@
 #include "Newton/NewtonManager.h"
 #include "Newton/PhysicsMaterialManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
-#include "Rendering/GraphicalInputEntity.h"
 #include "Rendering/Graphics.h"
 #include "Script/Console.h"
 #include "Sound/SoundDevice.h"
@@ -409,7 +408,7 @@ DLLEXPORT bool Engine::Init(
         }
 
         // create window //
-        GraphicalEntity1 = new GraphicalInputEntity(Graph, definition);
+        GraphicalEntity1 = new Window(Graph, definition);
     }
 
     if(!SoundDeviceResult.get_future().get()) {
@@ -649,29 +648,29 @@ DLLEXPORT void Engine::MessagePump()
             break;
 
         case SDL_KEYDOWN: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.key.windowID);
+            Window* win = GetWindowFromSDLID(event.key.windowID);
 
             if(win) {
 
                 // LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
-                win->InjectKeyDown(event.key.keysym.sym);
+                win->InjectKeyDown(event);
             }
 
             break;
         }
         case SDL_KEYUP: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.key.windowID);
+            Window* win = GetWindowFromSDLID(event.key.windowID);
 
             if(win) {
 
                 // LOG_WRITE("SDL_KEYUP: " + Convert::ToString(event.key.keysym.sym));
-                win->InjectKeyUp(event.key.keysym.sym);
+                win->InjectKeyUp(event);
             }
 
             break;
         }
         case SDL_TEXTINPUT: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.text.windowID);
+            Window* win = GetWindowFromSDLID(event.text.windowID);
 
             if(win) {
 
@@ -689,7 +688,7 @@ DLLEXPORT void Engine::MessagePump()
                 //     LOG_WRITE(" " + Convert::ToString(codepoint));
                 for(auto codepoint : codepoints) {
 
-                    win->InjectCodePoint(codepoint);
+                    win->InjectCodePoint(event);
                 }
             }
 
@@ -698,37 +697,37 @@ DLLEXPORT void Engine::MessagePump()
         // TODO: implement this
         // case SDL_TEXTEDITING: (https://wiki.libsdl.org/Tutorials/TextInput)
         case SDL_MOUSEBUTTONDOWN: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);
+            Window* win = GetWindowFromSDLID(event.button.windowID);
 
             if(win)
-                win->InjectMouseButtonDown(event.button.button);
+                win->InjectMouseButtonDown(event);
 
             break;
         }
 
         case SDL_MOUSEBUTTONUP: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.button.windowID);
+            Window* win = GetWindowFromSDLID(event.button.windowID);
 
             if(win)
-                win->InjectMouseButtonUp(event.button.button);
+                win->InjectMouseButtonUp(event);
 
             break;
         }
 
         case SDL_MOUSEMOTION: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.motion.windowID);
+            Window* win = GetWindowFromSDLID(event.motion.windowID);
 
             if(win)
-                win->InjectMouseMove(event.motion.x, event.motion.y);
+                win->InjectMouseMove(event);
 
             break;
         }
 
         case SDL_MOUSEWHEEL: {
-            GraphicalInputEntity* win = GetWindowFromSDLID(event.motion.windowID);
+            Window* win = GetWindowFromSDLID(event.motion.windowID);
 
             if(win)
-                win->InjectMouseWheel(event.wheel.x, event.wheel.y);
+                win->InjectMouseWheel(event);
 
             break;
         }
@@ -737,12 +736,12 @@ DLLEXPORT void Engine::MessagePump()
             switch(event.window.event) {
 
             case SDL_WINDOWEVENT_RESIZED: {
-                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+                Window* win = GetWindowFromSDLID(event.window.windowID);
 
                 if(win) {
 
                     int32_t width, height;
-                    win->GetWindow()->GetSize(width, height);
+                    win->GetSize(width, height);
 
                     LOG_INFO("SDL window resize: " + Convert::ToString(width) + "x" +
                              Convert::ToString(height));
@@ -755,7 +754,7 @@ DLLEXPORT void Engine::MessagePump()
             case SDL_WINDOWEVENT_CLOSE: {
                 LOG_INFO("SDL window close");
 
-                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+                Window* win = GetWindowFromSDLID(event.window.windowID);
 
                 GUARD_LOCK();
 
@@ -776,7 +775,7 @@ DLLEXPORT void Engine::MessagePump()
                 break;
             }
             case SDL_WINDOWEVENT_FOCUS_GAINED: {
-                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+                Window* win = GetWindowFromSDLID(event.window.windowID);
 
                 if(win)
                     win->OnFocusChange(true);
@@ -784,7 +783,7 @@ DLLEXPORT void Engine::MessagePump()
                 break;
             }
             case SDL_WINDOWEVENT_FOCUS_LOST: {
-                GraphicalInputEntity* win = GetWindowFromSDLID(event.window.windowID);
+                Window* win = GetWindowFromSDLID(event.window.windowID);
 
                 if(win)
                     win->OnFocusChange(false);
@@ -799,6 +798,7 @@ DLLEXPORT void Engine::MessagePump()
     // Reset input states //
     if(GraphicalEntity1) {
 
+        // TODO: fix initial mouse position being incorrect
         GraphicalEntity1->InputEnd();
     }
 
@@ -808,17 +808,15 @@ DLLEXPORT void Engine::MessagePump()
     }
 }
 
-DLLEXPORT GraphicalInputEntity* Engine::GetWindowFromSDLID(uint32_t sdlid)
+DLLEXPORT Window* Engine::GetWindowFromSDLID(uint32_t sdlid)
 {
-
-    if(GraphicalEntity1 && GraphicalEntity1->GetWindow() &&
-        GraphicalEntity1->GetWindow()->GetSDLID() == sdlid) {
+    if(GraphicalEntity1 && GraphicalEntity1->GetSDLID() == sdlid) {
         return GraphicalEntity1;
     }
 
     for(auto iter = AdditionalGraphicalEntities.begin();
         iter != AdditionalGraphicalEntities.end(); ++iter) {
-        if((*iter)->GetWindow() && (*iter)->GetWindow()->GetSDLID() == sdlid) {
+        if((*iter)->GetSDLID() == sdlid) {
 
             return *iter;
         }
@@ -1027,20 +1025,20 @@ DLLEXPORT int Engine::GetWindowOpenCount()
 
     GUARD_LOCK();
 
-
-    if(GraphicalEntity1 && GraphicalEntity1->GetWindow())
+    // TODO: should there be an IsOpen method?
+    if(GraphicalEntity1)
         openwindows++;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-        if(AdditionalGraphicalEntities[i]->GetWindow())
+        if(AdditionalGraphicalEntities[i])
             openwindows++;
     }
 
     return openwindows;
 }
 // ------------------------------------ //
-DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow()
+DLLEXPORT Window* Engine::OpenNewWindow()
 {
 
     AppDef winparams;
@@ -1058,7 +1056,7 @@ DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow()
         NULL));
 
 
-    auto newwindow = std::make_unique<GraphicalInputEntity>(Graph, &winparams);
+    auto newwindow = std::make_unique<Window>(Graph, &winparams);
 
     GUARD_LOCK();
 
@@ -1067,7 +1065,7 @@ DLLEXPORT GraphicalInputEntity* Engine::OpenNewWindow()
     return newwindow.release();
 }
 
-DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, GraphicalInputEntity* windowentity)
+DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, Window* windowentity)
 {
     windowentity->UnlinkAll();
 
@@ -1089,7 +1087,7 @@ DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, GraphicalInputEntity* win
     }
 
     // Didn't find the target //
-    Logger::Get()->Error("Engine: couldn't find closing GraphicalInputEntity");
+    Logger::Get()->Error("Engine: couldn't find closing Window");
 }
 
 DLLEXPORT void Engine::MarkQuit()
@@ -1134,8 +1132,7 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
     }
 }
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(
-    GraphicalInputEntity* owningwindow, int worldtype)
+DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, int worldtype)
 {
     auto tmp = GameWorldFactory::Get()->CreateNewWorld(worldtype);
 

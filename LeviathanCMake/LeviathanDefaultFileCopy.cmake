@@ -9,6 +9,7 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data/Shaders")
 
 
 # Copy the tools
@@ -68,15 +69,28 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   # Copy data from the scripts folder to the bin folder
   file(GLOB ScriptsMoveFiles "${LEVIATHAN_SRC}/Scripts/*")
   file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
+  
+endif()
 
+if(NOT ONLY_DOCUMENTATION)
   # Copy the crucial Ogre scripts
   file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/bin/CoreOgreScripts/*")
   file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION
     "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
   install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreScripts")
+
+  # And core shaders and materials
+  file(COPY "${LEVIATHAN_SRC}/bin/Data/Shaders/CoreShaders" DESTINATION
+    "${PROJECT_BINARY_DIR}/bin/Data/Shaders/")
+  install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/Shaders/CoreShaders" DESTINATION
+    "bin/Data/Shaders/")
+
+  file(COPY "${LEVIATHAN_SRC}/bin/Data/Materials/CoreMaterials" DESTINATION
+    "${PROJECT_BINARY_DIR}/bin/Data/Materials/")
+  install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/Materials/CoreMaterials" DESTINATION
+    "bin/Data/Materials/")
   
 endif()
-
 
 # Boost files
 # If we are not using static linking we need to copy everything

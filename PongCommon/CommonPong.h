@@ -18,7 +18,7 @@
 #include "Newton/PhysicsMaterialManager.h"
 #include "PlayerSlot.h"
 #include "PongPackets.h"
-#include "Rendering/GraphicalInputEntity.h"
+#include "Window.h"
 #include "Script/ScriptExecutor.h"
 #include "Statistics/TimingMonitor.h"
 #include "Threading/QueuedTask.h"

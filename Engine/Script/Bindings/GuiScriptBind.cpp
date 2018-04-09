@@ -3,9 +3,6 @@
 
 #include "GUI/GuiManager.h"
 
-#include "CEGUI/widgets/ProgressBar.h"
-#include "CEGUIInclude.h"
-
 #include "FileSystem.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 

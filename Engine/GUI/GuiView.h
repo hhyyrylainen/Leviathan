@@ -162,15 +162,9 @@ public:
     virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
 
 
-
     DLLEXPORT void SetCurrentInputHandlingWindow(Window* wind);
 
     DLLEXPORT CefRefPtr<CefBrowserHost> GetBrowserHost();
-
-    //! \brief Sets the CanPaint variable allowing or preventing this object from updating the
-    //! texture \note When setting to true the whole browser is invalidated and will be redrawn
-    //! \warning Doesn't actually do anything
-    DLLEXPORT void SetAllowPaintStatus(bool canpaintnow);
 
     virtual bool OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event,
         CefEventHandle os_event) override;
@@ -283,6 +277,14 @@ protected:
 
     //! Name of the Ogre texture
     std::string TextureName;
+
+    //! Name of the Ogre material
+    std::string MaterialName;
+
+    Ogre::SceneNode* Node = nullptr;
+    Ogre::Item* QuadItem;
+    Ogre::MeshPtr QuadMesh;
+
 
     //! Prevents crashing from painting the window too soon
     bool CanPaint = false;

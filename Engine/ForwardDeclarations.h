@@ -185,7 +185,6 @@ struct Int1;
 struct Int2;
 struct Int3;
 class LeviathanApplication;
-class GraphicalInputEntity;
 class StringIterator;
 class Window;
 class Random;

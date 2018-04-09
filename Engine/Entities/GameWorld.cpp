@@ -4,11 +4,10 @@
 #include "ScriptComponentHolder.h"
 #include "ScriptSystemWrapper.h"
 
-#include "../Handlers/IDFactory.h"
-#include "../Window.h"
 #include "Common/DataStoring/NamedVars.h"
 #include "Engine.h"
 #include "Entities/Objects/Constraints.h"
+#include "Handlers/IDFactory.h"
 #include "Networking/Connection.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/NetworkRequest.h"
@@ -16,11 +15,11 @@
 #include "Networking/NetworkServerInterface.h"
 #include "Newton/PhysicalWorld.h"
 #include "Newton/PhysicsMaterialManager.h"
-#include "Rendering/GraphicalInputEntity.h"
 #include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
 #include "Serializers/EntitySerializer.h"
 #include "Threading/ThreadingManager.h"
+#include "Window.h"
 
 // Camera interpolation
 #include "Generated/ComponentStates.h"
@@ -1470,7 +1469,7 @@ DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
     return iter->second->GetASImplementationObject();
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::OnUnLinkedFromWindow(GraphicalInputEntity* window, Ogre::Root* ogre)
+DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre)
 {
     if(window != LinkedToWindow) {
 
@@ -1489,7 +1488,7 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(GraphicalInputEntity* window, Ogr
     InBackground = true;
 }
 
-DLLEXPORT void GameWorld::OnLinkToWindow(GraphicalInputEntity* window, Ogre::Root* ogre)
+DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Ogre::Root* ogre)
 {
     LEVIATHAN_ASSERT(WorldsScene, "World is not initialized");
 

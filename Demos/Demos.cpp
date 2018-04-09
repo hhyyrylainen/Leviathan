@@ -8,7 +8,7 @@
 #include "Events/EventHandler.h"
 #include "GUI/GuiManager.h"
 #include "Handlers/ObjectLoader.h"
-#include "Rendering/GraphicalInputEntity.h"
+#include "Window.h"
 #include "Script/Bindings/BindHelpers.h"
 
 using namespace Demos;
@@ -52,7 +52,7 @@ void DemosApplication::Tick(int mspassed) {}
 void DemosApplication::CustomizeEnginePostLoad()
 {
     auto* engine = Engine::GetEngine();
-    GraphicalInputEntity* window1 = engine->GetWindowEntity();
+    Leviathan::Window* window1 = engine->GetWindowEntity();
 
     // Create game world //
     World =

@@ -1,14 +1,28 @@
 // ------------------------------------ //
 #include "Window.h"
 
-#include "CEGUIInclude.h"
 #include "Engine.h"
+#include "Entities/GameWorld.h"
 #include "Exceptions.h"
+#include "FileSystem.h"
 #include "GUI/GuiManager.h"
+#include "Handlers/IDFactory.h"
 #include "Input/InputController.h"
 #include "Input/Key.h"
-#include "Rendering/GraphicalInputEntity.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
+#include "Rendering/Graphics.h"
+#include "TimeIncludes.h"
 #include "Utility/Convert.h"
+
+#include "Compositor/OgreCompositorManager2.h"
+#include "Compositor/OgreCompositorNode.h"
+#include "Compositor/OgreCompositorWorkspace.h"
+#include "OgreCommon.h"
+#include "OgreRenderWindow.h"
+#include "OgreRoot.h"
+#include "OgreSceneManager.h"
+#include "OgreVector4.h"
+#include "OgreWindowEventUtilities.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -19,59 +33,183 @@
 #include "include/internal/cef_types_wrappers.h"
 
 #include <algorithm>
-
-using namespace std;
+#include <thread>
 // ------------------------------------ //
-
-#ifdef _WIN32
-// we must have an int of size 32 bits //
-#pragma intrinsic(_BitScanForward)
-
-static_assert(sizeof(int) == 4, "int must be 4 bytes long for bit scan function");
-#else
-// We must use GCC built ins int __builtin_ffs (unsigned int x)
-// Returns one plus the index of the least significant 1-bit of x, or
-// if x is zero, returns zero.  So using __builtin_ffs(val)-1 should
-// work
-
-// #include "XLibInclude.h"
-
-// // X11 window focus find function //
-// XID Leviathan::Window::GetForegroundWindow(){
-//     // Method posted on stack overflow (split to two lines to not be too long
-//     //http://stackoverflow.com/questions/1014822/
-//     //how-to-know-which-window-has-focus-and-how-to-change-it
-
-//     XID win;
-
-//     int revert_to;
-//     XGetInputFocus(XDisplay, &win, &revert_to); // see man
-
-//     return win;
-// }
-
-
-#endif
 
 namespace Leviathan {
 
-CEGUI::Key::Scan SDLKeyToCEGUIKey(int32_t key);
+Window* Window::InputCapturer = nullptr;
 
-DLLEXPORT Leviathan::Window::Window(SDL_Window* sdlwindow, GraphicalInputEntity* owner) :
-    SDLWindow(sdlwindow)
+std::atomic<int> Window::OpenWindowCount = 0;
+std::atomic<int> Window::TotalCreatedWindows = 0;
+
+// ------------------------------------ //
+DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
+    ID(IDFactory::GetID())
 {
-    OwningWindow = owner;
+    // Create window //
 
+    const WindowDataDetails& WData = windowproperties->GetWindowDetails();
+
+    // set some rendering specific parameters //
+    Ogre::NameValuePairList WParams;
+
+    // variables //
+    Ogre::String fsaastr = Convert::ToString(WData.FSAA);
+
+    WParams["FSAA"] = fsaastr;
+    WParams["vsync"] = WData.VSync ? "true" : "false";
+    WParams["gamma"] = WData.UseGamma ? "true" : "false";
+
+    Ogre::String wcaption = WData.Title;
+
+    int extraFlags = 0;
+
+    if(WData.FullScreen == "no" || WData.FullScreen == "0") {
+    } else if(WData.FullScreen == "fullscreendesktop") {
+        extraFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+    } else if(WData.FullScreen == "fullscreenvideomode") {
+        extraFlags |= SDL_WINDOW_FULLSCREEN;
+    } else {
+
+        LOG_ERROR("Window: invalid fullscreen value: " + WData.FullScreen);
+    }
+
+    // TODO: On Apple's OS X you must set the NSHighResolutionCapable
+    // Info.plist property to YES, otherwise you will not receive a
+    // High DPI OpenGL
+    // canvas. https://wiki.libsdl.org/SDL_CreateWindow
+
+    SDL_Window* sdlWindow = SDL_CreateWindow(WData.Title.c_str(),
+        SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber),
+        SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber), WData.Width, WData.Height,
+        // This seems to cause issues on Windows
+        // SDL_WINDOW_OPENGL |
+        SDL_WINDOW_RESIZABLE | extraFlags);
+
+    // SDL_WINDOW_FULLSCREEN_DESKTOP works so much better than
+    // SDL_WINDOW_FULLSCREEN so it should be always used
+
+    // SDL_WINDOW_BORDERLESS
+    // SDL_WINDOWPOS_UNDEFINED_DISPLAY(x)
+    // SDL_WINDOWPOS_CENTERED_DISPLAY(x)
+
+    if(!sdlWindow) {
+
+        LOG_FATAL("SDL Window creation failed, error: " + std::string(SDL_GetError()));
+    }
+
+    // SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindow);
+
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if(!SDL_GetWindowWMInfo(sdlWindow, &wmInfo)) {
+
+        LOG_FATAL("Window: created sdl window failed to retrieve info");
+    }
+
+#ifdef _WIN32
+    auto winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
+    // WParams["parentWindowHandle"] = Ogre::StringConverter::toString(winHandle);
+    // This seems to be the right name on windows
+    WParams["externalWindowHandle"] = Ogre::StringConverter::toString(winHandle);
+    // externalWindowHandle
+#else
+    WParams["parentWindowHandle"] =
+        Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.display) + ":" +
+        Ogre::StringConverter::toString(
+            (unsigned int)XDefaultScreen(wmInfo.info.x11.display)) +
+        ":" + Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.window);
+
+#endif
+
+    Ogre::RenderWindow* tmpwindow;
+
+    try {
+        tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(
+            wcaption, WData.Width, WData.Height, false, &WParams);
+    } catch(const Ogre::RenderingAPIException& e) {
+
+        LOG_ERROR("Failed to create Ogre window, exception: " + std::string(e.what()));
+        throw;
+    }
+
+    int windowsafter = ++OpenWindowCount;
+
+    // Do some first window initialization //
+    if(windowsafter == 1) {
+
+        // Notify engine to register threads to work with Ogre //
+        Engine::GetEngine()->_NotifyThreadsRegisterOgre();
+
+        // Hlms is needed to parse scripts etc.
+        windowcreater->_LoadOgreHLMS();
+
+        FileSystem::RegisterOGREResourceGroups();
+    }
+
+    // Store this window's number
+    WindowNumber = ++TotalCreatedWindows;
+
+    OWindow = tmpwindow;
+
+#ifdef _WIN32
+    // Fetch the windows handle from SDL //
+    HWND ourHWND = wmInfo.info.win.window;
+
+    // apply style settings (mainly ICON) //
+    if(ourHWND) {
+
+        WData.ApplyIconToHandle(ourHWND);
+
+    } else {
+        LOG_WARNING("Window: failed to get window HWND for styling");
+    }
+#else
+    // \todo linux icon
+#endif
+    tmpwindow->setDeactivateOnFocusChange(false);
+
+    // set the new window to be active //
+    tmpwindow->setActive(true);
     Focused = true;
 
-    SDL_StartTextInput();
+    // Overlay is needed for the GUI to register its views
+    _CreateOverlayScene();
 
-    // cursor on top of window's windows isn't hidden //
+    // create GUI //
+    WindowsGui = std::make_unique<GUI::GuiManager>();
+    if(!WindowsGui) {
+        // TODO: the window must be destroyed here
+        DEBUG_BREAK;
+        throw NULLPtr("cannot create GUI manager instance");
+    }
+
+    if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)) {
+
+        LOG_ERROR("Window: Gui init failed");
+        throw NULLPtr("invalid GUI manager");
+    }
+
+    // create receiver interface //
+    TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
+
+    SDLWindow = sdlWindow;
+
+    // TODO: this needs to be only used when a text box etc. is used
+    // SDL_StartTextInput();
+
+    // cursor on top of window isn't hidden //
     ApplicationWantCursorState = false;
 }
 
-DLLEXPORT Leviathan::Window::~Window()
+DLLEXPORT Window::~Window()
 {
+    // GUI is very picky about delete order
+    if(WindowsGui) {
+        WindowsGui->Release();
+        WindowsGui.reset();
+    }
 
     if(MouseCaptured) {
 
@@ -85,14 +223,167 @@ DLLEXPORT Leviathan::Window::~Window()
         SDL_SetWindowFullscreen(SDLWindow, 0);
     }
 
+    // Report that the window is now closed //
+    Logger::Get()->Info(
+        "Window: closing window(" + Convert::ToString(GetWindowNumber()) + ")");
+
+    _DestroyOverlay();
+
+    // Close the window //
+    OWindow->destroy();
+
+    TertiaryReceiver.reset();
+
+    int windowsafter = --OpenWindowCount;
+
+    // Destory CEGUI if we are the last window //
+    if(windowsafter == 0) {
+
+        Logger::Get()->Info("Window: all windows have been closed, "
+                            "should quit soon");
+    }
+
     LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
               "GLX plugin uninstall");
-    // SDL_DestroyWindow(SDLWindow);
-    SDL_HideWindow(SDLWindow);
+    SDL_DestroyWindow(SDLWindow);
+    // SDL_HideWindow(SDLWindow);
     SDLWindow = nullptr;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset)
+DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
+{
+    if(LinkedWorld) {
+
+        LinkedWorld->OnUnLinkedFromWindow(this, Graphics::Get()->GetOgreRoot());
+    }
+
+    LinkedWorld = world;
+
+    if(LinkedWorld) {
+
+        LinkedWorld->OnLinkToWindow(this, Graphics::Get()->GetOgreRoot());
+    }
+}
+
+DLLEXPORT void Window::UnlinkAll()
+{
+    LinkObjects(nullptr);
+}
+// ------------------------------------ //
+DLLEXPORT void Window::Tick(int mspassed)
+{
+    // pass to GUI //
+    WindowsGui->GuiTick(mspassed);
+}
+
+DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
+{
+    if(LinkedWorld)
+        LinkedWorld->Render(mspassed, tick, timeintick);
+
+    // Update GUI before each frame //
+    WindowsGui->Render();
+
+    // update window //
+    Ogre::RenderWindow* tmpwindow = GetOgreWindow();
+
+    // finish rendering the window //
+
+    // We don't actually want to swap buffers here because the Engine
+    // method that called us will call Ogre::Root::renderOneFrame
+    // after Render has been called on all active windows, so if we
+    // have this call here we may do double swap depending on the
+    // drivers.
+    // tmpwindow->swapBuffers();
+
+    return true;
+}
+
+DLLEXPORT void Window::OnResize(int width, int height)
+{
+// Notify Ogre //
+// This causes issues on Windows
+#ifdef __linux__
+    GetOgreWindow()->resize(width, height);
+#endif
+    GetOgreWindow()->windowMovedOrResized();
+
+    // send to GUI //
+    WindowsGui->OnResize();
+}
+
+DLLEXPORT void Window::OnFocusChange(bool focused)
+{
+    if(Focused == focused)
+        return;
+
+    LOG_INFO("Focus change in Window");
+
+    // Update mouse //
+    Focused = focused;
+    _CheckMouseVisibilityStates();
+
+    WindowsGui->OnFocusChanged(focused);
+
+    if(!Focused && MouseCaptured) {
+
+        LOG_WRITE("TODO: We need to force GUI on to stop mouse capture");
+        LOG_FATAL("Not implemented unfocus when mouse capture is on");
+    }
+}
+// ------------------------------------ //
+#ifdef __linux
+DLLEXPORT void Window::SetX11Cursor(int cursor)
+{
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
+
+        LOG_FATAL("Window: SetX11Cursor: failed to retrieve wm info");
+        return;
+    }
+
+    XDefineCursor(wmInfo.info.x11.display, wmInfo.info.x11.window, cursor);
+}
+#endif //__linux
+// ------------------------------------ //
+DLLEXPORT bool Window::SetMouseCapture(bool state)
+{
+    if(MouseCaptureState == state)
+        return true;
+
+    MouseCaptureState = state;
+
+    // handle changing state //
+    if(!MouseCaptureState) {
+
+        // set mouse visible and disable capturing //
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+        // reset pointer to indicate that this object no longer captures mouse to this window
+        // //
+        InputCapturer = nullptr;
+
+    } else {
+
+        if(InputCapturer != this && InputCapturer != nullptr) {
+            // another window has input //
+            MouseCaptureState = false;
+            return false;
+        }
+
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+
+        // hide mouse and tell window to capture //
+        // DisplayWindow->SetMouseToCenter();
+
+        // set static ptr to this //
+        InputCapturer = this;
+    }
+    return true;
+}
+
+
+DLLEXPORT void Window::SetHideCursor(bool toset)
 {
     ApplicationWantCursorState = toset;
 
@@ -124,7 +415,7 @@ DLLEXPORT void Leviathan::Window::SetHideCursor(bool toset)
     }
 }
 
-DLLEXPORT void Leviathan::Window::SetMouseToCenter()
+DLLEXPORT void Window::SetMouseToCenter()
 {
 
     int32_t width, height;
@@ -132,7 +423,7 @@ DLLEXPORT void Leviathan::Window::SetMouseToCenter()
     SDL_WarpMouseInWindow(SDLWindow, width / 2, height / 2);
 }
 
-DLLEXPORT void Leviathan::Window::GetRelativeMouse(int& x, int& y)
+DLLEXPORT void Window::GetRelativeMouse(int& x, int& y)
 {
     if(!SDLWindow)
         return;
@@ -173,7 +464,7 @@ DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y)
     y = static_cast<float>(yInt) / height;
 }
 
-DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea()
+DLLEXPORT bool Window::IsMouseOutsideWindowClientArea()
 {
     int X, Y;
     GetRelativeMouse(X, Y);
@@ -190,7 +481,7 @@ DLLEXPORT bool Leviathan::Window::IsMouseOutsideWindowClientArea()
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Window::GetSize(int32_t& width, int32_t& height) const
+DLLEXPORT void Window::GetSize(int32_t& width, int32_t& height) const
 {
     SDL_GetWindowSize(SDLWindow, &width, &height);
 }
@@ -200,7 +491,7 @@ DLLEXPORT void Window::GetPosition(int32_t& x, int32_t& y) const
     SDL_GetWindowPosition(SDLWindow, &x, &y);
 }
 // ------------------------------------ //
-DLLEXPORT uint32_t Leviathan::Window::GetSDLID() const
+DLLEXPORT uint32_t Window::GetSDLID() const
 {
     if(!SDLWindow)
         return -1;
@@ -228,82 +519,77 @@ DLLEXPORT uint32_t Window::GetNativeHandle() const
 #endif
 }
 // ------------------------------------ //
-#ifdef __linux
-DLLEXPORT void Window::SetX11Cursor(int cursor)
+DLLEXPORT void Window::SaveScreenShot(const std::string& filename)
 {
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
-
-        LOG_FATAL("Window: SetX11Cursor: failed to retrieve wm info");
-        return;
-    }
-
-    XDefineCursor(wmInfo.info.x11.display, wmInfo.info.x11.window, cursor);
+    // uses render target's capability to save it's contents //
+    GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
 }
-#endif //__linux
+
+DLLEXPORT bool Window::GetVsync() const
+{
+    return OWindow->isVSyncEnabled();
+}
+
+DLLEXPORT void Window::SetCustomInputController(std::shared_ptr<InputController> controller)
+{
+    TertiaryReceiver = controller;
+}
 // ------------------------------------ //
-DLLEXPORT void Leviathan::Window::SetCaptureMouse(bool state)
+void Window::_CreateOverlayScene()
 {
+    Ogre::Root& ogre = Ogre::Root::getSingleton();
 
-    if(MouseCaptured == state)
-        return;
+    // create scene manager //
+    OverlayScene = ogre.createSceneManager(Ogre::ST_GENERIC, 1,
+        Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_window_" + Convert::ToString(ID));
 
-    MouseCaptured = state;
+    // create camera //
+    OverlayCamera = OverlayScene->createCamera("overlay camera");
 
-    if(MouseCaptured) {
+    // Create the workspace for this scene
+    // Which will render after the normal scene
+    OverlayWorkspace = ogre.getCompositorManager2()->addWorkspace(
+        OverlayScene, OWindow, OverlayCamera, "OverlayWorkspace", true, 1000);
+}
 
-        SDL_SetRelativeMouseMode(SDL_TRUE);
+void Window::_DestroyOverlay()
+{
+    // Destroy the compositor //
+    Ogre::Root& ogre = Ogre::Root::getSingleton();
 
-    } else {
+    // Allow releasing twice
+    if(OverlayWorkspace) {
+        ogre.getCompositorManager2()->removeWorkspace(OverlayWorkspace);
+        OverlayWorkspace = nullptr;
+    }
 
-        SDL_SetRelativeMouseMode(SDL_FALSE);
+    if(OverlayScene) {
+        ogre.destroySceneManager(OverlayScene);
+        OverlayScene = nullptr;
+        OverlayCamera = nullptr;
     }
 }
 
-DLLEXPORT bool Leviathan::Window::IsWindowFocused() const
-{
-    return Focused;
-}
-
-void Leviathan::Window::_FirstInputCheck()
-{
-    if(FirstInput) {
-
-        FirstInput = false;
-
-        int x, y;
-        GetRelativeMouse(x, y);
-
-        // Pass the initial position //
-        DEBUG_BREAK;
-        // inputreceiver->injectMousePosition((float)x, (float)y);
-
-        _CheckMouseVisibilityStates();
-    }
-}
-
-DLLEXPORT void Leviathan::Window::GatherInput(CefBrowserHost* browserinput)
+// ------------------------------------ //
+DLLEXPORT void Window::_StartGatherInput()
 {
     // Quit if window closed //
     if(!SDLWindow) {
 
-        Logger::Get()->Warning("Window: GatherInput: skipping due to closed input window");
+        LOG_WARNING("Window: GatherInput: window is closed");
         return;
     }
 
-    inputreceiver = browserinput;
+    InputGatherStarted = true;
 
-    // On first frame we want to manually force mouse position send //
-    if(FirstInput)
-        _FirstInputCheck();
+    CefBrowserHost* browserinput;
 
+    inputreceiver = WindowsGui->GetPrimaryInputReceiver();
 
-    // Set parameters that listener functions need //
-    ThisFrameHandledCreate = false;
+    if(!inputreceiver)
+        LOG_ERROR("Window: _StartGatherInput: gui manager had no browser host");
 
-    // Capture the browser variable //
-    OwningWindow->GetInputController()->StartInputGather();
+    GetInputController()->StartInputGather();
 
     SpecialKeyModifiers = 0;
     CEFSpecialKeyModifiers = EVENTFLAG_NONE;
@@ -332,30 +618,26 @@ DLLEXPORT void Leviathan::Window::GatherInput(CefBrowserHost* browserinput)
 
     // TODO: EVENTFLAG_NUM_LOCK_ON;
 
-    // Handle mouse capture
-    if(MouseCaptured && Focused) {
+    // TODO: fix mouse capture
+    // // Handle mouse capture
+    // if(MouseCaptured && Focused) {
 
-        // get mouse relative to window center //
-        int xmoved = 0, ymoved = 0;
+    //     // get mouse relative to window center //
+    //     int xmoved = 0, ymoved = 0;
 
-        SDL_GetRelativeMouseState(&xmoved, &ymoved);
+    //     SDL_GetRelativeMouseState(&xmoved, &ymoved);
 
-        // Pass input //
-        OwningWindow->GetInputController()->SendMouseMovement(xmoved, ymoved);
-    }
+    //     // Pass input //
+    //     GetInputController()->SendMouseMovement(xmoved, ymoved);
+    // }
 }
 
-DLLEXPORT void Leviathan::Window::ReadInitialMouse(CefBrowserHost* browserinput)
+DLLEXPORT void Window::InputEnd()
 {
-    auto* old = inputreceiver;
-
-    inputreceiver = browserinput;
-    _FirstInputCheck();
-
-    inputreceiver = old;
+    InputGatherStarted = false;
 }
 
-void Leviathan::Window::_CheckMouseVisibilityStates()
+void Window::_CheckMouseVisibilityStates()
 {
 
     // force cursor visible check (if outside client area or mouse is unfocused on the window)
@@ -388,7 +670,7 @@ DLLEXPORT int Window::GetCEFButtonFromSdlMouseButton(uint32_t whichbutton)
     }
 }
 // ------------------ Input listener functions ------------------ //
-void Leviathan::Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
+void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
 {
     CefKeyEvent cef_event;
 
@@ -450,90 +732,88 @@ void Leviathan::Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
     }
 }
 
-DLLEXPORT void Leviathan::Window::InjectMouseMove(int xpos, int ypos)
+DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
 {
     // Only pass this data if we aren't going to pass our own captured mouse //
     if(!MouseCaptured) {
 
-        CefMouseEvent mevent;
-        mevent.modifiers = SpecialKeyModifiers;
-        mevent.x = xpos;
-        mevent.y = ypos;
+        CefMouseEvent cevent;
+        cevent.modifiers = CEFSpecialKeyModifiers;
+        cevent.x = event.motion.x;
+        cevent.y = event.motion.y;
 
-        inputreceiver->SendMouseMoveEvent(mevent, IsMouseOutsideWindowClientArea());
+        inputreceiver->SendMouseMoveEvent(cevent, IsMouseOutsideWindowClientArea());
     }
 
     _CheckMouseVisibilityStates();
 }
 
-DLLEXPORT void Leviathan::Window::InjectMouseWheel(int xamount, int yamount)
+DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
 {
     if(!MouseCaptured) {
 
-        CefMouseEvent event;
-        event.modifiers = SpecialKeyModifiers;
-        event.x = 0;
-        event.y = 0;
+        CefMouseEvent cevent;
+        cevent.modifiers = CEFSpecialKeyModifiers;
+        cevent.x = 0;
+        cevent.y = 0;
 
-        inputreceiver->SendMouseWheelEvent(event, 0, yamount);
+        inputreceiver->SendMouseWheelEvent(cevent, 0, event.wheel.y);
     }
 }
 
-DLLEXPORT void Leviathan::Window::InjectMouseButtonDown(int32_t whichbutton)
+DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
 {
     if(!MouseCaptured) {
 
-        CefMouseEvent mevent;
-        mevent.modifiers = SpecialKeyModifiers;
-        DEBUG_BREAK; // Get mouse pos
-        // mevent.x = mstate.X.abs;
-        // mevent.y = mstate.Y.abs;
+        CefMouseEvent cevent;
+        cevent.modifiers = CEFSpecialKeyModifiers;
+        cevent.x = event.button.x;
+        cevent.y = event.button.y;
 
-        int type = GetCEFButtonFromSdlMouseButton(whichbutton);
+        int type = GetCEFButtonFromSdlMouseButton(event.button.button);
         if(type == -1)
             return;
 
         cef_mouse_button_type_t btype = static_cast<cef_mouse_button_type_t>(type);
 
-        inputreceiver->SendMouseClickEvent(mevent, btype, false, 1);
+        inputreceiver->SendMouseClickEvent(cevent, btype, false, 1);
     }
 }
 
-DLLEXPORT void Leviathan::Window::InjectMouseButtonUp(int32_t whichbutton)
+DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
 {
     if(!MouseCaptured) {
 
-        CefMouseEvent mevent;
-        mevent.modifiers = SpecialKeyModifiers;
-        DEBUG_BREAK; // Get mouse pos
-        // mevent.x = mstate.X.abs;
-        // mevent.y = mstate.Y.abs;
+        CefMouseEvent cevent;
+        cevent.modifiers = CEFSpecialKeyModifiers;
+        cevent.x = event.button.x;
+        cevent.y = event.button.y;
 
-        int type = GetCEFButtonFromSdlMouseButton(whichbutton);
+        int type = GetCEFButtonFromSdlMouseButton(event.button.button);
         if(type == -1)
             return;
 
         cef_mouse_button_type_t btype = static_cast<cef_mouse_button_type_t>(type);
 
-        inputreceiver->SendMouseClickEvent(mevent, btype, true, 1);
+        inputreceiver->SendMouseClickEvent(cevent, btype, true, 1);
     }
 }
 
-DLLEXPORT void Leviathan::Window::InjectCodePoint(uint32_t utf32char)
+DLLEXPORT void Window::InjectCodePoint(const SDL_Event& event)
 {
     if(!MouseCaptured) {
 
         DEBUG_BREAK;
 
         CefKeyEvent event;
-        event.character = utf32char;
+        // event.character = utf32char;
         event.type = KEYEVENT_CHAR;
 
         inputreceiver->SendKeyEvent(event);
     }
 }
 
-DLLEXPORT void Leviathan::Window::InjectKeyDown(int32_t sdlkey)
+DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
 {
     bool SentToController = false;
 
@@ -550,27 +830,27 @@ DLLEXPORT void Leviathan::Window::InjectKeyDown(int32_t sdlkey)
 
         // Finally send to a controller //
         SentToController = true;
-        OwningWindow->GetInputController()->OnInputGet(sdlkey, SpecialKeyModifiers, true);
+        GetInputController()->OnInputGet(event.key.keysym.sym, SpecialKeyModifiers, true);
         // }
     }
 
     if(!SentToController) {
-        OwningWindow->GetInputController()->OnBlockedInput(sdlkey, SpecialKeyModifiers, true);
+        GetInputController()->OnBlockedInput(event.key.keysym.sym, SpecialKeyModifiers, true);
     }
 }
 
-DLLEXPORT void Leviathan::Window::InjectKeyUp(int32_t sdlkey)
+DLLEXPORT void Window::InjectKeyUp(const SDL_Event& event)
 {
     // Send to CEF if GUI is active //
     DEBUG_BREAK;
-    // DoCEFInputPass(sdlkey, true);
+    // DoCEFInputPass(sdlkey, false);
 
     // This should always be passed here //
-    OwningWindow->GetInputController()->OnInputGet(sdlkey, SpecialKeyModifiers, false);
+    GetInputController()->OnInputGet(event.key.keysym.sym, SpecialKeyModifiers, false);
 }
 // ------------------------------------ //
 
-DLLEXPORT int32_t Leviathan::Window::ConvertStringToKeyCode(const string& str)
+DLLEXPORT int32_t Window::ConvertStringToKeyCode(const std::string& str)
 {
 
     auto key = SDL_GetKeyFromName(str.c_str());
@@ -584,130 +864,10 @@ DLLEXPORT int32_t Leviathan::Window::ConvertStringToKeyCode(const string& str)
     return key;
 }
 
-DLLEXPORT string Leviathan::Window::ConvertKeyCodeToString(const int32_t& code)
+DLLEXPORT std::string Window::ConvertKeyCodeToString(const int32_t& code)
 {
 
     return std::string(SDL_GetKeyName(code));
-}
-
-/************************************************************************
-Translate a SDLKey to the proper CEGUI::Key
-*************************************************************************/
-// From: http://cegui.org.uk/wiki/SDL_to_CEGUI_keytable
-// Modified for SDL2
-CEGUI::Key::Scan SDLKeyToCEGUIKey(int32_t key)
-{
-    using namespace CEGUI;
-    switch(key) {
-    case SDLK_BACKSPACE: return CEGUI::Key::Scan::Backspace;
-    case SDLK_TAB: return CEGUI::Key::Scan::Tab;
-    case SDLK_RETURN: return CEGUI::Key::Scan::Return;
-    case SDLK_PAUSE: return CEGUI::Key::Scan::Pause;
-    case SDLK_ESCAPE: return CEGUI::Key::Scan::Esc;
-    case SDLK_SPACE: return CEGUI::Key::Scan::Space;
-    case SDLK_COMMA: return CEGUI::Key::Scan::Comma;
-    case SDLK_MINUS: return CEGUI::Key::Scan::Minus;
-    case SDLK_PERIOD: return CEGUI::Key::Scan::Period;
-    case SDLK_SLASH: return CEGUI::Key::Scan::ForwardSlash;
-    case SDLK_0: return CEGUI::Key::Scan::Zero;
-    case SDLK_1: return CEGUI::Key::Scan::One;
-    case SDLK_2: return CEGUI::Key::Scan::Two;
-    case SDLK_3: return CEGUI::Key::Scan::Three;
-    case SDLK_4: return CEGUI::Key::Scan::Four;
-    case SDLK_5: return CEGUI::Key::Scan::Five;
-    case SDLK_6: return CEGUI::Key::Scan::Six;
-    case SDLK_7: return CEGUI::Key::Scan::Seven;
-    case SDLK_8: return CEGUI::Key::Scan::Eight;
-    case SDLK_9: return CEGUI::Key::Scan::Nine;
-    case SDLK_COLON: return CEGUI::Key::Scan::Colon;
-    case SDLK_SEMICOLON: return CEGUI::Key::Scan::Semicolon;
-    case SDLK_EQUALS: return CEGUI::Key::Scan::Equals;
-    case SDLK_LEFTBRACKET: return CEGUI::Key::Scan::LeftBracket;
-    case SDLK_BACKSLASH: return CEGUI::Key::Scan::Backslash;
-    case SDLK_RIGHTBRACKET: return CEGUI::Key::Scan::RightBracket;
-    case SDLK_a: return CEGUI::Key::Scan::A;
-    case SDLK_b: return CEGUI::Key::Scan::B;
-    case SDLK_c: return CEGUI::Key::Scan::C;
-    case SDLK_d: return CEGUI::Key::Scan::D;
-    case SDLK_e: return CEGUI::Key::Scan::E;
-    case SDLK_f: return CEGUI::Key::Scan::F;
-    case SDLK_g: return CEGUI::Key::Scan::G;
-    case SDLK_h: return CEGUI::Key::Scan::H;
-    case SDLK_i: return CEGUI::Key::Scan::I;
-    case SDLK_j: return CEGUI::Key::Scan::J;
-    case SDLK_k: return CEGUI::Key::Scan::K;
-    case SDLK_l: return CEGUI::Key::Scan::L;
-    case SDLK_m: return CEGUI::Key::Scan::M;
-    case SDLK_n: return CEGUI::Key::Scan::N;
-    case SDLK_o: return CEGUI::Key::Scan::O;
-    case SDLK_p: return CEGUI::Key::Scan::P;
-    case SDLK_q: return CEGUI::Key::Scan::Q;
-    case SDLK_r: return CEGUI::Key::Scan::R;
-    case SDLK_s: return CEGUI::Key::Scan::S;
-    case SDLK_t: return CEGUI::Key::Scan::T;
-    case SDLK_u: return CEGUI::Key::Scan::U;
-    case SDLK_v: return CEGUI::Key::Scan::V;
-    case SDLK_w: return CEGUI::Key::Scan::W;
-    case SDLK_x: return CEGUI::Key::Scan::X;
-    case SDLK_y: return CEGUI::Key::Scan::Y;
-    case SDLK_z: return CEGUI::Key::Scan::Z;
-    case SDLK_DELETE: return CEGUI::Key::Scan::DeleteKey;
-    case SDLK_KP_0: return CEGUI::Key::Scan::Numpad_0;
-    case SDLK_KP_1: return CEGUI::Key::Scan::Numpad_1;
-    case SDLK_KP_2: return CEGUI::Key::Scan::Numpad_2;
-    case SDLK_KP_3: return CEGUI::Key::Scan::Numpad_3;
-    case SDLK_KP_4: return CEGUI::Key::Scan::Numpad_4;
-    case SDLK_KP_5: return CEGUI::Key::Scan::Numpad_5;
-    case SDLK_KP_6: return CEGUI::Key::Scan::Numpad_6;
-    case SDLK_KP_7: return CEGUI::Key::Scan::Numpad_7;
-    case SDLK_KP_8: return CEGUI::Key::Scan::Numpad_8;
-    case SDLK_KP_9: return CEGUI::Key::Scan::Numpad_9;
-    case SDLK_KP_PERIOD: return CEGUI::Key::Scan::Decimal;
-    case SDLK_KP_DIVIDE: return CEGUI::Key::Scan::Divide;
-    case SDLK_KP_MULTIPLY: return CEGUI::Key::Scan::Multiply;
-    case SDLK_KP_MINUS: return CEGUI::Key::Scan::Subtract;
-    case SDLK_KP_PLUS: return CEGUI::Key::Scan::Add;
-    case SDLK_KP_ENTER: return CEGUI::Key::Scan::NumpadEnter;
-    case SDLK_KP_EQUALS: return CEGUI::Key::Scan::NumpadEquals;
-    case SDLK_UP: return CEGUI::Key::Scan::ArrowUp;
-    case SDLK_DOWN: return CEGUI::Key::Scan::ArrowDown;
-    case SDLK_RIGHT: return CEGUI::Key::Scan::ArrowRight;
-    case SDLK_LEFT: return CEGUI::Key::Scan::ArrowLeft;
-    case SDLK_INSERT: return CEGUI::Key::Scan::Insert;
-    case SDLK_HOME: return CEGUI::Key::Scan::Home;
-    case SDLK_END: return CEGUI::Key::Scan::End;
-    case SDLK_PAGEUP: return CEGUI::Key::Scan::PageUp;
-    case SDLK_PAGEDOWN: return CEGUI::Key::Scan::PageDown;
-    case SDLK_F1: return CEGUI::Key::Scan::F1;
-    case SDLK_F2: return CEGUI::Key::Scan::F2;
-    case SDLK_F3: return CEGUI::Key::Scan::F3;
-    case SDLK_F4: return CEGUI::Key::Scan::F4;
-    case SDLK_F5: return CEGUI::Key::Scan::F5;
-    case SDLK_F6: return CEGUI::Key::Scan::F6;
-    case SDLK_F7: return CEGUI::Key::Scan::F7;
-    case SDLK_F8: return CEGUI::Key::Scan::F8;
-    case SDLK_F9: return CEGUI::Key::Scan::F9;
-    case SDLK_F10: return CEGUI::Key::Scan::F10;
-    case SDLK_F11: return CEGUI::Key::Scan::F11;
-    case SDLK_F12: return CEGUI::Key::Scan::F12;
-    case SDLK_F13: return CEGUI::Key::Scan::F13;
-    case SDLK_F14: return CEGUI::Key::Scan::F14;
-    case SDLK_F15: return CEGUI::Key::Scan::F15;
-    case SDLK_NUMLOCKCLEAR: return CEGUI::Key::Scan::NumLock;
-    case SDLK_SCROLLLOCK: return CEGUI::Key::Scan::ScrollLock;
-    case SDLK_RSHIFT: return CEGUI::Key::Scan::RightShift;
-    case SDLK_LSHIFT: return CEGUI::Key::Scan::LeftShift;
-    case SDLK_RCTRL: return CEGUI::Key::Scan::RightControl;
-    case SDLK_LCTRL: return CEGUI::Key::Scan::LeftControl;
-    case SDLK_RALT: return CEGUI::Key::Scan::RightAlt;
-    case SDLK_LALT: return CEGUI::Key::Scan::LeftAlt;
-    case SDLK_LGUI: return CEGUI::Key::Scan::LeftWindows;
-    case SDLK_RGUI: return CEGUI::Key::Scan::RightWindows;
-    case SDLK_SYSREQ: return CEGUI::Key::Scan::SysRq;
-    case SDLK_MENU: return CEGUI::Key::Scan::AppMenu;
-    case SDLK_POWER: return CEGUI::Key::Scan::Power;
-    default: return CEGUI::Key::Scan::Unknown;
-    }
 }
 
 

@@ -391,12 +391,11 @@ public:
 
     //! \brief Used to detect that this world is in the background and should not tick
     //! \note Removes the workspace created in OnLinkToWindow
-    DLLEXPORT virtual void OnUnLinkedFromWindow(
-        GraphicalInputEntity* window, Ogre::Root* ogre);
+    DLLEXPORT virtual void OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre);
 
-    //! \brief Called when this is added to a GraphicalInputEntity
+    //! \brief Called when this is added to a Window
     //! \note This creates a compositor workspace that renders this world's scene to the window
-    DLLEXPORT virtual void OnLinkToWindow(GraphicalInputEntity* window, Ogre::Root* ogre);
+    DLLEXPORT virtual void OnLinkToWindow(Window* window, Ogre::Root* ogre);
 
     //! \brief Configures this world to run tick even when not attached to a window
     DLLEXPORT virtual void SetRunInBackground(bool tickinbackground);
@@ -406,7 +405,7 @@ public:
 
 protected:
     //! \brief Called by Render which is called from a
-    //! GraphicalInputEntity if this is linked to one
+    //! Window if this is linked to one
     DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
 
     //! \brief Called by Tick
@@ -494,7 +493,7 @@ private:
     Ogre::CompositorWorkspace* WorldWorkspace = nullptr;
 
     //! The world is now always linked to a window
-    GraphicalInputEntity* LinkedToWindow = nullptr;
+    Window* LinkedToWindow = nullptr;
 
     Ogre::Light* Sunlight = nullptr;
     Ogre::SceneNode* SunLightNode = nullptr;
@@ -546,11 +545,11 @@ private:
     //! If true this will keep running while not attached to a window
     bool TickWhileInBackground = false;
 
-    //! Set by OnLinkToWindow when this is added to a GraphicalInputEntity
+    //! Set by OnLinkToWindow when this is added to a Window
     //! \note This must be added to the same one that Init was called with
-    //! \todo Determine if worlds could be linked to a different GraphicalInputEntity than the
+    //! \todo Determine if worlds could be linked to a different Window than the
     //! one it was created with
-    //! \see GraphicalInputEntity::LinkObjects
+    //! \see Window::LinkObjects
     bool InBackground = true;
 
     //! A lock for delayed delete, to allow deleting entities from physical callbacks

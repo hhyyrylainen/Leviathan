@@ -54,7 +54,7 @@ else()
     "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
     "Exceptions.h" "Exceptions.cpp"
     "TimeIncludes.h" "TimeIncludes.cpp"
-    "CEGUIInclude.h" "WindowsInclude.h"
+    "WindowsInclude.h"
     "GlobalCEFHandler.cpp" "GlobalCEFHandler.h"
     )
   
@@ -172,8 +172,11 @@ else()
     "Generated/ResponseImpl.h" "Networking/GenerateResponse.rb"
     )
   
+  set(GroupRendering
+    "Rendering/GeometryHelpers.h" "Rendering/GeometryHelpers.cpp"
+    "Rendering/Graphics.cpp" "Rendering/Graphics.h"
+    )
   
-  file(GLOB GroupRendering "Rendering/*.cpp" "Rendering/*.h")
   set(GroupScript
     "Script/Console.cpp" "Script/Console.h"
     "Script/ScriptArgumentsProvider.cpp" "Script/ScriptArgumentsProvider.h"

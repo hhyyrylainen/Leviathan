@@ -4,14 +4,13 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/AppDefine.h"
-#include "GraphicalInputEntity.h"
 
 #include "OgreFrameListener.h"
 
 namespace Leviathan {
 
 class Graphics : Ogre::FrameListener {
-    friend GraphicalInputEntity;
+    friend Window;
 
 public:
     DLLEXPORT Graphics();

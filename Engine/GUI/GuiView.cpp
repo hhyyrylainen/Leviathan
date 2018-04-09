@@ -5,13 +5,18 @@
 #include "GlobalCEFHandler.h"
 #include "Handlers/IDFactory.h"
 #include "LeviathanJavaScriptAsync.h"
+#include "Rendering/GeometryHelpers.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
 #include "OgreHardwarePixelBuffer.h"
+#include "OgreItem.h"
 #include "OgreManualObject.h"
 #include "OgreMaterialManager.h"
+#include "OgreMeshManager2.h"
 #include "OgreSceneManager.h"
+#include "OgreSubMesh2.h"
+#include "OgreTechnique.h"
 #include "OgreTextureManager.h"
 
 #include "include/cef_browser.h"
@@ -36,6 +41,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
 
     // Create the Ogre texture and material first //
     TextureName = "_ChromeOverlay_for_gui_" + Convert::ToString(ID);
+    MaterialName = TextureName + "_material";
 
     int32_t width;
     int32_t height;
@@ -45,6 +51,8 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     Texture = Ogre::TextureManager::getSingleton().createManual(TextureName,
         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D, width,
         height, 0, Ogre::PF_B8G8R8A8, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+
+    Texture->setHardwareGammaEnabled(true);
 
     // Fill in some test data //
     Ogre::v1::HardwarePixelBufferSharedPtr pixelbuf = Texture->getBuffer();
@@ -72,7 +80,43 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // Unlock the buffer //
     pixelbuf->unlock();
 
-    // TODO: quad pass over screen
+    Ogre::SceneManager* scene = Wind->GetOverlayScene();
+
+    Node = scene->createSceneNode(Ogre::SCENE_STATIC);
+
+    // This needs to be manually destroyed later
+    QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(TextureName + "mesh", -1, -1, 2, 2);
+
+    // Duplicate the material and set the texture on it
+    Ogre::MaterialPtr baseMaterial =
+        Ogre::MaterialManager::getSingleton().getByName("GUIOverlay");
+
+    // TODO: find a way for the species to manage this to
+    // avoid having tons of materials Maybe Use the species's
+    // name instead. and let something like the
+    // SpeciesComponent create and destroy this
+    Ogre::MaterialPtr customizedMaterial = baseMaterial->clone(MaterialName);
+
+    Ogre::TextureUnitState* textureState =
+        customizedMaterial->getTechnique(0)->getPass(0)->createTextureUnitState();
+    textureState->setTexture(Texture);
+    textureState->setHardwareGammaEnabled(true);
+    customizedMaterial->compile();
+
+    QuadMesh->getSubMesh(0)->setMaterialName(MaterialName);
+
+    // Setup render queue for it
+    // TODO: different queues for different GUIs
+    scene->getRenderQueue()->setRenderQueueMode(0, Ogre::RenderQueue::FAST);
+
+    QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
+    QuadItem->setCastShadows(false);
+
+    // Need to edit the render queue and add it to an early one
+    QuadItem->setRenderQueueGroup(1);
+
+    // Add it
+    Node->attachObject(QuadItem);
 
     // Now we can create the browser //
     CefWindowInfo info;
@@ -93,7 +137,6 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
 
 DLLEXPORT void View::ReleaseResources()
 {
-
     // Stop all events //
     UnRegisterAllEvents();
 
@@ -117,15 +160,26 @@ DLLEXPORT void View::ReleaseResources()
 
     SAFE_DELETE(OurAPIHandler);
 
-    // We could leave the Ogre resources hanging, but it might be a good idea to release them
-    // right now and not wait for the program to exit //
-    // TODO: don't use names here and make it work somehow //
-    Ogre::TextureManager::getSingleton().remove(Texture->getName());
+    Ogre::SceneManager* scene = Wind->GetOverlayScene();
 
+    if(Node) {
+        scene->destroySceneNode(Node);
+        Node = nullptr;
+    }
+
+    if(QuadItem) {
+        scene->destroyItem(QuadItem);
+        QuadItem = nullptr;
+    }
+
+    if(QuadMesh) {
+        Ogre::MeshManager::getSingleton().remove(QuadMesh);
+        QuadMesh.reset();
+    }
+
+    Ogre::MaterialManager::getSingleton().remove(MaterialName);
+    Ogre::TextureManager::getSingleton().remove(Texture);
     Texture.setNull();
-
-    // Destroy the manual object //
-    LOG_WRITE("TODO: release the quad rendering");
 }
 // ------------------------------------ //
 DLLEXPORT void View::NotifyWindowResized()
@@ -293,6 +347,8 @@ DLLEXPORT void View::CheckRender()
             ptrtotarget = RenderHolderForMain.get();
         else if(i == 1)
             ptrtotarget = RenderHolderForPopUp.get();
+        else
+            break;
 
         // Check and update the texture //
         if(!ptrtotarget->Updated) {
@@ -309,6 +365,7 @@ DLLEXPORT void View::CheckRender()
         } break;
         case 1: {
             // We don't know how to handle this //
+            LOG_WARNING("Don't know how to handle CEF render popup");
             continue;
         } break;
         }
@@ -522,20 +579,6 @@ DLLEXPORT CefRefPtr<CefBrowserHost> View::GetBrowserHost()
     }
 
     return NULL;
-}
-
-DLLEXPORT void View::SetAllowPaintStatus(bool canpaintnow)
-{
-    if(CanPaint == canpaintnow)
-        return;
-    // Update //
-    CanPaint = canpaintnow;
-
-    if(CanPaint) {
-        // Mark the whole area as dirty //
-        // This might be a better way to do this //
-        // OurBrowser->GetHost()->WasResized();
-    }
 }
 
 bool View::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,

@@ -47,32 +47,21 @@ enum KEYSPECIAL {
 
 namespace Leviathan{
 
-	// base class to have pointers and house the lookup table for ease of use //
-	class BaseKey{
-	public:
-		virtual inline ~BaseKey(){
-		}
-
-	protected:
-		//static map<int, wstring> KeySpecialStringRepresentationMap;
-	};
-
-
 	template<class T>
-	class Key : public BaseKey{
+	class Key{
 	public:
-		DLLEXPORT inline Key<T>(){
+		inline Key<T>(){
 			Extras = 0;
 			Character = (T)0;
 		}
-		DLLEXPORT inline Key<T>(const T &character, const short &additional){
+		inline Key<T>(const T &character, const short &additional){
 			Extras = additional;
 			Character = character;
 		}
-		DLLEXPORT inline ~Key(){
+		inline ~Key(){
 		}
 
-		DLLEXPORT inline bool Match(const Key<T> &other, bool strict = false) const{
+		inline bool Match(const Key<T> &other, bool strict = false) const{
 			if(other.Character != this->Character)
 				return false;
 			if(strict){
@@ -93,7 +82,7 @@ namespace Leviathan{
 			return true;
 		}
 
-		DLLEXPORT inline std::string GenerateStringMessage(const int &style = 0){
+		inline std::string GenerateStringMessage(const int &style = 0){
 			// create a string that represents this key //
 			if(style == 0){
 				// debug string //
@@ -109,35 +98,35 @@ namespace Leviathan{
 			return "error";
 		}
 
-		DLLEXPORT bool Match(const T &chara, const short &additional, bool strict = false) const{
+		inline bool Match(const T &chara, const short &additional, bool strict = false) const{
 			return Match(Key<T>(chara, additional), strict);
 		}
 
-		DLLEXPORT bool Match(const T &chara) const{
+		inline bool Match(const T &chara) const{
 			if(chara != this->Character)
 				return false;
 			return true;
 		}
 
 
-		DLLEXPORT T GetCharacter() const{
+		T GetCharacter() const{
 			return Character;
 		}
-		DLLEXPORT short GetAdditional() const{
+		short GetAdditional() const{
 			return Extras;
 		}
 
-		DLLEXPORT void Set(const T &character, const short &additional){
+		void Set(const T &character, const short &additional){
 			Character = character;
 			Extras = additional;
 		}
 
-		DLLEXPORT void SetAdditional(const short &additional){
+		void SetAdditional(const short &additional){
 
 			Extras = additional;
 		}
 
-		DLLEXPORT static void DeConstructSpecial(short keyspes, bool &Shift, bool &Alt, bool &Ctrl){
+		static void DeConstructSpecial(short keyspes, bool &Shift, bool &Alt, bool &Ctrl){
 
 			if(keyspes & KEYSPECIAL_SHIFT)
 				Shift = true;
@@ -148,7 +137,7 @@ namespace Leviathan{
 		}
 
         //! \See https://wiki.libsdl.org/SDL_Keycode for key names
-		DLLEXPORT static Key<T> GenerateKeyFromString(const std::string &representation){
+		static Key<T> GenerateKeyFromString(const std::string &representation){
 			if(representation.size() == 0){
 				// empty, nothing to do //
 				return Key<T>((T)0, 0);
@@ -197,7 +186,7 @@ namespace Leviathan{
 			return Key<T>(character, special);
 		}
 
-		DLLEXPORT std::string GenerateStringFromKey(){
+		std::string GenerateStringFromKey(){
 
 			// First the actual key value //
 			auto resultstr = Leviathan::Window::ConvertKeyCodeToString(Character);

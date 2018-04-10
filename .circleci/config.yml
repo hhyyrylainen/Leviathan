@@ -12,21 +12,20 @@ jobs:
              - v4-deps-{{ arch }}
        - restore_cache:
            keys:
-             - v3-assets-{{ .Branch }}
-             - v3-assets
-             - v2-assets
+             - v4-assets-{{ .Branch }}
+             - v4-assets
        - restore_cache:
            keys:
              - v3-build-{{ arch }}-{{ .Branch }}
        - run: ./Setup.rb --no-packagemanager --no-updates -j 2 --fully-parallel-project-compile --project-parallel 5
        - save_cache:
-           key: v3-assets-{{ .Branch }}
+           key: v4-assets-{{ .Branch }}
            paths:
-             - bin/Data
+             - bin
        - save_cache:
-           key: v3-assets
+           key: v4-assets
            paths:
-             - bin/Data
+             - bin
        - save_cache:
            key: v4-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
            paths:

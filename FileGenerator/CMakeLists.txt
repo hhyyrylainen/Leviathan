@@ -22,10 +22,12 @@ set(AllProjectFiles ${PSourceFiles} ${PHeaderFiles} ${Additional})
 
 # Add the program
 if(WIN32)
-    add_executable(FileGenerator WIN32 ${AllProjectFiles})
+  add_executable(FileGenerator WIN32 ${AllProjectFiles})
 else(WIN32)
-    add_executable(FileGenerator ${AllProjectFiles})
+  add_executable(FileGenerator ${AllProjectFiles})
 endif(WIN32)
+
+target_link_libraries(FileGenerator ${Boost_LIBRARIES})
 
 set_target_properties(FileGenerator PROPERTIES DEBUG_POSTFIX D)
 

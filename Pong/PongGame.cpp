@@ -9,7 +9,7 @@
 #include "Networking/RemoteConsole.h"
 #include "Networking/NetworkRequest.h"
 #include "Networking/NetworkResponse.h"
-#include "Rendering/GraphicalInputEntity.h"
+#include "Window.h"
 #include "PongNetHandler.h"
 #include "Utility/Random.h"
 using namespace Pong;
@@ -38,9 +38,10 @@ void TryToCrash(bool enable){
             Leviathan::NamedVars(shared_ptr<NamedVariableList>(new NamedVariableList("Message", new VariableBlock(
                             string("test")))))));
 
-    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("ConnectionScreen", enable);
-    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("DirectConnectScreen", enable);
-    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("TopLevelMenu", enable);
+    DEBUG_BREAK;
+    // Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("ConnectionScreen", enable);
+    // Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("DirectConnectScreen", enable);
+    // Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("TopLevelMenu", enable);
 }
 
 int Pong::PongGame::OnEvent(Event* event){
@@ -307,15 +308,17 @@ void Pong::PongGame::Tick(int mspassed){
 // ------------------------------------ //
 void Pong::PongGame::AllowPauseMenu(){
     // Allow pause menu //
-    GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", true);
+    DEBUG_BREAK;
+    // GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", true);
 }
 
 void Pong::PongGame::CustomizedGameEnd(){
     GUARD_LOCK();
 
     // Disable pause menu //
-    GuiManagerAccess->SetCollectionState("PauseMenu", false);
-    GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", false);
+    DEBUG_BREAK;
+    // GuiManagerAccess->SetCollectionState("PauseMenu", false);
+    // GuiManagerAccess->SetCollectionAllowEnableState("PauseMenu", false);
 }
 // ------------------------------------ //
 void Pong::PongGame::CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj){
@@ -395,7 +398,7 @@ void Pong::PongGame::DoSpecialPostLoad(){
         return;
     }
 
-    GraphicalInputEntity* window1 = Engine::GetEngine()->GetWindowEntity();
+    Window* window1 = Engine::GetEngine()->GetWindowEntity();
 
     GuiManagerAccess = window1->GetGui();
 

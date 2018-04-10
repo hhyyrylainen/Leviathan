@@ -7,7 +7,6 @@
 #include "Networking/NetworkRequest.h"
 #include "Networking/Connection.h"
 #include "Engine.h"
-#include "Rendering/GraphicalInputEntity.h"
 #include "GUI/GuiManager.h"
 #include "PongGame.h"
 using namespace Pong;
@@ -112,7 +111,8 @@ void Pong::PongNetHandler::_OnDisconnectFromServer(const string &reasonstring, b
                             string("Server kicked us, reason: "+reasonstring)))))));
 
     // Enable the connection screen to display this message //
-    Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("ConnectionScreen", true);
+    DEBUG_BREAK;
+    // Engine::Get()->GetWindowEntity()->GetGui()->SetCollectionState("ConnectionScreen", true);
 }
 
 

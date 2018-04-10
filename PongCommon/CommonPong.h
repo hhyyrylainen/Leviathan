@@ -293,9 +293,6 @@ public:
 
         QUICKTIME_THISSCOPE;
 
-        // Setup GUI style //
-        Engine::Get()->GetWindowEntity()->GetGui()->EnableStandardGUIThemes();
-
         // Load the game AI //
         GameAI = new GameModule("PongAIModule", "PongGameCore");
 

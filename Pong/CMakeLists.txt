@@ -39,6 +39,7 @@ set(USERREADABLEIDENTIFICATION		"\"Pong client version \" GAME_VERSIONS")
 set(GAMENAMEIDENTIFICATION			Pong)
 set(GAMEVERSIONIDENTIFICATION		GAME_VERSIONS)
 
+set(PROGRAMUSE_CUSTOMJS 0)
 
 # Configure the files
 StandardConfigureExecutableMainAndInclude("${BaseIncludeFileName}" "Main.cpp"

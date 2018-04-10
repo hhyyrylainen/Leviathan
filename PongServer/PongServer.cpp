@@ -7,7 +7,7 @@
 #include "PongServerNetworking.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/SyncedVariables.h"
-#include "Rendering/GraphicalInputEntity.h"
+#include "Window.h"
 #include "OgreException.h"
 #include "Networking/NetworkServerInterface.h"
 #include "Networking/NetworkHandler.h"

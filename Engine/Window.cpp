@@ -6,6 +6,7 @@
 #include "Exceptions.h"
 #include "FileSystem.h"
 #include "GUI/GuiManager.h"
+#include "GUI/KeyMapping.h"
 #include "Handlers/IDFactory.h"
 #include "Input/InputController.h"
 #include "Input/Key.h"
@@ -342,9 +343,13 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
         return;
     }
 
-    // LOG_WRITE("TODO: skipping cursor setting because it doesn't work in multi process
-    // mode");
-    XDefineCursor(wmInfo.info.x11.display, wmInfo.info.x11.window, cursor);
+    // Retrieve the X11 display shared with Chromium.
+    ::Display* xdisplay = cef_get_xdisplay();
+    LEVIATHAN_ASSERT(xdisplay, "cef_get_xdisplay failed");
+
+    // This is broken because apparently CEF has its own cursor stuff
+    // XDefineCursor(wmInfo.info.x11.display, wmInfo.info.x11.window, cursor);
+    XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
 }
 #endif //__linux
 // ------------------------------------ //
@@ -677,57 +682,79 @@ void Window::DoCEFInputPass(const SDL_Event& sdlevent, bool down)
     if(!inputreceiver)
         return;
 
-    CefKeyEvent cef_event;
-
-    cef_event.modifiers = CEFSpecialKeyModifiers;
     InputProcessedByCEF = false;
 
     // Currently there's no code from CEF here
     // // Heavily modified CEF (chromium embedded framework) code, license:
-    // // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
-    // // reserved. Use of this source code is governed by a BSD-style license that
-    // // can be found in the LICENSE file.
 
-    cef_event.windows_key_code = KeyMapping::GetWindowsKeyCodeFromSDLEvent(sdlevent);
-    cef_event.native_key_code = sdlevent.key.keysym.scancode;
+    // GDK compatible key code
+    int asX11KeyCode = KeyMapping::SDLKeyToX11Key(sdlevent.key.keysym);
+
+    // Modified to work here
+    // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
+    // reserved. Use of this source code is governed by a BSD-style license that
+    // can be found in the LICENSE file.
+    // Based on WebKeyboardEventBuilder::Build from
+    // content/browser/renderer_host/input/web_input_event_builders_gtk.cc.
+    CefKeyEvent key_event;
+    KeyboardCode windows_key_code = KeyMapping::GdkEventToWindowsKeyCode(asX11KeyCode);
+    key_event.windows_key_code =
+        KeyMapping::GetWindowsKeyCodeWithoutLocation(windows_key_code);
+    key_event.native_key_code = asX11KeyCode;
+
+    key_event.modifiers = CEFSpecialKeyModifiers;
+    // if(event->keyval >= GDK_KP_Space && event->keyval <= GDK_KP_9)
+    //     key_event.modifiers |= EVENTFLAG_IS_KEY_PAD;
+    if(key_event.modifiers & EVENTFLAG_ALT_DOWN)
+        key_event.is_system_key = true;
+
+    // This is VKEY_RETURN = 0x0D
+    if(windows_key_code == 0x0D) {
+        // We need to treat the enter key as a key press of character \r.  This
+        // is apparently just how webkit handles it and what it expects.
+        key_event.unmodified_character = '\r';
+    } else {
+        // FIXME: fix for non BMP chars
+        key_event.unmodified_character = sdlevent.key.keysym.sym;
+        // static_cast<int>(gdk_keyval_to_unicode(event->keyval));
+    }
+
+    // If ctrl key is pressed down, then control character shall be input.
+    if(key_event.modifiers & EVENTFLAG_CONTROL_DOWN) {
+        key_event.character = KeyMapping::GetControlCharacter(
+            windows_key_code, key_event.modifiers & EVENTFLAG_SHIFT_DOWN);
+    } else {
+        key_event.character = key_event.unmodified_character;
+    }
+
+    // This part has been modified
+    if(down) {
+        key_event.type = KEYEVENT_RAWKEYDOWN;
+        inputreceiver->SendKeyEvent(key_event);
+
+        // Pass the first //
+        inputreceiver->SendKeyEvent(key_event);
+
+        const auto storedHandled = InputProcessedByCEF;
+
+        // Send char event //
+        // TODO: should we pass the sdl text input event here
+        key_event.type = KEYEVENT_CHAR;
+        inputreceiver->SendKeyEvent(key_event);
+
+        if(storedHandled)
+            InputProcessedByCEF = true;
+    } else {
+        key_event.type = KEYEVENT_KEYUP;
+        inputreceiver->SendKeyEvent(key_event);
+    }
 
 #if defined(OS_WIN)
-
-    // // BYTE vkey = LOBYTE(VkKeyScan(text));
-    // BYTE vkey = OISVKeyConvert[arg.key];
-    // UINT scanCode = MapVirtualKey(vkey, MAPVK_VK_TO_VSC);
-    // cef_event.native_key_code = (scanCode << 16) | // key scan code
-    //                             1; // key repeat count
 #elif defined(OS_LINUX)
 #elif defined(OS_MACOSX)
 #else
 #error Unknown platform
 #endif // _WIN32
-
-    if(down) {
-        cef_event.type = KEYEVENT_RAWKEYDOWN;
-
-        // Pass the first //
-        inputreceiver->SendKeyEvent(cef_event);
-
-        const auto storedHandled = InputProcessedByCEF;
-
-        // Send char event //
-        cef_event.type = KEYEVENT_CHAR;
-        inputreceiver->SendKeyEvent(cef_event);
-
-        if(storedHandled)
-            InputProcessedByCEF = true;
-
-    } else {
-#if defined(OS_WIN)
-    // cef_event.windows_key_code = vkey;
-    // bits 30 and 31 should always be 1 for WM_KEYUP
-    // cef_event.native_key_code |= 0xC0000000;
-#endif
-        cef_event.type = KEYEVENT_KEYUP;
-        inputreceiver->SendKeyEvent(cef_event);
-    }
 }
 
 DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)

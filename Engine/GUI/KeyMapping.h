@@ -5,9 +5,22 @@
 // ------------------------------------ //
 
 union SDL_Event;
+struct SDL_Keysym;
+
+enum KeyboardCode : int;
 
 namespace Leviathan { namespace KeyMapping {
 
-DLLEXPORT int GetWindowsKeyCodeFromSDLEvent(const SDL_Event& event);
+DLLEXPORT int SDLKeyToX11Key(const SDL_Keysym& key);
+
+
+// CEF part
+
+DLLEXPORT KeyboardCode GdkEventToWindowsKeyCode(int key);
+DLLEXPORT KeyboardCode GetWindowsKeyCodeWithoutLocation(KeyboardCode key_code);
+DLLEXPORT int GetControlCharacter(KeyboardCode windows_key_code, bool shift);
+
+
+
 
 }} // namespace Leviathan::KeyMapping

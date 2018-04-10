@@ -6,8 +6,6 @@
 #include "Common/ThreadSafe.h"
 #include "Common/Types.h"
 
-#include "GUI/KeyMapping.h"
-
 #include "include/cef_browser.h"
 
 #include <atomic>

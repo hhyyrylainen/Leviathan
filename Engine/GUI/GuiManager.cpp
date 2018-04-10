@@ -126,11 +126,8 @@ DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
 // ------------------------------------ //
 void GuiManager::Render()
 {
-    // Update browser textures //
-    for(size_t i = 0; i < ThissViews.size(); i++) {
-
-        ThissViews[i]->CheckRender();
-    }
+    // Browser textures are now updated in the event loop (on the main thread between
+    // rendering)
 }
 // ------------------------------------ //
 DLLEXPORT void GuiManager::OnResize()

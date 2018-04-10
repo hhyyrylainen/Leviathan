@@ -343,6 +343,8 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
         return;
     }
 
+    // LOG_WRITE("TODO: skipping cursor setting because it doesn't work in multi process
+    // mode");
     XDefineCursor(wmInfo.info.x11.display, wmInfo.info.x11.window, cursor);
 }
 #endif //__linux

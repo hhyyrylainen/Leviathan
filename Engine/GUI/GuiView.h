@@ -54,24 +54,6 @@ class View : public CefClient,
              public CallableObject {
     friend class LeviathanJavaScriptAsync;
 
-    class RenderDataHolder {
-    public:
-        RenderDataHolder() : BufferSize(0), Buffer(NULL), Width(0), Height(0), Updated(false)
-        {
-        }
-        ~RenderDataHolder()
-        {
-            SAFE_DELETE(Buffer);
-        }
-
-        PaintElementType Type;
-        size_t BufferSize;
-        uint8_t* Buffer;
-        uint32_t Width;
-        uint32_t Height;
-        bool Updated;
-    };
-
 public:
     DLLEXPORT View(GuiManager* owner, Window* window,
         VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
@@ -89,12 +71,6 @@ public:
 
     //! \brief Must be called before destroying to release allocated Ogre resources
     DLLEXPORT void ReleaseResources();
-
-
-    //! \brief Updates the texture
-    //!
-    //! Should be called before rendering on the main thread
-    DLLEXPORT void CheckRender();
 
     //! \brief Notifies the internal browser that the window has resized
     //!
@@ -324,11 +300,6 @@ protected:
     // Message passing //
     CefRefPtr<CefMessageRouterBrowserSide> OurBrowserSide = nullptr;
     LeviathanJavaScriptAsync* OurAPIHandler;
-
-
-    //! Holds the buffer before it is transferred into a texture
-    std::shared_ptr<RenderDataHolder> RenderHolderForMain;
-    std::shared_ptr<RenderDataHolder> RenderHolderForPopUp;
 
     //! Keeps track of events that are registered
     std::map<EVENT_TYPE, int> RegisteredEvents;

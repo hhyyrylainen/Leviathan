@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "GuiView.h"
 
+#include "Engine.h"
 #include "Exceptions.h"
 #include "GlobalCEFHandler.h"
 #include "Handlers/IDFactory.h"
@@ -20,15 +21,19 @@
 #include "OgreTextureManager.h"
 
 #include "include/cef_browser.h"
+#include "include/wrapper/cef_helpers.h"
+
+#include <cstring>
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
+constexpr auto CEF_BYTES_PER_PIXEL = 4;
+
 DLLEXPORT View::View(GuiManager* owner, Window* window,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
     ID(IDFactory::GetID()),
     ViewSecurity(security), Wind(window), Owner(owner),
-    OurAPIHandler(new LeviathanJavaScriptAsync(this)),
-    RenderHolderForMain(new RenderDataHolder()), RenderHolderForPopUp(new RenderDataHolder())
+    OurAPIHandler(new LeviathanJavaScriptAsync(this))
 {
 }
 
@@ -50,35 +55,27 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // Create a material and a texture that we can update //
     Texture = Ogre::TextureManager::getSingleton().createManual(TextureName,
         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D, width,
-        height, 0, Ogre::PF_B8G8R8A8, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+        height, 0, Ogre::PF_B8G8R8A8, Ogre::TU_DYNAMIC, nullptr, true);
 
-    Texture->setHardwareGammaEnabled(true);
+    LEVIATHAN_ASSERT(
+        Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8) == CEF_BYTES_PER_PIXEL,
+        "Ogre texture size has changed");
 
     // Fill in some test data //
-    Ogre::v1::HardwarePixelBufferSharedPtr pixelbuf = Texture->getBuffer();
+    Ogre::v1::HardwarePixelBufferSharedPtr pixelBuffer = Texture->getBuffer();
 
     // Lock buffer and get a target box for writing //
-    pixelbuf->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD);
-    const Ogre::PixelBox& pixelbox = pixelbuf->getCurrentLock();
+    pixelBuffer->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD);
+    const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
 
     // Create a pointer to the destination //
-    uint8_t* destptr = static_cast<uint8_t*>(pixelbox.data);
+    uint8_t* destptr = static_cast<uint8_t*>(pixelBox.data);
 
-    // Fill it with data //
-    for(size_t j = 0; j < pixelbox.getHeight(); j++) {
-        for(size_t i = 0; i < pixelbox.getWidth(); i++) {
-            // Set it completely empty //
-            *destptr++ = 0;
-            *destptr++ = 0;
-            *destptr++ = 0;
-            *destptr++ = 0;
-        }
-
-        destptr += pixelbox.getRowSkip() * Ogre::PixelUtil::getNumElemBytes(pixelbox.format);
-    }
+    // Clear it
+    std::memset(destptr, 0, pixelBuffer->getSizeInBytes());
 
     // Unlock the buffer //
-    pixelbuf->unlock();
+    pixelBuffer->unlock();
 
     Ogre::SceneManager* scene = Wind->GetOverlayScene();
 
@@ -163,9 +160,6 @@ DLLEXPORT void View::ReleaseResources()
     }
 
     // Release our objects //
-    RenderHolderForMain.reset();
-    RenderHolderForPopUp.reset();
-
     SAFE_DELETE(OurAPIHandler);
 
     Ogre::SceneManager* scene = Wind->GetOverlayScene();
@@ -297,119 +291,107 @@ void View::OnScrollOffsetChanged(CefRefPtr<CefBrowser> browser, double x, double
 void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     const RectList& dirtyRects, const void* buffer, int width, int height)
 {
-    // Seems like we need to wait for main thread to handle this //
+    CEF_REQUIRE_UI_THREAD();
+    Engine::Get()->AssertIfNotMainThread();
 
-    // Calculate the size of the buffer //
-    size_t newbufsize = width * height * Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8);
+    if(dirtyRects.empty()) {
+
+        LOG_ERROR("View: OnPaint given empty dirtyRects list");
+        return;
+    }
 
     // Lock us, just for fun //
+    // As we are always on the main thread
     GUARD_LOCK();
 
-    RenderDataHolder* ptrtotarget;
+    // Calculate the size of the buffer //
+    size_t buffSize = width * height * CEF_BYTES_PER_PIXEL;
+
+    Ogre::TexturePtr targettexture;
 
     switch(type) {
     case PET_POPUP: {
-        ptrtotarget = RenderHolderForPopUp.get();
-        ptrtotarget->Type = PET_POPUP;
-        break;
+        LOG_ERROR("CEF PET_POPUP not handled");
+        return;
     }
     case PET_VIEW: {
-        ptrtotarget = RenderHolderForMain.get();
-        ptrtotarget->Type = PET_VIEW;
+        targettexture = Texture;
         break;
     }
     default: LOG_FATAL("Unknown paint type in View: OnPaint"); return;
     }
 
-    // We need to allocate a new buffer if it isn't the same size //
-    if(newbufsize != ptrtotarget->BufferSize) {
-        // Delete the old buffer //
-        SAFE_DELETE(ptrtotarget->Buffer);
+    // Make sure our texture is large enough //
+    if(targettexture->getWidth() != static_cast<size_t>(width) ||
+        targettexture->getHeight() != static_cast<size_t>(height)) {
 
-        // Set new size //
-        ptrtotarget->BufferSize = newbufsize;
+        // Free resources and then change the size //
+        targettexture->freeInternalResources();
+        targettexture->setWidth(width);
+        targettexture->setHeight(height);
+        targettexture->createInternalResources();
 
-        ptrtotarget->Buffer = new uint8_t[ptrtotarget->BufferSize];
+        LOG_INFO("GuiView: recreated texture for CEF browser");
     }
 
-    // Set data //
-    ptrtotarget->Width = width;
-    ptrtotarget->Height = height;
+    // Copy it to our texture //
+    Ogre::v1::HardwarePixelBufferSharedPtr pixelBuffer = targettexture->getBuffer();
 
-    // Mark as updated //
-    ptrtotarget->Updated = true;
+    LEVIATHAN_ASSERT(
+        pixelBuffer->getSizeInBytes() == buffSize, "CEF and Ogre buffer size mismatch");
 
-    // We probably need to copy the buffer over //
-    memcpy(ptrtotarget->Buffer, buffer, ptrtotarget->BufferSize);
-}
+    // Copy the data over //
+    const auto firstRect = dirtyRects.front();
+    if(dirtyRects.size() == 1 && firstRect.x == 0 && firstRect.y == 0 &&
+        firstRect.width == width && firstRect.height == height) {
 
-DLLEXPORT void View::CheckRender()
-{
-    // Lock us //
-    GUARD_LOCK();
+        // Can directly copy the whole thing
+        pixelBuffer->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD);
+        const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
 
-    // Update all that are needed //
-    for(int i = 0; i < 2; i++) {
-        RenderDataHolder* ptrtotarget;
-        if(i == 0)
-            ptrtotarget = RenderHolderForMain.get();
-        else if(i == 1)
-            ptrtotarget = RenderHolderForPopUp.get();
-        else
-            break;
+        uint8_t* destptr = static_cast<uint8_t*>(pixelBox.data);
+        std::memcpy(destptr, buffer, buffSize);
 
-        // Check and update the texture //
-        if(!ptrtotarget->Updated) {
-            // No need to update //
-            continue;
-        }
+        pixelBuffer->unlock();
 
-        // Get the right target //
-        Ogre::TexturePtr targettexture;
-
-        switch(i) {
-        case 0: {
-            targettexture = Texture;
-        } break;
-        case 1: {
-            // We don't know how to handle this //
-            LOG_WARNING("Don't know how to handle CEF render popup");
-            continue;
-        } break;
-        }
-
-
-        // Make sure our texture is large enough //
-        if(targettexture->getWidth() != ptrtotarget->Width ||
-            targettexture->getHeight() != ptrtotarget->Height) {
-            // Free resources and then change the size //
-            targettexture->freeInternalResources();
-            targettexture->setWidth(ptrtotarget->Width);
-            targettexture->setHeight(ptrtotarget->Height);
-            targettexture->createInternalResources();
-
-            LOG_INFO("GuiView: recreated texture for CEF browser");
-        }
-
-        // Copy it to our texture buffer //
-        Ogre::v1::HardwarePixelBufferSharedPtr pixelbuf = targettexture->getBuffer();
+    } else {
 
         // Lock buffer and get a target box for writing //
-        pixelbuf->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD);
-        const Ogre::PixelBox& pixelbox = pixelbuf->getCurrentLock();
+        pixelBuffer->lock(Ogre::v1::HardwareBuffer::HBL_NORMAL);
+        const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
 
-        // Copy out the pointer //
-        void* destptr = pixelbox.data;
+        uint32_t* destptr = static_cast<uint32_t*>(pixelBox.data);
+        const uint32_t* source = static_cast<const uint32_t*>(buffer);
 
-        // Copy the data over //
-        memcpy(destptr, ptrtotarget->Buffer, ptrtotarget->BufferSize);
+        const size_t rowElements = pixelBox.rowPitch;
 
+        for(const auto rect : dirtyRects) {
+
+            const auto lastX = rect.x + rect.width;
+            const auto lastY = rect.y + rect.height;
+
+            for(int y = rect.y; y < lastY; ++y) {
+                for(int x = rect.x; x < lastX; ++x) {
+
+                    // Safety check. Comment out when not debugging
+                    // LEVIATHAN_ASSERT(y >= 0 && y < height, "View OnPaint y out of range");
+                    // LEVIATHAN_ASSERT(x >= 0 && x < width, "View OnPaint x out of range");
+
+                    destptr[(rowElements * y) + x] = source[(y * width) + x];
+                }
+            }
+        }
+
+        // std::memset(destptr, 255, pixelBuffer->getSizeInBytes());
         // Unlock the buffer //
-        pixelbuf->unlock();
-
-        // Mark as no longer needs updating //
-        ptrtotarget->Updated = false;
+        pixelBuffer->unlock();
     }
+
+    // // Save render result
+    // Ogre::Image img;
+    // Texture->convertToImage(img);
+    // static std::atomic<int> spamnumber = 0;
+    // img.save("Test" + std::to_string(++spamnumber) + ".png");
 }
 // ------------------------------------ //
 void View::OnProtocolExecution(

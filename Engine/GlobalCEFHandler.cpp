@@ -43,7 +43,29 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     sandbox_info = keeper->GetPtr();
 #endif
 
-    // Provide CEF with command-line arguments //
+
+#ifdef __linux
+    // Must force GPU disabled
+    char** oldArgs = args;
+
+    argcount += 1;
+    args = new char*[argcount];
+
+    std::unique_ptr<char[]> disablegpu(strdup("--disable-gpu"));
+
+    for(int i = 0; i < argcount; ++i) {
+        if(i < argcount - 1) {
+            args[i] = oldArgs[i];
+        } else {
+            args[i] = disablegpu.get();
+        }
+    }
+
+#endif
+
+
+
+        // Provide CEF with command-line arguments //
 #ifdef _WIN32
     CefMainArgs main_args(hInstance);
 #else
@@ -101,9 +123,9 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     settings.single_process = false;
 
 #ifdef _WIN32
-    // Let's try to speed things up //
     // Only works on windows
-    settings.multi_threaded_message_loop = true;
+    // And the OnPaint assumes it is on the main thread so this doesn't work
+    settings.multi_threaded_message_loop = false;
 #endif
 
     // Initialize CEF.

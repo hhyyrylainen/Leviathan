@@ -106,11 +106,15 @@ public:
     DLLEXPORT void InputEnd();
 
     //! \brief Passes initial mouse position to gui
-    DLLEXPORT void ReadInitialMouse(CefBrowserHost* browserinput);
+    // DLLEXPORT void ReadInitialMouse(CefBrowserHost* browserinput);
 
     DLLEXPORT uint32_t GetSDLID() const;
 
-    DLLEXPORT uint32_t GetNativeHandle() const;
+#ifdef _WIN32
+	DLLEXPORT HWND GetNativeHandle() const;
+#else
+	DLLEXPORT uint32_t GetNativeHandle() const;
+#endif //_WIN32
 
     //! \brief Returns whether this window is focused
     //! \return True when the window has focus

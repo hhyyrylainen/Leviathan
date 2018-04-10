@@ -5,21 +5,21 @@
 
 #include "include/cef_app.h"
 
-#ifdef _WIN32
-#include "include/cef_sandbox_win.h"
-#endif
-
 #include <boost/filesystem.hpp>
+
+#include <iostream>
 using namespace Leviathan;
 // ------------------------------------ //
 
 
 DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     int argcount, char* args[], int& returnvalue,
-    std::shared_ptr<CEFSandboxInfoKeeper>& keeper, const std::string& logname
+    std::shared_ptr<CEFApplicationKeeper>& keeper, const std::string& logname
 #ifdef _WIN32
-    ,
-    HINSTANCE hInstance
+#ifdef CEF_ENABLE_SANDBOX
+    , CefScopedSandboxInfo& sandbox
+#endif
+    , HINSTANCE hInstance
 #endif // _WIN32
 )
 {
@@ -33,16 +33,13 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     }
 
     // Run CEF startup //
+    keeper = std::make_shared<CEFApplicationKeeper>();
 
-    // create CEF3 objects //
-    void* sandbox_info = NULL;
-
-    keeper = std::shared_ptr<CEFSandboxInfoKeeper>(new CEFSandboxInfoKeeper());
+	void* sandbox_info = nullptr;
 
 #ifdef CEF_ENABLE_SANDBOX
-    sandbox_info = keeper->GetPtr();
+	sandbox_info = &sandbox;
 #endif
-
 
 #ifdef __linux
     // Must force GPU disabled
@@ -63,9 +60,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
 #endif
 
-
-
-        // Provide CEF with command-line arguments //
+    // Provide CEF with command-line arguments //
 #ifdef _WIN32
     CefMainArgs main_args(hInstance);
 #else
@@ -76,7 +71,9 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     keeper->CEFApp = CefRefPtr<GUI::CefApplication>(new GUI::CefApplication());
 
     // Check are we a sub process //
-    int exit_code = CefExecuteProcess(main_args, keeper->CEFApp.get(), sandbox_info);
+    int exit_code = CefExecuteProcess(main_args, keeper->CEFApp.get(), 
+		sandbox_info
+	);
     if(exit_code >= 0) {
         // This was a sub process //
         returnvalue = exit_code;
@@ -87,7 +84,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     CefSettings settings;
 
     // Apparently this "just works" on non-windows platforms
-#if defined(CEF_ENABLE_SANDBOX) && defined(_WIN32)
+#if !defined(CEF_ENABLE_SANDBOX) && defined(_WIN32)
     settings.no_sandbox = true;
 #endif
 
@@ -159,7 +156,7 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::DoCEFMessageLoopWork()
     CefDoMessageLoopWork();
 }
 // ------------------------------------ //
-DLLEXPORT CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects()
+DLLEXPORT CEFApplicationKeeper* Leviathan::GlobalCEFHandler::GetCEFObjects()
 {
     return AccessToThese;
 }
@@ -232,28 +229,18 @@ std::vector<GUI::LeviathanJavaScriptAsync*> Leviathan::GlobalCEFHandler::JSAsynT
 
 std::vector<std::shared_ptr<GUI::JSAsyncCustom>> Leviathan::GlobalCEFHandler::CustomJSHandlers;
 
-CEFSandboxInfoKeeper* Leviathan::GlobalCEFHandler::AccessToThese = NULL;
+CEFApplicationKeeper* Leviathan::GlobalCEFHandler::AccessToThese = NULL;
 
 bool Leviathan::GlobalCEFHandler::CEFInitialized = false;
 // ------------------ CEFSandboxInfoKeeper ------------------ //
-Leviathan::CEFSandboxInfoKeeper::CEFSandboxInfoKeeper() : SandBoxAccess(NULL)
+DLLEXPORT Leviathan::CEFApplicationKeeper::CEFApplicationKeeper()
 {
-#ifdef CEF_ENABLE_SANDBOX
-    // Manage the life span of the sandbox information object. This is necessary
-    // for sandbox support on Windows. See cef_sandbox_win.h for complete details.
-    ScopedInfo = std::shared_ptr<CefScopedSandboxInfo>(new CefScopedSandboxInfo());
-    SandBoxAccess = ScopedInfo->sandbox_info();
-#endif
+
 }
 
-DLLEXPORT Leviathan::CEFSandboxInfoKeeper::~CEFSandboxInfoKeeper() {}
+DLLEXPORT Leviathan::CEFApplicationKeeper::~CEFApplicationKeeper() {}
 // ------------------------------------ //
-void* Leviathan::CEFSandboxInfoKeeper::GetPtr()
-{
-    return SandBoxAccess;
-}
-
-CefRefPtr<GUI::CefApplication> Leviathan::CEFSandboxInfoKeeper::GetCEFApp() const
+DLLEXPORT CefRefPtr<GUI::CefApplication> Leviathan::CEFApplicationKeeper::GetCEFApp() const
 {
     return CEFApp;
 }

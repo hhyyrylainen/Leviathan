@@ -19,22 +19,18 @@ class CefScopedSandboxInfo;
 namespace Leviathan {
 
 //! \brief Keeps certain CEF objects allocated for long enough
-class CEFSandboxInfoKeeper {
+class CEFApplicationKeeper {
     friend GlobalCEFHandler;
 
 public:
-    CEFSandboxInfoKeeper();
-    DLLEXPORT ~CEFSandboxInfoKeeper();
+	DLLEXPORT CEFApplicationKeeper();
+    DLLEXPORT ~CEFApplicationKeeper();
 
     //! \brief Gets the corresponding Gui::CefApplication
     DLLEXPORT CefRefPtr<GUI::CefApplication> GetCEFApp() const;
 
-    void* GetPtr();
-
 protected:
-    std::shared_ptr<CefScopedSandboxInfo> ScopedInfo;
     CefRefPtr<GUI::CefApplication> CEFApp;
-    void* SandBoxAccess;
 };
 
 //! \brief Singleton class for handling CEF initialization that needs to be done right away
@@ -47,15 +43,17 @@ public:
     //! this step and CEF initialization
     DLLEXPORT static bool CEFFirstCheckChildProcess(
         int argcount, char* args[], int& returnvalue,
-        std::shared_ptr<CEFSandboxInfoKeeper>& keeper, const std::string& logname
+        std::shared_ptr<CEFApplicationKeeper>& keeper, const std::string& logname
 #ifdef _WIN32
-        ,
-        HINSTANCE hInstance
+#ifdef CEF_ENABLE_SANDBOX
+        , CefScopedSandboxInfo& sandbox
+#endif
+        , HINSTANCE hInstance
 #endif // _WIN32
     );
 
     DLLEXPORT static void CEFLastThingInProgram();
-    DLLEXPORT static CEFSandboxInfoKeeper* GetCEFObjects();
+    DLLEXPORT static CEFApplicationKeeper* GetCEFObjects();
 
     DLLEXPORT static void DoCEFMessageLoopWork();
 
@@ -81,13 +79,13 @@ public:
 
 
 private:
-    GlobalCEFHandler();
-    ~GlobalCEFHandler();
+    GlobalCEFHandler() = delete;
+    ~GlobalCEFHandler() = delete;
 
 protected:
     //! A flag for making sure that functions are only ran if CEF is actually used
     static bool CEFInitialized;
-    static CEFSandboxInfoKeeper* AccessToThese;
+    static CEFApplicationKeeper* AccessToThese;
 
     //! Stores all the custom handlers
     static std::vector<std::shared_ptr<GUI::JSAsyncCustom>> CustomJSHandlers;

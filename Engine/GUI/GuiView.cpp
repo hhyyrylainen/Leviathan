@@ -267,15 +267,15 @@ void View::OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor,
 {
 #ifdef _WIN32
 
-    HWND hwnd = Wind->GetHandle();
+    HWND hwnd = Wind->GetNativeHandle();
 
     if(!hwnd)
         return;
 
     // Should not do this, but whatever //
     // TODO: custom cursors
-    SetClassLongPtr(hwnd, GCLP_HCURSOR, static_cast<LONG>(reinterpret_cast<LONG_PTR>(cursor)));
-    SetCursor(cursor);
+	SetClassLongPtr(hwnd, GCLP_HCURSOR, static_cast<LONG>(reinterpret_cast<LONG_PTR>(cursor)));
+	SetCursor(cursor);
 #else
 #ifdef __linux
     Wind->SetX11Cursor(cursor);

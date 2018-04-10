@@ -10,6 +10,11 @@
 
 #include <limits>
 
+// No clue where this is coming from...
+#ifdef _WIN32
+#undef max
+#endif
+
 namespace Leviathan{
 
 //! Must contain all valid Component types

@@ -8,6 +8,10 @@
 #include "Logger.h"
 #include "GlobalCEFHandler.h"
 
+#ifdef _WIN32
+#include "include/cef_sandbox_win.h"
+#endif
+
 #include <string>
 #include <iostream>
 
@@ -90,12 +94,23 @@ int main(int argcount, char* args[]){
     int Return = 0;
 
     // We need to manage the lifetime of an object //
-    std::shared_ptr<Leviathan::CEFSandboxInfoKeeper> KeepThisSafe;
+    std::shared_ptr<Leviathan::CEFApplicationKeeper> KeepThisSafe;
+
+    // This needs to create the sandbox as otherwise this doesn't work
+#ifdef CEF_ENABLE_SANDBOX
+    // Manage the life span of the sandbox information object. This is necessary
+    // for sandbox support on Windows. See cef_sandbox_win.h for complete details.
+    CefScopedSandboxInfo sandbox = CefScopedSandboxInfo();
+#endif
+    
     
     // The default CEF handling needs to be the first thing in the program //
     if(Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(argcount, args, Return,
             KeepThisSafe, "@PROGRAMLOG@"
         #ifdef _WIN32
+        #ifdef CEF_ENABLE_SANDBOX
+            , sandbox
+        #endif
             , hInstance
         #endif
         ))
@@ -210,10 +225,13 @@ int main(int argcount, char* args[]){
     CoUninitialize();
 #endif
 
+    // The CEF application will go out of scope after this //
+    KeepThisSafe.reset();
+
     // This needs to be called before quitting //
     Leviathan::GlobalCEFHandler::CEFLastThingInProgram();
-    
-    // But the CEF application will go out of scope after this //
+
+    // Sandbox will go out of scope after this
 
     return Return;
 }

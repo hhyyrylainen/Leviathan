@@ -15,6 +15,14 @@ set_target_properties(${CurrentProjectName} PROPERTIES DEBUG_POSTFIX D)
 set_property(TARGET ${CurrentProjectName} PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${CurrentProjectName} PROPERTY CXX_EXTENSIONS OFF)
 
+# For alternative runtime library
+# if(WIN32)
+#   target_compile_options(${CurrentProjectName} PRIVATE $<$<CONFIG:Debug>:/MTd>)
+#   target_compile_options(${CurrentProjectName} PRIVATE $<$<CONFIG:Release>:/MT>)
+#   target_compile_options(${CurrentProjectName} PRIVATE $<$<CONFIG:RelWithDebInfo>:/MT>)
+#   target_compile_options(${CurrentProjectName} PRIVATE $<$<CONFIG:MinSizeRel>:/MT>)
+# endif()
+
 install(TARGETS ${CurrentProjectName} DESTINATION bin)
 
 # Strip symbols

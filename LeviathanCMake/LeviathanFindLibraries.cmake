@@ -79,7 +79,13 @@ if(LEVIATHAN_FULL_BUILD)
     avcodec avformat avutil swresample swscale
     cAudio
     ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons
-    cef cef_dll_wrapper)
+    )
+
+  if(NOT WIN32)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES cef cef_dll_wrapper)
+  else()
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES libcef libcef_dll_wrapper)
+  endif()
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   # Now it is named the same as we are using the cmake build for angelscript
@@ -101,6 +107,11 @@ if(LEVIATHAN_FULL_BUILD)
   set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
     OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network AngelScriptAddons)
+
+  # # Currently disabled
+  # if(WIN32)
+  #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
+  # endif()
   
 else()
 

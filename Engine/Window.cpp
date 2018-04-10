@@ -505,14 +505,22 @@ DLLEXPORT uint32_t Window::GetSDLID() const
     return SDL_GetWindowID(SDLWindow);
 }
 
+#ifdef _WIN32
+DLLEXPORT HWND Window::GetNativeHandle() const
+#else
 DLLEXPORT uint32_t Window::GetNativeHandle() const
+#endif //_WIN32
 {
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
 
         LOG_FATAL("Window: GetNativeHandle: failed to retrieve wm info");
+#ifdef _WIN32
+		return 0;
+#else
         return -1;
+#endif //_WIN32
     }
 #if defined(_WIN32)
     return wmInfo.info.win.window;

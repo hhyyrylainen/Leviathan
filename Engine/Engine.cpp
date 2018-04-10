@@ -640,10 +640,8 @@ DLLEXPORT void Engine::MessagePump()
 
     Ogre::WindowEventUtilities::messagePump();
 
-    // CEF events (not on windows as that uses multi_threaded_message_loop
-#ifndef _WIN32
+    // CEF events (Also on windows as multi_threaded_message_loop makes rendering harder)
     GlobalCEFHandler::DoCEFMessageLoopWork();
-#endif //_WIN32
 
     SDL_Event event;
     while(SDL_PollEvent(&event)) {

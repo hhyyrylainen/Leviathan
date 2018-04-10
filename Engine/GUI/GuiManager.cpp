@@ -19,10 +19,9 @@ using namespace Leviathan::GUI;
 GuiManager::GuiManager() : ID(IDFactory::GetID()) {}
 GuiManager::~GuiManager() {}
 // ------------------------------------ //
-bool GuiManager::Init(Graphics* graph, Window* window, bool ismain)
+bool GuiManager::Init(Graphics* graph, Window* window)
 {
     ThisWindow = window;
-    MainGuiManager = ismain;
 
     // All rendering is now handled by individual Views and the
     // Window full screen compositor passes

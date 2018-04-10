@@ -14,7 +14,9 @@
     \code
         (LISTENERNAME_ONCLOSECLICKED, LISTENERVALUE_ONCLOSECLICKED);
     \endcode
-    
+
+    \todo Remove this CEGUI mention and add new GUI click stuff
+
     Then finally (if the event is for CEGUI) add it to Leviathan::Gui::BaseGuiObject::MakeSureCEGUIEventsAreFine in BaseGuiObject.cpp
     \code
         (LISTENERNAME_ONCLICK, &CEGUI::FrameWindow::EventCloseClicked);

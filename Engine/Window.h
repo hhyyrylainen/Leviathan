@@ -176,8 +176,6 @@ public:
 
     DLLEXPORT static int GetCEFButtonFromSdlMouseButton(uint32_t whichbutton);
 
-    // DLLEXPORT static CEGUI::MouseButton SDLToCEGUIMouseButton(int sdlbutton);
-
     DLLEXPORT static int32_t ConvertStringToKeyCode(const std::string& str);
     DLLEXPORT static std::string ConvertKeyCodeToString(const int32_t& code);
 

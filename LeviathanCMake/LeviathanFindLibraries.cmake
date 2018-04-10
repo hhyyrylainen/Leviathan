@@ -64,10 +64,6 @@ if(LEVIATHAN_FULL_BUILD)
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/newton")
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE")
-  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/cegui-9999")
-
-  # Windows fix for GLM include missing in CEGUI
-  # This is now in the third party include folder
 
   # Find SDL2
   if(USE_SDL2)
@@ -78,9 +74,7 @@ if(LEVIATHAN_FULL_BUILD)
 
   set(LEVIATHAN_ENGINE_LIBRARIES Newton
     OgreMain OgreHlmsUnlit OgreHlmsPbs
-    CEGUIBase-9999 CEGUICommonDialogs-9999
-    # CEGUICoreWindowRendererSet CEGUIExpatParser CEGUISILLYImageCodec
-    CEGUIOgreRenderer-9999 sfml-system sfml-network
+    sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
     cAudio

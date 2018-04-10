@@ -16,6 +16,8 @@
 
     \todo Make sure the latest, working code is copied here
 
+    \todo This is outdated as CEGUI is no longer used. Replace with an example of playing video on an Ogre material
+    
     \code{.cpp}
         o GuiObject "_IntroVideoStarter"{
             s{

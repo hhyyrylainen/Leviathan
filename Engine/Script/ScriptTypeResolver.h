@@ -11,10 +11,6 @@ class Matrix4;
 class ColourValue;
 } // namespace Ogre
 
-namespace CEGUI {
-class Window;
-}
-
 class NewtonCollision;
 
 class asIScriptFunction;
@@ -93,8 +89,6 @@ TYPE_RESOLVER_AS_PREDEFINED(Ogre::Matrix4, "Ogre::Matrix4@");
 TYPE_RESOLVER_AS_PREDEFINED(Ogre::SceneNode, "Ogre::SceneNode@");
 
 TYPE_RESOLVER_AS_PREDEFINED(NewtonCollision, "NewtonCollision@");
-
-TYPE_RESOLVER_AS_PREDEFINED(CEGUI::Window, "CEGUI::Window@");
 
 // Special case void //
 template<>

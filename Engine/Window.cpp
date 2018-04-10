@@ -185,7 +185,7 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
         throw NULLPtr("cannot create GUI manager instance");
     }
 
-    if(!WindowsGui->Init(windowcreater, this, windowsafter == 1)) {
+    if(!WindowsGui->Init(windowcreater, this)) {
 
         LOG_ERROR("Window: Gui init failed");
         throw NULLPtr("invalid GUI manager");
@@ -236,7 +236,6 @@ DLLEXPORT Window::~Window()
 
     int windowsafter = --OpenWindowCount;
 
-    // Destory CEGUI if we are the last window //
     if(windowsafter == 0) {
 
         Logger::Get()->Info("Window: all windows have been closed, "

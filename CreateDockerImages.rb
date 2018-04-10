@@ -4,7 +4,7 @@ require_relative 'RubySetupSystem/DockerImageCreator'
 
 require_relative 'LeviathanLibraries'
 
-runDockerCreate([$newton, $angelscript, $sfml, $ffmpeg, $ogre, $cegui], $leviathanSelfLib) 
+runDockerCreate($leviathanLibList, $leviathanSelfLib) 
 
 
 

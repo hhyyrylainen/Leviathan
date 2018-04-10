@@ -22,14 +22,13 @@ public:
     DLLEXPORT ~GuiManager();
 
     //! \param ismain Set to true for first created GuiManager
-    DLLEXPORT bool Init(Graphics* graph, Window* window, bool ismain);
+    DLLEXPORT bool Init(Graphics* graph, Window* window);
     DLLEXPORT void Release();
 
     DLLEXPORT void GuiTick(int mspassed);
     DLLEXPORT void Render();
 
     //! \brief Notifies internal browsers
-    //! \todo Make CEGUI allow multiple windows
     DLLEXPORT void OnResize();
 
     //! \brief Notifies contexts about the change to appropriately lose focus on fields
@@ -69,10 +68,6 @@ private:
 
     //! The main file of the GUI from which it is loaded from
     std::string MainGUIFile;
-
-    //! Set when this is the first created gui manager
-    //! \detail Used for injecting time pulses into CEGUI
-    bool MainGuiManager = false;
 
     int ID;
 

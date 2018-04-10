@@ -6,6 +6,8 @@
 #include "Common/ThreadSafe.h"
 #include "Common/Types.h"
 
+#include "GUI/KeyMapping.h"
+
 #include "include/cef_browser.h"
 
 #include <atomic>
@@ -186,7 +188,7 @@ protected:
 
     void _CheckMouseVisibilityStates();
 
-    void DoCEFInputPass(const SDL_Keysym& arg, bool down);
+    void DoCEFInputPass(const SDL_Event& sdlevent, bool down);
 
     //! \brief Creates an Ogre scene to display GUI on this window
     void _CreateOverlayScene();

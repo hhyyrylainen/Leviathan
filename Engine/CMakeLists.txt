@@ -222,6 +222,7 @@ else()
     "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
     "GUI/JSEventInterface.cpp" "GUI/JSEventInterface.h"
     "GUI/LeviathanJavaScriptAsync.cpp" "GUI/LeviathanJavaScriptAsync.h"
+    "GUI/KeyMapping.cpp" "GUI/KeyMapping.h"
     )
 
 

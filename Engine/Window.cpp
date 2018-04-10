@@ -672,7 +672,7 @@ DLLEXPORT int Window::GetCEFButtonFromSdlMouseButton(uint32_t whichbutton)
     }
 }
 // ------------------ Input listener functions ------------------ //
-void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
+void Window::DoCEFInputPass(const SDL_Event& sdlevent, bool down)
 {
     if(!inputreceiver)
         return;
@@ -682,10 +682,15 @@ void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
     cef_event.modifiers = CEFSpecialKeyModifiers;
     InputProcessedByCEF = false;
 
-    // Heavily modified CEF (chromium embedded framework) code, license:
-    // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
-    // reserved. Use of this source code is governed by a BSD-style license that
-    // can be found in the LICENSE file.
+    // Currently there's no code from CEF here
+    // // Heavily modified CEF (chromium embedded framework) code, license:
+    // // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
+    // // reserved. Use of this source code is governed by a BSD-style license that
+    // // can be found in the LICENSE file.
+
+    cef_event.windows_key_code = KeyMapping::GetWindowsKeyCodeFromSDLEvent(sdlevent);
+    cef_event.native_key_code = sdlevent.key.keysym.scancode;
+
 #if defined(OS_WIN)
 
     // // BYTE vkey = LOBYTE(VkKeyScan(text));
@@ -693,22 +698,13 @@ void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
     // UINT scanCode = MapVirtualKey(vkey, MAPVK_VK_TO_VSC);
     // cef_event.native_key_code = (scanCode << 16) | // key scan code
     //                             1; // key repeat count
-    DEBUG_BREAK;
-#else
-
-#if defined(OS_LINUX)
-    DEBUG_BREAK;
+#elif defined(OS_LINUX)
 #elif defined(OS_MACOSX)
-    DEBUG_BREAK;
 #else
 #error Unknown platform
-#endif // defined(OS_MACOSX)
 #endif // _WIN32
 
     if(down) {
-#if defined(OS_WIN)
-        cef_event.windows_key_code = vkey;
-#endif
         cef_event.type = KEYEVENT_RAWKEYDOWN;
 
         // Pass the first //
@@ -717,9 +713,6 @@ void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
         const auto storedHandled = InputProcessedByCEF;
 
         // Send char event //
-#if defined(OS_WIN)
-        cef_event.windows_key_code = vkey;
-#endif
         cef_event.type = KEYEVENT_CHAR;
         inputreceiver->SendKeyEvent(cef_event);
 
@@ -728,9 +721,9 @@ void Window::DoCEFInputPass(const SDL_Keysym& arg, bool down)
 
     } else {
 #if defined(OS_WIN)
-        cef_event.windows_key_code = vkey;
-        // bits 30 and 31 should always be 1 for WM_KEYUP
-        cef_event.native_key_code |= 0xC0000000;
+    // cef_event.windows_key_code = vkey;
+    // bits 30 and 31 should always be 1 for WM_KEYUP
+    // cef_event.native_key_code |= 0xC0000000;
 #endif
         cef_event.type = KEYEVENT_KEYUP;
         inputreceiver->SendKeyEvent(cef_event);
@@ -840,13 +833,13 @@ DLLEXPORT void Window::InjectCodePoint(const SDL_Event& event)
         if(!inputreceiver)
             return;
 
-        DEBUG_BREAK;
+        // DEBUG_BREAK;
 
-        CefKeyEvent event;
-        // event.character = utf32char;
-        event.type = KEYEVENT_CHAR;
+        // CefKeyEvent event;
+        // // event.character = utf32char;
+        // event.type = KEYEVENT_CHAR;
 
-        inputreceiver->SendKeyEvent(event);
+        // inputreceiver->SendKeyEvent(event);
     }
 }
 
@@ -858,8 +851,7 @@ DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
     bool SentToController = false;
 
     // Try to pass to CEF //
-    DEBUG_BREAK;
-    // DoCEFInputPass(sdlkey, true);
+    DoCEFInputPass(event, true);
 
     // Check is it now handled or not and continue //
     if(!InputProcessedByCEF) {
@@ -885,8 +877,7 @@ DLLEXPORT void Window::InjectKeyUp(const SDL_Event& event)
         _StartGatherInput();
 
     // Send to CEF if GUI is active //
-    DEBUG_BREAK;
-    // DoCEFInputPass(sdlkey, false);
+    DoCEFInputPass(event, false);
 
     // This should always be passed here //
     GetInputController()->OnInputGet(event.key.keysym.sym, SpecialKeyModifiers, false);

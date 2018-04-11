@@ -6,6 +6,8 @@
 #include "Common/BaseNotifiable.h"
 #include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
+#include "GuiInputSettings.h"
+
 #include "OgreMaterial.h"
 #include "OgreTexture.h"
 
@@ -14,6 +16,8 @@
 #include "include/cef_render_handler.h"
 #include "wrapper/cef_message_router.h"
 
+#include <atomic>
+
 namespace Leviathan { namespace GUI {
 
 class LeviathanJavaScriptAsync;
@@ -21,6 +25,7 @@ class LeviathanJavaScriptAsync;
 //! Controls what functions can be called from the page
 enum VIEW_SECURITYLEVEL {
     //! The page is not allowed to access anything
+    //! Except the notification about input element being focused
     VIEW_SECURITYLEVEL_BLOCKED = 0,
 
     //! The page can view minimal information only and access some objects
@@ -63,6 +68,7 @@ public:
     //! \param zcoord The z-coordinate, should be between -1 and 1, higher lower values mean
     //! that it will be drawn earlier \note Actually it most likely won't be drawn earlier, but
     //! it will overwrite everything below it (if it isn't transparent)
+    //! \todo This is unimplemented
     DLLEXPORT void SetZVal(float zcoord);
 
     //! \brief Must be called before using, initializes required Ogre resources
@@ -82,6 +88,36 @@ public:
     //! Called by GuiManager
     DLLEXPORT void NotifyFocusUpdate(bool focused);
 
+    DLLEXPORT inline INPUT_MODE GetInputMode() const
+    {
+        // Automatically reject input if we have no browser host
+        if(!OurBrowser)
+            return INPUT_MODE::None;
+        return InputMode;
+    }
+
+    //! \brief Sets the input mode. This should be regularly called from game code to update
+    //! how the key presses should be sent to this View (or not sent)
+    DLLEXPORT inline void SetInputMode(INPUT_MODE newmode)
+    {
+        InputMode = newmode;
+    }
+
+    //! \returns True if this has a focused input element
+    DLLEXPORT inline bool HasFocusedInputElement() const
+    {
+        return InputFocused;
+    }
+
+    //! \brief Passes events to the render process
+    DLLEXPORT int OnEvent(Event* event) override;
+    //! \brief Passes generic events to the render process
+    DLLEXPORT int OnGenericEvent(GenericEvent* event) override;
+
+    //! \brief Uses jQuery toggle method on target DOM element
+    DLLEXPORT void ToggleElement(const std::string& name);
+
+    DLLEXPORT CefRefPtr<CefBrowserHost> GetBrowserHost();
 
     // CEF callbacks //
 
@@ -136,11 +172,6 @@ public:
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
     virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
-
-
-    DLLEXPORT void SetCurrentInputHandlingWindow(Window* wind);
-
-    DLLEXPORT CefRefPtr<CefBrowserHost> GetBrowserHost();
 
     virtual bool OnKeyEvent(CefRefPtr<CefBrowser> browser, const CefKeyEvent& event,
         CefEventHandle os_event) override;
@@ -199,11 +230,6 @@ public:
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
         CefProcessId source_process, CefRefPtr<CefProcessMessage> message) override;
 
-    //! \brief Passes events to the render process
-    DLLEXPORT int OnEvent(Event* event) override;
-    //! \brief Passes generic events to the render process
-    DLLEXPORT int OnGenericEvent(GenericEvent* event) override;
-
     virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override
     {
         return this;
@@ -241,9 +267,6 @@ public:
         return this;
     }
 
-    //! \brief Uses jQuery toggle method on target DOM element
-    DLLEXPORT void ToggleElement(const std::string& name);
-
     IMPLEMENT_REFCOUNTING(View);
 
 protected:
@@ -263,7 +286,7 @@ protected:
     // ------------------------------------ //
 
     //! Unique ID
-    int ID;
+    const int ID;
 
     //! This View's security level
     //! \see VIEW_SECURITYLEVEL
@@ -287,10 +310,6 @@ protected:
     Ogre::Item* QuadItem;
     Ogre::MeshPtr QuadMesh;
 
-
-    //! Prevents crashing from painting the window too soon
-    bool CanPaint = false;
-
     //! The direct texture pointer
     Ogre::TexturePtr Texture;
 
@@ -300,6 +319,12 @@ protected:
     // Message passing //
     CefRefPtr<CefMessageRouterBrowserSide> OurBrowserSide = nullptr;
     LeviathanJavaScriptAsync* OurAPIHandler;
+
+    //! Support for input when text box is focused
+    std::atomic<bool> InputFocused = false;
+
+    //! The mode of input. used by
+    std::atomic<INPUT_MODE> InputMode = INPUT_MODE::Menu;
 
     //! Keeps track of events that are registered
     std::map<EVENT_TYPE, int> RegisteredEvents;

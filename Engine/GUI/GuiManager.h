@@ -6,8 +6,6 @@
 #include "Application/AppDefine.h"
 #include "Common/ThreadSafe.h"
 
-#include "include/cef_browser.h"
-
 #include <boost/intrusive_ptr.hpp>
 
 namespace Leviathan { namespace GUI {
@@ -41,6 +39,12 @@ public:
     //! \brief Unloads the currently loaded file
     DLLEXPORT void UnLoadGUIFile();
 
+    //! \brief Returns the View that should receive the event
+    //! \see Window::GetGUIEventReceiver
+    //! \todo Add support for multiple views inside a window. And prefer the active input if
+    //! this is a keypress
+    DLLEXPORT View* GetTargetViewForInput(bool iskeypress, int mousex, int mousey);
+
     // called when mouse cannot be captured (should force at least one collection on) //
     DLLEXPORT void OnForceGUIOn();
 
@@ -48,10 +52,6 @@ public:
     //! to the player movement (but key presses goe through the GUI so that it can react to GUI
     //! activation buttons)
     DLLEXPORT void SetDisableMouseCapture(bool newvalue);
-
-    //! \todo This needs to support multiple views somehow (maybe send to one the mouse is
-    //! over?)
-    DLLEXPORT CefRefPtr<CefBrowserHost> GetPrimaryInputReceiver();
 
 protected:
     //! Is called by folder listeners to notify of Gui file changes
@@ -77,7 +77,7 @@ private:
     //! When set to true will reload files on next tick
     bool ReloadQueued = false;
 
-    std::vector<boost::intrusive_ptr<GUI::View>> ThissViews;
+    std::vector<boost::intrusive_ptr<GUI::View>> ManagedViews;
 
     //! Disables the GUI trying to capture the mouse when no collection is active
     bool DisableGuiMouseCapture = false;

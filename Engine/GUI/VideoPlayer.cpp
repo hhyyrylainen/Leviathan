@@ -407,8 +407,8 @@ bool VideoPlayer::FFMPEGLoadFile()
 
         AudioStreamData = ProceduralSoundData::MakeShared<ProceduralSoundData>(
             [=](void* output, int amount) -> int {
-
-                return this->ReadAudioData(static_cast<uint8_t*>(output), amount);
+                return static_cast<int>(
+                    this->ReadAudioData(static_cast<uint8_t*>(output), amount));
             },
             std::move(properties));
 

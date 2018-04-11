@@ -133,7 +133,7 @@ DLLEXPORT void SoundDevice::SetGlobalVolume(float vol)
     if(!AudioManager)
         return;
 
-    std::clamp(vol, 0.f, 1.f);
+    vol = std::clamp(vol, 0.f, 1.f);
 
     AudioManager->setMasterVolume(vol);
 }
@@ -218,7 +218,7 @@ DLLEXPORT std::vector<std::string> SoundDevice::GetAudioDevices(
 
     const auto defaultDeviceName = devices->getDefaultDeviceName();
 
-    for(size_t i = 0; i < deviceCount; ++i) {
+    for(unsigned int i = 0; i < deviceCount; ++i) {
 
         const auto deviceName = devices->getDeviceName(i);
 

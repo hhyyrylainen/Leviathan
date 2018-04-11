@@ -34,8 +34,7 @@ DLLEXPORT View::View(GuiManager* owner, Window* window,
     ID(IDFactory::GetID()),
     ViewSecurity(security), Wind(window), Owner(owner),
     OurAPIHandler(new LeviathanJavaScriptAsync(this))
-{
-}
+{}
 
 DLLEXPORT View::~View() {}
 // ------------------------------------ //
@@ -274,8 +273,8 @@ void View::OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor,
 
     // Should not do this, but whatever //
     // TODO: custom cursors
-	SetClassLongPtr(hwnd, GCLP_HCURSOR, static_cast<LONG>(reinterpret_cast<LONG_PTR>(cursor)));
-	SetCursor(cursor);
+    SetClassLongPtr(hwnd, GCLP_HCURSOR, static_cast<LONG>(reinterpret_cast<LONG_PTR>(cursor)));
+    SetCursor(cursor);
 #else
 #ifdef __linux
     Wind->SetX11Cursor(cursor);
@@ -319,6 +318,12 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         break;
     }
     default: LOG_FATAL("Unknown paint type in View: OnPaint"); return;
+    }
+
+    if(!targettexture) {
+        LOG_WARNING(
+            "View: OnPaint: Ogre texture is null (perhaps released already?), skipping");
+        return;
     }
 
     // Make sure our texture is large enough //
@@ -513,8 +518,10 @@ bool View::OnKeyEvent(
     CefRefPtr<CefBrowser> browser, const CefKeyEvent& event, CefEventHandle os_event)
 {
     // Notify the window about this //
-    if(Wind)
-        Wind->ReportKeyEventAsUsed();
+    // We can't determine easily here if it was used. And besides this causes a round trip to
+    // the gui and back
+    /*if(Wind)
+        Wind->ReportKeyEventAsUsed();*/
     return false;
 }
 
@@ -551,8 +558,7 @@ CefRefPtr<CefResourceHandler> View::GetResourceHandler(
 
 void View::OnResourceRedirect(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     CefRefPtr<CefRequest> request, CefRefPtr<CefResponse> response, CefString& new_url)
-{
-}
+{}
 
 bool View::GetAuthCredentials(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     bool isProxy, const CefString& host, int port, const CefString& realm,

@@ -49,10 +49,10 @@ void GuiManager::Release()
     ThisWindow->SetHideCursor(false);
 
     // Destroy the views //
-    for(size_t i = 0; i < ThissViews.size(); i++) {
+    for(size_t i = 0; i < ManagedViews.size(); i++) {
 
-        ThissViews[i]->ReleaseResources();
-        ThissViews[i]->Release();
+        ManagedViews[i]->ReleaseResources();
+        ManagedViews[i]->Release();
     }
 
     Logger::Get()->Info("GuiManager: Gui successfully closed on window");
@@ -132,16 +132,16 @@ void GuiManager::Render()
 DLLEXPORT void GuiManager::OnResize()
 {
     // Resize all CEF browsers on this window //
-    for(size_t i = 0; i < ThissViews.size(); i++) {
-        ThissViews[i]->NotifyWindowResized();
+    for(size_t i = 0; i < ManagedViews.size(); i++) {
+        ManagedViews[i]->NotifyWindowResized();
     }
 }
 
 DLLEXPORT void GuiManager::OnFocusChanged(bool focused)
 {
     // Notify all CEF browsers on this window //
-    for(size_t i = 0; i < ThissViews.size(); i++) {
-        ThissViews[i]->NotifyFocusUpdate(focused);
+    for(size_t i = 0; i < ManagedViews.size(); i++) {
+        ManagedViews[i]->NotifyFocusUpdate(focused);
     }
 }
 // ------------------------------------ //
@@ -183,10 +183,10 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     }
 
     // Add the page //
-    ThissViews.push_back(loadingView);
+    ManagedViews.push_back(loadingView);
 
     // Set focus to the new View //
-    ThissViews.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
+    ManagedViews.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
     return true;
 }
 
@@ -195,14 +195,32 @@ DLLEXPORT void GuiManager::UnLoadGUIFile()
     DEBUG_BREAK;
 }
 // ------------------------------------ //
-DLLEXPORT CefRefPtr<CefBrowserHost> GuiManager::GetPrimaryInputReceiver()
+DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
+    bool iskeypress, int mousex, int mousey)
 {
-    for(size_t i = 0; i < ThissViews.size(); i++) {
+    View* bestFound = nullptr;
 
-        return ThissViews[i]->GetBrowserHost();
+    for(size_t i = 0; i < ManagedViews.size(); i++) {
+
+        View* view = ManagedViews[i].get();
+
+        const auto mode = view->GetInputMode();
+        if(mode == INPUT_MODE::None)
+            continue;
+
+        // TODO: coordinate check
+
+        if(mode == INPUT_MODE::Menu)
+            return view;
+
+        if(mode == INPUT_MODE::Gameplay && view->HasFocusedInputElement()) {
+
+            if(!bestFound)
+                bestFound = view;
+        }
     }
 
-    return nullptr;
+    return bestFound;
 }
 // ------------------------------------ //
 void GuiManager::_FileChanged(const std::string& file, ResourceFolderListener& caller)

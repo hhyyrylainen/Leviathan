@@ -800,6 +800,9 @@ DLLEXPORT void Engine::MessagePump()
         }
     }
 
+	// CEF needs to be let handle the keyboard events now to make sure that they can be dispatched to further on listeners
+	GlobalCEFHandler::DoCEFMessageLoopWork();
+
     // Reset input states //
     if(GraphicalEntity1) {
 

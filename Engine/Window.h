@@ -26,6 +26,13 @@ class CefBrowserHost;
 
 namespace Leviathan {
 
+namespace GUI {
+class View;
+}
+
+//! The default CEF scroll speed is ridiculously slow so we multiply it with this
+constexpr auto MOUSE_SCROLL_MULTIPLIER = 5.f;
+
 //! window class
 //! \todo Implement global lock for input handling
 class Window {
@@ -111,9 +118,9 @@ public:
     DLLEXPORT uint32_t GetSDLID() const;
 
 #ifdef _WIN32
-	DLLEXPORT HWND GetNativeHandle() const;
+    DLLEXPORT HWND GetNativeHandle() const;
 #else
-	DLLEXPORT uint32_t GetNativeHandle() const;
+    DLLEXPORT uint32_t GetNativeHandle() const;
 #endif //_WIN32
 
     //! \brief Returns whether this window is focused
@@ -172,12 +179,7 @@ public:
     // ------------------------------------ //
     // Input helpers
 
-    //! Called from GuiView when it has consumed the event that was passed to it
-    DLLEXPORT inline void ReportKeyEventAsUsed()
-    {
-        InputProcessedByCEF = true;
-    }
-
+    //! \todo Move to KeyMapping.cpp
     DLLEXPORT static int GetCEFButtonFromSdlMouseButton(uint32_t whichbutton);
 
     DLLEXPORT static int32_t ConvertStringToKeyCode(const std::string& str);
@@ -186,11 +188,25 @@ public:
 protected:
     //! \brief Detects state of modifier keys. Called whenever input is injected and is stored
     //! until InputEnd is called
+    //! \todo Fix mouse capture
     DLLEXPORT void _StartGatherInput();
 
     void _CheckMouseVisibilityStates();
 
-    void DoCEFInputPass(const SDL_Event& sdlevent, bool down);
+    //! \returns True if the event was passed to CEF
+    //!
+    //! It is difficult to get the events back in a guaranteed time so
+    //! we use GUI_INPUT_MODE to only send events to the GUI when they wouldn't be used
+    //! by any player character controllers or similar
+    bool DoCEFInputPass(
+        const SDL_Event& sdlevent, bool down, bool textinput, int mousex, int mousey);
+
+    //! \brief Retrieves the active gui object that is going to receive an event
+    //! \param iskeypress If true then only the currently input receiving window
+    //! (controlled by GUI_INPUT_MODE) is returned if there is one. For mouse events
+    //! the gui object under the cursor position is returned (unless mouse capture is on
+    //! then no thing is returned even if iskeypress is true)
+    GUI::View* GetGUIEventReceiver(bool iskeypress, int mousex, int mousey);
 
     //! \brief Creates an Ogre scene to display GUI on this window
     void _CreateOverlayScene();
@@ -201,17 +217,21 @@ private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
 
-    //! This is temporarily stored during input gathering
-    CefRefPtr<CefBrowserHost> inputreceiver = nullptr;
+    //! This is retrieved from GuiManager at the start of a sequence of inputs based
+    //! on the mouse position. The property of GUI_INPUT_MODE will determine how the input
+    //! is passed
+    // boost::intrusive_ptr<GUI::View> inputreceiver = nullptr;
 
-    //! Allows CEF to report whether a key input was handled
-    //! Set by ReportKeyEventAsUsed
-    bool InputProcessedByCEF;
+    ////! Allows CEF to report whether a key input was handled
+    ////! Set by ReportKeyEventAsUsed
+    // bool InputProcessedByCEF;
 
     // this is updated every time input is gathered //
     int SpecialKeyModifiers = 0;
     //! Contains the modifier keys with the CEF flags
     int CEFSpecialKeyModifiers = 0;
+    //! Used to populate SpecialKeyModifiers and CEFSpecialKeyModifiers once per input
+    //! gathering
     bool InputGatherStarted = false;
 
     bool Focused = true;

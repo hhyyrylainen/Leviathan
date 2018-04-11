@@ -949,7 +949,7 @@ public:
     {
         return Float3(0.f, 0.f, 1.f);
     }
-        // ----------------- casts ------------------- //
+    // ----------------- casts ------------------- //
 #ifdef LEVIATHAN_USING_OGRE
     DLLEXPORT Float3(const Ogre::Vector3& vec)
     {
@@ -1499,7 +1499,8 @@ public:
         const auto y = axis.Y * s;
         const auto z = axis.Z * s;
         const auto w = std::cos(angle / 2.0);
-        return Float4(x, y, z, w);
+        return Float4(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
+            static_cast<float>(w));
     }
 
     DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3& angles)

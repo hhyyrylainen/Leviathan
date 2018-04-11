@@ -45,6 +45,15 @@ public:
     //! this is a keypress
     DLLEXPORT View* GetTargetViewForInput(bool iskeypress, int mousex, int mousey);
 
+	//! \brief Returns the View count
+	DLLEXPORT inline auto GetViewCount() const {
+		return ManagedViews.size();
+	}
+
+	//! \brief Gets a View by index
+	//! \note The pointer is only safe to hang onto until UnLoadGUIFile is called
+	DLLEXPORT View* GetViewByIndex(size_t index);
+
     // called when mouse cannot be captured (should force at least one collection on) //
     DLLEXPORT void OnForceGUIOn();
 

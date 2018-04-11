@@ -195,6 +195,14 @@ DLLEXPORT void GuiManager::UnLoadGUIFile()
     DEBUG_BREAK;
 }
 // ------------------------------------ //
+DLLEXPORT View* Leviathan::GUI::GuiManager::GetViewByIndex(size_t index)
+{
+    if(index >= ManagedViews.size())
+        return nullptr;
+
+    return ManagedViews[index].get();
+}
+// ------------------------------------ //
 DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
     bool iskeypress, int mousex, int mousey)
 {

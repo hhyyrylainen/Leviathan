@@ -426,6 +426,12 @@ void View::OnLoadEnd(
 
     // Let's try fix some focusing issues //
     if(frame->IsMain()) {
+
+        // TODO: this should probably be ran in child frames as well to allow text boxes to
+        // work there as well 
+		// Run our text box focus setup
+        frame->ExecuteJavaScript("Leviathan.SetupInputDetection()", "", 0);
+
         // Store our original focus //
         bool origfocus = OurFocus;
         // Lose focus and then gain it if we have focus //
@@ -597,6 +603,16 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
     if(_PMCheckIsEvent(message))
         return true;
 
+	const auto& name = message->GetName();
+
+	if (name == "NotifyViewInputStatus") {
+
+		const bool inputFocused = message->GetArgumentList()->GetBool(0);
+
+		InputFocused = inputFocused;
+		// LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
+		return true;
+	}
 
     // Not handled //
     return false;

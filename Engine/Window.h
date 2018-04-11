@@ -31,7 +31,7 @@ class View;
 }
 
 //! The default CEF scroll speed is ridiculously slow so we multiply it with this
-constexpr auto MOUSE_SCROLL_MULTIPLIER = 5.f;
+constexpr auto MOUSE_SCROLL_MULTIPLIER = 25.f;
 
 //! window class
 //! \todo Implement global lock for input handling
@@ -133,6 +133,7 @@ public:
 
     // Key press callbacks
     DLLEXPORT void InjectMouseMove(const SDL_Event& event);
+	//! \todo allow configuring if mouse wheel is considered a key (for Gameplay input mode)
     DLLEXPORT void InjectMouseWheel(const SDL_Event& event);
     DLLEXPORT void InjectMouseButtonDown(const SDL_Event& event);
     DLLEXPORT void InjectMouseButtonUp(const SDL_Event& event);

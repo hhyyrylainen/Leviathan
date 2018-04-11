@@ -812,7 +812,6 @@ bool Window::DoCEFInputPass(
             key_event.type = KEYEVENT_RAWKEYDOWN;
             receiver->GetBrowserHost()->SendKeyEvent(key_event);
         } else {
-
             // Send char event //
             key_event.type = KEYEVENT_CHAR;
             receiver->GetBrowserHost()->SendKeyEvent(key_event);
@@ -838,7 +837,7 @@ DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
     // Only pass this data if we aren't going to pass our own captured mouse //
     if(!MouseCaptured) {
 
-        GUI::View* receiver = GetGUIEventReceiver(true, event.motion.x, event.motion.y);
+        GUI::View* receiver = GetGUIEventReceiver(false, event.motion.x, event.motion.y);
 
         if(receiver) {
 
@@ -866,6 +865,7 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
         int mouseX;
         int mouseY;
         GetRelativeMouse(mouseX, mouseY);
+		// TODO: allow configuring if mouse wheel is considered a key
         GUI::View* receiver = GetGUIEventReceiver(true, mouseX, mouseY);
 
         if(receiver) {
@@ -892,7 +892,7 @@ DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
 
     if(!MouseCaptured) {
 
-        GUI::View* receiver = GetGUIEventReceiver(true, event.button.x, event.button.y);
+        GUI::View* receiver = GetGUIEventReceiver(false, event.button.x, event.button.y);
 
         if(receiver) {
             CefMouseEvent cevent;
@@ -917,7 +917,7 @@ DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
 
     if(!MouseCaptured) {
 
-        GUI::View* receiver = GetGUIEventReceiver(true, event.button.x, event.button.y);
+        GUI::View* receiver = GetGUIEventReceiver(false, event.button.x, event.button.y);
 
         if(receiver) {
             CefMouseEvent cevent;
@@ -963,7 +963,9 @@ DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
     int mouseY;
     GetRelativeMouse(mouseX, mouseY);
 
-    if(!DoCEFInputPass(event, true, false, mouseX, mouseY)) {
+	const auto handled = DoCEFInputPass(event, true, false, mouseX, mouseY);
+
+    if(!handled) {
 
         // CEF didn't want it
         // Then try disabling collections //

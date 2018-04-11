@@ -213,7 +213,8 @@ DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
         if(mode == INPUT_MODE::Menu)
             return view;
 
-        if(mode == INPUT_MODE::Gameplay && view->HasFocusedInputElement()) {
+        // Allow mouse events but keyboard events are only allowed if a text box is focused
+        if(mode == INPUT_MODE::Gameplay && (!iskeypress || view->HasFocusedInputElement())) {
 
             if(!bestFound)
                 bestFound = view;

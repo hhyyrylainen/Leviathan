@@ -78,7 +78,7 @@ public:
     //! \brief Handles calls from javascript
     virtual bool Execute(const CefString& name, CefRefPtr<CefV8Value> object,
         const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
-        CefString& exception) OVERRIDE;
+        CefString& exception) override;
 
     //! \brief Called when context is released, causes everything to be cleared
     void ClearContextValues();

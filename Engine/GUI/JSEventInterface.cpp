@@ -24,6 +24,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
 {
     // Check which function is called //
     if(name == "LOnEvent") {
+
         // Check are the arguments correct //
         if(arguments.size() < 2 || !arguments[0]->IsString() || !arguments[1]->IsFunction()) {
             // Invalid arguments //
@@ -80,6 +81,25 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         Owner->StartListeningForEvent(tmplistener.get());
 
         return true;
+    } else if(name == "NotifyViewInputStatus") {
+
+        if(arguments.size() < 1 || !arguments[0]->IsBool()) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: bool";
+            return true;
+        }
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("NotifyViewInputStatus");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetBool(0, arguments[0]->GetBoolValue());
+
+        // TODO: is this not as clean way to do this as calling through Owner that also has the
+        // browser object
+        CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        return true;
     }
 
     // Not handled //
@@ -114,15 +134,13 @@ JSNativeCoreAPI::JSListener::JSListener(const std::string& eventname,
     IsGeneric(true),
     EventsType(EVENT_TYPE_ERROR), EventName(eventname), FunctionValueObject(callbackfunc),
     FunctionsContext(currentcontext)
-{
-}
+{}
 
 JSNativeCoreAPI::JSListener::JSListener(EVENT_TYPE etype, CefRefPtr<CefV8Value> callbackfunc,
     CefRefPtr<CefV8Context> currentcontext) :
     IsGeneric(false),
     EventsType(etype), FunctionValueObject(callbackfunc), FunctionsContext(currentcontext)
-{
-}
+{}
 // ------------------------------------ //
 bool JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent& eventdata)
 {

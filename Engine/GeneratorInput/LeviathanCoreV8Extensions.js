@@ -5,6 +5,22 @@ var Leviathan = {};
 // All library functions defined in one function block //
 (function(){
     "use strict";
+
+    //! This is needed to properly allow focusing input elements while playing
+    Leviathan.SetupInputDetection = function () {
+        native function NotifyViewInputStatus();
+        let detectChange = function() {
+            if (document.activeElement instanceof HTMLInputElement) {
+                NotifyViewInputStatus(true);
+            } else {
+                NotifyViewInputStatus(false);
+            }
+        }
+
+        window.addEventListener('focus', detectChange, true);
+        window.addEventListener('blur', detectChange, true);
+        // console.log("SetupInputDetection done");
+    }
     
     //! Closes the game, requires VIEW_SECURITYLEVEL_ACCESS_ALL
     Leviathan.Quit = function(){
@@ -33,6 +49,6 @@ var Leviathan = {};
         native function LOnGeneric();
         return LOnGeneric(genericname, callbackfunction);
     }
-    
+
     
 }());

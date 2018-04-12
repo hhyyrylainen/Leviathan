@@ -1471,6 +1471,12 @@ DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
 // ------------------------------------ //
 DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre)
 {
+    if(!LinkedToWindow) {
+        LOG_WARNING(
+            "GameWorld: unlink from window called while this wasn't linked to a window");
+        return;
+    }
+
     if(window != LinkedToWindow) {
 
         throw InvalidArgument("GameWorld attempted to be unlinked from window that wasn't the "

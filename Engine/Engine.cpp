@@ -549,6 +549,18 @@ void Engine::Release(bool forced)
     if(MainScript)
         MainScript->CollectGarbage();
 
+    // Make windows clear their stored objects //
+    for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
+
+        AdditionalGraphicalEntities[i]->UnlinkAll();
+    }
+
+    // Finally the main window //
+    if(GraphicalEntity1) {
+
+        GraphicalEntity1->UnlinkAll();
+    }
+
     // Destroy worlds //
     {
         Lock lock(GameWorldsLock);
@@ -567,22 +579,14 @@ void Engine::Release(bool forced)
     if(!forced)
         _ThreadingManager->WaitForAllTasksToFinish();
 
-    // Make windows clear their stored objects //
+    // Destroy windows //
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-        AdditionalGraphicalEntities[i]->UnlinkAll();
         SAFE_DELETE(AdditionalGraphicalEntities[i]);
     }
 
     AdditionalGraphicalEntities.clear();
 
-    // Finally the main window //
-    if(GraphicalEntity1) {
-
-        GraphicalEntity1->UnlinkAll();
-    }
-
-    // Destroy windows //
     SAFE_DELETE(GraphicalEntity1);
 
     // Release newton //
@@ -800,8 +804,9 @@ DLLEXPORT void Engine::MessagePump()
         }
     }
 
-	// CEF needs to be let handle the keyboard events now to make sure that they can be dispatched to further on listeners
-	GlobalCEFHandler::DoCEFMessageLoopWork();
+    // CEF needs to be let handle the keyboard events now to make sure that they can be
+    // dispatched to further on listeners
+    GlobalCEFHandler::DoCEFMessageLoopWork();
 
     // Reset input states //
     if(GraphicalEntity1) {

@@ -133,7 +133,7 @@ public:
 
     // Key press callbacks
     DLLEXPORT void InjectMouseMove(const SDL_Event& event);
-	//! \todo allow configuring if mouse wheel is considered a key (for Gameplay input mode)
+    //! \todo allow configuring if mouse wheel is considered a key (for Gameplay input mode)
     DLLEXPORT void InjectMouseWheel(const SDL_Event& event);
     DLLEXPORT void InjectMouseButtonDown(const SDL_Event& event);
     DLLEXPORT void InjectMouseButtonUp(const SDL_Event& event);
@@ -181,10 +181,7 @@ public:
     // Input helpers
 
     //! \todo Move to KeyMapping.cpp
-    DLLEXPORT static int GetCEFButtonFromSdlMouseButton(uint32_t whichbutton);
 
-    DLLEXPORT static int32_t ConvertStringToKeyCode(const std::string& str);
-    DLLEXPORT static std::string ConvertKeyCodeToString(const int32_t& code);
 
 protected:
     //! \brief Detects state of modifier keys. Called whenever input is injected and is stored

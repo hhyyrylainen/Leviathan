@@ -12,10 +12,50 @@
 #define XK_KOREAN
 #include "keysymdef.h"
 
+#include "include/cef_keyboard_handler.h"
+
 #include <SDL.h>
 
 using namespace Leviathan;
 // ------------------------------------ //
+
+DLLEXPORT int KeyMapping::GetCEFButtonFromSdlMouseButton(uint32_t whichbutton)
+{
+    if(whichbutton == SDL_BUTTON_LEFT) {
+        return MBT_LEFT;
+
+    } else if(whichbutton == SDL_BUTTON_RIGHT) {
+        return MBT_RIGHT;
+
+    } else if(whichbutton == SDL_BUTTON_MIDDLE) {
+        return MBT_MIDDLE;
+
+    } else {
+        return -1;
+    }
+}
+
+DLLEXPORT int32_t KeyMapping::ConvertStringToKeyCode(const std::string& str)
+{
+
+    auto key = SDL_GetKeyFromName(str.c_str());
+
+    if(key == SDLK_UNKNOWN) {
+
+        LOG_ERROR("Invalid SDL key name('" + str + "'): " + std::string(SDL_GetError()));
+        return key;
+    }
+
+    return key;
+}
+
+DLLEXPORT std::string KeyMapping::ConvertKeyCodeToString(const int32_t& code)
+{
+
+    return std::string(SDL_GetKeyName(code));
+}
+
+
 
 // This conversion approach is from:
 // https://github.com/inniyah/gtk3_sdl2_test/blob/master/MainGtk3App.cpp
@@ -193,7 +233,12 @@ DLLEXPORT int KeyMapping::SDLKeyToX11Key(const SDL_Keysym& key)
     case SDLK_CARET: return XK_caret;
     case SDLK_UNDERSCORE: return XK_underscore;
 
-    default: LOG_ERROR("Unkown SDL key: " + std::to_string(key.sym)); return SDLK_UNKNOWN;
+    default:
+#if LEVIATHAN_PRINT_ERRORS_ABOUT_UNKOWN_KEYS == 1
+        LOG_ERROR("Unkown SDL key: " + ConvertKeyCodeToString(key.sym) + +"(" +
+                  std::to_string(key.sym) + ")");
+#endif
+        return XK_VoidSymbol;
     }
 }
 
@@ -705,9 +750,13 @@ KeyboardCode KeyboardCodeFromXKeysym(unsigned int keysym)
         //     return VKEY_KBD_BRIGHTNESS_UP;
 
         // TODO(sad): some keycodes are still missing.
+        // Unknown translated to unknown
+    case XK_VoidSymbol: return VKEY_UNKNOWN;
     }
 
+#if LEVIATHAN_PRINT_ERRORS_ABOUT_UNKOWN_KEYS == 1
     LOG_ERROR("Unknown X11 key to VKEY: " + Convert::ToHexadecimalString(keysym));
+#endif
     return VKEY_UNKNOWN;
 }
 

@@ -32,7 +32,6 @@
 #include <SDL_syswm.h>
 
 #include "include/cef_browser.h"
-#include "include/cef_keyboard_handler.h"
 #include "include/internal/cef_types.h"
 #include "include/internal/cef_types_wrappers.h"
 
@@ -672,22 +671,6 @@ void Window::_CheckMouseVisibilityStates()
     // update cursor state //
     SetHideCursor(ApplicationWantCursorState);
 }
-// ------------------------------------ //
-DLLEXPORT int Window::GetCEFButtonFromSdlMouseButton(uint32_t whichbutton)
-{
-    if(whichbutton == SDL_BUTTON_LEFT) {
-        return MBT_LEFT;
-
-    } else if(whichbutton == SDL_BUTTON_RIGHT) {
-        return MBT_RIGHT;
-
-    } else if(whichbutton == SDL_BUTTON_MIDDLE) {
-        return MBT_MIDDLE;
-
-    } else {
-        return -1;
-    }
-}
 // ------------------ Input listener functions ------------------ //
 bool Window::DoCEFInputPass(
     const SDL_Event& sdlevent, bool down, bool textinput, int mousex, int mousey)
@@ -810,6 +793,10 @@ bool Window::DoCEFInputPass(
 #error Unknown platform
 #endif // _WIN32
 
+    // Skip input if unkown key
+    if(key_event.windows_key_code == 0)
+        return false;
+
     if(down) {
 
         if(!textinput) {
@@ -903,7 +890,7 @@ DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
             cevent.x = event.button.x;
             cevent.y = event.button.y;
 
-            int type = GetCEFButtonFromSdlMouseButton(event.button.button);
+            int type = KeyMapping::GetCEFButtonFromSdlMouseButton(event.button.button);
             if(type == -1)
                 return;
 
@@ -928,7 +915,7 @@ DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
             cevent.x = event.button.x;
             cevent.y = event.button.y;
 
-            int type = GetCEFButtonFromSdlMouseButton(event.button.button);
+            int type = KeyMapping::GetCEFButtonFromSdlMouseButton(event.button.button);
             if(type == -1)
                 return;
 
@@ -1001,27 +988,5 @@ DLLEXPORT void Window::InjectKeyUp(const SDL_Event& event)
     // This should always be passed here //
     GetInputController()->OnInputGet(event.key.keysym.sym, SpecialKeyModifiers, false);
 }
-// ------------------------------------ //
-
-DLLEXPORT int32_t Window::ConvertStringToKeyCode(const std::string& str)
-{
-
-    auto key = SDL_GetKeyFromName(str.c_str());
-
-    if(key == SDLK_UNKNOWN) {
-
-        LOG_ERROR("Invalid SDL key name('" + str + "'): " + std::string(SDL_GetError()));
-        return key;
-    }
-
-    return key;
-}
-
-DLLEXPORT std::string Window::ConvertKeyCodeToString(const int32_t& code)
-{
-
-    return std::string(SDL_GetKeyName(code));
-}
-
 
 } // namespace Leviathan

@@ -25,39 +25,40 @@ Pong::GameInputController::~GameInputController(){
 
 // ------------------------------------ //
 void Pong::GameInputController::_SetupControlGroups(){
-    typedef std::map<int32_t, CONTROLKEYACTION> KeyMap;
-    
+    // typedef std::map<int32_t, CONTROLKEYACTION> KeyMap;
+
+    DEBUG_BREAK;
     // Would be nice to be able to use boost::assign here...
     
-    KeyMap WASD;
-    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("A"), CONTROLKEYACTION_LEFT));
-    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("D"), CONTROLKEYACTION_RIGHT));
-    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("W"), CONTROLKEYACTION_POWERUPUP));
-    WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("S"), CONTROLKEYACTION_POWERUPDOWN));
+    // KeyMap WASD;
+    // WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("A"), CONTROLKEYACTION_LEFT));
+    // WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("D"), CONTROLKEYACTION_RIGHT));
+    // WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("W"), CONTROLKEYACTION_POWERUPUP));
+    // WASD.insert(std::make_pair(Window::ConvertStringToKeyCode("S"), CONTROLKEYACTION_POWERUPDOWN));
     
-    KeyMap Arrows;
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("LEFTARROW"), CONTROLKEYACTION_LEFT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("RIGHTARROW"), CONTROLKEYACTION_RIGHT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("UPARROW"), CONTROLKEYACTION_POWERUPUP));
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
+    // KeyMap Arrows;
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("LEFTARROW"), CONTROLKEYACTION_LEFT));
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("RIGHTARROW"), CONTROLKEYACTION_RIGHT));
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("UPARROW"), CONTROLKEYACTION_POWERUPUP));
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("DOWNARROW"), CONTROLKEYACTION_POWERUPDOWN));
     
-    KeyMap IJKL;
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("J"), CONTROLKEYACTION_LEFT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("L"), CONTROLKEYACTION_RIGHT));
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("I"), CONTROLKEYACTION_POWERUPUP));
-    Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("K"), CONTROLKEYACTION_POWERUPDOWN));
+    // KeyMap IJKL;
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("J"), CONTROLKEYACTION_LEFT));
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("L"), CONTROLKEYACTION_RIGHT));
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("I"), CONTROLKEYACTION_POWERUPUP));
+    // Arrows.insert(std::make_pair(Window::ConvertStringToKeyCode("K"), CONTROLKEYACTION_POWERUPDOWN));
     
-    KeyMap numpad;
-    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD4"), CONTROLKEYACTION_LEFT));
-    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD6"), CONTROLKEYACTION_RIGHT));
-    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
-    numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
+    // KeyMap numpad;
+    // numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD4"), CONTROLKEYACTION_LEFT));
+    // numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD6"), CONTROLKEYACTION_RIGHT));
+    // numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD8"), CONTROLKEYACTION_POWERUPUP));
+    // numpad.insert(std::make_pair(Window::ConvertStringToKeyCode("NUMPAD5"), CONTROLKEYACTION_POWERUPDOWN));
     
     
-    GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_WASD, WASD));
-    GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_ARROWS, Arrows));
-    GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_IJKL, IJKL));
-    GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_NUMPAD, numpad));
+    // GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_WASD, WASD));
+    // GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_ARROWS, Arrows));
+    // GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_IJKL, IJKL));
+    // GroupToKeyMap.insert(std::make_pair(PLAYERCONTROLS_NUMPAD, numpad));
     
 }
 

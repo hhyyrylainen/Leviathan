@@ -19,7 +19,9 @@ var Leviathan = {};
 
         window.addEventListener('focus', detectChange, true);
         window.addEventListener('blur', detectChange, true);
-        // console.log("SetupInputDetection done");
+
+        // Detect initial focus
+        detectChange();
     }
     
     //! Closes the game, requires VIEW_SECURITYLEVEL_ACCESS_ALL

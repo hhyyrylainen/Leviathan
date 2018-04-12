@@ -227,6 +227,7 @@ public:
         CefRefPtr<CefBrowser> browser, TerminationStatus status) override;
 
 
+    //! \todo check access level properly
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
         CefProcessId source_process, CefRefPtr<CefProcessMessage> message) override;
 
@@ -281,10 +282,9 @@ protected:
     }
 
 protected:
-    bool _PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message);
+    bool _PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message);
 
-    // ------------------------------------ //
-
+protected:
     //! Unique ID
     const int ID;
 

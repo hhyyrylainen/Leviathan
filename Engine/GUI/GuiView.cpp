@@ -34,7 +34,8 @@ DLLEXPORT View::View(GuiManager* owner, Window* window,
     ID(IDFactory::GetID()),
     ViewSecurity(security), Wind(window), Owner(owner),
     OurAPIHandler(new LeviathanJavaScriptAsync(this))
-{}
+{
+}
 
 DLLEXPORT View::~View() {}
 // ------------------------------------ //
@@ -428,8 +429,8 @@ void View::OnLoadEnd(
     if(frame->IsMain()) {
 
         // TODO: this should probably be ran in child frames as well to allow text boxes to
-        // work there as well 
-		// Run our text box focus setup
+        // work there as well
+        // Run our text box focus setup
         frame->ExecuteJavaScript("Leviathan.SetupInputDetection()", "", 0);
 
         // Store our original focus //
@@ -564,7 +565,8 @@ CefRefPtr<CefResourceHandler> View::GetResourceHandler(
 
 void View::OnResourceRedirect(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     CefRefPtr<CefRequest> request, CefRefPtr<CefResponse> response, CefString& new_url)
-{}
+{
+}
 
 bool View::GetAuthCredentials(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     bool isProxy, const CefString& host, int port, const CefString& realm,
@@ -600,25 +602,32 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
     // Handle IPC messages from the render process...
     if(OurBrowserSide->OnProcessMessageReceived(browser, source_process, message))
         return true;
-    if(_PMCheckIsEvent(message))
+
+    const auto& name = message->GetName();
+
+    if(name == "NotifyViewInputStatus") {
+
+        const bool inputFocused = message->GetArgumentList()->GetBool(0);
+
+        InputFocused = inputFocused;
+        // LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
+        return true;
+    }
+
+    // TODO: check access level properly
+    if(ViewSecurity == VIEW_SECURITYLEVEL_BLOCKED)
+        return false;
+
+    if(_PMCheckIsEvent(name, message))
         return true;
 
-	const auto& name = message->GetName();
 
-	if (name == "NotifyViewInputStatus") {
-
-		const bool inputFocused = message->GetArgumentList()->GetBool(0);
-
-		InputFocused = inputFocused;
-		// LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
-		return true;
-	}
 
     // Not handled //
     return false;
 }
 
-bool View::_PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message)
+bool View::_PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message)
 {
     // Check does name match something //
     if(message->GetName() == "LGeneric") {

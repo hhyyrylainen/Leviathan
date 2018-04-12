@@ -1,6 +1,8 @@
 // ------------------------------------ //
 #include "KeyMapping.h"
 
+#include "Utility/Convert.h"
+
 // Define required keymaps
 #define XK_MISCELLANY
 #define XK_LATIN1
@@ -704,6 +706,8 @@ KeyboardCode KeyboardCodeFromXKeysym(unsigned int keysym)
 
         // TODO(sad): some keycodes are still missing.
     }
+
+    LOG_ERROR("Unknown X11 key to VKEY: " + Convert::ToHexadecimalString(keysym));
     return VKEY_UNKNOWN;
 }
 

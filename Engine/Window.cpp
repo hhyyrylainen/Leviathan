@@ -793,6 +793,10 @@ bool Window::DoCEFInputPass(
             auto begin = std::begin(sdlevent.text.text);
             key_event.character = utf8::next(begin, begin + strlen(sdlevent.text.text));
             key_event.unmodified_character = key_event.character;
+            // VKEY_A 0x41 (this isn't used so this is just to quiet warnings)
+            key_event.windows_key_code = 0x41;
+            // Not needed
+            // key_event.native_key_code = ;
         } catch(const utf8::exception& e) {
             LOG_ERROR(
                 "Window: CEF input handling failed to convert utf8 to utf32 codepoint: " +
@@ -800,7 +804,7 @@ bool Window::DoCEFInputPass(
         }
     }
 #elif defined(OS_MACOSX)
-#error TODO: mac version. See: cef/tests/cefclient/browser/browser_window_osr_mac.mm 
+#error TODO: mac version. See: cef/tests/cefclient/browser/browser_window_osr_mac.mm
 // for how the event should be structured
 #else
 #error Unknown platform
@@ -865,7 +869,7 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
         int mouseX;
         int mouseY;
         GetRelativeMouse(mouseX, mouseY);
-		// TODO: allow configuring if mouse wheel is considered a key
+        // TODO: allow configuring if mouse wheel is considered a key
         GUI::View* receiver = GetGUIEventReceiver(true, mouseX, mouseY);
 
         if(receiver) {
@@ -963,7 +967,7 @@ DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
     int mouseY;
     GetRelativeMouse(mouseX, mouseY);
 
-	const auto handled = DoCEFInputPass(event, true, false, mouseX, mouseY);
+    const auto handled = DoCEFInputPass(event, true, false, mouseX, mouseY);
 
     if(!handled) {
 

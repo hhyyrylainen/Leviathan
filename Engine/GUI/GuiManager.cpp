@@ -11,6 +11,8 @@
 #include "Rendering/Graphics.h"
 #include "Window.h"
 
+#include <boost/filesystem.hpp>
+
 #include <thread>
 
 using namespace Leviathan;
@@ -163,7 +165,17 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
         finalpath = urlorpath;
     } else {
         // Local file, add to the end //
-        finalpath = "file:///" + urlorpath;
+        try {
+            // TODO: Probably needs to convert spaces here
+            finalpath = "file:///" + boost::filesystem::canonical(urlorpath).string();
+
+        } catch(const boost::filesystem::filesystem_error& e) {
+
+            Logger::Get()->Error("GuiManager: LoadGUIFile: failed to get canonical path (is "
+                                 "the file missing?) for file: " +
+                                 urlorpath + ", error: " + e.what());
+            return false;
+        }
     }
 
     LOG_INFO("GuiManager: loading GUI: " + finalpath);

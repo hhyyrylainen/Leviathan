@@ -18,6 +18,10 @@
 
 #include "utf8.h"
 
+#ifdef __linux
+#include "XLibInclude.h"
+#endif
+
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNode.h"
 #include "Compositor/OgreCompositorWorkspace.h"
@@ -48,6 +52,7 @@ std::atomic<int> Window::TotalCreatedWindows = 0;
 
 // ------------------------------------ //
 DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
+    CurrentCursor(nullptr, nullptr), CurrentCursorImage(nullptr, nullptr),
     ID(IDFactory::GetID())
 {
     // Create window //
@@ -341,15 +346,6 @@ DLLEXPORT void Window::OnFocusChange(bool focused)
 #ifdef __linux
 DLLEXPORT void Window::SetX11Cursor(int cursor)
 {
-    SelectedCursor = cursor;
-    _SetActiveX11Cursor();
-}
-
-DLLEXPORT void Window::_SetActiveX11Cursor()
-{
-    if(SelectedCursor == 0)
-        return;
-
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
@@ -362,7 +358,61 @@ DLLEXPORT void Window::_SetActiveX11Cursor()
     ::Display* xdisplay = cef_get_xdisplay();
     LEVIATHAN_ASSERT(xdisplay, "cef_get_xdisplay failed");
 
-    XDefineCursor(xdisplay, wmInfo.info.x11.window, SelectedCursor);
+    XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
+
+    // Now we can grab the image and feed it to SDL
+    std::unique_ptr<XFixesCursorImage, int (*)(void*)> xCursor(
+        XFixesGetCursorImage(xdisplay), XFree);
+
+    // The pixels format is A8R8G8B8
+    std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> image(
+        SDL_CreateRGBSurfaceWithFormat(
+            0, xCursor->width, xCursor->height, 32, SDL_PIXELFORMAT_ARGB8888),
+        SDL_FreeSurface);
+
+    if(!image) {
+
+        LOG_ERROR("Window: SetX11Cursor: failed to create SDL surface");
+        return;
+    }
+
+    // We need to copy the data to the SDL pixels and undo alpha premultiply
+    const size_t dataSize = xCursor->width * xCursor->height;
+
+    // uint8_t* data = reinterpret_cast<uint8_t*>(xCursor->pixels);
+    uint8_t* pixels = static_cast<uint8_t*>(image->pixels);
+
+    for(size_t i = 0, j = 0; i < dataSize; ++i, j += 4) {
+
+        // I have no clue why this bit shifting and or works to get the right colour
+        // approach taken from here
+        // https://github.com/landryb/xfce4-screenshooter/blob/master/lib/screenshooter-capture.c
+        const auto fixedColour = (static_cast<uint32_t>(xCursor->pixels[i]) << 8) |
+                                 (static_cast<uint32_t>(xCursor->pixels[i]) >> 24);
+        // Alpha
+        pixels[j + 0] = fixedColour >> 24;
+        // Red
+        pixels[j + 1] = (fixedColour >> 16) & 0xff;
+        // Green
+        pixels[j + 2] = (fixedColour >> 8) & 0xff;
+        // Blue
+        pixels[j + 3] = fixedColour & 0xff;
+    }
+
+    std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> newCursor(
+        SDL_CreateColorCursor(image.get(), xCursor->xhot, xCursor->yhot), SDL_FreeCursor);
+
+    if(!newCursor) {
+
+        LOG_ERROR("Window: SetX11Cursor: failed to create sdl cursor");
+        return;
+    }
+
+    SDL_SetCursor(newCursor.get());
+
+    // Overwrite the old ones releasing the resources after we are using the new cursor
+    CurrentCursor = std::move(newCursor);
+    CurrentCursorImage = std::move(image);
 }
 #endif //__linux
 // ------------------------------------ //
@@ -682,20 +732,6 @@ void Window::_CheckMouseVisibilityStates()
 
     // update cursor state //
     SetHideCursor(ApplicationWantCursorState);
-
-#ifdef __linux
-    if(outsideArea) {
-        WasCursorOverWindowLastFrame = false;
-    } else {
-
-        if(!WasCursorOverWindowLastFrame) {
-
-            // Update cursor image if we moved back in the window
-            _SetActiveX11Cursor();
-            WasCursorOverWindowLastFrame = true;
-        }
-    }
-#endif
 }
 // ------------------ Input listener functions ------------------ //
 bool Window::DoCEFInputPass(

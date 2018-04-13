@@ -22,6 +22,9 @@ class CompositorWorkspace;
 struct SDL_Window;
 struct SDL_Keysym;
 union SDL_Event;
+struct SDL_Cursor;
+struct SDL_Surface;
+
 class CefBrowserHost;
 
 namespace Leviathan {
@@ -211,10 +214,6 @@ protected:
 
     void _DestroyOverlay();
 
-#ifdef __linux
-    void _SetActiveX11Cursor();
-#endif
-
 private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
@@ -236,9 +235,6 @@ private:
     //! gathering
     bool InputGatherStarted = false;
 
-    //! Used in _CheckMouseVisibilityStates to fire events when cursor returns to the window
-    bool WasCursorOverWindowLastFrame = false;
-
     bool Focused = true;
 
     bool ApplicationWantCursorState;
@@ -247,14 +243,10 @@ private:
 
     bool MouseCaptured = false;
 
-#ifdef __linux
-    //! Restores cursor once hovering back over the window
-    //! This is done because there doesn't seem to be a good way to extract the actual cursor
-    //! image from the Cursor handle
-    //! (https://cgit.freedesktop.org/xorg/proto/fixesproto/plain/fixesproto.txt might be able
-    //! to be used)
-    int SelectedCursor = 0;
-#endif
+    //! \todo This needs to be used also on windows to fix things
+    //! \todo Cache old cursors to avoid recreations
+    std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> CurrentCursor;
+    std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> CurrentCursorImage;
 
     Ogre::RenderWindow* OWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;

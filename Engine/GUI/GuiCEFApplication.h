@@ -11,31 +11,46 @@
 
 namespace Leviathan { namespace GUI {
 
+//! \brief Handles messages sent to the main process from the render process that are directed
+//! towards an extension
+class MainProcessSideHandler {
+public:
+    //! \returns True if handled
+    virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
+        CefProcessId source_process, CefRefPtr<CefProcessMessage> message) = 0;
+};
+
+using HandlerFactory = CefRefPtr<CefV8Handler> (*)(GUI::CefApplication* app);
+
+struct CustomExtension {
+    inline CustomExtension(const std::string& extname, const std::string& contents,
+        HandlerFactory handler, std::shared_ptr<MainProcessSideHandler> messagehandler) :
+        ExtName(extname),
+        Contents(contents), Handler(handler), MessageHandler(messagehandler)
+    {
+    }
+
+    //! Name of this extension. For example "Leviathan/MyCustomThing"
+    const std::string ExtName;
+
+    //! The whole javascript text that is the extension
+    const std::string Contents;
+
+    //! A pointer to a global factory function that creates a handler for this.
+    //! May be null if no handler is needed. The factory method may also return null
+    HandlerFactory Handler;
+
+    //! This is only set in the main process. This receives any
+    //! messages sent by SendCustomExtensionMessage
+    std::shared_ptr<MainProcessSideHandler> MessageHandler;
+};
+
+
 //! \brief Handler for new render processes
 class CefApplication : public CefApp,
                        public CefBrowserProcessHandler,
                        public CefRenderProcessHandler {
-public:
-    using HandlerFactory = CefRefPtr<CefV8Handler> (*)(CefApplication* app);
-
-    struct CustomExtension {
-        inline CustomExtension(
-            const std::string& extname, const std::string& contents, HandlerFactory handler) :
-            ExtName(extname),
-            Contents(contents), Handler(handler)
-        {
-        }
-
-        //! Name of this extension. For example "Leviathan/MyCustomThing"
-        const std::string ExtName;
-
-        //! The whole javascript text that is the extension
-        const std::string Contents;
-
-        //! A pointer to a global factory function that creates a handler for this.
-        //! May be null if no handler is needed. The factory method may also return null
-        HandlerFactory Handler;
-    };
+    friend GlobalCEFHandler;
 
 public:
     CefApplication();
@@ -80,16 +95,19 @@ public:
         return this;
     }
 
+    //! \brief Sends a message to the main process. This helps handlers running in the render
+    //! process to run code in the main process
+    //! \param message The message to be sent. The name must be "Custom" and the first value a
+    //! string with the name of the message
+    DLLEXPORT void SendCustomExtensionMessage(CefRefPtr<CefProcessMessage> message);
 
     void StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo);
     void StopListeningForEvents();
 
-    //! \brief Registers a custom extension for all render processes to load as a V8 extension
-    //! \note Only one should ever be registered, for performance reasons
-    DLLEXPORT void RegisterCustomExtension(std::unique_ptr<CustomExtension>&& extension);
-
-
     IMPLEMENT_REFCOUNTING(CefApplication);
+
+protected:
+    DLLEXPORT void RegisterCustomExtension(std::shared_ptr<CustomExtension> extension);
 
 private:
     bool _PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message);
@@ -103,7 +121,7 @@ private:
     CefRefPtr<CefBrowser> OurBrowser;
 
     //! Custom extension storage
-    std::vector<std::unique_ptr<CustomExtension>> CustomExtensions;
+    std::vector<std::shared_ptr<CustomExtension>> CustomExtensions;
 };
 
 }} // namespace Leviathan::GUI

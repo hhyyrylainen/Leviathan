@@ -146,7 +146,8 @@ void CefApplication::OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info)
             factory = nullptr;
         }
 
-        CustomExtensions.push_back(std::make_unique<CustomExtension>(name, contents, factory));
+        CustomExtensions.push_back(
+            std::make_unique<CustomExtension>(name, contents, factory, nullptr));
     }
 }
 
@@ -154,7 +155,7 @@ bool CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
     CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
 {
     // Handle IPC messages from the browser process...
-
+    // This is in the renderer process
     if(RendererRouter->OnProcessMessageReceived(browser, source_process, message))
         return true;
 
@@ -166,9 +167,15 @@ bool CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
 }
 
 DLLEXPORT void CefApplication::RegisterCustomExtension(
-    std::unique_ptr<CustomExtension>&& extension)
+    std::shared_ptr<CustomExtension> extension)
 {
-    CustomExtensions.push_back(std::move(extension));
+    CustomExtensions.push_back(extension);
+}
+// ------------------------------------ //
+DLLEXPORT void CefApplication::SendCustomExtensionMessage(CefRefPtr<CefProcessMessage> message)
+{
+    LOG(INFO) << "Seding custom ext message";
+    OurBrowser->SendProcessMessage(PID_BROWSER, message);
 }
 // ------------------------------------ //
 void CefApplication::StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo)

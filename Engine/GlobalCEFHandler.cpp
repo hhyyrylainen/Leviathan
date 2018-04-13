@@ -246,6 +246,34 @@ std::vector<std::shared_ptr<GUI::JSAsyncCustom>> Leviathan::GlobalCEFHandler::Cu
 CEFApplicationKeeper* Leviathan::GlobalCEFHandler::AccessToThese = NULL;
 
 bool Leviathan::GlobalCEFHandler::CEFInitialized = false;
+
+// ------------------------------------ //
+DLLEXPORT void GlobalCEFHandler::RegisterCustomExtension(
+    std::shared_ptr<GUI::CustomExtension> extension)
+{
+    CustomExtensions.push_back(extension);
+    AccessToThese->CEFApp->RegisterCustomExtension(extension);
+}
+
+DLLEXPORT bool GlobalCEFHandler::HandleCustomExtensionProcessMessage(
+    CefRefPtr<CefBrowser> browser, CefProcessId source_process,
+    CefRefPtr<CefProcessMessage> message)
+{
+    // Pass to the extensions until it is handled //
+    for(const auto& ext : CustomExtensions) {
+
+        if(ext->MessageHandler) {
+
+            if(ext->MessageHandler->OnProcessMessageReceived(browser, source_process, message))
+                return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<std::shared_ptr<GUI::CustomExtension>> GlobalCEFHandler::CustomExtensions;
+
 // ------------------ CEFSandboxInfoKeeper ------------------ //
 DLLEXPORT Leviathan::CEFApplicationKeeper::CEFApplicationKeeper() {}
 

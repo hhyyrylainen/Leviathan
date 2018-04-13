@@ -202,9 +202,10 @@ int main(int argcount, char* args[]){
         std::make_shared<@PROGRAMCUSTOMJS_CLASS@>());
     
     // Register the custom file //
-    Leviathan::GlobalCEFHandler::GetCEFObjects()->GetCEFApp()->RegisterCustomExtension(
-        std::make_unique<Leviathan::GUI::CefApplication::CustomExtension>(
-            "@PROGRAMCUSTOMJS_CLASS@", @PROGRAMCUSTOMJS_EXTFILE@, @PROGRAMCUSTOMJS_HANDLER@));
+    Leviathan::GlobalCEFHandler::RegisterCustomExtension(
+        std::make_shared<Leviathan::GUI::CustomExtension>(
+            "@PROGRAMCUSTOMJS_CLASS@", @PROGRAMCUSTOMJS_EXTFILE@, @PROGRAMCUSTOMJS_HANDLER@,
+            @PROGRAMCUSTOMJS_MESSAGE_HANDLER@));
     
 #endif //LEVIATHAN_USES_CUSTOMJS
         

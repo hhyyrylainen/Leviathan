@@ -23,7 +23,7 @@ class CEFApplicationKeeper {
     friend GlobalCEFHandler;
 
 public:
-	DLLEXPORT CEFApplicationKeeper();
+    DLLEXPORT CEFApplicationKeeper();
     DLLEXPORT ~CEFApplicationKeeper();
 
     //! \brief Gets the corresponding Gui::CefApplication
@@ -46,9 +46,11 @@ public:
         std::shared_ptr<CEFApplicationKeeper>& keeper, const std::string& logname
 #ifdef _WIN32
 #ifdef CEF_ENABLE_SANDBOX
-        , CefScopedSandboxInfo& sandbox
+        ,
+        CefScopedSandboxInfo& sandbox
 #endif
-        , HINSTANCE hInstance
+        ,
+        HINSTANCE hInstance
 #endif // _WIN32
     );
 
@@ -70,6 +72,12 @@ public:
     DLLEXPORT static const std::vector<std::shared_ptr<GUI::JSAsyncCustom>>&
         GetRegisteredCustomHandlers();
 
+    //! \brief Registers a custom extension for all render processes to load as a V8 extension
+    //! \note Only one should ever be registered, for performance reasons
+    DLLEXPORT static void RegisterCustomExtension(
+        std::shared_ptr<GUI::CustomExtension> extension);
+
+
     //! \brief Registers a LeviathanJavaScriptAsync to receive notifications about
     //! JSAsyncCustom changes
     DLLEXPORT static void RegisterJSAsync(GUI::LeviathanJavaScriptAsync* ptr);
@@ -77,6 +85,9 @@ public:
     //! \see RegisterJSAsync
     DLLEXPORT static void UnRegisterJSAsync(GUI::LeviathanJavaScriptAsync* ptr);
 
+    //! \brief Handles passing a custom process message
+    DLLEXPORT static bool HandleCustomExtensionProcessMessage(CefRefPtr<CefBrowser> browser,
+        CefProcessId source_process, CefRefPtr<CefProcessMessage> message);
 
 private:
     GlobalCEFHandler() = delete;
@@ -94,6 +105,9 @@ protected:
     static std::vector<GUI::LeviathanJavaScriptAsync*> JSAsynToNotify;
 
     static std::recursive_mutex JSCustomMutex;
+
+    //! Custom extension storage here to allow routing messages to the right one
+    static std::vector<std::shared_ptr<GUI::CustomExtension>> CustomExtensions;
 };
 
 } // namespace Leviathan

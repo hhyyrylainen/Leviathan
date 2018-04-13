@@ -621,6 +621,15 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
     if(_PMCheckIsEvent(name, message))
         return true;
 
+    // Handle custom messages //
+    if(message->GetName() == "Custom") {
+
+        if(GlobalCEFHandler::HandleCustomExtensionProcessMessage(
+               browser, source_process, message)) {
+
+            return true;
+        }
+    }
 
 
     // Not handled //

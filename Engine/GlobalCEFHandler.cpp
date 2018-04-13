@@ -50,7 +50,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     argcount += 1;
     args = new char*[argcount];
 
-    std::unique_ptr<char[]> disablegpu(strdup("--disable-gpu"));
+    std::unique_ptr<char, decltype(std::free)*> disablegpu(strdup("--disable-gpu"), std::free);
 
     for(int i = 0; i < argcount; ++i) {
         if(i < argcount - 1) {
@@ -77,6 +77,10 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     if(exit_code >= 0) {
         // This was a sub process //
         returnvalue = exit_code;
+
+#ifdef __linux
+        delete[] args;
+#endif
         return true;
     }
 
@@ -132,6 +136,10 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
     AccessToThese = keeper.get();
 
+#ifdef __linux
+    delete[] args;
+#endif
+
     // Wasn't a sub process //
     return false;
 }
@@ -143,7 +151,9 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::CEFLastThingInProgram()
 
     // Close it down //
     CefShutdown();
-    std::cout << "CEF shutdown called" << std::endl;
+
+    // The automatic templates remove the need for this message, which won't be logged anyway
+    // std::cout << "CEF shutdown called" << std::endl;
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::GlobalCEFHandler::DoCEFMessageLoopWork()

@@ -1,36 +1,29 @@
 #pragma once
-#ifndef 
-#define 
-// ------------------------------------ //
-#ifndef 
 #include "Define.h"
-#endif
 // ------------------------------------ //
-// ---- includes ---- //
 #include "GUI/LeviathanJavaScriptAsync.h"
 
 
 namespace {
 
-    class CustomJSInterface : public Leviathan::Gui::JSAsyncCustom{
-    public:
-        CustomJSInterface();
-        ~CustomJSInterface();
-        
-        //! Query processing function
-        virtual bool ProcessQuery(Leviathan::Gui::LeviathanJavaScriptAsync* caller, const CefString &request, 
-            int64 queryid, bool persists, CefRefPtr<Callback> &callback);
-        
-        //! Previously made ProcessQuery is canceled
-        virtual void CancelQuery(Leviathan::Gui::LeviathanJavaScriptAsync* caller, int64 queryid);
+class CustomJSInterface : public Leviathan::GUI::JSAsyncCustom {
+public:
+    CustomJSInterface();
+    ~CustomJSInterface();
 
-        //! Called when a Gui::View is closed, should CancelQuery all matching ones
-        virtual void CancelAllMine(Leviathan::Gui::LeviathanJavaScriptAsync* me);
+    //! Query processing function
+    bool ProcessQuery(Leviathan::GUI::LeviathanJavaScriptAsync* caller,
+        const CefString& request, int64 queryid, bool persists,
+        CefRefPtr<Callback>& callback) override;
 
-    protected:
-        
-        //! Store queries that need to be handled async
-    };
+    //! Previously made ProcessQuery is canceled
+    void CancelQuery(Leviathan::GUI::LeviathanJavaScriptAsync* caller, int64 queryid) override;
 
-}
-#endif
+    //! Called when a Gui::View is closed, should CancelQuery all matching ones
+    void CancelAllMine(Leviathan::GUI::LeviathanJavaScriptAsync* me) override;
+
+protected:
+    //! Store queries that need to be handled async
+};
+
+} // namespace

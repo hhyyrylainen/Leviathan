@@ -84,9 +84,9 @@ int main(int argcount, char* args[])
 
 
     // Check first one //
-    if(tokens.size() != 3) {
+    if(tokens.size() != 3 && tokens.size() != 4) {
 
-        cout << "Invalid commandline, expected 3 arguments (got " << tokens.size() << ")"
+        cout << "Invalid commandline, expected 3 or 4 arguments (got " << tokens.size() << ")"
              << endl;
         for(const auto& token : tokens)
             cout << token << std::endl;
@@ -95,7 +95,8 @@ int main(int argcount, char* args[])
 
     if(tokens[0] == "V8EXT") {
 
-        if(!FileGenerator::DoJSExtensionGeneration(tokens[1], tokens[2])) {
+        if(!FileGenerator::DoJSExtensionGeneration(
+               tokens[1], tokens[2], tokens.size() > 3 ? tokens[3] : "Leviathan")) {
 
             cout << "Generating error" << endl;
             return -1;

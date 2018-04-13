@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 // C RunTime Header Files
-#include <stdlib.h>
-#include <malloc.h>
-#include <memory.h>
-#include <wchar.h>
-#include <math.h>
 #include <assert.h>
+#include <malloc.h>
+#include <math.h>
+#include <memory.h>
+#include <stdlib.h>
+#include <wchar.h>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -23,24 +23,20 @@
 // Might have to only include this on linux //
 #include <limits>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <map>
-#include <list>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <list>
+#include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
 
 using namespace std;
 
-class FileGenerator{
+class FileGenerator {
 public:
-
-
-	static bool DoJSExtensionGeneration(string input, string output);
-
-
-
+    static bool DoJSExtensionGeneration(
+        std::string input, std::string output, const std::string& name);
 };

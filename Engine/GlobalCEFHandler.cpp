@@ -17,9 +17,11 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     std::shared_ptr<CEFApplicationKeeper>& keeper, const std::string& logname
 #ifdef _WIN32
 #ifdef CEF_ENABLE_SANDBOX
-    , CefScopedSandboxInfo& sandbox
+    ,
+    CefScopedSandboxInfo& sandbox
 #endif
-    , HINSTANCE hInstance
+    ,
+    HINSTANCE hInstance
 #endif // _WIN32
 )
 {
@@ -35,10 +37,10 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     // Run CEF startup //
     keeper = std::make_shared<CEFApplicationKeeper>();
 
-	void* sandbox_info = nullptr;
+    void* sandbox_info = nullptr;
 
 #ifdef CEF_ENABLE_SANDBOX
-	sandbox_info = &sandbox;
+    sandbox_info = &sandbox;
 #endif
 
 #ifdef __linux
@@ -60,7 +62,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
 #endif
 
-    // Provide CEF with command-line arguments //
+        // Provide CEF with command-line arguments //
 #ifdef _WIN32
     CefMainArgs main_args(hInstance);
 #else
@@ -71,9 +73,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     keeper->CEFApp = CefRefPtr<GUI::CefApplication>(new GUI::CefApplication());
 
     // Check are we a sub process //
-    int exit_code = CefExecuteProcess(main_args, keeper->CEFApp.get(), 
-		sandbox_info
-	);
+    int exit_code = CefExecuteProcess(main_args, keeper->CEFApp.get(), sandbox_info);
     if(exit_code >= 0) {
         // This was a sub process //
         returnvalue = exit_code;
@@ -171,8 +171,12 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::RegisterCustomJavaScriptQueryHandler
 
     // Notify all //
     for(size_t i = 0; i < JSAsynToNotify.size(); i++) {
-        JSAsynToNotify[i]->RegisterNewCustom(ptr);
+        GUARD_LOCK_OTHER_NAME(JSAsynToNotify[i], guard2);
+        JSAsynToNotify[i]->RegisterNewCustom(guard2, ptr);
     }
+
+    // Things created after this will automatically retrieve the ones that are registered
+    // before it is created
 }
 
 DLLEXPORT void Leviathan::GlobalCEFHandler::UnRegisterCustomJavaScriptQueryHandler(
@@ -233,10 +237,7 @@ CEFApplicationKeeper* Leviathan::GlobalCEFHandler::AccessToThese = NULL;
 
 bool Leviathan::GlobalCEFHandler::CEFInitialized = false;
 // ------------------ CEFSandboxInfoKeeper ------------------ //
-DLLEXPORT Leviathan::CEFApplicationKeeper::CEFApplicationKeeper()
-{
-
-}
+DLLEXPORT Leviathan::CEFApplicationKeeper::CEFApplicationKeeper() {}
 
 DLLEXPORT Leviathan::CEFApplicationKeeper::~CEFApplicationKeeper() {}
 // ------------------------------------ //

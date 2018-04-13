@@ -71,9 +71,8 @@ class JSNativeCoreAPI : public CefV8Handler, public ThreadSafe {
 
 public:
     JSNativeCoreAPI(CefApplication* owner);
-    ;
     ~JSNativeCoreAPI();
-    ;
+
 
     //! \brief Handles calls from javascript
     virtual bool Execute(const CefString& name, CefRefPtr<CefV8Value> object,

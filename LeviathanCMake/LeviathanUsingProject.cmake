@@ -26,6 +26,11 @@ endif()
 # linking to engine
 target_link_libraries(${CurrentProjectName} Engine ${ProjectCommonLibs} ${DEPENDENT_LIBS})
 
+# Must link to CEF if uses custom js
+if(PROGRAMUSE_CUSTOMJS)
+  target_link_libraries(${CurrentProjectName} ${LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES})
+endif()
+
 # speed up build
 #cotire(${CurrentProjectName})
 

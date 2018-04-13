@@ -108,6 +108,14 @@ if(LEVIATHAN_FULL_BUILD)
     OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network AngelScriptAddons)
 
+  set(LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES)
+
+  if(NOT WIN32)
+    list(APPEND LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES cef cef_dll_wrapper)
+  else()
+    list(APPEND LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES libcef libcef_dll_wrapper)
+  endif()
+  
   # # Currently disabled
   # if(WIN32)
   #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)

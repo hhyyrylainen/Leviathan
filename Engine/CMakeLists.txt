@@ -41,7 +41,7 @@ else()
   #)
 
   # Generate additional source files
-  add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h
+  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h"
     COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
     "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
     DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"

@@ -15,14 +15,26 @@ namespace Leviathan { namespace GUI {
 class CefApplication : public CefApp,
                        public CefBrowserProcessHandler,
                        public CefRenderProcessHandler {
-    struct CustomExtensionFileData {
-        CustomExtensionFileData(const std::string& file, const std::string& filecontents) :
-            FileName(file), Contents(filecontents)
+public:
+    using HandlerFactory = CefRefPtr<CefV8Handler> (*)(CefApplication* app);
+
+    struct CustomExtension {
+        inline CustomExtension(
+            const std::string& extname, const std::string& contents, HandlerFactory handler) :
+            ExtName(extname),
+            Contents(contents), Handler(handler)
         {
         }
 
-        const std::string FileName;
+        //! Name of this extension. For example "Leviathan/MyCustomThing"
+        const std::string ExtName;
+
+        //! The whole javascript text that is the extension
         const std::string Contents;
+
+        //! A pointer to a global factory function that creates a handler for this.
+        //! May be null if no handler is needed. The factory method may also return null
+        HandlerFactory Handler;
     };
 
 public:
@@ -41,6 +53,8 @@ public:
     virtual void OnRenderProcessThreadCreated(CefRefPtr<CefListValue> extra_info) override;
 
     // CefRenderProcessHandler methods.
+    //! \todo Should the custom extensions require static strings that would also be available
+    //! in the render process? To reduce copying and converting between utf8 and utf16
     virtual void OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info) override;
     virtual void OnWebKitInitialized() override;
     virtual void OnBrowserCreated(CefRefPtr<CefBrowser> browser) override;
@@ -70,9 +84,9 @@ public:
     void StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo);
     void StopListeningForEvents();
 
-    //! \brief Registers a custom file for all processes to load as V8 extension
+    //! \brief Registers a custom extension for all render processes to load as a V8 extension
     //! \note Only one should ever be registered, for performance reasons
-    DLLEXPORT void RegisterCustomExtensionFile(const std::string& file);
+    DLLEXPORT void RegisterCustomExtension(std::unique_ptr<CustomExtension>&& extension);
 
 
     IMPLEMENT_REFCOUNTING(CefApplication);
@@ -89,9 +103,7 @@ private:
     CefRefPtr<CefBrowser> OurBrowser;
 
     //! Custom extension storage
-    std::vector<std::string> CustomExtensionFiles;
-
-    std::vector<std::unique_ptr<CustomExtensionFileData>> ExtensionContents;
+    std::vector<std::unique_ptr<CustomExtension>> CustomExtensions;
 };
 
 }} // namespace Leviathan::GUI

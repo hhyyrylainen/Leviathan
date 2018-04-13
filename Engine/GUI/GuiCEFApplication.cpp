@@ -5,6 +5,8 @@
 #include "Events/Event.h"
 #include "FileSystem.h"
 #include "Generated/LeviathanV8CoreExt.h"
+
+#include "include/base/cef_logging.h"
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
@@ -39,7 +41,7 @@ void CefApplication::OnWebKitInitialized()
     // WebKit has been initialized, register V8 extensions...
 
     // Register it //
-    const std::string levcoreext(LeviathanCoreV8ExtensionStr);
+    const std::string levcoreext(LeviathanCoreV8ExtensionsStr);
 
     // Bind the event handling object //
     NativeCoreLeviathanAPI = new JSNativeCoreAPI(this);
@@ -49,14 +51,14 @@ void CefApplication::OnWebKitInitialized()
     CefRegisterExtension("Leviathan/API", levcoreext, tmpptr);
 
     // Load custom extensions //
-    for(size_t i = 0; i < ExtensionContents.size(); i++) {
+    for(const auto& ext : CustomExtensions) {
         // Load it //
         CefRegisterExtension(
-            ExtensionContents[i]->FileName, ExtensionContents[i]->Contents, NULL);
+            ext->ExtName, ext->Contents, ext->Handler ? ext->Handler(this) : nullptr);
     }
 
     // Clear the memory //
-    ExtensionContents.clear();
+    CustomExtensions.clear();
 }
 
 void CefApplication::OnContextCreated(
@@ -82,30 +84,31 @@ void CefApplication::OnRenderProcessThreadCreated(CefRefPtr<CefListValue> extra_
 
 
     // Send custom extensions to it //
-    extra_info->SetInt(0, (int)CustomExtensionFiles.size());
+    extra_info->SetInt(0, static_cast<int>(CustomExtensions.size()));
 
-    for(int i = 0; i < (int)CustomExtensionFiles.size(); i++) {
+    for(int i = 0; i < static_cast<int>(CustomExtensions.size()); i++) {
         if(i != 0) {
 
             LOG_WARNING("CefApplication: loading multiple extensions, performance "
                         "might be worse than with one large extension");
         }
-        // Report this //
-        LOG_INFO("CefApplication: loading extension file " + CustomExtensionFiles[i]);
 
-        // Load it's contents and pass it //
-        extra_info->SetString(1 + i * 2,
-            "Leviathan/" + StringOperations::RemoveExtension(CustomExtensionFiles[i]));
-        // Load the file //
-        std::string filecontents;
-        try {
-            FileSystem::ReadFileEntirely(CustomExtensionFiles[i], filecontents);
-        } catch(...) {
-            LOG_ERROR("Failed to read file: " + CustomExtensionFiles[i] +
-                      ", extension not registered properly");
-            filecontents = "";
-        }
-        extra_info->SetString(1 + i * 2 + 1, filecontents);
+        // Report this //
+        LOG_INFO("CefApplication: sending extension to renderer process: " +
+                 CustomExtensions[i]->ExtName);
+
+        const auto baseIndex = 1 + i * 3;
+
+        // Pass data
+        // Name
+        extra_info->SetString(baseIndex + 0, CustomExtensions[i]->ExtName);
+
+        // Contents
+        extra_info->SetString(baseIndex + 1, CustomExtensions[i]->Contents);
+
+        // The factory ptr
+        extra_info->SetBinary(baseIndex + 2,
+            CefBinaryValue::Create(&CustomExtensions[i]->Handler, sizeof(HandlerFactory)));
     }
 }
 
@@ -126,9 +129,24 @@ void CefApplication::OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info)
 
     for(int i = 0; i < size; i++) {
 
+        const auto baseIndex = 1 + i * 3;
+
         // Copy it to our vector //
-        ExtensionContents.push_back(std::make_unique<CustomExtensionFileData>(
-            extra_info->GetString(1 + i * 2), extra_info->GetString(1 + i * 2 + 1)));
+        const auto name = Convert::Utf16ToUtf8(extra_info->GetString(baseIndex + 0));
+        const auto contents = Convert::Utf16ToUtf8(extra_info->GetString(baseIndex + 1));
+        const auto& bin = extra_info->GetBinary(baseIndex + 2);
+
+        HandlerFactory factory;
+        static_assert(
+            sizeof(factory) == sizeof(HandlerFactory), "Handler ptr size is messed up");
+        const auto read = bin->GetData(&factory, sizeof(factory), 0);
+
+        if(read != sizeof(HandlerFactory)) {
+            LOG(ERROR) << "Handler ptr read fail";
+            factory = nullptr;
+        }
+
+        CustomExtensions.push_back(std::make_unique<CustomExtension>(name, contents, factory));
     }
 }
 
@@ -147,9 +165,10 @@ bool CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
     return false;
 }
 
-DLLEXPORT void CefApplication::RegisterCustomExtensionFile(const std::string& file)
+DLLEXPORT void CefApplication::RegisterCustomExtension(
+    std::unique_ptr<CustomExtension>&& extension)
 {
-    CustomExtensionFiles.push_back(file);
+    CustomExtensions.push_back(std::move(extension));
 }
 // ------------------------------------ //
 void CefApplication::StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo)

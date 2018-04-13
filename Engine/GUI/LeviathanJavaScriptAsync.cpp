@@ -21,7 +21,7 @@ LeviathanJavaScriptAsync::LeviathanJavaScriptAsync(View* owner) : Owner(owner)
 
     for(auto iter = vec.begin(); iter != vec.end(); ++iter) {
 
-        RegisterNewCustom((*iter));
+        RegisterNewCustom(guard, (*iter));
     }
 }
 
@@ -147,10 +147,8 @@ void LeviathanJavaScriptAsync::OnQueryCanceled(
 }
 // ------------------------------------ //
 DLLEXPORT void LeviathanJavaScriptAsync::RegisterNewCustom(
-    std::shared_ptr<JSAsyncCustom> newhandler)
+    Lock& guard, std::shared_ptr<JSAsyncCustom> newhandler)
 {
-    GUARD_LOCK();
-
     RegisteredCustomHandlers.push_back(newhandler);
 }
 // ------------------------------------ //

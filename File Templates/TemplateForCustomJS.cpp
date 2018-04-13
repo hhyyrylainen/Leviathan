@@ -1,44 +1,41 @@
-#include "Include.h"
 // ------------------------------------ //
-#ifndef 
 #include ".h"
-#endif
-using namespace ;
-using namespace Leviathan;
-using namespace Gui;
+using namespace;
 // ------------------------------------ //
-CustomJSInterface::CustomJSInterface(){
+CustomJSInterface::CustomJSInterface() {}
 
-
-}
-
-CustomJSInterface::~CustomJSInterface(){
-
-}
+CustomJSInterface::~CustomJSInterface() {}
 // ------------------------------------ //
-#define JS_ACCESSCHECKPTR(x, y) if(y->_VerifyJSAccess(x, callback)){return true;}
+#define JS_ACCESSCHECKPTR(x, y)           \
+    if(y->_VerifyJSAccess(x, callback)) { \
+        return true;                      \
+    }
 // ------------------------------------ //
-bool CustomJSInterface::ProcessQuery(Leviathan::Gui::LeviathanJavaScriptAsync* caller, const CefString &request, 
-    int64 queryid, bool persists, CefRefPtr<Callback> &callback)
+bool CustomJSInterface::ProcessQuery(Leviathan::GUI::LeviathanJavaScriptAsync* caller,
+    const CefString& request, int64 queryid, bool persists, CefRefPtr<Callback>& callback)
 {
     // Do whatever to handle this //
-    if(request == "MyCustomRequest"){
+    if(request == "MyCustomRequest") {
         // Check rights //
-        JS_ACCESSCHECKPTR(VIEW_SECURITYLEVEL_ACCESS_ALL, caller);
+        JS_ACCESSCHECKPTR(Leviathan::GUI::VIEW_SECURITYLEVEL_ACCESS_ALL, caller);
+        
         // Return the result //
         callback->Success("1");
         return true;
     }
+    
     // Not handled //
     return false;
 }
 
-void CustomJSInterface::CancelQuery(Leviathan::Gui::LeviathanJavaScriptAsync* caller, int64 queryid){
+void CustomJSInterface::CancelQuery(
+    Leviathan::GUI::LeviathanJavaScriptAsync* caller, int64 queryid)
+{
     // Remove the query matching caller and queryid //
 }
 // ------------------------------------ //
-void CustomJSInterface::CancelAllMine(Leviathan::Gui::LeviathanJavaScriptAsync* me){
+void CustomJSInterface::CancelAllMine(Leviathan::GUI::LeviathanJavaScriptAsync* me)
+{
     // Remove all stored queries matching me and any id //
-    
 }
 // ------------------------------------ //

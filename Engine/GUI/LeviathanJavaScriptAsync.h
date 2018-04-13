@@ -62,7 +62,7 @@ public:
         CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, int64 query_id);
 
     //! \brief Registers a new JSAsyncCustom to use for handling
-    DLLEXPORT void RegisterNewCustom(std::shared_ptr<JSAsyncCustom> newhandler);
+    DLLEXPORT void RegisterNewCustom(Lock& guard, std::shared_ptr<JSAsyncCustom> newhandler);
     //! \brief Removes an entry from RegisteredCustomHandlers
     DLLEXPORT void UnregisterCustom(JSAsyncCustom* handler);
 

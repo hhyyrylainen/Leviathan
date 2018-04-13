@@ -350,13 +350,17 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
     SDL_VERSION(&wmInfo.version);
     if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
 
-        LOG_FATAL("Window: SetX11Cursor: failed to retrieve wm info");
+        LOG_ERROR("Window: SetX11Cursor: failed to retrieve wm info");
         return;
     }
 
     // Retrieve the X11 display shared with Chromium.
     ::Display* xdisplay = cef_get_xdisplay();
-    LEVIATHAN_ASSERT(xdisplay, "cef_get_xdisplay failed");
+    if(!xdisplay) {
+
+        LOG_ERROR("Window: SetX11Cursor: cef_get_xdisplay failed");
+        return;
+    }
 
     XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
 

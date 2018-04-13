@@ -211,6 +211,10 @@ protected:
 
     void _DestroyOverlay();
 
+#ifdef __linux
+    void _SetActiveX11Cursor();
+#endif
+
 private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
@@ -232,6 +236,9 @@ private:
     //! gathering
     bool InputGatherStarted = false;
 
+    //! Used in _CheckMouseVisibilityStates to fire events when cursor returns to the window
+    bool WasCursorOverWindowLastFrame = false;
+
     bool Focused = true;
 
     bool ApplicationWantCursorState;
@@ -239,6 +246,15 @@ private:
     bool CursorState = true;
 
     bool MouseCaptured = false;
+
+#ifdef __linux
+    //! Restores cursor once hovering back over the window
+    //! This is done because there doesn't seem to be a good way to extract the actual cursor
+    //! image from the Cursor handle
+    //! (https://cgit.freedesktop.org/xorg/proto/fixesproto/plain/fixesproto.txt might be able
+    //! to be used)
+    int SelectedCursor = 0;
+#endif
 
     Ogre::RenderWindow* OWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;

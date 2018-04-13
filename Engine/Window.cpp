@@ -341,6 +341,15 @@ DLLEXPORT void Window::OnFocusChange(bool focused)
 #ifdef __linux
 DLLEXPORT void Window::SetX11Cursor(int cursor)
 {
+    SelectedCursor = cursor;
+    _SetActiveX11Cursor();
+}
+
+DLLEXPORT void Window::_SetActiveX11Cursor()
+{
+    if(SelectedCursor == 0)
+        return;
+
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
@@ -353,9 +362,7 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
     ::Display* xdisplay = cef_get_xdisplay();
     LEVIATHAN_ASSERT(xdisplay, "cef_get_xdisplay failed");
 
-    // This is broken because apparently CEF has its own cursor stuff
-    // XDefineCursor(wmInfo.info.x11.display, wmInfo.info.x11.window, cursor);
-    XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
+    XDefineCursor(xdisplay, wmInfo.info.x11.window, SelectedCursor);
 }
 #endif //__linux
 // ------------------------------------ //
@@ -661,8 +668,10 @@ DLLEXPORT void Window::InputEnd()
 
 void Window::_CheckMouseVisibilityStates()
 {
+    const bool outsideArea = IsMouseOutsideWindowClientArea();
+
     // force cursor visible check (if outside client area or mouse is unfocused on the window)
-    if(IsMouseOutsideWindowClientArea() || !Focused) {
+    if(outsideArea || !Focused) {
 
         ForceMouseVisible = true;
 
@@ -673,6 +682,20 @@ void Window::_CheckMouseVisibilityStates()
 
     // update cursor state //
     SetHideCursor(ApplicationWantCursorState);
+
+#ifdef __linux
+    if(outsideArea) {
+        WasCursorOverWindowLastFrame = false;
+    } else {
+
+        if(!WasCursorOverWindowLastFrame) {
+
+            // Update cursor image if we moved back in the window
+            _SetActiveX11Cursor();
+            WasCursorOverWindowLastFrame = true;
+        }
+    }
+#endif
 }
 // ------------------ Input listener functions ------------------ //
 bool Window::DoCEFInputPass(

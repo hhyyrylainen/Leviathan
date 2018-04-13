@@ -74,47 +74,6 @@ bool LeviathanJavaScriptAsync::OnQuery(CefRefPtr<CefBrowser> browser,
         callback->Success("1");
 
         return true;
-    } else {
-        // These requests are multi-part ones //
-        const std::string tmpstr(request);
-        StringIterator itr(tmpstr);
-
-        // Get the first part of it //
-        const auto funcNamePtr = itr.GetNextCharacterSequence<std::string>(
-                                        UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS |
-                                        UNNORMALCHARACTER_TYPE_WHITESPACE)
-                                     .get();
-
-        if(!funcNamePtr) {
-
-            LOG_ERROR("LeviathanJavaScriptAsync: OnQuery: invalid query: " + tmpstr);
-            return false;
-        }
-
-        const std::string funcname = *funcNamePtr;
-
-        // We can now compare the function name //
-        if(funcname == "Not") {
-            // Security check //
-            JS_ACCESSCHECK(VIEW_SECURITYLEVEL_NORMAL);
-
-            // Get the event name //
-            const auto payloadPtr = itr.GetStringInQuotes<std::string>(QUOTETYPE_BOTH).get();
-
-            if(!payloadPtr) {
-                LOG_ERROR("LeviathanJavaScriptAsync: OnQuery: invalid query (no payload): " +
-                          tmpstr);
-                return false;
-            }
-
-            const auto argcontent = *payloadPtr;
-
-            // The window will now listen for it //
-            DEBUG_BREAK; // What's this here?
-            callback->Failure(2, "lol");
-
-            return true;
-        }
     }
 
     GUARD_LOCK();

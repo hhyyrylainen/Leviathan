@@ -4,17 +4,13 @@ environment:
   BOOST_HOME: C:/Libraries/boost_1_66_0
   PATH: C:\Ruby25-x64\bin;$(PATH);C:\cygwin64\bin
 
+platform: x64
+
 cache:
   - ThirdParty
 
 install:
   - ps: gem install os colorize rubyzip json sha3
-
-platform: x64
-
-before_build:
-  - ps: git submodule init
-  - ps: git submodule update
 
 build_script:
   - ps: ruby Setup.rb --precompiled

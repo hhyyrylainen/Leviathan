@@ -24,10 +24,35 @@
 #include <regex>
 
 #include <SDL.h>
+
+#ifdef __linux
+#include "XLibInclude.h"
+#endif
+
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 #define OGRE_ALLOW_USEFULLOUTPUT
+
+
+#ifdef __linux
+bool HasX11Error = false;
+
+int LeviathanX11ErrorHandler(Display* display, XErrorEvent* event)
+{
+    std::stringstream str;
+    str << "X error received: "
+        << "type " << event->type << ", "
+        << "serial " << event->serial << ", "
+        << "error_code " << static_cast<int>(event->error_code) << ", "
+        << "request_code " << static_cast<int>(event->request_code) << ", "
+        << "minor_code " << static_cast<int>(event->minor_code);
+
+    LOG_ERROR(str.str());
+    HasX11Error = true;
+    return 0;
+}
+#endif
 
 DLLEXPORT Leviathan::Graphics::Graphics()
 {
@@ -56,6 +81,11 @@ bool Graphics::Init(AppDef* appdef)
         Logger::Get()->Error("Graphics: Init: failed to create ogre renderer");
         return false;
     }
+
+#ifdef __linux
+    // Set X11 error handler to not crash on non-fatal errors
+    XSetErrorHandler(LeviathanX11ErrorHandler);
+#endif
 
     Initialized = true;
     return true;
@@ -401,3 +431,15 @@ bool Leviathan::Graphics::frameRenderingQueued(const Ogre::FrameEvent& evt)
     return true;
 }
 // ------------------------------------------- //
+// X11 errors
+#ifdef __linux
+DLLEXPORT bool Graphics::HasX11ErrorOccured()
+{
+    if(HasX11Error) {
+        HasX11Error = false;
+        return true;
+    }
+
+    return false;
+}
+#endif

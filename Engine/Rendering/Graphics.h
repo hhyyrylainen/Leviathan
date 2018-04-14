@@ -32,6 +32,16 @@ public:
         return ORoot.get();
     }
 
+#ifdef __linux
+    //! \brief Returns true if our X11 error handler has been called. Remember to check this
+    //! after every X11 call
+    //!
+    //! The value is reset to false after this call
+    //! \note This is not thread safe. X11 is also not thread safe so only call on the main
+    //! thread
+    DLLEXPORT static bool HasX11ErrorOccured();
+#endif
+
     DLLEXPORT static Graphics* Get();
 
 private:

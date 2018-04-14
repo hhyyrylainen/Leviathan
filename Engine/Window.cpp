@@ -363,10 +363,25 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
     }
 
     XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
+    if(Graphics::HasX11ErrorOccured()) {
+        LOG_ERROR("Window: SetX11Cursor: failed due to x11 error (on define cursor), retrying "
+                  "next frame");
+        Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor); });
+        return;
+    }
 
     // Now we can grab the image and feed it to SDL
-    std::unique_ptr<XFixesCursorImage, int (*)(void*)> xCursor(
-        XFixesGetCursorImage(xdisplay), XFree);
+    auto* tmpImg = XFixesGetCursorImage(xdisplay);
+    if(Graphics::HasX11ErrorOccured()) {
+        LOG_ERROR(
+            "Window: SetX11Cursor: failed due to x11 error (XFixesGetCursorImage), retrying "
+            "next frame");
+        Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor); });
+        return;
+    }
+
+    std::unique_ptr<XFixesCursorImage, int (*)(void*)> xCursor(tmpImg, XFree);
+
 
     // The pixels format is A8R8G8B8
     std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> image(

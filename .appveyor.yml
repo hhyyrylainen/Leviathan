@@ -4,17 +4,21 @@ environment:
   BOOST_HOME: C:/Libraries/boost_1_66_0
   PATH: C:\Ruby25-x64\bin;$(PATH);C:\cygwin64\bin
 
+image:
+  - Visual Studio 2017
+
 platform: x64
 
 cache:
   - ThirdParty
+  - bin
 
 install:
-  - ps: gem install os colorize rubyzip json sha3
+  - gem install os colorize rubyzip json sha3
 
 build_script:
-  - ps: ruby Setup.rb --precompiled
+  - ruby Setup.rb --precompiled
 
 test_script:
-  - ps: cd build\bin
-  - ps: .\LeviathanTest ~[xrequired]
+  - cd build\bin
+  - .\LeviathanTest ~[xrequired]

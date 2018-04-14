@@ -1,9 +1,20 @@
+version: 1.0.{build}-{branch}
+
 environment:
   BOOST_HOME: C:/Libraries/boost_1_66_0
   PATH: C:\Ruby25-x64\bin;C:\cygwin64\bin;$(PATH)
+
+cache:
+  - ThirdParty
+
 install:
   - ps: gem install os colorize rubyzip json sha3
-build:
+
+platform: x64
+
+build_script:
   - ps: ruby Setup.rb --use-precompiled
-test:
-  - ps: cd build\bin && .\LeviathanTest ~[xrequired]
+
+test_script:
+  - ps: cd build\bin
+  - ps: .\LeviathanTest ~[xrequired]

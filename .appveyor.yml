@@ -2,7 +2,7 @@ version: 1.0.{build}-{branch}
 
 environment:
   BOOST_HOME: C:/Libraries/boost_1_66_0
-  PATH: C:\Ruby25-x64\bin;C:\cygwin64\bin;$(PATH)
+  PATH: C:\Ruby25-x64\bin;$(PATH);C:\cygwin64\bin
 
 cache:
   - ThirdParty

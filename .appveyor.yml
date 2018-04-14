@@ -12,8 +12,12 @@ install:
 
 platform: x64
 
+before_build:
+  - ps: git submodule init
+  - ps: git submodule update
+
 build_script:
-  - ps: ruby Setup.rb --use-precompiled
+  - ps: ruby Setup.rb --precompiled
 
 test_script:
   - ps: cd build\bin

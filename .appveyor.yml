@@ -1,0 +1,9 @@
+environment:
+  BOOST_HOME: C:/Libraries/boost_1_66_0
+  PATH: C:\Ruby25-x64\bin;C:\cygwin64\bin;$(PATH)
+install:
+  - ps: gem install os colorize rubyzip json sha3
+build:
+  - ps: ruby Setup.rb --use-precompiled
+test:
+  - ps: cd build\bin && .\LeviathanTest ~[xrequired]

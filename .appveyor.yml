@@ -1,7 +1,7 @@
 version: 1.0.{build}-{branch}
 
 environment:
-  BOOST_HOME: C:/Libraries/boost_1_66_0
+  BOOST_ROOT: C:/Libraries/boost_1_66_0
   PATH: C:\Ruby25-x64\bin;$(PATH);C:\cygwin64\bin
 
 image:

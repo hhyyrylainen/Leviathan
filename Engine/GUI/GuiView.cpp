@@ -7,6 +7,7 @@
 #include "Handlers/IDFactory.h"
 #include "LeviathanJavaScriptAsync.h"
 #include "Rendering/GeometryHelpers.h"
+#include "Sound/SoundDevice.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
@@ -622,13 +623,23 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
         return true;
 
     // Handle custom messages //
-    if(message->GetName() == "Custom") {
+    if(name == "Custom") {
 
         if(GlobalCEFHandler::HandleCustomExtensionProcessMessage(
                browser, source_process, message)) {
 
             return true;
         }
+    }
+
+    // And handle other stuff //
+    if(name == "Play2DSoundEffect") {
+
+        if(ViewSecurity < VIEW_SECURITYLEVEL_NORMAL)
+            return true;
+
+        Engine::Get()->GetSoundDevice()->Play2DSoundEffect(
+            message->GetArgumentList()->GetString(0));
     }
 
 

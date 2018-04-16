@@ -1,5 +1,5 @@
 // ------------------------------------ //
-#include "JSEventInterface.h"
+#include "JSNativeCoreAPI.h"
 
 #include "GuiCEFApplication.h"
 #include "JavaScriptHelper.h"
@@ -100,6 +100,22 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         // browser object
         CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
         return true;
+    } else if(name == "Play2DSoundEffect") {
+
+        if(arguments.size() < 1 || !arguments[0]->IsString()) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: string";
+            return true;
+        }
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("Play2DSoundEffect");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetString(0, arguments[0]->GetStringValue());
+        CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        return true;
     }
 
     // Not handled //
@@ -134,13 +150,15 @@ JSNativeCoreAPI::JSListener::JSListener(const std::string& eventname,
     IsGeneric(true),
     EventsType(EVENT_TYPE_ERROR), EventName(eventname), FunctionValueObject(callbackfunc),
     FunctionsContext(currentcontext)
-{}
+{
+}
 
 JSNativeCoreAPI::JSListener::JSListener(EVENT_TYPE etype, CefRefPtr<CefV8Value> callbackfunc,
     CefRefPtr<CefV8Context> currentcontext) :
     IsGeneric(false),
     EventsType(etype), FunctionValueObject(callbackfunc), FunctionsContext(currentcontext)
-{}
+{
+}
 // ------------------------------------ //
 bool JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent& eventdata)
 {

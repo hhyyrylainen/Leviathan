@@ -52,5 +52,11 @@ var Leviathan = {};
         return LOnGeneric(genericname, callbackfunction);
     }
 
+    //! Plays a 2D sound effect. Requires VIEW_SECURITYLEVEL_NORMAL
+    Leviathan.Play2DSoundEffect = function(filename){
+
+        native function Play2DSoundEffect(filename);
+        Play2DSoundEffect(filename);
+    }
     
 }());

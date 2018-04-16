@@ -220,7 +220,7 @@ else()
     "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
     "GUI/GuiView.cpp" "GUI/GuiView.h"
     "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
-    "GUI/JSEventInterface.cpp" "GUI/JSEventInterface.h"
+    "GUI/JSNativeCoreAPI.cpp" "GUI/JSNativeCoreAPI.h"
     "GUI/LeviathanJavaScriptAsync.cpp" "GUI/LeviathanJavaScriptAsync.h"
     "GUI/KeyMapping.cpp" "GUI/KeyMapping.h"
     "GUI/GuiInputSettings.h"

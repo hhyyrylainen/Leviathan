@@ -13,6 +13,7 @@
 #include "Input/Key.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Rendering/Graphics.h"
+#include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
 #include "Utility/Convert.h"
 
@@ -365,8 +366,11 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
     XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
     if(Graphics::HasX11ErrorOccured()) {
         LOG_ERROR("Window: SetX11Cursor: failed due to x11 error (on define cursor), retrying "
-                  "next frame");
-        Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor); });
+                  "in 50ms");
+    queueretrylabel:
+        ThreadingManager::Get()->QueueTask(std::make_shared<DelayedTask>(
+            [=]() { Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor); }); },
+            MillisecondDuration(50)));
         return;
     }
 
@@ -375,9 +379,9 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
     if(Graphics::HasX11ErrorOccured()) {
         LOG_ERROR(
             "Window: SetX11Cursor: failed due to x11 error (XFixesGetCursorImage), retrying "
-            "next frame");
-        Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor); });
-        return;
+            "in 50ms");
+
+        goto queueretrylabel;
     }
 
     std::unique_ptr<XFixesCursorImage, int (*)(void*)> xCursor(tmpImg, XFree);

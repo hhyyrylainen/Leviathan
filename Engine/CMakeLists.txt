@@ -224,6 +224,7 @@ else()
     "GUI/LeviathanJavaScriptAsync.cpp" "GUI/LeviathanJavaScriptAsync.h"
     "GUI/KeyMapping.cpp" "GUI/KeyMapping.h"
     "GUI/GuiInputSettings.h"
+    "GUI/JSProxyable.h"
     )
 
 

@@ -53,10 +53,14 @@ var Leviathan = {};
     }
 
     //! Plays a 2D sound effect. Requires VIEW_SECURITYLEVEL_NORMAL
-    Leviathan.Play2DSoundEffect = function(filename){
+    native function Play2DSoundEffect(filename);
+    Leviathan.Play2DSoundEffect = Play2DSoundEffect;
 
-        native function Play2DSoundEffect(filename);
-        Play2DSoundEffect(filename);
-    }
+    //! Plays a 2D sound (either of the boolean parameters must be
+    //! true. use Play2DSoundEffect instead if both are false)
+    //! oncreated a callback to be called when the object is created. Passes the object
+    //! as the first parameter to the callback
+    native function Play2DSound(filename, looping, startpaused, oncreated);
+    Leviathan.Play2DSound = Play2DSound;
     
 }());

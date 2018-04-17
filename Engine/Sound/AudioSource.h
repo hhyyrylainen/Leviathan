@@ -3,7 +3,7 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "Common/ReferenceCounted.h"
+#include "GUI/JSProxyable.h"
 
 #include "cAudio/IAudioSource.h"
 
@@ -17,7 +17,7 @@ namespace Leviathan {
 class SoundDevice;
 
 //! \brief Small ReferenceCounted wrapper around a sound stream
-class AudioSource : public ReferenceCounted {
+class AudioSource : public GUI::JSProxyable {
 protected:
     // These are protected for only constructing properly reference
     // counted instances through MakeShared

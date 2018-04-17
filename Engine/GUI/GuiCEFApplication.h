@@ -101,6 +101,11 @@ public:
     //! string with the name of the message
     DLLEXPORT void SendCustomExtensionMessage(CefRefPtr<CefProcessMessage> message);
 
+    //! \brief Sends a standard message to the main process
+    void SendProcessMessage(CefRefPtr<CefProcessMessage> message);
+
+    //! \todo These should be moved to use SendProcessMessage to move all of this specific
+    //! functionality out of this class
     void StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo);
     void StopListeningForEvents();
 

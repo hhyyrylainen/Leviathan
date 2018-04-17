@@ -17,6 +17,9 @@ void JSNativeCoreAPI::ClearContextValues()
     Owner->StopListeningForEvents();
     // This should be enough //
     RegisteredListeners.clear();
+
+    // Let go of callbacks
+    PendingRequestCallbacks.clear();
 }
 // ------------------------------------ //
 bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> object,
@@ -96,10 +99,9 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
 
         args->SetBool(0, arguments[0]->GetBoolValue());
 
-        // TODO: is this not as clean way to do this as calling through Owner that also has the
-        // browser object
-        CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        SendProcessMessage(msg);
         return true;
+
     } else if(name == "Play2DSoundEffect") {
 
         if(arguments.size() < 1 || !arguments[0]->IsString()) {
@@ -114,14 +116,151 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
         args->SetString(0, arguments[0]->GetStringValue());
-        CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER, msg);
+        // CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER,
+        // msg);
+        SendProcessMessage(msg);
+        return true;
+
+    } else if(name == "Play2DSound") {
+
+        if(arguments.size() < 4 || !arguments[0]->IsString() || !arguments[1]->IsBool() ||
+            !arguments[2]->IsBool() || !arguments[3]->IsFunction()) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: string, bool, bool, function";
+            return true;
+        }
+
+        if(arguments[1]->GetBoolValue() == false && arguments[2]->GetBoolValue() == false) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, both boolean parameters are false";
+            return true;
+        }
+
+        // Add to queue
+        const auto requestNumber = ++RequestSequenceNumber;
+
+        GUARD_LOCK();
+
+        PendingRequestCallbacks.push_back(std::make_tuple(
+            requestNumber, arguments[3], nullptr, CefV8Context::GetCurrentContext()));
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("AudioSource");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetString(0, "new");
+
+        args->SetInt(1, requestNumber);
+        args->SetString(2, arguments[0]->GetStringValue());
+        args->SetBool(3, arguments[1]->GetBoolValue());
+        args->SetBool(4, arguments[2]->GetBoolValue());
+        SendProcessMessage(msg);
         return true;
     }
 
     // Not handled //
     return false;
 }
+// ------------------------------------ //
+void JSNativeCoreAPI::SendProcessMessage(CefRefPtr<CefProcessMessage> message)
+{
+    Owner->SendProcessMessage(message);
+}
+// ------------------------------------ //
+bool JSNativeCoreAPI::HandleProcessMessage(CefRefPtr<CefBrowser> browser,
+    CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
+{
+    if(message->GetName() == "AudioSource") {
 
+        auto args = message->GetArgumentList();
+
+        // First parameter is the type and second is the request number
+        const auto& type = args->GetString(0);
+        const auto& requestNumber = args->GetInt(1);
+
+        // Then handle on the type //
+        if(type == "new") {
+
+            // Detect creation
+            // The only parameter is the id we use for future calls related to this source
+            const auto& createdId = args->GetInt(2);
+
+            GUARD_LOCK();
+
+            // Find the request
+            const auto requestIndex = FindRequestByNumber(requestNumber);
+
+            if(requestIndex >= PendingRequestCallbacks.size()) {
+                LOG(ERROR) << "JSNativeCoreAPI AudioSource response didn't find request: "
+                           << requestNumber;
+                return true;
+            }
+
+            const auto& callback = PendingRequestCallbacks[requestIndex];
+
+            CefRefPtr<CefV8Context> context = std::get<3>(callback);
+
+#ifdef JSNATIVE_CORE_API_VERBOSE
+            LOG(INFO) << "JSNativeCoreAPI AudioSource created: " << createdId;
+#endif
+
+            // Enter the current context to be able to create things //
+            context->Enter();
+
+            {
+                // Create the proxy object
+                CefRefPtr<CefV8Value> proxy;
+
+                if(createdId == -1) {
+                    // Failed
+                    proxy->CreateNull();
+                } else {
+                    CefRefPtr<CefV8Accessor> accessor =
+                        new JSAudioSourceAccessor(*this, createdId);
+                    proxy = CefV8Value::CreateObject(accessor, nullptr);
+                    proxy->SetUserData(accessor);
+                }
+
+                // And give it to JavaScript
+                CefV8ValueList args;
+                args.push_back(proxy);
+
+                // We don't care about the return value
+                std::get<1>(callback)->ExecuteFunction(nullptr, args);
+            }
+
+            // And let go of the callback
+            PendingRequestCallbacks.erase(PendingRequestCallbacks.begin() + requestIndex);
+
+            // Leave the context //
+            context->Exit();
+
+            return true;
+        }
+
+        LOG(ERROR) << "Unknown JSNativeCoreAPI AudioSource response: "
+                   << Convert::Utf16ToUtf8(type);
+        return true;
+    }
+
+
+    return false;
+}
+
+
+size_t JSNativeCoreAPI::FindRequestByNumber(int number) const
+{
+    for(size_t i = 0; i < PendingRequestCallbacks.size(); ++i) {
+
+        if(std::get<0>(PendingRequestCallbacks[i]) == number)
+            return i;
+    }
+
+    return -1;
+}
+
+// ------------------------------------ //
 void JSNativeCoreAPI::HandlePacket(const Event& eventdata)
 {
     // Just pass it to all the listeners //
@@ -297,4 +436,86 @@ void JSNamedVarsAccessor::AttachYourValues(CefRefPtr<CefV8Value> thisisyou)
         thisisyou->SetValue(
             vecval->at(i)->GetName(), V8_ACCESS_CONTROL_DEFAULT, V8_PROPERTY_ATTRIBUTE_NONE);
     }
+}
+// ------------------------------------ //
+// JSAudioSourceAccessor
+JSAudioSourceAccessor::JSAudioSourceAccessor(JSNativeCoreAPI& messagebridge, int id) :
+    ID(id), MessageBridge(messagebridge)
+{
+}
+
+JSAudioSourceAccessor::~JSAudioSourceAccessor()
+{
+    CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("AudioSource");
+
+    CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+    args->SetString(0, "destroy");
+    args->SetInt(1, ID);
+
+    MessageBridge.SendProcessMessage(message);
+}
+// ------------------------------------ //
+bool JSAudioSourceAccessor::Get(const CefString& name, const CefRefPtr<CefV8Value> object,
+    CefRefPtr<CefV8Value>& retval, CefString& exception)
+{
+    if(name == "Pause") {
+        retval = CefV8Value::CreateFunction("Pause",
+            new JSLambdaFunction([](const CefString& name, CefRefPtr<CefV8Value> object,
+                                     const CefV8ValueList& arguments,
+                                     CefRefPtr<CefV8Value>& retval,
+                                     CefString& exception) -> bool {
+
+                if(name == "Pause") {
+
+                    // The JSAudioSourceAccessor is the user data
+                    if(!object) {
+                        exception = "No 'this' passed to function";
+                        return true;
+                    }
+
+                    auto userData = object->GetUserData();
+
+                    if(!userData) {
+                        exception = "'this' has no userdata";
+                        return true;
+                    }
+
+                    auto* casted = dynamic_cast<JSAudioSourceAccessor*>(userData.get());
+
+                    if(!casted) {
+                        exception = "'this' was of wrong type. Excepted JSAudioSourceAccessor";
+                        return true;
+                    }
+
+                    casted->Pause();
+                    return true;
+                }
+
+                return false;
+            }));
+        return true;
+    }
+
+    return false;
+}
+
+bool JSAudioSourceAccessor::Set(const CefString& name, const CefRefPtr<CefV8Value> object,
+    const CefRefPtr<CefV8Value> value, CefString& exception)
+{
+    return false;
+}
+// ------------------------------------ //
+DLLEXPORT void JSAudioSourceAccessor::Pause()
+{
+    CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("AudioSource");
+
+    CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+    args->SetString(0, "Pause");
+    // No callback
+    args->SetInt(1, -1);
+    args->SetInt(2, ID);
+
+    MessageBridge.SendProcessMessage(message);
 }

@@ -163,6 +163,9 @@ DLLEXPORT void View::ReleaseResources()
     // Release our objects //
     SAFE_DELETE(OurAPIHandler);
 
+    // Destroy all remaining proxy targets
+    ProxyedObjects.clear();
+
     Ogre::SceneManager* scene = Wind->GetOverlayScene();
 
     if(Node) {
@@ -642,11 +645,21 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
             message->GetArgumentList()->GetString(0));
     }
 
+    if(name == "AudioSource") {
+
+        if(ViewSecurity < VIEW_SECURITYLEVEL_NORMAL)
+            return true;
+
+        _HandleAudioSourceMessage(message);
+
+        return true;
+    }
+
 
     // Not handled //
     return false;
 }
-
+// ------------------------------------ //
 bool View::_PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message)
 {
     // Check does name match something //
@@ -690,7 +703,45 @@ bool View::_PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& 
     // Not handled //
     return false;
 }
+void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message)
+{
+    auto args = message->GetArgumentList();
 
+    const auto& operation = args->GetString(0);
+
+    if(operation == "new") {
+
+        const auto requestNumber = args->GetInt(1);
+        const auto& file = args->GetString(2);
+        bool looping = args->GetBool(3);
+        bool startPaused = args->GetBool(4);
+
+        // Create object
+        AudioSource::pointer source = Engine::Get()->GetSoundDevice()->Play2DSound(
+            Convert::Utf16ToUtf8(file), looping, startPaused);
+
+        if(source) {
+            ProxyedObjects.insert(std::make_pair(source->GetID(), source));
+        } else {
+            LOG_ERROR("GuiView: failed to create AudioSource for JavaScript proxy");
+        }
+
+        // And respond with the resulting ID
+        CefRefPtr<CefProcessMessage> responseMessage =
+            CefProcessMessage::Create("AudioSource");
+
+        CefRefPtr<CefListValue> responseArgs = responseMessage->GetArgumentList();
+        responseArgs->SetString(0, "new");
+        responseArgs->SetInt(1, requestNumber);
+        responseArgs->SetInt(2, source ? source->GetID() : -1);
+
+        OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
+        return;
+    }
+
+    LOG_ERROR("Got unknown AudioSource message: " + Convert::Utf16ToUtf8(operation));
+}
+// ------------------------------------ //
 DLLEXPORT int View::OnEvent(Event* event)
 {
     // Serialize it to a packet //

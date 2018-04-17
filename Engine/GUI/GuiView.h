@@ -7,6 +7,7 @@
 #include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
 #include "GuiInputSettings.h"
+#include "JSProxyable.h"
 
 #include "OgreMaterial.h"
 #include "OgreTexture.h"
@@ -284,6 +285,8 @@ protected:
 protected:
     bool _PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message);
 
+    void _HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message);
+
 protected:
     //! Unique ID
     const int ID;
@@ -331,6 +334,10 @@ protected:
 
     //! Keeps track of generic events
     std::map<std::string, int> RegisteredGenerics;
+
+    //! Proxied objects. These are sent messages from the render process from the proxy objects
+    //! there that are exposed to JavaScript
+    std::map<int, JSProxyable::pointer> ProxyedObjects;
 };
 
 }} // namespace Leviathan::GUI

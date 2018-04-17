@@ -162,6 +162,12 @@ bool CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
     if(_PMCheckIsEvent(message))
         return true;
 
+    if(NativeCoreLeviathanAPI->HandleProcessMessage(browser, source_process, message))
+        return true;
+
+
+    // TODO: custom extension messages in the render process
+
     // Not handled //
     return false;
 }
@@ -174,7 +180,12 @@ DLLEXPORT void CefApplication::RegisterCustomExtension(
 // ------------------------------------ //
 DLLEXPORT void CefApplication::SendCustomExtensionMessage(CefRefPtr<CefProcessMessage> message)
 {
-    LOG(INFO) << "Seding custom ext message";
+    // TODO: add debug verification here for message name being "Custom"
+    OurBrowser->SendProcessMessage(PID_BROWSER, message);
+}
+
+void CefApplication::SendProcessMessage(CefRefPtr<CefProcessMessage> message)
+{
     OurBrowser->SendProcessMessage(PID_BROWSER, message);
 }
 // ------------------------------------ //

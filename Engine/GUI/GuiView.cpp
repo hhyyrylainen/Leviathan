@@ -737,10 +737,60 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
 
         OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
         return;
+
+    } else if(operation == "destroy") {
+
+        _HandleDestroyProxyMsg(args->GetInt(1));
+        return;
+    } else if(operation == "Pause") {
+
+        // Function call
+        const auto requestNumber = args->GetInt(1);
+
+        if(requestNumber != -1)
+            LOG_WARNING("GuiView: request responses for Pause aren't done, request number: " +
+                        std::to_string(requestNumber));
+
+        const auto id = args->GetInt(2);
+
+        const auto iter = ProxyedObjects.find(id);
+
+        if(iter == ProxyedObjects.end()) {
+
+            LOG_ERROR(
+                "GuiView: didn't find proxyed object (for Pause): " + std::to_string(id));
+            return;
+        }
+
+        auto* casted = dynamic_cast<AudioSource*>(iter->second.get());
+
+        if(!casted) {
+            LOG_ERROR("GuiView: proxyed object is of wrong type (for Pause), id: " +
+                      std::to_string(id));
+            return;
+        }
+
+        casted->Pause();
+        return;
     }
 
     LOG_ERROR("Got unknown AudioSource message: " + Convert::Utf16ToUtf8(operation));
 }
+
+void View::_HandleDestroyProxyMsg(int id)
+{
+    const auto iter = ProxyedObjects.find(id);
+
+    if(iter == ProxyedObjects.end()) {
+
+        LOG_ERROR(
+            "GuiView: didn't find proxyed object for destroy message: " + std::to_string(id));
+        return;
+    }
+
+    ProxyedObjects.erase(iter);
+}
+
 // ------------------------------------ //
 DLLEXPORT int View::OnEvent(Event* event)
 {

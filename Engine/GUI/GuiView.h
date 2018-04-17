@@ -285,7 +285,12 @@ protected:
 protected:
     bool _PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message);
 
+    //! \todo It would be quite good if this and HandleProcessMessage (the AudioSource part)
+    //! could be moved to one file so that all the implementation for the proxy would be in the
+    //! same place
     void _HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message);
+
+    void _HandleDestroyProxyMsg(int id);
 
 protected:
     //! Unique ID

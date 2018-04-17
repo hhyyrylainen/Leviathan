@@ -216,9 +216,9 @@ bool JSNativeCoreAPI::HandleProcessMessage(CefRefPtr<CefBrowser> browser,
                     // Failed
                     proxy->CreateNull();
                 } else {
-                    CefRefPtr<CefV8Accessor> accessor =
-                        new JSAudioSourceAccessor(*this, createdId);
-                    proxy = CefV8Value::CreateObject(accessor, nullptr);
+                    CefRefPtr<CefV8Interceptor> accessor =
+                        new JSAudioSourceInterceptor(*this, createdId);
+                    proxy = CefV8Value::CreateObject(nullptr, accessor);
                     proxy->SetUserData(accessor);
                 }
 
@@ -438,13 +438,13 @@ void JSNamedVarsAccessor::AttachYourValues(CefRefPtr<CefV8Value> thisisyou)
     }
 }
 // ------------------------------------ //
-// JSAudioSourceAccessor
-JSAudioSourceAccessor::JSAudioSourceAccessor(JSNativeCoreAPI& messagebridge, int id) :
+// JSAudioSourceInterceptor
+JSAudioSourceInterceptor::JSAudioSourceInterceptor(JSNativeCoreAPI& messagebridge, int id) :
     ID(id), MessageBridge(messagebridge)
 {
 }
 
-JSAudioSourceAccessor::~JSAudioSourceAccessor()
+JSAudioSourceInterceptor::~JSAudioSourceInterceptor()
 {
     CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("AudioSource");
 
@@ -456,57 +456,70 @@ JSAudioSourceAccessor::~JSAudioSourceAccessor()
     MessageBridge.SendProcessMessage(message);
 }
 // ------------------------------------ //
-bool JSAudioSourceAccessor::Get(const CefString& name, const CefRefPtr<CefV8Value> object,
+bool JSAudioSourceInterceptor::Get(const CefString& name, const CefRefPtr<CefV8Value> object,
     CefRefPtr<CefV8Value>& retval, CefString& exception)
 {
     if(name == "Pause") {
         retval = CefV8Value::CreateFunction("Pause",
-            new JSLambdaFunction([](const CefString& name, CefRefPtr<CefV8Value> object,
-                                     const CefV8ValueList& arguments,
-                                     CefRefPtr<CefV8Value>& retval,
-                                     CefString& exception) -> bool {
+            new JSLambdaFunction(
+                [](const CefString& name, CefRefPtr<CefV8Value> object,
+                    const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
+                    CefString& exception) -> bool {
 
-                if(name == "Pause") {
+                    if(name == "Pause") {
 
-                    // The JSAudioSourceAccessor is the user data
-                    if(!object) {
-                        exception = "No 'this' passed to function";
+                        // The JSAudioSourceInterceptor is the user data
+                        if(!object) {
+                            exception = "No 'this' passed to function";
+                            return true;
+                        }
+
+                        auto userData = object->GetUserData();
+
+                        if(!userData) {
+                            exception = "'this' has no userdata";
+                            return true;
+                        }
+
+                        auto* casted = dynamic_cast<JSAudioSourceInterceptor*>(userData.get());
+
+                        if(!casted) {
+                            exception =
+                                "'this' was of wrong type. Excepted JSAudioSourceInterceptor";
+                            return true;
+                        }
+
+                        casted->Pause();
                         return true;
                     }
 
-                    auto userData = object->GetUserData();
-
-                    if(!userData) {
-                        exception = "'this' has no userdata";
-                        return true;
-                    }
-
-                    auto* casted = dynamic_cast<JSAudioSourceAccessor*>(userData.get());
-
-                    if(!casted) {
-                        exception = "'this' was of wrong type. Excepted JSAudioSourceAccessor";
-                        return true;
-                    }
-
-                    casted->Pause();
-                    return true;
-                }
-
-                return false;
-            }));
+                    return false;
+                }));
         return true;
     }
 
     return false;
 }
 
-bool JSAudioSourceAccessor::Set(const CefString& name, const CefRefPtr<CefV8Value> object,
+bool JSAudioSourceInterceptor::Get(int index, const CefRefPtr<CefV8Value> object,
+    CefRefPtr<CefV8Value>& retval, CefString& exception)
+{
+    return false;
+}
+
+bool JSAudioSourceInterceptor::Set(int index, const CefRefPtr<CefV8Value> object,
+    const CefRefPtr<CefV8Value> value, CefString& exception)
+{
+    return false;
+}
+
+bool JSAudioSourceInterceptor::Set(const CefString& name, const CefRefPtr<CefV8Value> object,
     const CefRefPtr<CefV8Value> value, CefString& exception)
 {
     return false;
 }
 // ------------------------------------ //
-DLLEXPORT void JSAudioSourceAccessor::Pause()
+DLLEXPORT void JSAudioSourceInterceptor::Pause()
 {
     CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("AudioSource");
 

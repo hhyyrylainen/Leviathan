@@ -40,6 +40,7 @@ private:
 };
 
 //! \brief Provides an accessor interface for javascript for accessing NamedVars
+//! \todo Change this to an interceptor to not have to call SetValue in AttachYourValues
 class JSNamedVarsAccessor : public CefV8Accessor {
 public:
     JSNamedVarsAccessor(NamedVars* valueobject);
@@ -60,22 +61,27 @@ protected:
 };
 
 //! \brief Provides access for JavaScript to AudioSource
-class JSAudioSourceAccessor : public CefV8Accessor {
+//! \todo Expose a destroy method to js as relying on garbage collecting doesn't seem that
+//! great
+class JSAudioSourceInterceptor : public CefV8Interceptor {
 public:
-    JSAudioSourceAccessor(JSNativeCoreAPI& messagebridge, int id);
+    JSAudioSourceInterceptor(JSNativeCoreAPI& messagebridge, int id);
     //! \brief Sends the destroy message for the proxied object
-    ~JSAudioSourceAccessor();
+    ~JSAudioSourceInterceptor();
 
+    bool Get(int index, const CefRefPtr<CefV8Value> object, CefRefPtr<CefV8Value>& retval,
+        CefString& exception) override;
     bool Get(const CefString& name, const CefRefPtr<CefV8Value> object,
         CefRefPtr<CefV8Value>& retval, CefString& exception) override;
-
+    bool Set(int index, const CefRefPtr<CefV8Value> object, const CefRefPtr<CefV8Value> value,
+        CefString& exception) override;
     bool Set(const CefString& name, const CefRefPtr<CefV8Value> object,
         const CefRefPtr<CefV8Value> value, CefString& exception) override;
 
     // JS exposed functions
     DLLEXPORT void Pause();
 
-    IMPLEMENT_REFCOUNTING(JSAudioSourceAccessor);
+    IMPLEMENT_REFCOUNTING(JSAudioSourceInterceptor);
 
 protected:
     //! Our ID that we use to send our operations as messages

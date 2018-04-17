@@ -48,6 +48,12 @@ public:
             Source->stop();
     }
 
+    DLLEXPORT inline void Pause()
+    {
+        if(Source)
+            Source->pause();
+    }
+
     DLLEXPORT inline bool IsPlaying() const
     {
         if(Source)

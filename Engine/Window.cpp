@@ -465,33 +465,41 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 
     int colourBitmapSize = 0;
     int maskBitmapSize = 0;
-	bool monochrome;
+    bool monochrome;
 
     // This can be none if the cursor is monochrome
     if(info->hbmColor) {
         colourBitmapSize = GetObjectA(info->hbmColor, sizeof(BITMAP), &colourBitmap);
 
-		if (colourBitmap.bmBitsPixel != 32) {
+        if(colourBitmap.bmBitsPixel != 32) {
 
-			LOG_ERROR(
-				"Window: SetWinCursor: got some weird colour bitmapsthat have unexpected pixel depth");
-			return;
-		}
+            LOG_ERROR("Window: SetWinCursor: got some weird colour bitmapsthat have "
+                      "unexpected pixel depth");
+            return;
+        }
 
-		monochrome = false;
+        if(colourBitmap.bmBits != nullptr)
+            LOG_WARNING(
+                "Window: SetWinCursor: bitmap retrieve got pixel data, this will be leaked");
+
+        monochrome = false;
 
     } else {
-		// And the colour cursors don't need the mask so this is only retrieved fro monochrome
+        // And the colour cursors don't need the mask so this is only retrieved fro monochrome
         maskBitmapSize = GetObjectA(info->hbmMask, sizeof(BITMAP), &maskBitmap);
 
-		if (maskBitmap.bmBitsPixel != 1 ) {
+        if(maskBitmap.bmBitsPixel != 1) {
 
-			LOG_ERROR(
-				"Window: SetWinCursor: got some weird monochrome bitmapsthat have unexpected pixel depth");
-			return;
-		}
+            LOG_ERROR("Window: SetWinCursor: got some weird monochrome bitmapsthat have "
+                      "unexpected pixel depth");
+            return;
+        }
 
-		monochrome = true;
+        if(maskBitmap.bmBits != nullptr)
+            LOG_WARNING(
+                "Window: SetWinCursor: bitmap retrieve got pixel data, this will be leaked");
+
+        monochrome = true;
     }
 
     if((monochrome && maskBitmapSize == 0) || (!monochrome && colourBitmapSize == 0)) {
@@ -539,11 +547,11 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
     if(monochrome) {
         // For some reason the colour cursors don't need this so save time retrieving
 
-		bi.biWidth = maskBitmap.bmWidth;
-		bi.biHeight = -maskBitmap.bmHeight;
-		bi.biBitCount = 1;
-		const auto maskByteCount = (maskBitmap.bmWidth / 8) * maskBitmap.bmHeight;
-		bi.biSizeImage = maskByteCount;
+        bi.biWidth = maskBitmap.bmWidth;
+        bi.biHeight = -maskBitmap.bmHeight;
+        bi.biBitCount = 1;
+        const auto maskByteCount = (maskBitmap.bmWidth / 8) * maskBitmap.bmHeight;
+        bi.biSizeImage = maskByteCount;
 
         maskPixels = std::unique_ptr<uint8_t[]>(new uint8_t[maskByteCount]);
 

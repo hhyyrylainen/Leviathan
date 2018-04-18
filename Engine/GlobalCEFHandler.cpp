@@ -110,8 +110,23 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
     } catch(const boost::filesystem::filesystem_error& e) {
 
-        std::cout << "Error missing file or accessing cache location: " << e.what()
-                  << std::endl;
+        std::stringstream msg;
+        msg << "Error missing file or accessing cache location: " << e.what() << "\n";
+
+
+        std::ofstream write("Leviathan_start_failure_" +
+#ifdef __linux
+                            std::to_string(::getpid()) +
+#endif //__linux
+                            ".txt");
+        write << msg.str();
+        write << "Args are (" << argcount << ")" << std::endl;
+        for(int i = 0; i < argcount; ++i)
+            write << args[i] << std::endl;
+        write << std::endl;
+        write.close();
+
+        std::cout << msg.str();
         abort();
     }
 

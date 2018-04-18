@@ -464,34 +464,51 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
     BITMAP maskBitmap;
 
     int colourBitmapSize = 0;
+    int maskBitmapSize = 0;
+	bool monochrome;
 
     // This can be none if the cursor is monochrome
-    if(info->hbmColor)
+    if(info->hbmColor) {
         colourBitmapSize = GetObjectA(info->hbmColor, sizeof(BITMAP), &colourBitmap);
 
-    int maskBitmapSize = GetObjectA(info->hbmMask, sizeof(BITMAP), &maskBitmap);
+		if (colourBitmap.bmBitsPixel != 32) {
 
-    if(maskBitmapSize == 0) {
+			LOG_ERROR(
+				"Window: SetWinCursor: got some weird colour bitmapsthat have unexpected pixel depth");
+			return;
+		}
+
+		monochrome = false;
+
+    } else {
+		// And the colour cursors don't need the mask so this is only retrieved fro monochrome
+        maskBitmapSize = GetObjectA(info->hbmMask, sizeof(BITMAP), &maskBitmap);
+
+		if (maskBitmap.bmBitsPixel != 1 ) {
+
+			LOG_ERROR(
+				"Window: SetWinCursor: got some weird monochrome bitmapsthat have unexpected pixel depth");
+			return;
+		}
+
+		monochrome = true;
+    }
+
+    if((monochrome && maskBitmapSize == 0) || (!monochrome && colourBitmapSize == 0)) {
 
         LOG_ERROR("Window: SetWinCursor: failed to get bitmap objects");
         return;
     }
 
-    if(maskBitmap.bmBitsPixel != 1 ||
-        (colourBitmapSize > 0 && colourBitmap.bmBitsPixel != 32)) {
+    const auto width = monochrome ? maskBitmap.bmWidth : colourBitmap.bmWidth;
+    const auto height = monochrome ? maskBitmap.bmHeight / 2 : colourBitmap.bmHeight;
 
-        LOG_ERROR(
-            "Window: SetWinCursor: got some weird bitmaps that have unexpected pixel depths");
-        return;
-    }
-
-    bool monochrome = colourBitmapSize == 0;
-    const auto width = maskBitmap.bmWidth;
-    const auto height = monochrome ? maskBitmap.bmHeight / 2 : maskBitmap.bmHeight;
-
-    // The pixels format is R8G8B8A8 because we fill it in from the BITMAPs like that
     std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> image(
-        SDL_CreateRGBSurfaceWithFormat(0, width, height, 32, SDL_PIXELFORMAT_ARGB8888),
+        SDL_CreateRGBSurfaceWithFormat(0, width, height, 32,
+            // There's some weird stuff going on with this format. This should not be changed
+            // This format is accurate for monochrome but colour cursors have the elements in a
+            // different order, for some reason
+            SDL_PIXELFORMAT_RGBA32),
         SDL_FreeSurface);
 
     if(!image) {
@@ -510,13 +527,8 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
     BITMAPINFOHEADER bi;
 
     bi.biSize = sizeof(BITMAPINFOHEADER);
-    bi.biWidth = maskBitmap.bmWidth;
-    bi.biHeight = -maskBitmap.bmHeight;
     bi.biPlanes = 1;
-    bi.biBitCount = 1;
     bi.biCompression = BI_RGB; // Apparently this means also uncompressed
-    const auto maskByteCount = (maskBitmap.bmWidth / 8) * maskBitmap.bmHeight;
-    bi.biSizeImage = maskByteCount;
     bi.biXPelsPerMeter = 0;
     bi.biYPelsPerMeter = 0;
     bi.biClrUsed = 0;
@@ -524,23 +536,30 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 
     bool fail = false;
 
-    maskPixels = std::unique_ptr<uint8_t[]>(new uint8_t[maskByteCount]);
+    if(monochrome) {
+        // For some reason the colour cursors don't need this so save time retrieving
 
-    int readBytes = GetDIBits(hdcScreen, info->hbmMask, 0, maskBitmap.bmHeight,
-                        maskPixels.get(), (BITMAPINFO*)&bi, DIB_RGB_COLORS) *
-                    maskBitmap.bmWidthBytes;
-    if(readBytes != maskByteCount) {
-        LOG_ERROR("Window: SetWinCursor: pixel read count is different (read) " +
-                  std::to_string(readBytes) + " != " + std::to_string(maskByteCount));
-        fail = true;
-    }
+		bi.biWidth = maskBitmap.bmWidth;
+		bi.biHeight = -maskBitmap.bmHeight;
+		bi.biBitCount = 1;
+		const auto maskByteCount = (maskBitmap.bmWidth / 8) * maskBitmap.bmHeight;
+		bi.biSizeImage = maskByteCount;
 
-    if(!monochrome && !fail) {
+        maskPixels = std::unique_ptr<uint8_t[]>(new uint8_t[maskByteCount]);
+
+        int readBytes = GetDIBits(hdcScreen, info->hbmMask, 0, maskBitmap.bmHeight,
+                            maskPixels.get(), (BITMAPINFO*)&bi, DIB_RGB_COLORS) *
+                        maskBitmap.bmWidthBytes;
+        if(readBytes != maskByteCount) {
+            LOG_ERROR("Window: SetWinCursor: pixel read count is different (read) " +
+                      std::to_string(readBytes) + " != " + std::to_string(maskByteCount));
+            fail = true;
+        }
+    } else {
 
         bi.biWidth = colourBitmap.bmWidth;
         bi.biHeight = -colourBitmap.bmHeight;
         bi.biBitCount = 32;
-        bi.biCompression = BI_RGB;
         const auto colourByteCount = (colourBitmap.bmWidth * 4) * colourBitmap.bmHeight;
         bi.biSizeImage = colourByteCount;
 
@@ -567,141 +586,58 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
     uint8_t* directMask = maskPixels.get();
     uint8_t* directColour = colourPixels.get();
 
-
-    std::stringstream str;
-    for(size_t y = 0; y < height * 2; ++y) {
-        for(size_t x = 0; x < maskBitmap.bmWidthBytes; ++x) {
-
-            str << std::bitset<8>(directMask[maskBitmap.bmWidthBytes * y + x]);
-        }
-        str << "\n";
-    }
-    LOG_WRITE(str.str());
-
-
     // This if is outside the loop to not constantly hit it
     if(monochrome) {
-        int readbit = 0;
-		int readcolour = maskBitmap.bmWidthBytes * 8 * height;
-        std::stringstream str1;
         for(size_t y = 0; y < height; ++y) {
             for(size_t x = 0; x < width; ++x) {
 
                 const auto pixelStart = y * width * 4 + (x * 4);
 
-				const auto maskBit = (maskBitmap.bmWidthBytes * 8 * y) + x;
-				const auto maskIndex = maskBit / 8;
-				const auto indexInsideByte = maskBit % 8;
-				const auto insideBitAnd = (0x80 >> indexInsideByte);
+                const auto maskBit = (maskBitmap.bmWidthBytes * 8 * y) + x;
+                const auto maskIndex = maskBit / 8;
+                const auto indexInsideByte = maskBit % 8;
+                const auto insideBitAnd = (0x80 >> indexInsideByte);
 
-				//{
-				//	std::stringstream s;
-				//	s << "Vars:" << "bmWidthBytes: " << maskBitmap.bmWidthBytes << " y:" << y << " x: " << x;
-				//	LOG_INFO(s.str());
-				//}
-
-				LEVIATHAN_ASSERT(maskBit == readbit, "logic fail1: " + std::to_string(maskBit) + " != " +
-					std::to_string(readbit));
-
-                const uint8_t maskByte =
-                    directMask[maskIndex];
+                const uint8_t maskByte = directMask[maskIndex];
                 const bool visible = (maskByte & insideBitAnd) > 0;
-                // str << /*"i: " << (int)maskBitmap.bmWidthBytes * y + (x / 8) << " " <<
-                // (int)visible */ std::hex << (int)maskByte << " ";
                 const auto mask = visible ? 255 : 0;
 
-				const auto colourIndex = maskIndex + (maskBitmap.bmWidthBytes * height);
-                const auto sourceByte =
-                    directMask[colourIndex];
+                const auto colourIndex = maskIndex + (maskBitmap.bmWidthBytes * height);
+                const auto sourceByte = directMask[colourIndex];
                 const bool sourcePixel = (sourceByte & insideBitAnd) > 0;
                 const auto pixel = sourcePixel ? 255 : 0;
 
-                LEVIATHAN_ASSERT(readbit == maskIndex * 8 + indexInsideByte,
-                    "bit read logic fail, " + std::to_string(readbit) + " != " +
-                        std::to_string(maskIndex * 8 + indexInsideByte));
-
-				LEVIATHAN_ASSERT(readcolour == colourIndex * 8 + indexInsideByte,
-					"bit read2 logic fail, " + std::to_string(readcolour) + " != " +
-					std::to_string(colourIndex * 8 + indexInsideByte));
-
-                ++readbit;
-				++readcolour;
-
-				//{
-				//	std::stringstream s;
-				//	s << " y:" << y << " x: " << x << " " << std::bitset<8>(sourceByte) << " band: " << std::bitset<8>(insideBitAnd);
-				//	LOG_INFO(s.str());
-				//}
-
-                if(x == 0) {
-                    if(pixel) {
-                        LOG_INFO("HERE");
-                    }
-                }
-
-                //std::stringstream str;
-                //str << x << ", " << y << ": "
-                //    << "mask index: " << maskBitmap.bmWidthBytes * y + (x / 8)
-                //    << " offset: " << std::bitset<8>(0x1 << (x % 8))
-                //    << " source offset: " << maskBitmap.bmWidthBytes * (y + height) + (x / 8);
-                // LOG_WRITE(str.str())
-                // const auto result = (mask & sourcePixel);
-                // Alpha
-                // pixels[pixelStart + 3] = mask;
-                pixels[pixelStart + 0] = 0 /*pixel & mask*/;
                 // Red
-                pixels[pixelStart + 1] = 0 /*255 & pixel*/;
+                pixels[pixelStart + 0] = 0;
                 // Green
-                pixels[pixelStart + 2] = 0;
+                pixels[pixelStart + 1] = 0;
                 // Blue
+                pixels[pixelStart + 2] = 0;
+                // Alpha
                 pixels[pixelStart + 3] = pixel & mask;
-
-                str1 << std::hex << (int)(visible && pixel) << " ";
             }
-            str1 << "\n";
         }
-        // LOG_WRITE(str1.str());
-
-		SDL_SaveBMP(image.get(), "cursor_test.bmp");
-
     } else {
         for(size_t y = 0; y < height; ++y) {
             for(size_t x = 0; x < width; ++x) {
 
                 const auto pixelStart = y * width * 4 + (x * 4);
 
-				const auto sourcePixelStart = y * colourBitmap.bmWidthBytes + (x * 4);
+                const auto sourcePixelStart = y * colourBitmap.bmWidthBytes + (x * 4);
 
-				const auto maskBit = (maskBitmap.bmWidthBytes * 8 * y) + x;
-				const auto maskIndex = maskBit / 8;
-				const auto indexInsideByte = maskBit % 8;
-				const auto insideBitAnd = (0x80 >> indexInsideByte);
-
-				const uint8_t maskByte =
-					directMask[maskIndex];
-				const bool visible = (maskByte & insideBitAnd) > 0;
-				const auto mask = visible ? 255 : 0;
-
-				// Alpha
-				pixels[pixelStart + 0] = /*directColour[sourcePixelStart + 2] &*/ ~mask;
+                // Weird pixel order. This doesn't match the format for some reason
+                // So we just copy the data from the HBITMAP and hope it is right
+                // Also apparently applying the mask breaks everything
                 // Red
-                pixels[pixelStart + 1] = directColour[sourcePixelStart + 0] & mask;
+                pixels[pixelStart + 0] = directColour[sourcePixelStart + 0] /*& mask*/;
                 // Green
-                pixels[pixelStart + 2] = directColour[sourcePixelStart + 1] & mask;
+                pixels[pixelStart + 1] = directColour[sourcePixelStart + 1] /*& mask*/;
                 // Blue
-                pixels[pixelStart + 3] = directColour[sourcePixelStart + 2] & mask;
-                //// Red
-                // pixels[pixelStart + 0] = directColour[sourcePixelStart + 0];
-                //// Green
-                // pixels[pixelStart + 1] = directColour[sourcePixelStart + 1];
-                //// Blue
-                // pixels[pixelStart + 2] = directColour[sourcePixelStart + 2];
-
+                pixels[pixelStart + 2] = directColour[sourcePixelStart + 2] /*& mask*/;
+                // Alpha
+                pixels[pixelStart + 3] = directColour[sourcePixelStart + 3] /*& mask*/;
             }
         }
-
-
-		SDL_SaveBMP(image.get(), "cursor_test_colour.bmp");
     }
 
     std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> newCursor(

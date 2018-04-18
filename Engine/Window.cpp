@@ -345,8 +345,16 @@ DLLEXPORT void Window::OnFocusChange(bool focused)
 }
 // ------------------------------------ //
 #ifdef __linux
-DLLEXPORT void Window::SetX11Cursor(int cursor)
+DLLEXPORT void Window::SetX11Cursor(int cursor, int retrycount /*= 10*/)
 {
+    if(retrycount <= 0) {
+
+        LOG_ERROR("Window: SetX11Cursor: retrycount reached");
+        return;
+    }
+
+    Engine::Get()->AssertIfNotMainThread();
+
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
     if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
@@ -363,23 +371,86 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
         return;
     }
 
+    WantedX11Cursor = cursor;
     XDefineCursor(xdisplay, wmInfo.info.x11.window, cursor);
     if(Graphics::HasX11ErrorOccured()) {
         LOG_ERROR("Window: SetX11Cursor: failed due to x11 error (on define cursor), retrying "
                   "in 50ms");
+
+        ThreadingManager::Get()->QueueTask(std::make_shared<DelayedTask>(
+            [=]() {
+                Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor, retrycount - 1); });
+            },
+            MillisecondDuration(50)));
+        return;
+    }
+
+    // And we need to make it permanent so that the cursor isn't returned to default after it
+    // leaves and re-enters our window
+
+    // // Todo make this more robust somehow
+    // ThreadingManager::Get()->QueueTask(std::make_shared<DelayedTask>(
+    //     [=]() { Engine::Get()->Invoke([=]() { this->MakeX11CursorPermanent(); }); },
+    //     MillisecondDuration(10)));
+
+    MakeX11CursorPermanent();
+}
+
+DLLEXPORT void Window::MakeX11CursorPermanent()
+{
+    Engine::Get()->AssertIfNotMainThread();
+
+    // This needs to be retried if the cursor isn't over our window currently
+    if(IsMouseOutsideWindowClientArea()) {
+
+        LOG_ERROR("Window: MakeX11CursorPermanent: failed because mouse is outside area, "
+                  "retrying SetX11Cursor in 50ms and after mouse is inside");
+
+        ThreadingManager::Get()->QueueTask(std::make_shared<ConditionalDelayedTask>(
+            [=]() { Engine::Get()->Invoke([=]() { this->SetX11Cursor(WantedX11Cursor); }); },
+            [=]() { return !this->IsMouseOutsideWindowClientArea(); },
+            MillisecondDuration(50)));
+        return;
+    }
+
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
+
+        LOG_ERROR("Window: MakeX11CursorPermanent: failed to retrieve wm info");
+        return;
+    }
+
+    ::Display* xdisplay = cef_get_xdisplay();
+    if(!xdisplay) {
+
+        LOG_ERROR("Window: SetX11Cursor: cef_get_xdisplay failed");
+        return;
+    }
+
+    ::Display* usedDisplay = xdisplay;
+    // ::Display* usedDisplay = wmInfo.info.x11.display;
+
+    // Verify that we can use XFixes
+    int event_basep;
+    int error_basep;
+    if(!XFixesQueryExtension(usedDisplay, &event_basep, &error_basep)) {
+
+        LOG_ERROR("Window: MakeX11CursorPermanent: failed due to XFixes extension not being "
+                  "available / failing to load, retrying in 50ms");
     queueretrylabel:
         ThreadingManager::Get()->QueueTask(std::make_shared<DelayedTask>(
-            [=]() { Engine::Get()->Invoke([=]() { this->SetX11Cursor(cursor); }); },
+            [=]() { Engine::Get()->Invoke([=]() { this->MakeX11CursorPermanent(); }); },
             MillisecondDuration(50)));
         return;
     }
 
     // Now we can grab the image and feed it to SDL
-    auto* tmpImg = XFixesGetCursorImage(xdisplay);
+    // auto* tmpImg = XFixesGetCursorImage(xdisplay);
+    auto* tmpImg = XFixesGetCursorImage(usedDisplay);
     if(Graphics::HasX11ErrorOccured()) {
-        LOG_ERROR(
-            "Window: SetX11Cursor: failed due to x11 error (XFixesGetCursorImage), retrying "
-            "in 50ms");
+        LOG_ERROR("Window: MakeX11CursorPermanent: failed due to x11 error "
+                  "(XFixesGetCursorImage), retrying in 50ms");
 
         goto queueretrylabel;
     }
@@ -762,6 +833,22 @@ DLLEXPORT void Window::GetRelativeMouse(int& x, int& y)
     y = std::clamp(globalY, 0, height);
 }
 
+DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y)
+{
+    if(!SDLWindow)
+        return;
+
+    int globalX, globalY;
+    SDL_GetGlobalMouseState(&globalX, &globalY);
+
+    int windowX, windowY;
+    SDL_GetWindowPosition(SDLWindow, &windowX, &windowY);
+
+    x = globalX - windowX;
+    y = globalY - windowY;
+}
+
+
 DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y)
 {
 
@@ -784,7 +871,7 @@ DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y)
 DLLEXPORT bool Window::IsMouseOutsideWindowClientArea()
 {
     int X, Y;
-    GetRelativeMouse(X, Y);
+    GetUnclampedRelativeMouse(X, Y);
 
     int32_t width, height;
     GetSize(width, height);
@@ -964,9 +1051,9 @@ DLLEXPORT void Window::InputEnd()
 {
     // Initial mouse position
     if(!InitialMousePositionSent) {
-        InitialMousePositionSent = true;
-
         if(!IsMouseOutsideWindowClientArea()) {
+
+            InitialMousePositionSent = true;
 
             // Build a mouse move from the current position and send it
             int x;

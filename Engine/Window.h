@@ -92,7 +92,7 @@ public:
 
     DLLEXPORT void SetHideCursor(bool toset);
 #ifdef __linux
-    DLLEXPORT void SetX11Cursor(int cursor);
+    DLLEXPORT void SetX11Cursor(int cursor, int retrycount = 10);
 #endif //__linux
 #ifdef _WIN32
     DLLEXPORT void SetWinCursor(HCURSOR cursor);
@@ -100,6 +100,11 @@ public:
 
     //! \note This is clamped to range [0, width / height]
     DLLEXPORT void GetRelativeMouse(int& x, int& y);
+
+    //! Unclamped version of GetRelativeMouse can return negative coordinates if the mouse is
+    //! left of this window
+    DLLEXPORT void GetUnclampedRelativeMouse(int& x, int& y);
+
     //! \returns The normalized mouse x and y positions (in range [0, 1])
     DLLEXPORT void GetNormalizedRelativeMouse(float& x, float& y);
     DLLEXPORT void SetMouseToCenter();
@@ -217,6 +222,14 @@ protected:
 
     void _DestroyOverlay();
 
+#ifdef __linux
+    //! \brief Called in SetX11Cursor (or after a slight delay)
+    //!
+    //! This grabs the current X11 cursor and makes an SDL_Cursor out of it to make it
+    //! permanent
+    DLLEXPORT void MakeX11CursorPermanent();
+#endif //__linux
+
 private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
@@ -240,7 +253,7 @@ private:
 
     //! This is used to send the initial mouse position on the first frame to make sure that
     //! mouse visibility and custom cursors are set
-	bool InitialMousePositionSent = false;
+    bool InitialMousePositionSent = false;
 
     bool Focused = true;
 
@@ -250,10 +263,14 @@ private:
 
     bool MouseCaptured = false;
 
-    //! \todo This needs to be used also on windows to fix things
     //! \todo Cache old cursors to avoid recreations
     std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> CurrentCursor;
     std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> CurrentCursorImage;
+
+#ifdef __linux
+    //! This is the cursor that SetX11Cursor was last called with
+    int WantedX11Cursor = 0;
+#endif //__linux
 
     Ogre::RenderWindow* OWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;

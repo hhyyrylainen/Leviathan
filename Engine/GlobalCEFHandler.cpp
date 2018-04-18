@@ -114,7 +114,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
         msg << "Error missing file or accessing cache location: " << e.what() << "\n";
 
 
-        std::ofstream write("Leviathan_start_failure_" +
+        std::ofstream write(std::string("Leviathan_start_failure_") +
 #ifdef __linux
                             std::to_string(::getpid()) +
 #endif //__linux

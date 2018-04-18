@@ -438,6 +438,267 @@ DLLEXPORT void Window::SetX11Cursor(int cursor)
     CurrentCursorImage = std::move(image);
 }
 #endif //__linux
+
+#ifdef _WIN32
+DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
+{
+    std::unique_ptr<ICONINFO, void (*)(ICONINFO*)> info(new ICONINFO({0}), [](ICONINFO* icon) {
+        if(icon->hbmColor)
+            DeleteObject(icon->hbmColor);
+
+        if(icon->hbmMask)
+            DeleteObject(icon->hbmMask);
+    });
+
+    LEVIATHAN_ASSERT(info.get(), "Memory alloc failed");
+
+    bool success = GetIconInfo(cursor, info.get());
+
+    if(!success) {
+
+        LOG_ERROR("Window: SetWinCursor: failed to get icon info from HCURSOR");
+        return;
+    }
+
+    BITMAP colourBitmap;
+    BITMAP maskBitmap;
+
+    int colourBitmapSize = 0;
+
+    // This can be none if the cursor is monochrome
+    if(info->hbmColor)
+        colourBitmapSize = GetObjectA(info->hbmColor, sizeof(BITMAP), &colourBitmap);
+
+    int maskBitmapSize = GetObjectA(info->hbmMask, sizeof(BITMAP), &maskBitmap);
+
+    if(maskBitmapSize == 0) {
+
+        LOG_ERROR("Window: SetWinCursor: failed to get bitmap objects");
+        return;
+    }
+
+    if(maskBitmap.bmBitsPixel != 1 ||
+        (colourBitmapSize > 0 && colourBitmap.bmBitsPixel != 32)) {
+
+        LOG_ERROR(
+            "Window: SetWinCursor: got some weird bitmaps that have unexpected pixel depths");
+        return;
+    }
+
+    bool monochrome = colourBitmapSize == 0;
+    const auto width = maskBitmap.bmWidth;
+    const auto height = monochrome ? maskBitmap.bmHeight / 2 : maskBitmap.bmHeight;
+
+    // The pixels format is R8G8B8A8 because we fill it in from the BITMAPs like that
+    std::unique_ptr<SDL_Surface, void (*)(SDL_Surface*)> image(
+        SDL_CreateRGBSurfaceWithFormat(0, width, height, 32, SDL_PIXELFORMAT_ARGB8888),
+        SDL_FreeSurface);
+
+    if(!image) {
+
+        LOG_ERROR("Window: SetWinCursor: failed to create SDL surface");
+        return;
+    }
+
+    // Retrieve pixel data //
+    std::unique_ptr<uint8_t[]> maskPixels;
+    std::unique_ptr<uint8_t[]> colourPixels;
+
+    HDC hdcScreen = GetDC(nullptr);
+
+    BITMAPFILEHEADER bmfHeader;
+    BITMAPINFOHEADER bi;
+
+    bi.biSize = sizeof(BITMAPINFOHEADER);
+    bi.biWidth = maskBitmap.bmWidth;
+    bi.biHeight = -maskBitmap.bmHeight;
+    bi.biPlanes = 1;
+    bi.biBitCount = 1;
+    bi.biCompression = BI_RGB; // Apparently this means also uncompressed
+    const auto maskByteCount = (maskBitmap.bmWidth / 8) * maskBitmap.bmHeight;
+    bi.biSizeImage = maskByteCount;
+    bi.biXPelsPerMeter = 0;
+    bi.biYPelsPerMeter = 0;
+    bi.biClrUsed = 0;
+    bi.biClrImportant = 0;
+
+    bool fail = false;
+
+    maskPixels = std::unique_ptr<uint8_t[]>(new uint8_t[maskByteCount]);
+
+    int readBytes = GetDIBits(hdcScreen, info->hbmMask, 0, maskBitmap.bmHeight,
+                        maskPixels.get(), (BITMAPINFO*)&bi, DIB_RGB_COLORS) *
+                    maskBitmap.bmWidthBytes;
+    if(readBytes != maskByteCount) {
+        LOG_ERROR("Window: SetWinCursor: pixel read count is different (read) " +
+                  std::to_string(readBytes) + " != " + std::to_string(maskByteCount));
+        fail = true;
+    }
+
+    if(!monochrome && !fail) {
+
+        bi.biWidth = colourBitmap.bmWidth;
+        bi.biHeight = -colourBitmap.bmHeight;
+        bi.biBitCount = 32;
+        bi.biCompression = BI_RGB;
+        const auto colourByteCount = (colourBitmap.bmWidth * 4) * colourBitmap.bmHeight;
+        bi.biSizeImage = colourByteCount;
+
+        colourPixels = std::unique_ptr<uint8_t[]>(new uint8_t[colourByteCount]);
+
+        int readBytes = GetDIBits(hdcScreen, info->hbmColor, 0, colourBitmap.bmHeight,
+                            colourPixels.get(), (BITMAPINFO*)&bi, DIB_RGB_COLORS) *
+                        colourBitmap.bmWidthBytes;
+        if(readBytes != colourByteCount) {
+            LOG_ERROR("Window: SetWinCursor: pixel read count is different (read) " +
+                      std::to_string(readBytes) + " != " + std::to_string(colourByteCount));
+            fail = true;
+        }
+    }
+
+    ReleaseDC(nullptr, hdcScreen);
+
+    if(fail) {
+        LOG_ERROR("Window: SetWinCursor: failed to read bitmap pixels");
+        return;
+    }
+
+    uint8_t* pixels = static_cast<uint8_t*>(image->pixels);
+    uint8_t* directMask = maskPixels.get();
+    uint8_t* directColour = colourPixels.get();
+
+
+    std::stringstream str;
+    for(size_t y = 0; y < height * 2; ++y) {
+        for(size_t x = 0; x < maskBitmap.bmWidthBytes; ++x) {
+
+            str << std::bitset<8>(directMask[maskBitmap.bmWidthBytes * y + x]);
+        }
+        str << "\n";
+    }
+    LOG_WRITE(str.str());
+
+
+    // This if is outside the loop to not constantly hit it
+    if(monochrome) {
+        int readbit = 0;
+		int readcolour = maskBitmap.bmWidthBytes * 8 * height;
+        std::stringstream str1;
+        for(size_t y = 0; y < height; ++y) {
+            for(size_t x = 0; x < width; ++x) {
+
+                const auto pixelStart = y * width * 4 + (x * 4);
+
+				const auto maskBit = (maskBitmap.bmWidthBytes * 8 * y) + x;
+				const auto maskIndex = maskBit / 8;
+				const auto indexInsideByte = maskBit % 8;
+
+				{
+					std::stringstream s;
+					s << "Vars:" << "bmWidthBytes: " << maskBitmap.bmWidthBytes << " y:" << y << " x: " << x;
+					LOG_INFO(s.str());
+				}
+
+				LEVIATHAN_ASSERT(maskBit == readbit, "logic fail1: " + std::to_string(maskBit) + " != " +
+					std::to_string(readbit));
+
+                const uint8_t maskByte =
+                    directMask[maskIndex];
+                const bool visible = (maskByte & (0x1 << indexInsideByte)) > 0;
+                // str << /*"i: " << (int)maskBitmap.bmWidthBytes * y + (x / 8) << " " <<
+                // (int)visible */ std::hex << (int)maskByte << " ";
+                const auto mask = visible ? 255 : 0;
+
+				const auto colourIndex = maskIndex + (maskBitmap.bmWidthBytes * height);
+                const auto sourceByte =
+                    directMask[colourIndex];
+                const bool sourcePixel = (sourceByte & (0x1 << indexInsideByte)) > 0;
+                const auto pixel = sourcePixel ? 255 : 0;
+
+                LEVIATHAN_ASSERT(readbit == maskIndex * 8 + indexInsideByte,
+                    "bit read logic fail, " + std::to_string(readbit) + " != " +
+                        std::to_string(maskIndex * 8 + indexInsideByte));
+
+				LEVIATHAN_ASSERT(readcolour == colourIndex * 8 + indexInsideByte,
+					"bit read2 logic fail, " + std::to_string(readcolour) + " != " +
+					std::to_string(colourIndex * 8 + indexInsideByte));
+
+                ++readbit;
+				++readcolour;
+
+                if(x == 0) {
+                    if(pixel) {
+                        LOG_INFO("HERE");
+                    }
+                }
+
+                std::stringstream str;
+                str << x << ", " << y << ": "
+                    << "mask index: " << maskBitmap.bmWidthBytes * y + (x / 8)
+                    << " offset: " << std::bitset<8>(0x1 << (x % 8))
+                    << " source offset: " << maskBitmap.bmWidthBytes * (y + height) + (x / 8);
+                LOG_WRITE(str.str())
+                // const auto result = (mask & sourcePixel);
+                // Alpha
+                // pixels[pixelStart + 3] = mask;
+                pixels[pixelStart + 0] = pixel & mask;
+                // Red
+                pixels[pixelStart + 1] = 255;
+                // Green
+                pixels[pixelStart + 2] = 0;
+                // Blue
+                pixels[pixelStart + 3] = 0;
+
+                str1 << std::hex << (int)(visible && pixel) << " ";
+            }
+            str1 << "\n";
+        }
+        LOG_WRITE(str1.str());
+    } else {
+        for(size_t y = 0; y < height; ++y) {
+            for(size_t x = 0; x < width; ++x) {
+
+                const auto pixelStart = y * width * 4 + (x * 4);
+                const uint8_t maskBits =
+                    (directMask[maskBitmap.bmWidthBytes * y + (x / 8)] >> x % 8) & 0x1;
+                const auto sourcePixelStart = y * colourBitmap.bmWidthBytes + (x * 4);
+
+                const auto mask = maskBits > 0 ? 255 : 0;
+                // Red
+                pixels[pixelStart + 0] = 255;
+                // Green
+                pixels[pixelStart + 1] = 255;
+                // Blue
+                pixels[pixelStart + 2] = 0;
+                //// Red
+                // pixels[pixelStart + 0] = directColour[sourcePixelStart + 0];
+                //// Green
+                // pixels[pixelStart + 1] = directColour[sourcePixelStart + 1];
+                //// Blue
+                // pixels[pixelStart + 2] = directColour[sourcePixelStart + 2];
+                // Alpha
+                pixels[pixelStart + 3] = /*directColour[sourcePixelStart + 2] & mask */ 255;
+            }
+        }
+    }
+
+    std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> newCursor(
+        SDL_CreateColorCursor(image.get(), info->xHotspot, info->yHotspot), SDL_FreeCursor);
+
+    if(!newCursor) {
+        LOG_ERROR("Window: SetWinCursor: failed to create sdl cursor");
+        return;
+    }
+
+    SDL_SaveBMP(image.get(), "cursor_test.bmp");
+
+    SDL_SetCursor(newCursor.get());
+
+    // Overwrite the old ones releasing the resources after we are using the new cursor
+    CurrentCursor = std::move(newCursor);
+    CurrentCursorImage = std::move(image);
+}
+#endif //_WIN32
 // ------------------------------------ //
 DLLEXPORT bool Window::SetMouseCapture(bool state)
 {
@@ -451,7 +712,8 @@ DLLEXPORT bool Window::SetMouseCapture(bool state)
 
         // set mouse visible and disable capturing //
         SDL_SetRelativeMouseMode(SDL_FALSE);
-        // reset pointer to indicate that this object no longer captures mouse to this window
+        // reset pointer to indicate that this object no longer captures mouse to this
+        // window
         // //
         InputCapturer = nullptr;
 
@@ -743,7 +1005,8 @@ void Window::_CheckMouseVisibilityStates()
 {
     const bool outsideArea = IsMouseOutsideWindowClientArea();
 
-    // force cursor visible check (if outside client area or mouse is unfocused on the window)
+    // force cursor visible check (if outside client area or mouse is unfocused on the
+    // window)
     if(outsideArea || !Focused) {
 
         ForceMouseVisible = true;
@@ -900,8 +1163,8 @@ bool Window::DoCEFInputPass(
     }
 
 
-    // Detecting if the key press was actually used is pretty difficult and might cause lag so
-    // we don't do that
+    // Detecting if the key press was actually used is pretty difficult and might cause lag
+    // so we don't do that
     return true;
 }
 

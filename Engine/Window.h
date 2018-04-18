@@ -94,6 +94,9 @@ public:
 #ifdef __linux
     DLLEXPORT void SetX11Cursor(int cursor);
 #endif //__linux
+#ifdef _WIN32
+    DLLEXPORT void SetWinCursor(HCURSOR cursor);
+#endif //_WIN32
 
     //! \note This is clamped to range [0, width / height]
     DLLEXPORT void GetRelativeMouse(int& x, int& y);

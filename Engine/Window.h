@@ -238,6 +238,10 @@ private:
     //! gathering
     bool InputGatherStarted = false;
 
+    //! This is used to send the initial mouse position on the first frame to make sure that
+    //! mouse visibility and custom cursors are set
+	bool InitialMousePositionSent = false;
+
     bool Focused = true;
 
     bool ApplicationWantCursorState;

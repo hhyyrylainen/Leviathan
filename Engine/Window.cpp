@@ -962,6 +962,25 @@ DLLEXPORT void Window::_StartGatherInput()
 
 DLLEXPORT void Window::InputEnd()
 {
+    // Initial mouse position
+    if(!InitialMousePositionSent) {
+        InitialMousePositionSent = true;
+
+        if(!IsMouseOutsideWindowClientArea()) {
+
+            // Build a mouse move from the current position and send it
+            int x;
+            int y;
+            GetRelativeMouse(x, y);
+
+            SDL_Event event;
+
+            event.motion.x = x;
+            event.motion.y = y;
+            InjectMouseMove(event);
+        }
+    }
+
     InputGatherStarted = false;
 }
 

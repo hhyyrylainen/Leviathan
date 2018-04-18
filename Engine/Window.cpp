@@ -592,19 +592,20 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 				const auto maskBit = (maskBitmap.bmWidthBytes * 8 * y) + x;
 				const auto maskIndex = maskBit / 8;
 				const auto indexInsideByte = maskBit % 8;
+				const auto insideBitAnd = (0x80 >> indexInsideByte);
 
-				{
-					std::stringstream s;
-					s << "Vars:" << "bmWidthBytes: " << maskBitmap.bmWidthBytes << " y:" << y << " x: " << x;
-					LOG_INFO(s.str());
-				}
+				//{
+				//	std::stringstream s;
+				//	s << "Vars:" << "bmWidthBytes: " << maskBitmap.bmWidthBytes << " y:" << y << " x: " << x;
+				//	LOG_INFO(s.str());
+				//}
 
 				LEVIATHAN_ASSERT(maskBit == readbit, "logic fail1: " + std::to_string(maskBit) + " != " +
 					std::to_string(readbit));
 
                 const uint8_t maskByte =
                     directMask[maskIndex];
-                const bool visible = (maskByte & (0x1 << indexInsideByte)) > 0;
+                const bool visible = (maskByte & insideBitAnd) > 0;
                 // str << /*"i: " << (int)maskBitmap.bmWidthBytes * y + (x / 8) << " " <<
                 // (int)visible */ std::hex << (int)maskByte << " ";
                 const auto mask = visible ? 255 : 0;
@@ -612,7 +613,7 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 				const auto colourIndex = maskIndex + (maskBitmap.bmWidthBytes * height);
                 const auto sourceByte =
                     directMask[colourIndex];
-                const bool sourcePixel = (sourceByte & (0x1 << indexInsideByte)) > 0;
+                const bool sourcePixel = (sourceByte & insideBitAnd) > 0;
                 const auto pixel = sourcePixel ? 255 : 0;
 
                 LEVIATHAN_ASSERT(readbit == maskIndex * 8 + indexInsideByte,
@@ -626,24 +627,30 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
                 ++readbit;
 				++readcolour;
 
+				//{
+				//	std::stringstream s;
+				//	s << " y:" << y << " x: " << x << " " << std::bitset<8>(sourceByte) << " band: " << std::bitset<8>(insideBitAnd);
+				//	LOG_INFO(s.str());
+				//}
+
                 if(x == 0) {
                     if(pixel) {
                         LOG_INFO("HERE");
                     }
                 }
 
-                std::stringstream str;
-                str << x << ", " << y << ": "
-                    << "mask index: " << maskBitmap.bmWidthBytes * y + (x / 8)
-                    << " offset: " << std::bitset<8>(0x1 << (x % 8))
-                    << " source offset: " << maskBitmap.bmWidthBytes * (y + height) + (x / 8);
-                LOG_WRITE(str.str())
+                //std::stringstream str;
+                //str << x << ", " << y << ": "
+                //    << "mask index: " << maskBitmap.bmWidthBytes * y + (x / 8)
+                //    << " offset: " << std::bitset<8>(0x1 << (x % 8))
+                //    << " source offset: " << maskBitmap.bmWidthBytes * (y + height) + (x / 8);
+                // LOG_WRITE(str.str())
                 // const auto result = (mask & sourcePixel);
                 // Alpha
                 // pixels[pixelStart + 3] = mask;
                 pixels[pixelStart + 0] = pixel & mask;
                 // Red
-                pixels[pixelStart + 1] = 255;
+                pixels[pixelStart + 1] = 0 /*255 & pixel*/;
                 // Green
                 pixels[pixelStart + 2] = 0;
                 // Blue
@@ -653,33 +660,48 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
             }
             str1 << "\n";
         }
-        LOG_WRITE(str1.str());
+        // LOG_WRITE(str1.str());
+
+		SDL_SaveBMP(image.get(), "cursor_test.bmp");
+
     } else {
         for(size_t y = 0; y < height; ++y) {
             for(size_t x = 0; x < width; ++x) {
 
                 const auto pixelStart = y * width * 4 + (x * 4);
-                const uint8_t maskBits =
-                    (directMask[maskBitmap.bmWidthBytes * y + (x / 8)] >> x % 8) & 0x1;
-                const auto sourcePixelStart = y * colourBitmap.bmWidthBytes + (x * 4);
 
-                const auto mask = maskBits > 0 ? 255 : 0;
+				const auto sourcePixelStart = y * colourBitmap.bmWidthBytes + (x * 4);
+
+				const auto maskBit = (maskBitmap.bmWidthBytes * 8 * y) + x;
+				const auto maskIndex = maskBit / 8;
+				const auto indexInsideByte = maskBit % 8;
+				const auto insideBitAnd = (0x80 >> indexInsideByte);
+
+				const uint8_t maskByte =
+					directMask[maskIndex];
+				const bool visible = (maskByte & insideBitAnd) > 0;
+				const auto mask = visible ? 255 : 0;
+
+				// Alpha
+				pixels[pixelStart + 0] = /*directColour[sourcePixelStart + 2] &*/ mask;
                 // Red
-                pixels[pixelStart + 0] = 255;
+                pixels[pixelStart + 1] = directColour[sourcePixelStart + 0] & mask;
                 // Green
-                pixels[pixelStart + 1] = 255;
+                pixels[pixelStart + 2] = directColour[sourcePixelStart + 1] & mask;
                 // Blue
-                pixels[pixelStart + 2] = 0;
+                pixels[pixelStart + 3] = directColour[sourcePixelStart + 2] & mask;
                 //// Red
                 // pixels[pixelStart + 0] = directColour[sourcePixelStart + 0];
                 //// Green
                 // pixels[pixelStart + 1] = directColour[sourcePixelStart + 1];
                 //// Blue
                 // pixels[pixelStart + 2] = directColour[sourcePixelStart + 2];
-                // Alpha
-                pixels[pixelStart + 3] = /*directColour[sourcePixelStart + 2] & mask */ 255;
+
             }
         }
+
+
+		SDL_SaveBMP(image.get(), "cursor_test_colour.bmp");
     }
 
     std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> newCursor(
@@ -689,8 +711,6 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
         LOG_ERROR("Window: SetWinCursor: failed to create sdl cursor");
         return;
     }
-
-    SDL_SaveBMP(image.get(), "cursor_test.bmp");
 
     SDL_SetCursor(newCursor.get());
 

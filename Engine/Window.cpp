@@ -648,13 +648,13 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
                 // const auto result = (mask & sourcePixel);
                 // Alpha
                 // pixels[pixelStart + 3] = mask;
-                pixels[pixelStart + 0] = pixel & mask;
+                pixels[pixelStart + 0] = 0 /*pixel & mask*/;
                 // Red
                 pixels[pixelStart + 1] = 0 /*255 & pixel*/;
                 // Green
                 pixels[pixelStart + 2] = 0;
                 // Blue
-                pixels[pixelStart + 3] = 0;
+                pixels[pixelStart + 3] = pixel & mask;
 
                 str1 << std::hex << (int)(visible && pixel) << " ";
             }
@@ -683,7 +683,7 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 				const auto mask = visible ? 255 : 0;
 
 				// Alpha
-				pixels[pixelStart + 0] = /*directColour[sourcePixelStart + 2] &*/ mask;
+				pixels[pixelStart + 0] = /*directColour[sourcePixelStart + 2] &*/ ~mask;
                 // Red
                 pixels[pixelStart + 1] = directColour[sourcePixelStart + 0] & mask;
                 // Green

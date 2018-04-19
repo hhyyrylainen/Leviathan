@@ -1,25 +1,51 @@
 #include "Input/Key.h"
 
-#include "catch.hpp"
 #include "../PartialEngine.h"
+#include "catch.hpp"
 
 using namespace Leviathan;
 using namespace Test;
 
-TEST_CASE("Common key names parsing", "[string][input]"){
-    
+TEST_CASE("Common key names parsing", "[string][input]")
+{
     TestLogger log;
-    
-    SECTION("ESCAPE"){
 
+    SECTION("ESCAPE")
+    {
         const auto key = GKey::GenerateKeyFromString("ESCAPE");
         // 27 == ESC from asciitable
         CHECK(key.GetCharacter() == 27);
     }
+
+    SECTION("+")
+    {
+        CHECK_NOTHROW(GKey::GenerateKeyFromString("+"));
+    }
+
+    SECTION("+")
+    {
+        CHECK_NOTHROW(GKey::GenerateKeyFromString("-"));
+    }
 }
 
-TEST_CASE("Invalid key name gives an error", "[string][input]"){
+TEST_CASE("Combination key parsing", "[string][input]")
+{
+    TestLogger log;
 
+    SECTION("random keys plus a modifier")
+    {
+        CHECK_NOTHROW(GKey::GenerateKeyFromString("A+SHIFT"));
+        CHECK_NOTHROW(GKey::GenerateKeyFromString("K+ALT"));
+    }
+
+    SECTION("plus key plus a modifier")
+    {
+        CHECK_NOTHROW(GKey::GenerateKeyFromString("++SHIFT"));
+    }
+}
+
+TEST_CASE("Invalid key name gives an error", "[string][input]")
+{
     // Needs to print an error. In the future this might throw //
     TestLogRequireError log;
 
@@ -27,5 +53,3 @@ TEST_CASE("Invalid key name gives an error", "[string][input]"){
 
     CHECK(key.GetCharacter() == 0);
 }
-
-

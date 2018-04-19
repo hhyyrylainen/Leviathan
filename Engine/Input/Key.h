@@ -1,10 +1,10 @@
 // Leviathan Game Engine
 // Copyright (c) 2012-2018 Henri Hyyryläinen
-// ------------------------------------ //
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/StringOperations.h"
+#include "Exceptions.h"
 #include "GUI/KeyMapping.h"
 #include "Iterators/StringIterator.h"
 #include "Window.h"
@@ -156,7 +156,21 @@ public:
 
         StringIterator itr(representation);
 
-        auto str = itr.GetUntilNextCharacterOrAll<std::string>('+');
+        std::unique_ptr<std::string> str;
+
+        // Allow plus key
+        if(representation[0] == '+') {
+            itr.MoveToNext();
+            str = std::make_unique<std::string>("+");
+        } else {
+
+            str = itr.GetUntilNextCharacterOrAll<std::string>('+');
+        }
+
+        if(!str) {
+
+            throw Leviathan::InvalidArgument("Key: can't parse: " + representation);
+        }
 
         T character;
 

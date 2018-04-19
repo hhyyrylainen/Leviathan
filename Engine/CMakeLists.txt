@@ -261,7 +261,13 @@ else()
     "Sound/SoundInternalTypes.h" "Sound/SoundInternalTypes.cpp"
     )
 
-  file(GLOB GroupInput "Input/*.cpp" "Input/*.h")
+  set(GroupInput
+    "Input/InputController.cpp"
+    "Input/InputController.h"
+    "Input/Key.cpp"
+    "Input/Key.h"
+    )
+
   file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
   file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
   file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")

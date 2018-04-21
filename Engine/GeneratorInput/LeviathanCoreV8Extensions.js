@@ -41,16 +41,12 @@ var Leviathan = {};
     
     // Register the native functions //
     //! Allows JavaScript to receive Engine events
-    Leviathan.OnEvent = function(eventstypestr, callbackfunction){
-        native function LOnEvent();
-        return LOnEvent(eventstypestr, callbackfunction);
-    }
+    native function LOnEvent(eventstypestr, callbackfunction);
+    Leviathan.OnEvent = LOnEvent;
     
     //! Allows JavaScript to receive GenericEvents
-    Leviathan.OnGeneric = function(genericname, callbackfunction){
-        native function LOnGeneric();
-        return LOnGeneric(genericname, callbackfunction);
-    }
+    native function LOnGeneric(genericname, callbackfunction);
+    Leviathan.OnGeneric = LOnGeneric;
 
     //! Plays a 2D sound effect. Requires VIEW_SECURITYLEVEL_NORMAL
     native function Play2DSoundEffect(filename);

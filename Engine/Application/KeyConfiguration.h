@@ -46,6 +46,11 @@ public:
     DLLEXPORT std::shared_ptr<std::vector<GKey>> ResolveControlNameToKey(
         const std::string& controlkey);
 
+    //! \brief Resolve variant for getting a reference to the vector of keys
+    //! \exception InvalidArgument if controlkey not found
+    DLLEXPORT const std::vector<GKey>& ResolveControlNameToKeyVector(
+        const std::string& controlkey);
+
     //! \brief Resolve variant for getting the first binding or throwing
     //! \exception InvalidArgument if controlkey not found
     DLLEXPORT GKey ResolveControlNameToFirstKey(const std::string& controlkey);

@@ -3,6 +3,8 @@
 #include "../PartialEngine.h"
 #include "catch.hpp"
 
+#include <SDL.h>
+
 using namespace Leviathan;
 using namespace Test;
 
@@ -22,9 +24,15 @@ TEST_CASE("Common key names parsing", "[string][input]")
         CHECK_NOTHROW(GKey::GenerateKeyFromString("+"));
     }
 
-    SECTION("+")
+    SECTION("-")
     {
         CHECK_NOTHROW(GKey::GenerateKeyFromString("-"));
+    }
+
+    SECTION("Keypad keys")
+    {
+        CHECK(GKey::GenerateKeyFromString("Keypad -").GetCharacter() == SDLK_KP_MINUS);
+        CHECK(GKey::GenerateKeyFromString("Keypad +").GetCharacter() == SDLK_KP_PLUS);
     }
 }
 

@@ -146,6 +146,23 @@ DLLEXPORT std::shared_ptr<std::vector<GKey>> KeyConfiguration::ResolveControlNam
     return NULL;
 }
 
+DLLEXPORT const std::vector<GKey>& KeyConfiguration::ResolveControlNameToKeyVector(
+    const std::string& controlkey)
+{
+    GUARD_LOCK();
+    auto iter = KeyConfigurations.find(controlkey);
+
+    if(iter != KeyConfigurations.end()) {
+
+        if(!iter->second)
+            throw InvalidArgument("Key with name \"" + controlkey + "\" is nullptr");
+
+        return *iter->second;
+    }
+
+    throw InvalidArgument("Key with name \"" + controlkey + "\" not found");
+}
+
 DLLEXPORT GKey KeyConfiguration::ResolveControlNameToFirstKey(const std::string& controlkey)
 {
     GUARD_LOCK();

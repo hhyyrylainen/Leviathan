@@ -183,7 +183,19 @@ public:
 
         } else {
 
-            character = Leviathan::KeyMapping::ConvertStringToKeyCode(*str);
+            // Detect things like "Keypad +" and make them work
+            const auto pos = itr.GetPosition();
+            if((pos + 1 >= representation.length() && pos < representation.length() &&
+                   representation[pos] == '+') ||
+                // This is things like "Keypad ++SHIFT"
+                (pos + 1 <= representation.length() && representation[pos] == '+' &&
+                    representation[pos + 1] == '+')) {
+
+                character = Leviathan::KeyMapping::ConvertStringToKeyCode(*str + "+");
+            } else {
+
+                character = Leviathan::KeyMapping::ConvertStringToKeyCode(*str);
+            }
         }
 
         short special = 0;
@@ -232,6 +244,17 @@ private:
     short Extras;
     T Character;
 };
+
+//! Helper for checking multiple keys
+template<typename KeyType>
+inline bool MatchesAnyKeyInSet(const std::vector<Key<KeyType>> keys, const KeyType& chara,
+    const short& additional, bool strict = false)
+{
+    for(const auto& key : keys)
+        if(key.Match(chara, additional, strict))
+            return true;
+    return false;
+}
 
 // This is the most likely type //
 typedef Key<int32_t> GKey;

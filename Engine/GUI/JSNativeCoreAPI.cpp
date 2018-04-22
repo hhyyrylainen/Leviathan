@@ -216,10 +216,10 @@ bool JSNativeCoreAPI::HandleProcessMessage(CefRefPtr<CefBrowser> browser,
                     // Failed
                     proxy->CreateNull();
                 } else {
-                    CefRefPtr<CefV8Interceptor> accessor =
+                    CefRefPtr<CefV8Interceptor> interceptor =
                         new JSAudioSourceInterceptor(*this, createdId);
-                    proxy = CefV8Value::CreateObject(nullptr, accessor);
-                    proxy->SetUserData(accessor);
+                    proxy = CefV8Value::CreateObject(nullptr, interceptor);
+                    proxy->SetUserData(interceptor);
                 }
 
                 // And give it to JavaScript
@@ -307,40 +307,37 @@ bool JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent& eventdata)
         return false;
     }
 
-    // Call the javascript callback with it //
-    CefV8ValueList args;
-
     // Enter the current context //
     FunctionsContext->Enter();
 
-    // Set the type as int //
-    args.push_back(CefV8Value::CreateString(EventName));
+    {
+        // Call the javascript callback with it //
+        CefV8ValueList args;
 
-    // Create a new accessor object //
-    JSNamedVarsAccessor* directptr = new JSNamedVarsAccessor(eventdata.GetVariables());
+        // First parameter is the event name //
+        args.push_back(CefV8Value::CreateString(EventName));
 
-    CefRefPtr<CefV8Accessor> tmpaccess(directptr);
+        // Create a new accessor object //
+        CefRefPtr<CefV8Interceptor> interceptor =
+            new JSNamedVarsInterceptor(eventdata.GetVariables());
 
-    // Create the object //
-    CefRefPtr<CefV8Value> arrayobjval = CefV8Value::CreateObject(tmpaccess, nullptr);
+        // Create the object //
+        CefRefPtr<CefV8Value> arrayobjval = CefV8Value::CreateObject(nullptr, interceptor);
 
-    // Attach the values //
-    directptr->AttachYourValues(arrayobjval);
+        // Add to the args //
+        args.push_back(arrayobjval);
 
-    // Add to the args //
-    args.push_back(arrayobjval);
+        // Invoke the function //
+        CefRefPtr<CefV8Value> retval = FunctionValueObject->ExecuteFunction(NULL, args);
 
-    // Invoke the function //
-    CefRefPtr<CefV8Value> retval = FunctionValueObject->ExecuteFunction(NULL, args);
+        // if(!retval) {
+        //     // It failed //
+        //     return false;
+        // }
+    }
 
     // Leave the context //
     FunctionsContext->Exit();
-
-    if(!retval) {
-        // It failed //
-        return false;
-    }
-
 
     return true;
 }
@@ -388,22 +385,24 @@ bool JSNativeCoreAPI::JSListener::ExecutePredefined(const Event& eventdata)
     return true;
 }
 // ------------------ JSNamedVarsAccessor ------------------ //
-JSNamedVarsAccessor::JSNamedVarsAccessor(NamedVars* valueobject)
-{
-    valueobject->AddRef();
-    OurValues = valueobject;
-}
+JSNamedVarsInterceptor::JSNamedVarsInterceptor(NamedVars::pointer obj) : Values(obj) {}
 
-JSNamedVarsAccessor::~JSNamedVarsAccessor()
-{
-    OurValues->Release();
-}
+JSNamedVarsInterceptor::~JSNamedVarsInterceptor() {}
 // ------------------------------------ //
-bool JSNamedVarsAccessor::Get(const CefString& name, const CefRefPtr<CefV8Value> object,
+bool JSNamedVarsInterceptor::Get(int index, const CefRefPtr<CefV8Value> object,
     CefRefPtr<CefV8Value>& retval, CefString& exception)
 {
+    return false;
+}
+
+bool JSNamedVarsInterceptor::Get(const CefString& name, const CefRefPtr<CefV8Value> object,
+    CefRefPtr<CefV8Value>& retval, CefString& exception)
+{
+    if(!Values)
+        return false;
+
     // Try to find the value //
-    NamedVariableList* block = OurValues->GetValueDirect(name).get();
+    NamedVariableList* block = Values->GetValueDirect(name).get();
 
     if(!block) {
         // Value not found //
@@ -417,25 +416,17 @@ bool JSNamedVarsAccessor::Get(const CefString& name, const CefRefPtr<CefV8Value>
     return true;
 }
 
-bool JSNamedVarsAccessor::Set(const CefString& name, const CefRefPtr<CefV8Value> object,
+bool JSNamedVarsInterceptor::Set(int index, const CefRefPtr<CefV8Value> object,
     const CefRefPtr<CefV8Value> value, CefString& exception)
 {
-    // Disallow setting now //
-    exception = "Set unallowed for JSNamedVarsAccessor";
-    return true;
+    return false;
 }
-// ------------------------------------ //
-void JSNamedVarsAccessor::AttachYourValues(CefRefPtr<CefV8Value> thisisyou)
+
+bool JSNamedVarsInterceptor::Set(const CefString& name, const CefRefPtr<CefV8Value> object,
+    const CefRefPtr<CefV8Value> value, CefString& exception)
 {
-    // All the values need to be attached for this to work properly //
-    auto vecval = OurValues->GetVec();
-
-    for(size_t i = 0; i < vecval->size(); i++) {
-
-        // Bind the value //
-        thisisyou->SetValue(
-            vecval->at(i)->GetName(), V8_ACCESS_CONTROL_DEFAULT, V8_PROPERTY_ATTRIBUTE_NONE);
-    }
+    exception = "TODO: Set for JSNamedVarsInterceptor";
+    return true;
 }
 // ------------------------------------ //
 // JSAudioSourceInterceptor

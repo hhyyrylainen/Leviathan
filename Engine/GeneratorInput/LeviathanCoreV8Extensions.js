@@ -45,6 +45,7 @@ var Leviathan = {};
     Leviathan.OnEvent = LOnEvent;
     
     //! Allows JavaScript to receive GenericEvents
+    //! The callback will be called with (eventname, namedvars)
     native function LOnGeneric(genericname, callbackfunction);
     Leviathan.OnGeneric = LOnGeneric;
 

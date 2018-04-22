@@ -39,25 +39,26 @@ private:
     const HandlerSignature Handler;
 };
 
-//! \brief Provides an accessor interface for javascript for accessing NamedVars
+//! \brief Provides access for JS to NamedVars
 //! \todo Change this to an interceptor to not have to call SetValue in AttachYourValues
-class JSNamedVarsAccessor : public CefV8Accessor {
+class JSNamedVarsInterceptor : public CefV8Interceptor {
 public:
-    JSNamedVarsAccessor(NamedVars* valueobject);
-    ~JSNamedVarsAccessor();
+    JSNamedVarsInterceptor(NamedVars::pointer obj);
+    ~JSNamedVarsInterceptor();
 
-    virtual bool Get(const CefString& name, const CefRefPtr<CefV8Value> object,
+    bool Get(int index, const CefRefPtr<CefV8Value> object, CefRefPtr<CefV8Value>& retval,
+        CefString& exception) override;
+    bool Get(const CefString& name, const CefRefPtr<CefV8Value> object,
         CefRefPtr<CefV8Value>& retval, CefString& exception) override;
-
-    virtual bool Set(const CefString& name, const CefRefPtr<CefV8Value> object,
+    bool Set(int index, const CefRefPtr<CefV8Value> object, const CefRefPtr<CefV8Value> value,
+        CefString& exception) override;
+    bool Set(const CefString& name, const CefRefPtr<CefV8Value> object,
         const CefRefPtr<CefV8Value> value, CefString& exception) override;
 
-    void AttachYourValues(CefRefPtr<CefV8Value> thisisyou);
-
-    IMPLEMENT_REFCOUNTING(JSNamedVarsAccessor);
+    IMPLEMENT_REFCOUNTING(JSNamedVarsInterceptor);
 
 protected:
-    NamedVars* OurValues;
+    NamedVars::pointer Values;
 };
 
 //! \brief Provides access for JavaScript to AudioSource

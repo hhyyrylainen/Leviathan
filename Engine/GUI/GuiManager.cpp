@@ -216,7 +216,7 @@ DLLEXPORT View* Leviathan::GUI::GuiManager::GetViewByIndex(size_t index)
 }
 // ------------------------------------ //
 DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
-    bool iskeypress, int mousex, int mousey)
+    bool iskeypress, bool isscroll, int mousex, int mousey)
 {
     View* bestFound = nullptr;
 
@@ -233,11 +233,21 @@ DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
         if(mode == INPUT_MODE::Menu)
             return view;
 
-        // Allow mouse events but keyboard events are only allowed if a text box is focused
-        if(mode == INPUT_MODE::Gameplay && (!iskeypress || view->HasFocusedInputElement())) {
+        // The mode Gameplay is only best if nothing has been found so far
+        if(bestFound)
+            continue;
 
-            if(!bestFound)
-                bestFound = view;
+        LEVIATHAN_ASSERT(mode == INPUT_MODE::Gameplay, "Some input mode is not handled");
+
+        // Allow mouse events but keyboard events are only allowed if a text box is focused
+        if(!iskeypress || view->HasFocusedInputElement()) {
+
+            bestFound = view;
+
+            // Allow scroll events when over something scrollable
+        } else if(isscroll && view->HasScrollableElementUnderCursor()) {
+
+            bestFound = view;
         }
     }
 

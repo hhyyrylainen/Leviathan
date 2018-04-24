@@ -212,10 +212,13 @@ protected:
 
     //! \brief Retrieves the active gui object that is going to receive an event
     //! \param iskeypress If true then only the currently input receiving window
-    //! (controlled by GUI_INPUT_MODE) is returned if there is one. For mouse events
-    //! the gui object under the cursor position is returned (unless mouse capture is on
-    //! then no thing is returned even if iskeypress is true)
-    GUI::View* GetGUIEventReceiver(bool iskeypress, int mousex, int mousey);
+    //! (controlled by GUI_INPUT_MODE) is returned if there is one.
+    //! For mouse events the gui object under the cursor position is returned (unless mouse
+    //! capture is on then nothing is returned even if iskeypress is true)
+    //! \param isscroll If true then this is a mouse scroll event and a GuiView that has a
+    //! scrollable element is returned in every case except when the mouse is captured (or the
+    //! view has None as the input mode)
+    GUI::View* GetGUIEventReceiver(bool iskeypress, bool isscroll, int mousex, int mousey);
 
     //! \brief Creates an Ogre scene to display GUI on this window
     void _CreateOverlayScene();

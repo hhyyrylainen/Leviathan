@@ -172,6 +172,13 @@ private:
     std::vector<
         std::tuple<int, CefRefPtr<CefV8Value>, CefRefPtr<CefV8Value>, CefRefPtr<CefV8Context>>>
         PendingRequestCallbacks;
+
+    // TODO: I was dumb so I messed using this up so this should probably work but isn't used
+    // currently in the hopes that doing the check in js before calling native code is faster
+    // // These are cached states. These need to match the ones in GUI::View
+    // // These are used to not send redundant requests
+    // std::atomic<bool> InputFocused = false;
+    // std::atomic<bool> ScrollableElement = false;
 };
 
 

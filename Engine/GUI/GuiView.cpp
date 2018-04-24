@@ -278,7 +278,7 @@ void View::OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor,
 
     // Should not do this, but whatever //
     // TODO: custom cursors
-	Wind->SetWinCursor(cursor);
+    Wind->SetWinCursor(cursor);
 #else
 #ifdef __linux
     Wind->SetX11Cursor(cursor);
@@ -432,7 +432,7 @@ void View::OnLoadEnd(
     if(frame->IsMain()) {
 
         // TODO: this should probably be ran in child frames as well to allow text boxes to
-        // work there as well
+        // work there as well but then we need some way to detect which frame sends the status
         // Run our text box focus setup
         frame->ExecuteJavaScript("Leviathan.SetupInputDetection()", "", 0);
 
@@ -610,10 +610,14 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
 
     if(name == "NotifyViewInputStatus") {
 
-        const bool inputFocused = message->GetArgumentList()->GetBool(0);
+        InputFocused = message->GetArgumentList()->GetBool(0);
+        LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
+        return true;
 
-        InputFocused = inputFocused;
-        // LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
+    } else if(name == "NotifyViewScrollableStatus") {
+
+        ScrollableElement = message->GetArgumentList()->GetBool(0);
+        LOG_INFO("Setting ScrollableElement: " + std::to_string(ScrollableElement));
         return true;
     }
 

@@ -110,6 +110,12 @@ public:
         return InputFocused;
     }
 
+    //! \returns True if there is a scrollable element under the mouse
+    DLLEXPORT inline bool HasScrollableElementUnderCursor() const
+    {
+        return ScrollableElement;
+    }
+
     //! \brief Passes events to the render process
     DLLEXPORT int OnEvent(Event* event) override;
     //! \brief Passes generic events to the render process
@@ -300,6 +306,10 @@ protected:
     //! \see VIEW_SECURITYLEVEL
     VIEW_SECURITYLEVEL ViewSecurity;
 
+    //! This makes sure that opened iframes cannot access dangerous things by default
+    //! \todo Allow configuring per frame
+    VIEW_SECURITYLEVEL AdditionalFrameSecurity = VIEW_SECURITYLEVEL_BLOCKED;
+
     //! Current focus state, set with NotifyFocusUpdate
     bool OurFocus = false;
 
@@ -329,7 +339,12 @@ protected:
     LeviathanJavaScriptAsync* OurAPIHandler;
 
     //! Support for input when text box is focused
+    //! \todo This needs to be tracked per frame
     std::atomic<bool> InputFocused = false;
+
+    //! Support for scrolling when the mouse is over a scrollable thing
+    //! \todo This needs to be tracked per frame
+    std::atomic<bool> ScrollableElement = false;
 
     //! The mode of input. used by
     std::atomic<INPUT_MODE> InputMode = INPUT_MODE::Menu;

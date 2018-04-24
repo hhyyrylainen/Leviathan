@@ -44,7 +44,8 @@ public:
     //! \see Window::GetGUIEventReceiver
     //! \todo Add support for multiple views inside a window. And prefer the active input if
     //! this is a keypress
-    DLLEXPORT View* GetTargetViewForInput(bool iskeypress, int mousex, int mousey);
+    DLLEXPORT View* GetTargetViewForInput(
+        bool iskeypress, bool isscroll, int mousex, int mousey);
 
     //! \brief Returns the View count
     DLLEXPORT inline auto GetViewCount() const

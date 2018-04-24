@@ -6,19 +6,78 @@ var Leviathan = {};
 (function(){
     "use strict";
 
+    Leviathan._ = {};
+
     //! This is needed to properly allow focusing input elements while playing
+    //! And scrollable things
     Leviathan.SetupInputDetection = function () {
-        native function NotifyViewInputStatus();
+        native function NotifyViewInputStatus(focused);
+        native function NotifyViewScrollableStatus(scrollable);
+
+        Leviathan._.LastInputStatus = false;
+        Leviathan._.LastScrollStatus = false;
+        
         let detectChange = function() {
+            let status;
             if (document.activeElement instanceof HTMLInputElement) {
-                NotifyViewInputStatus(true);
+                status = true;
             } else {
-                NotifyViewInputStatus(false);
+                status = false;
             }
+            if(status === Leviathan._.LastInputStatus)
+                return;
+            
+            Leviathan._.LastInputStatus = status;
+            NotifyViewInputStatus(Leviathan._.LastInputStatus);
+        }
+
+
+        let detectScroll = function(event) {
+
+            let scrollable = false;
+            let element = document.elementFromPoint(event.clientX, event.clientY);
+
+            // Grab this target (as the mouse can be over a scroll bar where there's
+            // nothing under it
+            if(element == null)
+                element = event.target;
+
+            while(element != null){
+                
+                // Check is it scrollable
+                let overflowY = window.getComputedStyle(element)["overflow-y"];
+                // let overflowY = element.style.overflowY;
+                // TODO: x-way scrolling
+                // let overflowX = window.getComputedStyle(element)["overflow-x"];
+
+                // TODO: should this be used instead?
+                // element.offsetHeight
+                
+                if((overflowY === "scroll" || overflowY === "auto" ||
+                    // This detects if the whole page is scrollable
+                    (element instanceof HTMLHtmlElement && overflowY === "visible"))
+                    && element.scrollHeight > element.clientHeight
+                   // || (overflowX === 'scroll' || overflowX === 'auto') &&
+                   // element.scrollWidth > element.clientWidth
+                  ) {
+                    scrollable = true;
+                    break;
+                }
+
+                // Check parent
+                element = element.parentElement;
+            }
+
+            if(scrollable === Leviathan._.LastScrollStatus)
+                return;
+            
+            Leviathan._.LastScrollStatus = scrollable;
+            NotifyViewScrollableStatus(Leviathan._.LastScrollStatus);
         }
 
         window.addEventListener('focus', detectChange, true);
         window.addEventListener('blur', detectChange, true);
+        window.addEventListener('mouseover', detectScroll, false);
 
         // Detect initial focus
         detectChange();

@@ -26,6 +26,46 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
     const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval, CefString& exception)
 {
     // Check which function is called //
+
+    // These are called a lot
+    if(name == "NotifyViewInputStatus") {
+
+        if(arguments.size() < 1 || !arguments[0]->IsBool()) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: bool";
+            return true;
+        }
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("NotifyViewInputStatus");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetBool(0, arguments[0]->GetBoolValue());
+
+        SendProcessMessage(msg);
+        return true;
+
+    } else if(name == "NotifyViewScrollableStatus") {
+
+        if(arguments.size() < 1 || !arguments[0]->IsBool()) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: bool";
+            return true;
+        }
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg =
+            CefProcessMessage::Create("NotifyViewScrollableStatus");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetBool(0, arguments[0]->GetBoolValue());
+
+        SendProcessMessage(msg);
+        return true;
+    }
+
     if(name == "LOnEvent") {
 
         // Check are the arguments correct //
@@ -84,24 +124,6 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         Owner->StartListeningForEvent(tmplistener.get());
 
         return true;
-    } else if(name == "NotifyViewInputStatus") {
-
-        if(arguments.size() < 1 || !arguments[0]->IsBool()) {
-            // Invalid arguments //
-            exception = "Invalid arguments passed, expected: bool";
-            return true;
-        }
-
-        // Pack data to a message and send to the browser process
-        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("NotifyViewInputStatus");
-
-        CefRefPtr<CefListValue> args = msg->GetArgumentList();
-
-        args->SetBool(0, arguments[0]->GetBoolValue());
-
-        SendProcessMessage(msg);
-        return true;
-
     } else if(name == "Play2DSoundEffect") {
 
         if(arguments.size() < 1 || !arguments[0]->IsString()) {

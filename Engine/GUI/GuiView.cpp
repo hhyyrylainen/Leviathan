@@ -611,13 +611,13 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
     if(name == "NotifyViewInputStatus") {
 
         InputFocused = message->GetArgumentList()->GetBool(0);
-        LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
+        // LOG_INFO("Setting InputFocused: " + std::to_string(InputFocused));
         return true;
 
     } else if(name == "NotifyViewScrollableStatus") {
 
         ScrollableElement = message->GetArgumentList()->GetBool(0);
-        LOG_INFO("Setting ScrollableElement: " + std::to_string(ScrollableElement));
+        // LOG_INFO("Setting ScrollableElement: " + std::to_string(ScrollableElement));
         return true;
     }
 

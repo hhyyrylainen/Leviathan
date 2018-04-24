@@ -1289,6 +1289,7 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
                 x *= -1;
             }
 
+            // LOG_INFO("Mouse scroll to CEF");
             CefMouseEvent cevent;
             receiver->GetBrowserHost()->SendMouseWheelEvent(cevent, x, y);
         }

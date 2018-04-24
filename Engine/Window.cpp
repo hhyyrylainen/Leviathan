@@ -983,13 +983,13 @@ void Window::_DestroyOverlay()
 }
 
 // ------------------------------------ //
-GUI::View* Window::GetGUIEventReceiver(bool iskeypress, bool isscroll, int mousex, int mousey)
+GUI::View* Window::GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey)
 {
     // Don't pass to GUI if mouse capture is enabled
     if(MouseCaptured)
         return nullptr;
 
-    GUI::View* view = WindowsGui->GetTargetViewForInput(iskeypress, isscroll, mousex, mousey);
+    GUI::View* view = WindowsGui->GetTargetViewForInput(type, mousex, mousey);
     return view;
 }
 
@@ -1094,7 +1094,7 @@ bool Window::DoCEFInputPass(
     const SDL_Event& sdlevent, bool down, bool textinput, int mousex, int mousey)
 {
     // Find active gui view that wants the event
-    GUI::View* receiver = GetGUIEventReceiver(true, false, mousex, mousey);
+    GUI::View* receiver = GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Keypress, mousex, mousey);
 
     // Don't pass to GUI
     if(!receiver)
@@ -1247,7 +1247,7 @@ DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
     if(!MouseCaptured) {
 
         GUI::View* receiver =
-            GetGUIEventReceiver(false, false, event.motion.x, event.motion.y);
+            GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.motion.x, event.motion.y);
 
         if(receiver) {
 
@@ -1276,7 +1276,8 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
         int mouseY;
         GetRelativeMouse(mouseX, mouseY);
         // TODO: allow configuring if mouse wheel is considered a key
-        GUI::View* receiver = GetGUIEventReceiver(false, true, mouseX, mouseY);
+        GUI::View* receiver =
+            GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Scroll, mouseX, mouseY);
 
         if(receiver) {
 
@@ -1289,9 +1290,21 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
                 x *= -1;
             }
 
-            // LOG_INFO("Mouse scroll to CEF");
+            // LOG_INFO("Mouse scroll to CEF: " + std::to_string(y) + " " + std::to_string(x));
             CefMouseEvent cevent;
             receiver->GetBrowserHost()->SendMouseWheelEvent(cevent, x, y);
+        } else {
+
+            int x = event.wheel.x;
+            int y = event.wheel.y;
+
+            if(SDL_MOUSEWHEEL_FLIPPED == event.wheel.direction) {
+                y *= -1;
+            } else {
+                x *= -1;
+            }
+
+            GetInputController()->OnScroll(x, y, SpecialKeyModifiers);
         }
     }
 }
@@ -1304,7 +1317,7 @@ DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
     if(!MouseCaptured) {
 
         GUI::View* receiver =
-            GetGUIEventReceiver(false, false, event.button.x, event.button.y);
+            GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.button.x, event.button.y);
 
         if(receiver) {
             CefMouseEvent cevent;
@@ -1330,7 +1343,7 @@ DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
     if(!MouseCaptured) {
 
         GUI::View* receiver =
-            GetGUIEventReceiver(false, false, event.button.x, event.button.y);
+            GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.button.x, event.button.y);
 
         if(receiver) {
             CefMouseEvent cevent;

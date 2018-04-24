@@ -12,6 +12,8 @@ namespace Leviathan { namespace GUI {
 
 class View;
 
+enum class INPUT_EVENT_TYPE : int { Keypress, Scroll, Other };
+
 //! \brief Main GUI controller
 //! \todo Add GUI window objects to this which are associated with different windows
 class GuiManager {
@@ -44,8 +46,7 @@ public:
     //! \see Window::GetGUIEventReceiver
     //! \todo Add support for multiple views inside a window. And prefer the active input if
     //! this is a keypress
-    DLLEXPORT View* GetTargetViewForInput(
-        bool iskeypress, bool isscroll, int mousex, int mousey);
+    DLLEXPORT View* GetTargetViewForInput(INPUT_EVENT_TYPE type, int mousex, int mousey);
 
     //! \brief Returns the View count
     DLLEXPORT inline auto GetViewCount() const

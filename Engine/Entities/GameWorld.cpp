@@ -196,6 +196,10 @@ void GameWorld::_CreateOgreResources(Ogre::Root* ogre)
         WorldSceneCamera->setFarClipDistance(0);
     }
 
+    // // Orthographic test
+    // WorldSceneCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
+    // WorldSceneCamera->setOrthoWindow(85, 85);
+
     // default sun //
     SetSunlight();
 }

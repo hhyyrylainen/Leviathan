@@ -120,9 +120,12 @@ ruby 2.4.1p111
   - bash
   - tar (with gzip support)
  
-  You can also optionally install git and svn (the package is called
-  subversion) with cygwin. But cmake has to be the Windows version,
-  otherwise it won't properly generate visual studio project files.
+  You can also optionally install git with cygwin. But cmake has to be
+  the Windows version, otherwise it won't properly generate visual
+  studio project files. Also subversion and mercurial has to be the
+  Windows versions. I used SlickSVN and TortoiseHG. TortoiseSVN should
+  also work if you select the option to add svn to PATH while
+  installing it.
   
   Then add `C:\cygwin64\bin` to the system
   path to make everything visible to the script
@@ -162,8 +165,10 @@ ruby 2.4.1p111
   takes a long time.
 
   If msvc isn't detected correctly, open "Developer Command Prompt for
-  Visual Studio 2017" and run again in that. That should make boost
-  detect visual studio.
+  Visual Studio 2017" and run again in that. Just make sure to use the
+  64 bit version and with that you might have to add
+  `architecture=x86` as an extra parameter to b2 for it to build
+  correctly. That should make boost detect visual studio.
 
   <a
   href="http://www.boost.org/doc/libs/1_66_0/more/getting_started/windows.html#prepare-to-use-a-boost-library-binary">official

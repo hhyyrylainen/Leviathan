@@ -196,3 +196,38 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
 
     world.Release();
 }
+
+
+// Also testing newton versions
+template<class T>
+inline T newtonAbs(T A)
+{
+    return (A >= T(0)) ? A : -A;
+}
+
+TEST_CASE("Newton TestOrthogonal", "[physics]")
+{
+    float tol = float(1.0e-4f);
+    float a = 1;
+    float b = 1;
+    float c = 1;
+    float d = 1;
+
+    // Individual parts
+    CHECK(0.0f == float(0.0f));
+    CHECK(0.0f == float(0.0f));
+    CHECK(0.0f == float(0.0f));
+    CHECK(1.0f == float(1.0f));
+
+    // The whole thing
+    CHECK(((0.0f == float(0.0f)) & (0.0f == float(0.0f)) & (0.0f == float(0.0f)) &
+           (1.0f == float(1.0f)) & (newtonAbs(a - float(1.0f)) < tol) &
+           (newtonAbs(b - float(1.0f)) < tol) & (newtonAbs(c - float(1.0f)) < tol) &
+           (newtonAbs(d - float(1.0f)) < tol)));
+
+    // SECTION("check method in types")
+    // {
+    //     CHECK_NOTHROW(
+    //         ThrowIfMatrixIsNotOrthogonal(PrepareOgreMatrixForNewton(Ogre::Matrix4::IDENTITY)));
+    // }
+}

@@ -133,3 +133,8 @@ TEST_CASE("std::copy with vectors", "[std]"){
     CHECK(newData == std::vector<uint8_t>({3, 4, 5, 6, 7, 8}));
 }
 
+TEST_CASE("std::abs", "[std]"){
+
+    CHECK(std::abs(1.0f - 1.0f) == 0.f);
+}
+

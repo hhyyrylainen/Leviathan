@@ -6,37 +6,36 @@
 // ------------------------------------ //
 #include "Common/Types.h"
 
-#include <Newton.h>
 #include "OgreMatrix4.h"
+#include <Newton.h>
 
-namespace Leviathan{
+namespace Leviathan {
 
-DLLEXPORT inline Ogre::Matrix4 NewtonMatrixToOgre(const dFloat* const matrix){
+DLLEXPORT inline Ogre::Matrix4 NewtonMatrixToOgre(const dFloat* const matrix)
+{
     // Need to transpose as well
     // needs to convert from d3d style matrix to OpenGL style matrix //
-    return Ogre::Matrix4(
-        matrix[0], matrix[4], matrix[8], matrix[12],
-        matrix[1], matrix[5], matrix[9], matrix[13],
-        matrix[2], matrix[6], matrix[10], matrix[14],
-        matrix[3], matrix[7], matrix[11], matrix[15]
-    );
+    return Ogre::Matrix4(matrix[0], matrix[4], matrix[8], matrix[12], matrix[1], matrix[5],
+        matrix[9], matrix[13], matrix[2], matrix[6], matrix[10], matrix[14], matrix[3],
+        matrix[7], matrix[11], matrix[15]);
 }
 
 //! \usage Pass to newton like this: const auto& prep = PrepareOgreMatrixForNewton(matrix);
 //! NewtonMethod(&prep[0])
-DLLEXPORT inline Ogre::Matrix4 PrepareOgreMatrixForNewton(const Ogre::Matrix4 &matrix){
+DLLEXPORT inline Ogre::Matrix4 PrepareOgreMatrixForNewton(const Ogre::Matrix4& matrix)
+{
     // Need to just transpose
+    // But they always need to be orthogonal / unit matrices. But apparently that can't be
+    // really done here so the called must do that
     return matrix.transpose();
 }
 
 //! \brief Grabs the translation from a newton matrix without transposing
-DLLEXPORT inline Float3 ExtractNewtonMatrixTranslation(const float (&matrix)[16]){
+DLLEXPORT inline Float3 ExtractNewtonMatrixTranslation(const float (&matrix)[16])
+{
     // Hopefully this is right. Reference:
     // https://stackoverflow.com/questions/10094634/4x4-matrix-last-element-significance
     return Float3(matrix[12], matrix[13], matrix[14]);
 }
 
-}
-
-
-
+} // namespace Leviathan

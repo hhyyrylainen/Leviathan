@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -949,7 +949,7 @@ public:
     {
         return Float3(0.f, 0.f, 1.f);
     }
-    // ----------------- casts ------------------- //
+        // ----------------- casts ------------------- //
 #ifdef LEVIATHAN_USING_OGRE
     DLLEXPORT Float3(const Ogre::Vector3& vec)
     {
@@ -1543,6 +1543,15 @@ DLLEXPORT std::ostream& operator<<(
 DLLEXPORT std::ostream& operator<<(
     std::ostream& stream, const Leviathan::PotentiallySetIndex& value);
 
+#ifdef LEVIATHAN_USING_OGRE
+//! \brief Newton compatible matrix orthogonal check
+//! \exception InvalidArgument if the matrix isn't orthogonal
+//! \warning The matrix needs to be transposed with PrepareOgreMatrixForNewton
+//! \todo Fix this. This doesn't work because I used Float3 here instead of Float4 as that
+//! doesn't have Cross or Dot and tihs seems to claim that not even an identity matrix is
+//! orthogonal
+void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol = 1.0e-4f);
+#endif
 
 } // namespace Leviathan
 

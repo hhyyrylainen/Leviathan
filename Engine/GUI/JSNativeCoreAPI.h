@@ -55,6 +55,12 @@ public:
     bool Set(const CefString& name, const CefRefPtr<CefV8Value> object,
         const CefRefPtr<CefV8Value> value, CefString& exception) override;
 
+    //! \brief This binds all current values to the js object so that
+    //! Object.keys can detect them
+    //! \warning This doesn't work (apparently this only works with Accessors which we don't
+    //! want to use for this, but maybe useful in the future)
+    void BindValues(CefRefPtr<CefV8Value> object);
+
     IMPLEMENT_REFCOUNTING(JSNamedVarsInterceptor);
 
 protected:

@@ -340,11 +340,17 @@ bool JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent& eventdata)
         args.push_back(CefV8Value::CreateString(EventName));
 
         // Create a new accessor object //
-        CefRefPtr<CefV8Interceptor> interceptor =
+        CefRefPtr<JSNamedVarsInterceptor> interceptor =
             new JSNamedVarsInterceptor(eventdata.GetVariables());
 
         // Create the object //
         CefRefPtr<CefV8Value> arrayobjval = CefV8Value::CreateObject(nullptr, interceptor);
+
+        // Doesn't work
+        // interceptor->BindValues(arrayobjval);
+
+        // But user data needs to be set
+        arrayobjval->SetUserData(interceptor);
 
         // Add to the args //
         args.push_back(arrayobjval);
@@ -420,6 +426,60 @@ bool JSNamedVarsInterceptor::Get(int index, const CefRefPtr<CefV8Value> object,
 bool JSNamedVarsInterceptor::Get(const CefString& name, const CefRefPtr<CefV8Value> object,
     CefRefPtr<CefV8Value>& retval, CefString& exception)
 {
+    if(name == "keys") {
+        retval = CefV8Value::CreateFunction("keys",
+            new JSLambdaFunction(
+                [](const CefString& name, CefRefPtr<CefV8Value> object,
+                    const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
+                    CefString& exception) -> bool {
+
+                    if(name == "keys") {
+
+                        // The JSNamedVarsInterceptor is the user data
+                        if(!object) {
+                            exception = "No 'this' passed to function";
+                            return true;
+                        }
+
+                        auto userData = object->GetUserData();
+
+                        if(!userData) {
+                            exception = "'this' has no userdata";
+                            return true;
+                        }
+
+                        auto* casted = dynamic_cast<JSNamedVarsInterceptor*>(userData.get());
+
+                        if(!casted) {
+                            exception =
+                                "'this' was of wrong type. Excepted JSNamedVarsInterceptor";
+                            return true;
+                        }
+
+                        if(!casted->Values) {
+
+                            retval = CefV8Value::CreateArray(0);
+                            return true;
+                        }
+
+                        auto vecval = casted->Values->GetVec();
+
+                        retval = CefV8Value::CreateArray(vecval->size());
+
+                        for(size_t i = 0; i < vecval->size(); i++) {
+
+                            retval->SetValue(
+                                i, CefV8Value::CreateString(vecval->at(i)->GetName()));
+                        }
+
+                        return true;
+                    }
+
+                    return false;
+                }));
+        return true;
+    }
+
     if(!Values)
         return false;
 
@@ -449,6 +509,20 @@ bool JSNamedVarsInterceptor::Set(const CefString& name, const CefRefPtr<CefV8Val
 {
     exception = "TODO: Set for JSNamedVarsInterceptor";
     return true;
+}
+
+void JSNamedVarsInterceptor::BindValues(CefRefPtr<CefV8Value> object)
+{
+    auto vecval = Values->GetVec();
+
+    for(size_t i = 0; i < vecval->size(); i++) {
+
+        LOG(INFO) << "Binding index: " << i;
+
+        // Bind the value //
+        object->SetValue(
+            vecval->at(i)->GetName(), V8_ACCESS_CONTROL_DEFAULT, V8_PROPERTY_ATTRIBUTE_NONE);
+    }
 }
 // ------------------------------------ //
 // JSAudioSourceInterceptor

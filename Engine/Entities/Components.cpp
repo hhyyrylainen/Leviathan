@@ -157,13 +157,12 @@ DLLEXPORT bool Physics::SetOnlyOrientation(const Float4& orientation)
     NewtonBodyGetMatrix(Body, &newtonMatrix[0]);
 
     const auto pos = ExtractNewtonMatrixTranslation(newtonMatrix);
-    static const auto normalized = Float3(1, 1, 1).Normalize();
 
     Ogre::Matrix4 matrix;
 
     Ogre::Vector3 ogrepos = pos;
     Ogre::Quaternion ogrerot = orientation;
-    matrix.makeTransform(ogrepos, normalized, ogrerot);
+    matrix.makeTransform(ogrepos, Float3(1, 1, 1), ogrerot);
 
     Ogre::Matrix4 tmatrix = PrepareOgreMatrixForNewton(matrix);
 

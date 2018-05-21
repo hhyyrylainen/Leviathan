@@ -97,8 +97,13 @@ protected:
 };
 
 
-//! \brief Handles javascript functions that have native extensions //
-class JSNativeCoreAPI : public CefV8Handler, public ThreadSafe {
+//! \brief Handles javascript functions that have native extensions
+//!
+//! This needs to be recursively lockable as we can't pass the locks through JavaScript
+//! \todo Figure out if CEF actually runs multiple threads in the render process. This may not
+//! actually be the case so locking can probably be skipped as we can't get process messages
+//! while we are processing something else if that is true
+class JSNativeCoreAPI : public CefV8Handler, public ThreadSafeRecursive {
     friend CefApplication;
     //! \brief Class that holds everything related to a listen callback
     //! \todo Add support for passing event values

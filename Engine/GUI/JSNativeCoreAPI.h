@@ -101,9 +101,10 @@ protected:
 //!
 //! This needs to be recursively lockable as we can't pass the locks through JavaScript
 //! \todo Figure out if CEF actually runs multiple threads in the render process. This may not
-//! actually be the case so locking can probably be skipped as we can't get process messages
-//! while we are processing something else if that is true
-class JSNativeCoreAPI : public CefV8Handler, public ThreadSafeRecursive {
+//! actually be the case so the lack of locking here might not cause issues. The lock was
+//! removed from here to not cause deadlocking, and because ThreadSafeRecursive didn't compile
+//! with visual studio while we are processing something else if that is true
+class JSNativeCoreAPI : public CefV8Handler /*, public ThreadSafeRecursive*/ {
     friend CefApplication;
     //! \brief Class that holds everything related to a listen callback
     //! \todo Add support for passing event values

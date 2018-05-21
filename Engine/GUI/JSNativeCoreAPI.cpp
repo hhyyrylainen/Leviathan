@@ -12,7 +12,7 @@ JSNativeCoreAPI::JSNativeCoreAPI(CefApplication* owner) : Owner(owner) {}
 // ------------------------------------ //
 void JSNativeCoreAPI::ClearContextValues()
 {
-    GUARD_LOCK();
+    // GUARD_LOCK();
     // Stop listening //
     Owner->StopListeningForEvents();
     // This should be enough //
@@ -91,7 +91,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         auto tmplistener = std::make_shared<JSListener>(
             (*iter).second, arguments[1], CefV8Context::GetCurrentContext());
 
-        GUARD_LOCK();
+        // GUARD_LOCK();
 
         // Add it //
         RegisteredListeners.push_back(tmplistener);
@@ -115,7 +115,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         auto tmplistener = std::make_shared<JSListener>(
             eventname, arguments[1], CefV8Context::GetCurrentContext());
 
-        GUARD_LOCK();
+        // GUARD_LOCK();
 
         // Add it //
         RegisteredListeners.push_back(tmplistener);
@@ -161,7 +161,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         // Add to queue
         const auto requestNumber = ++RequestSequenceNumber;
 
-        GUARD_LOCK();
+        // GUARD_LOCK();
 
         PendingRequestCallbacks.push_back(std::make_tuple(
             requestNumber, arguments[3], nullptr, CefV8Context::GetCurrentContext()));
@@ -208,7 +208,7 @@ bool JSNativeCoreAPI::HandleProcessMessage(CefRefPtr<CefBrowser> browser,
             // The only parameter is the id we use for future calls related to this source
             const auto& createdId = args->GetInt(2);
 
-            GUARD_LOCK();
+            // GUARD_LOCK();
 
             // Find the request
             const auto requestIndex = FindRequestByNumber(requestNumber);
@@ -286,7 +286,7 @@ size_t JSNativeCoreAPI::FindRequestByNumber(int number) const
 void JSNativeCoreAPI::HandlePacket(const Event& eventdata)
 {
     // Just pass it to all the listeners //
-    GUARD_LOCK();
+    // GUARD_LOCK();
 
     for(size_t i = 0; i < RegisteredListeners.size(); i++) {
 
@@ -297,7 +297,7 @@ void JSNativeCoreAPI::HandlePacket(const Event& eventdata)
 void JSNativeCoreAPI::HandlePacket(GenericEvent& eventdata)
 {
     // Just pass it to all the listeners //
-    GUARD_LOCK();
+    // GUARD_LOCK();
 
     for(size_t i = 0; i < RegisteredListeners.size(); i++) {
 

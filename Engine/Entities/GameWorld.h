@@ -382,6 +382,12 @@ public:
     //! implement the ScriptSystem interface
     DLLEXPORT bool RegisterScriptSystem(const std::string& name, asIScriptObject* system);
 
+    //! \brief Unregisters a script system that was registered with RegisterScriptSystem
+    //! \returns True if unregistered. False if no system with the name was registered
+    //! \note This may not be called during a tick while script systems are running (because
+    //! this modifies the container for them)
+    DLLEXPORT bool UnregisterScriptSystem(const std::string& name);
+
     //! \brief Returns the underlying angelscript object that implements a script system
     //! \note Increases refcount on returned object
     DLLEXPORT asIScriptObject* GetScriptSystem(const std::string& name);

@@ -1455,6 +1455,24 @@ DLLEXPORT bool GameWorld::RegisterScriptSystem(
     return true;
 }
 
+DLLEXPORT bool GameWorld::UnregisterScriptSystem(const std::string& name)
+{
+    // if called after release
+    if(!pimpl) {
+        return false;
+    }
+
+    const auto iter = pimpl->RegisteredScriptSystems.find(name);
+    if(iter == pimpl->RegisteredScriptSystems.end()) {
+        return false;
+    }
+
+    iter->second->Release();
+    pimpl->RegisteredScriptSystems.erase(iter);
+
+    return true;
+}
+
 DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
 {
     // if called after release

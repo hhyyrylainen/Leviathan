@@ -82,6 +82,12 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     if(engine->RegisterObjectMethod(classname,
+           "bool UnregisterScriptSystem(const string &in name)",
+           asMETHOD(WorldType, UnregisterScriptSystem), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod(classname,
            "ScriptComponentHolder@ GetScriptComponentHolder(const string &in name)",
            asMETHOD(WorldType, GetScriptComponentHolder), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

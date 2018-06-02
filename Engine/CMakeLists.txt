@@ -306,6 +306,9 @@ file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
 
 if(NOT CREATE_UE4_PLUGIN)
     set(GroupJsoncpp "jsoncpp.cpp" "json/json.h" "json/json-forwards.h")
+    # For building jsoncpp must have "JSON_DLL_BUILD" defined
+    set_source_files_properties("jsoncpp.cpp" PROPERTIES 
+      COMPILE_DEFINITIONS JSON_DLL_BUILD)
 endif()
 
 file(GLOB Grouputf8 "utf8/*.h" "utf8/*.cpp")

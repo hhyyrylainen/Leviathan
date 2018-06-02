@@ -305,7 +305,7 @@ file(GLOB GeneratorInput "GeneratorInput/*.*")
 file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
 
 if(NOT CREATE_UE4_PLUGIN)
-    file(GLOB GroupJsoncpp "jsoncpp/*.h" "jsoncpp/*.cpp")
+    set(GroupJsoncpp "jsoncpp.cpp" "json/json.h" "json/json-forwards.h")
 endif()
 
 file(GLOB Grouputf8 "utf8/*.h" "utf8/*.cpp")

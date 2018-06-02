@@ -6,7 +6,7 @@
 #include "GuiView.h"
 #include "Iterators/StringIterator.h"
 
-#include "jsoncpp/json.h"
+#include "json/json.h"
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //

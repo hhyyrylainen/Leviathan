@@ -478,6 +478,13 @@ TEST_CASE("StringOperations URL combine", "[string][url]"){
                 "https://example.com//img.example.com//images/1234.jpeg") ==
             "https://img.example.com/images/1234.jpeg");
     }
+
+    SECTION("Combine starting double /"){
+        CHECK(StringOperations::CombineURL(
+                "https://a.example.com/a",
+                "//abc.example.com/images/1234.jpeg") ==
+            "https://abc.example.com/images/1234.jpeg");
+    }
 }
 
 TEST_CASE("StringOperations IsURLDomain", "[string][url]"){

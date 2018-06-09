@@ -4,19 +4,19 @@ using namespace Leviathan;
 // ------------------------------------ //
 
 template<>
-    DLLEXPORT void StringOperations::MakeString(std::wstring &str, const char* characters,
-        size_t count)
+DLLEXPORT void StringOperations::MakeString(
+    std::wstring& str, const char* characters, size_t count)
 {
     // Skip copying null terminator
     const size_t copysize = count - 1;
     str.resize(copysize);
 
-    for (size_t i = 0; i < copysize; ++i)
+    for(size_t i = 0; i < copysize; ++i)
         str[i] = (wchar_t)characters[i];
 }
 
-DLLEXPORT std::string StringOperations::URLProtocol(const std::string &url){
-
+DLLEXPORT std::string StringOperations::URLProtocol(const std::string& url)
+{
     const auto colonpos = url.find_first_of(':');
 
     if(colonpos == std::string::npos)
@@ -25,7 +25,8 @@ DLLEXPORT std::string StringOperations::URLProtocol(const std::string &url){
     return url.substr(0, colonpos);
 }
 
-DLLEXPORT std::string StringOperations::BaseHostName(const std::string &url){
+DLLEXPORT std::string StringOperations::BaseHostName(const std::string& url)
+{
 
     if(url.empty())
         return "";
@@ -33,11 +34,11 @@ DLLEXPORT std::string StringOperations::BaseHostName(const std::string &url){
     // Start scanning until a '/' is found that is not preceeded by ':' or '/'
     size_t length = 0;
 
-    for(size_t i = 0; i < url.size(); ++i){
+    for(size_t i = 0; i < url.size(); ++i) {
 
         length = i + 1;
-        
-        if(url[i] == '/'){
+
+        if(url[i] == '/') {
 
             if(i < 1)
                 continue;
@@ -57,7 +58,8 @@ DLLEXPORT std::string StringOperations::BaseHostName(const std::string &url){
     return url.substr(0, length);
 }
 
-DLLEXPORT std::string StringOperations::URLPath(const std::string &url){
+DLLEXPORT std::string StringOperations::URLPath(const std::string& url)
+{
 
     if(url.empty())
         return "";
@@ -65,9 +67,9 @@ DLLEXPORT std::string StringOperations::URLPath(const std::string &url){
     // Start scanning until a '/' is found that is not preceeded by ':' or '/'
     size_t startCopy = 0;
 
-    for(size_t i = 0; i < url.size(); ++i){
+    for(size_t i = 0; i < url.size(); ++i) {
 
-        if(url[i] == '/'){
+        if(url[i] == '/') {
 
             if(i < 1)
                 continue;
@@ -84,16 +86,16 @@ DLLEXPORT std::string StringOperations::URLPath(const std::string &url){
     // Make sure the string doesn't end there
     if(startCopy >= url.size())
         return "";
-    
+
     return url.substr(startCopy, url.size() - startCopy);
 }
 
-DLLEXPORT std::string StringOperations::CombineURL(const std::string &first, 
-    const std::string &second)
+DLLEXPORT std::string StringOperations::CombineURL(
+    const std::string& first, const std::string& second)
 {
     // To fix messed up urls we always do this cleanup
     const auto cleanedUpSecond = RemovePartsBeforeAbsoluteURLParts(second);
-    
+
     if(first.empty())
         return cleanedUpSecond;
 
@@ -103,6 +105,11 @@ DLLEXPORT std::string StringOperations::CombineURL(const std::string &first,
     // If second is an absolute URL just return it //
     if(cleanedUpSecond.find("://") != std::string::npos)
         return cleanedUpSecond;
+
+    // If the other starts with double '//' then we just need to grab the protocol from the
+    // first and add the second
+    if(cleanedUpSecond.find("//") == 0)
+        return URLProtocol(first) + ":" + second;
 
     // Simplest case: first ends with '/' and second doesn't begin with '/'
     if(first.back() == '/' && cleanedUpSecond.front() != '/')
@@ -124,30 +131,30 @@ DLLEXPORT std::string StringOperations::CombineURL(const std::string &first,
 // TODO: remove
 #include <iostream>
 DLLEXPORT std::string StringOperations::RemovePartsBeforeAbsoluteURLParts(
-    const std::string &url)
+    const std::string& url)
 {
     // Detect two '//'s in a path
     const auto colonPos = url.find_first_of(':');
 
-    if(colonPos != std::string::npos){
+    if(colonPos != std::string::npos) {
 
         // First double slash
         auto firstDouble = url.find("//", colonPos + 3);
         // Second
         const auto secondDouble = url.find("//", firstDouble + 2);
 
-        if(firstDouble != std::string::npos && secondDouble != std::string::npos){
+        if(firstDouble != std::string::npos && secondDouble != std::string::npos) {
 
             // If the part between the double slashes looks like a
             // domain then we cut the part between the protocol and
             // the first double slash
             firstDouble += 2;
 
-            if(IsURLDomain(url.substr(firstDouble, secondDouble - firstDouble))){
+            if(IsURLDomain(url.substr(firstDouble, secondDouble - firstDouble))) {
 
                 return URLProtocol(url) + "://" +
-                    url.substr(firstDouble, secondDouble - firstDouble) + "/" +
-                    url.substr(secondDouble + 2);
+                       url.substr(firstDouble, secondDouble - firstDouble) + "/" +
+                       url.substr(secondDouble + 2);
             }
         }
     }
@@ -155,13 +162,14 @@ DLLEXPORT std::string StringOperations::RemovePartsBeforeAbsoluteURLParts(
     return url;
 }
 
-DLLEXPORT bool StringOperations::IsURLDomain(const std::string &str){
+DLLEXPORT bool StringOperations::IsURLDomain(const std::string& str)
+{
 
     // Must have a dot
     bool dotSeen = false;
 
-    for(char c : str){
-        if(c == '.'){
+    for(char c : str) {
+        if(c == '.') {
             dotSeen = true;
             continue;
         }
@@ -171,13 +179,12 @@ DLLEXPORT bool StringOperations::IsURLDomain(const std::string &str){
 
         if(c >= 'A' && c <= 'Z')
             continue;
-        
+
         if(c >= 'a' && c <= 'z')
             continue;
-        
+
         return false;
     }
-    
+
     return dotSeen;
 }
-

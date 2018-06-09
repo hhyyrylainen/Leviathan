@@ -87,6 +87,11 @@ void Vector4Proxy(void* memory, Ogre::Real x, Ogre::Real y, Ogre::Real z, Ogre::
     new(memory) Ogre::Vector4(x, y, z, w);
 }
 
+void PlaneFromNormalProxy(void* memory, const Ogre::Vector3& normal, Ogre::Real f)
+{
+    new(memory) Ogre::Plane(normal, f);
+}
+
 void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child)
 {
     if(child)
@@ -143,7 +148,6 @@ std::string MeshGetNameProxy(Ogre::Mesh* self)
 // Ogre::Root::getSingletonPtr() with angelscript does weird stuff
 Ogre::Root* ScriptGetOgre()
 {
-
     Ogre::Root* root = Ogre::Root::getSingletonPtr();
 
     LEVIATHAN_ASSERT(root != nullptr, "Script called GetOgre while Ogre isn't initialized");
@@ -487,6 +491,32 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
     return true;
 }
 
+bool BindPlane(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Plane", sizeof(Ogre::Plane),
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Plane>() | asOBJ_POD |
+               asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Plane", asBEHAVE_CONSTRUCT,
+           "void f(const Vector3 &in normal, Real f)", asFUNCTION(PlaneFromNormalProxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty(
+           "Plane", "Vector3 normal", asOFFSET(Ogre::Plane, normal)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Plane", "Real dy", asOFFSET(Ogre::Plane, d)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 // ------------------------------------ //
 
 bool BindScene(asIScriptEngine* engine)
@@ -642,6 +672,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         return false;
 
     if(!BindMatrix4(engine))
+        return false;
+
+    if(!BindPlane(engine))
         return false;
 
     if(!BindSkeletons(engine))

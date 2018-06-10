@@ -100,16 +100,16 @@ public:
 #endif //_WIN32
 
     //! \note This is clamped to range [0, width / height]
-    DLLEXPORT void GetRelativeMouse(int& x, int& y);
+    DLLEXPORT void GetRelativeMouse(int& x, int& y) const;
 
     //! Unclamped version of GetRelativeMouse can return negative coordinates if the mouse is
     //! left of this window
-    DLLEXPORT void GetUnclampedRelativeMouse(int& x, int& y);
+    DLLEXPORT void GetUnclampedRelativeMouse(int& x, int& y) const;
 
     //! \returns The normalized mouse x and y positions (in range [0, 1])
-    DLLEXPORT void GetNormalizedRelativeMouse(float& x, float& y);
+    DLLEXPORT void GetNormalizedRelativeMouse(float& x, float& y) const;
     DLLEXPORT void SetMouseToCenter();
-    DLLEXPORT bool IsMouseOutsideWindowClientArea();
+    DLLEXPORT bool IsMouseOutsideWindowClientArea() const;
 
     //! \brief Translates a client space coordinate to screen coordinate
     //! \exception ExceptionNotFound If the window is not found (the internal translate fails)

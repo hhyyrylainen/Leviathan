@@ -811,7 +811,7 @@ DLLEXPORT void Window::SetMouseToCenter()
     SDL_WarpMouseInWindow(SDLWindow, width / 2, height / 2);
 }
 
-DLLEXPORT void Window::GetRelativeMouse(int& x, int& y)
+DLLEXPORT void Window::GetRelativeMouse(int& x, int& y) const
 {
     if(!SDLWindow)
         return;
@@ -833,7 +833,7 @@ DLLEXPORT void Window::GetRelativeMouse(int& x, int& y)
     y = std::clamp(globalY, 0, height);
 }
 
-DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y)
+DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y) const
 {
     if(!SDLWindow)
         return;
@@ -849,7 +849,7 @@ DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y)
 }
 
 
-DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y)
+DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y) const
 {
 
     int xInt, yInt;
@@ -868,7 +868,7 @@ DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y)
     y = static_cast<float>(yInt) / height;
 }
 
-DLLEXPORT bool Window::IsMouseOutsideWindowClientArea()
+DLLEXPORT bool Window::IsMouseOutsideWindowClientArea() const
 {
     int X, Y;
     GetUnclampedRelativeMouse(X, Y);

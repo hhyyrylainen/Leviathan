@@ -54,6 +54,12 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod(classname,
+           "Ogre::Ray CastRayFromCamera(float x, float y) const",
+           asMETHOD(WorldType, CastRayFromCamera), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // ------------------------------------ //
     // Support for script types
     if(engine->RegisterObjectMethod(classname,

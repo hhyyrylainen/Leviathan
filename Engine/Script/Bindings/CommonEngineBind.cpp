@@ -19,6 +19,7 @@
 #include "Threading/ThreadingManager.h"
 #include "Utility/DataHandling/SimpleDatabase.h"
 #include "Utility/Random.h"
+#include "Window.h"
 
 #include "Engine.h"
 
@@ -504,9 +505,86 @@ bool BindThreadingManager(asIScriptEngine* engine)
     return true;
 }
 // ------------------------------------ //
+bool BindWindow(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Window", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "void SaveScreenShot(const string &in filename)",
+           asMETHOD(Window, SaveScreenShot), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "float GetAspectRatio() const",
+           asMETHOD(Window, SaveScreenShot), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+           "void GetSize(int32 &out width, int32 &out height) const",
+           asMETHOD(Window, GetSize), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+           "void GetPosition(int32 &out x, int32 &out y) const", asMETHOD(Window, GetPosition),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+           "void GetRelativeMouse(int32 &out x, int32 &out y) const",
+           asMETHOD(Window, GetRelativeMouse), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+           "void GetUnclampedRelativeMouse(int32 &out x, int32 &out y) const",
+           asMETHOD(Window, GetUnclampedRelativeMouse), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window",
+           "void GetNormalizedRelativeMouse(float &out x, float &out y) const",
+           asMETHOD(Window, GetNormalizedRelativeMouse), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "bool IsMouseOutsideWindowClientArea() const",
+           asMETHOD(Window, IsMouseOutsideWindowClientArea), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "bool IsWindowFocused() const",
+           asMETHOD(Window, IsWindowFocused), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Window", "int GetWindowNumber() const",
+           asMETHOD(Window, GetWindowNumber), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    if(engine->SetDefaultNamespace("Window") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction("int GetGlobalWindowCount()",
+           asFUNCTION(Window::GetGlobalWindowCount), asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+// ------------------------------------ //
 bool BindEngine(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Engine", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -543,6 +621,11 @@ bool BindEngine(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Engine", "ThreadingManager& GetThreadingManager()",
            asMETHOD(Engine, GetThreadingManager), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Engine", "Window& GetWindowEntity()",
+           asMETHOD(Engine, GetWindowEntity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -1057,6 +1140,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         return false;
 
     if(!BindThreadingManager(engine))
+        return false;
+
+    if(!BindWindow(engine))
         return false;
 
     if(!BindEngine(engine))

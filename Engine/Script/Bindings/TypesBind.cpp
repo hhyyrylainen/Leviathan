@@ -61,6 +61,11 @@ void Float3ConstructorProxyCopy(void* memory, const Float3& other)
     new(memory) Float3(other);
 }
 
+void Float3ConstructorProxyFromInt3(void* memory, const Int3& values)
+{
+    new(memory) Float3(values);
+}
+
 void Float3DestructorProxy(void* memory)
 {
     reinterpret_cast<Float3*>(memory)->~Float3();
@@ -283,7 +288,6 @@ bool BindFloat2(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindFloat3(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Float3", sizeof(Float3),
            asOBJ_VALUE | asGetTypeTraits<Float3>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -306,6 +310,12 @@ bool BindFloat3(asIScriptEngine* engine)
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+    if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
+           "void f(const Int3 &in values)", asFUNCTION(Float3ConstructorProxyFromInt3),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_DESTRUCT, "void f()",
            asFUNCTION(Float3DestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -803,6 +813,11 @@ bool BindTypeDefs(asIScriptEngine* engine)
 // Main bind function
 bool Leviathan::BindTypes(asIScriptEngine* engine)
 {
+    if(!BindInt2(engine))
+        return false;
+
+    if(!BindInt3(engine))
+        return false;
 
     // Register common float types //
     if(!BindFloat2(engine))
@@ -814,11 +829,6 @@ bool Leviathan::BindTypes(asIScriptEngine* engine)
     if(!BindFloat4(engine))
         return false;
 
-    if(!BindInt2(engine))
-        return false;
-
-    if(!BindInt3(engine))
-        return false;
 
     if(!BindOgreConversions(engine))
         return false;

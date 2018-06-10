@@ -655,6 +655,14 @@ public:
         X = Y = Z = data;
         DO_NAN_CHECK;
     }
+    DLLEXPORT Float3(const Int3& values)
+    {
+        X = values.X;
+        Y = values.Y;
+        Z = values.Z;
+
+        DO_NAN_CHECK;
+    }
     DLLEXPORT Float3(const Float3& other)
     {
         // copy values //

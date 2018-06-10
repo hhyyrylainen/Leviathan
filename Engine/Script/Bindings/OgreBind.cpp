@@ -92,6 +92,20 @@ void PlaneFromNormalProxy(void* memory, const Ogre::Vector3& normal, Ogre::Real 
     new(memory) Ogre::Plane(normal, f);
 }
 
+void RayProxy(void* memory, const Ogre::Vector3& origin, const Ogre::Vector3& direction)
+{
+    new(memory) Ogre::Ray(origin, direction);
+}
+
+bool RayIntersectsPlaneProxy(
+    const Ogre::Ray* self, const Ogre::Plane& plane, Ogre::Real& distance)
+{
+    bool intersects;
+
+    std::tie(intersects, distance) = self->intersects(plane);
+    return intersects;
+}
+
 void SceneNodeAddChildProxy(Ogre::SceneNode* self, Ogre::SceneNode* child)
 {
     if(child)
@@ -517,6 +531,34 @@ bool BindPlane(asIScriptEngine* engine)
     return true;
 }
 
+bool BindRay(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Ray", sizeof(Ogre::Ray),
+           asOBJ_VALUE | asGetTypeTraits<Ogre::Ray>() | asOBJ_POD |
+               asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Ray", asBEHAVE_CONSTRUCT,
+           "void f(const Vector3 &in origin, const Vector3 &in direction)",
+           asFUNCTION(RayProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Ray",
+           "bool intersects(const Plane &in plane, Real &out distance) const",
+           asFUNCTION(RayIntersectsPlaneProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Ray", "Vector3 getPoint(Real t) const",
+           asMETHOD(Ogre::Ray, getPoint), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 // ------------------------------------ //
 
 bool BindScene(asIScriptEngine* engine)
@@ -650,7 +692,6 @@ bool BindMeshes(asIScriptEngine* engine)
 // ------------------------------------ //
 bool Leviathan::BindOgre(asIScriptEngine* engine)
 {
-
     // This doesn't need to be restored if we fail //
     if(engine->SetDefaultNamespace("Ogre") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -675,6 +716,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         return false;
 
     if(!BindPlane(engine))
+        return false;
+
+    if(!BindRay(engine))
         return false;
 
     if(!BindSkeletons(engine))

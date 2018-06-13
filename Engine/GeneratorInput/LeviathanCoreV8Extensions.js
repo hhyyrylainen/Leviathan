@@ -60,6 +60,9 @@ var Leviathan = {};
                    // || (overflowX === 'scroll' || overflowX === 'auto') &&
                    // element.scrollWidth > element.clientWidth
                   ) {
+                    // console.log("this is scrollable: " + overflowY + " scroll: " +
+                    //             element.scrollHeight + " clientHeight: " +
+                    //             element.clientHeight);
                     scrollable = true;
                     break;
                 }

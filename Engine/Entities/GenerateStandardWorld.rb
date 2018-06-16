@@ -84,7 +84,9 @@ worldClass = GameWorldClass.new(
                                           noRef: true),
                              Variable.new("material", "std::string"),
                              Variable.new("plane", "Ogre::Plane"),
-                             Variable.new("size", "Float2")
+                             Variable.new("size", "Float2"),
+                             Variable.new("uvupvector", "Ogre::Vector3",
+                                          default: "Ogre::Vector3::UNIT_Y"),
                            ])
                         ]),
     EntityComponent.new("Animated",

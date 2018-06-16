@@ -49,7 +49,8 @@ DLLEXPORT RenderNode::RenderNode(const Test::TestComponentCreation& test) : Comp
 // ------------------------------------ //
 // Plane
 DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
-    const std::string& material, const Ogre::Plane& plane, const Float2& size) :
+    const std::string& material, const Ogre::Plane& plane, const Float2& size,
+    const Ogre::Vector3& uvupvector /*= Ogre::Vector3::UNIT_Y*/) :
     Component(TYPE),
     GeneratedMeshName("Plane_Component_Mesh_" + std::to_string(IDFactory::GetID()))
 {
@@ -57,8 +58,7 @@ DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
         GeneratedMeshName + "_v1", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
         plane, size.X, size.Y, 1, 1,
         // Normals
-        true, 1, 1.0f, 1.0f, Ogre::Vector3::UNIT_Y,
-        Ogre::v1::HardwareBuffer::HBU_STATIC_WRITE_ONLY,
+        true, 1, 1.0f, 1.0f, uvupvector, Ogre::v1::HardwareBuffer::HBU_STATIC_WRITE_ONLY,
         Ogre::v1::HardwareBuffer::HBU_STATIC_WRITE_ONLY, false, false);
 
     const auto mesh2 = Ogre::MeshManager::getSingleton().createManual(

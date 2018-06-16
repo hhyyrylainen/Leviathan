@@ -297,7 +297,8 @@ public:
 class Plane : public Component {
 public:
     DLLEXPORT Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
-        const std::string& material, const Ogre::Plane& plane, const Float2& size);
+        const std::string& material, const Ogre::Plane& plane, const Float2& size,
+        const Ogre::Vector3& uvupvector = Ogre::Vector3::UNIT_Y);
 
     //! \brief Destroys GraphicalObject
     DLLEXPORT void Release(Ogre::SceneManager* scene);

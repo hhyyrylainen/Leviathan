@@ -560,6 +560,46 @@ bool BindRay(asIScriptEngine* engine)
 }
 
 // ------------------------------------ //
+bool BindRenderQueue(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("RenderQueue", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("Ogre::RenderQueue") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterEnum("Modes") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterEnumValue("Modes", "V1_LEGACY", Ogre::RenderQueue::V1_LEGACY) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterEnumValue("Modes", "V1_FAST", Ogre::RenderQueue::V1_FAST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterEnumValue("Modes", "FAST", Ogre::RenderQueue::FAST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("Ogre") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("RenderQueue",
+           "void setRenderQueueMode(uint8 rqId, Ogre::RenderQueue::Modes newMode) const",
+           asMETHOD(Ogre::RenderQueue, setRenderQueueMode), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
+// ------------------------------------ //
 
 bool BindScene(asIScriptEngine* engine)
 {
@@ -615,6 +655,11 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Item", "void setRenderQueueGroup(uint8 queueID)",
+           asMETHOD(Ogre::Item, setRenderQueueGroup), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("Item", "SkeletonInstance@ getSkeletonInstance()",
            asMETHOD(Ogre::Item, getSkeletonInstance), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -622,6 +667,17 @@ bool BindScene(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Item", "Mesh@ getMesh()", asFUNCTION(ItemGetMeshProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Scene
+    if(engine->RegisterObjectType("SceneManager", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("SceneManager", "RenderQueue& getRenderQueue()",
+           asMETHOD(Ogre::SceneManager, getRenderQueue), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -725,6 +781,9 @@ bool Leviathan::BindOgre(asIScriptEngine* engine)
         return false;
 
     if(!BindMeshes(engine))
+        return false;
+
+    if(!BindRenderQueue(engine))
         return false;
 
     if(!BindScene(engine))

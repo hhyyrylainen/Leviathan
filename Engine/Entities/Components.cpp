@@ -73,12 +73,13 @@ DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
     parent->attachObject(GraphicalObject);
 
     // This DOESN'T seem to throw if material is invalid
-    GraphicalObject->setMaterialName(material);
+    GraphicalObject->setDatablockOrMaterialName(material);
+
+    GraphicalObject->setRenderQueueGroup(DEFAULT_RENDER_QUEUE);
 }
 
 DLLEXPORT void Plane::Release(Ogre::SceneManager* scene)
 {
-
     scene->destroyItem(GraphicalObject);
 
     Ogre::MeshManager::getSingleton().remove(GeneratedMeshName);

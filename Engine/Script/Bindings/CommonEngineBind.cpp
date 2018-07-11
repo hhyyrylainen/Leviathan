@@ -186,7 +186,6 @@ static NamedVars* NamedVarsFactory()
 static void InvokeProxy(Engine* obj, asIScriptFunction* callback)
 {
     obj->Invoke([=]() {
-
         try {
             ScriptRunningSetup ssetup;
             auto result = ScriptExecutor::Get()->RunScript<void>(callback, nullptr, ssetup);
@@ -240,6 +239,8 @@ static float PIProxy = PI;
 static float EPSILONProxy = EPSILON;
 
 static int TICKSPEEDProxy = TICKSPEED;
+
+static uint8_t DEFAULT_RENDER_QUEUEProxy = DEFAULT_RENDER_QUEUE;
 
 static float DEGREES_TO_RADIANSProxy = DEGREES_TO_RADIANS;
 static float RADIANS_TO_DEGREESProxy = RADIANS_TO_DEGREES;
@@ -1230,6 +1231,12 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
     }
 
     if(engine->RegisterGlobalProperty("const int TICKSPEED", &TICKSPEEDProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty(
+           "const uint8 DEFAULT_RENDER_QUEUE", &DEFAULT_RENDER_QUEUEProxy) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

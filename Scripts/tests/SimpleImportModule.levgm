@@ -1,0 +1,15 @@
+Version = 1;
+
+
+o GameModule "SimpleImportModule"{
+    t sourcefiles{
+        TestImport.as
+    }
+
+    t import{
+        SimpleExportModule
+    }
+    
+    l properties{
+    }
+}

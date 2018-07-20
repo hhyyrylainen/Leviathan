@@ -1,4 +1,3 @@
-#include "Include.h"
 // ------------------------------------ //
 #include "FileSystem.h"
 
@@ -660,7 +659,7 @@ DLLEXPORT const string& Leviathan::FileSystem::GetExtensionName(int id) const
             return FileTypes[i]->Name;
     }
 
-        // Not found //
+    // Not found //
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
     throw NotFound("No extension corresponds with id");
 #else

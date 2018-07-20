@@ -70,7 +70,6 @@ public:
     template<class ActualType>
     static inline boost::intrusive_ptr<ActualType> WrapPtr(ActualType* ptr)
     {
-
         if(!ptr)
             return nullptr;
 
@@ -92,7 +91,6 @@ public:
     template<class ActualType, class... Args>
     static boost::intrusive_ptr<ActualType> MakeShared(Args&&... args)
     {
-
         boost::intrusive_ptr<ActualType> ptr(new ActualType(std::forward<Args>(args)...));
         ptr->Release();
 
@@ -105,7 +103,6 @@ public:
     //! \todo Make sure that the right memory order is used
     int32_t GetRefCount() const
     {
-
         return RefCount.load(std::memory_order_acquire);
     }
 
@@ -113,7 +110,6 @@ public:
 protected:
     friend void intrusive_ptr_add_ref(const ReferenceCounted* obj)
     {
-
         obj->RefCount.fetch_add(1, std::memory_order_relaxed);
     }
 
@@ -129,4 +125,4 @@ protected:
 private:
     mutable std::atomic_int_fast32_t RefCount;
 };
-}
+} // namespace Leviathan

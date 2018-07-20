@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "Engine.h"
 
+#include "Addons/GameModuleLoader.h"
 #include "Application/AppDefine.h"
 #include "Application/Application.h"
 #include "Application/ConsoleInput.h"
@@ -242,6 +243,9 @@ DLLEXPORT bool Engine::Init(
                                      "continuing anyway");
             }
 
+            engine->_GameModuleLoader = std::make_unique<GameModuleLoader>();
+            engine->_GameModuleLoader->Init();
+
             returnvalue.set_value(true);
         },
         std::ref(ScriptInterfaceResult), this)));
@@ -252,7 +256,6 @@ DLLEXPORT bool Engine::Init(
     // Ref is OK to use since this task finishes before this function //
     _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
         [](std::promise<bool>& returnvalue, Engine* engine) -> void {
-
             engine->_NewtonManager = new NewtonManager();
             if(!engine->_NewtonManager) {
 
@@ -316,8 +319,8 @@ DLLEXPORT bool Engine::Init(
         return false;
     }
 
-        // We can queue some more tasks //
-        // create leap controller //
+    // We can queue some more tasks //
+    // create leap controller //
 #ifdef LEVIATHAN_USES_LEAP
 
     // Disable leap if in non-gui mode //
@@ -332,7 +335,6 @@ DLLEXPORT bool Engine::Init(
         // Seems that std::threads are joinable when constructed with default constructor
         leapinitthread = std::thread(std::bind<void>(
             [](Engine* engine) -> void {
-
                 engine->LeapData = new LeapManager(engine);
                 if(!engine->LeapData) {
                     Logger::Get()->Error("Engine: Init: failed to create LeapManager");
@@ -351,7 +353,6 @@ DLLEXPORT bool Engine::Init(
                         "Engine: Init: Leap threw something, even without leap "
                         "this shouldn't happen; continuing anyway");
                 }
-
             },
             this));
     }
@@ -363,7 +364,6 @@ DLLEXPORT bool Engine::Init(
     // Ref is OK to use since this task finishes before this function //
     _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
         [](std::promise<bool>& returnvalue, Engine* engine) -> void {
-
             if(!engine->NoGui) {
                 engine->Sound = new SoundDevice();
 
@@ -599,6 +599,8 @@ void Engine::Release(bool forced)
 
     // Console needs to be released before script release //
     SAFE_RELEASEDEL(MainConsole);
+
+    _GameModuleLoader.reset();
 
     SAFE_DELETE(MainScript);
 
@@ -1529,7 +1531,6 @@ bool Engine::_ReceiveConsoleInput(const std::string& command)
 {
 
     Invoke([=]() {
-
         if(MainConsole) {
 
             MainConsole->RunConsoleCommand(command);

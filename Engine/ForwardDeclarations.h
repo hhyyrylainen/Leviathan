@@ -149,6 +149,8 @@ class ScriptConsole;
 class LeapManager;
 class LeapListener;
 
+class GameModule;
+
 class ObjectLoader;
 class GameSpecificPacketHandler;
 class BaseGameSpecificRequestPacket;
@@ -191,7 +193,6 @@ class Random;
 class VariableBlock;
 class TimingMonitor;
 class ScopeTimer;
-class GameModule;
 struct MasterServerInformation;
 class GlobalCEFHandler;
 } // namespace Leviathan
@@ -210,7 +211,6 @@ using Leviathan::Engine;
 using Leviathan::Event;
 using Leviathan::EventHandler;
 using Leviathan::FileSystem;
-using Leviathan::GUI::GuiManager;
 using Leviathan::GameConfiguration;
 using Leviathan::GameModule;
 using Leviathan::GameSpecificPacketData;
@@ -235,6 +235,7 @@ using Leviathan::SyncedValue;
 using Leviathan::TimingMonitor;
 using Leviathan::UTF8DataIterator;
 using Leviathan::VariableBlock;
+using Leviathan::GUI::GuiManager;
 
 
 using Leviathan::ConditionalDelayedTask;

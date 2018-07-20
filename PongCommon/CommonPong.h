@@ -294,14 +294,12 @@ public:
         QUICKTIME_THISSCOPE;
 
         // Load the game AI //
-        GameAI = new GameModule("PongAIModule", "PongGameCore");
+        // GameAI = new GameModule("PongAIModule", "PongGameCore");
+        LOG_WRITE("TODO: port over AI module load");
 
-        if(!GameAI->Init()) {
-            // No AI for the game //
-            Logger::Get()->Error("Failed to load AI!");
-            GameAI->ReleaseScript();
-            SAFE_DELETE(GameAI);
-        }
+
+        // No AI for the game //
+        Logger::Get()->Error("Failed to load AI!");
 
         // Load Pong specific packets //
         PongPackets::RegisterAllPongPacketTypes();

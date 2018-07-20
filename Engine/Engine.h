@@ -17,10 +17,12 @@
 
 namespace Leviathan {
 
+class GameModuleLoader;
+
 //! \brief The main class of the Leviathan Game Engine
 //!
 //! Allocates a lot of classes and performs almost all startup operations.
-//! \note Should be thread safe, but might not actually be
+//! \note Only some operations are thread safe
 class Engine : public ThreadSafe {
 
     friend Window;
@@ -201,6 +203,10 @@ public:
     {
         return MainRandom;
     }
+    inline GameModuleLoader* GetGameModuleLoader()
+    {
+        return _GameModuleLoader.get();
+    }
 
     DLLEXPORT Window* GetWindowFromSDLID(uint32_t sdlid);
 
@@ -290,6 +296,7 @@ protected:
 
     std::unique_ptr<ConsoleInput> _ConsoleInput;
     std::unique_ptr<EntitySerializer> _EntitySerializer;
+    std::unique_ptr<GameModuleLoader> _GameModuleLoader;
 
 #ifdef LEVIATHAN_USES_LEAP
     LeapManager* LeapData = nullptr;

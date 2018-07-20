@@ -11,22 +11,30 @@
 
 namespace Leviathan {
 
-//! \brief Represents a scriptable part of a program
-class GameModule : public ReferenceCounted, public EventableScriptObject {
-public:
-    //! \warning Quite expensive constructor since it loads the definition file
-    //! \todo Make load all source files, instead of loading just the first
-    DLLEXPORT GameModule(const std::string& modulename, const std::string& ownername,
-        const std::string& extension = "txt|levgm");
+class GameModuleLoader;
 
-    DLLEXPORT ~GameModule();
+//! \brief Represents a scriptable part of a program
+//! \note Create instances through GameModuleLoader::Load
+class GameModule : public ReferenceCounted, public EventableScriptObject {
+    friend GameModuleLoader;
+    // This is to make MakeShared work, but it should only be called from GameModuleLoader
+    friend ReferenceCounted;
+
+protected:
+    DLLEXPORT GameModule(const std::string& filepath, const std::string& ownername,
+        GameModuleLoader* loadedthrough);
 
     //! \brief Makes the scripts usable
     DLLEXPORT bool Init();
 
+public:
+    DLLEXPORT ~GameModule();
+
     //! \brief Releases the script
     //!
     //! Use to release script before releasing any other objects
+    //! \note GameModuleLoader will call this automatically but this is provided to allow
+    //! controlling the release order
     DLLEXPORT void ReleaseScript();
 
     //! \returns The script module
@@ -57,8 +65,26 @@ public:
     }
 
 
-    //! \brief Returns a string describing this module
+    //! \returns A string describing this module
     DLLEXPORT std::string GetDescription(bool full);
+
+    //! \returns The name of this module
+    DLLEXPORT const auto& GetName() const
+    {
+        return Name;
+    }
+
+    //! \returns The list of export files from this module
+    DLLEXPORT const auto& GetExportFiles() const
+    {
+        return ExportFiles;
+    }
+
+    //! \brief Used to detect circular dependencies by GameModuleLoader
+    DLLEXPORT bool IsInitializing() const
+    {
+        return IsCurrentlyInitializing;
+    }
 
     REFERENCE_COUNTED_PTR_TYPE(GameModule);
 
@@ -78,6 +104,20 @@ private:
     std::string Name;
     std::string Version;
     std::vector<std::string> SourceFiles;
+    std::vector<std::string> ImportModules;
+    std::vector<std::string> ExportFiles;
+
+
+    //! This is used to work with GameModuleLoader without it holding a reference, in order to
+    //! work like a weak reference (this is uses boost::intrusive_ptr so weak_ptr isn't
+    //! supported)
+    GameModuleLoader* Loader;
+
+    //! This is used to detect circular loading of modules
+    bool IsCurrentlyInitializing = false;
+
+    //! Loaded modules that this depends on. The list is defined in ImportModules
+    std::vector<GameModule::pointer> LoadedImportedModules;
 };
 
 } // namespace Leviathan

@@ -1,0 +1,19 @@
+Version = 1;
+
+
+o GameModule "SimpleExportModule"{
+    t sourcefiles{
+        ExportImpl.as
+    }
+
+    // This defines the files that are included by modules importing this
+    // These *should* contain only the names of any shared objects as these are reparsed whenever
+    // this module is imported. So declarations in these files (also keep the number of files down)
+    // should be with the "external" keyword like this: `external shared class Foo;`
+    t export{
+        ExportPublic.as
+    }
+    
+    l properties{
+    }
+}

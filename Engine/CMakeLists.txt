@@ -269,7 +269,12 @@ else()
     )
 
   file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
-  file(GLOB GroupAddons "Addons/*.cpp" "Addons/*.h")
+
+  set(GroupAddons
+    "Addons/GameModule.cpp" "Addons/GameModule.h"
+    "Addons/GameModuleLoader.cpp" "Addons/GameModuleLoader.h"
+    )
+
   file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
   file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
 

@@ -464,9 +464,11 @@ bool JSNamedVarsInterceptor::Get(const CefString& name, const CefRefPtr<CefV8Val
 
                         auto vecval = casted->Values->GetVec();
 
-                        retval = CefV8Value::CreateArray(vecval->size());
+						const int size = static_cast<int>(vecval->size());
 
-                        for(size_t i = 0; i < vecval->size(); i++) {
+                        retval = CefV8Value::CreateArray(size);
+
+                        for(int i = 0; i < size; i++) {
 
                             retval->SetValue(
                                 i, CefV8Value::CreateString(vecval->at(i)->GetName()));

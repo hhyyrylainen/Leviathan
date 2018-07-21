@@ -124,6 +124,7 @@ constexpr float EPSILON = 0.00000001f;
  if(x[vdind]){delete x[vdind];}}; \
     x.clear();
 
+#define UNUSED(x) ((void)x);
 
 #ifdef LEVIATHAN_FULL
 #include "Logger.h"

@@ -158,7 +158,7 @@ int Pong::PongGame::StartServer(){
 
 #endif // _WIN32
 
-            GUARD_LOCK_OTHER(StaticGame);
+            GUARD_LOCK_OTHER_NAME(StaticGame, guardStaticGame);
 
 #ifdef WIN32
             CloseHandle(StaticGame->ServerProcessHandle);

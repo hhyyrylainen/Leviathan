@@ -602,7 +602,7 @@ DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 
     HDC hdcScreen = GetDC(nullptr);
 
-    BITMAPFILEHEADER bmfHeader;
+    // BITMAPFILEHEADER bmfHeader;
     BITMAPINFOHEADER bi;
 
     bi.biSize = sizeof(BITMAPINFOHEADER);

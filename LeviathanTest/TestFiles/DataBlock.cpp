@@ -54,7 +54,7 @@ TEST_CASE("DataBlock value casts", "[datablock][script][networking]"){
 
 	// void block testings //
 
-	unique_ptr<Float4> floaty = make_unique<Float4>(1, 564, 73784, 124);
+	unique_ptr<Float4> floaty = make_unique<Float4>(1.f, 564.f, 73784.f, 124.f);
 
 	VoidPtrBlock vblocky(floaty.get());
 

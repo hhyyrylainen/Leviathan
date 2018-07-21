@@ -513,11 +513,12 @@ if(WIN32 AND NOT MINGW)
 endif(WIN32 AND NOT MINGW)
 
 # Symbol building
-if(UNIX)
-  add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/libEngine.so"
-    DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
-elseif(WIN32)
-  add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/Engine.dll"
-    DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+if(USE_BREAKPAD)
+  if(UNIX)
+    add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/libEngine.so"
+      DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+  elseif(WIN32)
+    add_custom_target(Engine_Symbols ${SYMBOL_EXTRACTOR} "${CMAKE_BINARY_DIR}/bin/RelWithDebInfo/Engine.dll"
+      DEPENDS Engine WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
+  endif()
 endif()
-

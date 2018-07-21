@@ -2,16 +2,21 @@
 #include "GameModuleLoader.h"
 
 #include "FileSystem.h"
+#include "Logger.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 
 #include <boost/filesystem.hpp>
 
 using namespace Leviathan;
 // ------------------------------------ //
-GameModuleLoader::~GameModuleLoader()
+DLLEXPORT GameModuleLoader::GameModuleLoader() {}
+
+DLLEXPORT GameModuleLoader::~GameModuleLoader()
 {
     // We need to be careful about the delete order as the module will unregister from us
     for(auto& [key, value] : LoadedModules) {
+
+        UNUSED(key);
 
         if(value == nullptr)
             continue;
@@ -29,7 +34,7 @@ GameModuleLoader::~GameModuleLoader()
     LoadedModules.clear();
 }
 // ------------------------------------ //
-void GameModuleLoader::Init()
+DLLEXPORT void GameModuleLoader::Init()
 {
     GUARD_LOCK();
 
@@ -64,7 +69,7 @@ void GameModuleLoader::Init()
     }
 }
 
-GameModule::pointer GameModuleLoader::Load(
+DLLEXPORT GameModule::pointer GameModuleLoader::Load(
     const std::string& moduleorfilename, const char* requiredby)
 {
     GUARD_LOCK();

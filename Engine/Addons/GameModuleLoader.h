@@ -17,11 +17,12 @@ class GameModuleLoader : public ThreadSafeRecursive {
     friend GameModule;
 
 public:
-    ~GameModuleLoader();
+	DLLEXPORT GameModuleLoader();
+	DLLEXPORT ~GameModuleLoader();
 
     //! \brief Finds the names of all modules and which files they are in. This is safe to call
     //! again if changes to module files are detected
-    void Init();
+	DLLEXPORT void Init();
 
     //! \brief Returns a module by name
     //!
@@ -30,7 +31,7 @@ public:
     //! use an unique string here. This is taken as a const char to avoid constructing unused
     //! string objects \exception NotFound if not found
     //! \todo Allow loading by relative path (right now must just have the exact module name)
-    GameModule::pointer Load(const std::string& modulename, const char* requiredby);
+    DLLEXPORT GameModule::pointer Load(const std::string& modulename, const char* requiredby);
 
 protected:
     //! \brief Used by GameModule to report that it is going to be deleted

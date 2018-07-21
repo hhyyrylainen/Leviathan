@@ -117,8 +117,8 @@ DLLEXPORT void NetworkAckField::AddDataToPacket(sf::Packet &packet) const{
 }
 
 DLLEXPORT void NetworkAckField::InvokeForEachAck(std::function<void (uint32_t)> func) const{
-
-    for(size_t i = 0; i < Acks.size(); ++i){
+	const auto size = static_cast<uint32_t>(Acks.size());
+    for(uint32_t i = 0; i < size; ++i){
 
         for(uint8_t bit = 0; bit < 8; ++bit){
         

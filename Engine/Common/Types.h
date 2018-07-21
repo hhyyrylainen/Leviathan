@@ -657,9 +657,9 @@ public:
     }
     DLLEXPORT Float3(const Int3& values)
     {
-        X = values.X;
-        Y = values.Y;
-        Z = values.Z;
+        X = static_cast<float>(values.X);
+        Y = static_cast<float>(values.Y);
+        Z = static_cast<float>(values.Z);
 
         DO_NAN_CHECK;
     }

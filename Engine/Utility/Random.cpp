@@ -105,7 +105,7 @@ int Leviathan::Random::GetNumber(int min, int max)
     // New, hopefully better approach for smaller ranges
     // See stuff here:
     // https://stackoverflow.com/questions/1202687/how-do-i-get-a-specific-range-of-numbers-from-rand
-    return min + (GetNumber() / (RANDOM_MAX_POSSIBLE / (max - min + 1) + 1.0f));
+    return static_cast<int>(min + (GetNumber() / (RANDOM_MAX_POSSIBLE / (max - min + 1) + 1.0f)));
 }
 
 float Leviathan::Random::GetNumber(float min, float max)

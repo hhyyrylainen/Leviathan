@@ -26,8 +26,7 @@ int RoundProxy2(float value)
 
 float SignProxy(float value)
 {
-
-    return value < 0 ? -1 : 1;
+    return value < 0.f ? -1.f : 1.f;
 }
 
 std::string CharacterToStringProxy(int32_t character)

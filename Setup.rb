@@ -62,6 +62,8 @@ GetBreakpad = false
 # Doesn't get the resources for samples into leviathan/bin if set to false
 FetchAssets = true
 
+WantedURL = "https://boostslair.com/svn/leviathan_assets"
+
 require_relative 'LeviathanLibraries.rb'
 
 # All the objects
@@ -111,8 +113,10 @@ Dir.chdir(ProjectDir) do
         info "Creating a working copy for assets svn"
 
         runOpen3Checked("svn", "co",
-                        "https://subversion.assembla.com/svn/leviathan-assets/trunk", ".")
-        
+                        WantedURL, ".")
+      else
+        # Check that url is right
+        verifySVNUrl(WantedURL)        
       end
 
       # Update to latest version (don't force in case there are local changes)

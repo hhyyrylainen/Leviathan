@@ -12,18 +12,18 @@ jobs:
              - v4-deps-{{ arch }}
        - restore_cache:
            keys:
-             - v4-assets-{{ .Branch }}
-             - v4-assets
+             - v5-assets-{{ .Branch }}
+             - v5-assets
        - restore_cache:
            keys:
              - v3-build-{{ arch }}-{{ .Branch }}
        - run: ./Setup.rb --no-packagemanager --no-updates -j 2 --fully-parallel-project-compile --project-parallel 5
        - save_cache:
-           key: v4-assets-{{ .Branch }}
+           key: v5-assets-{{ .Branch }}
            paths:
              - bin
        - save_cache:
-           key: v4-assets
+           key: v5-assets
            paths:
              - bin
        - save_cache:

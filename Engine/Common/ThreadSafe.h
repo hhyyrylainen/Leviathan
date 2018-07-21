@@ -95,20 +95,23 @@ public:
 };
 
 #define GUARD_LOCK()                                                                  \
-    Leviathan::LockTypeResolver<                                                      \
+    typename Leviathan::LockTypeResolver<                                             \
         std::remove_reference_t<decltype(Leviathan::Locker::AcessLock(this))>>::LType \
         guard(Leviathan::Locker::AcessLock(this));
 
-#define GUARD_LOCK_OTHER(x)                                       \
-    Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
-        Leviathan::Locker::AcessLock(x))>>::LType guard(Leviathan::Locker::AcessLock(x));
-#define GUARD_LOCK_NAME(y) auto y = (Leviathan::Locker::Object(this));
+#define GUARD_LOCK_NAME(y)                                                 \
+    typename Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
+        Leviathan::Locker::AcessLock(this))>>::LType y(Leviathan::Locker::AcessLock(this));
 
-#define GUARD_LOCK_OTHER(x)                                       \
-    Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
+#define GUARD_LOCK_OTHER(x)                                                \
+    typename Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
         Leviathan::Locker::AcessLock(x))>>::LType guard(Leviathan::Locker::AcessLock(x));
-#define GUARD_LOCK_OTHER_NAME(x, y)                               \
-    Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
+
+#define GUARD_LOCK_OTHER(x)                                                \
+    typename Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
+        Leviathan::Locker::AcessLock(x))>>::LType guard(Leviathan::Locker::AcessLock(x));
+#define GUARD_LOCK_OTHER_NAME(x, y)                                        \
+    typename Leviathan::LockTypeResolver<std::remove_reference_t<decltype( \
         Leviathan::Locker::AcessLock(x))>>::LType y(Leviathan::Locker::AcessLock(x));
 
 //! Asserts if lock isn't locked / doesn't own mutex

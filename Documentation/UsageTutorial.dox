@@ -96,7 +96,7 @@ These programs are needed for all platforms:
   the package manager to install this. For **Windows** see \ref
   prerequisite_software_windows)
 
-- 7zip (if you want to use precompiled dependencies)
+- 7zip (required in latest versions)
 
 You can check whether a program is in PATH by opening a command 
 prompt/terminal and running the program by typing its name. 
@@ -177,7 +177,9 @@ ruby 2.4.1p111
 - 7zip. Download the <a
   href="http://www.7-zip.org/download.html">official</a> installer
   release and then once installed add the installed folder (where
-  `7z.exe` is) to path.
+  `7z.exe` is) to path. Confirm by running `7z.exe` in cmd.exe or
+  powershell, it should print 7zip version info and command line
+  usage.
 
 \subsection prerequisite_software_linux Linux
 

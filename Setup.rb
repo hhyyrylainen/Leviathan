@@ -155,11 +155,6 @@ success "Done compiling Leviathan"
 
 if OS.linux?
   
-  info "Indexing with cscope"
-  Dir.chdir(ProjectDir) do
-    runOpen3Checked File.join(ProjectDir, "RubySetupSystem/RunCodeIndexing.rb")
-  end
-  
   success "All done."
   info "To compile again just run 'make' in ./build"
   puts "You may need to run this setup again from time to time"

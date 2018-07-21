@@ -99,6 +99,7 @@ $ffmpeg = FFMPEG.new(
 $ogre = Ogre.new(
   version: "v2-1",
   installPath: THIRD_PARTY_INSTALL,
+  buildTools: true,
   noInstallSudo: true
 )
 

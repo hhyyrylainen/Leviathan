@@ -13,7 +13,6 @@ using namespace Leviathan::Test;
 
 TEST_CASE("Basic script running", "[script]")
 {
-
     PartialEngine<false> engine;
 
     IDFactory ids;

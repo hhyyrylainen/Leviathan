@@ -59,20 +59,17 @@ public:
 
     void Info(const std::string& data) override
     {
-
         INFO(data);
     }
 
     void Error(const std::string& data) override
     {
-
         Logger::Error(data);
         FAIL(data);
     }
 
     void Warning(const std::string& data) override
     {
-
         Logger::Warning(data);
 
         if(!IgnoreWarnings)
@@ -81,9 +78,22 @@ public:
 
     void Fatal(const std::string& text) override
     {
-
         FAIL(text);
         REQUIRE(false);
+    }
+
+    void Write(const std::string& text) override
+    {
+        Logger::Write(text);
+
+        // Detect AngelScript warnings and errors
+        if(text.find("[SCRIPT] [WARNING]") == 0) {
+
+            if(!IgnoreWarnings)
+                FAIL(text);
+        } else if(text.find("[SCRIPT] [ERROR]") == 0) {
+            FAIL(text);
+        }
     }
 
     bool IgnoreWarnings = false;

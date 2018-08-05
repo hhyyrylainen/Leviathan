@@ -15,7 +15,7 @@
 
 namespace Leviathan { namespace Script {
 
-//! \brief Script class
+//! \brief An EventListener that scripts can use to listen for events
 class EventListener : public ReferenceCounted, public CallableObject, public ThreadSafe {
 public:
     EventListener(asIScriptFunction* onevent, asIScriptFunction* ongeneric) :

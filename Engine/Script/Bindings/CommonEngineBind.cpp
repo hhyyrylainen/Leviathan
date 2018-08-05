@@ -415,6 +415,10 @@ bool BindEvents(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("GenericEvent", "string GetType() const",
+           asMETHOD(GenericEvent, GetType), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     // Event handler which cannot be instantiated or copied around //
     if(engine->RegisterObjectType("EventHandler", 0, asOBJ_REF | asOBJ_NOHANDLE) < 0) {

@@ -1,7 +1,11 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
+// ------------------------------------ //
 #include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
 #include "Events/EventHandler.h"
+#include "Script/NonOwningScriptCallback.h"
 
 #include "Common/ThreadSafe.h"
 #include "Exceptions.h"
@@ -14,65 +18,33 @@ namespace Leviathan { namespace Script {
 //! \brief Script class
 class EventListener : public ReferenceCounted, public CallableObject, public ThreadSafe {
 public:
-    EventListener(asIScriptFunction* onevent, asIScriptFunction* ongeneric)
+    EventListener(asIScriptFunction* onevent, asIScriptFunction* ongeneric) :
+        OnEventScript(onevent), OnGenericScript(ongeneric)
     {
-
-        if(onevent) {
-
-            OnEventScript = onevent;
-
-        } else {
-
-            OnEventScript = NULL;
-        }
-
-        if(ongeneric) {
-
-            OnGenericScript = ongeneric;
-
-        } else {
-
-            OnGenericScript = NULL;
-        }
-
         // Fail if neither is set //
-        if(!OnGenericScript && !OnEventScript)
+        if(!OnGenericScript.HasCallback() && !OnEventScript.HasCallback())
             throw InvalidArgument("At least on event or on generic listeners need to be "
-                                  "provided, both are NULL");
+                                  "provided, both are null");
     }
 
     ~EventListener()
     {
-
         UnRegisterAllEvents();
 
-        GUARD_LOCK();
-
-        SAFE_RELEASE(OnEventScript);
-        SAFE_RELEASE(OnGenericScript);
+        OnEventScript.Reset();
+        OnGenericScript.Reset();
     }
 
     int OnEvent(Event* event) override
     {
-
         GUARD_LOCK();
 
-        if(OnEventScript) {
+        if(OnEventScript.HasCallback()) {
 
-            ScriptRunningSetup sargs;
+            ScriptRunningSetup setup;
 
             // Run the script //
-            auto result =
-                ScriptExecutor::Get()->RunScript<int>(OnGenericScript, nullptr, sargs, event);
-
-            if(result.Result != SCRIPT_RUN_RESULT::Success) {
-
-                LOG_ERROR("ScriptEventListener: failed to call OnGenericScript callback");
-                return 0;
-            }
-
-            // Return the value returned by the script //
-            return result.Value;
+            return _HandleReturnValue(OnEventScript.Run<int>(setup, event), "OnEventScript");
         }
 
         return -1;
@@ -83,37 +55,38 @@ public:
 
         GUARD_LOCK();
 
-        if(OnGenericScript) {
+        if(OnGenericScript.HasCallback()) {
 
-            // TODO: merge with OnEvent to reduce duplication
-
-            ScriptRunningSetup sargs;
+            ScriptRunningSetup setup;
 
             // Run the script //
-            auto result =
-                ScriptExecutor::Get()->RunScript<int>(OnGenericScript, nullptr, sargs, event);
-
-            if(result.Result != SCRIPT_RUN_RESULT::Success) {
-
-                LOG_ERROR("ScriptEventListener: failed to call OnGenericScript callback");
-                return 0;
-            }
-
-            // Return the value returned by the script //
-            return result.Value;
+            return _HandleReturnValue(
+                OnGenericScript.Run<int>(setup, event), "OnGenericScript");
         }
 
         return -1;
     }
 
+    inline int _HandleReturnValue(const ScriptRunResult<int>& result, std::string_view which)
+    {
+        if(result.Result != SCRIPT_RUN_RESULT::Success) {
+
+            LOG_ERROR(
+                "ScriptEventListener: failed to call " + std::string(which) + " callback");
+            return 0;
+        }
+
+        // Return the value returned by the script //
+        return result.Value;
+    }
+
     //! \brief Registers for a predefined event type if OnEvent is not NULL
     bool RegisterForEventType(EVENT_TYPE type)
     {
-
         {
             GUARD_LOCK();
 
-            if(!OnEventScript)
+            if(!OnEventScript.HasCallback())
                 return false;
         }
 
@@ -124,11 +97,10 @@ public:
     //! \brief Registers for a generic event if OnGeneric is not NULL
     bool RegisterForEventGeneric(const std::string& name)
     {
-
         {
             GUARD_LOCK();
 
-            if(!OnGenericScript)
+            if(!OnGenericScript.HasCallback())
                 return false;
         }
 
@@ -138,14 +110,13 @@ public:
 
 protected:
     // The AngelScript functions to be called //
-    asIScriptFunction* OnEventScript;
-    asIScriptFunction* OnGenericScript;
+    NonOwningScriptCallback OnEventScript;
+    NonOwningScriptCallback OnGenericScript;
 };
 
 EventListener* EventListenerFactory(asIScriptFunction* onevent, asIScriptFunction* ongeneric)
 {
-
-    EventListener* listener = NULL;
+    EventListener* listener = nullptr;
 
     try {
 

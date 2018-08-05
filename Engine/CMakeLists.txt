@@ -187,6 +187,7 @@ else()
     "Script/ScriptRunningSetup.cpp" "Script/ScriptRunningSetup.h"
     "Script/ScriptScript.cpp" "Script/ScriptScript.h"
     "Script/AccessMask.cpp" "Script/AccessMask.h"
+    "Script/NonOwningScriptCallback.cpp" "Script/NonOwningScriptCallback.h"
     "Script/AddonTypes.h"
     "Script/ScriptCallingHelpers.h"
     "Script/CustomScriptRunHelpers.h"

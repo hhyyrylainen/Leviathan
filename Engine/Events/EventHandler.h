@@ -27,6 +27,8 @@ public:
 
     //! \param event The event to send. Reference count will be decremented by this
     DLLEXPORT void CallEvent(GenericEvent* event);
+    //! \todo Swap this with the function above to make this more efficient (and switch to
+    //! using this)
     DLLEXPORT inline void CallEvent(const GenericEvent::pointer& event)
     {
         event->AddRef();

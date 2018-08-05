@@ -97,6 +97,7 @@ public:
             return ScriptRunResult<ReturnT>(SCRIPT_RUN_RESULT::Error);
 
         if(!module) {
+            // TODO: this is a performance waste if there are no errors
             // Find the right module //
             module = GetScriptModuleByFunction(func, parameters.PrintErrors);
         }
@@ -323,10 +324,10 @@ private:
         const auto parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
         if(wantedTypeID != parameterType) {
 
-        // Compatibility checks //
-        // This is not the most optimal as this results in a duplicate call to
-        // func->GetParam
-        // TODO: is there a better way than to have this mess here?
+            // Compatibility checks //
+            // This is not the most optimal as this results in a duplicate call to
+            // func->GetParam
+            // TODO: is there a better way than to have this mess here?
 
 #ifdef _MSC_VER // Microsoft, fix your shit
             // MSVC can't handle the good looking constexpr if things so this is a butchered

@@ -251,8 +251,8 @@ Make sure you have installed \ref prerequisites first.
 If you haven't used git to clone the Leviathan repository yet. Run
 this command to clone Leviathan to a new folder:
 \code{sh}
-git clone https://bitbucket.org/hhyyrylainen/leviathan.git
-cd leviathan
+git clone https://github.com/hhyyrylainen/Leviathan.git
+cd Leviathan
 git submodule init
 \endcode
 
@@ -265,7 +265,7 @@ try a path without a space in it.
 
 Now move to the Leviathan folder and run the setup script:
 \code{sh}
-cd leviathan
+cd Leviathan
 ruby Setup.rb
 \endcode
 
@@ -291,7 +291,7 @@ Now, if the samples runs correctly, you are all set to start your own project.
 Here are some common fixes for issues you might have with the setup script.
 
 If none of these work please open an issue here: [Leviathan
-repository](https://bitbucket.org/hhyyrylainen/leviathan/issues).
+repository](https://github.com/hhyyrylainen/Leviathan/issues).
 
 \subsection troubleshooting_submodules Submodules out of date
 
@@ -299,7 +299,7 @@ If you have pulled updates or changed branches your downloaded
 submodules might be out of date. To fix this run:
 
 \code{sh}
-cd leviathan
+cd Leviathan
 git submodule update
 \endcode
 
@@ -372,7 +372,7 @@ Visual Studio project settings.
 
 This is very much not recommended as the dependencies need to be built
 with complex options and additional dependencies. Then the resulting
-files need to be installed into `leviathan/build/ThirdParty`. Then
+files need to be installed into `Leviathan/build/ThirdParty`. Then
 running the main cmake configure should succeed and you can try
 building. You will still need ruby for generating some C++ files so
 you can't skip the ruby dependency even with trying to build manually.

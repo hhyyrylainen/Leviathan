@@ -13,7 +13,7 @@ namespace Editor {
 //! \brief Main class that handles all editor functionality
 class Editor {
 public:
-    Editor();
+    Editor(Window* targetwindow, Engine* engine);
     ~Editor();
 
 protected:
@@ -26,7 +26,7 @@ protected:
 protected:
     //! \todo This needs some mechanism to detect when the window is closed and the editor
     //! should also close then
-    Window* ShownOnWindow;
+    Window* ShownOnWindow = nullptr;
 };
 
 } // namespace Editor

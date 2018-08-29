@@ -52,6 +52,8 @@ void EditorApplication::CustomizeEnginePostLoad()
     auto* engine = Engine::GetEngine();
 
     Leviathan::Window* window1 = engine->GetWindowEntity();
+
+    engine->OpenEditorWindow(window1);
 }
 
 void EditorApplication::EnginePreShutdown() {}

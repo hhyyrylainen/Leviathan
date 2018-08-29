@@ -8,6 +8,7 @@
 #include "Common/DataStoring/DataStore.h"
 #include "Common/StringOperations.h"
 #include "Common/Types.h"
+#include "Editor/Editor.h"
 #include "Entities/GameWorld.h"
 #include "Entities/GameWorldFactory.h"
 #include "Entities/Serializers/EntitySerializer.h"
@@ -482,6 +483,7 @@ void Engine::PostLoad()
 DLLEXPORT void Engine::PreRelease()
 {
     GUARD_LOCK();
+
     if(PreReleaseWaiting || PreReleaseCompleted)
         return;
 
@@ -495,6 +497,9 @@ DLLEXPORT void Engine::PreRelease()
         _ConsoleInput->Release(false);
         Logger::Get()->Info("Successfully stopped command handling");
     }
+
+    // Close all editors
+    OpenedEditors.clear();
 
     // Automatically destroy input sources //
     _NetworkHandler->ReleaseInputHandler();
@@ -643,7 +648,6 @@ void Engine::Release(bool forced)
 // ------------------------------------ //
 DLLEXPORT void Engine::MessagePump()
 {
-
     Ogre::WindowEventUtilities::messagePump();
 
     // CEF events (Also on windows as multi_threaded_message_loop makes rendering harder)
@@ -767,18 +771,16 @@ DLLEXPORT void Engine::MessagePump()
 
                 Window* win = GetWindowFromSDLID(event.window.windowID);
 
-                GUARD_LOCK();
-
                 // Detect closed windows //
                 if(win == GraphicalEntity1) {
                     // Window closed //
-                    ReportClosedWindow(guard, GraphicalEntity1);
+                    ReportClosedWindow(GraphicalEntity1);
                 }
 
                 for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
                     if(AdditionalGraphicalEntities[i] == win) {
 
-                        ReportClosedWindow(guard, AdditionalGraphicalEntities[i]);
+                        ReportClosedWindow(AdditionalGraphicalEntities[i]);
                         break;
                     }
                 }
@@ -1037,8 +1039,6 @@ DLLEXPORT int Engine::GetWindowOpenCount()
     if(NoGui)
         return 1;
 
-    GUARD_LOCK();
-
     // TODO: should there be an IsOpen method?
     if(GraphicalEntity1)
         openwindows++;
@@ -1052,9 +1052,23 @@ DLLEXPORT int Engine::GetWindowOpenCount()
     return openwindows;
 }
 // ------------------------------------ //
+DLLEXPORT bool Engine::IsValidWindow(Window* window) const
+{
+    if(window == GraphicalEntity1) {
+        return true;
+    }
+
+    for(Window* openWindow : AdditionalGraphicalEntities) {
+        if(openWindow == window) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 DLLEXPORT Window* Engine::OpenNewWindow()
 {
-
     AppDef winparams;
 
     winparams.SetWindowDetails(WindowDataDetails("My Second window", 1280, 720, "no",
@@ -1062,24 +1076,35 @@ DLLEXPORT Window* Engine::OpenNewWindow()
         // Opens on same display as the other window
         // TODO: open on next display
         Define->GetWindowDetails().DisplayNumber, Define->GetWindowDetails().FSAA, true,
-        // no gamma
-        false,
+        // yes, gamma
+        true,
 #ifdef _WIN32
-        NULL,
+        nullptr,
 #endif
-        NULL));
-
+        nullptr));
 
     auto newwindow = std::make_unique<Window>(Graph, &winparams);
-
-    GUARD_LOCK();
 
     AdditionalGraphicalEntities.push_back(newwindow.get());
 
     return newwindow.release();
 }
 
-DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, Window* windowentity)
+DLLEXPORT bool Engine::CloseWindow(Window* window)
+{
+    if(!window)
+        return false;
+
+    if(IsValidWindow(window)) {
+
+        ReportClosedWindow(window);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+DLLEXPORT void Engine::ReportClosedWindow(Window* windowentity)
 {
     windowentity->UnlinkAll();
 
@@ -1103,10 +1128,28 @@ DLLEXPORT void Engine::ReportClosedWindow(Lock& guard, Window* windowentity)
     // Didn't find the target //
     Logger::Get()->Error("Engine: couldn't find closing Window");
 }
+// ------------------------------------ //
+DLLEXPORT void Engine::OpenEditorWindow(Window* useexistingwindow /*= nullptr*/)
+{
+    AssertIfNotMainThread();
 
+    if(useexistingwindow && !IsValidWindow(useexistingwindow)) {
+
+        LOG_WARNING("Engine: OpenEditorWindow: invalid window given, defaulting to opening a "
+                    "new window");
+        useexistingwindow = nullptr;
+    }
+
+    if(!useexistingwindow) {
+        useexistingwindow = OpenNewWindow();
+    }
+
+
+    OpenedEditors.emplace_back(std::make_unique<Editor::Editor>(useexistingwindow, this));
+}
+// ------------------------------------ //
 DLLEXPORT void Engine::MarkQuit()
 {
-
     if(Owner)
         Owner->MarkAsClosing();
 }

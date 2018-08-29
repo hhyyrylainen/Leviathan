@@ -17,12 +17,18 @@
 
 namespace Leviathan {
 
+namespace Editor {
+class Editor;
+}
+
 class GameModuleLoader;
 
 //! \brief The main class of the Leviathan Game Engine
 //!
 //! Allocates a lot of classes and performs almost all startup operations.
 //! \note Only some operations are thread safe
+//! \todo Reduce the amount of logging and mention thread safety on methods that ARE thread
+//! safe and add note to assume that everything else isn't
 class Engine : public ThreadSafe {
 
     friend Window;
@@ -122,23 +128,37 @@ public:
     //! \todo Allow changing the parameters
     DLLEXPORT Window* OpenNewWindow();
 
+    //! \brief Closes a window
+    //! \note Due to Ogre related issues the window isn't actually closed before shutting down
+    //! completely
+    //! \returns True if closed. False if window was invalid
+    //!
+    //! This is a wrapper for ReportClosedWindow
+    DLLEXPORT bool CloseWindow(Window* window);
+
     //! \brief Returns the main window
     DLLEXPORT Window* GetWindowEntity()
     {
         return GraphicalEntity1;
-    };
+    }
 
     //! \brief Removes an closed window from the engine
-    DLLEXPORT void ReportClosedWindow(Lock& guard, Window* windowentity);
+    DLLEXPORT void ReportClosedWindow(Window* windowentity);
 
-    DLLEXPORT inline void ReportClosedWindow(Window* windowentity)
-    {
-        GUARD_LOCK();
-        ReportClosedWindow(guard, windowentity);
-    }
+    //! \returns True if window is a valid open Window
+    DLLEXPORT bool IsValidWindow(Window* window) const;
 
     DLLEXPORT void SaveScreenShot();
 
+    // ------------------------------------ //
+    //! \brief Opens an Editor::Editor window
+    //! \todo Exit fullscreen mode if main window is in fullscreen mode
+    DLLEXPORT void OpenEditorWindow(Window* useexistingwindow = nullptr);
+
+    //! \brief Focuses the first editor or opens an editor if none are open
+    DLLEXPORT void FocusOrOpenEditor();
+
+    // ------------------------------------ //
     inline Graphics* GetGraphics()
     {
         return Graph;
@@ -297,6 +317,7 @@ protected:
     std::unique_ptr<ConsoleInput> _ConsoleInput;
     std::unique_ptr<EntitySerializer> _EntitySerializer;
     std::unique_ptr<GameModuleLoader> _GameModuleLoader;
+    std::vector<std::unique_ptr<Editor::Editor>> OpenedEditors;
 
 #ifdef LEVIATHAN_USES_LEAP
     LeapManager* LeapData = nullptr;

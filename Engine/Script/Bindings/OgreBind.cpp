@@ -71,6 +71,12 @@ Ogre::Degree RadianToDegreeCast(Ogre::Radian* self)
     return *self;
 }
 
+void QuaternionProxyValues(
+    void* memory, Ogre::Real W, Ogre::Real X, Ogre::Real Y, Ogre::Real Z)
+{
+    new(memory) Ogre::Quaternion(W, X, Y, Z);
+}
+
 void QuaternionProxyAroundAxis(
     void* memory, const Ogre::Radian& radian, const Ogre::Vector3& vector)
 {
@@ -217,6 +223,30 @@ bool BindVector3(asIScriptEngine* engine)
     if(engine->RegisterObjectProperty("Vector3", "Real z", asOFFSET(Ogre::Vector3, z)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->SetDefaultNamespace("Ogre::Vector3") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Ogre::Vector3 UNIT_X",
+           const_cast<Ogre::Vector3*>(&Ogre::Vector3::UNIT_X)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Ogre::Vector3 UNIT_Y",
+           const_cast<Ogre::Vector3*>(&Ogre::Vector3::UNIT_Y)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Ogre::Vector3 UNIT_Z",
+           const_cast<Ogre::Vector3*>(&Ogre::Vector3::UNIT_Z)) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("Ogre") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 
@@ -366,7 +396,6 @@ bool BindMatrix4(asIScriptEngine* engine)
 
 bool BindAnglesAndQuaternion(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Radian", sizeof(Ogre::Radian),
            asOBJ_VALUE | asGetTypeTraits<Ogre::Radian>() | asOBJ_POD |
                asOBJ_APP_CLASS_ALLFLOATS) < 0) {
@@ -382,6 +411,12 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
     if(engine->RegisterObjectType("Quaternion", sizeof(Ogre::Quaternion),
            asOBJ_VALUE | asGetTypeTraits<Ogre::Quaternion>() | asOBJ_POD |
                asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT,
+           "void f(Real w, Real x, Real y, Real z)", asFUNCTION(QuaternionProxyValues),
+           asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -411,6 +446,22 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Quaternion opMul(const Quaternion &in vec) const",
+           asMETHODPR(
+               Ogre::Quaternion, operator*,(const Ogre::Quaternion&) const, Ogre::Quaternion),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Quaternion& opAssign(const Quaternion &in quat)",
+           asMETHODPR(
+               Ogre::Quaternion, operator=,(const Ogre::Quaternion&), Ogre::Quaternion&),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // Alias to the above function
     if(engine->RegisterObjectMethod("Quaternion",
            "Vector3 RotateVector(const Vector3 &in vec) const",
@@ -418,6 +469,31 @@ bool BindAnglesAndQuaternion(asIScriptEngine* engine)
            asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectProperty("Quaternion", "Real x", asOFFSET(Ogre::Quaternion, x)) <
+        0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Quaternion", "Real y", asOFFSET(Ogre::Quaternion, y)) <
+        0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Quaternion", "Real z", asOFFSET(Ogre::Quaternion, z)) <
+        0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectProperty("Quaternion", "Real w", asOFFSET(Ogre::Quaternion, w)) <
+        0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
 
     if(engine->SetDefaultNamespace("Ogre::Quaternion") < 0) {
         ANGELSCRIPT_REGISTERFAIL;

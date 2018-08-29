@@ -60,6 +60,7 @@ option(DOCUMENTATION_LOCAL "Set to OFF to create web documentation" ON)
 # Strip symbols from install
 option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" OFF)
 
+option(BUILD_SAMPLES "Set to OFF to disable building demo programs" ON)
 
 # Check is leap motion used
 option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
@@ -202,17 +203,23 @@ if(NOT ONLY_DOCUMENTATION)
   add_subdirectory(LeviathanTest)
   
   if(NOT CREATE_UE4_PLUGIN)
-    # example pong master server
-    add_subdirectory(PongMasterServer)
-    
-    # example pong server
-    add_subdirectory(PongServer)
 
-    # pong example game
-    add_subdirectory(Pong)
+    # Standalone editor
+    add_subdirectory(Editor)
 
-    # demo examples
-    add_subdirectory(Demos)
+    if(BUILD_SAMPLES)
+      # example pong master server
+      add_subdirectory(PongMasterServer)
+      
+      # example pong server
+      add_subdirectory(PongServer)
+
+      # pong example game
+      add_subdirectory(Pong)
+
+      # demo examples
+      add_subdirectory(Demos)
+    endif()
   endif()
   
   # Strip symbols

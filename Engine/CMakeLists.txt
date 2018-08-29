@@ -285,6 +285,10 @@ else()
   file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
   file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
 
+  set(GroupEditor
+    "Editor/Editor.h" "Editor/Editor.cpp"
+    )
+
   # Generated files
   set(GroupGeneratedFiles "Generated/LeviathanV8CoreExt.h")
   
@@ -384,6 +388,8 @@ source_group("ObjectFiles" FILES ${GroupObjectFiles})
 source_group("Rendering" FILES ${GroupRendering})
 source_group("Rendering\\GUI" FILES ${GroupRenderingGUI})
 
+source_group("Editor" FILES ${GroupEditor})
+
 if(USE_LEAP)
   source_group("Leap" FILES ${GroupLeap})
 endif()
@@ -401,7 +407,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupGameplay} 
   ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
   ${GeneratorInput} ${GroupGeneratedFiles}
-  ${Grouputf8} ${GroupGeneratedFiles}
+  ${Grouputf8} ${GroupEditor} ${GroupGeneratedFiles}
   )
 
 if(USE_LEAP)

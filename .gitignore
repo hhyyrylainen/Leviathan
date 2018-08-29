@@ -61,3 +61,5 @@ Leap/version.txt
 /cAudio
 /Windows/ThirdParty
 /Demos/Main.cpp
+/Editor/EditorConfiguredHeader.h
+/Editor/Main.cpp

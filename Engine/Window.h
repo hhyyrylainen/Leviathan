@@ -39,6 +39,7 @@ constexpr auto MOUSE_SCROLL_MULTIPLIER = 25.f;
 
 //! window class
 //! \todo Implement global lock for input handling
+//! \todo This should be handled through shared_ptr
 class Window {
 public:
     //! \exception InvalidArgument if creation fails

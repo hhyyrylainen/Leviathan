@@ -8,8 +8,8 @@
 #include "Events/EventHandler.h"
 #include "GUI/GuiManager.h"
 #include "Handlers/ObjectLoader.h"
-#include "Window.h"
 #include "Script/Bindings/BindHelpers.h"
+#include "Window.h"
 
 using namespace Demos;
 using namespace Leviathan;
@@ -148,7 +148,6 @@ void DemosApplication::CheckGameConfigurationVariables(
     // Check for various variables //
     NamedVars* vars = configobj->AccessVariables(guard);
 
-    // Master server force localhost //
     if(vars->ShouldAddValueIfNotFoundOrWrongType<std::string>("SomeDemoVariable")) {
         // Add new //
         vars->AddVar("SomeDemoVariable", new VariableBlock(new StringBlock("has a value")));

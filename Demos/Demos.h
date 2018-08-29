@@ -20,10 +20,11 @@ public:
     void PlaySample1();
 
     // Overrides from LeviathanApplication
-    Leviathan::NETWORKED_TYPE GetProgramNetType() const override{
+    Leviathan::NETWORKED_TYPE GetProgramNetType() const override
+    {
         return Leviathan::NETWORKED_TYPE::Client;
     }
-    
+
     void Tick(int mspassed) override;
 
     void CustomizeEnginePostLoad() override;
@@ -37,7 +38,7 @@ public:
     // Game configuration checkers //
     static void CheckGameConfigurationVariables(Lock& guard, GameConfiguration* configobj);
     static void CheckGameKeyConfigVariables(Lock& guard, KeyConfiguration* keyconfigobj);
-    
+
 
 protected:
     Leviathan::NetworkInterface* _GetApplicationPacketHandler() override;

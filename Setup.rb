@@ -129,6 +129,37 @@ Dir.chdir(ProjectDir) do
   end
   
   FileUtils.mkdir_p "build"
+
+  # Symlink the js libraries and images from bin to make local previewing of the GUI easier
+  if OS.windows?
+    info "Creating junctions for assets to be referenced from gui " +
+         "html without running cmake every time"
+    runSystemSafe "cmd", "/c", "mklink", "/J",
+                  convertPathToWindows(File.join(ProjectDir, "Textures")),
+                  convertPathToWindows(File.join(ProjectDir, "bin/Data", "Textures"))
+    runSystemSafe "cmd", "/c", "mklink", "/J",
+                  convertPathToWindows(File.join(ProjectDir, "Fonts")),
+                  convertPathToWindows(File.join(ProjectDir, "bin/Data", "Fonts"))
+    runSystemSafe "cmd", "/c", "mklink", "/J",
+                  convertPathToWindows(File.join(ProjectDir, "JSVendor")),
+                  convertPathToWindows(File.join(ProjectDir, "bin/Data",
+                                                 "JSVendor"))  
+  else
+    if !File.exists? File.join(ProjectDir, "Textures")
+      FileUtils.ln_sf File.join(ProjectDir, "bin/Data", "Textures"),
+                      File.join(ProjectDir, "Textures")
+    end
+
+    if !File.exists? File.join(ProjectDir, "Fonts")
+      FileUtils.ln_sf File.join(ProjectDir, "bin/Data", "Fonts"),
+                      File.join(ProjectDir, "Fonts")
+    end
+
+    if !File.exists? File.join(ProjectDir, "JSVendor")
+      FileUtils.ln_sf File.join(ProjectDir, "bin/Data", "JSVendor"),
+                      File.join(ProjectDir, "JSVendor")
+    end
+  end
   
 end
 

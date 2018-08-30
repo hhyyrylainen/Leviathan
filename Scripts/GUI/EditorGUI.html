@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Leviathan Editor GUI</title>
+    <meta name="description" content="The HTML file with the Leviathan editor GUI">
+    
+    <link rel="stylesheet" href="LeviathanStyle.css">
+    <script src="../../JSVendor/jquery-3.3.1.min.js"></script>
+    <script src="GUICommon.js"></script>
+    <script src="Editor.js"></script>
+  </head>
+  <body>
+    
+    <script>
+      // Document.onload doesn't work here
+      $(document).ready(function(){
+
+          InitializeEditor();
+      
+          if(!IsInEngine()){
+              console.log("GUI is not inside Leviathan process");
+          }
+      });
+    </script>
+    
+    <!-- This blocks out everything until javascript has loaded (shows the tasteful thrive logo) -->
+    <div id="LoadingLogo" class="FullScreen"
+         style="z-index: 20; background: white;">
+      Loading...
+      <!-- <div class="Logo"></div> -->
+    </div>
+
+    <div id="MainTabSelect" class="Panel">
+      <span>
+        This is where the editor stuff goes.
+      </span>
+    </div>
+  </body>
+</html>

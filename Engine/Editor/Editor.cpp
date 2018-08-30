@@ -30,7 +30,7 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 
     GuiManager* guiManager = ShownOnWindow->GetGui();
 
-    if(!guiManager->LoadGUIFile("https://www.google.fi")) {
+    if(!guiManager->LoadGUIFile("Data/Scripts/GUI/EditorGUI.html")) {
 
         Logger::Get()->Error("Editor: failed to load the gui");
         return;

@@ -1,0 +1,52 @@
+/* Thrive stylesheet */
+
+/* Fonts */
+@font-face {
+    font-family: "Simonetta";
+    src: url("../../Fonts/Simonetta/Simonetta-Regular.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Element styling */
+html{
+    width: 100%;
+    height: 100%;
+    /* font-family: "Simonetta"; */
+    /* By default all text is white */
+    color: white;
+    /* Custom cursor everywhere */
+    /* cursor: url("../../Textures/gui/cursors/default.png"), auto; */
+}
+
+body{
+    /* Remove borders around the content */
+    margin: 0px;
+}
+
+/* Centered fullscreen container */
+.FullScreen{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* The Editor background is transparent (in order to show 3D stuff
+   underneath) so everything must be in panels */
+.Panel{
+
+    background: rgba(42, 78, 110, 0.8);
+    border: 1px rgb(74, 107, 138);
+    border-radius: 5px;
+    padding: 2px;
+    min-width: 15px;
+    min-height: 15px;
+    width: auto;
+    display: inline-block;
+}
+
+/* rgb(120, 72, 196) */

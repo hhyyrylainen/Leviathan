@@ -115,10 +115,15 @@ public:
     //! \brief Creates a GameWorld for placing entities into
     //! \note To actually move the world camera you need to use
     //! Leviathan::ObjectLoader::LoadCamera to create a camera entity
+    //! \param worldtype Is the type of the world to be created. This is passed to the game's
+    //! registered world factory. Types over 1024 are reserved for inbuilt types and are needed
+    //! for example things like the editor
     DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(Window* owningwindow, int worldtype);
 
     //! \brief Releases a GameWorld
-    //! \param world The world to destroy.
+    //! \param world The world to destroy. This is taken as a const reference to allow
+    //! shared_ptrs of derived types to be passed here. Make sure to call world.reset()
+    //! afterwards to release the reference.
     //! \post The World will have been released and removed from Engine's internal list and
     //! when all other holders of the pointer release it will be deleted
     DLLEXPORT void DestroyWorld(const std::shared_ptr<GameWorld>& world);

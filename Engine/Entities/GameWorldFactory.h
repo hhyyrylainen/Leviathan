@@ -31,4 +31,13 @@ protected:
     DLLEXPORT static GameWorldFactory* StaticInstance;
 };
 
+//! \brief Types of inbuilt world types
+enum class INBUILT_WORLD_TYPE { Standard = 1024 };
+
+//! \brief Factory for inbuilt world types
+class InbuiltWorldFactory {
+public:
+    static std::shared_ptr<GameWorld> CreateNewWorld(INBUILT_WORLD_TYPE worldtype);
+};
+
 } // namespace Leviathan

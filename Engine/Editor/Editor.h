@@ -4,9 +4,12 @@
 #include "Define.h"
 // ------------------------------------ //
 
+#include <memory>
+
 namespace Leviathan {
 
 class Window;
+class Engine;
 
 namespace Editor {
 
@@ -27,6 +30,10 @@ protected:
     //! \todo This needs some mechanism to detect when the window is closed and the editor
     //! should also close then
     Window* ShownOnWindow = nullptr;
+
+    std::shared_ptr<GameWorld> World;
+
+    Engine* _Engine;
 };
 
 } // namespace Editor

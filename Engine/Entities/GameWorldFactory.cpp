@@ -29,3 +29,13 @@ DLLEXPORT std::shared_ptr<GameWorld> GameWorldFactory::CreateNewWorld(int worldt
 
     return std::make_shared<StandardWorld>();
 }
+// ------------------------------------ //
+// InbuiltWorldFactory
+std::shared_ptr<GameWorld> InbuiltWorldFactory::CreateNewWorld(INBUILT_WORLD_TYPE worldtype)
+{
+    switch(worldtype) {
+    case INBUILT_WORLD_TYPE::Standard: return std::make_shared<StandardWorld>();
+    }
+
+    return nullptr;
+}

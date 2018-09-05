@@ -1191,22 +1191,35 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, int worldtype)
 {
-    auto tmp = GameWorldFactory::Get()->CreateNewWorld(worldtype);
+    std::shared_ptr<GameWorld> world;
+    if(worldtype >= 1024) {
+        // Standard world types
+        world =
+            InbuiltWorldFactory::CreateNewWorld(static_cast<INBUILT_WORLD_TYPE>(worldtype));
+    } else {
+        world = GameWorldFactory::Get()->CreateNewWorld(worldtype);
+    }
 
-    tmp->Init(_NetworkHandler->GetNetworkType(), NoGui ? nullptr : Graph->GetOgreRoot());
+    if(!world) {
+
+        LOG_ERROR("Engine: CreateWorld: factory failed to create a world of type: " +
+                  std::to_string(worldtype));
+        return nullptr;
+    }
+
+    world->Init(_NetworkHandler->GetNetworkType(), NoGui ? nullptr : Graph->GetOgreRoot());
 
     if(owningwindow)
-        owningwindow->LinkObjects(tmp);
+        owningwindow->LinkObjects(world);
 
     Lock lock(GameWorldsLock);
 
-    GameWorlds.push_back(tmp);
+    GameWorlds.push_back(world);
     return GameWorlds.back();
 }
 
 DLLEXPORT void Engine::DestroyWorld(const shared_ptr<GameWorld>& world)
 {
-
     if(!world)
         return;
 

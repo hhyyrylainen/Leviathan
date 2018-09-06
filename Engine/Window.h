@@ -61,6 +61,8 @@ public:
     //! \returns true if succeeds, false if another window has input
     DLLEXPORT bool SetMouseCapture(bool state);
 
+    //! \brief Tries to bring this window to front
+    DLLEXPORT void BringToFront();
 
     // Input function //
 

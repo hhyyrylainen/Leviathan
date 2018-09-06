@@ -15,20 +15,18 @@ using namespace Leviathan;
 Editor::Editor::Editor(Window* targetwindow, Engine* engine) : _Engine(engine)
 {
     _SetupOnWindow(targetwindow);
-
-    World = _Engine->CreateWorld(targetwindow, static_cast<int>(INBUILT_WORLD_TYPE::Standard));
-
-    if(!World)
-        throw InvalidState("Failed to create needed world of type Standard for editor");
 }
 
 Editor::Editor::~Editor()
 {
     if(ShownOnWindow)
         _CloseEditor();
-
-    _Engine->DestroyWorld(World);
-    World.reset();
+}
+// ------------------------------------ //
+void Editor::Editor::BringToFront()
+{
+    if(ShownOnWindow)
+        ShownOnWindow->BringToFront();
 }
 // ------------------------------------ //
 void Editor::Editor::_SetupOnWindow(Window* targetwindow)
@@ -38,11 +36,17 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 
     ShownOnWindow = targetwindow;
 
+    World = _Engine->CreateWorld(targetwindow, static_cast<int>(INBUILT_WORLD_TYPE::Standard));
+
+    if(!World) {
+        LOG_ERROR("Editor: failed to create needed world of type Standard for editor");
+    }
+
     GuiManager* guiManager = ShownOnWindow->GetGui();
 
-    if(!guiManager->LoadGUIFile("Data/Scripts/GUI/EditorGUI.html")) {
+    if(!guiManager->LoadGUIFile("Data/EditorResources/GUI/EditorGUI.html")) {
 
-        Logger::Get()->Error("Editor: failed to load the gui");
+        LOG_ERROR("Editor: failed to load the gui");
         return;
     }
 }
@@ -53,7 +57,10 @@ void Editor::Editor::_CloseEditor()
         LOG_WARNING("Editor: failed to close window");
     }
 
-    // TODO: release editor resources, once there are some
+    // Release editor resources
+
+    _Engine->DestroyWorld(World);
+    World.reset();
 
     ShownOnWindow = nullptr;
 }

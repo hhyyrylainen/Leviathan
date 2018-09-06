@@ -668,9 +668,18 @@ DLLEXPORT void Engine::MessagePump()
             if(win) {
 
                 // LOG_WRITE("SDL_KEYDOWN: " + Convert::ToString(event.key.keysym.sym));
-                win->InjectKeyDown(event);
-            }
 
+                // Core engine functionality keys
+                switch(event.key.keysym.sym) {
+                case SDLK_F10: {
+                    // Editor key pressed
+                    LOG_INFO("Editor key pressed");
+                    FocusOrOpenEditor();
+                    break;
+                }
+                default: win->InjectKeyDown(event);
+                }
+            }
             break;
         }
         case SDL_KEYUP: {
@@ -1146,6 +1155,17 @@ DLLEXPORT void Engine::OpenEditorWindow(Window* useexistingwindow /*= nullptr*/)
 
 
     OpenedEditors.emplace_back(std::make_unique<Editor::Editor>(useexistingwindow, this));
+}
+
+DLLEXPORT void Engine::FocusOrOpenEditor()
+{
+    if(OpenedEditors.empty()) {
+
+        OpenEditorWindow();
+        return;
+    }
+
+    OpenedEditors.front()->BringToFront();
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::MarkQuit()

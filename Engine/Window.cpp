@@ -344,6 +344,14 @@ DLLEXPORT void Window::OnFocusChange(bool focused)
     }
 }
 // ------------------------------------ //
+DLLEXPORT void Window::BringToFront()
+{
+    if(SDLWindow) {
+        SDL_RaiseWindow(SDLWindow);
+    }
+}
+
+// ------------------------------------ //
 #ifdef __linux
 DLLEXPORT void Window::SetX11Cursor(int cursor, int retrycount /*= 10*/)
 {

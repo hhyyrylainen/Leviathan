@@ -87,6 +87,10 @@ if(NOT ONLY_DOCUMENTATION)
     "${PROJECT_BINARY_DIR}/bin/Data/")
   install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/JSVendor" DESTINATION
     "bin/Data/")
+  file(COPY "${LEVIATHAN_SRC}/EditorResources" DESTINATION
+    "${PROJECT_BINARY_DIR}/bin/Data/")
+  install(DIRECTORY "${LEVIATHAN_SRC}/EditorResources" DESTINATION
+    "bin/Data/")  
 
   # Copy additional CEF stuff
   file(GLOB CEF_BLOBS "${LEVIATHAN_SRC}/build/ThirdParty/cefextrablobs/*.bin")

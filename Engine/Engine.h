@@ -161,6 +161,7 @@ public:
     DLLEXPORT void OpenEditorWindow(Window* useexistingwindow = nullptr);
 
     //! \brief Focuses the first editor or opens an editor if none are open
+    //! \todo Closed editors need to report that they are closed in order to open one again
     DLLEXPORT void FocusOrOpenEditor();
 
     // ------------------------------------ //

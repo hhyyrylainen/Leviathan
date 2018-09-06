@@ -19,6 +19,9 @@ public:
     Editor(Window* targetwindow, Engine* engine);
     ~Editor();
 
+    //! \brief Instructs ShownOnWindow to become foreground
+    void BringToFront();
+
 protected:
     void _SetupOnWindow(Window* targetwindow);
 

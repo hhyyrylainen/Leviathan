@@ -10,6 +10,7 @@ namespace Leviathan {
 
 class Window;
 class Engine;
+class StandardWorld;
 
 namespace Editor {
 
@@ -34,7 +35,7 @@ protected:
     //! should also close then
     Window* ShownOnWindow = nullptr;
 
-    std::shared_ptr<GameWorld> World;
+    std::shared_ptr<StandardWorld> World;
 
     Engine* _Engine;
 };

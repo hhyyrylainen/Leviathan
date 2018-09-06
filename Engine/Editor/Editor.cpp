@@ -4,6 +4,8 @@
 #include "Entities/GameWorldFactory.h"
 #include "Exceptions.h"
 #include "GUI/GuiManager.h"
+#include "Generated/StandardWorld.h"
+#include "Handlers/ObjectLoader.h"
 #include "Window.h"
 
 #include "Engine.h"
@@ -36,7 +38,8 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 
     ShownOnWindow = targetwindow;
 
-    World = _Engine->CreateWorld(targetwindow, static_cast<int>(INBUILT_WORLD_TYPE::Standard));
+    World = std::dynamic_pointer_cast<StandardWorld>(
+        _Engine->CreateWorld(targetwindow, static_cast<int>(INBUILT_WORLD_TYPE::Standard)));
 
     if(!World) {
         LOG_ERROR("Editor: failed to create needed world of type Standard for editor");
@@ -49,6 +52,19 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
         LOG_ERROR("Editor: failed to load the gui");
         return;
     }
+
+    ObjectID camera =
+        ObjectLoader::LoadCamera(*World, Float3(0, 0, 5), Float4::IdentityQuaternion());
+
+    World->SetCamera(camera);
+
+
+    // ------------------------------------ //
+    // Test cube
+    // ObjectID box = World->CreateEntity();
+    // World->Create_Position(box, Float3(0, 0, 0), Float4::IdentityQuaternion());
+    // auto& renderNode = World->Create_RenderNode(box);
+    // World->Create_Model(box, renderNode.Node, "UnitCube.mesh");
 }
 
 void Editor::Editor::_CloseEditor()

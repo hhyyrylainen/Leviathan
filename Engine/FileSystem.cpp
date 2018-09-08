@@ -923,6 +923,17 @@ void RegisterSubFolders(Ogre::ResourceGroupManager& manager, const std::string& 
     }
 }
 
+bool RegisterIfExists(Ogre::ResourceGroupManager& manager, const std::string& groupname,
+    const Ogre::String& basefolder)
+{
+    if(boost::filesystem::exists(basefolder)) {
+        RegisterSubFolders(manager, groupname, basefolder);
+        return true;
+    }
+
+    return false;
+}
+
 DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /*= false*/)
 {
     // get the resource managing singleton //
@@ -949,16 +960,11 @@ DLLEXPORT void Leviathan::FileSystem::RegisterOGREResourceGroups(bool testload /
     RegisterSubFolders(manager, "MainMaterialsFolder", DataFolder + MaterialFolder);
 
     // Scripts folder //
-    manager.createResourceGroup("GuiScripts");
-    if(boost::filesystem::exists(DataFolder + ScriptsFolder + "GUI")) {
-        // Uppercase
-        RegisterSubFolders(manager, "GuiScripts", DataFolder + ScriptsFolder + "GUI");
-    } else {
 
-        // Lowercase
-        RegisterSubFolders(manager, "GuiScripts", DataFolder + ScriptsFolder + "gui");
+    // Only one of these is registered
+    if(!RegisterIfExists(manager, "GuiScripts", DataFolder + ScriptsFolder + "GUI")) {
+        RegisterIfExists(manager, "GuiScripts", DataFolder + ScriptsFolder + "gui");
     }
-
 
     // shaders //
     manager.createResourceGroup("ShadersFolder");

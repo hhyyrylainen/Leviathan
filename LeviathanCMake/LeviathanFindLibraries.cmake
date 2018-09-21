@@ -55,15 +55,17 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
 
   # Set the setup script result directories
-  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib")
-  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib64")
-  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/bin")
+  link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib"
+    "${LEVIATHAN_SRC}/build/ThirdParty/lib64"
+    "${LEVIATHAN_SRC}/build/ThirdParty/bin"
+    )
   
-  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include")
-  # Needed for CEF
-  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/")
-  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/newton")
-  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE")
+  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
+    # Needed for CEF
+    "${LEVIATHAN_SRC}/build/ThirdParty/"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/newton"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE"
+    )
 
   # Find SDL2
   if(USE_SDL2)

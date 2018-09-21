@@ -58,6 +58,9 @@ using namespace std;
 static thread_local int MainThreadMagic = 0;
 constexpr auto THREAD_MAGIC = 42;
 
+//! Used for automatic unique window names
+static std::atomic<int> WindowNameCounter = {1};
+
 DLLEXPORT Engine::Engine(LeviathanApplication* owner) : Owner(owner)
 {
     // This makes sure that uninitialized engine will have at least some last frame time //
@@ -1078,17 +1081,21 @@ DLLEXPORT bool Engine::IsValidWindow(Window* window) const
 
 DLLEXPORT Window* Engine::OpenNewWindow()
 {
+    AssertIfNotMainThread();
+
     AppDef winparams;
 
-    winparams.SetWindowDetails(WindowDataDetails("My Second window", 1280, 720, "no",
-        Define->GetWindowDetails().VSync,
+    winparams.SetWindowDetails(WindowDataDetails(
+        "Leviathan Window " + std::to_string(++WindowNameCounter), 1280, 720, "no",
+        // Multiple vsyncs cause issues (or they can cause issues, sometimes it is fine)
+        /* Define->GetWindowDetails().VSync */ false,
         // Opens on same display as the other window
-        // TODO: open on next display
-        Define->GetWindowDetails().DisplayNumber, Define->GetWindowDetails().FSAA, true,
         // yes, gamma
         true,
+        // TODO: open on next display
+        Define->GetWindowDetails().DisplayNumber, Define->GetWindowDetails().FSAA, true,
 #ifdef _WIN32
-        nullptr,
+        Define->GetWindowDetails().Icon,
 #endif
         nullptr));
 

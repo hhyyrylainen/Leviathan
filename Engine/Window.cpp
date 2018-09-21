@@ -66,8 +66,22 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // variables //
     Ogre::String fsaastr = Convert::ToString(WData.FSAA);
 
+    // Context needs to be reused for multiple windows
+    if(OpenWindowCount > 0) {
+
+        LOG_INFO("Window: using existing GLX context for creating");
+
+        WParams["currentGLContext"] = "true";
+
+        // Needs to be forced off to not cause issues like vsyncing each window separately and
+        // dropping to "monitor refresh rate / window count" fps
+        WParams["vsync"] = "false";
+
+    } else {
+        WParams["vsync"] = WData.VSync ? "true" : "false";
+    }
+
     WParams["FSAA"] = fsaastr;
-    WParams["vsync"] = WData.VSync ? "true" : "false";
     WParams["gamma"] = WData.UseGamma ? "true" : "false";
 
     Ogre::String wcaption = WData.Title;

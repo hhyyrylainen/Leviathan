@@ -35,7 +35,6 @@ DLLEXPORT RenderNode::RenderNode(Ogre::SceneManager* scene) : Component(TYPE)
 
 DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene)
 {
-
     worldsscene->destroySceneNode(Node);
     Node = nullptr;
 }
@@ -100,8 +99,8 @@ DLLEXPORT void Physics::Release()
     if(Collision)
         NewtonDestroyCollision(Collision);
 
-    Body = NULL;
-    Collision = NULL;
+    Body = nullptr;
+    Collision = nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT void Physics::JumpTo(Position& target)
@@ -823,7 +822,6 @@ DLLEXPORT Model::Model(
 
 DLLEXPORT void Model::Release(Ogre::SceneManager* scene)
 {
-
     scene->destroyItem(GraphicalObject);
 }
 

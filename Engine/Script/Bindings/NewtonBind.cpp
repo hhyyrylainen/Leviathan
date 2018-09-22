@@ -22,6 +22,10 @@ bool BindNewtonTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectType("NewtonCollisionNode", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("NewtonCollision",
            "void CompoundCollisionBeginAddRemove()",
            asFUNCTION(NewtonCompoundCollisionBeginAddRemove), asCALL_CDECL_OBJFIRST) < 0) {
@@ -34,15 +38,14 @@ bool BindNewtonTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("NewtonCollision",
-           "void CompoundCollisionAddSubCollision(NewtonCollision@ convexCollision)",
+           "NewtonCollisionNode@ CompoundCollisionAddSubCollision(NewtonCollision@ "
+           "convexCollision)",
            asFUNCTION(NewtonCompoundCollisionAddSubCollision), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // This seems to be very crash prone so disallowing scripts from using this might be a good
-    // idea
     if(engine->RegisterObjectMethod("NewtonCollision",
-           "void CompoundCollisionRemoveSubCollision(NewtonCollision@ convexCollision)",
+           "void CompoundCollisionRemoveSubCollision(NewtonCollisionNode@ collisionNode)",
            asFUNCTION(NewtonCompoundCollisionRemoveSubCollision), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

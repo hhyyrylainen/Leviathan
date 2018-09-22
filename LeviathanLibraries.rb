@@ -33,7 +33,7 @@ $newton = Newton.new(
 )
 
 $angelscript = AngelScript.new(
-  version: 2482,
+  version: 2547,
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true
 )

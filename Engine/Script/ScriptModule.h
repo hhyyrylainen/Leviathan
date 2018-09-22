@@ -233,6 +233,8 @@ private:
 
     void _BuildListenerList(Lock& guard);
 
+    //! \todo This needs handling of multiple metadata entries that are now allowed by
+    //! AngelScript
     void _ProcessMetadataForFunc(asIScriptFunction* func, asIScriptModule* mod);
 
     std::map<std::string, std::shared_ptr<ValidListenerData>>::iterator _GetIteratorOfListener(
@@ -316,8 +318,7 @@ private:
     struct AutomonitoredFile {
 
         AutomonitoredFile(const std::string& file) : File(new std::string(file)), Added(false)
-        {
-        }
+        {}
 
         std::unique_ptr<std::string> File;
         bool Added;

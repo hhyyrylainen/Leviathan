@@ -221,9 +221,13 @@ void Leviathan::ScriptModule::_BuildListenerList(Lock& guard)
 void Leviathan::ScriptModule::_ProcessMetadataForFunc(
     asIScriptFunction* func, asIScriptModule* mod)
 {
-
     // Start of by getting metadata string //
-    std::string meta = ScriptBuilder->GetMetadataStringForFunc(func);
+    const auto& metaEntries = ScriptBuilder->GetMetadataForFunc(func);
+
+    if(metaEntries.empty())
+        return;
+
+    std::string meta = metaEntries.front();
     StringOperations::RemovePreceedingTrailingSpaces(meta);
 
     if(meta.size() < 1) {
@@ -838,5 +842,4 @@ DLLEXPORT ScriptSourceFileData::ScriptSourceFileData(
     const std::string& file, int line, const std::string& code) :
     SourceFile(file),
     StartLine(line), SourceCode(std::make_shared<std::string>(code))
-{
-}
+{}

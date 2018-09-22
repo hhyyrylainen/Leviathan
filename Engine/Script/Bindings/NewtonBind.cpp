@@ -39,6 +39,8 @@ bool BindNewtonTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    // This seems to be very crash prone so disallowing scripts from using this might be a good
+    // idea
     if(engine->RegisterObjectMethod("NewtonCollision",
            "void CompoundCollisionRemoveSubCollision(NewtonCollision@ convexCollision)",
            asFUNCTION(NewtonCompoundCollisionRemoveSubCollision), asCALL_CDECL_OBJFIRST) < 0) {

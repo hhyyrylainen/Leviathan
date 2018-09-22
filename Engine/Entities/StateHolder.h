@@ -3,42 +3,41 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "EntityCommon.h"
 #include "Common/ObjectPool.h"
-
-#include "boost/pool/pool.hpp"
+#include "EntityCommon.h"
 
 #include <array>
 
-namespace Leviathan{
+namespace Leviathan {
 
 //! Number of states that are kept. Corresponds to time span of TICKSPEED * KEPT_STATES_COUNT
 constexpr auto KEPT_STATES_COUNT = 5;
 
 template<class StateT>
-    class StateHolder;
+class StateHolder;
 
 template<class StateT>
-class ObjectsComponentStates{
+class ObjectsComponentStates {
 public:
+    ObjectsComponentStates()
+    {
 
-    ObjectsComponentStates(){
-
-        for(size_t i = 0; i < StoredStates.size(); ++i){
+        for(size_t i = 0; i < StoredStates.size(); ++i) {
 
             StoredStates[i] = nullptr;
         }
     }
 
     //! \brief Returns the state with the highest tick number
-    StateT* GetNewest() const{
+    StateT* GetNewest() const
+    {
 
         StateT* newest = nullptr;
         int newestTick = 0;
 
-        for(StateT* state : StoredStates){
+        for(StateT* state : StoredStates) {
 
-            if(state && state->TickNumber >= newestTick){
+            if(state && state->TickNumber >= newestTick) {
 
                 newest = state;
                 newestTick = state->TickNumber;
@@ -49,14 +48,15 @@ public:
     }
 
     //! \brief Returns the state with the lowest tick number
-    StateT* GetOldest() const{
+    StateT* GetOldest() const
+    {
 
         StateT* oldest = nullptr;
         int oldestTick = std::numeric_limits<int>::max();
 
-        for(StateT* state : StoredStates){
+        for(StateT* state : StoredStates) {
 
-            if(state && state->TickNumber <= oldestTick){
+            if(state && state->TickNumber <= oldestTick) {
 
                 oldest = state;
                 oldestTick = state->TickNumber;
@@ -72,36 +72,38 @@ public:
     //! has been missed and should instead (maybe) wait a bit? Or
     //! should we just skip missed states and start interpolating from
     //! the later state
-    StateT* GetMatchingOrNewer(int ticknumber) const{
+    StateT* GetMatchingOrNewer(int ticknumber) const
+    {
 
         StateT* closest = nullptr;
         int closestBy = std::numeric_limits<int>::max();
 
-        for(StateT* state : StoredStates){
+        for(StateT* state : StoredStates) {
 
             if(!state || state->TickNumber < ticknumber)
                 continue;
 
-            if(state->TickNumber == ticknumber){
-                
+            if(state->TickNumber == ticknumber) {
+
                 return state;
             }
 
             const auto difference = state->TickNumber - ticknumber;
-            if(difference <= closestBy){
+            if(difference <= closestBy) {
 
                 closestBy = difference;
                 closest = state;
             }
         }
 
-        return closest;        
+        return closest;
     }
 
     //! \brief Returns state matching tick number
-    StateT* GetState(int ticknumber) const{
+    StateT* GetState(int ticknumber) const
+    {
 
-        for(StateT* state : StoredStates){
+        for(StateT* state : StoredStates) {
 
             if(state && state->TickNumber == ticknumber)
                 return state;
@@ -111,18 +113,20 @@ public:
     }
 
     //! \brief Returns true if state is still valid
-    bool IsStateValid(StateT* statetocheck) const{
+    bool IsStateValid(StateT* statetocheck) const
+    {
 
-        for(StateT* state : StoredStates){
+        for(StateT* state : StoredStates) {
             if(state == statetocheck)
                 return true;
         }
-        
+
         return false;
     }
 
     //! \brief Appends a new state removing old states if they don't fit anymore
-    void Append(StateT* newstate, StateHolder<StateT> &stateowner){
+    void Append(StateT* newstate, StateHolder<StateT>& stateowner)
+    {
 
         // Fill from the back and pop from the front if states don't fit //
 
@@ -135,12 +139,12 @@ public:
         // }
 
         // First state will be popped off if it exists //
-        if(StoredStates[0] != nullptr){
+        if(StoredStates[0] != nullptr) {
 
             stateowner._DestroyStateObject(StoredStates[0]);
         }
 
-        for(size_t i = 0; i < KEPT_STATES_COUNT - 1; ++i){
+        for(size_t i = 0; i < KEPT_STATES_COUNT - 1; ++i) {
 
             StoredStates[i] = StoredStates[i + 1];
         }
@@ -150,19 +154,20 @@ public:
 
     //! \brief Counts the filled number of state slots
     //! \returns A number in range [0, KEPT_STATES_COUNT]
-    auto GetNumberOfStates() const{
+    auto GetNumberOfStates() const
+    {
 
         int count = 0;
-        
-        for(StateT* state : StoredStates){
+
+        for(StateT* state : StoredStates) {
 
             if(state)
                 ++count;
         }
-        
+
         return count;
     }
-    
+
 protected:
     std::array<StateT*, KEPT_STATES_COUNT> StoredStates;
 };
@@ -170,15 +175,14 @@ protected:
 //! \brief Holds state objects of type for quick access by ObjectID
 //! \todo The GameWorld needs to notify this when ObjectID is deleted
 template<class StateT>
-class StateHolder{
+class StateHolder {
     friend ObjectsComponentStates<StateT>;
+
 public:
+    StateHolder() {}
 
-    StateHolder(){
-
-    }
-    
-    ~StateHolder(){
+    ~StateHolder()
+    {
         // Both of the pools are released here so the destructor of ObjectsComponentStates
         // doesn't need to notify us of the states it held
     }
@@ -186,12 +190,11 @@ public:
     //! \brief Creates a new state for entity's component if it has changed
     //! \returns True if a new state was created
     template<class ComponentT>
-        bool CreateStateIfChanged(ObjectID id, const ComponentT &component,
-            int ticknumber)
+    bool CreateStateIfChanged(ObjectID id, const ComponentT& component, int ticknumber)
     {
         ObjectsComponentStates<StateT>* entityStates = StateObjects.Find(id);
 
-        if(!entityStates){
+        if(!entityStates) {
 
             entityStates = StateObjects.ConstructNew(id);
         }
@@ -200,7 +203,7 @@ public:
         StateT* latestState = entityStates->GetNewest();
 
         // If empty always create //
-        if(!latestState){
+        if(!latestState) {
 
             StateT* newState = _CreateNewState(ticknumber, component);
             entityStates->Append(newState, *this);
@@ -214,36 +217,38 @@ public:
         // Create a new state //
         StateT* newState = _CreateNewState(ticknumber, component);
         entityStates->Append(newState, *this);
-        return true;        
+        return true;
     }
 
     //! \brief Returns the number of entities that have states
-    auto GetNumberOfEntitiesWithStates() const{
+    auto GetNumberOfEntitiesWithStates() const
+    {
 
         return StateObjects.GetObjectCount();
     }
 
     //! \brief Returns a pointer to entity's states if they exist
-    ObjectsComponentStates<StateT> const* GetEntityStates(ObjectID id) const{
+    ObjectsComponentStates<StateT> const* GetEntityStates(ObjectID id) const
+    {
 
         return StateObjects.Find(id);
     }
-    
-protected:
 
+protected:
     template<typename... Args>
-    StateT* _CreateNewState(Args&&... args){
-        
+    StateT* _CreateNewState(Args&&... args)
+    {
+
         return StatePool.ConstructNew(std::forward<Args>(args)...);
     }
 
-    void _DestroyStateObject(StateT* state){
+    void _DestroyStateObject(StateT* state)
+    {
 
         StatePool.Destroy(state);
     }
 
 private:
-    
     //! Keeps track of states associated with an object
     ObjectPool<ObjectsComponentStates<StateT>, ObjectID> StateObjects;
 
@@ -252,5 +257,4 @@ private:
     BasicPool<StateT> StatePool;
 };
 
-}
-
+} // namespace Leviathan

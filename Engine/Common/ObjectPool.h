@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Include.h"
 // ------------------------------------ //
@@ -12,8 +12,10 @@
 #include <unordered_map>
 #include <vector>
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 //#include "boost/pool/object_pool.hpp"
 #include "boost/pool/pool.hpp"
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
 namespace Leviathan {
 
@@ -21,16 +23,22 @@ namespace Leviathan {
 template<class ElementType>
 class BasicPool {
 public:
-    BasicPool() : Elements(sizeof(ElementType), 16) {}
+    BasicPool()
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+        :
+        Elements(sizeof(ElementType), 16)
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+    {}
 
     ~BasicPool() {}
+
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
     //! \brief Constructs a new component of the held type for entity
     //! \exception Exception when component has not been created
     template<typename... Args>
     ElementType* ConstructNew(Args&&... args)
     {
-
         // Get memory to hold the object //
         void* memoryForObject = Elements.malloc();
 
@@ -57,10 +65,25 @@ public:
         element->~ElementType();
         Elements.free(element);
     }
+#else
+    template<typename... Args>
+    ElementType* ConstructNew(Args&&... args)
+    {
+        return new ElementType(std::forward<Args>(args)...);
+    }
+
+    void Destroy(ElementType* element)
+    {
+        delete element;
+    }
+
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
 protected:
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
     //! Pool for objects
     boost::pool<> Elements;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 };
 
 //! \brief Creates objects in a shared memory region
@@ -69,12 +92,15 @@ protected:
 template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPool {
 public:
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
     //! \todo Figure out the optimal value for the Elements constructor (initial size)
     ObjectPool() : Elements(sizeof(ElementType), 16) {}
+#else
+    ObjectPool() {}
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
     ~ObjectPool()
     {
-
         if(!AutoCleanupObjects)
             return;
 
@@ -86,10 +112,10 @@ public:
     template<typename... Args>
     ElementType* ConstructNew(KeyType forentity, Args&&... args)
     {
-
         if(Find(forentity))
             throw Exception("Entity with ID already has object in pool of this type");
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         // Get memory to hold the object //
         void* memoryForObject = Elements.malloc();
 
@@ -105,6 +131,10 @@ public:
             Elements.free(memoryForObject);
             throw;
         }
+#else
+        // Construct the object //
+        ElementType* created = new ElementType(std::forward<Args>(args)...);
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
         // Add to index for finding later //
         Index.insert(std::make_pair(forentity, created));
@@ -115,7 +145,6 @@ public:
     template<typename... Args>
     void Release(KeyType entity, Args&&... args)
     {
-
         auto* object = Find(entity);
 
         if(!object)
@@ -123,8 +152,12 @@ public:
 
         object->Release(std::forward<Args>(args)...);
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         object->~ElementType();
         Elements.free(object);
+#else
+        delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
         RemoveFromIndex(entity);
         RemoveFromAdded(entity);
@@ -133,7 +166,6 @@ public:
     //! \return The found component or NULL
     ElementType* Find(KeyType id) const
     {
-
         auto iter = Index.find(id);
 
         if(iter == Index.end())
@@ -145,14 +177,17 @@ public:
     //! \brief Destroys a component based on id
     void Destroy(KeyType id)
     {
-
         auto object = Find(id);
 
         if(!object)
             throw InvalidArgument("ID is not in index");
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         object->~ElementType();
         Elements.free(object);
+#else
+        delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
         RemoveFromIndex(id);
         RemoveFromAdded(id);
@@ -169,8 +204,12 @@ public:
             if(todelete == Index.end())
                 continue;
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             todelete->second->~ElementType();
             Elements.free(todelete->second);
+#else
+            delete todelete->second;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
             Index.erase(todelete);
         }
@@ -185,13 +224,17 @@ public:
     //! if the component should be destroyed (true being yes and false being no)
     void Call(std::function<bool(ElementType&, KeyType)> function)
     {
-
         for(auto iter = Index.begin(); iter != Index.end();) {
 
             if(function(*iter->second, iter->first)) {
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
                 iter->second->~ElementType();
                 Elements.free(iter->second);
+#else
+                delete iter->second;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+
                 iter = Index.erase(iter);
 
             } else {
@@ -205,11 +248,14 @@ public:
     //! \warning All objects after this call are invalid
     void Clear()
     {
-
         for(auto iter = Index.begin(); iter != Index.end(); ++iter) {
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             iter->second->~ElementType();
             Elements.free(iter->second);
+#else
+            delete iter->second;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         }
 
         Index.clear();
@@ -217,7 +263,6 @@ public:
 
     auto GetObjectCount() const
     {
-
         return Index.size();
     }
 
@@ -226,7 +271,6 @@ public:
     //! Okay, you may change it but you have to be extremely careful
     inline std::unordered_map<KeyType, ElementType*>& GetIndex()
     {
-
         return Index;
     }
 
@@ -235,7 +279,6 @@ protected:
     //! \note The component will only be deallocated once this object is destructed
     bool RemoveFromIndex(KeyType id)
     {
-
         auto end = Index.end();
         for(auto iter = Index.begin(); iter != end; ++iter) {
 
@@ -253,8 +296,10 @@ protected:
     //! Used for looking up element belonging to id
     std::unordered_map<KeyType, ElementType*> Index;
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
     //! Pool for objects
     boost::pool<> Elements;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 };
 
 // ------------------------------------ //
@@ -266,11 +311,15 @@ protected:
 template<class ElementType, typename KeyType, bool AutoCleanupObjects = true>
 class ObjectPoolTracked {
 public:
-    ObjectPoolTracked() : Elements(sizeof(ElementType), 16) {}
+    ObjectPoolTracked()
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+        :
+        Elements(sizeof(ElementType), 16)
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+    {}
 
     ~ObjectPoolTracked()
     {
-
         if(!AutoCleanupObjects)
             return;
 
@@ -282,10 +331,10 @@ public:
     template<typename... Args>
     ElementType* ConstructNew(KeyType forentity, Args&&... args)
     {
-
         if(Find(forentity))
             throw Exception("Entity with ID already has object in pool of this type");
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         // Get memory to hold the object //
         void* memoryForObject = Elements.malloc();
 
@@ -301,6 +350,10 @@ public:
             Elements.free(memoryForObject);
             throw;
         }
+#else
+        // Construct the object //
+        ElementType* created = new ElementType(std::forward<Args>(args)...);
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
         // Add to index for finding later //
         Index.insert(std::make_pair(forentity, created));
@@ -313,21 +366,18 @@ public:
     //! \brief Returns true if there are objects in Removed
     bool HasElementsInRemoved() const
     {
-
         return !Removed.empty();
     }
 
     //! \brief Returns true if there are objects in Added
     bool HasElementsInAdded() const
     {
-
         return !Added.empty();
     }
 
     //! \brief Returns true if there are objects in Queued
     bool HasElementsInQueued() const
     {
-
         return !Queued.empty();
     }
 
@@ -336,7 +386,6 @@ public:
     template<typename... Args>
     void ReleaseQueued(Args&&... args)
     {
-
         for(auto iter = Queued.begin(); iter != Queued.end(); ++iter) {
 
             auto object = std::get<0>(*iter);
@@ -344,8 +393,12 @@ public:
 
             object->Release(std::forward<Args>(args)...);
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             object->~ElementType();
             Elements.free(object);
+#else
+            delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             Removed.push_back(std::make_tuple(object, id));
             RemoveFromIndex(id);
         }
@@ -383,14 +436,18 @@ public:
     //! without calling release
     void ClearQueued()
     {
-
         for(auto iter = Queued.begin(); iter != Queued.end(); ++iter) {
 
             auto object = std::get<0>(*iter);
             const auto id = std::get<1>(*iter);
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             object->~ElementType();
             Elements.free(object);
+#else
+            delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+
             Removed.push_back(std::make_tuple(object, id));
             RemoveFromIndex(id);
         }
@@ -401,28 +458,24 @@ public:
     //! \brief Returns a reference to the vector of removed elements
     const auto& GetRemoved() const
     {
-
         return Removed;
     }
 
     //! \brief Returns a reference to the vector of added elements
     auto& GetAdded()
     {
-
         return Added;
     }
 
     //! \brief Clears the added list
     void ClearAdded()
     {
-
         Added.clear();
     }
 
     //! \brief Clears the removed list
     void ClearRemoved()
     {
-
         Removed.clear();
     }
 
@@ -440,8 +493,12 @@ public:
             if(todelete == Index.end())
                 continue;
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             todelete->second->~ElementType();
             Elements.free(todelete->second);
+#else
+            delete todelete->second;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
             if(addtoremoved)
                 Removed.push_back(std::make_tuple(todelete->second, todelete->first));
@@ -456,15 +513,18 @@ public:
     template<typename... Args>
     void ReleaseAllAndClear(Args&&... args)
     {
-
         for(auto iter = Index.begin(); iter != Index.end(); ++iter) {
 
             auto object = iter->second;
 
             object->Release(std::forward<Args>(args)...);
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             object->~ElementType();
             Elements.free(object);
+#else
+            delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         }
 
         // Skip double free
@@ -481,7 +541,6 @@ public:
     //! during node construction
     void RemoveFromAdded(KeyType id)
     {
-
         for(auto iter = Added.begin(); iter != Added.end(); ++iter) {
 
             if(std::get<1>(*iter) == id) {
@@ -495,7 +554,6 @@ public:
     //! \return The found component or NULL
     ElementType* Find(KeyType id) const
     {
-
         auto iter = Index.find(id);
 
         if(iter == Index.end())
@@ -507,7 +565,6 @@ public:
     //! \brief Destroys a component based on id
     void Destroy(KeyType id, bool addtoremoved = true)
     {
-
         auto object = Find(id);
 
         if(!object)
@@ -557,13 +614,17 @@ public:
     //! if the component should be destroyed (true being yes and false being no)
     void Call(std::function<bool(ElementType&, KeyType)> function)
     {
-
         for(auto iter = Index.begin(); iter != Index.end();) {
 
             if(function(*iter->second, iter->first)) {
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
                 iter->second->~ElementType();
                 Elements.free(iter->second);
+#else
+                delete iter->second;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+
                 iter = Index.erase(iter);
 
             } else {
@@ -577,11 +638,14 @@ public:
     //! \warning All objects after this call are invalid
     void Clear()
     {
-
         for(auto iter = Index.begin(); iter != Index.end(); ++iter) {
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
             iter->second->~ElementType();
             Elements.free(iter->second);
+#else
+            delete iter->second;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         }
 
         Index.clear();
@@ -592,7 +656,6 @@ public:
 
     auto GetObjectCount() const
     {
-
         return Index.size();
     }
 
@@ -601,7 +664,6 @@ public:
     //! Okay, you may change it but you have to be extremely careful
     inline std::unordered_map<KeyType, ElementType*>& GetIndex()
     {
-
         return Index;
     }
 
@@ -610,7 +672,6 @@ protected:
     //! \note The component will only be deallocated once this object is destructed
     bool RemoveFromIndex(KeyType id)
     {
-
         auto end = Index.end();
         for(auto iter = Index.begin(); iter != end; ++iter) {
 
@@ -629,8 +690,14 @@ protected:
     {
         object->Release(std::forward<Args>(args)...);
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         object->~ElementType();
         Elements.free(object);
+#else
+        delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+
+
 
         if(addtoremoved)
             Removed.push_back(std::make_tuple(object, id));
@@ -641,8 +708,12 @@ protected:
 
     void _DestroyCommon(ElementType* object, KeyType id, bool addtoremoved)
     {
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
         object->~ElementType();
         Elements.free(object);
+#else
+        delete object;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
         if(addtoremoved)
             Removed.push_back(std::make_tuple(object, id));
@@ -668,8 +739,10 @@ protected:
     //! Used for detecting created elements
     std::vector<std::tuple<ElementType*, KeyType>> Added;
 
+#ifdef LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
     //! Pool for objects
     boost::pool<> Elements;
+#endif // LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 };
 
 

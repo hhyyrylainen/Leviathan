@@ -69,6 +69,9 @@ option(USE_LEAP "Set to on when using Leap motion, will auto disable if files ar
 option(ONLY_DOCUMENTATION "If true only documentation can be built correctly" OFF)
 
 
+option(LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
+  "Set to false to use new/delete instead of object pools. Provided for debugging memory issues with valgrind" ON)
+
 # Build configuration
 
 if(ONLY_DOCUMENTATION)

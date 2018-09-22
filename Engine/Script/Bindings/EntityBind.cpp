@@ -9,6 +9,7 @@
 
 #include "StandardWorldBindHelper.h"
 
+
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -187,7 +188,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Physics", "Float3 ClearVelocity() const",
+    if(engine->RegisterObjectMethod("Physics", "void ClearVelocity() const",
            asMETHOD(Physics, ClearVelocity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

@@ -27,7 +27,6 @@ DLLEXPORT std::string StringOperations::URLProtocol(const std::string& url)
 
 DLLEXPORT std::string StringOperations::BaseHostName(const std::string& url)
 {
-
     if(url.empty())
         return "";
 
@@ -60,7 +59,6 @@ DLLEXPORT std::string StringOperations::BaseHostName(const std::string& url)
 
 DLLEXPORT std::string StringOperations::URLPath(const std::string& url)
 {
-
     if(url.empty())
         return "";
 
@@ -128,8 +126,7 @@ DLLEXPORT std::string StringOperations::CombineURL(
     const auto lastpos = first.find_last_of('/');
     return first.substr(0, lastpos + 1) + cleanedUpSecond;
 }
-// TODO: remove
-#include <iostream>
+
 DLLEXPORT std::string StringOperations::RemovePartsBeforeAbsoluteURLParts(
     const std::string& url)
 {
@@ -164,7 +161,6 @@ DLLEXPORT std::string StringOperations::RemovePartsBeforeAbsoluteURLParts(
 
 DLLEXPORT bool StringOperations::IsURLDomain(const std::string& str)
 {
-
     // Must have a dot
     bool dotSeen = false;
 

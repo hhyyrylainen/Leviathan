@@ -1,14 +1,14 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "../Utility/Convert.h"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
-namespace Leviathan{
+namespace Leviathan {
 
 constexpr int32_t DOT_CHARACTER = '.';
 constexpr int32_t UNIVERSAL_PATHSEPARATOR = '/';
@@ -30,21 +30,23 @@ constexpr char UNIVERSAL_LINE_SEPARATOR[] = "\n";
 //! \todo Get rid of ElementType and just use ints for everything and hope that it is large
 //! enough
 //! \todo Drop wstring support
-class StringOperations{
+class StringOperations {
 public:
     template<typename CharType>
-        static bool IsCharacterWhitespace(CharType character){
+    static bool IsCharacterWhitespace(CharType character)
+    {
         if((int)character <= 32)
             return true;
 
-        if (IsLineTerminator(character))
+        if(IsLineTerminator(character))
             return true;
 
         return false;
     }
 
     template<typename CharType>
-        static bool IsCharacterQuote(CharType character){
+    static bool IsCharacterQuote(CharType character)
+    {
 
         if(character == '"' || character == '\'')
             return true;
@@ -55,59 +57,57 @@ public:
     // Helper functions //
 
     template<class StringTypeN>
-        static void MakeString(StringTypeN &str, const char* characters, size_t count) {
-
+    static void MakeString(StringTypeN& str, const char* characters, size_t count)
+    {
         // Skip the null terminator //
         str = StringTypeN(characters, count - 1);
     }
 
     template<class StringTypeN>
-        static StringTypeN RepeatCharacter(int character, size_t count){
-
+    static StringTypeN RepeatCharacter(int character, size_t count)
+    {
         StringTypeN result;
 
         result.resize(count);
 
         for(size_t i = 0; i < count; ++i)
             result[i] = character;
-        
+
         return result;
     }
 
     // ------------------ Path related operations ------------------ //
     template<class StringTypeN>
-        static const StringTypeN RemoveExtension(const StringTypeN &filepath,
-            bool delpath = true)
+    static const StringTypeN RemoveExtension(const StringTypeN& filepath, bool delpath = true)
     {
         size_t startcopy = 0;
         size_t endcopy;
 
         size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
-        if(lastdot == StringTypeN::npos){
+        if(lastdot == StringTypeN::npos) {
             // no dot //
-            endcopy = filepath.size()-1;
+            endcopy = filepath.size() - 1;
         } else {
-            endcopy = lastdot-1;
+            endcopy = lastdot - 1;
         }
 
         // Potentially erase from beginning //
-        if(delpath){
+        if(delpath) {
             // Find last path character //
             size_t lastpath = 0;
 
-            for(size_t i = 0; i < filepath.size(); i++){
-                if(filepath[i] == UNIVERSAL_PATHSEPARATOR || filepath[i] ==
-                    WINDOWS_PATHSEPARATOR)
-                {
+            for(size_t i = 0; i < filepath.size(); i++) {
+                if(filepath[i] == UNIVERSAL_PATHSEPARATOR ||
+                    filepath[i] == WINDOWS_PATHSEPARATOR) {
                     // Currently last found path //
                     lastpath = i;
                 }
             }
 
-            if(lastpath != 0){
+            if(lastpath != 0) {
                 // Set start //
-                startcopy = lastpath+1;
+                startcopy = lastpath + 1;
             }
         }
 
@@ -116,47 +116,48 @@ public:
             return StringTypeN();
 
         // return the wanted part //
-        return filepath.substr(startcopy, endcopy-startcopy+1);
+        return filepath.substr(startcopy, endcopy - startcopy + 1);
     }
 
     template<class StringTypeN>
-        static const StringTypeN GetExtension(const StringTypeN &filepath){
+    static const StringTypeN GetExtension(const StringTypeN& filepath)
+    {
         size_t startcopy = 0;
-        size_t endcopy = filepath.size()-1;
+        size_t endcopy = filepath.size() - 1;
 
         size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
-        if(lastdot == StringTypeN::npos){
+        if(lastdot == StringTypeN::npos) {
             // no dot //
             return StringTypeN();
         }
 
-        startcopy = lastdot+1;
+        startcopy = lastdot + 1;
 
         // Return empty if no data is valid //
         if(startcopy > endcopy || startcopy >= filepath.size() || endcopy >= filepath.size())
             return StringTypeN();
 
         // Return the extension //
-        return filepath.substr(startcopy, endcopy-startcopy+1);
+        return filepath.substr(startcopy, endcopy - startcopy + 1);
     }
 
     template<class StringTypeN>
-        static const StringTypeN ChangeExtension(const StringTypeN& filepath,
-            const StringTypeN &newext)
+    static const StringTypeN ChangeExtension(
+        const StringTypeN& filepath, const StringTypeN& newext)
     {
         size_t startcopy = 0;
-        size_t endcopy = filepath.size()-1;
+        size_t endcopy = filepath.size() - 1;
 
         size_t lastdot = filepath.find_last_of(DOT_CHARACTER);
 
-        if(lastdot != StringTypeN::npos){
+        if(lastdot != StringTypeN::npos) {
             // dot found //
             endcopy = lastdot;
 
         } else {
             // No dot, so just append it //
-            return filepath+newext;
+            return filepath + newext;
         }
 
         // Return empty if no data is valid //
@@ -164,61 +165,61 @@ public:
             return StringTypeN();
 
         // Return the extension //
-        return filepath.substr(startcopy, endcopy-startcopy+1)+newext;
+        return filepath.substr(startcopy, endcopy - startcopy + 1) + newext;
     }
 
     template<class StringTypeN>
-        static const StringTypeN RemovePath(const StringTypeN &filepath){
+    static const StringTypeN RemovePath(const StringTypeN& filepath)
+    {
         size_t startcopy = 0;
-        size_t endcopy = filepath.size()-1;
+        size_t endcopy = filepath.size() - 1;
 
         // Find last path character //
         size_t lastpath = 0;
 
-        for(size_t i = 0; i < filepath.size(); i++){
-            if(filepath[i] == UNIVERSAL_PATHSEPARATOR
-                || filepath[i] == WINDOWS_PATHSEPARATOR)
-            {
+        for(size_t i = 0; i < filepath.size(); i++) {
+            if(filepath[i] == UNIVERSAL_PATHSEPARATOR ||
+                filepath[i] == WINDOWS_PATHSEPARATOR) {
                 // Currently last found path //
                 lastpath = i;
             }
         }
 
-        if(lastpath != 0){
+        if(lastpath != 0) {
             // Set start //
-            startcopy = lastpath+1;
+            startcopy = lastpath + 1;
         }
 
         // Return empty if no data is valid //
         if(startcopy > endcopy || startcopy >= filepath.size() || endcopy >= filepath.size())
             return StringTypeN();
-            
+
 
         // return the wanted part //
-        return filepath.substr(startcopy, endcopy-startcopy+1);
+        return filepath.substr(startcopy, endcopy - startcopy + 1);
     }
 
     //! \brief Returns the path part of a path+filename
     template<class StringTypeN>
-        static const StringTypeN GetPath(const StringTypeN &filepath){
+    static const StringTypeN GetPath(const StringTypeN& filepath)
+    {
         size_t startcopy = 0;
-        size_t endcopy = filepath.size()-1;
+        size_t endcopy = filepath.size() - 1;
 
         // Find last path character //
         size_t lastpath;
         bool found = false;
 
-        for(size_t i = 0; i < filepath.size(); i++){
-            if(filepath[i] == UNIVERSAL_PATHSEPARATOR || filepath[i] == 
-                WINDOWS_PATHSEPARATOR)
-            {
+        for(size_t i = 0; i < filepath.size(); i++) {
+            if(filepath[i] == UNIVERSAL_PATHSEPARATOR ||
+                filepath[i] == WINDOWS_PATHSEPARATOR) {
                 // Currently last found path //
                 lastpath = i;
                 found = true;
             }
         }
 
-        if(!found){
+        if(!found) {
             // Set start //
             return StringTypeN();
         }
@@ -233,59 +234,57 @@ public:
 
 
         // return the wanted part //
-        return filepath.substr(startcopy, endcopy-startcopy+1);
+        return filepath.substr(startcopy, endcopy - startcopy + 1);
     }
 
     //! \brief Returns the protocol from a URL
     //! \example URLProtocol("http://google.fi/index.html") = "http"
-    DLLEXPORT static std::string URLProtocol(const std::string &url);
+    DLLEXPORT static std::string URLProtocol(const std::string& url);
 
     //! \brief Returns the base hostname from a URL
     //! \example BaseHostName("http://google.fi/index.html") = "http://google.fi/"
-    DLLEXPORT static std::string BaseHostName(const std::string &url);
+    DLLEXPORT static std::string BaseHostName(const std::string& url);
 
     //! \brief Returns the path of an url
     //!
     //! This returns everything after what BaseHostName would have returned
     //! \example URLPath("http://google.fi/index.html") = "index.html"
-    DLLEXPORT static std::string URLPath(const std::string &url);
+    DLLEXPORT static std::string URLPath(const std::string& url);
 
     //! \brief Combines a URL with another (relative) URL
     //! \example CombineURL("http://google.fi/index.html", "img.jpg") =
     //! "http://google.fi/img.jpg"
-    DLLEXPORT static std::string CombineURL(const std::string &first,
-        const std::string &second);
+    DLLEXPORT static std::string CombineURL(
+        const std::string& first, const std::string& second);
 
     //! \brief Removes multiple hostnames from an address
     //!
     //! \example RemovePartsBeforeAbsoluteURLParts(
     //! "http://example.com//a.example.com/img.png") = "http://a.example.com/img.png"
-    DLLEXPORT static std::string RemovePartsBeforeAbsoluteURLParts(const std::string &url);
+    DLLEXPORT static std::string RemovePartsBeforeAbsoluteURLParts(const std::string& url);
 
     //! \brief Returns true if string looks like a top level domain
-    DLLEXPORT static bool IsURLDomain(const std::string &str);
+    DLLEXPORT static bool IsURLDomain(const std::string& str);
 
 
     //! \brief Changes all line separators to Windows line separators
     template<class StringTypeN>
-        static const StringTypeN ChangeLineEndsToWindows(const StringTypeN &input){
-
+    static const StringTypeN ChangeLineEndsToWindows(const StringTypeN& input)
+    {
         StringTypeN results;
-            
+
         // This is the line ending sequence //
         StringTypeN separator;
-        MakeString(separator, WINDOWS_LINE_SEPARATOR,
-            sizeof(WINDOWS_LINE_SEPARATOR));
+        MakeString(separator, WINDOWS_LINE_SEPARATOR, sizeof(WINDOWS_LINE_SEPARATOR));
 
         // Try to find path strings and replace them //
         StartEndIndex copyparts;
-            
-        for(size_t i = 0; i < input.size(); i++){
+
+        for(size_t i = 0; i < input.size(); i++) {
             if(input[i] == UNIVERSAL_LINE_SEPARATOR[0]
                 // Previous character wasn't the first character of a windows line separator.
                 // If it was this is already the correct line separator and should be ignored
-                && (i == 0 || input[i - 1] != WINDOWS_LINE_SEPARATOR[0]))
-            {
+                && (i == 0 || input[i - 1] != WINDOWS_LINE_SEPARATOR[0])) {
                 // Found a line separator //
                 // Copy the current thing //
                 if(copyparts.Start && copyparts.End)
@@ -297,15 +296,15 @@ public:
 
                 continue;
             }
-                
-            if (!copyparts.Start)
+
+            if(!copyparts.Start)
                 copyparts.Start = i;
 
             // Change the end copy //
             copyparts.End = i;
         }
 
-        if (copyparts.End && copyparts.Start)
+        if(copyparts.End && copyparts.Start)
             results += input.substr(copyparts.Start, copyparts.Length());
 
         return results;
@@ -313,32 +312,30 @@ public:
 
     //! \brief Changes all line separators to universal line separators
     template<class StringTypeN>
-        static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN &input){
-
+    static const StringTypeN ChangeLineEndsToUniversal(const StringTypeN& input)
+    {
         StringTypeN results;
 
         // This is the line ending sequence //
         StringTypeN separator;
-        MakeString(separator, UNIVERSAL_LINE_SEPARATOR, 
-            sizeof(UNIVERSAL_LINE_SEPARATOR));
+        MakeString(separator, UNIVERSAL_LINE_SEPARATOR, sizeof(UNIVERSAL_LINE_SEPARATOR));
 
         // Try to find path strings and replace them //
         size_t copystart = 0;
         size_t copyend = 0;
 
-        for(size_t i = 0; i < input.size(); i++){
-            if(input[i] == WINDOWS_LINE_SEPARATOR[0] &&
-                i+1 < input.size() && input[i+1] == WINDOWS_LINE_SEPARATOR[1])
-            {
+        for(size_t i = 0; i < input.size(); i++) {
+            if(input[i] == WINDOWS_LINE_SEPARATOR[0] && i + 1 < input.size() &&
+                input[i + 1] == WINDOWS_LINE_SEPARATOR[1]) {
                 // Found a line separator //
                 // Copy the current thing //
-                if(copyend >= copystart && copystart-copyend > 1)
-                    results += input.substr(copystart, copyend-copystart+1);
+                if(copyend >= copystart && copystart - copyend > 1)
+                    results += input.substr(copystart, copyend - copystart + 1);
 
 
                 results += separator;
 
-                copystart = i+2 < input.size() ? i+2: i;
+                copystart = i + 2 < input.size() ? i + 2 : i;
                 copyend = copystart;
 
                 i += 2;
@@ -350,8 +347,8 @@ public:
             copyend = i;
         }
 
-        if(copyend >= copystart && copystart-copyend > 1)
-            results += input.substr(copystart, copyend-copystart+1);
+        if(copyend >= copystart && copystart - copyend > 1)
+            results += input.substr(copystart, copyend - copystart + 1);
 
 
         return results;
@@ -359,36 +356,35 @@ public:
 
     //! \brief Splits a string on line separators
     template<class StringTypeN>
-        static size_t CutLines(const StringTypeN &input, std::vector<StringTypeN> &output)
+    static size_t CutLines(const StringTypeN& input, std::vector<StringTypeN>& output)
     {
         if(input.empty())
             return 0;
-        
+
         size_t copystart = 0;
         size_t copyend = 0;
 
-        for(size_t i = 0; i < input.size(); i++){
+        for(size_t i = 0; i < input.size(); i++) {
             // Check is at a line separator
-            bool windows = input[i] == WINDOWS_LINE_SEPARATOR[0] &&
-                i+1 < input.size() && input[i+1] == WINDOWS_LINE_SEPARATOR[1];
-            
-            if(windows || (input[i] == UNIVERSAL_LINE_SEPARATOR[0]))
-            {
+            bool windows = input[i] == WINDOWS_LINE_SEPARATOR[0] && i + 1 < input.size() &&
+                           input[i + 1] == WINDOWS_LINE_SEPARATOR[1];
+
+            if(windows || (input[i] == UNIVERSAL_LINE_SEPARATOR[0])) {
                 // Check that previous character wasn't the beginning of
                 // a windows line separator. If it was this is already added
                 // and should be ignored
-                if(i > 0 && input[i - 1] == WINDOWS_LINE_SEPARATOR[0]){
+                if(i > 0 && input[i - 1] == WINDOWS_LINE_SEPARATOR[0]) {
 
                     // Skip adding this
                     continue;
                 }
-                
+
                 // Found a line separator //
                 // Copy the current thing //
-                if(copyend >= copystart && copystart-copyend > 1){
-                    
+                if(copyend >= copystart && copystart - copyend > 1) {
+
                     output.push_back(input.substr(copystart, copyend - copystart + 1));
-                    
+
                 } else {
                     // There was an empty line //
                     output.push_back(StringTypeN());
@@ -405,40 +401,41 @@ public:
 
         if(copyend >= copystart)
             output.push_back(input.substr(copystart, copyend - copystart + 1));
-        
+
         return output.size();
     }
 
 
     // ------------------ General string operations ------------------ //
     template<class StringTypeN>
-        static bool CutString(const StringTypeN &strtocut, const StringTypeN &separator,
-            std::vector<StringTypeN>& vec)
+    static bool CutString(const StringTypeN& strtocut, const StringTypeN& separator,
+        std::vector<StringTypeN>& vec)
     {
         // scan the input and gather positions for string copying //
         std::vector<StartEndIndex> CopyOperations;
         bool PositionStarted = false;
 
-        for(size_t i = 0; i < strtocut.length(); i++){
-            if(!PositionStarted){
+        for(size_t i = 0; i < strtocut.length(); i++) {
+            if(!PositionStarted) {
                 PositionStarted = true;
                 // add new position index //
                 CopyOperations.push_back(StartEndIndex(i));
             }
 
-            if(strtocut[i] == separator[0]){
+            if(strtocut[i] == separator[0]) {
                 // Found a possible match //
                 // test further //
                 size_t modifier = 0;
                 bool WasMatch = false;
-                while(strtocut[i+modifier] == separator[modifier]){
+                while(strtocut[i + modifier] == separator[modifier]) {
                     // check can it increase without going out of bounds //
-                    if((strtocut.length() > i+modifier+1) && (separator.length() > modifier+1)){
+                    if((strtocut.length() > i + modifier + 1) &&
+                        (separator.length() > modifier + 1)) {
                         // increase modifier to move forward //
                         modifier++;
                     } else {
                         // check is it a match
-                        if(modifier+1 == separator.length()){
+                        if(modifier + 1 == separator.length()) {
                             // found match! //
 
                             // end old string to just before this position //
@@ -459,12 +456,12 @@ public:
                 if(WasMatch)
                     // -1 here so that first character of next string won't be missing,
                     // because of the loop incrementation
-                    i += separator.length()-1;
+                    i += separator.length() - 1;
             }
         }
 
         // Return empty string if there is nothing here //
-        if(CopyOperations.empty()){
+        if(CopyOperations.empty()) {
 
             vec.push_back(StringTypeN());
             return false;
@@ -474,12 +471,12 @@ public:
         if(!CopyOperations.back().End)
             CopyOperations.back().End = strtocut.length();
 
-        if(CopyOperations.size() < 2){
+        if(CopyOperations.size() < 2) {
 
             vec.push_back(strtocut.substr(CopyOperations.front().Start,
-                    static_cast<size_t>(CopyOperations.front().End) -
+                static_cast<size_t>(CopyOperations.front().End) -
                     static_cast<size_t>(CopyOperations.front().Start)));
-            
+
             // would be just one string, for legacy
             // (actually we don't want caller to think it got cut) reasons we return nothing //
             return false;
@@ -492,11 +489,11 @@ public:
         vec.reserve(CopyOperations.size());
 
         // loop through positions and copy substrings to result vector //
-        for(size_t i = 0; i < CopyOperations.size(); i++){
+        for(size_t i = 0; i < CopyOperations.size(); i++) {
             // copy using std::wstring method for speed //
-            vec.push_back(strtocut.substr(CopyOperations[i].Start,
-                    static_cast<size_t>(CopyOperations[i].End) -
-                    static_cast<size_t>(CopyOperations[i].Start)));
+            vec.push_back(strtocut.substr(
+                CopyOperations[i].Start, static_cast<size_t>(CopyOperations[i].End) -
+                                             static_cast<size_t>(CopyOperations[i].Start)));
         }
 
         // cutting succeeded //
@@ -504,26 +501,25 @@ public:
     }
 
     template<class StringTypeN>
-        static int CountOccuranceInString(const StringTypeN &data,
-            const StringTypeN &lookfor)
+    static int CountOccuranceInString(const StringTypeN& data, const StringTypeN& lookfor)
     {
-
         int count = 0;
 
-        for(size_t i = 0; i < data.length(); i++){
-            if(data[i] == lookfor[0]){
+        for(size_t i = 0; i < data.length(); i++) {
+            if(data[i] == lookfor[0]) {
                 // Found a possible match //
                 // test further //
                 size_t modifier = 0;
                 bool WasMatch = false;
-                while(data[i+modifier] == lookfor[modifier]){
+                while(data[i + modifier] == lookfor[modifier]) {
                     // check can it increase without going out of bounds //
-                    if((data.length() > i+modifier+1) && (lookfor.length() > modifier+1)){
+                    if((data.length() > i + modifier + 1) &&
+                        (lookfor.length() > modifier + 1)) {
                         // increase modifier to move forward //
                         modifier++;
                     } else {
                         // check is it a match
-                        if(modifier+1 == lookfor.length()){
+                        if(modifier + 1 == lookfor.length()) {
                             // found match! //
                             count++;
                             WasMatch = true;
@@ -536,21 +532,21 @@ public:
                 if(WasMatch)
                     // -1 here so that first character of next string won't be missing,
                     // because of the loop incrementation
-                    i += lookfor.length()-1;
+                    i += lookfor.length() - 1;
             }
         }
-            
+
         return count;
     }
 
     template<class StringTypeN>
-        static StringTypeN Replace(const StringTypeN &data,
-            const StringTypeN &toreplace, const StringTypeN &replacer)
+    static StringTypeN Replace(
+        const StringTypeN& data, const StringTypeN& toreplace, const StringTypeN& replacer)
     {
         // We construct an output string from the wanted bits //
         StringTypeN out;
 
-        if(toreplace.size() < 1){
+        if(toreplace.size() < 1) {
             // Don't replace anything //
             return data;
         }
@@ -559,34 +555,33 @@ public:
         PotentiallySetIndex copyend;
 
         // loop through data and copy final characters to out string //
-        for(size_t i = 0; i < data.size(); i++){
+        for(size_t i = 0; i < data.size(); i++) {
             // check for replaced part //
-            if(data[i] == toreplace[0]){
+            if(data[i] == toreplace[0]) {
                 // check for match //
                 bool IsMatch = false;
-                for(size_t checkind = 0; (checkind < toreplace.size()) &&
-                        (checkind < data.size()); checkind++)
-                {
-                    if(data[i+checkind] != toreplace[checkind]){
+                for(size_t checkind = 0;
+                    (checkind < toreplace.size()) && (checkind < data.size()); checkind++) {
+                    if(data[i + checkind] != toreplace[checkind]) {
                         // didn't match //
                         break;
                     }
                     // check is final iteration //
-                    if(!((checkind+1 < toreplace.size()) && (checkind+1 < data.size()))){
+                    if(!((checkind + 1 < toreplace.size()) && (checkind + 1 < data.size()))) {
                         // is a match //
                         IsMatch = true;
                         break;
                     }
                 }
-                    
-                if(IsMatch || toreplace.size() == 1){
+
+                if(IsMatch || toreplace.size() == 1) {
 
                     if(copystart && !copyend)
                         copyend = copystart;
-                    
+
                     // First add proper characters //
                     if(copystart && copyend)
-                        out += data.substr(copystart, 
+                        out += data.substr(copystart,
                             static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
 
                     copystart.ValueSet = false;
@@ -596,13 +591,13 @@ public:
                     // add toreplace length to i
                     out += replacer;
 
-                    i += toreplace.length()-1;
+                    i += toreplace.length() - 1;
                     continue;
                 }
             }
-                
+
             // non matching character mark as to copy //
-            if(!copystart){
+            if(!copystart) {
                 copystart = i;
             } else {
                 copyend = i;
@@ -611,8 +606,8 @@ public:
 
         // Copy rest to out //
         if(copystart && copyend)
-            out += data.substr(copystart,
-                static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
+            out += data.substr(
+                copystart, static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
 
         // Return finished string //
         return out;
@@ -620,20 +615,20 @@ public:
 
 
     template<class StringTypeN>
-        static StringTypeN ReplaceSingleCharacter(const StringTypeN &data,
-            const StringTypeN &toreplace, int replacer = ' ')
+    static StringTypeN ReplaceSingleCharacter(
+        const StringTypeN& data, const StringTypeN& toreplace, int replacer = ' ')
     {
         // Copy the string and then modify it //
         StringTypeN out(data);
 
-        for(auto iter = out.begin(); iter != out.end(); ++iter){
+        for(auto iter = out.begin(); iter != out.end(); ++iter) {
 
             // Check does it contain //
             bool replace = false;
 
-            for(auto iter2 = toreplace.begin(); iter2 != toreplace.end(); ++iter2){
+            for(auto iter2 = toreplace.begin(); iter2 != toreplace.end(); ++iter2) {
 
-                if((*iter2) == (*iter)){
+                if((*iter2) == (*iter)) {
 
                     replace = true;
                     break;
@@ -648,20 +643,19 @@ public:
     }
 
     template<class StringTypeN>
-        static StringTypeN RemoveCharacters(const StringTypeN &data,
-            const StringTypeN &toremove)
+    static StringTypeN RemoveCharacters(const StringTypeN& data, const StringTypeN& toremove)
     {
         StringTypeN out;
         out.reserve(data.size());
 
-        for(auto iter = data.begin(); iter != data.end(); ++iter){
+        for(auto iter = data.begin(); iter != data.end(); ++iter) {
 
             // Check does it contain //
             bool ignore = false;
 
-            for(auto iter2 = toremove.begin(); iter2 != toremove.end(); ++iter2){
+            for(auto iter2 = toremove.begin(); iter2 != toremove.end(); ++iter2) {
 
-                if((*iter2) == (*iter)){
+                if((*iter2) == (*iter)) {
 
                     ignore = true;
                     break;
@@ -678,21 +672,21 @@ public:
     }
 
     template<class StringTypeN>
-        static StringTypeN RemoveFirstWords(const StringTypeN &data, int amount){
-
+    static StringTypeN RemoveFirstWords(const StringTypeN& data, int amount)
+    {
         size_t firstpos = 0;
         // Find the copy start position //
         int spaces = 0;
         int words = 0;
 
-        for(size_t i = 0; i < data.length(); i++){
-            if(data[i] == SPACE_CHARACTER){
+        for(size_t i = 0; i < data.length(); i++) {
+            if(data[i] == SPACE_CHARACTER) {
                 spaces++;
                 continue;
             }
-            if(spaces > 0){
+            if(spaces > 0) {
                 words++;
-                if(words == amount){
+                if(words == amount) {
                     // This is the spot we want to start from //
                     firstpos = i;
                     break;
@@ -701,18 +695,18 @@ public:
             }
         }
 
-        if(firstpos == 0){
+        if(firstpos == 0) {
             // Didn't remove anything? //
             return data;
         }
 
         // Generate sub string from start to end //
-        return data.substr(firstpos, data.size()-firstpos);
+        return data.substr(firstpos, data.size() - firstpos);
     }
 
     template<class StringTypeN>
-        static StringTypeN StitchTogether(const std::vector<StringTypeN*> &data,
-            const StringTypeN &separator)
+    static StringTypeN StitchTogether(
+        const std::vector<StringTypeN*>& data, const StringTypeN& separator)
     {
         StringTypeN ret;
         bool first = true;
@@ -720,17 +714,17 @@ public:
         int totalcharacters = 0;
 
         // This might be faster than not reserving space //
-        for(size_t i = 0; i < data.size(); i++){
+        for(size_t i = 0; i < data.size(); i++) {
             totalcharacters += data[i]->length();
         }
-            
-        totalcharacters += separator.length()*data.size();
-            
+
+        totalcharacters += separator.length() * data.size();
+
         // By reserving space we don't have to allocate more memory
         // during copying which might be faster
         ret.reserve(totalcharacters);
 
-        for(size_t i = 0; i < data.size(); i++){
+        for(size_t i = 0; i < data.size(); i++) {
             if(!first)
                 ret += separator;
             ret += *data[i];
@@ -741,8 +735,8 @@ public:
     }
 
     template<class StringTypeN>
-        static StringTypeN StitchTogether(const std::vector<StringTypeN> &data,
-            const StringTypeN &separator)
+    static StringTypeN StitchTogether(
+        const std::vector<StringTypeN>& data, const StringTypeN& separator)
     {
         StringTypeN ret;
         bool first = true;
@@ -750,17 +744,17 @@ public:
         int totalcharacters = 0;
 
         // This might be faster than not reserving space //
-        for(size_t i = 0; i < data.size(); i++){
+        for(size_t i = 0; i < data.size(); i++) {
             totalcharacters += data[i].length();
         }
-        
-        totalcharacters += separator.length()*data.size();
-            
+
+        totalcharacters += separator.length() * data.size();
+
         // By reserving space we don't have to allocate more memory
         // during copying which might be faster
         ret.reserve(totalcharacters);
-        
-        for(size_t i = 0; i < data.size(); i++){
+
+        for(size_t i = 0; i < data.size(); i++) {
             if(!first)
                 ret += separator;
             ret += data[i];
@@ -772,9 +766,8 @@ public:
 
 
     template<class StringTypeN>
-        static StringTypeN StitchTogether(
-            const std::vector<std::shared_ptr<StringTypeN>> &data,
-            const StringTypeN &separator)
+    static StringTypeN StitchTogether(
+        const std::vector<std::shared_ptr<StringTypeN>>& data, const StringTypeN& separator)
     {
         StringTypeN ret;
         bool first = true;
@@ -782,16 +775,16 @@ public:
         int totalcharacters = 0;
 
         // This might be faster than not reserving space //
-        for(size_t i = 0; i < data.size(); i++){
+        for(size_t i = 0; i < data.size(); i++) {
             totalcharacters += data[i]->length();
         }
-        totalcharacters += separator.length()*data.size();
+        totalcharacters += separator.length() * data.size();
 
         // By reserving space we don't have to allocate more memory during
         // copying which might be faster
         ret.reserve(totalcharacters);
 
-        for(size_t i = 0; i < data.size(); i++){
+        for(size_t i = 0; i < data.size(); i++) {
             if(!first)
                 ret += separator;
             ret += *data[i].get();
@@ -802,57 +795,57 @@ public:
     }
 
     template<class StringTypeN>
-        static void RemovePreceedingTrailingSpaces(StringTypeN &str){
+    static void RemovePreceedingTrailingSpaces(StringTypeN& str)
+    {
         StartEndIndex CutPositions;
 
         // search the right part of the string //
-        for(size_t i = 0; i < str.size(); i++){
-            if(!IsCharacterWhitespace(str[i])){
-                if(!CutPositions.Start){
+        for(size_t i = 0; i < str.size(); i++) {
+            if(!IsCharacterWhitespace(str[i])) {
+                if(!CutPositions.Start) {
                     // beginning ended //
                     CutPositions.Start = i;
                 } else {
                     // set last pos as this //
-
                 }
                 continue;
             }
-            if(!CutPositions.Start){
+            if(!CutPositions.Start) {
                 // still haven't found a character //
                 continue;
             }
             // check is this last character //
-            size_t a = str.size()-1;
+            size_t a = str.size() - 1;
             bool found = false;
-            for(; a > i; a--){
-                if(!IsCharacterWhitespace(str[a])){
+            for(; a > i; a--) {
+                if(!IsCharacterWhitespace(str[a])) {
                     // there is still valid characters //
                     found = true;
                     break;
                 }
             }
-            if(found){
+            if(found) {
                 // skip to the found non-space character //
-                i = a-1;
+                i = a - 1;
                 continue;
             }
             // end found //
-            CutPositions.End = i-1;
+            CutPositions.End = i - 1;
             break;
         }
 
-        if(!CutPositions.Start){
+        if(!CutPositions.Start) {
             // nothing in the string //
             str.clear();
             return;
         }
-        if(!CutPositions.End){
-            if(!CutPositions.Start){
+        if(!CutPositions.End) {
+            if(!CutPositions.Start) {
                 // just the first character required //
                 CutPositions.End = CutPositions.Start;
             } else {
                 // no need to cut from the end //
-                CutPositions.End = str.length()-1;
+                CutPositions.End = str.length() - 1;
             }
         }
 
@@ -861,55 +854,50 @@ public:
     }
 
     template<class StringTypeN>
-        static bool CompareInsensitive(const StringTypeN &data,
-            const StringTypeN &second)
+    static bool CompareInsensitive(const StringTypeN& data, const StringTypeN& second)
     {
         if(data.size() != second.size())
             return false;
 
-        for(unsigned int i = 0; i < data.size(); i++){
-            if(data[i] != second[i]){
+        for(unsigned int i = 0; i < data.size(); i++) {
+            if(data[i] != second[i]) {
 
                 // Check are they different case //
-                if(97 <= data[i] && data[i] <= 122){
+                if(97 <= data[i] && data[i] <= 122) {
 
-                    if(data[i]-32 != second[i]){
+                    if(data[i] - 32 != second[i]) {
 
                         return false;
                     }
-                } else if(97 <= second[i] && second[i] <= 122){
+                } else if(97 <= second[i] && second[i] <= 122) {
 
-                    if(second[i]-32 != data[i]){
+                    if(second[i] - 32 != data[i]) {
 
                         return false;
                     }
                 } else {
-                        
+
                     return false;
                 }
             }
         }
-            
+
         return true;
     }
 
     template<class StringTypeN>
-        static bool StringStartsWith(const StringTypeN &data,
-            const StringTypeN &tomatch)
+    static bool StringStartsWith(const StringTypeN& data, const StringTypeN& tomatch)
     {
-        size_t foundstop = data.find(tomatch);
-        return foundstop != StringTypeN::npos && foundstop == 0;
+        return data.find(tomatch) == 0;
     }
-    
+
     template<class StringTypeN>
-        static bool IsStringNumeric(const StringTypeN &data){
-        for(size_t i = 0; i < data.size(); i++){
-            if((data[i] < FIRST_NUMBER ||
-                    data[i] > LAST_NUMBER) &&
-                data[i] != DASH_CHARACTER &&
-                data[i] != DOT_CHARACTER &&
-                data[i] != PLUS_SYMBOL)
-            {
+    static bool IsStringNumeric(const StringTypeN& data)
+    {
+        for(size_t i = 0; i < data.size(); i++) {
+            if((data[i] < FIRST_NUMBER || data[i] > LAST_NUMBER) &&
+                data[i] != DASH_CHARACTER && data[i] != DOT_CHARACTER &&
+                data[i] != PLUS_SYMBOL) {
                 return false;
             }
         }
@@ -918,20 +906,20 @@ public:
 
     //! \todo Make this work with any unicode characters
     template<class StringTypeN>
-        static StringTypeN ToUpperCase(const StringTypeN &data){
-
+    static StringTypeN ToUpperCase(const StringTypeN& data)
+    {
         StringTypeN result;
         result.reserve(data.size());
-            
-        for(size_t i = 0; i < data.size(); i++){
+
+        for(size_t i = 0; i < data.size(); i++) {
 
             // Not actually unicode decoding...
             auto const codepoint = data[i];
 
-            if(97 <= codepoint && codepoint <= 122){
+            if(97 <= codepoint && codepoint <= 122) {
 
-                result.push_back(codepoint-32);
-                    
+                result.push_back(codepoint - 32);
+
             } else {
 
                 result.push_back(codepoint);
@@ -942,18 +930,18 @@ public:
     }
 
     template<class StringTypeN>
-        static StringTypeN Indent(size_t numspaces) {
-
-        if (!numspaces)
+    static StringTypeN Indent(size_t numspaces)
+    {
+        if(!numspaces)
             return StringTypeN();
 
-        return StringTypeN(numspaces, (int)' ');
+        return StringTypeN(numspaces, static_cast<int>(' '));
     }
 
     //! \brief Appends spaces number of spaces to each line in str and returns the result
     template<class StringTypeN>
-    static StringTypeN IndentLines(const StringTypeN &str, size_t spaces){
-        
+    static StringTypeN IndentLines(const StringTypeN& str, size_t spaces)
+    {
         const auto indentstr = Indent<StringTypeN>(spaces);
 
         StringTypeN result;
@@ -961,33 +949,33 @@ public:
 
         StartEndIndex currentcut;
 
-        for (size_t i = 0; i < str.size(); ++i) {
+        for(size_t i = 0; i < str.size(); ++i) {
 
             // Check for line change //
-            if (IsLineTerminator(str[i])) {
+            if(IsLineTerminator(str[i])) {
 
                 result += indentstr;
 
                 if(currentcut.Start)
-                    result += str.substr(currentcut.Start,
-                        i - static_cast<size_t>(currentcut.Start));
+                    result += str.substr(
+                        currentcut.Start, i - static_cast<size_t>(currentcut.Start));
 
                 result += "\n";
                 currentcut = StartEndIndex();
 
                 // Multi character line terminator //
-                if (i + 1 < str.length() && IsLineTerminator(str[i], str[i + 1]))
+                if(i + 1 < str.length() && IsLineTerminator(str[i], str[i + 1]))
                     ++i;
             }
 
-            if (!currentcut.Start && !IsCharacterWhitespace(str[i])) {
+            if(!currentcut.Start && !IsCharacterWhitespace(str[i])) {
 
                 // Started a line //
                 currentcut.Start = i;
             }
         }
 
-        if (currentcut.Start) {
+        if(currentcut.Start) {
 
             currentcut.End = str.size();
 
@@ -998,24 +986,23 @@ public:
     }
 
     template<class StringTypeN>
-    static StringTypeN RemoveEnding(const StringTypeN &str, const StringTypeN &ending){
-
+    static StringTypeN RemoveEnding(const StringTypeN& str, const StringTypeN& ending)
+    {
         const auto pos = str.rfind(ending);
 
         if(pos != StringTypeN::npos && str.length() - pos == ending.length())
             return str.substr(0, pos);
-        
+
         return str;
     }
 
     //! \returns True if a character is a line terminating character
-    static bool IsLineTerminator(int32_t codepoint) {
-
-        if (codepoint == '\r' || codepoint == '\n' ||
+    static bool IsLineTerminator(int32_t codepoint)
+    {
+        if(codepoint == '\r' || codepoint == '\n' ||
             // Unicode newlines //
             codepoint == 0x0085 || codepoint == 0x2028 || codepoint == 0x2029 ||
-            codepoint == 0x000B || codepoint == 0x000C)
-        {
+            codepoint == 0x000B || codepoint == 0x000C) {
             return true;
         }
 
@@ -1023,10 +1010,9 @@ public:
     }
 
     //! \returns True if two characters are a line terminating sequence
-    static bool IsLineTerminator(int32_t codepoint1, int32_t codepoint2) {
-
-        if (codepoint1 == '\r' && codepoint2 == '\n')
-        {
+    static bool IsLineTerminator(int32_t codepoint1, int32_t codepoint2)
+    {
+        if(codepoint1 == '\r' && codepoint2 == '\n') {
             return true;
         }
 
@@ -1040,9 +1026,7 @@ private:
 
 
 template<>
-    DLLEXPORT void StringOperations::MakeString(std::wstring &str, const char* characters,
-        size_t count);
+DLLEXPORT void StringOperations::MakeString(
+    std::wstring& str, const char* characters, size_t count);
 
-}
-
-
+} // namespace Leviathan

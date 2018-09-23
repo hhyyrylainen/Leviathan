@@ -76,8 +76,7 @@ public:
 // ------------------------------------ //
 DLLEXPORT GameWorld::GameWorld() :
     pimpl(std::make_unique<Implementation>()), ID(IDFactory::GetID())
-{
-}
+{}
 
 DLLEXPORT GameWorld::~GameWorld()
 {
@@ -887,6 +886,7 @@ void GameWorld::_DoDestroy(ObjectID id)
             Parents.pop_back();
 
             // And then destroy //
+            // LOG_WRITE("Destroying child ID: " + std::to_string(childId));
             DestroyEntity(childId);
 
             // To support recursively parented we go back to the start to scan again

@@ -12,7 +12,7 @@ using namespace Leviathan::Test;
 using namespace Leviathan::GUI;
 
 
-TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired]"){
+TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired][ogre]"){
     
     // TODO: add leviathan intro video that can be attempted to be opened
 

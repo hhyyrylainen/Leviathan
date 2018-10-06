@@ -51,7 +51,9 @@ public:
 
 
 //! \version Now puts all output to the catch framework which only
-//! prints it if a test fails
+//! prints it if a test fails. That doesn't actually work
+//! \todo Fix all the output not being visible
+//! \todo Merge this with DummyLogger if that makes sense
 class TestLogger : public Logger {
 public:
     TestLogger(const std::string& file) : Logger(file) {}
@@ -285,7 +287,7 @@ public:
         Ogre::String renderSystemName = "RenderSystem_GL3Plus";
 
 #ifdef _DEBUG
-        renderSystemName->append("_d");
+        renderSystemName.append("_d");
 #endif // _DEBUG
 
 #ifndef _WIN32

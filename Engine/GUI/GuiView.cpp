@@ -35,8 +35,7 @@ DLLEXPORT View::View(GuiManager* owner, Window* window,
     ID(IDFactory::GetID()),
     ViewSecurity(security), Wind(window), Owner(owner),
     OurAPIHandler(new LeviathanJavaScriptAsync(this))
-{
-}
+{}
 
 DLLEXPORT View::~View() {}
 // ------------------------------------ //
@@ -568,8 +567,7 @@ CefRefPtr<CefResourceHandler> View::GetResourceHandler(
 
 void View::OnResourceRedirect(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     CefRefPtr<CefRequest> request, CefRefPtr<CefResponse> response, CefString& new_url)
-{
-}
+{}
 
 bool View::GetAuthCredentials(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
     bool isProxy, const CefString& host, int port, const CefString& realm,
@@ -745,6 +743,7 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
 
         _HandleDestroyProxyMsg(args->GetInt(1));
         return;
+
     } else if(operation == "Pause") {
 
         // Function call
@@ -775,7 +774,38 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
 
         casted->Pause();
         return;
+    } else if(operation == "Play2D") {
+
+        // Function call
+        const auto requestNumber = args->GetInt(1);
+
+        if(requestNumber != -1)
+            LOG_WARNING("GuiView: request responses for Play2D aren't done, request number: " +
+                        std::to_string(requestNumber));
+
+        const auto id = args->GetInt(2);
+
+        const auto iter = ProxyedObjects.find(id);
+
+        if(iter == ProxyedObjects.end()) {
+
+            LOG_ERROR(
+                "GuiView: didn't find proxyed object (for Play2D): " + std::to_string(id));
+            return;
+        }
+
+        auto* casted = dynamic_cast<AudioSource*>(iter->second.get());
+
+        if(!casted) {
+            LOG_ERROR("GuiView: proxyed object is of wrong type (for Play2D), id: " +
+                      std::to_string(id));
+            return;
+        }
+
+        casted->Play2D();
+        return;
     }
+
 
     LOG_ERROR("Got unknown AudioSource message: " + Convert::Utf16ToUtf8(operation));
 }

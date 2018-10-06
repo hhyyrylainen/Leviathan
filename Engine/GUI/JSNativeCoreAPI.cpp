@@ -311,15 +311,13 @@ JSNativeCoreAPI::JSListener::JSListener(const std::string& eventname,
     IsGeneric(true),
     EventsType(EVENT_TYPE_ERROR), EventName(eventname), FunctionValueObject(callbackfunc),
     FunctionsContext(currentcontext)
-{
-}
+{}
 
 JSNativeCoreAPI::JSListener::JSListener(EVENT_TYPE etype, CefRefPtr<CefV8Value> callbackfunc,
     CefRefPtr<CefV8Context> currentcontext) :
     IsGeneric(false),
     EventsType(etype), FunctionValueObject(callbackfunc), FunctionsContext(currentcontext)
-{
-}
+{}
 // ------------------------------------ //
 bool JSNativeCoreAPI::JSListener::ExecuteGenericEvent(GenericEvent& eventdata)
 {
@@ -432,7 +430,6 @@ bool JSNamedVarsInterceptor::Get(const CefString& name, const CefRefPtr<CefV8Val
                 [](const CefString& name, CefRefPtr<CefV8Value> object,
                     const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
                     CefString& exception) -> bool {
-
                     if(name == "keys") {
 
                         // The JSNamedVarsInterceptor is the user data
@@ -464,7 +461,7 @@ bool JSNamedVarsInterceptor::Get(const CefString& name, const CefRefPtr<CefV8Val
 
                         auto vecval = casted->Values->GetVec();
 
-						const int size = static_cast<int>(vecval->size());
+                        const int size = static_cast<int>(vecval->size());
 
                         retval = CefV8Value::CreateArray(size);
 
@@ -530,8 +527,7 @@ void JSNamedVarsInterceptor::BindValues(CefRefPtr<CefV8Value> object)
 // JSAudioSourceInterceptor
 JSAudioSourceInterceptor::JSAudioSourceInterceptor(JSNativeCoreAPI& messagebridge, int id) :
     ID(id), MessageBridge(messagebridge)
-{
-}
+{}
 
 JSAudioSourceInterceptor::~JSAudioSourceInterceptor()
 {
@@ -554,7 +550,6 @@ bool JSAudioSourceInterceptor::Get(const CefString& name, const CefRefPtr<CefV8V
                 [](const CefString& name, CefRefPtr<CefV8Value> object,
                     const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
                     CefString& exception) -> bool {
-
                     if(name == "Pause") {
 
                         // The JSAudioSourceInterceptor is the user data
@@ -579,6 +574,42 @@ bool JSAudioSourceInterceptor::Get(const CefString& name, const CefRefPtr<CefV8V
                         }
 
                         casted->Pause();
+                        return true;
+                    }
+
+                    return false;
+                }));
+        return true;
+    } else if(name == "Play2D") {
+        retval = CefV8Value::CreateFunction("Play2D",
+            new JSLambdaFunction(
+                [](const CefString& name, CefRefPtr<CefV8Value> object,
+                    const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
+                    CefString& exception) -> bool {
+                    if(name == "Play2D") {
+
+                        // The JSAudioSourceInterceptor is the user data
+                        if(!object) {
+                            exception = "No 'this' passed to function";
+                            return true;
+                        }
+
+                        auto userData = object->GetUserData();
+
+                        if(!userData) {
+                            exception = "'this' has no userdata";
+                            return true;
+                        }
+
+                        auto* casted = dynamic_cast<JSAudioSourceInterceptor*>(userData.get());
+
+                        if(!casted) {
+                            exception =
+                                "'this' was of wrong type. Excepted JSAudioSourceInterceptor";
+                            return true;
+                        }
+
+                        casted->Play2D();
                         return true;
                     }
 
@@ -615,6 +646,20 @@ DLLEXPORT void JSAudioSourceInterceptor::Pause()
     CefRefPtr<CefListValue> args = message->GetArgumentList();
 
     args->SetString(0, "Pause");
+    // No callback
+    args->SetInt(1, -1);
+    args->SetInt(2, ID);
+
+    MessageBridge.SendProcessMessage(message);
+}
+
+DLLEXPORT void JSAudioSourceInterceptor::Play2D()
+{
+    CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("AudioSource");
+
+    CefRefPtr<CefListValue> args = message->GetArgumentList();
+
+    args->SetString(0, "Play2D");
     // No callback
     args->SetInt(1, -1);
     args->SetInt(2, ID);

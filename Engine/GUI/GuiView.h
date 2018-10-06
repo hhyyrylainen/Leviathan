@@ -46,6 +46,8 @@ enum VIEW_SECURITYLEVEL {
 //! \brief A class that represents a single GUI layer that has it's own chromium browser
 //!
 //! GUI can be layered by setting the z coordinate of Views different
+//! \todo Split the process messages away from this into the places that actually sent them
+//! "JSNativeCoreAPI.cpp" to be clearer
 class View : public CefClient,
              public CefContextMenuHandler,
              public CefDisplayHandler,

@@ -147,7 +147,7 @@ public:
     // process functions //
     DLLEXPORT static bool ProcessDataDump(const std::string& data,
         std::vector<std::shared_ptr<NamedVariableList>>& vec, LErrorReporter* errorreport,
-        std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = NULL);
+        std::map<std::string, std::shared_ptr<VariableBlock>>* predefined = nullptr);
 
     // operators //
     DLLEXPORT NamedVariableList& operator=(const NamedVariableList& other);
@@ -165,6 +165,7 @@ public:
     DLLEXPORT VariableBlock& operator[](const int& nindex);
 
     //! \brief Switches values to a new instance
+    //! \todo Rewrite this as a move operation
     DLLEXPORT static void SwitchValues(
         NamedVariableList& receiver, NamedVariableList& donator);
 

@@ -267,7 +267,6 @@ public:
     std::unique_ptr<RStrType> GetUntilEqualityAssignment(
         EQUALITYCHARACTER stopcase, int specialflags = 0)
     {
-
         // Setup the result object //
         IteratorAssignmentData data;
 
@@ -276,8 +275,7 @@ public:
             specialflags, &StringIterator::FindUntilEquality, &data, stopcase, specialflags);
 
         // Check for validity //
-        if(!data.Positions.Start || data.Positions.Start == data.Positions.End ||
-            data.SeparatorFound == false) {
+        if(!data.Positions.Start || data.SeparatorFound == false) {
             // nothing found //
             return nullptr;
         }
@@ -478,7 +476,6 @@ public:
     //! \brief When set to true prints lots of debug output
     void SetDebugMode(bool mode)
     {
-
         DebugMode = mode;
     }
 #endif

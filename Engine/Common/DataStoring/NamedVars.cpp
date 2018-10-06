@@ -12,8 +12,7 @@ using namespace std;
 NamedVariableList::NamedVariableList() : Datas(0), Name("") {}
 
 DLLEXPORT NamedVariableList::NamedVariableList(const std::string& name) : Datas(0), Name(name)
-{
-}
+{}
 
 DLLEXPORT NamedVariableList::NamedVariableList(
     const std::string& name, VariableBlock* value1) :
@@ -74,7 +73,7 @@ DLLEXPORT NamedVariableList::NamedVariableList(const std::string& line,
     auto name = itr.GetUntilEqualityAssignment<std::string>(EQUALITYCHARACTER_TYPE_ALL);
 
     if(!name) {
-    // no name //
+        // no name //
 #ifdef ALTERNATIVE_EXCEPTIONS_FATAL
         errorreport->Error(std::string("invalid data on line (invalid name)"));
         return;
@@ -92,7 +91,7 @@ DLLEXPORT NamedVariableList::NamedVariableList(const std::string& line,
     auto tempvar = itr.GetUntilNextCharacterOrAll<std::string>(L';');
 
     if(!tempvar || tempvar->size() < 1) {
-    // no variable //
+        // no variable //
 #ifdef ALTERNATIVE_EXCEPTIONS_FATAL
         Name = "";
         errorreport->Error(std::string("invalid data on line (no variable data)"));
@@ -610,46 +609,48 @@ DLLEXPORT bool NamedVariableList::ProcessDataDump(const std::string& data,
     std::vector<std::shared_ptr<NamedVariableList>>& vec, LErrorReporter* errorreport,
     std::map<std::string, std::shared_ptr<VariableBlock>>* predefined /*= NULL*/)
 {
-    // split to lines //
-    vector<shared_ptr<string>> Lines;
+    // Split to lines //
+    std::vector<std::shared_ptr<std::string>> lines;
 
     StringIterator itr(data);
 
-    // use string iterator to get the lines that are separated by ; //
-    unique_ptr<string> curline;
-    size_t linelength = 0;
+    // Use string iterator to get the lines that are separated by ; //
+    std::unique_ptr<std::string> curLine;
+    size_t lineLength = 0;
+
     do {
-        curline = itr.GetUntilNextCharacterOrNothing<string>(';');
-        if(!curline)
+        curLine = itr.GetUntilNextCharacterOrNothing<std::string>(';');
+
+        if(!curLine)
             break;
 
-        linelength = curline->size();
+        lineLength = curLine->size();
 
-        string* tmp = curline.release();
+        lines.push_back(std::shared_ptr<string>(curLine.release()));
 
-        Lines.push_back(shared_ptr<string>(tmp));
-    } while(linelength != 0);
+    } while(lineLength != 0);
 
 
-    if(Lines.size() < 1) {
-        // no lines //
+    if(lines.empty()) {
+        // No lines //
         return false;
     }
-    // make space for values //
-    // let's reserve space //
-    vec.reserve(Lines.size());
 
-    // fill values //
-    for(size_t i = 0; i < Lines.size(); i++) {
-        // skip empty lines //
-        if(Lines[i]->size() == 0)
+    // Make space for values //
+    // let's reserve space //
+    vec.reserve(lines.size());
+
+    // Fill values //
+    for(size_t i = 0; i < lines.size(); ++i) {
+        // Skip empty lines //
+        if(lines[i]->empty())
             continue;
 
-            // create a named var //
+            // Create a named var //
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
         try {
             auto var =
-                std::make_shared<NamedVariableList>(*Lines[i], Logger::Get(), predefined);
+                std::make_shared<NamedVariableList>(*lines[i], Logger::Get(), predefined);
 
             if(!var || !var->IsValid()) {
                 // Invalid value //
@@ -657,24 +658,25 @@ DLLEXPORT bool NamedVariableList::ProcessDataDump(const std::string& data,
             }
 
             vec.push_back(var);
+
         } catch(const InvalidArgument& e) {
-            // print to log //
-            e.PrintToLog();
             // exception throws, must be invalid line //
 
-            // This should remove null characters from the string //
+            errorreport->Error("NamedVar: ProcessDataDump: contains invalid line, "
+                               "line (with only ASCII characters): " +
+                               // This should remove null characters from the string //
+                               Convert::ToString(*lines[i]) + "\nEND");
 
-            Logger::Get()->Info("NamedVar: ProcessDataDump: contains invalid line, "
-                                "line (with only ASCII characters): " +
-                                Convert::ToString(Lines[i]) + "\nEND");
+            // Print to log //
+            e.Print(errorreport);
 
             continue;
         }
 
 #else
 
-        shared_ptr<NamedVariableList> var(
-            new NamedVariableList(*Lines[i], errorreport, predefined));
+        std::shared_ptr<NamedVariableList> var(
+            new NamedVariableList(*lines[i], errorreport, predefined));
 
         if(!var || !var->IsValid()) {
             // Invalid value //
@@ -684,8 +686,6 @@ DLLEXPORT bool NamedVariableList::ProcessDataDump(const std::string& data,
         vec.push_back(var);
 
 #endif // ALTERNATIVE_EXCEPTIONS_FATAL
-
-        continue;
     }
 
     return true;
@@ -800,7 +800,7 @@ DLLEXPORT NamedVars::NamedVars(const std::string& datadump, LErrorReporter* erro
     // load data directly to vector //
     if(!NamedVariableList::ProcessDataDump(datadump, Variables, errorreport, NULL)) {
 
-    // error happened //
+        // error happened //
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
         throw InvalidArgument("datadump processing failed");
 #else
@@ -812,8 +812,7 @@ DLLEXPORT NamedVars::NamedVars(const std::string& datadump, LErrorReporter* erro
 
 DLLEXPORT NamedVars::NamedVars(const vector<shared_ptr<NamedVariableList>>& variables) :
     Variables(variables)
-{
-}
+{}
 
 DLLEXPORT NamedVars::NamedVars(shared_ptr<NamedVariableList> variable) : Variables(1)
 {
@@ -863,6 +862,7 @@ DLLEXPORT NamedVars::NamedVars(sf::Packet& packet)
 DLLEXPORT void NamedVars::AddDataToPacket(sf::Packet& packet) const
 {
     GUARD_LOCK();
+
     // First write size //
     int isize = (int)Variables.size();
 
@@ -878,8 +878,8 @@ DLLEXPORT void NamedVars::AddDataToPacket(sf::Packet& packet) const
 // ------------------------------------ //
 DLLEXPORT bool NamedVars::Add(std::shared_ptr<NamedVariableList> value)
 {
-
     GUARD_LOCK();
+
     auto index = Find(guard, value->Name);
     // index check //
     if(index >= Variables.size()) {
@@ -970,6 +970,7 @@ DLLEXPORT VariableBlock& NamedVars::GetValueNonConst(const std::string& name)
 DLLEXPORT const VariableBlock* NamedVars::GetValue(const std::string& name) const
 {
     GUARD_LOCK();
+
     auto index = Find(guard, name);
 
     if(index >= Variables.size()) {
@@ -987,6 +988,7 @@ DLLEXPORT const VariableBlock* NamedVars::GetValue(const std::string& name) cons
 DLLEXPORT bool NamedVars::GetValue(const std::string& name, VariableBlock& receiver) const
 {
     GUARD_LOCK();
+
     auto index = Find(guard, name);
     // index check //
     if(index >= Variables.size()) {
@@ -1017,6 +1019,7 @@ DLLEXPORT bool NamedVars::GetValue(
 DLLEXPORT bool NamedVars::GetValue(const int& index, VariableBlock& receiver) const
 {
     GUARD_LOCK();
+
     // index check //
     if(index >= static_cast<int>(Variables.size())) {
         return false;
@@ -1030,6 +1033,7 @@ DLLEXPORT bool NamedVars::GetValue(const int& index, VariableBlock& receiver) co
 DLLEXPORT size_t NamedVars::GetValueCount(const std::string& name) const
 {
     GUARD_LOCK();
+
     auto index = Find(guard, name);
     // index check //
     if(index >= Variables.size()) {
@@ -1099,7 +1103,6 @@ DLLEXPORT NamedVariableList* NamedVars::GetValueDirectRaw(const std::string& nam
 
 DLLEXPORT NamedVariableList* Leviathan::NamedVars::GetValueDirectRaw(size_t index) const
 {
-
     if(index >= Variables.size()) {
         return nullptr;
     }
@@ -1130,7 +1133,6 @@ DLLEXPORT int NamedVars::GetVariableType(const std::string& name) const
 
 DLLEXPORT int NamedVars::GetVariableType(Lock& guard, size_t index) const
 {
-
     return Variables[index]->GetVariableType();
 }
 
@@ -1143,7 +1145,6 @@ DLLEXPORT int NamedVars::GetVariableTypeOfAll(const std::string& name) const
 
 DLLEXPORT int NamedVars::GetVariableTypeOfAll(Lock& guard, size_t index) const
 {
-
     return Variables[index]->GetCommonType();
 }
 // ------------------------------------ //
@@ -1277,7 +1278,6 @@ ScriptSafeVariableBlock* NamedVars::GetScriptCompatibleValue(const std::string& 
 
 bool NamedVars::AddScriptCompatibleValue(ScriptSafeVariableBlock* value)
 {
-
     GUARD_LOCK();
 
     RemoveIfExists(value->GetName(), guard);

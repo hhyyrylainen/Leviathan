@@ -1481,7 +1481,6 @@ DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
 
     auto iter = pimpl->RegisteredScriptSystems.find(name);
 
-    // Skip if already registered //
     if(iter == pimpl->RegisteredScriptSystems.end()) {
 
         LOG_ERROR("GameWorld: GetScriptSystemDirect: world has no system called: " + name);

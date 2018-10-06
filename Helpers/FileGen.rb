@@ -1135,6 +1135,10 @@ END
            "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"    
 
     c.constructors.each{|a|
+
+      if a.NoAngelScript
+        next
+      end
     
       str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ Create_#{c.type}} +
              %{(ObjectID id#{a.formatParametersAngelScript()})", \n} +
@@ -1170,12 +1174,14 @@ END
 end
 
 class ConstructorInfo
-  attr_reader :Parameters, :UseDataStruct
+  attr_reader :Parameters, :UseDataStruct, :NoAngelScript
 
-  def initialize(parameters, usedatastruct: false, memberinitializers: nil)
+  def initialize(parameters, usedatastruct: false, memberinitializers: nil,
+                 noangelscript: false)
     @Parameters = parameters
     @UseDataStruct = usedatastruct
     @MemberInitializers = memberinitializers
+    @NoAngelScript= noangelscript
   end
 
   def formatMemberInitializers

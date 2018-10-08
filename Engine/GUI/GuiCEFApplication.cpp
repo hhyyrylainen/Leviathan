@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "GuiCEFApplication.h"
 
+#include "CEFLocalResourceRequest.h"
 #include "Common/StringOperations.h"
 #include "Events/Event.h"
 #include "FileSystem.h"
@@ -14,7 +15,11 @@ CefApplication::CefApplication() : RendererRouter(NULL) {}
 
 DLLEXPORT CefApplication::~CefApplication() {}
 // ------------------------------------ //
-void CefApplication::OnContextInitialized() {}
+void CefApplication::OnContextInitialized()
+{
+    CefRegisterSchemeHandlerFactory(
+        "http", "leviathan-local", new CefLocalResourceRequestHandlerFactory());
+}
 // ------------------------------------ //
 void CefApplication::OnBeforeCommandLineProcessing(
     const CefString& process_type, CefRefPtr<CefCommandLine> command_line)

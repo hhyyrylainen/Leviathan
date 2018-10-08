@@ -67,6 +67,7 @@ else()
     "Common/ThreadSafe.h" 
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
+    "Common/MimeTypes.cpp" "Common/MimeTypes.h"    
     )
   
   set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
@@ -219,6 +220,7 @@ else()
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
+    "GUI/CEFLocalResourceRequest.cpp" "GUI/CEFLocalResourceRequest.h" 
     "GUI/GuiView.cpp" "GUI/GuiView.h"
     "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
     "GUI/JSNativeCoreAPI.cpp" "GUI/JSNativeCoreAPI.h"

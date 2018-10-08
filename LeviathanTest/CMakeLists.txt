@@ -37,6 +37,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/Entities.cpp
     TestFiles/ScriptInterfaces.cpp
     TestFiles/CustomScriptComponents.cpp
+    TestFiles/MimeTypes.cpp
     
     TestFiles/CoreEngineTests.cpp
     )

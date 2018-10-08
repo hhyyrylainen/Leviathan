@@ -57,7 +57,8 @@ DLLEXPORT std::string StringOperations::BaseHostName(const std::string& url)
     return url.substr(0, length);
 }
 
-DLLEXPORT std::string StringOperations::URLPath(const std::string& url)
+DLLEXPORT std::string StringOperations::URLPath(
+    const std::string& url, bool stripoptions /*= true*/)
 {
     if(url.empty())
         return "";
@@ -85,7 +86,20 @@ DLLEXPORT std::string StringOperations::URLPath(const std::string& url)
     if(startCopy >= url.size())
         return "";
 
-    return url.substr(startCopy, url.size() - startCopy);
+    size_t endCopy = url.size();
+
+    // Scan backwards for cutting options
+    if(stripoptions) {
+        for(size_t cut = endCopy; cut > startCopy; --cut) {
+            if(url[cut] == '?') {
+                // Found options
+                endCopy = cut;
+                break;
+            }
+        }
+    }
+
+    return url.substr(startCopy, endCopy - startCopy);
 }
 
 DLLEXPORT std::string StringOperations::CombineURL(

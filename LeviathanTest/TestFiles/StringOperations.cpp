@@ -667,6 +667,19 @@ TEST_CASE("StringOperations URL cut to path", "[string][url]")
           "b/Word Space/664/10232/01.jpg");
 }
 
+TEST_CASE("StringOperations URL cut to path removes options", "[string][url]")
+{
+    CHECK(StringOperations::URLPath("http://google.fi/index.html?lang=something") ==
+          "index.html");
+
+    CHECK(StringOperations::URLPath("http://google.fi/index.html?") == "index.html");
+
+    SECTION("It can be disabled"){
+        CHECK(StringOperations::URLPath("http://google.fi/index.html?lang=something", false) ==
+            "index.html?lang=something");
+    }
+}
+
 TEST_CASE("StringOperations RepeatCharacter", "[string]")
 {
     SECTION("Basic one byte characters")

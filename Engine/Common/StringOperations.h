@@ -248,8 +248,10 @@ public:
     //! \brief Returns the path of an url
     //!
     //! This returns everything after what BaseHostName would have returned
+    //! \param stripoptions If true then options are also removed. They are marked with a
+    //! question mark like "example.com/file?token=1234". The question mark is also stripped
     //! \example URLPath("http://google.fi/index.html") = "index.html"
-    DLLEXPORT static std::string URLPath(const std::string& url);
+    DLLEXPORT static std::string URLPath(const std::string& url, bool stripoptions = true);
 
     //! \brief Combines a URL with another (relative) URL
     //! \example CombineURL("http://google.fi/index.html", "img.jpg") =

@@ -2,6 +2,7 @@
 #include "GuiManager.h"
 
 #include "Common/DataStoring/DataBlock.h"
+#include "Common/StringOperations.h"
 #include "Engine.h"
 #include "Exceptions.h"
 #include "FileSystem.h"
@@ -165,17 +166,15 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
         finalpath = urlorpath;
     } else {
         // Local file, add to the end //
-        try {
-            // TODO: Probably needs to convert spaces here
-            finalpath = "file:///" + boost::filesystem::canonical(urlorpath).string();
-
-        } catch(const boost::filesystem::filesystem_error& e) {
-
-            Logger::Get()->Error("GuiManager: LoadGUIFile: failed to get canonical path (is "
-                                 "the file missing?) for file: " +
-                                 urlorpath + ", error: " + e.what());
+        if(!boost::filesystem::exists(urlorpath)) {
+            LOG_ERROR("GuiManager: LoadGUIFile: failed to get canonical path (is "
+                      "the file missing?) for file: " +
+                      urlorpath);
             return false;
         }
+
+        // TODO: Probably needs to convert spaces here
+        finalpath = StringOperations::CombineURL("http://leviathan-local/", urlorpath);
     }
 
     LOG_INFO("GuiManager: loading GUI: " + finalpath);

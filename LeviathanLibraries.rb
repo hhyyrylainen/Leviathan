@@ -113,7 +113,7 @@ $caudio = CAudio.new(
 $cef = CEF.new(
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  version: "3.3396.1777.g636f29b"
+  version: "3.3497.1837.g00188c7"
 )
 
 $leviathanSelfLib = Leviathan.new({})

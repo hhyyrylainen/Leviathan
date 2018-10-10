@@ -29,7 +29,7 @@ var Leviathan = {};
             
             Leviathan._.LastInputStatus = status;
             NotifyViewInputStatus(Leviathan._.LastInputStatus);
-        }
+        };
 
 
         let detectScroll = function(event) {
@@ -76,7 +76,7 @@ var Leviathan = {};
             
             Leviathan._.LastScrollStatus = scrollable;
             NotifyViewScrollableStatus(Leviathan._.LastScrollStatus);
-        }
+        };
 
         window.addEventListener('focus', detectChange, true);
         window.addEventListener('blur', detectChange, true);
@@ -84,13 +84,13 @@ var Leviathan = {};
 
         // Detect initial focus
         detectChange();
-    }
+    };
     
     //! Closes the game, requires VIEW_SECURITYLEVEL_ACCESS_ALL
     Leviathan.Quit = function(){
         window.cefQuery({request: 'Quit', persistent: false,
             onSuccess: function(){}, onFailure: function(){}});
-    }
+    };
     
     //! Gets the current Leviathan version, requires VIEW_SECURITYLEVEL_MINIMAL
     //!
@@ -99,7 +99,7 @@ var Leviathan = {};
         window.cefQuery({request: 'LeviathanVersion', persistent: false,
             onSuccess: successcallback,
             onFailure: failurecallback});
-    }
+    };
     
     // Register the native functions //
     //! Allows JavaScript to receive Engine events

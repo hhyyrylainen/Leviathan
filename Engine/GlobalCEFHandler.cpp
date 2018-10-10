@@ -43,33 +43,6 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     windows_sandbox_info = &sandbox;
 #endif
 
-
-
-#ifdef __linux
-    // Forcing GPU disabled is no longer required
-    const bool forceGPUDisabled = false;
-
-    if(forceGPUDisabled) {
-        // Must force GPU disabled
-        char** oldArgs = args;
-
-        argcount += 1;
-        args = new char*[argcount];
-
-        std::unique_ptr<char, decltype(std::free)*> disablegpu(
-            strdup("--disable-gpu"), std::free);
-
-        for(int i = 0; i < argcount; ++i) {
-            if(i < argcount - 1) {
-                args[i] = oldArgs[i];
-            } else {
-                args[i] = disablegpu.get();
-            }
-        }
-    }
-
-#endif
-
     // Provide CEF with command-line arguments //
 #ifdef _WIN32
     CefMainArgs main_args(hInstance);
@@ -86,9 +59,6 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
         // This was a sub process //
         returnvalue = exit_code;
 
-#ifdef __linux
-        delete[] args;
-#endif
         return true;
     }
 
@@ -149,6 +119,9 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
     settings.single_process = false;
 
+    // // Enable remote debugging
+    // settings.remote_debugging_port = 9090;
+
     // Only works on windows
     // And the OnPaint assumes it is on the main thread so this doesn't work at all
     settings.multi_threaded_message_loop = false;
@@ -159,12 +132,6 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     CEFInitialized = true;
 
     AccessToThese = keeper.get();
-
-#ifdef __linux
-    if(forceGPUDisabled) {
-        delete[] args;
-    }
-#endif
 
     // Wasn't a sub process //
     return false;

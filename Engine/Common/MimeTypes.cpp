@@ -21,7 +21,7 @@ DLLEXPORT std::string_view Leviathan::GetMimeTypeFromPath(const std::string_view
         return "image/gif";
     if(extension == "svg")
         return "image/svg";
-    if(extension == "ogg")
+    if(extension == "ogg" || extension == "opus")
         return "audio/ogg";
     if(extension == "css")
         return "text/css";
@@ -37,6 +37,12 @@ DLLEXPORT std::string_view Leviathan::GetMimeTypeFromPath(const std::string_view
         return "text/xml";
     if(extension == "csv")
         return "text/csv";
+    if(extension == "mkv")
+        return "video/x-matroska";
+    if(extension == "webm")
+        return "video/webm";
+    if(extension == "mp4" || extension == "mpg4" || extension == "m4v")
+        return "video/mp4";
 
     // Didn't match anything so this is just a guess
     return "text/plain";

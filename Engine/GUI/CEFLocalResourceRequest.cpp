@@ -42,6 +42,10 @@ public:
 
         response_length = size;
 
+        // Set status code
+        response->SetStatus(200);
+        response->SetStatusText("OK");
+
         // Set type header
         response->SetMimeType(
             GetMimeTypeFromPath(StringOperations::URLPath(Request->GetURL())).data());
@@ -51,10 +55,15 @@ public:
         CefRefPtr<CefRequest> request, CefRefPtr<CefCallback> callback) override
     {
         // Check if it is good //
-        FileReader.open(StringOperations::URLPath(Request->GetURL()), std::ios::binary);
+        const auto localFile = StringOperations::URLPath(Request->GetURL());
+        FileReader.open(localFile, std::ios::binary);
 
-        if(!FileReader.good())
+        if(!FileReader.good()) {
+            LOG(WARNING) << "GET missing local file: " << localFile;
             return false;
+        }
+
+        // LOG(INFO) << "GET local file: " << localFile;
 
         // We are immediately ready to return the headers
         callback->Continue();

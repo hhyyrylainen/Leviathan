@@ -117,7 +117,9 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
     settings.external_message_pump = true;
 
-    settings.single_process = false;
+    // Apparently this is missing from the windows version but not the linux version. For some
+    // reason? 
+	// settings.single_process = false;
 
     // // Enable remote debugging
     // settings.remote_debugging_port = 9090;

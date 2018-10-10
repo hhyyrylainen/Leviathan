@@ -545,9 +545,8 @@ DLLEXPORT CefRefPtr<CefBrowserHost> View::GetBrowserHost()
 }
 
 bool View::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-    CefRefPtr<CefRequest> request, bool is_redirect)
+    CefRefPtr<CefRequest> request, bool user_gesture, bool is_redirect)
 {
-
     OurBrowserSide->OnBeforeBrowse(browser, frame);
     return false;
 }

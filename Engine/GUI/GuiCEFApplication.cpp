@@ -20,12 +20,102 @@ void CefApplication::OnContextInitialized()
     CefRegisterSchemeHandlerFactory(
         "http", "leviathan-local", new CefLocalResourceRequestHandlerFactory());
 }
+
+void CefApplication::OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line)
+{
+    // Change command line if needed
+}
 // ------------------------------------ //
+// These definitions are from CEF
+// Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
+// reserved. Use of this source code is governed by a BSD-style license that
+// can be found in the LICENSE file.
+namespace switches {
+
+// CEF and Chromium support a wide range of command-line switches. This file
+// only contains command-line switches specific to the cefclient application.
+// View CEF/Chromium documentation or search for *_switches.cc files in the
+// Chromium source code to identify other existing command-line switches.
+// Below is a partial listing of relevant *_switches.cc files:
+//   base/base_switches.cc
+//   cef/libcef/common/cef_switches.cc
+//   chrome/common/chrome_switches.cc (not all apply)
+//   content/public/common/content_switches.cc
+
+const char kMultiThreadedMessageLoop[] = "multi-threaded-message-loop";
+const char kExternalMessagePump[] = "external-message-pump";
+const char kCachePath[] = "cache-path";
+const char kUrl[] = "url";
+const char kOffScreenRenderingEnabled[] = "off-screen-rendering-enabled";
+const char kOffScreenFrameRate[] = "off-screen-frame-rate";
+const char kTransparentPaintingEnabled[] = "transparent-painting-enabled";
+const char kShowUpdateRect[] = "show-update-rect";
+const char kMouseCursorChangeDisabled[] = "mouse-cursor-change-disabled";
+const char kRequestContextPerBrowser[] = "request-context-per-browser";
+const char kRequestContextSharedCache[] = "request-context-shared-cache";
+const char kRequestContextBlockCookies[] = "request-context-block-cookies";
+const char kBackgroundColor[] = "background-color";
+const char kEnableGPU[] = "enable-gpu";
+const char kFilterURL[] = "filter-url";
+const char kUseViews[] = "use-views";
+const char kHideFrame[] = "hide-frame";
+const char kHideControls[] = "hide-controls";
+const char kHideTopMenu[] = "hide-top-menu";
+const char kWidevineCdmPath[] = "widevine-cdm-path";
+const char kSslClientCertificate[] = "ssl-client-certificate";
+const char kCRLSetsPath[] = "crl-sets-path";
+const char kLoadExtension[] = "load-extension";
+
+} // namespace switches
+
+
+
 void CefApplication::OnBeforeCommandLineProcessing(
     const CefString& process_type, CefRefPtr<CefCommandLine> command_line)
 {
     // Check if we want to change something
+
+    // Pass additional command-line flags to the browser process.
+    if(process_type.empty()) {
+        // Pass additional command-line flags when off-screen rendering is enabled.
+        if(command_line->HasSwitch(switches::kOffScreenRenderingEnabled)) {
+            // If the PDF extension is enabled then cc Surfaces must be disabled for
+            // PDFs to render correctly.
+            // See https://bitbucket.org/chromiumembedded/cef/issues/1689 for details.
+            if(!command_line->HasSwitch("disable-extensions") &&
+                !command_line->HasSwitch("disable-pdf-extension")) {
+                command_line->AppendSwitch("disable-surfaces");
+            }
+
+            // Use software rendering and compositing (disable GPU) for increased FPS
+            // and decreased CPU usage. This will also disable WebGL so remove these
+            // switches if you need that capability.
+            // See https://bitbucket.org/chromiumembedded/cef/issues/1257 for details.
+            if(!command_line->HasSwitch(switches::kEnableGPU)) {
+                command_line->AppendSwitch("disable-gpu");
+                command_line->AppendSwitch("disable-gpu-compositing");
+            }
+        }
+
+        if(command_line->HasSwitch(switches::kUseViews) &&
+            !command_line->HasSwitch("top-chrome-md")) {
+            // Use non-material mode on all platforms by default. Among other things
+            // this causes menu buttons to show hover state. See usage of
+            // MaterialDesignController::IsModeMaterial() in Chromium code.
+            command_line->AppendSwitchWithValue("top-chrome-md", "non-material");
+        }
+
+        if(!command_line->HasSwitch(switches::kCachePath) &&
+            !command_line->HasSwitch("disable-gpu-shader-disk-cache")) {
+            // Don't create a "GPUCache" directory when cache-path is unspecified.
+            command_line->AppendSwitch("disable-gpu-shader-disk-cache");
+        }
+    }
 }
+
+//
+// End code from CEF
+//
 
 void CefApplication::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) {}
 
@@ -82,6 +172,13 @@ void CefApplication::OnContextReleased(
     RendererRouter->OnContextReleased(browser, frame, context);
     NativeCoreLeviathanAPI->ClearContextValues();
 }
+// ------------------------------------ //
+// void CefApplication::OnUncaughtException(CefRefPtr<CefBrowser> browser,
+//     CefRefPtr<CefFrame> frame, CefRefPtr<CefV8Context> context,
+//     CefRefPtr<CefV8Exception> exception, CefRefPtr<CefV8StackTrace> stackTrace)
+// {
+//     LOG_ERROR("Uncaught exception in CEF: " + std::string(exception->GetMessage()));
+// }
 // ------------------------------------ //
 void CefApplication::OnRenderProcessThreadCreated(CefRefPtr<CefListValue> extra_info)
 {
@@ -155,7 +252,9 @@ void CefApplication::OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info)
             std::make_unique<CustomExtension>(name, contents, factory, nullptr));
     }
 }
-
+// ------------------------------------ //
+void CefApplication::OnScheduleMessagePumpWork(int64 delay) {}
+// ------------------------------------ //
 bool CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
     CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
 {

@@ -27,8 +27,7 @@ struct CustomExtension {
         HandlerFactory handler, std::shared_ptr<MainProcessSideHandler> messagehandler) :
         ExtName(extname),
         Contents(contents), Handler(handler), MessageHandler(messagehandler)
-    {
-    }
+    {}
 
     //! Name of this extension. For example "Leviathan/MyCustomThing"
     const std::string ExtName;
@@ -47,6 +46,7 @@ struct CustomExtension {
 
 
 //! \brief Handler for new render processes
+//! \todo It would be good style to split this into CefClientApp and renderer and other
 class CefApplication : public CefApp,
                        public CefBrowserProcessHandler,
                        public CefRenderProcessHandler {
@@ -65,6 +65,7 @@ public:
 
     //! \note This is called after the browser UI thread is initialized
     virtual void OnContextInitialized() override;
+    virtual void OnBeforeChildProcessLaunch(CefRefPtr<CefCommandLine> command_line) override;
     virtual void OnRenderProcessThreadCreated(CefRefPtr<CefListValue> extra_info) override;
 
     // CefRenderProcessHandler methods.
@@ -81,6 +82,11 @@ public:
     virtual void OnContextReleased(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
         CefRefPtr<CefV8Context> context) override;
 
+    // The default handler for this might be better so this is commented out
+    // virtual void OnUncaughtException(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame>
+    // frame,
+    //     CefRefPtr<CefV8Context> context, CefRefPtr<CefV8Exception> exception,
+    //     CefRefPtr<CefV8StackTrace> stackTrace) override;
 
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
         CefProcessId source_process, CefRefPtr<CefProcessMessage> message) override;
@@ -94,6 +100,10 @@ public:
     {
         return this;
     }
+
+    //! This does nothing as we run the message loop very often in the main loop
+    //! (Leviathan::Engine::MessagePump)
+    virtual void OnScheduleMessagePumpWork(int64 delay) override;
 
     //! \brief Sends a message to the main process. This helps handlers running in the render
     //! process to run code in the main process

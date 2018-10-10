@@ -15,6 +15,7 @@
 #include "include/cef_client.h"
 #include "include/cef_context_menu_handler.h"
 #include "include/cef_render_handler.h"
+#include "include/cef_request_handler.h"
 #include "wrapper/cef_message_router.h"
 
 #include <atomic>
@@ -199,7 +200,7 @@ public:
 
     // Request handler methods //
     virtual bool OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        CefRefPtr<CefRequest> request, bool is_redirect) override;
+        CefRefPtr<CefRequest> request, bool user_gesture, bool is_redirect) override;
 
     virtual CefRequestHandler::ReturnValue OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request,

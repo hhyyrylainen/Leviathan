@@ -73,8 +73,14 @@ if(LEVIATHAN_FULL_BUILD)
     include_directories(${SDL2_INCLUDE_DIR})
   endif()
 
+  # CEF must be linked to first in order for it to be loaded first to avoid a ton of problems
+  if(NOT WIN32)
+    set(LEVIATHAN_ENGINE_LIBRARIES cef cef_dll_wrapper)
+  else()
+    set(LEVIATHAN_ENGINE_LIBRARIES libcef libcef_dll_wrapper)
+  endif()  
 
-  set(LEVIATHAN_ENGINE_LIBRARIES Newton
+  list(APPEND LEVIATHAN_ENGINE_LIBRARIES Newton
     OgreMain OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network
     # ffmpeg
@@ -83,11 +89,7 @@ if(LEVIATHAN_FULL_BUILD)
     ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons
     )
 
-  if(NOT WIN32)
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES cef cef_dll_wrapper)
-  else()
-    list(APPEND LEVIATHAN_ENGINE_LIBRARIES libcef libcef_dll_wrapper)
-  endif()
+
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   # Now it is named the same as we are using the cmake build for angelscript
@@ -106,22 +108,25 @@ if(LEVIATHAN_FULL_BUILD)
   endif()
   
   # Leviathan application libraries
-  set(LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
+  # CEF must also be first here
+  # theoretically these aren't always used by the game program but CEF will absolutely
+  # break without them being loaded first and that doesn't happen when they aren't here
+  if(NOT WIN32)
+    set(LEVIATHAN_APPLICATION_LIBRARIES cef cef_dll_wrapper)
+  else()
+    set(LEVIATHAN_APPLICATION_LIBRARIES libcef libcef_dll_wrapper)
+  endif()
+
+  # # Currently disabled
+  # if(WIN32)
+  #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
+  # endif()  
+  
+  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
     OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network AngelScriptAddons)
 
   set(LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES)
-
-  if(NOT WIN32)
-    list(APPEND LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES cef cef_dll_wrapper)
-  else()
-    list(APPEND LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES libcef libcef_dll_wrapper)
-  endif()
-  
-  # # Currently disabled
-  # if(WIN32)
-  #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
-  # endif()
   
 else()
 

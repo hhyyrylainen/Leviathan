@@ -18,7 +18,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 #ifdef _WIN32
 #ifdef CEF_ENABLE_SANDBOX
     ,
-    CefScopedSandboxInfo& sandbox
+    CefScopedSandboxInfo& windowssandbox
 #endif
     ,
     HINSTANCE hInstance
@@ -37,32 +37,40 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     // Run CEF startup //
     keeper = std::make_shared<CEFApplicationKeeper>();
 
-    void* sandbox_info = nullptr;
+    void* windows_sandbox_info = nullptr;
 
 #ifdef CEF_ENABLE_SANDBOX
-    sandbox_info = &sandbox;
+    windows_sandbox_info = &sandbox;
 #endif
 
+
+
 #ifdef __linux
-    // Must force GPU disabled
-    char** oldArgs = args;
+    // Forcing GPU disabled is no longer required
+    const bool forceGPUDisabled = false;
 
-    argcount += 1;
-    args = new char*[argcount];
+    if(forceGPUDisabled) {
+        // Must force GPU disabled
+        char** oldArgs = args;
 
-    std::unique_ptr<char, decltype(std::free)*> disablegpu(strdup("--disable-gpu"), std::free);
+        argcount += 1;
+        args = new char*[argcount];
 
-    for(int i = 0; i < argcount; ++i) {
-        if(i < argcount - 1) {
-            args[i] = oldArgs[i];
-        } else {
-            args[i] = disablegpu.get();
+        std::unique_ptr<char, decltype(std::free)*> disablegpu(
+            strdup("--disable-gpu"), std::free);
+
+        for(int i = 0; i < argcount; ++i) {
+            if(i < argcount - 1) {
+                args[i] = oldArgs[i];
+            } else {
+                args[i] = disablegpu.get();
+            }
         }
     }
 
 #endif
 
-        // Provide CEF with command-line arguments //
+    // Provide CEF with command-line arguments //
 #ifdef _WIN32
     CefMainArgs main_args(hInstance);
 #else
@@ -73,7 +81,7 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     keeper->CEFApp = CefRefPtr<GUI::CefApplication>(new GUI::CefApplication());
 
     // Check are we a sub process //
-    int exit_code = CefExecuteProcess(main_args, keeper->CEFApp.get(), sandbox_info);
+    int exit_code = CefExecuteProcess(main_args, keeper->CEFApp.get(), windows_sandbox_info);
     if(exit_code >= 0) {
         // This was a sub process //
         returnvalue = exit_code;
@@ -131,28 +139,31 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     }
 
     // TODO: log_severity
+    // settings.log_severity = cef_log_severity_t::LOGSEVERITY_DEBUG;
 
     // TODO: user agent
 
     settings.windowless_rendering_enabled = true;
 
+    settings.external_message_pump = true;
+
     settings.single_process = false;
 
-#ifdef _WIN32
     // Only works on windows
-    // And the OnPaint assumes it is on the main thread so this doesn't work
+    // And the OnPaint assumes it is on the main thread so this doesn't work at all
     settings.multi_threaded_message_loop = false;
-#endif
 
     // Initialize CEF.
-    CefInitialize(main_args, settings, keeper->CEFApp.get(), sandbox_info);
+    CefInitialize(main_args, settings, keeper->CEFApp.get(), windows_sandbox_info);
 
     CEFInitialized = true;
 
     AccessToThese = keeper.get();
 
 #ifdef __linux
-    delete[] args;
+    if(forceGPUDisabled) {
+        delete[] args;
+    }
 #endif
 
     // Wasn't a sub process //

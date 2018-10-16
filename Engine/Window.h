@@ -6,7 +6,9 @@
 #include "Common/ThreadSafe.h"
 #include "Common/Types.h"
 
-#include "include/cef_browser.h"
+#ifdef _WIN32
+#include "WindowsInclude.h"
+#endif
 
 #include <atomic>
 #include <memory>

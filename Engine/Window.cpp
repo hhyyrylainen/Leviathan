@@ -16,6 +16,10 @@
 #include "TimeIncludes.h"
 #include "Utility/Convert.h"
 
+#include "include/cef_browser.h"
+#include "include/internal/cef_types.h"
+#include "include/internal/cef_types_wrappers.h"
+
 #ifdef __linux
 #include "XLibInclude.h"
 #endif
@@ -32,10 +36,6 @@
 
 #include <SDL.h>
 #include <SDL_syswm.h>
-
-#include "include/cef_browser.h"
-#include "include/internal/cef_types.h"
-#include "include/internal/cef_types_wrappers.h"
 
 #include <algorithm>
 #include <thread>

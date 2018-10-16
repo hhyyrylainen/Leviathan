@@ -27,8 +27,6 @@ union SDL_Event;
 struct SDL_Cursor;
 struct SDL_Surface;
 
-class CefBrowserHost;
-
 namespace Leviathan {
 
 namespace GUI {
@@ -125,9 +123,6 @@ public:
     //!
     //! This is used to reset modifier key states
     DLLEXPORT void InputEnd();
-
-    //! \brief Passes initial mouse position to gui
-    // DLLEXPORT void ReadInitialMouse(CefBrowserHost* browserinput);
 
     DLLEXPORT uint32_t GetSDLID() const;
 

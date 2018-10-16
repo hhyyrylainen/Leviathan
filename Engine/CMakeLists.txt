@@ -220,7 +220,9 @@ else()
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
-    "GUI/CEFLocalResourceRequest.cpp" "GUI/CEFLocalResourceRequest.h" 
+    "GUI/CEFLocalResourceRequest.cpp" "GUI/CEFLocalResourceRequest.h"
+    "GUI/GuiLayer.cpp" "GUI/GuiLayer.h"
+    "GUI/GuiWidgetContainer.cpp" "GUI/GuiWidgetContainer.h"
     "GUI/GuiView.cpp" "GUI/GuiView.h"
     "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
     "GUI/JSNativeCoreAPI.cpp" "GUI/JSNativeCoreAPI.h"
@@ -230,6 +232,10 @@ else()
     "GUI/JSProxyable.h"
     )
 
+  set(GroupGUIWidgets
+    "GUI/Widgets/Widget.h" "GUI/Widgets/Widget.cpp"
+    "GUI/Widgets/VideoPlayerWidget.h" "GUI/Widgets/VideoPlayerWidget.cpp"
+    )
 
   
   file(GLOB GroupNewton 
@@ -371,6 +377,7 @@ source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
 source_group("Utility\\DataHandling" FILES ${GroupUtilityData})
 
 source_group("GUI" FILES ${GroupGUI})
+source_group("GUI\\Widgets" FILES ${GroupGUIWidgets})
 
 source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})

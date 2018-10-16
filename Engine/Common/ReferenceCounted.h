@@ -5,6 +5,7 @@
 // ------------------------------------ //
 #include <atomic>
 #include <cstdint>
+
 #ifdef LEVIATHAN_USING_BOOST
 #include <boost/intrusive_ptr.hpp>
 #endif // LEVIATHAN_USING_BOOST
@@ -52,14 +53,12 @@ public:
 
     FORCE_INLINE void AddRef()
     {
-
         intrusive_ptr_add_ref(this);
     }
 
     //! removes a reference and deletes the object if reference count reaches zero
     FORCE_INLINE void Release()
     {
-
         intrusive_ptr_release(this);
     }
 
@@ -115,7 +114,6 @@ protected:
 
     friend void intrusive_ptr_release(const ReferenceCounted* obj)
     {
-
         if(obj->RefCount.fetch_sub(1, std::memory_order_release) == 1) {
             std::atomic_thread_fence(std::memory_order_acquire);
             delete obj;

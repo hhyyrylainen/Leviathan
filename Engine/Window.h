@@ -30,12 +30,9 @@ class CefBrowserHost;
 namespace Leviathan {
 
 namespace GUI {
-class View;
+class Layer;
 enum class INPUT_EVENT_TYPE : int;
 } // namespace GUI
-
-//! The default CEF scroll speed is ridiculously slow so we multiply it with this
-constexpr auto MOUSE_SCROLL_MULTIPLIER = 25.f;
 
 //! window class
 //! \todo Implement global lock for input handling
@@ -206,12 +203,12 @@ protected:
 
     void _CheckMouseVisibilityStates();
 
-    //! \returns True if the event was passed to CEF
+    //! \returns True if the event was passed to the GUI
     //!
-    //! It is difficult to get the events back in a guaranteed time so
+    //! It is difficult to get the events back (from CEF) in a guaranteed time so
     //! we use GUI_INPUT_MODE to only send events to the GUI when they wouldn't be used
     //! by any player character controllers or similar
-    bool DoCEFInputPass(
+    bool DoGUILayerInputPass(
         const SDL_Event& sdlevent, bool down, bool textinput, int mousex, int mousey);
 
     //! \brief Retrieves the active gui object that is going to receive an event
@@ -219,10 +216,10 @@ protected:
     //! (controlled by GUI_INPUT_MODE) is returned if there is one.
     //! For mouse events the gui object under the cursor position is returned (unless mouse
     //! capture is on then nothing is returned even if iskeypress is true)
-    //! If Scroll then this is a mouse scroll event and a GuiView that has a
+    //! If Scroll then this is a mouse scroll event and a GUI::Layer that has a
     //! scrollable element is returned in every case except when the mouse is captured (or the
-    //! view has None as the input mode)
-    GUI::View* GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey);
+    //! Layer has None as the input mode)
+    GUI::Layer* GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey);
 
     //! \brief Creates an Ogre scene to display GUI on this window
     void _CreateOverlayScene();

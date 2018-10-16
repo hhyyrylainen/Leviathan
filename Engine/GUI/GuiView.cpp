@@ -3,8 +3,8 @@
 
 #include "Engine.h"
 #include "Exceptions.h"
+#include "GUI/KeyMapping.h"
 #include "GlobalCEFHandler.h"
-#include "Handlers/IDFactory.h"
 #include "LeviathanJavaScriptAsync.h"
 #include "Rendering/GeometryHelpers.h"
 #include "Sound/SoundDevice.h"
@@ -24,6 +24,10 @@
 #include "include/cef_browser.h"
 #include "include/wrapper/cef_helpers.h"
 
+#include "utf8.h"
+
+#include <SDL.h>
+
 #include <cstring>
 using namespace Leviathan;
 using namespace Leviathan::GUI;
@@ -32,9 +36,10 @@ constexpr auto CEF_BYTES_PER_PIXEL = 4;
 
 DLLEXPORT View::View(GuiManager* owner, Window* window,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
-    ID(IDFactory::GetID()),
-    ViewSecurity(security), Wind(window), Owner(owner),
-    OurAPIHandler(new LeviathanJavaScriptAsync(this))
+    Layer(owner, window),
+    ViewSecurity(security), OurAPIHandler(new LeviathanJavaScriptAsync(this)),
+    TextureName("_ChromeOverlay_for_gui_" + Convert::ToString(ID)),
+    MaterialName(TextureName + "_material")
 {}
 
 DLLEXPORT View::~View() {}
@@ -45,8 +50,6 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     GUARD_LOCK();
 
     // Create the Ogre texture and material first //
-    TextureName = "_ChromeOverlay_for_gui_" + Convert::ToString(ID);
-    MaterialName = TextureName + "_material";
 
     int32_t width;
     int32_t height;
@@ -205,6 +208,188 @@ DLLEXPORT void View::NotifyFocusUpdate(bool focused)
         OurBrowser->GetHost()->SendFocusEvent(focused);
     }
 }
+// ------------------------------------ //
+DLLEXPORT bool View::OnReceiveKeyInput(const SDL_Event& sdlevent, bool down, bool textinput,
+    int mousex, int mousey, int specialkeymodifiers, int cefspecialkeymodifiers)
+{
+    CefKeyEvent key_event;
+    key_event.modifiers = cefspecialkeymodifiers;
+
+#if defined(OS_WIN)
+    if(!textinput) {
+        // GDK compatible key code
+        int asX11KeyCode = KeyMapping::SDLKeyToX11Key(sdlevent.key.keysym);
+
+        // Modified to work here
+        // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
+        // reserved. Use of this source code is governed by a BSD-style license that
+        // can be found in the LICENSE file.
+        // Based on WebKeyboardEventBuilder::Build from
+        // content/browser/renderer_host/input/web_input_event_builders_gtk.cc.
+
+        KeyboardCode windows_key_code = KeyMapping::GdkEventToWindowsKeyCode(asX11KeyCode);
+        key_event.windows_key_code =
+            KeyMapping::GetWindowsKeyCodeWithoutLocation(windows_key_code);
+
+        // List is the lParam of WM_KEYDOWN or WM_SYSKEYDOWN
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms646280(v=vs.85).aspx
+        // Also set the repeat count to 1 here
+        key_event.native_key_code = 1;
+
+        // WM_SYSKEYDOWN detection (hopefully...)
+        if(key_event.modifiers & EVENTFLAG_ALT_DOWN)
+            key_event.is_system_key = true;
+
+    } else {
+        // text input
+        try {
+            auto begin = std::begin(sdlevent.text.text);
+            key_event.windows_key_code = utf8::next(begin, begin + strlen(sdlevent.text.text));
+        } catch(const utf8::exception& e) {
+            LOG_ERROR(
+                "Window: CEF input handling failed to convert utf8 to utf32 codepoint: " +
+                std::string(e.what()));
+        }
+
+        // This is the lParam of WM_CHAR
+        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms646276(v=vs.85).aspx
+        // Just set the repeat count to 1 here
+        key_event.native_key_code = 1;
+    }
+
+#elif defined(OS_LINUX)
+    if(!textinput) {
+
+        // GDK compatible key code
+        int asX11KeyCode = KeyMapping::SDLKeyToX11Key(sdlevent.key.keysym);
+
+        // Modified to work here
+        // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
+        // reserved. Use of this source code is governed by a BSD-style license that
+        // can be found in the LICENSE file.
+        // Based on WebKeyboardEventBuilder::Build from
+        // content/browser/renderer_host/input/web_input_event_builders_gtk.cc.
+
+        KeyboardCode windows_key_code = KeyMapping::GdkEventToWindowsKeyCode(asX11KeyCode);
+        key_event.windows_key_code =
+            KeyMapping::GetWindowsKeyCodeWithoutLocation(windows_key_code);
+
+        key_event.native_key_code = windows_key_code;
+        // key_event.native_key_code = asX11KeyCode;
+
+
+        // if(event->keyval >= GDK_KP_Space && event->keyval <= GDK_KP_9)
+        //     key_event.modifiers |= EVENTFLAG_IS_KEY_PAD;
+        if(key_event.modifiers & EVENTFLAG_ALT_DOWN)
+            key_event.is_system_key = true;
+
+        // This is VKEY_RETURN = 0x0D
+        if(windows_key_code == 0x0D) {
+            // We need to treat the enter key as a key press of character \r.  This
+            // is apparently just how webkit handles it and what it expects.
+            key_event.unmodified_character = '\r';
+        } else {
+            key_event.unmodified_character = sdlevent.key.keysym.sym;
+        }
+
+        // If ctrl key is pressed down, then control character shall be input.
+        if(key_event.modifiers & EVENTFLAG_CONTROL_DOWN) {
+            key_event.character = KeyMapping::GetControlCharacter(
+                windows_key_code, key_event.modifiers & EVENTFLAG_SHIFT_DOWN);
+        } else {
+
+            // key_event.character = key_event.unmodified_character;
+        }
+    } else {
+        // text input
+        try {
+            auto begin = std::begin(sdlevent.text.text);
+            key_event.character = utf8::next(begin, begin + strlen(sdlevent.text.text));
+            key_event.unmodified_character = key_event.character;
+            // VKEY_A 0x41 (this isn't used so this is just to quiet warnings)
+            key_event.windows_key_code = 0x41;
+            // Not needed
+            // key_event.native_key_code = ;
+        } catch(const utf8::exception& e) {
+            LOG_ERROR(
+                "Window: CEF input handling failed to convert utf8 to utf32 codepoint: " +
+                std::string(e.what()));
+        }
+    }
+#elif defined(OS_MACOSX)
+#error TODO: mac version. See: cef/tests/cefclient/browser/browser_window_osr_mac.mm
+    // for how the event should be structured
+#else
+#error Unknown platform
+#endif // _WIN32
+
+    // Skip input if unkown key
+    if(key_event.windows_key_code == 0)
+        return false;
+
+    if(down) {
+
+        if(!textinput) {
+            key_event.type = KEYEVENT_RAWKEYDOWN;
+            GetBrowserHost()->SendKeyEvent(key_event);
+        } else {
+            // Send char event //
+            key_event.type = KEYEVENT_CHAR;
+            GetBrowserHost()->SendKeyEvent(key_event);
+        }
+    } else {
+        if(!textinput) {
+            key_event.type = KEYEVENT_KEYUP;
+            GetBrowserHost()->SendKeyEvent(key_event);
+        }
+    }
+
+
+    // Detecting if the key press was actually used is pretty difficult and might cause lag
+    // so we don't do that
+    return true;
+}
+
+DLLEXPORT void View::OnMouseMove(const SDL_Event& event, bool outsidewindow)
+{
+    CefMouseEvent cevent;
+    cevent.x = event.motion.x;
+    cevent.y = event.motion.y;
+
+    GetBrowserHost()->SendMouseMoveEvent(cevent, outsidewindow);
+}
+
+DLLEXPORT void View::OnMouseWheel(const SDL_Event& event)
+{
+    int x = static_cast<int>(event.wheel.x * CEF_MOUSE_SCROLL_MULTIPLIER);
+    int y = static_cast<int>(event.wheel.y * CEF_MOUSE_SCROLL_MULTIPLIER);
+
+    if(SDL_MOUSEWHEEL_FLIPPED == event.wheel.direction) {
+        y *= -1;
+    } else {
+        x *= -1;
+    }
+
+    // LOG_INFO("Mouse scroll to CEF: " + std::to_string(y) + " " + std::to_string(x));
+    CefMouseEvent cevent;
+    GetBrowserHost()->SendMouseWheelEvent(cevent, x, y);
+}
+
+DLLEXPORT void View::OnMouseButton(const SDL_Event& event, bool down)
+{
+    CefMouseEvent cevent;
+    cevent.x = event.button.x;
+    cevent.y = event.button.y;
+
+    int type = KeyMapping::GetCEFButtonFromSdlMouseButton(event.button.button);
+    if(type == -1)
+        return;
+
+    cef_mouse_button_type_t btype = static_cast<cef_mouse_button_type_t>(type);
+
+    GetBrowserHost()->SendMouseClickEvent(cevent, btype, !down, 1);
+}
+
 // ------------------------------------ //
 bool View::GetRootScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect)
 {
@@ -541,7 +726,8 @@ DLLEXPORT CefRefPtr<CefBrowserHost> View::GetBrowserHost()
         return OurBrowser->GetHost();
     }
 
-    return NULL;
+    LOG_ERROR("View: GetBrowserHost: no browser host");
+    return nullptr;
 }
 
 bool View::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,

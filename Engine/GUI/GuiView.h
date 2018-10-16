@@ -4,13 +4,9 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/BaseNotifiable.h"
-#include "Common/ReferenceCounted.h"
 #include "Events/CallableObject.h"
-#include "GuiInputSettings.h"
+#include "GuiLayer.h"
 #include "JSProxyable.h"
-
-#include "OgreMaterial.h"
-#include "OgreTexture.h"
 
 #include "include/cef_client.h"
 #include "include/cef_context_menu_handler.h"
@@ -18,11 +14,12 @@
 #include "include/cef_request_handler.h"
 #include "wrapper/cef_message_router.h"
 
-#include <atomic>
-
 namespace Leviathan { namespace GUI {
 
 class LeviathanJavaScriptAsync;
+
+//! The default CEF scroll speed is ridiculously slow so we multiply it with this
+constexpr auto CEF_MOUSE_SCROLL_MULTIPLIER = 25.f;
 
 //! Controls what functions can be called from the page
 enum VIEW_SECURITYLEVEL {
@@ -49,7 +46,8 @@ enum VIEW_SECURITYLEVEL {
 //! GUI can be layered by setting the z coordinate of Views different
 //! \todo Split the process messages away from this into the places that actually sent them
 //! "JSNativeCoreAPI.cpp" to be clearer
-class View : public CefClient,
+class View : public Layer,
+             public CefClient,
              public CefContextMenuHandler,
              public CefDisplayHandler,
              public CefDownloadHandler,
@@ -68,55 +66,23 @@ public:
         VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
     DLLEXPORT ~View();
 
-    //! \brief Sets the order Views are drawn, higher value is draw under other Views
-    //! \param zcoord The z-coordinate, should be between -1 and 1, higher lower values mean
-    //! that it will be drawn earlier \note Actually it most likely won't be drawn earlier, but
-    //! it will overwrite everything below it (if it isn't transparent)
-    //! \todo This is unimplemented
-    DLLEXPORT void SetZVal(float zcoord);
-
     //! \brief Must be called before using, initializes required Ogre resources
     //! \return True when succeeds
     DLLEXPORT bool Init(const std::string& filetoload, const NamedVars& headervars);
 
-    //! \brief Must be called before destroying to release allocated Ogre resources
-    DLLEXPORT void ReleaseResources();
+    DLLEXPORT void ReleaseResources() override;
 
-    //! \brief Notifies the internal browser that the window has resized
-    //!
-    //! Called by GuiManager
-    DLLEXPORT void NotifyWindowResized();
+    DLLEXPORT void NotifyWindowResized() override;
 
-    //! \brief Notifies the internal browser that focus has been updated
-    //!
-    //! Called by GuiManager
-    DLLEXPORT void NotifyFocusUpdate(bool focused);
+    DLLEXPORT void NotifyFocusUpdate(bool focused) override;
 
-    DLLEXPORT inline INPUT_MODE GetInputMode() const
+
+    DLLEXPORT inline INPUT_MODE GetInputMode() const override
     {
         // Automatically reject input if we have no browser host
         if(!OurBrowser)
             return INPUT_MODE::None;
         return InputMode;
-    }
-
-    //! \brief Sets the input mode. This should be regularly called from game code to update
-    //! how the key presses should be sent to this View (or not sent)
-    DLLEXPORT inline void SetInputMode(INPUT_MODE newmode)
-    {
-        InputMode = newmode;
-    }
-
-    //! \returns True if this has a focused input element
-    DLLEXPORT inline bool HasFocusedInputElement() const
-    {
-        return InputFocused;
-    }
-
-    //! \returns True if there is a scrollable element under the mouse
-    DLLEXPORT inline bool HasScrollableElementUnderCursor() const
-    {
-        return ScrollableElement;
     }
 
     //! \brief Passes events to the render process
@@ -128,6 +94,17 @@ public:
     DLLEXPORT void ToggleElement(const std::string& name);
 
     DLLEXPORT CefRefPtr<CefBrowserHost> GetBrowserHost();
+
+
+    //! This converts keypresses to CEF events and injects them
+    DLLEXPORT bool OnReceiveKeyInput(const SDL_Event& sdlevent, bool down, bool textinput,
+        int mousex, int mousey, int specialkeymodifiers, int cefspecialkeymodifiers) override;
+
+    DLLEXPORT void OnMouseMove(const SDL_Event& event, bool outsidewindow) override;
+
+    DLLEXPORT void OnMouseWheel(const SDL_Event& event) override;
+
+    DLLEXPORT void OnMouseButton(const SDL_Event& event, bool down) override;
 
     // CEF callbacks //
 
@@ -278,17 +255,20 @@ public:
         return this;
     }
 
-    IMPLEMENT_REFCOUNTING(View);
-
-protected:
-    friend void intrusive_ptr_add_ref(View* obj)
+    // Cef refcount overrides
+    void AddRef() const OVERRIDE
     {
-        obj->AddRef();
+        const_cast<View*>(this)->ReferenceCounted::AddRef();
     }
-
-    friend void intrusive_ptr_release(View* obj)
+    bool Release() const OVERRIDE
     {
-        obj->Release();
+        const_cast<View*>(this)->ReferenceCounted::Release();
+        // We don't know if us were deleted. Hopefully nothing in CEF needs this
+        return false;
+    }
+    bool HasOneRef() const OVERRIDE
+    {
+        return GetRefCount() == 1;
     }
 
 protected:
@@ -302,9 +282,6 @@ protected:
     void _HandleDestroyProxyMsg(int id);
 
 protected:
-    //! Unique ID
-    const int ID;
-
     //! This View's security level
     //! \see VIEW_SECURITYLEVEL
     VIEW_SECURITYLEVEL ViewSecurity;
@@ -313,44 +290,11 @@ protected:
     //! \todo Allow configuring per frame
     VIEW_SECURITYLEVEL AdditionalFrameSecurity = VIEW_SECURITYLEVEL_BLOCKED;
 
-    //! Current focus state, set with NotifyFocusUpdate
-    bool OurFocus = false;
-
-    //! Stored access to matching window
-    Window* Wind;
-    //! Owning GuiManager
-    GuiManager* Owner;
-
-    //! Name of the Ogre texture
-    std::string TextureName;
-
-    //! Name of the Ogre material
-    std::string MaterialName;
-
-    Ogre::SceneNode* Node = nullptr;
-    Ogre::Item* QuadItem;
-    Ogre::MeshPtr QuadMesh;
-
-    //! The direct texture pointer
-    Ogre::TexturePtr Texture;
-
     CefRefPtr<CefBrowser> OurBrowser;
-
 
     // Message passing //
     CefRefPtr<CefMessageRouterBrowserSide> OurBrowserSide = nullptr;
     LeviathanJavaScriptAsync* OurAPIHandler;
-
-    //! Support for input when text box is focused
-    //! \todo This needs to be tracked per frame
-    std::atomic<bool> InputFocused = false;
-
-    //! Support for scrolling when the mouse is over a scrollable thing
-    //! \todo This needs to be tracked per frame
-    std::atomic<bool> ScrollableElement = false;
-
-    //! The mode of input. used by
-    std::atomic<INPUT_MODE> InputMode = INPUT_MODE::Menu;
 
     //! Keeps track of events that are registered
     std::map<EVENT_TYPE, int> RegisteredEvents;
@@ -361,6 +305,20 @@ protected:
     //! Proxied objects. These are sent messages from the render process from the proxy objects
     //! there that are exposed to JavaScript
     std::map<int, JSProxyable::pointer> ProxyedObjects;
+
+    // Rendering resources
+    //! Name of the Ogre texture
+    const std::string TextureName;
+
+    //! Name of the Ogre material
+    const std::string MaterialName;
+
+    Ogre::SceneNode* Node = nullptr;
+    Ogre::Item* QuadItem;
+    Ogre::MeshPtr QuadMesh;
+
+    //! The direct texture pointer
+    Ogre::TexturePtr Texture;
 };
 
 }} // namespace Leviathan::GUI

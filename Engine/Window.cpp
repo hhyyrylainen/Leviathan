@@ -5,9 +5,8 @@
 #include "Entities/GameWorld.h"
 #include "Exceptions.h"
 #include "FileSystem.h"
+#include "GUI/GuiLayer.h"
 #include "GUI/GuiManager.h"
-#include "GUI/GuiView.h"
-#include "GUI/KeyMapping.h"
 #include "Handlers/IDFactory.h"
 #include "Input/InputController.h"
 #include "Input/Key.h"
@@ -16,8 +15,6 @@
 #include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
 #include "Utility/Convert.h"
-
-#include "utf8.h"
 
 #ifdef __linux
 #include "XLibInclude.h"
@@ -1005,14 +1002,14 @@ void Window::_DestroyOverlay()
 }
 
 // ------------------------------------ //
-GUI::View* Window::GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey)
+GUI::Layer* Window::GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey)
 {
     // Don't pass to GUI if mouse capture is enabled
     if(MouseCaptured)
         return nullptr;
 
-    GUI::View* view = WindowsGui->GetTargetViewForInput(type, mousex, mousey);
-    return view;
+    auto layer = WindowsGui->GetTargetLayerForInput(type, mousex, mousey);
+    return layer;
 }
 
 DLLEXPORT void Window::_StartGatherInput()
@@ -1112,152 +1109,18 @@ void Window::_CheckMouseVisibilityStates()
     SetHideCursor(ApplicationWantCursorState);
 }
 // ------------------ Input listener functions ------------------ //
-bool Window::DoCEFInputPass(
+bool Window::DoGUILayerInputPass(
     const SDL_Event& sdlevent, bool down, bool textinput, int mousex, int mousey)
 {
     // Find active gui view that wants the event
-    GUI::View* receiver = GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Keypress, mousex, mousey);
+    auto* receiver = GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Keypress, mousex, mousey);
 
     // Don't pass to GUI
     if(!receiver)
         return false;
 
-    CefKeyEvent key_event;
-    key_event.modifiers = CEFSpecialKeyModifiers;
-
-#if defined(OS_WIN)
-    if(!textinput) {
-        // GDK compatible key code
-        int asX11KeyCode = KeyMapping::SDLKeyToX11Key(sdlevent.key.keysym);
-
-        // Modified to work here
-        // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
-        // reserved. Use of this source code is governed by a BSD-style license that
-        // can be found in the LICENSE file.
-        // Based on WebKeyboardEventBuilder::Build from
-        // content/browser/renderer_host/input/web_input_event_builders_gtk.cc.
-
-        KeyboardCode windows_key_code = KeyMapping::GdkEventToWindowsKeyCode(asX11KeyCode);
-        key_event.windows_key_code =
-            KeyMapping::GetWindowsKeyCodeWithoutLocation(windows_key_code);
-
-        // List is the lParam of WM_KEYDOWN or WM_SYSKEYDOWN
-        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms646280(v=vs.85).aspx
-        // Also set the repeat count to 1 here
-        key_event.native_key_code = 1;
-
-        // WM_SYSKEYDOWN detection (hopefully...)
-        if(key_event.modifiers & EVENTFLAG_ALT_DOWN)
-            key_event.is_system_key = true;
-
-    } else {
-        // text input
-        try {
-            auto begin = std::begin(sdlevent.text.text);
-            key_event.windows_key_code = utf8::next(begin, begin + strlen(sdlevent.text.text));
-        } catch(const utf8::exception& e) {
-            LOG_ERROR(
-                "Window: CEF input handling failed to convert utf8 to utf32 codepoint: " +
-                std::string(e.what()));
-        }
-
-        // This is the lParam of WM_CHAR
-        // https://msdn.microsoft.com/en-us/library/windows/desktop/ms646276(v=vs.85).aspx
-        // Just set the repeat count to 1 here
-        key_event.native_key_code = 1;
-    }
-
-#elif defined(OS_LINUX)
-    if(!textinput) {
-
-        // GDK compatible key code
-        int asX11KeyCode = KeyMapping::SDLKeyToX11Key(sdlevent.key.keysym);
-
-        // Modified to work here
-        // Copyright (c) 2013 The Chromium Embedded Framework Authors. All rights
-        // reserved. Use of this source code is governed by a BSD-style license that
-        // can be found in the LICENSE file.
-        // Based on WebKeyboardEventBuilder::Build from
-        // content/browser/renderer_host/input/web_input_event_builders_gtk.cc.
-
-        KeyboardCode windows_key_code = KeyMapping::GdkEventToWindowsKeyCode(asX11KeyCode);
-        key_event.windows_key_code =
-            KeyMapping::GetWindowsKeyCodeWithoutLocation(windows_key_code);
-
-        key_event.native_key_code = windows_key_code;
-        // key_event.native_key_code = asX11KeyCode;
-
-
-        // if(event->keyval >= GDK_KP_Space && event->keyval <= GDK_KP_9)
-        //     key_event.modifiers |= EVENTFLAG_IS_KEY_PAD;
-        if(key_event.modifiers & EVENTFLAG_ALT_DOWN)
-            key_event.is_system_key = true;
-
-        // This is VKEY_RETURN = 0x0D
-        if(windows_key_code == 0x0D) {
-            // We need to treat the enter key as a key press of character \r.  This
-            // is apparently just how webkit handles it and what it expects.
-            key_event.unmodified_character = '\r';
-        } else {
-            key_event.unmodified_character = sdlevent.key.keysym.sym;
-        }
-
-        // If ctrl key is pressed down, then control character shall be input.
-        if(key_event.modifiers & EVENTFLAG_CONTROL_DOWN) {
-            key_event.character = KeyMapping::GetControlCharacter(
-                windows_key_code, key_event.modifiers & EVENTFLAG_SHIFT_DOWN);
-        } else {
-
-            // key_event.character = key_event.unmodified_character;
-        }
-    } else {
-        // text input
-        try {
-            auto begin = std::begin(sdlevent.text.text);
-            key_event.character = utf8::next(begin, begin + strlen(sdlevent.text.text));
-            key_event.unmodified_character = key_event.character;
-            // VKEY_A 0x41 (this isn't used so this is just to quiet warnings)
-            key_event.windows_key_code = 0x41;
-            // Not needed
-            // key_event.native_key_code = ;
-        } catch(const utf8::exception& e) {
-            LOG_ERROR(
-                "Window: CEF input handling failed to convert utf8 to utf32 codepoint: " +
-                std::string(e.what()));
-        }
-    }
-#elif defined(OS_MACOSX)
-#error TODO: mac version. See: cef/tests/cefclient/browser/browser_window_osr_mac.mm
-// for how the event should be structured
-#else
-#error Unknown platform
-#endif // _WIN32
-
-    // Skip input if unkown key
-    if(key_event.windows_key_code == 0)
-        return false;
-
-    if(down) {
-
-        if(!textinput) {
-            key_event.type = KEYEVENT_RAWKEYDOWN;
-            receiver->GetBrowserHost()->SendKeyEvent(key_event);
-        } else {
-            // Send char event //
-            key_event.type = KEYEVENT_CHAR;
-            receiver->GetBrowserHost()->SendKeyEvent(key_event);
-        }
-    } else {
-        if(!textinput) {
-            key_event.type = KEYEVENT_KEYUP;
-            receiver->GetBrowserHost()->SendKeyEvent(key_event);
-        }
-    }
-
-
-    // Detecting if the key press was actually used is pretty difficult and might cause lag
-    // so we don't do that
-    return true;
+    return receiver->OnReceiveKeyInput(sdlevent, down, textinput, mousex, mousey,
+        SpecialKeyModifiers, CEFSpecialKeyModifiers);
 }
 
 DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
@@ -1268,19 +1131,14 @@ DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
     // Only pass this data if we aren't going to pass our own captured mouse //
     if(!MouseCaptured) {
 
-        GUI::View* receiver =
+        auto* receiver =
             GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.motion.x, event.motion.y);
 
         if(receiver) {
-
-            CefMouseEvent cevent;
-            cevent.x = event.motion.x;
-            cevent.y = event.motion.y;
-
-            // TODO: IsMouseOutsideWindowClientArea needs to be updated once we support
-            // multiple browsers in a single window
-            receiver->GetBrowserHost()->SendMouseMoveEvent(
-                cevent, IsMouseOutsideWindowClientArea());
+            // TODO: IsMouseOutsideWindowClientArea needs to be
+            // updated (for CEF GuiViews) once we support multiple
+            // browsers in a single window
+            receiver->OnMouseMove(event, IsMouseOutsideWindowClientArea());
         }
     }
 
@@ -1298,23 +1156,12 @@ DLLEXPORT void Window::InjectMouseWheel(const SDL_Event& event)
         int mouseY;
         GetRelativeMouse(mouseX, mouseY);
         // TODO: allow configuring if mouse wheel is considered a key
-        GUI::View* receiver =
-            GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Scroll, mouseX, mouseY);
+        auto* receiver = GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Scroll, mouseX, mouseY);
 
         if(receiver) {
 
-            int x = static_cast<int>(event.wheel.x * MOUSE_SCROLL_MULTIPLIER);
-            int y = static_cast<int>(event.wheel.y * MOUSE_SCROLL_MULTIPLIER);
+            receiver->OnMouseWheel(event);
 
-            if(SDL_MOUSEWHEEL_FLIPPED == event.wheel.direction) {
-                y *= -1;
-            } else {
-                x *= -1;
-            }
-
-            // LOG_INFO("Mouse scroll to CEF: " + std::to_string(y) + " " + std::to_string(x));
-            CefMouseEvent cevent;
-            receiver->GetBrowserHost()->SendMouseWheelEvent(cevent, x, y);
         } else {
 
             int x = event.wheel.x;
@@ -1338,21 +1185,12 @@ DLLEXPORT void Window::InjectMouseButtonDown(const SDL_Event& event)
 
     if(!MouseCaptured) {
 
-        GUI::View* receiver =
+        auto* receiver =
             GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.button.x, event.button.y);
 
         if(receiver) {
-            CefMouseEvent cevent;
-            cevent.x = event.button.x;
-            cevent.y = event.button.y;
 
-            int type = KeyMapping::GetCEFButtonFromSdlMouseButton(event.button.button);
-            if(type == -1)
-                return;
-
-            cef_mouse_button_type_t btype = static_cast<cef_mouse_button_type_t>(type);
-
-            receiver->GetBrowserHost()->SendMouseClickEvent(cevent, btype, false, 1);
+            receiver->OnMouseButton(event, true);
         }
     }
 }
@@ -1364,21 +1202,12 @@ DLLEXPORT void Window::InjectMouseButtonUp(const SDL_Event& event)
 
     if(!MouseCaptured) {
 
-        GUI::View* receiver =
+        auto* receiver =
             GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.button.x, event.button.y);
 
         if(receiver) {
-            CefMouseEvent cevent;
-            cevent.x = event.button.x;
-            cevent.y = event.button.y;
 
-            int type = KeyMapping::GetCEFButtonFromSdlMouseButton(event.button.button);
-            if(type == -1)
-                return;
-
-            cef_mouse_button_type_t btype = static_cast<cef_mouse_button_type_t>(type);
-
-            receiver->GetBrowserHost()->SendMouseClickEvent(cevent, btype, true, 1);
+            receiver->OnMouseButton(event, false);
         }
     }
 }
@@ -1393,9 +1222,9 @@ DLLEXPORT void Window::InjectCodePoint(const SDL_Event& event)
     int mouseY;
     GetRelativeMouse(mouseX, mouseY);
 
-    if(!DoCEFInputPass(event, true, true, mouseX, mouseY)) {
+    if(!DoGUILayerInputPass(event, true, true, mouseX, mouseY)) {
 
-        // CEF didn't want it
+        // GUI didn't want it
     }
 }
 
@@ -1411,7 +1240,7 @@ DLLEXPORT void Window::InjectKeyDown(const SDL_Event& event)
     int mouseY;
     GetRelativeMouse(mouseX, mouseY);
 
-    const auto handled = DoCEFInputPass(event, true, false, mouseX, mouseY);
+    const auto handled = DoGUILayerInputPass(event, true, false, mouseX, mouseY);
 
     if(!handled) {
 
@@ -1440,7 +1269,7 @@ DLLEXPORT void Window::InjectKeyUp(const SDL_Event& event)
     int mouseX;
     int mouseY;
     GetRelativeMouse(mouseX, mouseY);
-    DoCEFInputPass(event, false, false, mouseX, mouseY);
+    DoGUILayerInputPass(event, false, false, mouseX, mouseY);
 
     // This should always be passed here //
     GetInputController()->OnInputGet(event.key.keysym.sym, SpecialKeyModifiers, false);

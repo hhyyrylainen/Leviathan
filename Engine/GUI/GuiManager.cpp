@@ -6,6 +6,7 @@
 #include "Engine.h"
 #include "Exceptions.h"
 #include "FileSystem.h"
+#include "GuiLayer.h"
 #include "GuiView.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/ResourceRefreshHandler.h"
@@ -26,7 +27,7 @@ bool GuiManager::Init(Graphics* graph, Window* window)
 {
     ThisWindow = window;
 
-    // All rendering is now handled by individual Views and the
+    // All rendering is now handled by individual Layers and the
     // Window full screen compositor passes
 
     return true;
@@ -52,10 +53,10 @@ void GuiManager::Release()
     ThisWindow->SetHideCursor(false);
 
     // Destroy the views //
-    for(size_t i = 0; i < ManagedViews.size(); i++) {
+    for(size_t i = 0; i < ManagedLayers.size(); i++) {
 
-        ManagedViews[i]->ReleaseResources();
-        ManagedViews[i]->Release();
+        ManagedLayers[i]->ReleaseResources();
+        ManagedLayers[i]->Release();
     }
 
     Logger::Get()->Info("GuiManager: Gui successfully closed on window");
@@ -135,16 +136,16 @@ void GuiManager::Render()
 DLLEXPORT void GuiManager::OnResize()
 {
     // Resize all CEF browsers on this window //
-    for(size_t i = 0; i < ManagedViews.size(); i++) {
-        ManagedViews[i]->NotifyWindowResized();
+    for(size_t i = 0; i < ManagedLayers.size(); i++) {
+        ManagedLayers[i]->NotifyWindowResized();
     }
 }
 
 DLLEXPORT void GuiManager::OnFocusChanged(bool focused)
 {
     // Notify all CEF browsers on this window //
-    for(size_t i = 0; i < ManagedViews.size(); i++) {
-        ManagedViews[i]->NotifyFocusUpdate(focused);
+    for(size_t i = 0; i < ManagedLayers.size(); i++) {
+        ManagedLayers[i]->NotifyFocusUpdate(focused);
     }
 }
 // ------------------------------------ //
@@ -194,10 +195,10 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     }
 
     // Add the page //
-    ManagedViews.push_back(loadingView);
+    ManagedLayers.push_back(loadingView);
 
-    // Set focus to the new View //
-    ManagedViews.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
+    // Set focus to the new Layer //
+    ManagedLayers.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
     return true;
 }
 
@@ -206,22 +207,22 @@ DLLEXPORT void GuiManager::UnLoadGUIFile()
     DEBUG_BREAK;
 }
 // ------------------------------------ //
-DLLEXPORT View* Leviathan::GUI::GuiManager::GetViewByIndex(size_t index)
+DLLEXPORT Layer* Leviathan::GUI::GuiManager::GetLayerByIndex(size_t index)
 {
-    if(index >= ManagedViews.size())
+    if(index >= ManagedLayers.size())
         return nullptr;
 
-    return ManagedViews[index].get();
+    return ManagedLayers[index].get();
 }
 // ------------------------------------ //
-DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
+DLLEXPORT Layer* Leviathan::GUI::GuiManager::GetTargetLayerForInput(
     INPUT_EVENT_TYPE type, int mousex, int mousey)
 {
-    View* bestFound = nullptr;
+    Layer* bestFound = nullptr;
 
-    for(size_t i = 0; i < ManagedViews.size(); i++) {
+    for(size_t i = 0; i < ManagedLayers.size(); i++) {
 
-        View* view = ManagedViews[i].get();
+        Layer* view = ManagedLayers[i].get();
 
         const auto mode = view->GetInputMode();
         if(mode == INPUT_MODE::None)
@@ -229,8 +230,13 @@ DLLEXPORT View* Leviathan::GUI::GuiManager::GetTargetViewForInput(
 
         // TODO: coordinate check
 
-        if(mode == INPUT_MODE::Menu)
-            return view;
+        // TODO: proper Z-order and mouse position checking should be done
+        if(mode == INPUT_MODE::Menu &&
+            (!bestFound || bestFound->GetInputMode() != INPUT_MODE::Menu)) {
+
+            bestFound = view;
+            continue;
+        }
 
         // The mode Gameplay is only best if nothing has been found so far
         if(bestFound)

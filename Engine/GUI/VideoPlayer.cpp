@@ -212,7 +212,9 @@ bool VideoPlayer::OnVideoDataLoaded()
 
     VideoOutputTexture = Ogre::TextureManager::getSingleton().createManual(TextureName,
         Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D, FrameWidth,
-        FrameHeight, 0, OGRE_IMAGE_FORMAT, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+        FrameHeight, 0, OGRE_IMAGE_FORMAT, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE, 0,
+        // Gamma correction
+        true);
 
     if(VideoOutputTexture.isNull()) {
         LOG_ERROR("VideoPlayer: Failed to create video output texture");

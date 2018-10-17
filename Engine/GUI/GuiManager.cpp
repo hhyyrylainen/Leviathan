@@ -8,10 +8,14 @@
 #include "FileSystem.h"
 #include "GuiLayer.h"
 #include "GuiView.h"
+#include "GuiWidgetContainer.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Rendering/Graphics.h"
+#include "Widgets/VideoPlayerWidget.h"
 #include "Window.h"
+
+#include "Engine.h"
 
 #include <boost/filesystem.hpp>
 
@@ -19,6 +23,21 @@
 
 using namespace Leviathan;
 using namespace Leviathan::GUI;
+// ------------------------------------ //
+// CutscenePlayStatus
+struct GuiManager::CutscenePlayStatus {
+
+    inline CutscenePlayStatus(std::function<void()>&& onfinished,
+        std::function<void(const std::string&)>&& onerror) :
+        OnFinished(onfinished),
+        OnError(onerror)
+    {}
+
+    std::function<void()> OnFinished;
+    std::function<void(const std::string&)> OnError;
+
+    boost::intrusive_ptr<WidgetContainer> Container;
+};
 // ------------------------------------ //
 GuiManager::GuiManager() : ID(IDFactory::GetID()) {}
 GuiManager::~GuiManager() {}
@@ -156,8 +175,6 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     // Create the view //
     boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow));
 
-    loadingView->AddRef();
-
     // Create the final page //
     std::string finalpath;
 
@@ -205,6 +222,60 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
 DLLEXPORT void GuiManager::UnLoadGUIFile()
 {
     DEBUG_BREAK;
+}
+// ------------------------------------ //
+DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
+    std::function<void()> onfinished, std::function<void(const std::string&)> onerror,
+    bool allowskip /*= true*/)
+{
+    // if(CurrentlyPlayingCutscene) {
+    //     LOG_ERROR("GuiManager: PlayCutscene: can't play multiple cutscenes at the same
+    //     time");
+
+    //     onerror("can't play multiple cutscenes at the same time");
+    //     return;
+    // }
+
+    if(!boost::filesystem::exists(file)) {
+        onerror("file doesn't exist");
+        return;
+    }
+
+    auto container = WidgetContainer::MakeShared<WidgetContainer>(this, ThisWindow);
+
+    // CurrentlyPlayingCutscene = std::make_unique<CutscenePlayStatus>(
+    //     std::move(onfinished), std::move(onerror), container);
+
+    // CurrentlyPlayingCutscene->Container = container;
+
+    auto player = VideoPlayerWidget::MakeShared<VideoPlayerWidget>();
+
+    container->AddWidget(player);
+
+    player->SetEndCallback([=]() {
+        // TODO: figure out if an error happened
+
+        // Due to release order we do the release with an invoke
+        Engine::Get()->Invoke([=]() {
+            onfinished();
+            player->SetEndCallback(nullptr);
+
+            for(auto iter = ManagedLayers.begin(); iter != ManagedLayers.end(); ++iter) {
+
+                if(*iter == container) {
+                    ManagedLayers.erase(iter);
+                    break;
+                }
+            }
+        });
+    });
+
+    player->Play(file);
+
+    ManagedLayers.push_back(container);
+
+    // TODO: focus setting and also focus fixing when popping
+    // ManagedLayers.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
 }
 // ------------------------------------ //
 DLLEXPORT Layer* Leviathan::GUI::GuiManager::GetLayerByIndex(size_t index)

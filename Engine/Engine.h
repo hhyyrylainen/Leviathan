@@ -89,6 +89,8 @@ public:
     //! \note This maybe called after preshutdown has started before final tick.
     //! This means that some objects may no longer be valid so check the result of
     //! any Get functions called in the invoke
+    //! \todo Write a wrapper file that can be used for invoking without having to include this
+    //! huge file
     DLLEXPORT void Invoke(const std::function<void()>& function);
 
     //! \brief Runs the function now if on the main thread otherwise calls Invoke

@@ -279,6 +279,8 @@ protected:
     //! same place
     void _HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message);
 
+    void _HandlePlayCutsceneMessage(const CefRefPtr<CefProcessMessage>& message);
+
     void _HandleDestroyProxyMsg(int id);
 
 protected:

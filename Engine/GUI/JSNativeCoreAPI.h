@@ -107,6 +107,7 @@ protected:
 //! with visual studio while we are processing something else if that is true
 class JSNativeCoreAPI : public CefV8Handler /*, public ThreadSafeRecursive*/ {
     friend CefApplication;
+
     //! \brief Class that holds everything related to a listen callback
     //! \todo Add support for passing event values
     class JSListener {

@@ -9,7 +9,10 @@ using namespace Leviathan::GUI;
 
 DLLEXPORT Layer::Layer(GuiManager* owner, Window* window) :
     ID(IDFactory::GetID()), Wind(window), Owner(owner)
-{}
+{
+    LEVIATHAN_ASSERT(Owner, "Layer has no owner");
+    LEVIATHAN_ASSERT(Wind, "Layer has no window");
+}
 
 DLLEXPORT Layer::~Layer() {}
 // ------------------------------------ //

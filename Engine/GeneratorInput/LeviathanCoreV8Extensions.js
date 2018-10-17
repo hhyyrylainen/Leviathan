@@ -121,5 +121,10 @@ var Leviathan = {};
     //! as the first parameter to the callback
     native function Play2DSound(filename, looping, startpaused, oncreated);
     Leviathan.Play2DSound = Play2DSound;
+
+    //! Creates a new GUI layer and plays a video in it. Calls the callback when done.
+    //! On error onerror callback is called. Only one of the callbacks is called
+    native function PlayCutscene(filename, onended, onerror);
+    Leviathan.PlayCutscene = PlayCutscene;
     
 }());

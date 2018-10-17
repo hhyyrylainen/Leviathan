@@ -161,8 +161,6 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         // Add to queue
         const auto requestNumber = ++RequestSequenceNumber;
 
-        // GUARD_LOCK();
-
         PendingRequestCallbacks.push_back(std::make_tuple(
             requestNumber, arguments[3], nullptr, CefV8Context::GetCurrentContext()));
 
@@ -178,6 +176,35 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         args->SetBool(3, arguments[1]->GetBoolValue());
         args->SetBool(4, arguments[2]->GetBoolValue());
         SendProcessMessage(msg);
+        return true;
+    } else if(name == "PlayCutscene") {
+
+        if(arguments.size() < 2 || !arguments[0]->IsString() || !arguments[1]->IsFunction()) {
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: string, function, [function]";
+            return true;
+        }
+
+        const std::string eventname = arguments[0]->GetStringValue();
+
+        // Add to queue
+        const auto requestNumber = ++RequestSequenceNumber;
+
+        PendingRequestCallbacks.push_back(std::make_tuple(requestNumber, arguments[1],
+            arguments.size() > 2 ? arguments[2] : nullptr, CefV8Context::GetCurrentContext()));
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PlayCutscene");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        // This is the only operation but for consistently this is added here
+        args->SetString(0, "Play");
+        args->SetInt(1, requestNumber);
+        args->SetString(2, arguments[0]->GetStringValue());
+
+        SendProcessMessage(msg);
+
         return true;
     }
 
@@ -252,17 +279,66 @@ bool JSNativeCoreAPI::HandleProcessMessage(CefRefPtr<CefBrowser> browser,
                 std::get<1>(callback)->ExecuteFunction(nullptr, args);
             }
 
-            // And let go of the callback
-            PendingRequestCallbacks.erase(PendingRequestCallbacks.begin() + requestIndex);
-
             // Leave the context //
             context->Exit();
+
+            // And let go of the callback
+            PendingRequestCallbacks.erase(PendingRequestCallbacks.begin() + requestIndex);
 
             return true;
         }
 
         LOG(ERROR) << "Unknown JSNativeCoreAPI AudioSource response: "
                    << Convert::Utf16ToUtf8(type);
+        return true;
+
+    } else if(message->GetName() == "PlayCutscene") {
+
+        auto args = message->GetArgumentList();
+
+        // First parameter is the type and second is the request number
+        const auto& type = args->GetString(0);
+        const auto& requestNumber = args->GetInt(1);
+
+        // All of these message types use the request
+        // Find the request
+        const auto requestIndex = FindRequestByNumber(requestNumber);
+
+        if(requestIndex >= PendingRequestCallbacks.size()) {
+            LOG(ERROR) << "JSNativeCoreAPI PlayCutscene response didn't find request: "
+                       << requestNumber;
+            return true;
+        }
+
+        const auto& callback = PendingRequestCallbacks[requestIndex];
+
+        if(type == "Finished") {
+
+            // Call finish callback
+            CefV8ValueList args;
+
+            std::get<1>(callback)->ExecuteFunctionWithContext(
+                std::get<3>(callback), nullptr, args);
+
+        } else if(type == "Error") {
+            // Call error callback
+            // We got the error string
+            const auto& errorStr = args->GetString(2);
+
+            CefV8ValueList args;
+            args.push_back(CefV8Value::CreateString(errorStr));
+
+            std::get<2>(callback)->ExecuteFunctionWithContext(
+                std::get<3>(callback), nullptr, args);
+        } else {
+
+            LOG(ERROR) << "Unknown JSNativeCoreAPI PlayCutscene response: "
+                       << Convert::Utf16ToUtf8(type);
+        }
+
+        // And let go of the callback
+        PendingRequestCallbacks.erase(PendingRequestCallbacks.begin() + requestIndex);
+
         return true;
     }
 

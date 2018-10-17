@@ -31,7 +31,6 @@ DLLEXPORT VideoPlayer::VideoPlayer() {}
 
 DLLEXPORT VideoPlayer::~VideoPlayer()
 {
-
     UnRegisterAllEvents();
 
     // Ensure all FFMPEG resources are closed
@@ -42,7 +41,6 @@ std::atomic<int> VideoPlayer::TextureSequenceNumber = {0};
 // ------------------------------------ //
 DLLEXPORT bool VideoPlayer::Play(const std::string& videofile)
 {
-
     // Make sure nothing is playing currently //
     Stop();
 
@@ -208,7 +206,6 @@ DLLEXPORT float VideoPlayer::GetDuration() const
 // ------------------------------------ //
 bool VideoPlayer::OnVideoDataLoaded()
 {
-
     const int number = TextureSequenceNumber++;
 
     TextureName = "Leviathan_VideoPlayer_" + std::to_string(number);
@@ -832,13 +829,11 @@ size_t VideoPlayer::ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, s
 // ------------------------------------ //
 void VideoPlayer::ResetClock()
 {
-
     LastUpdateTime = ClockType::now();
 }
 
 void VideoPlayer::OnStreamEndReached()
 {
-
     auto vars = NamedVars::MakeShared<NamedVars>();
 
     vars->AddVar(std::make_shared<NamedVariableList>("oldvideo", new StringBlock(VideoFile)));

@@ -3,8 +3,9 @@
 
 #include "Engine.h"
 #include "Exceptions.h"
-#include "GUI/KeyMapping.h"
 #include "GlobalCEFHandler.h"
+#include "GuiManager.h"
+#include "KeyMapping.h"
 #include "LeviathanJavaScriptAsync.h"
 #include "Rendering/GeometryHelpers.h"
 #include "Sound/SoundDevice.h"
@@ -13,7 +14,6 @@
 
 #include "OgreHardwarePixelBuffer.h"
 #include "OgreItem.h"
-#include "OgreManualObject.h"
 #include "OgreMaterialManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreSceneManager.h"
@@ -95,10 +95,6 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
         LOG_FATAL("GuiView: GUIOverlay material doesn't exists! are the core Leviathan "
                   "materials and shaders copied?");
 
-    // TODO: find a way for the species to manage this to
-    // avoid having tons of materials Maybe Use the species's
-    // name instead. and let something like the
-    // SpeciesComponent create and destroy this
     Ogre::MaterialPtr customizedMaterial = baseMaterial->clone(MaterialName);
 
     Ogre::TextureUnitState* textureState =
@@ -841,6 +837,17 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
         return true;
     }
 
+    if(name == "PlayCutscene") {
+
+        if(ViewSecurity < VIEW_SECURITYLEVEL_ACCESS_ALL)
+            return true;
+
+        _HandlePlayCutsceneMessage(message);
+
+        return true;
+    }
+
+    LOG_ERROR("View: OnProcessMessageReceived: unknown message type: " + name.ToString());
 
     // Not handled //
     return false;
@@ -889,6 +896,7 @@ bool View::_PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& 
     // Not handled //
     return false;
 }
+// ------------------------------------ //
 void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message)
 {
     auto args = message->GetArgumentList();
@@ -904,7 +912,7 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
 
         // Create object
         AudioSource::pointer source = Engine::Get()->GetSoundDevice()->Play2DSound(
-            Convert::Utf16ToUtf8(file), looping, startPaused);
+            file.ToString(), looping, startPaused);
 
         if(source) {
             ProxyedObjects.insert(std::make_pair(source->GetID(), source));
@@ -992,9 +1000,52 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
     }
 
 
-    LOG_ERROR("Got unknown AudioSource message: " + Convert::Utf16ToUtf8(operation));
+    LOG_ERROR("Got unknown AudioSource message: " + operation.ToString());
 }
+// ------------------------------------ //
+void View::_HandlePlayCutsceneMessage(const CefRefPtr<CefProcessMessage>& message)
+{
+    auto args = message->GetArgumentList();
 
+    const auto& operation = args->GetString(0);
+
+    if(operation == "Play") {
+
+        const auto requestNumber = args->GetInt(1);
+        const auto& file = args->GetString(2);
+
+        // Call the cutscene playing method on our GUI manager that handles everything.
+        // Our lambdas store the request number to respond properly
+        Owner->PlayCutscene(file.ToString(),
+            [=]() {
+                // Success
+                CefRefPtr<CefProcessMessage> responseMessage =
+                    CefProcessMessage::Create("PlayCutscene");
+
+                CefRefPtr<CefListValue> responseArgs = responseMessage->GetArgumentList();
+                responseArgs->SetString(0, "Finished");
+                responseArgs->SetInt(1, requestNumber);
+
+                OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
+            },
+            [=](const std::string& error) {
+                // Failure
+                CefRefPtr<CefProcessMessage> responseMessage =
+                    CefProcessMessage::Create("PlayCutscene");
+
+                CefRefPtr<CefListValue> responseArgs = responseMessage->GetArgumentList();
+                responseArgs->SetString(0, "Error");
+                responseArgs->SetInt(1, requestNumber);
+                responseArgs->SetString(2, error);
+
+                OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
+            });
+        return;
+    }
+
+    LOG_ERROR("Got unknown PlayCutscene message: " + operation.ToString());
+}
+// ------------------------------------ //
 void View::_HandleDestroyProxyMsg(int id)
 {
     const auto iter = ProxyedObjects.find(id);
@@ -1008,7 +1059,6 @@ void View::_HandleDestroyProxyMsg(int id)
 
     ProxyedObjects.erase(iter);
 }
-
 // ------------------------------------ //
 DLLEXPORT int View::OnEvent(Event* event)
 {

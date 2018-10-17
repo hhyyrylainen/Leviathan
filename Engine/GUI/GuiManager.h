@@ -17,6 +17,8 @@ enum class INPUT_EVENT_TYPE : int { Keypress, Scroll, Other };
 //! \brief Main GUI controller
 //! \todo Add GUI window objects to this which are associated with different windows
 class GuiManager {
+    struct CutscenePlayStatus;
+
 public:
     DLLEXPORT GuiManager();
     DLLEXPORT ~GuiManager();
@@ -40,7 +42,17 @@ public:
     DLLEXPORT bool LoadGUIFile(const std::string& urlorpath, bool nochangelistener = false);
 
     //! \brief Unloads the currently loaded file
+    //! \todo This needs to be reimplemented
     DLLEXPORT void UnLoadGUIFile();
+
+    //! \brief Creates a new Widget Layer and plays a fullscreen video in it
+    //!
+    //! This is a pretty huge function and the functionality should maybe split more
+    //! \param onfinished Callback called when the video finishes or the user has skipped it
+    //! \param onerror Callback for when an error occurs and the file can't be played. Only one
+    //! of these callbacks is called
+    DLLEXPORT void PlayCutscene(const std::string& file, std::function<void()> onfinished,
+        std::function<void(const std::string&)> onerror, bool allowskip = true);
 
     //! \brief Returns the Layer that should receive the event
     //! \see Window::GetGUIEventReceiver
@@ -92,10 +104,13 @@ private:
 
     //! These are all the different Layers (web browsers and Leviathan Widgets) that are
     //! rendered on the Window of this GuiManager
+    //! \todo Layer pushing and popping needs to have logic for focus changes
     std::vector<boost::intrusive_ptr<GUI::Layer>> ManagedLayers;
 
     //! Disables the GUI trying to capture the mouse when no collection is active
     bool DisableGuiMouseCapture = false;
+
+    std::unique_ptr<CutscenePlayStatus> CurrentlyPlayingCutscene;
 };
 
 }} // namespace Leviathan::GUI

@@ -44,6 +44,16 @@ public:
     //! \todo This is unimplemented
     DLLEXPORT virtual void SetZVal(float zcoord);
 
+    DLLEXPORT inline auto GetGuiManager() const
+    {
+        return Owner;
+    }
+
+    DLLEXPORT inline auto GetWindow() const
+    {
+        return Wind;
+    }
+
     //! \brief Sets the input mode. This should be regularly called from game code to update
     //! how the key presses should be sent to this View (or not sent)
     DLLEXPORT inline void SetInputMode(INPUT_MODE newmode)

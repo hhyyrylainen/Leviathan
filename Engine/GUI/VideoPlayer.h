@@ -31,6 +31,8 @@ namespace Leviathan { namespace GUI {
 //! ogre-ffmpeg-videoplayer, but all original ogre-ffmpeg-videoplayer
 //! code has been removed in course of all the rewrites.
 //! \todo Implement pausing and seeking
+//! \todo When Stop is called the OnPlaybackEnded should still be fired. If something was
+//! playing
 class VideoPlayer : public CallableObject {
 protected:
     using ClockType = std::chrono::steady_clock;
@@ -134,14 +136,17 @@ public:
     //! \returns true if all the ffmpeg stream objects are valid for playback
     DLLEXPORT bool IsStreamValid() const
     {
-
         return StreamValid && VideoCodec && ConvertedFrameBuffer;
     }
 
     DLLEXPORT auto GetTextureName() const
     {
-
         return TextureName;
+    }
+
+    DLLEXPORT auto GetTexture() const
+    {
+        return VideoOutputTexture;
     }
 
     //! \brief Dumps info about loaded ffmpeg streams
@@ -282,6 +287,7 @@ protected:
 
 public:
     //! Called when current video stops player
+    //! \todo Should be renamed to OnPlaybackEnded
     Delegate OnPlayBackEnded;
 
 protected:

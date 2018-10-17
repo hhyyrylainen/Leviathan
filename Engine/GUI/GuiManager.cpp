@@ -27,16 +27,11 @@ using namespace Leviathan::GUI;
 // CutscenePlayStatus
 struct GuiManager::CutscenePlayStatus {
 
-    inline CutscenePlayStatus(std::function<void()>&& onfinished,
-        std::function<void(const std::string&)>&& onerror) :
-        OnFinished(onfinished),
-        OnError(onerror)
+    inline CutscenePlayStatus(const boost::intrusive_ptr<VideoPlayerWidget>& player) :
+        Player(player)
     {}
 
-    std::function<void()> OnFinished;
-    std::function<void(const std::string&)> OnError;
-
-    boost::intrusive_ptr<WidgetContainer> Container;
+    boost::intrusive_ptr<VideoPlayerWidget> Player;
 };
 // ------------------------------------ //
 GuiManager::GuiManager() : ID(IDFactory::GetID()) {}
@@ -228,13 +223,12 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
     std::function<void()> onfinished, std::function<void(const std::string&)> onerror,
     bool allowskip /*= true*/)
 {
-    // if(CurrentlyPlayingCutscene) {
-    //     LOG_ERROR("GuiManager: PlayCutscene: can't play multiple cutscenes at the same
-    //     time");
+    if(CurrentlyPlayingCutscene) {
+        LOG_ERROR("GuiManager: PlayCutscene: can't play multiple cutscenes at the same time");
 
-    //     onerror("can't play multiple cutscenes at the same time");
-    //     return;
-    // }
+        onerror("can't play multiple cutscenes at the same time");
+        return;
+    }
 
     if(!boost::filesystem::exists(file)) {
         onerror("file doesn't exist");
@@ -243,17 +237,13 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
 
     auto container = WidgetContainer::MakeShared<WidgetContainer>(this, ThisWindow);
 
-    // CurrentlyPlayingCutscene = std::make_unique<CutscenePlayStatus>(
-    //     std::move(onfinished), std::move(onerror), container);
-
-    // CurrentlyPlayingCutscene->Container = container;
-
     auto player = VideoPlayerWidget::MakeShared<VideoPlayerWidget>();
 
     container->AddWidget(player);
 
     player->SetEndCallback([=]() {
         // TODO: figure out if an error happened
+        CurrentlyPlayingCutscene.reset();
 
         // Due to release order we do the release with an invoke
         Engine::Get()->Invoke([=]() {
@@ -274,8 +264,20 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
 
     ManagedLayers.push_back(container);
 
+    CurrentlyPlayingCutscene = std::make_unique<CutscenePlayStatus>(player);
+
     // TODO: focus setting and also focus fixing when popping
     // ManagedLayers.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
+}
+
+DLLEXPORT void GuiManager::CancelCutscene()
+{
+    if(CurrentlyPlayingCutscene) {
+
+        // Just stop it and that will destroy it on next tick (immediately after this call a
+        // new video can be played)
+        CurrentlyPlayingCutscene->Player->Stop();
+    }
 }
 // ------------------------------------ //
 DLLEXPORT Layer* Leviathan::GUI::GuiManager::GetLayerByIndex(size_t index)

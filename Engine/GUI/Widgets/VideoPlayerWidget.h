@@ -26,6 +26,12 @@ public:
     //! \copydoc VideoPlayer::Play
     DLLEXPORT bool Play(const std::string& videofile);
 
+    //! \brief Stops the currently playing video.
+    //!
+    //! This will call Callback.
+    //! \todo The player should be changed to call our callback when it is stopped
+    DLLEXPORT void Stop();
+
     //! \brief Sets callback to call when video has ended
     DLLEXPORT void SetEndCallback(std::function<void()> callback);
 
@@ -37,8 +43,13 @@ protected:
     DLLEXPORT void OnRemovedFromContainer(WidgetContainer* container) override;
 
 private:
+    void _DoCallback();
+
+private:
     VideoPlayer Player;
 
+    //! Used to call callback only once
+    bool CanCallCallback = false;
     std::function<void()> Callback;
 
     WidgetContainer* ContainedIn = nullptr;

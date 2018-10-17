@@ -185,8 +185,6 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
             return true;
         }
 
-        const std::string eventname = arguments[0]->GetStringValue();
-
         // Add to queue
         const auto requestNumber = ++RequestSequenceNumber;
 
@@ -198,11 +196,21 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
 
         CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
-        // This is the only operation but for consistently this is added here
         args->SetString(0, "Play");
         args->SetInt(1, requestNumber);
         args->SetString(2, arguments[0]->GetStringValue());
 
+        SendProcessMessage(msg);
+
+        return true;
+    } else if(name == "CancelCutscene") {
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("PlayCutscene");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetString(0, "Cancel");
         SendProcessMessage(msg);
 
         return true;

@@ -54,6 +54,9 @@ public:
     DLLEXPORT void PlayCutscene(const std::string& file, std::function<void()> onfinished,
         std::function<void(const std::string&)> onerror, bool allowskip = true);
 
+    //! \brief Cancels a playing video started by PlayCutscene
+    DLLEXPORT void CancelCutscene();
+
     //! \brief Returns the Layer that should receive the event
     //! \see Window::GetGUIEventReceiver
     //! \todo Add support for multiple views inside a window. And prefer the active input if

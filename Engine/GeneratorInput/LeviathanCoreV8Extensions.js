@@ -126,5 +126,9 @@ var Leviathan = {};
     //! On error onerror callback is called. Only one of the callbacks is called
     native function PlayCutscene(filename, onended, onerror);
     Leviathan.PlayCutscene = PlayCutscene;
+
+    //! Destroys a playing cutscene player if there is one active
+    native function CancelCutscene();
+    Leviathan.CancelCutscene = CancelCutscene;
     
 }());

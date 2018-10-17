@@ -18,10 +18,7 @@ using namespace Leviathan::GUI;
 DLLEXPORT VideoPlayerWidget::VideoPlayerWidget()
 {
     Player.OnPlayBackEnded.Register(LambdaDelegateSlot::MakeShared<LambdaDelegateSlot>(
-        [=](const NamedVars::pointer& values) {
-            if(Callback)
-                Callback();
-        }));
+        [=](const NamedVars::pointer& values) { _DoCallback(); }));
 }
 
 DLLEXPORT VideoPlayerWidget::~VideoPlayerWidget()
@@ -33,6 +30,8 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 {
     if(!Player.Play(videofile))
         return false;
+
+    CanCallCallback = true;
 
     // The Play method creates the texture we want to display
 
@@ -72,10 +71,28 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 
     return true;
 }
+
+DLLEXPORT void VideoPlayerWidget::Stop()
+{
+    Player.Stop();
+
+    _DoCallback();
+}
 // ------------------------------------ //
 DLLEXPORT void VideoPlayerWidget::SetEndCallback(std::function<void()> callback)
 {
     Callback = callback;
+}
+
+void VideoPlayerWidget::_DoCallback()
+{
+    if(!CanCallCallback)
+        return;
+
+    CanCallCallback = false;
+
+    if(Callback)
+        Callback();
 }
 // ------------------------------------ //
 DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetContainer* container)

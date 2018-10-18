@@ -245,19 +245,19 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
         // TODO: figure out if an error happened
         CurrentlyPlayingCutscene.reset();
 
-        // Due to release order we do the release with an invoke
-        Engine::Get()->Invoke([=]() {
-            onfinished();
-            player->SetEndCallback(nullptr);
+        for(auto iter = ManagedLayers.begin(); iter != ManagedLayers.end(); ++iter) {
 
-            for(auto iter = ManagedLayers.begin(); iter != ManagedLayers.end(); ++iter) {
-
-                if(*iter == container) {
-                    ManagedLayers.erase(iter);
-                    break;
-                }
+            if(*iter == container) {
+                ManagedLayers.erase(iter);
+                break;
             }
-        });
+        }
+
+        onfinished();
+
+        // Due to release order we do clear the callback like this to destroy the player object
+        // later
+        Engine::Get()->Invoke([=]() { player->SetEndCallback(nullptr); });
     });
 
     player->Play(file);

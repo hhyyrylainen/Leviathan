@@ -18,6 +18,18 @@ public:
     //! \todo Parameter to specify if shadow geometry is needed
     DLLEXPORT static Ogre::MeshPtr CreateScreenSpaceQuad(
         const std::string& meshname, float x, float y, float width, float height);
+
+    //! \brief Creates a plane with specific size and UV coordinates with 0, 0 on top left
+    //!
+    //! This plane is flat on the Y axis. The actual width of the mesh will be double of width
+    //! to make it easier to calculate
+    //! \todo Merge the shared code with CreateScreenSpaceQuad
+    //! \todo This needs to be verified that this generates good geometry (currently crashes
+    //! when recorded with RenderDoc)
+    DLLEXPORT static Ogre::MeshPtr CreateXZPlane(
+        const std::string& meshname, float width, float height);
+
+    GeometryHelpers() = delete;
 };
 
 } // namespace Leviathan

@@ -18,7 +18,7 @@ TEST_CASE("Sendable get correct server states", "[entity][networking]"){
     PartialEngine<false> engine;
 
 
-    StandardWorld world;
+    StandardWorld world(nullptr);
     world.Init(NETWORKED_TYPE::Client, nullptr);
 
 

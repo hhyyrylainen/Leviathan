@@ -6,15 +6,14 @@
 
 #include "Common/DataStoring/NamedVars.h"
 #include "Engine.h"
-#include "Entities/Objects/Constraints.h"
 #include "Handlers/IDFactory.h"
 #include "Networking/Connection.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/NetworkRequest.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkServerInterface.h"
-#include "Newton/PhysicalWorld.h"
-#include "Newton/PhysicsMaterialManager.h"
+#include "Physics/PhysicalWorld.h"
+#include "Physics/PhysicsMaterialManager.h"
 #include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
 #include "Serializers/EntitySerializer.h"
@@ -29,7 +28,6 @@
 
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorWorkspace.h"
-#include "Newton/NewtonManager.h"
 #include "OgreCamera.h"
 #include "OgreLight.h"
 #include "OgreRenderWindow.h"
@@ -45,11 +43,11 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-// Ray callbacks //
-static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
-    const NewtonCollision* const shapeHit, const dFloat* const hitContact,
-    const dFloat* const hitNormal, dLong collisionID, void* const userData,
-    dFloat intersectParam);
+// // Ray callbacks //
+// static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
+//     const NewtonCollision* const shapeHit, const dFloat* const hitContact,
+//     const dFloat* const hitNormal, dLong collisionID, void* const userData,
+//     dFloat intersectParam);
 
 // ------------------------------------ //
 class GameWorld::Implementation {
@@ -74,8 +72,10 @@ public:
 };
 
 // ------------------------------------ //
-DLLEXPORT GameWorld::GameWorld() :
-    pimpl(std::make_unique<Implementation>()), ID(IDFactory::GetID())
+DLLEXPORT GameWorld::GameWorld(
+    const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials) :
+    pimpl(std::make_unique<Implementation>()),
+    PhysicsMaterials(physicsMaterials), ID(IDFactory::GetID())
 {}
 
 DLLEXPORT GameWorld::~GameWorld()
@@ -104,11 +104,11 @@ DLLEXPORT bool GameWorld::Init(NETWORKED_TYPE type, Ogre::Root* ogre)
         _CreateOgreResources(ogre);
     }
 
-    // Acquire physics engine world //
-    // This should not be required if it isn't available
-    if(NewtonManager::Get()) {
+    // Acquire physics engine world only if we have been given physical materials indicating
+    // that physics is wanted
+    if(PhysicsMaterials) {
 
-        _PhysicalWorld = NewtonManager::Get()->CreateWorld(this);
+        _PhysicalWorld = std::make_shared<PhysicalWorld>(this, PhysicsMaterials.get());
     }
 
     _DoSystemsInit();
@@ -550,7 +550,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
 
         _ApplyEntityUpdatePackets();
         if(_PhysicalWorld)
-            _PhysicalWorld->SimulateWorldFixed(TICKSPEED, 2);
+            _PhysicalWorld->SimulateWorld(1000.f / TICKSPEED, 2);
 
         // } else {
 
@@ -767,17 +767,19 @@ DLLEXPORT void GameWorld::ClearEntities()
     }
 }
 // ------------------------------------ //
-DLLEXPORT Float3 GameWorld::GetGravityAtPosition(const Float3& pos)
-{
-    // \todo take position into account //
-    // create force without mass applied //
-    return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
-}
+// DLLEXPORT Float3 GameWorld::GetGravityAtPosition(const Float3& pos)
+// {
+//     // \todo take position into account //
+//     // create force without mass applied //
+//     return Float3(0.f, PHYSICS_BASE_GRAVITY, 0.f);
+// }
 // ------------------------------------ //
 DLLEXPORT int GameWorld::GetPhysicalMaterial(const std::string& name)
 {
-    return PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
-        name, _PhysicalWorld->GetNewtonWorld());
+    if(!PhysicsMaterials)
+        return -1;
+
+    return PhysicsMaterials->GetMaterialID(name);
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::DestroyEntity(ObjectID id)
@@ -1054,53 +1056,48 @@ DLLEXPORT void GameWorld::SetWorldPhysicsFrozenState(bool frozen)
         RECEIVE_GUARANTEE::Critical);
 }
 
-DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHit(const Float3& from, const Float3& to)
-{
-    // Create a data object for the ray cast //
-    RayCastData data(1, from, to);
+// DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHit(const Float3& from, const Float3&
+// to)
+// {
+//     // Create a data object for the ray cast //
+//     RayCastData data(1, from, to);
 
-    // Call the actual ray firing function //
-    NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X,
-        RayCallbackDataCallbackClosest, &data, nullptr, 0);
+//     // Call the actual ray firing function //
+//     NewtonWorldRayCast(_PhysicalWorld->GetNewtonWorld(), &from.X, &to.X,
+//         RayCallbackDataCallbackClosest, &data, nullptr, 0);
 
-    // Check the result //
-    if(data.HitEntities.size() == 0) {
-        // Nothing hit //
-        return new RayCastHitEntity();
-    }
+//     // Check the result //
+//     if(data.HitEntities.size() == 0) {
+//         // Nothing hit //
+//         return new RayCastHitEntity();
+//     }
 
-    // We need to increase reference count to not to accidentally delete the result while
-    // caller is using it
-    data.HitEntities[0]->AddRef();
+//     // We need to increase reference count to not to accidentally delete the result while
+//     // caller is using it
+//     data.HitEntities[0]->AddRef();
 
-    // Return the only hit //
-    return data.HitEntities[0];
-}
+//     // Return the only hit //
+//     return data.HitEntities[0];
+// }
 
 
-// \todo improve this performance //
-dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
-    const NewtonCollision* const shapeHit, const dFloat* const hitContact,
-    const dFloat* const hitNormal, dLong collisionID, void* const userData,
-    dFloat intersectParam)
-{
-    // Let's just store it as a NewtonBody pointer //
-    RayCastData* data = reinterpret_cast<RayCastData*>(userData);
+// //! \todo improve this performance //
+// dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
+//     const NewtonCollision* const shapeHit, const dFloat* const hitContact,
+//     const dFloat* const hitNormal, dLong collisionID, void* const userData,
+//     dFloat intersectParam)
+// {
+//     // Let's just store it as a NewtonBody pointer //
+//     RayCastData* data = reinterpret_cast<RayCastData*>(userData);
 
-    if(data->HitEntities.size() == 0)
-        data->HitEntities.push_back(new RayCastHitEntity(body, intersectParam, data));
-    else
-        *data->HitEntities[0] = RayCastHitEntity(body, intersectParam, data);
+//     if(data->HitEntities.size() == 0)
+//         data->HitEntities.push_back(new RayCastHitEntity(body, intersectParam, data));
+//     else
+//         *data->HitEntities[0] = RayCastHitEntity(body, intersectParam, data);
 
-    // Continue //
-    return intersectParam;
-}
-
-DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHitProxy(
-    const Float3& from, const Float3& to)
-{
-    return CastRayGetFirstHit(from, to);
-}
+//     // Continue //
+//     return intersectParam;
+// }
 
 DLLEXPORT void GameWorld::MarkForClear()
 {
@@ -1293,7 +1290,8 @@ DLLEXPORT void GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data)
                                 Convert::ToString(tickstosimulate * TICKSPEED) +
                                 " ms worth of more physical updates");
 
-            _PhysicalWorld->AdjustClock(tickstosimulate * TICKSPEED);
+            DEBUG_BREAK;
+            // _PhysicalWorld->AdjustClock(tickstosimulate * TICKSPEED);
         }
 
 
@@ -1548,56 +1546,56 @@ DLLEXPORT void GameWorld::SetRunInBackground(bool tickinbackground)
     TickWhileInBackground = tickinbackground;
 }
 
-// ------------------ RayCastHitEntity ------------------ //
-DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(
-    const NewtonBody* ptr /*= nullptr*/, const float& tvar, RayCastData* ownerptr) :
-    HitEntity(ptr),
-    HitVariable(tvar)
-{
-    if(ownerptr) {
-        HitLocation = ownerptr->BaseHitLocationCalcVar * HitVariable;
-    } else {
-        HitLocation = (Float3)0;
-    }
-}
+// // ------------------ RayCastHitEntity ------------------ //
+// DLLEXPORT Leviathan::RayCastHitEntity::RayCastHitEntity(
+//     const NewtonBody* ptr /*= nullptr*/, const float& tvar, RayCastData* ownerptr) :
+//     HitEntity(ptr),
+//     HitVariable(tvar)
+// {
+//     if(ownerptr) {
+//         HitLocation = ownerptr->BaseHitLocationCalcVar * HitVariable;
+//     } else {
+//         HitLocation = (Float3)0;
+//     }
+// }
 
-DLLEXPORT bool Leviathan::RayCastHitEntity::HasHit()
-{
-    return HitEntity != nullptr;
-}
+// DLLEXPORT bool Leviathan::RayCastHitEntity::HasHit()
+// {
+//     return HitEntity != nullptr;
+// }
 
-DLLEXPORT bool Leviathan::RayCastHitEntity::DoesBodyMatchThisHit(NewtonBody* other)
-{
-    return HitEntity == other;
-}
+// DLLEXPORT bool Leviathan::RayCastHitEntity::DoesBodyMatchThisHit(NewtonBody* other)
+// {
+//     return HitEntity == other;
+// }
 
-DLLEXPORT Float3 Leviathan::RayCastHitEntity::GetPosition()
-{
-    return HitLocation;
-}
+// DLLEXPORT Float3 Leviathan::RayCastHitEntity::GetPosition()
+// {
+//     return HitLocation;
+// }
 
-DLLEXPORT RayCastHitEntity& Leviathan::RayCastHitEntity::operator=(
-    const RayCastHitEntity& other)
-{
-    HitEntity = other.HitEntity;
-    HitVariable = other.HitVariable;
-    HitLocation = other.HitLocation;
+// DLLEXPORT RayCastHitEntity& Leviathan::RayCastHitEntity::operator=(
+//     const RayCastHitEntity& other)
+// {
+//     HitEntity = other.HitEntity;
+//     HitVariable = other.HitVariable;
+//     HitLocation = other.HitLocation;
 
-    return *this;
-}
-// ------------------ RayCastData ------------------ //
-DLLEXPORT Leviathan::RayCastData::RayCastData(
-    int maxcount, const Float3& from, const Float3& to) :
-    MaxCount(maxcount),
-    // Formula based on helpful guy on Newton forums
-    BaseHitLocationCalcVar(from + (to - from))
-{
-    // Reserve memory for maximum number of objects //
-    HitEntities.reserve(maxcount);
-}
+//     return *this;
+// }
+// // ------------------ RayCastData ------------------ //
+// DLLEXPORT Leviathan::RayCastData::RayCastData(
+//     int maxcount, const Float3& from, const Float3& to) :
+//     MaxCount(maxcount),
+//     // Formula based on helpful guy on Newton forums
+//     BaseHitLocationCalcVar(from + (to - from))
+// {
+//     // Reserve memory for maximum number of objects //
+//     HitEntities.reserve(maxcount);
+// }
 
-DLLEXPORT Leviathan::RayCastData::~RayCastData()
-{
-    // We want to release all hit data //
-    SAFE_RELEASE_VECTOR(HitEntities);
-}
+// DLLEXPORT Leviathan::RayCastData::~RayCastData()
+// {
+//     // We want to release all hit data //
+//     SAFE_RELEASE_VECTOR(HitEntities);
+// }

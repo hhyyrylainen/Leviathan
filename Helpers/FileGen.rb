@@ -509,9 +509,11 @@ class GameWorldClass < OutputClass
 
   def genMemberConstructor(f, opts)
 
-    f.write "#{export}#{qualifier opts}#{@Name}()"
+    f.write "#{export}#{qualifier opts}#{@Name}(const " +
+            "std::shared_ptr<PhysicsMaterialManager>& physicsMaterials)"
     
     if opts.include?(:impl)
+      f.puts " : #{@BaseClass}(physicsMaterials) "
       f.puts "{}"
     else
       f.puts ";"

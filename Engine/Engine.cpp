@@ -22,8 +22,6 @@
 #include "Iterators/StringIterator.h"
 #include "Networking/NetworkHandler.h"
 #include "Networking/RemoteConsole.h"
-#include "Newton/NewtonManager.h"
-#include "Newton/PhysicsMaterialManager.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Rendering/Graphics.h"
 #include "Script/Console.h"
@@ -254,35 +252,6 @@ DLLEXPORT bool Engine::Init(
         },
         std::ref(ScriptInterfaceResult), this)));
 
-    // create newton manager before any newton resources are needed //
-    std::promise<bool> NewtonManagerResult;
-
-    // Ref is OK to use since this task finishes before this function //
-    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
-        [](std::promise<bool>& returnvalue, Engine* engine) -> void {
-            engine->_NewtonManager = new NewtonManager();
-            if(!engine->_NewtonManager) {
-
-                Logger::Get()->Error("Engine: Init: failed to create NewtonManager");
-                returnvalue.set_value(false);
-                return;
-            }
-
-            // next force application to load physical surface materials //
-            engine->PhysMaterials = new PhysicsMaterialManager(engine->_NewtonManager);
-            if(!engine->PhysMaterials) {
-
-                Logger::Get()->Error("Engine: Init: failed to create PhysicsMaterialManager");
-                returnvalue.set_value(false);
-                return;
-            }
-
-            engine->Owner->RegisterApplicationPhysicalMaterials(engine->PhysMaterials);
-
-            returnvalue.set_value(true);
-        },
-        std::ref(NewtonManagerResult), this)));
-
     // Create the default serializer //
     _EntitySerializer = std::make_unique<EntitySerializer>();
     if(!_EntitySerializer) {
@@ -317,7 +286,7 @@ DLLEXPORT bool Engine::Init(
     _ThreadingManager->WaitForAllTasksToFinish();
 
     // Check return values //
-    if(!ScriptInterfaceResult.get_future().get() || !NewtonManagerResult.get_future().get()) {
+    if(!ScriptInterfaceResult.get_future().get()) {
 
         Logger::Get()->Error("Engine: Init: one or more queued tasks failed");
         return false;
@@ -596,10 +565,6 @@ void Engine::Release(bool forced)
     AdditionalGraphicalEntities.clear();
 
     SAFE_DELETE(GraphicalEntity1);
-
-    // Release newton //
-    SAFE_DELETE(PhysMaterials);
-    SAFE_DELETE(_NewtonManager);
 
 #ifdef LEVIATHAN_USES_LEAP
     SAFE_RELEASEDEL(LeapData);
@@ -1216,15 +1181,16 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
     }
 }
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, int worldtype)
+DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, int worldtype,
+    const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials)
 {
     std::shared_ptr<GameWorld> world;
     if(worldtype >= 1024) {
         // Standard world types
-        world =
-            InbuiltWorldFactory::CreateNewWorld(static_cast<INBUILT_WORLD_TYPE>(worldtype));
+        world = InbuiltWorldFactory::CreateNewWorld(
+            static_cast<INBUILT_WORLD_TYPE>(worldtype), physicsMaterials);
     } else {
-        world = GameWorldFactory::Get()->CreateNewWorld(worldtype);
+        world = GameWorldFactory::Get()->CreateNewWorld(worldtype, physicsMaterials);
     }
 
     if(!world) {

@@ -67,15 +67,15 @@ namespace Pong{
         static PongServer* Get();
 
         
-        static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
-            int threadIndex);
+        // static void BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
+        //     int threadIndex);
         
-        static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
-            int threadIndex);
+        // static void BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
+        //     int threadIndex);
 
-        PhysicsMaterialContactCallback GetBallPaddleCallback() override;
+        // PhysicsMaterialContactCallback GetBallPaddleCallback() override;
 
-        PhysicsMaterialContactCallback GetBallGoalAreaCallback() override;
+        // PhysicsMaterialContactCallback GetBallGoalAreaCallback() override;
 
 	protected:
 

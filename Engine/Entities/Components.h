@@ -7,8 +7,8 @@
 // ------------------------------------ //
 #include "Common/SFMLPackets.h"
 #include "Common/Types.h"
-#include "Newton/PhysicalWorld.h"
-#include "Objects/Constraints.h"
+#include "Physics/PhysicsBody.h"
+#include "Physics/PhysicsShape.h"
 
 #include "Component.h"
 #include "ComponentState.h"
@@ -22,6 +22,8 @@
 #include "OgreIdString.h"
 
 namespace Leviathan {
+
+class PhysicalWorld;
 
 namespace Test {
 class TestComponentCreation;
@@ -42,14 +44,13 @@ class PositionState;
 //! \note Any possible locking needs to be handled by the caller
 //! \todo Initial position states should not be generated or initially sent data shouldn't
 //! have the state instead the first state would be guaranteed to be sent after it
-class Position : public ComponentWithStates<PositionState> {
+class Position : public ComponentWithStates<PositionState>, public PhysicsPositionProvider {
 public:
     struct Data : public ComponentData {
 
         Data(const Float3& position, const Float4& orientation) :
             _Position(position), _Orientation(orientation)
-        {
-        }
+        {}
 
         Float3 _Position;
         Float4 _Orientation;
@@ -58,6 +59,20 @@ public:
 public:
     //! \brief Creates at specific position
     inline Position(const Data& data) : ComponentWithStates(TYPE), Members(data) {}
+
+    void GetPositionDataForPhysics(
+        const Float3*& position, const Float4*& orientation) const override
+    {
+        position = &Members._Position;
+        orientation = &Members._Orientation;
+    }
+
+    void SetPositionDataFromPhysics(const Float3& position, const Float4& orientation) override
+    {
+        Members._Position = position;
+        Members._Orientation = orientation;
+        Marked = true;
+    }
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Position);
 
@@ -105,8 +120,7 @@ public:
     public:
         inline ActiveConnection(std::shared_ptr<Connection> connection) :
             CorrespondingConnection(connection), LastConfirmedTickNumber(-1)
-        {
-        }
+        {}
 
         //! \brief Checks has any packet been successfully received and updates
         //! last confirmed
@@ -166,8 +180,7 @@ public:
     public:
         inline StoredState(std::shared_ptr<ComponentState> safedata, int tick, void* data) :
             DeltaData(safedata), Tick(tick), DirectData(data)
-        {
-        }
+        {}
 
         std::shared_ptr<ComponentState> DeltaData;
 
@@ -180,8 +193,7 @@ public:
 
 public:
     inline Received() : Component(TYPE), ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES)
-    {
-    }
+    {}
 
     DLLEXPORT void GetServerSentStates(StoredState const** first, StoredState const** second,
         int tick, float& progress) const;
@@ -203,8 +215,7 @@ class BoxGeometry : public Component {
 public:
     inline BoxGeometry(const Float3& size, const std::string& material) :
         Component(TYPE), Sizes(size), Material(material)
-    {
-    }
+    {}
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(BoxGeometry);
 
@@ -241,8 +252,7 @@ public:
 struct SimpleAnimation {
 
     DLLEXPORT inline SimpleAnimation(const std::string& name) : Name(name), ReadableName(name)
-    {
-    }
+    {}
 
     DLLEXPORT inline SimpleAnimation(SimpleAnimation&& other) :
         Name(std::move(other.Name)), ReadableName(std::move(other.ReadableName))
@@ -329,8 +339,7 @@ public:
             std::unique_ptr<std::string> name = nullptr) :
             OptionalName(move(name)),
             MultiplyByMass(addmass), Callback(getforce)
-        {
-        }
+        {}
 
         ApplyForceInfo(const ApplyForceInfo& other) :
             MultiplyByMass(other.MultiplyByMass), Callback(other.Callback)
@@ -342,8 +351,7 @@ public:
         ApplyForceInfo(ApplyForceInfo&& other) :
             OptionalName(move(other.OptionalName)),
             MultiplyByMass(std::move(other.MultiplyByMass)), Callback(move(other.Callback))
-        {
-        }
+        {}
 
         ApplyForceInfo& operator=(const ApplyForceInfo& other)
         {
@@ -378,93 +386,32 @@ public:
     struct Data {
 
         ObjectID id;
+        //! \todo Remove if this is still unneeded
         GameWorld* world;
         Position& updatepos;
-        Sendable* updatesendable;
     };
 
 public:
     inline Physics(const Data& args) :
-        Component(TYPE), World(args.world), _Position(args.updatepos), ThisEntity(args.id),
-        UpdateSendable(args.updatesendable)
-    {
-    }
+        Component(TYPE), ThisEntity(args.id), _Position(args.updatepos)
+
+    {}
     DLLEXPORT ~Physics();
 
     //! \brief Destroys the physical body
     DLLEXPORT void Release();
 
-    //! \brief Sets collision when body hasn't been created yet
-    DLLEXPORT bool SetCollision(NewtonCollision* collision);
-
     //! \brief Use this to create a body for this component once Collision is set
     //! \param physicsmaterialid Retrieve from the same world with
     //! `GameWorld::GetPhysicalMaterial`. -1 to use default material
-    DLLEXPORT NewtonBody* CreatePhysicsBody(PhysicalWorld* world, int physicsmaterialid = -1);
+    //! \todo This should be changed so that the Physics constructor would create the physics
+    //! body
+    DLLEXPORT PhysicsBody::pointer CreatePhysicsBody(PhysicalWorld* world,
+        const PhysicsShape::pointer& shape, float mass, int physicsmaterialid = -1);
 
-    //! \exception InvalidArgument if deltaspeed or point has non-finite values
-    DLLEXPORT void GiveImpulse(const Float3& deltaspeed, const Float3& point = Float3(0));
-
-    //! \brief Adds an apply force
-    //! \note Overwrites old forces with the same name
-    //! \param pointertohandle Pointer to the force which will be deleted by this
-    DLLEXPORT void ApplyForce(ApplyForceInfo* pointertohandle);
-
-    //! \brief Removes an existing ApplyForce
-    //! \param name name of force to delete, pass empty std::string to delete the
-    //! default named force
-    DLLEXPORT bool RemoveApplyForce(const std::string& name);
-
-    //! \brief Add force to the object
-    //! \note This is applied in ApplyForceAndTorqueEvent
-    DLLEXPORT void AddForce(const Float3& force);
-
-    //! Overrides this objects velocity in ApplyForceAndTorqueEvent
-    DLLEXPORT void SetVelocity(const Float3& velocities);
-
-    //! \brief Clears velocity and last frame forces (but not the applied force list)
-    DLLEXPORT void ClearVelocity();
-
-    //! \brief Gets the absolute velocity
-    DLLEXPORT Float3 GetVelocity() const;
-
-    //! \brief Gets the omega (angular velocity)
-    DLLEXPORT Float3 GetOmega() const;
-
-    //! \brief Sets the omega
-    DLLEXPORT void SetOmega(const Float3& velocities);
-
-    //! \brief Add to the omega
-    DLLEXPORT void AddOmega(const Float3& velocities);
-
-    //! \brief Adds torque to the object
-    //! \note This is applied in ApplyForceAndTorqueEvent
-    DLLEXPORT void AddTorque(const Float3& torque);
-
-    //! \brief Overrides this object's torque in ApplyForceAndTorqueEvent
-    DLLEXPORT void SetTorque(const Float3& torque);
-
-    //! \brief Gets the torque of the body (rotational velocity)
-    DLLEXPORT Float3 GetTorque() const;
-
-    //! \brief Sets the physical material ID of this object
-    //! \note You have to fetch the ID from the world's corresponding PhysicalMaterialManager
-    DLLEXPORT void SetPhysicalMaterialID(int ID);
-
-    //! \brief Sets the linear dampening which slows down the object
-    //! \param factor The factor to set. Must be between 0.f and 1.f. Default is 0.1f
-    //! \note This can be used to set the viscosity of the substance the object is in
-    //! for example to mimic drag in water (this needs verification...)
-    //!
-    //! More on this in the Newton wiki here:
-    //! http://newtondynamics.com/wiki/index.php5?title=NewtonBodySetLinearDamping
-    DLLEXPORT void SetLinearDamping(float factor = 0.1f);
-
-    //! \brief Sets the angular damping.
-    DLLEXPORT void SetAngularDamping(const Float3& factor = Float3(0.1f));
-
-    //! \brief Applies physical state from holder object
-    DLLEXPORT void ApplyPhysicalState(const BasePhysicsData& data);
+    //! \brief Updates the shape. This can be the same pointer as before. BUT if the shape is
+    //! modified this MUST be called before physics is sumulated the next time
+    DLLEXPORT bool ChangeShape(PhysicalWorld* world, const PhysicsShape::pointer& shape);
 
     //! \brief Syncs this physics body to a changed position.
     //!
@@ -472,93 +419,60 @@ public:
     //! body to overwrite the change on next tick.
     DLLEXPORT void JumpTo(Position& target);
 
-    //! \brief Moves the physical body to the specified position
-    //! \returns False if this fails because there currently is no physics body
-    //! for this component
-    //! \exception InvalidArgument if pos or orientation has non-finite values
-    DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
-
-    //! \brief Same as SetPosition but only sets orientation
-    DLLEXPORT bool SetOnlyOrientation(const Float4& orientation);
-
-    //! \brief Returns the full matrix representing this body's position and rotation
-    DLLEXPORT Ogre::Matrix4 GetFullMatrix() const;
-
-    //! \brief Calculates the mass matrix and applies the mass parameter to the body
-    DLLEXPORT void SetMass(float mass);
-
-    //! \brief Adds a constraint to the current Body to only move in place
-    DLLEXPORT bool CreatePlaneConstraint(
-        PhysicalWorld* world, const Float3& planenormal = Float3(0, 1, 0));
-
-
-    // default physics callbacks that are fine in most cases //
-    // Don't forget to pass the user data as BaseObject if using these //
-    static void ApplyForceAndTorqueEvent(
-        const NewtonBody* const body, dFloat timestep, int threadIndex);
-
-    static void DestroyBodyCallback(const NewtonBody* body);
-
-    static void PhysicsMovedEvent(
-        const NewtonBody* const body, const dFloat* const matrix, int threadIndex);
-
-    REFERENCE_HANDLE_UNCOUNTED_TYPE(Physics);
+    //! \brief Applies physical state from holder object
+    DLLEXPORT void ApplyPhysicalState(const BasePhysicsData& data);
 
     //! \brief Adds all applied forces together
     Float3 _GatherApplyForces(const float& mass);
 
-    DLLEXPORT float GetMass() const
+    DLLEXPORT float GetMass() const;
+
+    inline PhysicsBody* GetBody() const
     {
-        return Mass;
+        return Body.get();
     }
 
-    inline NewtonBody* GetBody() const
+    //
+    // Script wrappers
+    //
+
+    inline PhysicsBody* GetBodyWrapper() const
     {
-        return Body;
+        if(Body)
+            Body->AddRef();
+        return Body.get();
     }
 
-    inline NewtonCollision* GetCollision() const
+    inline bool ChangeShapeWrapper(PhysicalWorld* world, PhysicsShape* shape)
     {
-        return Collision;
+        return ChangeShape(world, ReferenceCounted::WrapPtr(shape));
     }
+
+    inline PhysicsBody* CreatePhysicsBodyWrapper(
+        PhysicalWorld* world, PhysicsShape* shape, int physicsmaterialid)
+    {
+        auto body =
+            CreatePhysicsBody(world, ReferenceCounted::WrapPtr(shape), physicsmaterialid);
+
+        if(body)
+            body->AddRef();
+        return body.get();
+    }
+
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Physics);
 
 private:
-    NewtonCollision* Collision = nullptr;
-    NewtonBody* Body = nullptr;
-
-    //! The set physical material
-    //! If none is set this defaults to -1
-    //! The default material ID from GetDefaultPhysicalMaterialID might be applied
-    int AppliedPhysicalMaterial = -1;
-
-    //! Non-newton access to mass
-    // 0 mass means static
-    float Mass = 0.f;
-
-    bool ApplyGravity = true;
-
-    std::list<std::shared_ptr<ApplyForceInfo>> ApplyForceList;
-
-    // Stores velocity and torque that should be set in the
-    // callback. These are reset after each apply
-    // If the override is true then the value is directly set
-    Float3 SumQueuedForce = Float3(0, 0, 0);
-    Float3 SumQueuedTorque = Float3(0, 0, 0);
-    bool TorqueOverride = false;
+    PhysicsBody::pointer Body;
 
 public:
-    //! Used to access gravity data
-    GameWorld* World = nullptr;
+    //! For passing to PhysicsBody::SetOwningEntity
+    ObjectID ThisEntity;
+
+    // //! Used to access gravity data
+    // GameWorld* World = nullptr;
 
     //! Physics object requires a position
     Position& _Position;
-
-    //! For access from physics callbacks
-    const ObjectID ThisEntity;
-
-    // Optional access to other components that can be used for marking when physics object
-    // moves
-    Sendable* UpdateSendable = nullptr;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Physics;
 };
@@ -782,8 +696,7 @@ public:
     //! \brief Creates at specific position
     inline Camera(uint8_t fovy = 60, bool soundperceiver = true) :
         Component(TYPE), FOVY(fovy), SoundPerceiver(soundperceiver)
-    {
-    }
+    {}
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Camera);
 

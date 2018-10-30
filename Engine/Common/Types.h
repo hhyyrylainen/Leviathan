@@ -18,11 +18,13 @@
 #define DO_NAN_CHECK
 #endif // CHECK_FOR_NANS
 
-#ifdef LEVIATHAN_USING_OGRE
-#include "OGRE/OgreColourValue.h"
-#include "OGRE/OgreQuaternion.h"
-#include "OGRE/OgreVector3.h"
-#include "OGRE/OgreVector4.h"
+#ifdef LEVIATHAN_FULL
+#include "LinearMath/btQuaternion.h"
+#include "LinearMath/btVector3.h"
+#include "OgreColourValue.h"
+#include "OgreQuaternion.h"
+#include "OgreVector3.h"
+#include "OgreVector4.h"
 #endif // LEVIATHAN_USING_OGRE
 
 namespace Leviathan {
@@ -958,7 +960,7 @@ public:
         return Float3(0.f, 0.f, 1.f);
     }
     // ----------------- casts ------------------- //
-#ifdef LEVIATHAN_USING_OGRE
+#ifdef LEVIATHAN_FULL
     DLLEXPORT Float3(const Ogre::Vector3& vec)
     {
         // copy values //
@@ -971,6 +973,20 @@ public:
     DLLEXPORT inline operator Ogre::Vector3() const
     {
         return Ogre::Vector3(X, Y, Z);
+    }
+
+    DLLEXPORT Float3(const btVector3& vec)
+    {
+        // copy values //
+        X = vec.x();
+        Y = vec.y();
+        Z = vec.z();
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline operator btVector3() const
+    {
+        return btVector3(X, Y, Z);
     }
 #endif // LEVIATHAN_USING_OGRE
     // ------------------------------------ //
@@ -1361,7 +1377,7 @@ public:
         return Float4(0.f, 0.f, 0.f, 1.f);
     }
 
-#ifdef LEVIATHAN_USING_OGRE
+#ifdef LEVIATHAN_FULL
     DLLEXPORT Float4(const Ogre::Quaternion& quat)
     {
         // copy values //
@@ -1384,19 +1400,33 @@ public:
 
     DLLEXPORT inline operator Ogre::Quaternion() const
     {
-
+        // Ogre has these in different order
         return Ogre::Quaternion(W, X, Y, Z);
     }
 
     DLLEXPORT inline operator Ogre::ColourValue() const
     {
-
         return Ogre::ColourValue(X, Y, Z, W);
     }
+
     DLLEXPORT inline operator Ogre::Vector4() const
     {
-
         return Ogre::Vector4(X, Y, Z, W);
+    }
+
+    DLLEXPORT Float4(const btQuaternion& colour)
+    {
+        // copy values //
+        X = colour.x();
+        Y = colour.y();
+        Z = colour.z();
+        W = colour.w();
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline operator btQuaternion() const
+    {
+        return btQuaternion(X, Y, Z, W);
     }
 #endif // LEVIATHAN_USING_OGRE
 

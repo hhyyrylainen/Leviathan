@@ -134,7 +134,7 @@ void Pong::PongServer::Tick(int mspassed){
             // Check is the ball stuck on the dead axis (where no paddle can hit it) //
             auto& physics = WorldOfPong->GetComponent<Leviathan::Physics>(ball);
             
-            Float3 ballspeed = physics.GetVelocity();
+            Float3 ballspeed = physics.GetBody()->GetVelocity();
             ballspeed.X = abs(ballspeed.X);
             ballspeed.Y = 0;
             ballspeed.Z = abs(ballspeed.Z);
@@ -571,37 +571,37 @@ void PongServer::GameMatchEnded(){
     CustomizedGameEnd();
 }
 
-void PongServer::BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
-    int threadIndex)
-{
+// void PongServer::BallContactCallbackPaddle(const NewtonJoint* contact, dFloat timestep,
+//     int threadIndex)
+// {
 
-    // Call the callback //
-    Staticaccess->_SetLastPaddleHit(reinterpret_cast<Physics*>(
-            NewtonBodyGetUserData(NewtonJointGetBody0(contact)))->ThisEntity,
-        reinterpret_cast<Physics*>(NewtonBodyGetUserData(
-                NewtonJointGetBody1(contact)))->ThisEntity);
-}
+//     // Call the callback //
+//     Staticaccess->_SetLastPaddleHit(reinterpret_cast<Physics*>(
+//             NewtonBodyGetUserData(NewtonJointGetBody0(contact)))->ThisEntity,
+//         reinterpret_cast<Physics*>(NewtonBodyGetUserData(
+//                 NewtonJointGetBody1(contact)))->ThisEntity);
+// }
         
-void PongServer::BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
-    int threadIndex)
-{
-    // Call the function and set the collision state as the last one //
-    NewtonJointSetCollisionState(contact,
-        Staticaccess->_BallEnterGoalArea(reinterpret_cast<
-            Physics*>(NewtonBodyGetUserData(NewtonJointGetBody0(contact)))->ThisEntity,
-            reinterpret_cast<Physics*>(NewtonBodyGetUserData(
-                    NewtonJointGetBody1(contact)))->ThisEntity));
-}
+// void PongServer::BallContactCallbackGoalArea(const NewtonJoint* contact, dFloat timestep,
+//     int threadIndex)
+// {
+//     // Call the function and set the collision state as the last one //
+//     NewtonJointSetCollisionState(contact,
+//         Staticaccess->_BallEnterGoalArea(reinterpret_cast<
+//             Physics*>(NewtonBodyGetUserData(NewtonJointGetBody0(contact)))->ThisEntity,
+//             reinterpret_cast<Physics*>(NewtonBodyGetUserData(
+//                     NewtonJointGetBody1(contact)))->ThisEntity));
+// }
 
-PhysicsMaterialContactCallback PongServer::GetBallPaddleCallback(){
+// PhysicsMaterialContactCallback PongServer::GetBallPaddleCallback(){
 
-    return BallContactCallbackPaddle;
-}
+//     return BallContactCallbackPaddle;
+// }
 
-PhysicsMaterialContactCallback PongServer::GetBallGoalAreaCallback(){
+// PhysicsMaterialContactCallback PongServer::GetBallGoalAreaCallback(){
 
-    return BallContactCallbackGoalArea;
-}
+//     return BallContactCallbackGoalArea;
+// }
 
 
 

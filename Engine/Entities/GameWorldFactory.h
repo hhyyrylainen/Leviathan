@@ -7,6 +7,7 @@
 
 namespace Leviathan {
 
+class PhysicsMaterialManager;
 class GameWorld;
 
 //! \brief Allows overwriting the used GameWorld class in the
@@ -22,7 +23,8 @@ public:
     //! GameWorld class that should be created is known
     //! \param worldtype Application specific type that can be used to pass the wanted type of
     //! world around
-    DLLEXPORT virtual std::shared_ptr<GameWorld> CreateNewWorld(int worldtype);
+    DLLEXPORT virtual std::shared_ptr<GameWorld> CreateNewWorld(
+        int worldtype, const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
 
     DLLEXPORT static GameWorldFactory* Get();
 
@@ -37,7 +39,8 @@ enum class INBUILT_WORLD_TYPE { Standard = 1024 };
 //! \brief Factory for inbuilt world types
 class InbuiltWorldFactory {
 public:
-    static std::shared_ptr<GameWorld> CreateNewWorld(INBUILT_WORLD_TYPE worldtype);
+    static std::shared_ptr<GameWorld> CreateNewWorld(INBUILT_WORLD_TYPE worldtype,
+        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
 };
 
 } // namespace Leviathan

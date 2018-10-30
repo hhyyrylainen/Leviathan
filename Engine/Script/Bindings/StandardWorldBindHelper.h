@@ -48,11 +48,11 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod(classname,
-           "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
-           asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectMethod(classname,
+    //        "RayCastHitEntity@ CastRayGetFirstHit(Float3 start, Float3 end)",
+    //        asMETHOD(WorldType, CastRayGetFirstHitProxy), asCALL_THISCALL) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     if(engine->RegisterObjectMethod(classname,
            "Ogre::Ray CastRayFromCamera(float x, float y) const",

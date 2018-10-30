@@ -13,7 +13,6 @@
 #include "OgreRibbonTrail.h"
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
-#include <Newton.h>
 using namespace Leviathan;
 // ------------------------------------ //
 

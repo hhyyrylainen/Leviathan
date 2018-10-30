@@ -5,38 +5,33 @@
 #include "Application/MasterServerApplication.h"
 #include "PongMasterNetworking.h"
 
-namespace Pong{
+namespace Pong {
 
-	class PongMasterServer : public Leviathan::MasterServerApplication{
-	public:
-		PongMasterServer();
-		~PongMasterServer();
+class PongMasterServer : public Leviathan::MasterServerApplication {
+public:
+    PongMasterServer();
+    ~PongMasterServer();
 
-		void Tick(int mspassed) override;
+    void Tick(int mspassed) override;
 
-		void CustomizeEnginePostLoad() override;
-		void EnginePreShutdown() override;
+    void CustomizeEnginePostLoad() override;
+    void EnginePreShutdown() override;
 
-		static std::string GenerateWindowTitle();
+    static std::string GenerateWindowTitle();
 
-		// customized callbacks //
-		bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override;
-		void RegisterApplicationPhysicalMaterials(
-            Leviathan::PhysicsMaterialManager* manager) override;
+    // customized callbacks //
+    bool InitLoadCustomScriptTypes(asIScriptEngine* engine) override;
 
-		// Game configuration checkers //
-		static void CheckGameConfigurationVariables(Lock &guard, GameConfiguration* configobj);
-		static void CheckGameKeyConfigVariables(Lock &guard, KeyConfiguration* keyconfigobj);
+    // Game configuration checkers //
+    static void CheckGameConfigurationVariables(Lock& guard, GameConfiguration* configobj);
+    static void CheckGameKeyConfigVariables(Lock& guard, KeyConfiguration* keyconfigobj);
 
-	protected:
+protected:
+    Leviathan::NetworkInterface* _GetApplicationPacketHandler() override;
+    void _ShutdownApplicationPacketHandler() override;
 
-        Leviathan::NetworkInterface* _GetApplicationPacketHandler() override;
-        void _ShutdownApplicationPacketHandler() override;
-        
-    protected:
+protected:
+    std::unique_ptr<PongMasterNetworking> MasterInterface;
+};
 
-        std::unique_ptr<PongMasterNetworking> MasterInterface;
-	};
-
-}
-
+} // namespace Pong

@@ -14,15 +14,15 @@
 #include "Networking/NetworkHandler.h"
 #include "Networking/NetworkInterface.h"
 #include "Networking/SyncedResource.h"
-#include "Newton/PhysicalMaterial.h"
-#include "Newton/PhysicsMaterialManager.h"
+#include "Physics/PhysicalMaterial.h"
+#include "Physics/PhysicsMaterialManager.h"
 #include "PlayerSlot.h"
 #include "PongPackets.h"
-#include "Window.h"
 #include "Script/ScriptExecutor.h"
 #include "Statistics/TimingMonitor.h"
 #include "Threading/QueuedTask.h"
 #include "Threading/ThreadingManager.h"
+#include "Window.h"
 #include "add_on/autowrapper/aswrappedcall.h"
 
 #include "Generated/StandardWorld.h"
@@ -304,9 +304,64 @@ public:
         // Load Pong specific packets //
         PongPackets::RegisterAllPongPacketTypes();
 
+        // load predefined materials //
+        auto PaddleMaterial =
+            std::make_unique<Leviathan::PhysicalMaterial>("PaddleMaterial", 1);
+        auto ArenaMaterial = std::make_unique<Leviathan::PhysicalMaterial>("ArenaMaterial", 2);
+        auto ArenaBottomMaterial =
+            std::make_unique<Leviathan::PhysicalMaterial>("ArenaBottomMaterial", 3);
+        auto BallMaterial = std::make_unique<Leviathan::PhysicalMaterial>("BallMaterial", 4);
+        auto GoalAreaMaterial =
+            std::make_unique<Leviathan::PhysicalMaterial>("GoalAreaMaterial", 5);
+
+        // Set callbacks //
+        BallMaterial
+            ->FormPairWith(*PaddleMaterial)
+            /*.SetSoftness(1.f)
+            .SetElasticity(1.0f)
+            .SetFriction(1.f, 1.f)*/
+            /*.SetCallbacks(NULL, GetBallPaddleCallback())*/;
+        BallMaterial->FormPairWith(*GoalAreaMaterial)
+            // .SetCallbacks(NULL, GetBallGoalAreaCallback())
+            ;
+
+        PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+        PaddleMaterial->FormPairWith(*ArenaMaterial).SetCollidable(false)
+            /*.SetElasticity(0.f)
+            .SetSoftness(0.f)*/
+            ;
+        PaddleMaterial->FormPairWith(*ArenaBottomMaterial).SetCollidable(false)
+            /*.SetSoftness(0.f)
+            .SetFriction(0.f, 0.f)
+            .SetElasticity(0.f)*/
+            ;
+        PaddleMaterial->FormPairWith(*PaddleMaterial).SetCollidable(false);
+        ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+        ArenaMaterial->FormPairWith(*BallMaterial)
+            /*.SetFriction(0.f, 0.f)
+            .SetSoftness(1.f)
+            .SetElasticity(1.f)*/
+            ;
+        ArenaBottomMaterial->FormPairWith(*BallMaterial)
+            /*.SetElasticity(0.f)
+            .SetFriction(0.f, 0.f)
+            .SetSoftness(0.f)*/
+            ;
+        ArenaBottomMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
+
+        // Add the materials //
+        auto tmp = std::make_unique<Leviathan::PhysicsMaterialManager>();
+
+        tmp->LoadedMaterialAdd(std::move(PaddleMaterial));
+        tmp->LoadedMaterialAdd(std::move(ArenaMaterial));
+        tmp->LoadedMaterialAdd(std::move(BallMaterial));
+        tmp->LoadedMaterialAdd(std::move(GoalAreaMaterial));
+        tmp->LoadedMaterialAdd(std::move(ArenaBottomMaterial));
+
         // Setup world //
         WorldOfPong = std::dynamic_pointer_cast<Leviathan::StandardWorld>(
-            Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), 0));
+            Engine::GetEngine()->CreateWorld(
+                Engine::Get()->GetWindowEntity(), 0, std::move(tmp)));
 
         // create playing field manager with the world //
         GameArena = unique_ptr<Arena>(new Arena(WorldOfPong.get()));
@@ -553,69 +608,12 @@ public:
         return MoreCustomScriptTypes(engine);
     }
 
-    virtual void RegisterApplicationPhysicalMaterials(
-        Leviathan::PhysicsMaterialManager* manager)
-    {
-        // \todo implement loading from files //
-
-        // load predefined materials //
-        auto PaddleMaterial = std::make_shared<Leviathan::PhysicalMaterial>("PaddleMaterial");
-        auto ArenaMaterial = std::make_shared<Leviathan::PhysicalMaterial>("ArenaMaterial");
-        auto ArenaBottomMaterial =
-            std::make_shared<Leviathan::PhysicalMaterial>("ArenaBottomMaterial");
-        auto BallMaterial = std::make_shared<Leviathan::PhysicalMaterial>("BallMaterial");
-        auto GoalAreaMaterial =
-            std::make_shared<Leviathan::PhysicalMaterial>("GoalAreaMaterial");
-
-        // Set callbacks //
-        BallMaterial->FormPairWith(*PaddleMaterial)
-            .SetSoftness(1.f)
-            .SetElasticity(1.0f)
-            .SetFriction(1.f, 1.f)
-            .SetCallbacks(NULL, GetBallPaddleCallback());
-        BallMaterial->FormPairWith(*GoalAreaMaterial)
-            .SetCallbacks(NULL, GetBallGoalAreaCallback());
-
-        PaddleMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-        PaddleMaterial->FormPairWith(*ArenaMaterial)
-            .SetCollidable(false)
-            .SetElasticity(0.f)
-            .SetSoftness(0.f);
-        PaddleMaterial->FormPairWith(*ArenaBottomMaterial)
-            .SetCollidable(false)
-            .SetSoftness(0.f)
-            .SetFriction(0.f, 0.f)
-            .SetElasticity(0.f);
-        PaddleMaterial->FormPairWith(*PaddleMaterial).SetCollidable(false);
-        ArenaMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-        ArenaMaterial->FormPairWith(*BallMaterial)
-            .SetFriction(0.f, 0.f)
-            .SetSoftness(1.f)
-            .SetElasticity(1.f);
-        ArenaBottomMaterial->FormPairWith(*BallMaterial)
-            .SetElasticity(0.f)
-            .SetFriction(0.f, 0.f)
-            .SetSoftness(0.f);
-        ArenaBottomMaterial->FormPairWith(*GoalAreaMaterial).SetCollidable(false);
-
-        // Add the materials //
-        Leviathan::PhysicsMaterialManager* tmp = Leviathan::PhysicsMaterialManager::Get();
-
-        tmp->LoadedMaterialAdd(PaddleMaterial);
-        tmp->LoadedMaterialAdd(ArenaMaterial);
-        tmp->LoadedMaterialAdd(BallMaterial);
-        tmp->LoadedMaterialAdd(GoalAreaMaterial);
-        tmp->LoadedMaterialAdd(ArenaBottomMaterial);
-    }
-
-
-
     // ------------------ Physics callbacks for game logic ------------------ //
     // Ball handling callback //
 
-    virtual PhysicsMaterialContactCallback GetBallPaddleCallback() = 0;
+    // virtual PhysicsMaterialContactCallback GetBallPaddleCallback() = 0;
 
-    virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback() = 0;
+    // virtual PhysicsMaterialContactCallback GetBallGoalAreaCallback() = 0;
 
 protected:
     virtual bool MoreCustomScriptTypes(asIScriptEngine* engine) = 0;

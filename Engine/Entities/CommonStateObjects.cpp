@@ -74,9 +74,9 @@ DLLEXPORT void PhysicsComponentState::Interpolate(
 
     target._Position.Marked = true;
 
-    target.SetVelocity(vel);
+    target.GetBody()->SetVelocity(vel);
     LOG_WRITE("TODO: shouldn't this be angular momentum? (NewtonBodySetOmega)");
-    target.SetTorque(tor);
+    target.GetBody()->SetAngularVelocity(tor);
 }
 // ------------------------------------ //
 DLLEXPORT void PositionComponentState::Interpolate(

@@ -15,7 +15,7 @@ TEST_CASE("Entity parent destruction deletes children", "[entity]"){
     // TODO: recursive check of parenting that has weird order
     PartialEngine<false> engine;
 
-    StandardWorld TargetWorld;
+    StandardWorld TargetWorld(nullptr);
 
     auto parent = TargetWorld.CreateEntity();
 

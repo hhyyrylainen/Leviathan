@@ -24,7 +24,7 @@ TEST_CASE("Script can register custom entity type and do stuff with it", "[scrip
     ScriptExecutor exec;
 
     // Script needs to be valid for releasing the components
-    StandardWorld world;
+    StandardWorld world(nullptr);
     world.SetRunInBackground(true);
 
     // setup the script //
@@ -92,7 +92,7 @@ TEST_CASE("Script node helper works with multiple script classes", "[script][ent
     ScriptExecutor exec;
 
     // Script needs to be valid for releasing the components
-    StandardWorld world;
+    StandardWorld world(nullptr);
     world.SetRunInBackground(true);
 
     // setup the script //

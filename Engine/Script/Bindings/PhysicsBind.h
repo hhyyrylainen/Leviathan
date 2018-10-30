@@ -6,5 +6,5 @@
 
 namespace Leviathan {
 
-bool BindNewton(asIScriptEngine* engine);
+bool BindPhysics(asIScriptEngine* engine);
 }

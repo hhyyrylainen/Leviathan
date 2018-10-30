@@ -4,8 +4,6 @@
 
 #include <cstdint>
 
-// Newton things
-class NewtonJoint;
 
 namespace Ogre {
 
@@ -140,10 +138,8 @@ class SyncedPrimitive;
 class SyncedResource;
 
 class ViewerCameraPos;
-class NewtonManager;
 class SoundDevice;
 class PhysicsMaterialManager;
-class NewtonManager;
 class ScriptConsole;
 
 class LeapManager;

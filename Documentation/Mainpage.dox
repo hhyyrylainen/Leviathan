@@ -2,7 +2,7 @@
     
     \section intro_sec Introduction
 
-    Leviathan is a 3D game engine based on open source libraries Ogre, CEGUI and others.
+    Leviathan is a 3D game engine based on open source libraries Ogre, CEF, Bullet and others.
 
     [Main repository](https://bitbucket.org/hhyyrylainen/leviathan)
     [Website](https://leviathanengine.com/)

@@ -1,7 +1,7 @@
 # Libraries used by leviathan
 require 'os'
 
-require_relative 'RubySetupSystem/Libraries/SetupNewton.rb'
+require_relative 'RubySetupSystem/Libraries/SetupBullet.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
 require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
 require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
@@ -24,12 +24,16 @@ require_relative 'RubySetupSystem/Libraries/SetupLeviathan.rb'
 # Setup dependencies settings
 THIRD_PARTY_INSTALL = File.join(ProjectDir, "build", "ThirdParty")
 
-$newton = Newton.new(
-  version: "6d9be8ccce94845d8738244f5fd9da19c53886ca",
+$bullet = Bullet.new(
+  version: "2.87",
   installPath: THIRD_PARTY_INSTALL,
-  noInstallSudo: true,
+  disableGraphicalBenchmark: true,
+  disableCPUDemos: true,
+  disableGLUT: true,
   disableDemos: true,
-  fork: "https://github.com/hhyyrylainen/newton-dynamics.git"
+  noInstallSudo: true,
+  # Only way to properly get -fPIC on linux (without hacking with CXX_FLAGS)
+  shared: true
 )
 
 $angelscript = AngelScript.new(
@@ -150,11 +154,7 @@ end
 
 
 $leviathanLibList =
-  [$newton, $angelscript, $sfml, $cef, $ffmpeg]
-
-# This if for testing one single dependency compiling
-#$leviathanLibList = [$ffmpeg]
-#$leviathanLibList = []
+  [$bullet, $angelscript, $sfml, $cef, $ffmpeg]
 
 # Ogre windows deps and other windows only deps
 # sdl is also used by Leviathan directly

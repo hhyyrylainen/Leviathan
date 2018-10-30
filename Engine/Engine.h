@@ -120,7 +120,10 @@ public:
     //! \param worldtype Is the type of the world to be created. This is passed to the game's
     //! registered world factory. Types over 1024 are reserved for inbuilt types and are needed
     //! for example things like the editor
-    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(Window* owningwindow, int worldtype);
+    //! \param physicsMaterials The physical materials used for the world. This must be
+    //! non-null if physics is wanted for this world
+    DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(Window* owningwindow, int worldtype,
+        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy. This is taken as a const reference to allow
@@ -191,17 +194,9 @@ public:
     {
         return Define;
     }
-    inline NewtonManager* GetNewtonManager()
-    {
-        return _NewtonManager;
-    }
     inline LeviathanApplication* GetOwningApplication()
     {
         return Owner;
-    }
-    inline PhysicsMaterialManager* GetPhysicalMaterialManager()
-    {
-        return PhysMaterials;
     }
     inline NetworkHandler* GetNetworkHandler()
     {
@@ -315,8 +310,6 @@ protected:
     FileSystem* MainFileHandler = nullptr;
     Random* MainRandom = nullptr;
     OutOfMemoryHandler* OutOMemory = nullptr;
-    NewtonManager* _NewtonManager = nullptr;
-    PhysicsMaterialManager* PhysMaterials = nullptr;
     NetworkHandler* _NetworkHandler = nullptr;
     ThreadingManager* _ThreadingManager = nullptr;
     RemoteConsole* _RemoteConsole = nullptr;

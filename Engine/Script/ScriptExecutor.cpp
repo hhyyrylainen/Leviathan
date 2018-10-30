@@ -24,8 +24,8 @@
 #include "Bindings/CommonEngineBind.h"
 #include "Bindings/EntityBind.h"
 #include "Bindings/GuiScriptBind.h"
-#include "Bindings/NewtonBind.h"
 #include "Bindings/OgreBind.h"
+#include "Bindings/PhysicsBind.h"
 #include "Bindings/TypesBind.h"
 
 // Exception support
@@ -169,11 +169,11 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     if(!BindOgre(engine))
         throw Exception("BindOgre failed");
 
-    if(!BindNewton(engine))
-        throw Exception("BindNewton failed");
-
     if(!BindTypes(engine))
         throw Exception("BindTypes failed");
+
+    if(!BindPhysics(engine))
+        throw Exception("BindNewton failed");
 
     if(!BindEngineCommon(engine))
         throw Exception("BindEngineCommon failed");

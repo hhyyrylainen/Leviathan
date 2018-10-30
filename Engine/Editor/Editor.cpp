@@ -39,7 +39,9 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
     ShownOnWindow = targetwindow;
 
     World = std::dynamic_pointer_cast<StandardWorld>(
-        _Engine->CreateWorld(targetwindow, static_cast<int>(INBUILT_WORLD_TYPE::Standard)));
+        _Engine->CreateWorld(targetwindow, static_cast<int>(INBUILT_WORLD_TYPE::Standard),
+            // no physics
+            nullptr));
 
     if(!World) {
         LOG_ERROR("Editor: failed to create needed world of type Standard for editor");

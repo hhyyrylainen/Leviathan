@@ -209,7 +209,7 @@ DLLEXPORT bool NamedVariableList::RecursiveParseList(std::vector<VariableBlock*>
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
         try {
             tmpcreated = std::make_unique<VariableBlock>(*valuestr, predefined);
-        } catch(const InvalidArgument) {
+        } catch(const InvalidArgument&) {
 
             // Rethrow the exception //
             SAFE_DELETE_VECTOR(resultvalues);
@@ -264,7 +264,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string& va
                 throw InvalidArgument("NamedVariableList could not parse top level bracket "
                                       "expression");
             }
-        } catch(const InvalidArgument) {
+        } catch(const InvalidArgument&) {
 
             throw;
         }
@@ -306,7 +306,7 @@ DLLEXPORT bool NamedVariableList::ConstructValuesForObject(const std::string& va
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL
     try {
         tmpcreated = std::make_unique<VariableBlock>(variablestr, predefined);
-    } catch(const InvalidArgument) {
+    } catch(const InvalidArgument&) {
 
         // Rethrow the exception //
         SAFE_DELETE_VECTOR(Datas);

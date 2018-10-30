@@ -63,8 +63,8 @@ if(LEVIATHAN_FULL_BUILD)
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
     # Needed for CEF
     "${LEVIATHAN_SRC}/build/ThirdParty/"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/newton"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bullet"
     )
 
   # Find SDL2
@@ -78,9 +78,10 @@ if(LEVIATHAN_FULL_BUILD)
     set(LEVIATHAN_ENGINE_LIBRARIES cef cef_dll_wrapper)
   else()
     set(LEVIATHAN_ENGINE_LIBRARIES libcef libcef_dll_wrapper)
-  endif()  
+  endif()
 
-  list(APPEND LEVIATHAN_ENGINE_LIBRARIES Newton
+  list(APPEND LEVIATHAN_ENGINE_LIBRARIES
+    LinearMath BulletDynamics Bullet3Dynamics BulletCollision
     OgreMain OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network
     # ffmpeg
@@ -122,7 +123,7 @@ if(LEVIATHAN_FULL_BUILD)
   #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
   # endif()  
   
-  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES Newton ${Boost_LIBRARIES} OgreMain
+  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES ${Boost_LIBRARIES} OgreMain
     OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network AngelScriptAddons)
 
@@ -179,7 +180,6 @@ endif()
 DefinePreprocessorMacro(USE_ANGELSCRIPT LEVIATHAN_USING_ANGELSCRIPT)
 DefinePreprocessorMacro(USE_BOOST LEVIATHAN_USING_BOOST)
 DefinePreprocessorMacro(USE_OGRE LEVIATHAN_USING_OGRE)
-DefinePreprocessorMacro(USE_NEWTON LEVIATHAN_USING_NEWTON)
 DefinePreprocessorMacro(USE_SFML LEVIATHAN_USING_SFML)
 DefinePreprocessorMacro(USE_LEAP LEVIATHAN_USING_LEAP)
 DefinePreprocessorMacro(USE_SDL2 LEVIATHAN_USING_SDL2)

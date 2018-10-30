@@ -207,7 +207,7 @@ else()
     "Script/Bindings/BindStandardFunctions.h" "Script/Bindings/BindStandardFunctions.cpp"
     "Script/Bindings/CommonEngineBind.h" "Script/Bindings/CommonEngineBind.cpp"
     "Script/Bindings/OgreBind.h" "Script/Bindings/OgreBind.cpp"
-    "Script/Bindings/NewtonBind.h" "Script/Bindings/NewtonBind.cpp"
+    "Script/Bindings/PhysicsBind.h" "Script/Bindings/PhysicsBind.cpp"
     "Script/Bindings/GuiScriptBind.h" "Script/Bindings/GuiScriptBind.cpp"
     "Script/Bindings/TypesBind.h" "Script/Bindings/TypesBind.cpp"
     "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"
@@ -238,17 +238,18 @@ else()
     )
 
   
-  file(GLOB GroupNewton 
-    "Newton/NewtonConversions.h"
-    "Newton/NewtonManager.cpp" "Newton/NewtonManager.h"
-    "Newton/PhysicalMaterial.cpp" "Newton/PhysicalMaterial.h"
-    "Newton/PhysicalWorld.cpp" "Newton/PhysicalWorld.h"
-    "Newton/PhysicsMaterialManager.cpp" "Newton/PhysicsMaterialManager.h"
-  )
+  file(GLOB GroupPhysics 
+    "Physics/PhysicalMaterial.cpp" "Physics/PhysicalMaterial.h"
+    "Physics/PhysicsMaterialManager.cpp" "Physics/PhysicsMaterialManager.h"    
+    "Physics/PhysicalWorld.cpp" "Physics/PhysicalWorld.h"
+    "Physics/PhysicsShape.cpp" "Physics/PhysicsShape.h"
+    "Physics/PhysicsBody.cpp" "Physics/PhysicsBody.h"
+    )
 
 
-  file(GLOB GroupEntitiesObjects "Entities/Objects/*.cpp" "Entities/Objects/*.h")
-  file(GLOB GroupEntitiesSerializers "Entities/Serializers/*.cpp" "Entities/Serializers/*.h")
+  set(GroupEntitiesSerializers
+    "Entities/Serializers/EntitySerializer.cpp" "Entities/Serializers/EntitySerializer.h"
+    )
 
 
   
@@ -367,7 +368,6 @@ source_group("Libraries\\json-cpp" FILES ${GroupJsoncpp})
 source_group("Libraries\\utf8" FILES ${Grouputf8})
 
 source_group("Entities" FILES ${GroupEntities})
-source_group("Entities\\Objects" FILES ${GroupEntitiesObjects})
 source_group("Entities\\Serializers" FILES ${GroupEntitiesSerializers})
 
 source_group("Utility" FILES ${GroupUtility})
@@ -383,7 +383,7 @@ source_group("Core" FILES ${GroupCore})
 source_group("Core\\Events" FILES ${GroupEvents})
 source_group("Core\\Input" FILES ${GroupInput})
 source_group("Core\\Handlers" FILES ${GroupHandlers})
-source_group("Newton" FILES ${GroupNewton})
+source_group("Physics" FILES ${GroupPhysics})
 
 source_group("Common" FILES ${GroupCommon})
 source_group("Common\\Application" FILES ${GroupApplication})
@@ -406,12 +406,12 @@ endif()
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupMath} ${GroupSound}
-  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}  # ${GroupScriptAddons} 
+  ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}
   ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
   ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
   ${GroupObjectFiles} ${GroupRendering} ${GroupCommonData} ${GroupUtilityIte}
   ${GroupUtilityFile}
-  ${GroupRenderingGUI} ${GroupNewton} ${GroupEntitiesObjects}
+  ${GroupRenderingGUI} ${GroupPhysics}
   ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
   ${GroupGameplay} 
   ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
@@ -456,7 +456,8 @@ endif()
 set_property(TARGET Engine PROPERTY CXX_STANDARD 17)
 set_property(TARGET Engine PROPERTY CXX_EXTENSIONS OFF)
 
-# Avoid Xlib headers and windows header in the precompiled header to avoid macros destroying everything
+# Avoid Xlib headers and windows header in the precompiled header to
+# avoid macros destroying everything
 set_target_properties(Engine PROPERTIES 
   COTIRE_PREFIX_HEADER_IGNORE_PATH
   "${X11_INCLUDE_DIR}/X11;${CMAKE_SOURCE_DIR};${CMAKE_BINARY_DIR}")
@@ -466,7 +467,8 @@ set_target_properties(Engine PROPERTIES
 # And add the Include.h as a precompiled header file
 # TODO: update this if using cotire
 set_target_properties(Engine PROPERTIES 
-  COTIRE_PREFIX_HEADER_INCLUDE_PATH  "${PROJECT_SOURCE_DIR}/AngelScript;${PROJECT_SOURCE_DIR}/Newton;${PROJECT_SOURCE_DIR}/Leap;${CMAKE_SOURCE_DIR}/Engine/Include.h")
+  COTIRE_PREFIX_HEADER_INCLUDE_PATH
+  "${PROJECT_SOURCE_DIR}/build;${CMAKE_SOURCE_DIR}/Engine/Include.h")
 
 # speed up build
 #cotire(Engine)

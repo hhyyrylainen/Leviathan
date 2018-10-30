@@ -17,7 +17,6 @@
 #include "Script/ScriptExecutor.h"
 #include "Sound/SoundDevice.h"
 #include "Threading/ThreadingManager.h"
-#include "Utility/DataHandling/SimpleDatabase.h"
 #include "Utility/Random.h"
 #include "Window.h"
 
@@ -255,7 +254,6 @@ bool BindDataBlock(asIScriptEngine* engine);
 //! \todo make this safe to be passed to the script
 bool BindNamedVars(asIScriptEngine* engine)
 {
-
     ANGELSCRIPT_REGISTER_REF_TYPE("NamedVars", NamedVars);
 
     if(!BindDataBlock(engine))

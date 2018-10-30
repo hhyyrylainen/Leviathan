@@ -10,9 +10,6 @@
 
 #include <type_traits>
 
-#define PHYSICS_BASE_GRAVITY -9.81f
-
-class NewtonBody;
 
 class CScriptArray;
 class asIScriptObject;
@@ -37,8 +34,7 @@ struct ComponentTypeInfo {
 
     inline ComponentTypeInfo(uint16_t ltype, int astype) :
         LeviathanType(ltype), AngelScriptType(astype)
-    {
-    }
+    {}
 
     uint16_t LeviathanType;
     int AngelScriptType;
@@ -49,43 +45,43 @@ struct ComponentTypeInfo {
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
 
-//! Holds the returned entity that was hit during ray casting
-//! \todo Move to a new file
-class RayCastHitEntity : public ReferenceCounted {
-public:
-    DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = nullptr, const float& tvar = 0.f,
-        RayCastData* ownerptr = nullptr);
+// //! Holds the returned entity that was hit during ray casting
+// //! \todo Move to a new file
+// class RayCastHitEntity : public ReferenceCounted {
+// public:
+//     DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = nullptr, const float& tvar = 0.f,
+//         RayCastData* ownerptr = nullptr);
 
-    DLLEXPORT RayCastHitEntity& operator=(const RayCastHitEntity& other);
+//     DLLEXPORT RayCastHitEntity& operator=(const RayCastHitEntity& other);
 
-    // Compares the hit entity with nullptr //
-    DLLEXPORT bool HasHit();
+//     // Compares the hit entity with nullptr //
+//     DLLEXPORT bool HasHit();
 
-    DLLEXPORT Float3 GetPosition();
+//     DLLEXPORT Float3 GetPosition();
 
-    DLLEXPORT bool DoesBodyMatchThisHit(NewtonBody* other);
+//     DLLEXPORT bool DoesBodyMatchThisHit(NewtonBody* other);
 
-    //! Stores the entity, typed as NewtonBody to make sure that user knows
-    //! what should be compared with this
-    const NewtonBody* HitEntity;
+//     //! Stores the entity, typed as NewtonBody to make sure that user knows
+//     //! what should be compared with this
+//     const NewtonBody* HitEntity;
 
-    //! The distance from the start of the ray to the hit location
-    float HitVariable;
-    Float3 HitLocation;
-};
+//     //! The distance from the start of the ray to the hit location
+//     float HitVariable;
+//     Float3 HitLocation;
+// };
 
-// Internal object in ray casts //
-struct RayCastData {
-    DLLEXPORT RayCastData(int maxcount, const Float3& from, const Float3& to);
-    DLLEXPORT ~RayCastData();
+// // Internal object in ray casts //
+// struct RayCastData {
+//     DLLEXPORT RayCastData(int maxcount, const Float3& from, const Float3& to);
+//     DLLEXPORT ~RayCastData();
 
-    // All hit entities that pass checks //
-    std::vector<RayCastHitEntity*> HitEntities;
-    // Used to stop after certain amount of entities found //
-    int MaxCount;
-    // Used to efficiently calculate many hit locations //
-    Float3 BaseHitLocationCalcVar;
-};
+//     // All hit entities that pass checks //
+//     std::vector<RayCastHitEntity*> HitEntities;
+//     // Used to stop after certain amount of entities found //
+//     int MaxCount;
+//     // Used to efficiently calculate many hit locations //
+//     Float3 BaseHitLocationCalcVar;
+// };
 
 //! \brief Represents a world that contains entities
 //!
@@ -97,7 +93,7 @@ class GameWorld {
     class Implementation;
 
 public:
-    DLLEXPORT GameWorld();
+    DLLEXPORT GameWorld(const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
     DLLEXPORT ~GameWorld();
 
     //! \brief Returns the unique ID of this world
@@ -156,10 +152,10 @@ public:
     DLLEXPORT int GetPhysicalMaterial(const std::string& name);
 
 
-    //! \brief Casts a ray from point along a vector and returns the first physical
-    //! object it hits
-    //! \warning You need to call Release on the returned object once done
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3& from, const Float3& to);
+    // //! \brief Casts a ray from point along a vector and returns the first physical
+    // //! object it hits
+    // //! \warning You need to call Release on the returned object once done
+    // DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3& from, const Float3& to);
 
     //! \brief Creates a new empty entity and returns its id
     //! \todo Make this have a per world counter
@@ -288,7 +284,7 @@ public:
     }
 
     // physics functions //
-    DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
+    // DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
 
     inline PhysicalWorld* GetPhysicalWorld()
     {
@@ -299,7 +295,10 @@ public:
     DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 
     // Script proxies //
-    DLLEXPORT RayCastHitEntity* CastRayGetFirstHitProxy(const Float3& from, const Float3& to);
+
+    //
+    // Networking methods
+    //
 
     //! \brief Returns true when the player matching the connection should receive updates
     //! about an entity
@@ -505,6 +504,7 @@ private:
     Ogre::SceneNode* SunLightNode = nullptr;
 
     // physics //
+    std::shared_ptr<PhysicsMaterialManager> PhysicsMaterials;
     std::shared_ptr<PhysicalWorld> _PhysicalWorld;
 
     //! The world can be frozen to stop physics

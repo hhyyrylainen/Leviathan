@@ -3,10 +3,9 @@
 
 #include "CommonPong.h"
 #include "Entities/Components.h"
-#include "Entities/Objects/Constraints.h"
 #include "TextureGenerator.h"
 #include "Handlers/ObjectLoader.h"
-#include "Newton/PhysicsMaterialManager.h"
+#include "Physics/PhysicsMaterialManager.h"
 #include "Utility/Random.h"
 
 #include <iostream>
@@ -40,7 +39,8 @@ bool Pong::Arena::GenerateArena(BasePongParts* game, PlayerList &plys){
     
 
     // Fast access to objects //
-    NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
+    DEBUG_BREAK;
+    // NewtonWorld* nworld = TargetWorld->GetPhysicalWorld()->GetNewtonWorld();
 
     VerifyTrail(guard);
     
@@ -79,28 +79,28 @@ newtonmaterialfetchstartlabel:
 
 
 
-    int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
-        "ArenaMaterial", nworld);
-    int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
-        "PaddleMaterial", nworld);
-    int GoalAreaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
-        "GoalAreaMaterial", nworld);
-    int ArenaBaseID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
-        "ArenaBottomMaterial", nworld);
+    // int ArenaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
+    //     "ArenaMaterial", nworld);
+    // int PaddleID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
+    //     "PaddleMaterial", nworld);
+    // int GoalAreaMatID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
+    //     "GoalAreaMaterial", nworld);
+    // int ArenaBaseID = Leviathan::PhysicsMaterialManager::Get()->GetMaterialIDForWorld(
+    //     "ArenaBottomMaterial", nworld);
 
-    if(ArenaMatID == -1){
-        // All are probably invalid, force world adding //
-        if(infiniteloop){
+    // if(ArenaMatID == -1){
+    //     // All are probably invalid, force world adding //
+    //     if(infiniteloop){
 
-            Logger::Get()->Error("Stuck infinitely regenerating materials");
-            return false;
-        }
+    //         Logger::Get()->Error("Stuck infinitely regenerating materials");
+    //         return false;
+    //     }
         
-        Logger::Get()->Warning("Arena: GenerateArena: world doesn't have materials, regenerating");
-        Leviathan::PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(nworld);
-        infiniteloop = true;
-        goto newtonmaterialfetchstartlabel;
-    }
+    //     Logger::Get()->Warning("Arena: GenerateArena: world doesn't have materials, regenerating");
+    //     Leviathan::PhysicsMaterialManager::Get()->CreateActualMaterialsForWorld(nworld);
+    //     infiniteloop = true;
+    //     goto newtonmaterialfetchstartlabel;
+    // }
 
     // create brushes //
 
@@ -555,19 +555,7 @@ void Pong::Arena::ServeBall(){
 
     auto& physics = TargetWorld->GetComponent<Physics>(Ball);
     
-    physics.GiveImpulse(dir);
-
-    // apply force //
-    physics.ApplyForce(new Physics::ApplyForceInfo(true, [](
-                    ApplyForceInfo* instance, Physics &object) -> Float3
-        {
-            auto vel = object.GetVelocity();
-
-            vel.Y = 0;
-
-            return vel.Normalize()*1.002f;
-            
-        }));
+    physics.GetBody()->GiveImpulse(dir);
 }
 // ------------------------------------ //
 void Pong::Arena::VerifyTrail(Lock &guard){

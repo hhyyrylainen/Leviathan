@@ -8,42 +8,45 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT LeviathanApplication::LeviathanApplication() :
-    _Engine(new Engine(this))
+DLLEXPORT LeviathanApplication::LeviathanApplication() : _Engine(new Engine(this))
 {
     Curapp = this;
 }
 
-DLLEXPORT LeviathanApplication::~LeviathanApplication(){
+DLLEXPORT LeviathanApplication::~LeviathanApplication()
+{
 
     // Release should have been called when exiting the main loop
     SAFE_DELETE(_Engine);
     Curapp = nullptr;
 }
 
-DLLEXPORT LeviathanApplication* LeviathanApplication::Get(){
-    
+DLLEXPORT LeviathanApplication* LeviathanApplication::Get()
+{
+
     return Curapp;
 }
 
 LeviathanApplication* LeviathanApplication::Curapp = NULL;
 // ------------------------------------ //
-DLLEXPORT bool LeviathanApplication::Initialize(AppDef* configuration){
+DLLEXPORT bool LeviathanApplication::Initialize(AppDef* configuration)
+{
     GUARD_LOCK();
-    
+
     // Store configuration //
     ApplicationConfiguration = configuration;
 
     // Init engine //
-    if(!_Engine->Init(ApplicationConfiguration, GetProgramNetType(),
-            _GetApplicationPacketHandler()))
+    if(!_Engine->Init(
+           ApplicationConfiguration, GetProgramNetType(), _GetApplicationPacketHandler()))
         return false;
-    
+
     _InternalInit();
     return true;
 }
 
-DLLEXPORT void LeviathanApplication::Release(){
+DLLEXPORT void LeviathanApplication::Release()
+{
     {
         GUARD_LOCK();
         // set as quitting //
@@ -70,7 +73,8 @@ DLLEXPORT void LeviathanApplication::Release(){
     }
 }
 
-DLLEXPORT void LeviathanApplication::StartRelease(){
+DLLEXPORT void LeviathanApplication::StartRelease()
+{
     GUARD_LOCK();
     ShouldQuit = true;
 
@@ -78,12 +82,13 @@ DLLEXPORT void LeviathanApplication::StartRelease(){
     _Engine->PreRelease();
 }
 // ------------------------------------ //
-DLLEXPORT void LeviathanApplication::ForceRelease(){
+DLLEXPORT void LeviathanApplication::ForceRelease()
+{
     GUARD_LOCK();
     ShouldQuit = true;
     Quit = true;
 
-    if(_Engine){
+    if(_Engine) {
         // The prelease does some which requires a tick //
         _Engine->PreRelease();
         _Engine->Tick();
@@ -93,23 +98,22 @@ DLLEXPORT void LeviathanApplication::ForceRelease(){
     SAFE_DELETE(_Engine);
 }
 // ------------------------------------ //
-DLLEXPORT bool LeviathanApplication::PassCommandLine(int argcount, char* args[]){
+DLLEXPORT bool LeviathanApplication::PassCommandLine(int argcount, char* args[])
+{
     return _Engine->PassCommandLine(argcount, args);
 }
 
-DLLEXPORT void LeviathanApplication::_InternalInit(){
-
-}
+DLLEXPORT void LeviathanApplication::_InternalInit() {}
 // ------------------------------------ //
-DLLEXPORT void LeviathanApplication::Render(){
+DLLEXPORT void LeviathanApplication::Render()
+{
     _Engine->RenderFrame();
 }
 
-DLLEXPORT void LeviathanApplication::PreFirstTick(){
-
-}
+DLLEXPORT void LeviathanApplication::PreFirstTick() {}
 // ------------------------------------ //
-DLLEXPORT int LeviathanApplication::RunMessageLoop(){
+DLLEXPORT int LeviathanApplication::RunMessageLoop()
+{
     // This is almost at tick so call this outside the loop for performance //
     _Engine->PreFirstTick();
     PreFirstTick();
@@ -117,14 +121,14 @@ DLLEXPORT int LeviathanApplication::RunMessageLoop(){
     // For reporting wait failures //
     int FailCount = 0;
 
-    while(!_Engine->HasPreReleaseBeenDone()){
+    while(!_Engine->HasPreReleaseBeenDone()) {
         // Store this //
         bool canprocess = _Engine->GetWindowOpenCount() != 0;
 
         _Engine->MessagePump();
 
         // Set as quitting //
-        if((!canprocess || QuitSometime) && !ShouldQuit){
+        if((!canprocess || QuitSometime) && !ShouldQuit) {
             Logger::Get()->Info("Application: starting real close");
             StartRelease();
         }
@@ -132,7 +136,7 @@ DLLEXPORT int LeviathanApplication::RunMessageLoop(){
         // engine tick //
         _Engine->Tick();
 
-        if(ShouldQuit || Quit){
+        if(ShouldQuit || Quit) {
             // We need to have done a proper run after calling StartRelease //
             continue;
         }
@@ -142,9 +146,9 @@ DLLEXPORT int LeviathanApplication::RunMessageLoop(){
         // We could potentially wait here //
         //! TODO: make this wait happen only if tick wasn't actually and no frame was
         //! rendered
-        try{
+        try {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        } catch(...){
+        } catch(...) {
             FailCount++;
         }
     }
@@ -156,38 +160,29 @@ DLLEXPORT int LeviathanApplication::RunMessageLoop(){
     // always release before quitting to avoid tons of memory leaks //
     Release();
 
-    return 0; 
+    return 0;
 }
 // ------------------------------------ //
-DLLEXPORT void LeviathanApplication::ClearTimers(){
+DLLEXPORT void LeviathanApplication::ClearTimers()
+{
 
     _Engine->ClearTimers();
 }
 // ------------------ Default callbacks that do nothing ------------------ //
-DLLEXPORT bool LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine){
+DLLEXPORT bool LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine)
+{
 
     return true;
 }
 
-DLLEXPORT void LeviathanApplication::RegisterApplicationPhysicalMaterials(
-    PhysicsMaterialManager* manager)
+DLLEXPORT void LeviathanApplication::Tick(int mspassed) {}
+
+DLLEXPORT void LeviathanApplication::CustomizeEnginePostLoad() {}
+
+DLLEXPORT void LeviathanApplication::EnginePreShutdown() {}
+
+DLLEXPORT std::shared_ptr<GameWorld> LeviathanApplication::GetGameWorld(int id)
 {
-
-}
-
-DLLEXPORT void LeviathanApplication::Tick(int mspassed){
-
-}
-
-DLLEXPORT void LeviathanApplication::CustomizeEnginePostLoad(){
-    
-}
-
-DLLEXPORT void LeviathanApplication::EnginePreShutdown(){
-
-}
-
-DLLEXPORT std::shared_ptr<GameWorld> LeviathanApplication::GetGameWorld(int id){
 
     return nullptr;
 }
@@ -195,22 +190,19 @@ DLLEXPORT std::shared_ptr<GameWorld> LeviathanApplication::GetGameWorld(int id){
 
 DLLEXPORT void LeviathanApplication::DummyGameConfigurationVariables(
     GameConfiguration* configobj)
-{
-
-}
+{}
 
 DLLEXPORT void LeviathanApplication::DummyGameKeyConfigVariables(
     KeyConfiguration* keyconfigobj)
+{}
+
+DLLEXPORT void LeviathanApplication::MarkAsClosing()
 {
-
-}
-
-DLLEXPORT void LeviathanApplication::MarkAsClosing(){
     QuitSometime = true;
 }
 // ------------------------------------ //
 DLLEXPORT void LeviathanApplication::StartServerProcess(
-    const std::string &processname, const std::string &commandline)
+    const std::string& processname, const std::string& commandline)
 {
 
 #ifdef _WIN32
@@ -222,39 +214,36 @@ DLLEXPORT void LeviathanApplication::StartServerProcess(
     ZeroMemory(&startedinfo, sizeof(PROCESS_INFORMATION));
 
     processstart.cb = sizeof(STARTUPINFOA);
-    //processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
-    //processstart.wShowWindow = SW_SHOWMINIMIZED;
+    // processstart.dwFlags = STARTF_FORCEOFFFEEDBACK;
+    // processstart.wShowWindow = SW_SHOWMINIMIZED;
 
-    std::string finalstart = "\""+processname+"\" "+commandline;
+    std::string finalstart = "\"" + processname + "\" " + commandline;
 
     // Use windows process creation //
-    if(!CreateProcessA(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, 
-            NULL, NULL, &processstart,
-            &startedinfo))
-    {
+    if(!CreateProcessA(NULL, const_cast<char*>(finalstart.c_str()), NULL, NULL, FALSE, 0, NULL,
+           NULL, &processstart, &startedinfo)) {
         // Failed to start the process
-        Logger::Get()->Error("Failed to start the server process, error code: "+
-            Convert::ToString(GetLastError()));
+        Logger::Get()->Error("Failed to start the server process, error code: " +
+                             Convert::ToString(GetLastError()));
         return;
     }
 
     // Close our handles //
     CloseHandle(startedinfo.hThread);
     DEBUG_BREAK;
-    //ServerProcessHandle = startedinfo.hProcess;
+    // ServerProcessHandle = startedinfo.hProcess;
 
 
 #else
     // Popen should work //
 
     // Actually fork might be simpler //
-    if(fork() == 0){
+    if(fork() == 0) {
         // We are now in the child process //
 
-        execl(processname.c_str(), commandline.c_str(), (char*) NULL);
+        execl(processname.c_str(), commandline.c_str(), (char*)NULL);
     }
 
 
 #endif // _WIN32
-
 }

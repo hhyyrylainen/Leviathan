@@ -118,16 +118,16 @@ thingsToGenerate = [
      Variable.new("TickNumber", "int32_t"),
    ]],
 
-  ["EntityConstraint",
-   [
-     Variable.new("WorldID", "int32_t"),
-     Variable.new("Create", "bool"),
-     Variable.new("ConstraintID", "int32_t"),
-     Variable.new("EntityID1", "ObjectID"),
-     Variable.new("EntityID2", "ObjectID"),
-     Variable.new("ConstraintType", "ENTITY_CONSTRAINT_TYPE", serializeas: "uint16_t"),
-     Variable.new("ConstraintData", "ObjectID"),
-   ]],
+  # ["EntityConstraint",
+  #  [
+  #    Variable.new("WorldID", "int32_t"),
+  #    Variable.new("Create", "bool"),
+  #    Variable.new("ConstraintID", "int32_t"),
+  #    Variable.new("EntityID1", "ObjectID"),
+  #    Variable.new("EntityID2", "ObjectID"),
+  #    Variable.new("ConstraintType", "ENTITY_CONSTRAINT_TYPE", serializeas: "uint16_t"),
+  #    Variable.new("ConstraintData", "ObjectID"),
+  #  ]],
   
   ["EntityUpdate",
    [

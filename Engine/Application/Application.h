@@ -4,16 +4,16 @@
 // ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-#include "Engine.h"
 #include "Application/AppDefine.h"
+#include "Engine.h"
 #include "Script/ScriptExecutor.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
 class NetworkInterface;
 
 //! \brief Base class for all leviathan programs
-class LeviathanApplication : public ThreadSafe{
+class LeviathanApplication : public ThreadSafe {
 public:
     // creation and initialization //
     DLLEXPORT LeviathanApplication();
@@ -38,14 +38,25 @@ public:
     DLLEXPORT virtual int RunMessageLoop();
     DLLEXPORT virtual void Render();
     DLLEXPORT virtual bool PassCommandLine(int argcount, char* args[]);
-        
+
     DLLEXPORT virtual void Tick(int mspassed);
     DLLEXPORT virtual void PreFirstTick();
-		
+
     // getting data from the class //
-    DLLEXPORT bool Quitting(){ return Quit; };
-    DLLEXPORT Engine* GetEngine(){ return _Engine;};
-    DLLEXPORT AppDef* GetDefinition(){ return ApplicationConfiguration;};
+    DLLEXPORT bool Quitting()
+    {
+        return Quit;
+    }
+
+    DLLEXPORT Engine* GetEngine()
+    {
+        return _Engine;
+    }
+
+    DLLEXPORT AppDef* GetDefinition()
+    {
+        return ApplicationConfiguration;
+    }
 
 
     //! \brief Resets all time sensitive timers
@@ -55,9 +66,6 @@ public:
 
     // callback functions called during engine initialization at appropriate times //
     DLLEXPORT virtual bool InitLoadCustomScriptTypes(asIScriptEngine* engine);
-        
-    DLLEXPORT virtual void RegisterApplicationPhysicalMaterials(
-        PhysicsMaterialManager* manager);
 
     DLLEXPORT virtual void CustomizeEnginePostLoad();
     DLLEXPORT virtual void EnginePreShutdown();
@@ -67,23 +75,22 @@ public:
     //! This is called when the world holder couldn't find a world with the id
     DLLEXPORT virtual std::shared_ptr<GameWorld> GetGameWorld(int id);
 
-    
+
     // static access method for getting instance of this class //
     DLLEXPORT static LeviathanApplication* Get();
-        
+
     // Some dummy functions for ease of use //
     DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
     DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
 
     // Utility functions //
-    DLLEXPORT static void StartServerProcess(const std::string &processname,
-        const std::string &commandline);
+    DLLEXPORT static void StartServerProcess(
+        const std::string& processname, const std::string& commandline);
 
     DLLEXPORT virtual NETWORKED_TYPE GetProgramNetType() const = 0;
-        
-protected:
 
+protected:
     //! \brief Performs the final steps in the release process
     //! \warning This should not be called directly
     DLLEXPORT virtual void Release();
@@ -98,28 +105,27 @@ protected:
 
     //! Called to destroy the custom packet handler. This is called
     //! just before the engine is released and the main loop exited
-    virtual void _ShutdownApplicationPacketHandler() = 0; 
+    virtual void _ShutdownApplicationPacketHandler() = 0;
 
 protected:
     // ------------------------------------ //
 
     bool Quit = false;
     bool ShouldQuit = false;
-        
-    //! This can be quickly set anywhere to quit sometime in the future 
+
+    //! This can be quickly set anywhere to quit sometime in the future
     bool QuitSometime = false;
 
     Engine* _Engine;
     AppDef* ApplicationConfiguration = nullptr;
-        
+
     // static part //
     static LeviathanApplication* Curapp;
 };
 
 
-}
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::LeviathanApplication;
 #endif
-

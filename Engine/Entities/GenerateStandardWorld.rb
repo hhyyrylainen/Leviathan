@@ -52,8 +52,6 @@ worldClass = GameWorldClass.new(
                                            angelScriptUseInstead:
                                              Variable.new("updatepos", "Position*",
                                                           noRef: true)),
-                              Variable.new("updatesendable", "Sendable*",
-                                           noRef: true)
                             ], usedatastruct: true)], releaseparams: []),
     EntityComponent.new("BoxGeometry",
                         [ConstructorInfo.new(

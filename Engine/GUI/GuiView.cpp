@@ -825,6 +825,7 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
 
         Engine::Get()->GetSoundDevice()->Play2DSoundEffect(
             message->GetArgumentList()->GetString(0));
+        return true;
     }
 
     if(name == "AudioSource") {

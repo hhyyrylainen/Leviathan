@@ -33,7 +33,8 @@ $bullet = Bullet.new(
   disableDemos: true,
   noInstallSudo: true,
   # Only way to properly get -fPIC on linux (without hacking with CXX_FLAGS)
-  shared: true
+  # And bullet doesn't support shared libs on Windows
+  shared: if OS.linux? then true else false end
 )
 
 $angelscript = AngelScript.new(
@@ -148,6 +149,7 @@ if OS.windows?
   $openalsoft = OpenALSoft.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
+    disableExamples: true,
     version: "master"
   )
 end

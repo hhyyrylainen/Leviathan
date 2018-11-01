@@ -161,8 +161,8 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("Physics",
-           "PhysicsBody@ CreatePhysicsBody(PhysicalWorld@ world, PhysicsShape@ shape, int "
-           "physicsmaterialid = -1)",
+           "PhysicsBody@ CreatePhysicsBody(PhysicalWorld@ world, PhysicsShape@ shape, "
+           "float mass, int physicsmaterialid = -1)",
            asMETHOD(Physics, CreatePhysicsBodyWrapper), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -178,8 +178,8 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod(
-           "Physics", "void Release()", asMETHOD(Physics, Release), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Physics", "void Release(PhysicalWorld@ world)",
+           asMETHOD(Physics, Release), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

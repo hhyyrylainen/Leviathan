@@ -399,18 +399,20 @@ public:
     DLLEXPORT ~Physics();
 
     //! \brief Destroys the physical body
-    DLLEXPORT void Release();
+    DLLEXPORT void Release(PhysicalWorld* world);
 
     //! \brief Use this to create a body for this component once Collision is set
     //! \param physicsmaterialid Retrieve from the same world with
     //! `GameWorld::GetPhysicalMaterial`. -1 to use default material
     //! \todo This should be changed so that the Physics constructor would create the physics
     //! body
+    //! \warning Only the physical world from the GameWorld that this entity is in may be used
+    //! here
     DLLEXPORT PhysicsBody::pointer CreatePhysicsBody(PhysicalWorld* world,
         const PhysicsShape::pointer& shape, float mass, int physicsmaterialid = -1);
 
     //! \brief Updates the shape. This can be the same pointer as before. BUT if the shape is
-    //! modified this MUST be called before physics is sumulated the next time
+    //! modified this MUST be called before physics is simulated the next time
     DLLEXPORT bool ChangeShape(PhysicalWorld* world, const PhysicsShape::pointer& shape);
 
     //! \brief Syncs this physics body to a changed position.
@@ -449,10 +451,10 @@ public:
     }
 
     inline PhysicsBody* CreatePhysicsBodyWrapper(
-        PhysicalWorld* world, PhysicsShape* shape, int physicsmaterialid)
+        PhysicalWorld* world, PhysicsShape* shape, float mass, int physicsmaterialid)
     {
-        auto body =
-            CreatePhysicsBody(world, ReferenceCounted::WrapPtr(shape), physicsmaterialid);
+        auto body = CreatePhysicsBody(
+            world, ReferenceCounted::WrapPtr(shape), mass, physicsmaterialid);
 
         if(body)
             body->AddRef();

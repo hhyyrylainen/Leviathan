@@ -35,6 +35,16 @@ public:
         const Float4& orientation = Float4::IdentityQuaternion());
     DLLEXPORT bool RemoveChildShape(PhysicsShape* child);
 
+    //
+    // Script wrappers
+    //
+    DLLEXPORT inline bool AddChildShapeWrapper(PhysicsShape* child,
+        const Float3& offset = Float3(0, 0, 0),
+        const Float4& orientation = Float4::IdentityQuaternion())
+    {
+        return AddChildShape(ReferenceCounted::WrapPtr(child), offset, orientation);
+    }
+
 private:
     std::unique_ptr<btCollisionShape> Shape1;
 

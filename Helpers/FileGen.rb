@@ -510,7 +510,7 @@ class GameWorldClass < OutputClass
   def genMemberConstructor(f, opts)
 
     f.write "#{export}#{qualifier opts}#{@Name}(const " +
-            "std::shared_ptr<PhysicsMaterialManager>& physicsMaterials)"
+            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials)"
     
     if opts.include?(:impl)
       f.puts " : #{@BaseClass}(physicsMaterials) "

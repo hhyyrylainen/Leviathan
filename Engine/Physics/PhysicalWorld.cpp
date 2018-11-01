@@ -4,7 +4,6 @@
 #include "../TimeIncludes.h"
 #include "Engine.h"
 #include "Events/EventHandler.h"
-// #include "NewtonConversions.h"
 #include "PhysicsMaterialManager.h"
 
 #include <bullet/btBulletDynamicsCommon.h>
@@ -46,7 +45,7 @@ public:
 
             if(pair && pair->AABBCallback) {
 
-                return pair->AABBCallback(*body1, *body2);
+                return pair->AABBCallback(*World, *body1, *body2);
             }
         }
 
@@ -99,29 +98,23 @@ DLLEXPORT PhysicalWorld::PhysicalWorld(
 
 DLLEXPORT PhysicalWorld::~PhysicalWorld()
 {
+    // It is an error to not release a body
+    if(!PhysicsBodies.empty()) {
+        LOG_ERROR("PhysicalWorld: not all bodies have been destroyed, alive count: " +
+                  std::to_string(PhysicsBodies.size()));
+    }
+
     // All bodies need to be destroyed here
+    while(!PhysicsBodies.empty()) {
+        DestroyBody(PhysicsBodies.back().get());
+    }
 
     // We can rely on the default delete order and everything is fine
 }
 // ------------------------------------ //
-DLLEXPORT void PhysicalWorld::SimulateWorld(float secondspassed, int splits /*= 1*/)
+DLLEXPORT void PhysicalWorld::SimulateWorld(float secondspassed, int maxsubsteps /*= 4*/)
 {
-    if(splits <= 0) {
-
-        // TODO: report error?
-        splits = 1;
-    }
-
-    const float timeStep = secondspassed / splits;
-
-    for(int i = 0; i < splits; ++i) {
-
-        Engine::Get()->GetEventHandler()->CallEvent(new Event(
-            EVENT_TYPE_PHYSICS_BEGIN, new PhysicsStartEventData(timeStep, OwningWorld)));
-
-        // We do our own splitting to timesteps
-        DynamicsWorld->stepSimulation(timeStep, 0);
-    }
+    DynamicsWorld->stepSimulation(secondspassed, maxsubsteps);
 }
 
 void PhysicalWorld::OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep)
@@ -187,7 +180,7 @@ void PhysicalWorld::OnManifoldWithContact(btPersistentManifold* contactManifold,
 
         if(pair && pair->ContactCallback) {
 
-            pair->ContactCallback(*body1, *body2);
+            pair->ContactCallback(*this, *body1, *body2);
         }
     }
 }
@@ -307,7 +300,13 @@ DLLEXPORT PhysicsBody::pointer PhysicalWorld::CreateBodyFromCollision(
         }
     }
 
+    // Dirty hack to make bodies not sleep
+    body->GetBody()->setActivationState(DISABLE_DEACTIVATION);
+
     DynamicsWorld->addRigidBody(body->GetBody());
+
+    // Make sure it is alive as long as it is in the world
+    PhysicsBodies.push_back(body);
     return body;
 }
 
@@ -331,6 +330,17 @@ DLLEXPORT void PhysicalWorld::DestroyBody(PhysicsBody* body)
 {
     DynamicsWorld->removeRigidBody(body->GetBody());
     body->DetachResources();
+
+    // Remove from alive bodies
+    for(auto iter = PhysicsBodies.begin(); iter != PhysicsBodies.end(); ++iter) {
+
+        if(iter->get() == body) {
+            PhysicsBodies.erase(iter);
+            return;
+        }
+    }
+
+    LOG_WARNING("PhysicalWorld: DestroyBody: called with body that wasn't in PhysicsBodies");
 }
 
 // ------------------------------------ //

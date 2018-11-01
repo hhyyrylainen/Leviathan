@@ -88,13 +88,13 @@ DLLEXPORT Physics::~Physics()
 {
     if(Body) {
         LOG_ERROR("Physics: Release not called before destructor!");
-        Release();
     }
 }
 
-DLLEXPORT void Physics::Release()
+DLLEXPORT void Physics::Release(PhysicalWorld* world)
 {
-
+    if(Body)
+        world->DestroyBody(Body.get());
     Body.reset();
 }
 // ------------------------------------ //

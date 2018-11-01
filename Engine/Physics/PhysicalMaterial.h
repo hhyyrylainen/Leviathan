@@ -11,6 +11,7 @@
 namespace Leviathan {
 
 class PhysicsBody;
+class PhysicalWorld;
 
 //! This callback is called first when the bounding boxes of 2 bodies touch. This can be used
 //! then to disable the collision or allow the collision. After this has run if the bodies
@@ -18,14 +19,15 @@ class PhysicsBody;
 //! touching point. If no fine grained hit detection is needed this can also be used for that.
 //! Returning false disables the collision between the objects. Returning true enables the
 //! collision
-using PhysicsMaterialAABBCallback = bool (*)(PhysicsBody&, PhysicsBody&);
+using PhysicsMaterialAABBCallback = bool (*)(PhysicalWorld& world, PhysicsBody&, PhysicsBody&);
 
 
 //! This function is called every time an actual collision occurs
 //! between objects for each collision point between the materials.
 //! This is recommended to be used for playing sound effects and other
 //! fine grained hit detection.
-using PhysicsMaterialContactCallback = void (*)(PhysicsBody&, PhysicsBody&);
+using PhysicsMaterialContactCallback = void (*)(
+    PhysicalWorld& world, PhysicsBody&, PhysicsBody&);
 
 
 

@@ -57,6 +57,9 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
     // Let it run a bit
     world.Tick(1);
     world.Tick(2);
+    world.Tick(3);
+    world.Tick(4);
+    world.Tick(5);
 
     // And check that it has fallen a bit
     CHECK(pos.Members._Position != Float3(0, 10, 0));
@@ -65,9 +68,32 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
     world.Release();
 }
 
+TEST_CASE("Plane constrainted physics sphere doesn't fall", "[physics][entity]")
+{
+    PhysicsMaterialManager materials;
+    PhysicalWorld world(nullptr, &materials);
+
+    auto body = world.CreateBodyFromCollision(world.CreateSphere(1), 10, nullptr);
+    REQUIRE(body);
+
+    body->ConstraintMovementAxises();
+
+    body->SetPosition(Float3(0, 10, 0), Float4::IdentityQuaternion());
+
+    // Let it run a bit
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+
+    // And check that it hasn't fallen a bit
+    CHECK(body->GetPosition() == Float3(0, 10, 0));
+
+    world.DestroyBody(body.get());
+}
+
 std::atomic<int> TestHit = 0;
 
-bool TestAABBCallback(PhysicsBody& body1, PhysicsBody& body2)
+bool TestAABBCallback(PhysicalWorld& world, PhysicsBody& body1, PhysicsBody& body2)
 {
     ++TestHit;
     return 1;
@@ -195,8 +221,7 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
     auto& pos2 = world.Create_Position(plane, Float3(5, 0, 0), Float4::IdentityQuaternion());
     auto& physics2 = world.Create_Physics(plane, &world, pos2);
 
-    CHECK(physics2.CreatePhysicsBody(
-        physWorld, shape2, 0, material2));
+    CHECK(physics2.CreatePhysicsBody(physWorld, shape2, 0, material2));
 
     CHECK(TestHit == 0);
 
@@ -211,4 +236,38 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
     CHECK(TestHit > 0);
 
     world.Release();
+}
+
+TEST_CASE(
+    "Plane constrainted physics sphere can be moved with an impulse", "[physics][entity]")
+{
+    PhysicsMaterialManager materials;
+    PhysicalWorld world(nullptr, &materials);
+
+    auto body = world.CreateBodyFromCollision(world.CreateSphere(1), 10, nullptr);
+    REQUIRE(body);
+
+    body->ConstraintMovementAxises();
+
+    body->SetPosition(Float3(0, 10, 0), Float4::IdentityQuaternion());
+
+    // Let it run a bit
+    world.SimulateWorld(0.1f);
+
+    CHECK(body->GetPosition() == Float3(0, 10, 0));
+
+    // Impulse
+    body->GiveImpulse(Float3(42.6506f, 0, -90.4485f));
+
+    // And run again to let it effect
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+
+    // And check that it hasn't fallen a bit
+    CHECK(body->GetPosition().Y == 10);
+
+    // And it has moved
+    CHECK(body->GetPosition() != Float3(0, 10, 0));
+
+    world.DestroyBody(body.get());
 }

@@ -21,6 +21,19 @@ bool BindShape(asIScriptEngine* engine)
 {
     ANGELSCRIPT_REGISTER_REF_TYPE("PhysicsShape", PhysicsShape);
 
+    if(engine->RegisterObjectMethod("PhysicsShape",
+           "bool AddChildShape(PhysicsShape@ child, const Float3 &in offset = Float3(0, 0, "
+           "0), const Float4 &in orientation = Float4::IdentityQuaternion)",
+           asMETHOD(PhysicsShape, AddChildShapeWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicsShape",
+           "bool RemoveChildShape(PhysicsShape@ child)",
+           asMETHOD(PhysicsShape, RemoveChildShape), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 
@@ -76,9 +89,24 @@ bool BindBody(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("PhysicsBody", "PhysicsShape@ get_Shape() const",
+           asMETHOD(PhysicsBody, GetShapeWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicsBody", "PhysicsShape@ GetShape() const",
+           asMETHOD(PhysicsBody, GetShapeWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("PhysicsBody",
            "bool SetPosition(const Float3 &in pos, const Float4 &in orientation)",
            asMETHOD(PhysicsBody, SetPosition), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicsBody", "Float3 GetPosition() const",
+           asMETHOD(PhysicsBody, GetPosition), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -100,10 +128,15 @@ bool BindBody(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("PhysicsBody", "void SetFriction(float friction)",
+           asMETHOD(PhysicsBody, SetFriction), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("PhysicsBody",
-           "bool CreatePlaneConstraint(const Float3 &in planenormal = "
-           "Float3(0, 1, 0))",
-           asMETHOD(PhysicsBody, CreatePlaneConstraint), asCALL_THISCALL) < 0) {
+           "void ConstraintMovementAxises(const Float3 &in movement = Float3(1, 0, 1), const "
+           "Float3 &in rotation = Float3(0, 1, 0))",
+           asMETHOD(PhysicsBody, ConstraintMovementAxises), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -124,11 +157,10 @@ bool Leviathan::BindPhysics(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // if(engine->RegisterObjectMethod("PhysicalWorld",
-    //        "NewtonCollision@ CreateCompoundCollision()",
-    //        asMETHOD(PhysicalWorld, CreateCompoundCollision), asCALL_THISCALL) < 0) {
-    //     ANGELSCRIPT_REGISTERFAIL;
-    // }
+    if(engine->RegisterObjectMethod("PhysicalWorld", "PhysicsShape@ CreateCompound()",
+           asMETHOD(PhysicalWorld, CreateCompoundWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     if(engine->RegisterObjectMethod("PhysicalWorld",
            "PhysicsShape@ CreateSphere(float radius)",

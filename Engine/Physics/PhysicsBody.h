@@ -79,11 +79,17 @@ public:
     //! Recommended value is 0.1f
     DLLEXPORT void SetDamping(float linear, float angular);
 
+    //! \brief Sets the friction on this body
+    DLLEXPORT void SetFriction(float friction);
+
     //! \brief Moves the physical body to the specified position
     //! \returns False if this fails because there currently is no physics body
     //! for this component
     //! \exception InvalidArgument if pos or orientation has non-finite values
     DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
+
+    //! \returns The current physical body position
+    DLLEXPORT Float3 GetPosition() const;
 
     //! \brief Same as SetPosition but only sets orientation
     DLLEXPORT bool SetOnlyOrientation(const Float4& orientation);
@@ -101,8 +107,11 @@ public:
         return Mass;
     }
 
-    //! \brief Adds a constraint to the current Body to only move in place
-    DLLEXPORT bool CreatePlaneConstraint(const Float3& planenormal = Float3(0, 1, 0));
+    //! \brief Adds a constraint to the current Body to only move on specified axises
+    //!
+    //! This uses the bullet linear factor and replaces
+    DLLEXPORT void ConstraintMovementAxises(
+        const Float3& movement = Float3(1, 0, 1), const Float3& rotation = Float3(0, 1, 0));
 
     //! \brief Applies material properties
     //! \todo Add in the properties that make sense as there currently is none
@@ -132,6 +141,16 @@ public:
     DLLEXPORT inline void SetOwningEntity(ObjectID entity)
     {
         ThisEntity = entity;
+    }
+
+    //
+    // Script wrappers
+    //
+    inline PhysicsShape* GetShapeWrapper() const
+    {
+        if(Shape)
+            Shape->AddRef();
+        return Shape.get();
     }
 
     REFERENCE_COUNTED_PTR_TYPE(PhysicsBody);

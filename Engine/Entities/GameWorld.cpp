@@ -550,7 +550,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
 
         _ApplyEntityUpdatePackets();
         if(_PhysicalWorld)
-            _PhysicalWorld->SimulateWorld(1000.f / TICKSPEED, 2);
+            _PhysicalWorld->SimulateWorld(TICKSPEED / 1000.f);
 
         // } else {
 

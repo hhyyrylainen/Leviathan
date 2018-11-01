@@ -61,8 +61,7 @@ public:
     DLLEXPORT ~PhysicalWorld();
 
     //! \brief Advances the simulation the specified amount of time
-    //! \todo Remove the physics begin event
-    DLLEXPORT void SimulateWorld(float secondspassed, int splits = 1);
+    DLLEXPORT void SimulateWorld(float secondspassed, int maxsubsteps = 4);
 
     // ------------------------------------ //
     // Physics collision creation
@@ -118,6 +117,16 @@ public:
         return obj.get();
     }
 
+    inline PhysicsShape* CreateCompoundWrapper()
+    {
+        auto obj = CreateCompound();
+
+        if(obj)
+            obj->AddRef();
+
+        return obj.get();
+    }
+
 protected:
     static void OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep);
 
@@ -147,6 +156,8 @@ protected:
 
     std::unique_ptr<LeviathanPhysicsOverlapFilter> OverlapFilter;
 
+    //! We need to keep the physic bodies alive (guaranteed) until they are destroyed
+    std::vector<PhysicsBody::pointer> PhysicsBodies;
 
     // //! Used for resimulation
     // //! \todo Potentially allow this to be a vector

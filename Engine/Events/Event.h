@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -34,7 +34,6 @@ enum EVENT_TYPE {
     EVENT_TYPE_FRAME_END,
     EVENT_TYPE_INIT,
     EVENT_TYPE_RELEASE,
-    EVENT_TYPE_PHYSICS_BEGIN,
     EVENT_TYPE_TEST,
     //! Only called on the client when a frame is about to be renderd and interpolation status
     //! needs to be determined
@@ -92,24 +91,6 @@ public:
     float Percentage;
 };
 
-//! \brief Data for EVENT_TYPE_PHYSICS_BEGIN
-class PhysicsStartEventData : public BaseEventData {
-public:
-    //! \brief Loads from a packet
-    DLLEXPORT PhysicsStartEventData(sf::Packet& packet);
-    //! \brief Creates a new PhysicsStartEventData
-    DLLEXPORT PhysicsStartEventData(const float& time, void* worldptr);
-
-    virtual void AddDataToPacket(sf::Packet& packet);
-
-    //! The time step in seconds
-    float TimeStep;
-
-    //! Pointer to the world
-    //! \warning This is NULL if this event is passed through a packet
-    void* GameWorldPtr;
-};
-
 //! \brief Data for EVENT_TYPE_ENGINE_TICK and all others that have only int data
 class IntegerEventData : public BaseEventData {
 public:
@@ -142,7 +123,6 @@ public:
     DLLEXPORT void AddDataToPacket(sf::Packet& packet) const;
 
     // Data getting functions //
-    DLLEXPORT PhysicsStartEventData* GetDataForPhysicsStartEvent() const;
     DLLEXPORT ClientInterpolationEventData* GetDataForClientInterpolationEvent() const;
     //! \brief Gets the data if this is an event that has only one integer data member
     DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;

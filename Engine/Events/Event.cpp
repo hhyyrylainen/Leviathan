@@ -12,8 +12,8 @@ DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) :
     // Check that types that require values have values //
     if(!Data) {
         // Check that the event has data //
-        if(Type == EVENT_TYPE_PHYSICS_BEGIN || Type == EVENT_TYPE_FRAME_BEGIN ||
-            Type == EVENT_TYPE_FRAME_END || Type == EVENT_TYPE_TICK) {
+        if(Type == EVENT_TYPE_FRAME_BEGIN || Type == EVENT_TYPE_FRAME_END ||
+            Type == EVENT_TYPE_TICK) {
 
             throw InvalidArgument("Event that requires data, didn't get it");
         }
@@ -56,31 +56,22 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet& packet)
 
     // Load based on type //
     switch(Type) {
-    case EVENT_TYPE_PHYSICS_BEGIN: {
-        // Load data //
-        Data = new PhysicsStartEventData(packet);
-    } break;
     case EVENT_TYPE_FRAME_BEGIN:
     case EVENT_TYPE_FRAME_END:
     case EVENT_TYPE_TICK: {
         Data = new IntegerEventData(packet);
-    } break;
+        break;
+    }
     case EVENT_TYPE_CLIENT_INTERPOLATION: {
         Data = new ClientInterpolationEventData(packet);
-    } break;
+        break;
+    }
     default:
         // No data required //
         Data = NULL;
     }
 }
 // ------------------------------------ //
-DLLEXPORT PhysicsStartEventData* Leviathan::Event::GetDataForPhysicsStartEvent() const
-{
-    if(Type == EVENT_TYPE_PHYSICS_BEGIN)
-        return static_cast<PhysicsStartEventData*>(Data);
-    return NULL;
-}
-
 DLLEXPORT ClientInterpolationEventData* Event::GetDataForClientInterpolationEvent() const
 {
     if(Type == EVENT_TYPE_CLIENT_INTERPOLATION)
@@ -100,20 +91,17 @@ DLLEXPORT Leviathan::GenericEvent::GenericEvent(
     const std::string& type, const NamedVars& copyvals) :
     TypeStr(new std::string(type)),
     Variables(new NamedVars(copyvals))
-{
-}
+{}
 
 DLLEXPORT Leviathan::GenericEvent::GenericEvent(
     std::string* takeownershipstr, NamedVars* takeownershipvars) :
     TypeStr(takeownershipstr),
     Variables(takeownershipvars)
-{
-}
+{}
 
 DLLEXPORT Leviathan::GenericEvent::GenericEvent(const std::string& type) :
     TypeStr(new std::string(type)), Variables(new NamedVars())
-{
-}
+{}
 
 DLLEXPORT Leviathan::GenericEvent::~GenericEvent()
 {
@@ -213,29 +201,6 @@ DLLEXPORT void ClientInterpolationEventData::AddDataToPacket(sf::Packet& packet)
 
     packet << TickNumber << TimeInTick;
 }
-// ------------------ PhysicsStartEventData ------------------ //
-void Leviathan::PhysicsStartEventData::AddDataToPacket(sf::Packet& packet)
-{
-    // Add our data //
-    packet << TimeStep;
-}
-
-Leviathan::PhysicsStartEventData::PhysicsStartEventData(const float& time, void* worldptr) :
-    TimeStep(time), GameWorldPtr(worldptr)
-{
-}
-
-DLLEXPORT Leviathan::PhysicsStartEventData::PhysicsStartEventData(sf::Packet& packet)
-{
-    // Load our data //
-    if(!(packet >> TimeStep)) {
-
-        throw InvalidArgument("packet has invalid format");
-    }
-
-    // This doesn't make any sense to be stored //
-    GameWorldPtr = NULL;
-}
 // ------------------ IntegerEventData ------------------ //
 DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet& packet)
 {
@@ -248,8 +213,7 @@ DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet& packet)
 
 DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) :
     IntegerDataValue(ticknumber)
-{
-}
+{}
 
 void Leviathan::IntegerEventData::AddDataToPacket(sf::Packet& packet)
 {

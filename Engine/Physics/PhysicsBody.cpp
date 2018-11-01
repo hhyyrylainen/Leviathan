@@ -47,6 +47,9 @@ DLLEXPORT void PhysicsBody::ApplyShapeChange(const PhysicsShape::pointer& shape)
         Shape->GetShape()->calculateLocalInertia(Mass, localInertia);
 
     Body->setMassProps(Mass, localInertia);
+
+    // TODO: is Body->updateInertiaTensor() needed here? or is the removing and adding this
+    // back to the world good enough?
 }
 // ------------------------------------ //
 DLLEXPORT bool PhysicsBody::SetPosition(const Float3& pos, const Float4& orientation)
@@ -75,6 +78,14 @@ DLLEXPORT bool PhysicsBody::SetPosition(const Float3& pos, const Float4& orienta
     return true;
 }
 
+DLLEXPORT Float3 PhysicsBody::GetPosition() const
+{
+    if(!Body)
+        throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
+
+    return Body->getCenterOfMassTransform().getOrigin();
+}
+// ------------------------------------ //
 DLLEXPORT bool PhysicsBody::SetOnlyOrientation(const Float4& orientation)
 {
     if(!Body)
@@ -105,7 +116,6 @@ DLLEXPORT void PhysicsBody::GiveImpulse(const Float3& deltaspeed, const Float3& 
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
 
-
     // Safety check. Can be disabled in release builds if this is a performance issue
     if(deltaspeed.HasInvalidValues() || point.HasInvalidValues()) {
 
@@ -117,6 +127,7 @@ DLLEXPORT void PhysicsBody::GiveImpulse(const Float3& deltaspeed, const Float3& 
     }
 
     Body->applyImpulse(deltaspeed, point);
+    // Maybe this needs to call activate() for the force to move it?
 }
 
 DLLEXPORT void PhysicsBody::SetVelocity(const Float3& velocities)
@@ -214,14 +225,21 @@ DLLEXPORT void PhysicsBody::ApplyTorque(const Float3& torque)
 
     Body->applyTorque(torque);
 }
-
+// ------------------------------------ //
 DLLEXPORT void PhysicsBody::SetDamping(float linear, float angular)
 {
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
 
-
     Body->setDamping(linear, angular);
+}
+
+DLLEXPORT void PhysicsBody::SetFriction(float friction)
+{
+    if(!Body)
+        throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
+
+    Body->setFriction(friction);
 }
 // ------------------------------------ //
 DLLEXPORT void PhysicsBody::SetMass(float mass)
@@ -252,14 +270,14 @@ DLLEXPORT void PhysicsBody::SetMass(float mass)
     Body->setMassProps(mass, localInertia);
 }
 // ------------------------------------ //
-DLLEXPORT bool PhysicsBody::CreatePlaneConstraint(
-    const Float3& planenormal /*= Float3(0, 1, 0)*/)
+DLLEXPORT void PhysicsBody::ConstraintMovementAxises(
+    const Float3& movement /*= Float3(1, 0, 1)*/, const Float3& rotation /*= Float3(0, 1, 0)*/)
 {
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
 
-
-    return true;
+    Body->setLinearFactor(movement);
+    Body->setAngularFactor(rotation);
 }
 // ------------------------------------ //
 DLLEXPORT void PhysicsBody::ApplyMaterial(PhysicalMaterial& material)

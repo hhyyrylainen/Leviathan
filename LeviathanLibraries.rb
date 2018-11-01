@@ -149,7 +149,6 @@ if OS.windows?
   $openalsoft = OpenALSoft.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
-    disableExamples: true,
     version: "master"
   )
 end

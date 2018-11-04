@@ -9,7 +9,10 @@
 namespace Leviathan {
 
 //! \brief Allows object to register for events that can be fired from anywhere
-class EventHandler : public ThreadSafe {
+//!
+//! This is recursive to allow EventCallbacks to also fire events. This makes it possible to
+//! cause a stackoverflow but makes it easier to make events that fire a different event
+class EventHandler : public ThreadSafeRecursive {
 public:
     DLLEXPORT EventHandler();
     DLLEXPORT ~EventHandler();

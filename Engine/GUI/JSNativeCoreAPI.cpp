@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "JSNativeCoreAPI.h"
 
+#include "CEFConversionHelpers.h"
 #include "GuiCEFApplication.h"
 #include "JavaScriptHelper.h"
 using namespace Leviathan;
@@ -124,6 +125,38 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         Owner->StartListeningForEvent(tmplistener.get());
 
         return true;
+
+    } else if(name == "CallGenericEvent") {
+
+        if(arguments.size() < 1 || !arguments[0]->IsString() ||
+            (arguments.size() > 1 && !arguments[1]->IsObject())) {
+
+            // Invalid arguments //
+            exception = "Invalid arguments passed, expected: string, [object]";
+            return true;
+        }
+
+        // Get the name //
+        const std::string eventname = arguments[0]->GetStringValue();
+
+        // Pack data to a message and send to the browser process
+        CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("CallGenericEvent");
+
+        CefRefPtr<CefListValue> args = msg->GetArgumentList();
+
+        args->SetString(0, arguments[0]->GetStringValue());
+
+        if(arguments.size() > 1) {
+
+            CefRefPtr<CefDictionaryValue> dictionary = CefDictionaryValue::Create();
+            JSObjectToDictionary(arguments[1], dictionary);
+
+            args->SetDictionary(1, dictionary);
+        }
+
+        SendProcessMessage(msg);
+        return true;
+
     } else if(name == "Play2DSoundEffect") {
 
         if(arguments.size() < 1 || !arguments[0]->IsString()) {
@@ -138,8 +171,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         CefRefPtr<CefListValue> args = msg->GetArgumentList();
 
         args->SetString(0, arguments[0]->GetStringValue());
-        // CefV8Context::GetCurrentContext()->GetBrowser()->SendProcessMessage(PID_BROWSER,
-        // msg);
+
         SendProcessMessage(msg);
         return true;
 

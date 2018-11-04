@@ -221,6 +221,7 @@ else()
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
     "GUI/CEFLocalResourceRequest.cpp" "GUI/CEFLocalResourceRequest.h"
+    "GUI/CEFConversionHelpers.cpp" "GUI/CEFConversionHelpers.h"
     "GUI/GuiLayer.cpp" "GUI/GuiLayer.h"
     "GUI/GuiWidgetContainer.cpp" "GUI/GuiWidgetContainer.h"
     "GUI/GuiView.cpp" "GUI/GuiView.h"

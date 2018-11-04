@@ -111,6 +111,10 @@ var Leviathan = {};
     native function LOnGeneric(genericname, callbackfunction);
     Leviathan.OnGeneric = LOnGeneric;
 
+    //! Fires an event from js
+    native function CallGenericEvent(genericname, values);
+    Leviathan.CallGenericEvent = CallGenericEvent;
+
     //! Plays a 2D sound effect. Requires VIEW_SECURITYLEVEL_NORMAL
     native function Play2DSoundEffect(filename);
     Leviathan.Play2DSoundEffect = Play2DSoundEffect;

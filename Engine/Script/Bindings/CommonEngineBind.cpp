@@ -277,8 +277,7 @@ bool BindNamedVars(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("NamedVars",
-           "string Serialize(const string &in lineprefix = "
-           ") const",
+           "string Serialize(const string &in lineprefix = \"\") const",
            asMETHOD(NamedVars, Serialize), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

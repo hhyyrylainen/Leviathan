@@ -86,6 +86,9 @@ public:
     DLLEXPORT void SetValue(const int& nindex, const VariableBlock& valuetoset);
     DLLEXPORT void SetValue(const int& nindex, VariableBlock* valuetoset);
 
+    //! \brief Adds a new value
+    DLLEXPORT void PushValue(std::unique_ptr<VariableBlock>&& value);
+
     DLLEXPORT VariableBlock* GetValueDirect();
     DLLEXPORT VariableBlock& GetValue();
     DLLEXPORT VariableBlock* GetValueDirect(size_t nindex);

@@ -454,7 +454,11 @@ DLLEXPORT void NamedVariableList::SetValue(const vector<VariableBlock*>& values)
     // copy vector (will copy pointers and steal them) //
     Datas = values;
 }
-
+DLLEXPORT void NamedVariableList::PushValue(std::unique_ptr<VariableBlock>&& value)
+{
+    Datas.push_back(value.release());
+}
+// ------------------------------------ //
 DLLEXPORT VariableBlock& NamedVariableList::GetValue()
 {
     // uses vector operator to get value, might throw something //

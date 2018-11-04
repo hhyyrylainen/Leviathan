@@ -1,5 +1,6 @@
 #include "Common/DataStoring/NamedVars.h"
 
+#include "GUI/CEFConversionHelpers.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 
 #include "../DummyLog.h"
@@ -453,4 +454,43 @@ TEST_CASE("NamedVariableList::ProcessDataDump data flow all p-uses 2", "[variabl
 
     CHECK(variables[0]->GetName() == "thing");
     CHECK(variables[0]->GetValue().ConvertAndReturnVariable<std::string>() == "stuff");
+}
+
+TEST_CASE("CEF dictionary to NamedVars conversion", "[variable]")
+{
+    SECTION("Empty dictionary")
+    {
+        CefRefPtr<CefDictionaryValue> dictionary = CefDictionaryValue::Create();
+        NamedVars vars;
+        CEFDictionaryToNamedVars(dictionary, vars);
+
+        CHECK(vars.GetVariableCount() == 0);
+    }
+
+    SECTION("Dictionary with one bool key")
+    {
+        CefRefPtr<CefDictionaryValue> dictionary = CefDictionaryValue::Create();
+        dictionary->SetBool("primary", true);
+
+        NamedVars vars;
+        CEFDictionaryToNamedVars(dictionary, vars);
+
+        CHECK(vars.GetVariableCount() == 1);
+        REQUIRE(vars.GetValue("primary"));
+        CHECK(vars.GetValue("primary")->ConvertAndReturnVariable<bool>() == true);
+    }
+
+    SECTION("Dictionary with a string")
+    {
+        constexpr auto str = "this is a test string";
+        CefRefPtr<CefDictionaryValue> dictionary = CefDictionaryValue::Create();
+        dictionary->SetString("str", str);
+
+        NamedVars vars;
+        CEFDictionaryToNamedVars(dictionary, vars);
+
+        CHECK(vars.GetVariableCount() == 1);
+        REQUIRE(vars.GetValue("str"));
+        CHECK(vars.GetValue("str")->ConvertAndReturnVariable<std::string>() == str);
+    }
 }

@@ -1,7 +1,9 @@
 // ------------------------------------ //
 #include "GuiView.h"
 
+#include "CEFConversionHelpers.h"
 #include "Engine.h"
+#include "Events/EventHandler.h"
 #include "Exceptions.h"
 #include "GlobalCEFHandler.h"
 #include "GuiManager.h"
@@ -835,6 +837,27 @@ bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId 
 
         _HandleAudioSourceMessage(message);
 
+        return true;
+    }
+
+    if(name == "CallGenericEvent") {
+
+        if(ViewSecurity < VIEW_SECURITYLEVEL_ACCESS_ALL)
+            return true;
+
+        const auto& args = message->GetArgumentList();
+
+        if(args->GetSize() < 1)
+            return true;
+
+        auto event = GenericEvent::MakeShared<GenericEvent>(args->GetString(0));
+
+        if(args->GetSize() > 1) {
+            // Parameters
+            CEFDictionaryToNamedVars(args->GetDictionary(1), *event->GetVariables());
+        }
+
+        Engine::Get()->GetEventHandler()->CallEvent(event);
         return true;
     }
 

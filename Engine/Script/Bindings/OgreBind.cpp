@@ -125,7 +125,7 @@ void SceneNodeRemoveFromParent(Ogre::SceneNode* self)
         parent->removeChild(self);
 }
 
-void ItemSetMaterialProxy(Ogre::Item* self, const std::string& material)
+void ItemSetMaterialNameProxy(Ogre::Item* self, const std::string& material)
 {
     if(self)
         self->setMaterialName(material);
@@ -135,6 +135,11 @@ void ItemSetDataBlockProxy(Ogre::Item* self, const std::string& datablock)
 {
     if(self)
         self->setDatablock(datablock);
+}
+
+void ItemSetDatablockOrMaterialName(Ogre::Item* self, const std::string& name)
+{
+    self->setDatablockOrMaterialName(name);
 }
 
 void ItemSetCustomParameterProxy(Ogre::Item* self, int index, const Ogre::Vector4& value)
@@ -702,6 +707,12 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("SceneNode", "Ogre::Vector3 getPosition() const",
+           asMETHODPR(Ogre::SceneNode, getPosition, () const, Ogre::Vector3),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("SceneNode", "void setOrientation(Ogre::Quaternion quat)",
            asMETHODPR(Ogre::SceneNode, setOrientation, (Ogre::Quaternion), void),
            asCALL_THISCALL) < 0) {
@@ -715,8 +726,9 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Item", "void setMaterial(const string &in materialname)",
-           asFUNCTION(ItemSetMaterialProxy), asCALL_CDECL_OBJFIRST) < 0) {
+    if(engine->RegisterObjectMethod("Item",
+           "void setMaterialName(const string &in materialname)",
+           asFUNCTION(ItemSetMaterialNameProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -724,6 +736,14 @@ bool BindScene(asIScriptEngine* engine)
            asFUNCTION(ItemSetDataBlockProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterObjectMethod("Item",
+           "void setDatablockOrMaterialName(const string &in name)",
+           asFUNCTION(ItemSetDatablockOrMaterialName), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
 
     if(engine->RegisterObjectMethod("Item",
            "void setCustomParameter(int index, const Ogre::Vector4 &in value)",

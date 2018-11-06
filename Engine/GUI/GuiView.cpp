@@ -1065,8 +1065,10 @@ void View::_HandlePlayCutsceneMessage(const CefRefPtr<CefProcessMessage>& messag
                 OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
             });
         return;
+
     } else if(operation == "Cancel") {
         Owner->CancelCutscene();
+        return;
     }
 
     LOG_ERROR("Got unknown PlayCutscene message: " + operation.ToString());

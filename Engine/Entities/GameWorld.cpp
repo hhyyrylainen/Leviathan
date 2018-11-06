@@ -54,14 +54,13 @@ class GameWorld::Implementation {
 public:
     ~Implementation()
     {
-
         // Check that there are no external references to these
         for(const auto& tuple : RegisteredScriptComponents) {
 
             if(tuple.second->GetRefCount() != 1) {
 
-                LOG_FATAL("GameWorld: ImplRelease: RegisteredScriptComponent: has external "
-                          "refs, count: " +
+                LOG_FATAL("GameWorld: ImplRelease: RegisteredScriptComponent (holder): has "
+                          "external refs, count: " +
                           std::to_string(tuple.second->GetRefCount()));
             }
         }

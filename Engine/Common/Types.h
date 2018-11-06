@@ -99,7 +99,6 @@ struct StartEndIndex {
     //! Reset the Start and End to unset
     inline void Reset()
     {
-
         Start = Index();
         End = Index();
     }
@@ -108,7 +107,6 @@ struct StartEndIndex {
     //! \returns The length or if either is unset 0 Or if Start > End
     inline size_t Length() const
     {
-
         if(!Start || !End || static_cast<size_t>(Start) > static_cast<size_t>(End))
             return 0;
 

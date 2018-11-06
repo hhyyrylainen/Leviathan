@@ -45,6 +45,7 @@ struct TypeToAngelScriptTypeString {
 };
 
 //! Helper for querying each type for their corresponding angelscript type once
+//! \todo This will entirely break if there can be multiple script executors in use
 template<class T>
 struct AngelScriptTypeIDResolver {
 public:

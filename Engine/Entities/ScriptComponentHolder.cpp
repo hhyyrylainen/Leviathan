@@ -72,10 +72,14 @@ DLLEXPORT void ScriptComponentHolder::ReleaseAllComponents()
 DLLEXPORT asIScriptObject* ScriptComponentHolder::Create(ObjectID entity)
 {
     // Fail if already exists //
-    if(Find(entity) != nullptr) {
+    asIScriptObject* found = Find(entity);
+    if(found != nullptr) {
 
         LOG_WARNING("ScriptComponentHolder: Create: called for existing component, id: " +
                     std::to_string(entity));
+
+        // Must release reference
+        found->Release();
         return nullptr;
     }
 

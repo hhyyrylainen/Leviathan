@@ -230,6 +230,10 @@ public:
     {
         return _GameModuleLoader.get();
     }
+    inline ScriptExecutor* GetScriptExecutor()
+    {
+        return MainScript;
+    }
 
     DLLEXPORT Window* GetWindowFromSDLID(uint32_t sdlid);
 

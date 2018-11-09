@@ -33,6 +33,11 @@ public:
         return Source;
     }
 
+    DLLEXPORT inline bool HasInternalSource() const
+    {
+        return Source != nullptr;
+    }
+
     // ------------------------------------ //
     // Proxies for some of the common audio functions
     DLLEXPORT inline bool Play2D()

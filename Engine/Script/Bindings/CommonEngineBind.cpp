@@ -1038,6 +1038,11 @@ bool BindAudioSource(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("AudioSource", "bool HasInternalSource() const",
+           asMETHOD(AudioSource, HasInternalSource), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 

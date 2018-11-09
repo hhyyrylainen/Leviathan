@@ -17,7 +17,6 @@ using namespace Leviathan;
 // ------------------ SendableSystem ------------------ //
 DLLEXPORT void HandleNode(ObjectID id, Sendable& obj, GameWorld& world)
 {
-
     const auto ticknumber = world.GetTickNumber();
 
     // Create current state here as one or more connections should require it //

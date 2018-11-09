@@ -19,7 +19,7 @@ Pong::PongNetHandler::~PongNetHandler(){
 
 }
 // ------------------------------------ //
-void Pong::PongNetHandler::_OnStartApplicationConnect(){
+void Pong::PongNetHandler::_OnProperlyConnected(){
     Logger::Get()->Info("Pong ready to join the lobby or the game");
 
     DEBUG_BREAK;

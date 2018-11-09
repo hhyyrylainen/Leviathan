@@ -46,7 +46,7 @@ public:
 
 class PartialClient : public NetworkClientInterface {
 public:
-    void _OnStartApplicationConnect() override {}
+    void _OnProperlyConnected() override {}
 };
 
 

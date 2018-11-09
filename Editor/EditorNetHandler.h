@@ -15,7 +15,7 @@ public:
     virtual ~EditorNetHandler();
 
 protected:
-    void _OnStartApplicationConnect() override;
+    void _OnProperlyConnected() override;
 };
 
 } // namespace Editor

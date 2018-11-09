@@ -112,8 +112,7 @@ protected:
     // Callbacks for child classes to implement //
     DLLEXPORT virtual void _OnDisconnectFromServer(
         const std::string& reasonstring, bool donebyus)
-    {
-    }
+    {}
     DLLEXPORT virtual void _OnStartConnectToServer() {}
     DLLEXPORT virtual void _OnFailedToConnectToServer(const std::string& reason) {}
     DLLEXPORT virtual void _OnSuccessfullyConnectedToServer() {}
@@ -125,18 +124,9 @@ protected:
 
     //! \brief Called when the server has confirmed the join and we are a player on the server
     //!
-    //! By default this will synchronize game variables and call the _OnLobbyJoin function
-    //! (which can then handle match joining)
-    //! \todo Do what this should do
-    DLLEXPORT virtual void _OnProperlyConnected();
-
-
-    //! \brief Called when the player is on the server and everything that the Engine
-    //! is concerned about is done
-    //! \note Here the application's connect data should be sent. The application
-    //! specific connection routine should be done here
-    DLLEXPORT virtual void _OnStartApplicationConnect() = 0;
-
+    //! This is where the game needs to request joining a GameWorld or do some other game
+    //! specific logic
+    DLLEXPORT virtual void _OnProperlyConnected() = 0;
 
 private:
     //! \brief Helper for TickIt to handle server connection state
@@ -154,7 +144,6 @@ private:
         std::shared_ptr<SentRequest> tmpsendthing, std::shared_ptr<NetworkResponse> response);
 
     //! \brief Internally called when server has accepted us
-    //! \todo Call variable syncing from here
     void _ProperlyConnectedToServer();
 
     //! \brief Called when we receive a start heartbeat packet

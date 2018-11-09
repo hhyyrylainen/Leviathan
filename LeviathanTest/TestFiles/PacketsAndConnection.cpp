@@ -1,6 +1,6 @@
 #include "Networking/Connection.h"
-#include "Networking/NetworkResponse.h"
 #include "Networking/NetworkRequest.h"
+#include "Networking/NetworkResponse.h"
 
 #include "../DummyLog.h"
 
@@ -12,8 +12,8 @@ using namespace Leviathan;
 using namespace Leviathan::Test;
 
 
-TEST_CASE("Connection correctly decodes ServerAllow and passes to ClientInterface",
-    "[networking]")
+TEST_CASE(
+    "Connection correctly decodes ServerAllow and passes to ClientInterface", "[networking]")
 {
     // Sender socket //
     sf::UdpSocket socket;
@@ -36,40 +36,41 @@ TEST_CASE("Connection correctly decodes ServerAllow and passes to ClientInterfac
     // Create packet //
     sf::Packet response;
 
-    response << LEVIATHAN_NORMAL_PACKET << uint32_t(1) << uint32_t(0) << uint8_t(1) <<
-        NORMAL_RESPONSE_TYPE << uint32_t(1);
+    response << LEVIATHAN_NORMAL_PACKET << uint32_t(1) << uint32_t(0) << uint8_t(1)
+             << NORMAL_RESPONSE_TYPE << uint32_t(1);
 
     {
-        ResponseServerAllow responseAllow(0, SERVER_ACCEPTED_TYPE::RequestQueued,
-            "not a chance");
+        ResponseServerAllow responseAllow(
+            0, SERVER_ACCEPTED_TYPE::RequestQueued, "not a chance");
         responseAllow.AddDataToPacket(response);
     }
 
-    SECTION("Direct pass packet"){
+    SECTION("Direct pass packet")
+    {
 
         ClientConnection->HandlePacket(response);
     }
 
-    SECTION("Through socket"){
+    SECTION("Through socket")
+    {
 
         REQUIRE(socket.send(response, sf::IpAddress::LocalHost, Client.GetOurPort()) ==
-            sf::Socket::Done);
-        
+                sf::Socket::Done);
+
         Client.UpdateAllConnections();
     }
 
     // Needs to be marked as received //
     CHECK(ClientInterface.ReceivedCount == 1);
 }
-
 // ------------------------------------ //
-
-TEST_CASE_METHOD(ClientConnectionTestFixture, "ClientConnectionTestFixture can manually open "
-    "a connection to a client", "[networking]")
+TEST_CASE_METHOD(ClientConnectionTestFixture,
+    "ClientConnectionTestFixture can manually open "
+    "a connection to a client",
+    "[networking]")
 {
     DoConnectionOpening();
 }
-
 // ------------------------------------ //
 TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message when joining",
     "[networking]")
@@ -85,22 +86,18 @@ TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message w
 
     std::shared_ptr<NetworkRequest> joinrequest;
 
-    WireData::DecodeIncomingData(packet,
-        nullptr, nullptr, nullptr,
-        [&](uint8_t messagetype, uint32_t messagenumber, sf::Packet &packet)
-        -> WireData::DECODE_CALLBACK_RESULT
-        {
-            switch(messagetype){
-            case NORMAL_REQUEST_TYPE:
-            {
-                REQUIRE_NOTHROW(joinrequest = NetworkRequest::LoadFromPacket(packet,
-                        messagenumber));
+    WireData::DecodeIncomingData(packet, nullptr, nullptr, nullptr,
+        [&](uint8_t messagetype, uint32_t messagenumber,
+            sf::Packet& packet) -> WireData::DECODE_CALLBACK_RESULT {
+            switch(messagetype) {
+            case NORMAL_REQUEST_TYPE: {
+                REQUIRE_NOTHROW(
+                    joinrequest = NetworkRequest::LoadFromPacket(packet, messagenumber));
                 REQUIRE(joinrequest);
                 CHECK(joinrequest->GetType() == NETWORK_REQUEST_TYPE::JoinServer);
                 break;
             }
-            default:
-            {
+            default: {
                 CHECK(false);
                 return WireData::DECODE_CALLBACK_RESULT::Error;
             }
@@ -112,12 +109,9 @@ TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message w
     REQUIRE(joinrequest);
     CHECK(joinrequest->GetType() == NETWORK_REQUEST_TYPE::JoinServer);
 }
-
-
-
 // ------------------------------------ //
-TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[networking]"){
-    
+TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[networking]")
+{
     VerifyEstablishConnection();
 
     // Should no longer be in initial state //
@@ -130,7 +124,6 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
     // Should have been enough time to move to CONNECTION_STATE::Authenticated
     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
     CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
-
 }
 
 // TEST_CASE_METHOD(ConnectionTestFixture, "No infinite acks", "[networking]"){
@@ -149,8 +142,8 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
 // }
 
 
-TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
-
+TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]")
+{
     VerifyEstablishConnection();
 
     VerifyServerStarted();
@@ -161,11 +154,11 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]"){
     RunListeningLoop(6);
 
     CHECK(ClientInterface.GetServerConnectionState() ==
-        NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
+          NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
 
     CHECK(ServerInterface.GetClientConnections().size() == 1);
-    CloseServerProperly();    
+
+    CHECK(ClientInterface.ConnectedCallbackCount == 1);
+
+    CloseServerProperly();
 }
-
-
-

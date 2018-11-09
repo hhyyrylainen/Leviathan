@@ -16,7 +16,7 @@ namespace Pong{
 		virtual ~PongNetHandler();
 
 		//! \brief Joins the lobby or the match when the connection is confirmed
-		virtual void _OnStartApplicationConnect();
+		virtual void _OnProperlyConnected();
 
 	protected:
 

@@ -7,4 +7,4 @@ DemosNetHandler::DemosNetHandler() {}
 
 DemosNetHandler::~DemosNetHandler() {}
 // ------------------------------------ //
-void DemosNetHandler::_OnStartApplicationConnect() {}
+void DemosNetHandler::_OnProperlyConnected() {}

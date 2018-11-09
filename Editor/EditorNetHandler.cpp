@@ -7,4 +7,4 @@ EditorNetHandler::EditorNetHandler() {}
 
 EditorNetHandler::~EditorNetHandler() {}
 // ------------------------------------ //
-void EditorNetHandler::_OnStartApplicationConnect() {}
+void EditorNetHandler::_OnProperlyConnected() {}

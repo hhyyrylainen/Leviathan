@@ -15,7 +15,7 @@ public:
     virtual ~DemosNetHandler();
 
 protected:
-    void _OnStartApplicationConnect() override;
+    void _OnProperlyConnected() override;
 };
 
 } // namespace Demos

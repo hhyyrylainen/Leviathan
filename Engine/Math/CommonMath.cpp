@@ -5,28 +5,24 @@ using namespace std;
 // ------------------------------------ //
 #include "Utility/Random.h"
 
-float MMath::CoordinateDistance(float x1, float x2,float y1, float y2){
-	float Distance=0;
-	Distance=sqrt( (x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+#include <cmath>
 
-	return Distance;
-}
-double MMath::AngleBetweenPoints(float x1, float x2,float y1, float y2){
-	double angle = 0;
-
-	angle = atan2(y2 - y1, x2 - x1);
-
-
-	return angle;
-
-
+DLLEXPORT double MMath::AngleBetweenPoints(float x1, float x2, float y1, float y2) noexcept
+{
+	return atan2(y2 - y1, x2 - x1);
 }
 
-int MMath::GreatestCommonDivisor(int a, int b){
-	return (b == 0 ? a : GreatestCommonDivisor(b, a%b));
+DLLEXPORT double MMath::AngleBetweenPoints(Float2 v1, Float2 v2) noexcept
+{
+    return MMath::AngleBetweenPoints(v1.X, v2.X, v1.Y, v2.Y);
 }
 
-DLLEXPORT  bool Leviathan::MMath::IsPointInsidePolygon(const std::vector<Float3>& polygon,
+DLLEXPORT constexpr int MMath::GreatestCommonDivisor(int a, int b)
+{
+	return b == 0 ? a : GreatestCommonDivisor(b, a%b);
+}
+
+DLLEXPORT bool Leviathan::MMath::IsPointInsidePolygon(const std::vector<Float3>& polygon,
     const Float3& point)
 {
 	//bool IsInside = false;
@@ -47,54 +43,25 @@ DLLEXPORT  bool Leviathan::MMath::IsPointInsidePolygon(const std::vector<Float3>
 			return false;
 	}
 	return true;
-
 }
 
-DLLEXPORT bool Leviathan::MMath::IsEqual(double x, double y){
-	const double epsilon = 1e-5;
-	return abs(x - y) <= epsilon * abs(x);
+DLLEXPORT bool Leviathan::MMath::IsEqual(double x, double y) noexcept
+{
+    return abs(x - y) <= MMath::FLOATING_POINT_COMPARISON_EPSILON * abs(x);
 }
 
-DLLEXPORT bool Leviathan::MMath::IsEqual(float x, float y){
-	const double epsilon = 1e-5;
-	return abs(x - y) <= epsilon * abs(x);
+DLLEXPORT bool Leviathan::MMath::IsEqual(float x, float y) noexcept
+{
+    return abs(x - y) <= MMath::FLOATING_POINT_COMPARISON_EPSILON * abs(x);
 }
 
-DLLEXPORT Float3 Leviathan::MMath::CalculateNormal(const Float3 &p1, const Float3 &p2, const Float3 &p3){
-	// according to OpenGL wiki //
-
+DLLEXPORT Float3 Leviathan::MMath::CalculateNormal(
+    const Float3& p1, const Float3& p2, const Float3& p3)
+{
 	// some vectors for calculating final normal //
 	const Float3 VecU = p2-p1;
 	const Float3 VecV = p3-p1;
 
 	// normalize before returning //
-	return Float3(VecU.Y*VecV.Z-VecU.Z*VecV.Y, VecU.Z*VecV.X-VecU.X*VecV.Z, VecU.X*VecV.Y-VecU.Y*VecV.X).Normalize();
+    return VecU.Cross(VecV).Normalize();
 }
-
-/*--------------------------------------
-Original Function written by Philip J. Erdelsky October 25, 2001 (revised August 22, 2002)
-Code Edited by Henri Hyyryläinen
-----------------------------------------*/
-//DLLEXPORT  bool Leviathan::MMath::IsPrime(const mpuint &p){
-//	mpuint pminus1(p);
-//	pminus1 -= 1;
-//	unsigned count = 101;
-//	while (--count != 0)
-//	{
-//		mpuint r(p.length);
-//		mpuint x(p.length);
-//		{
-//			for (unsigned i = 0; i < x.length; i++)
-//				x.value[i] = (USHORT)Random::Get()->GetNumber(0, USHRT_MAX) << 8 | (USHORT)Random::Get()->GetNumber(0, USHRT_MAX);
-//		}
-//		x %= p;
-//		if (x != 0)
-//		{
-//			mpuint::Power(x, pminus1, p, r);
-//			if (r != 1)
-//				return false;
-//		}
-//	}
-//	return true;
-//}
-

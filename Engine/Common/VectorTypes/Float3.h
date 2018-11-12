@@ -9,7 +9,7 @@ namespace Leviathan {
 
 struct Float3 {
 public:
-    DLLEXPORT constexpr Float3() noexcept  = default;
+    DLLEXPORT constexpr Float3() noexcept = default;
 
     DLLEXPORT constexpr Float3(float x, float y, float z);
     DLLEXPORT constexpr Float3(Float2 floats, float z);
@@ -24,12 +24,12 @@ public:
 
     // ------------------- Operators ----------------- //
     // add elements //
-    DLLEXPORT constexpr Float3 operator+(const Float3& val) const noexcept;
-    DLLEXPORT inline Float3& operator+=(const Float3& val) noexcept;
+    DLLEXPORT constexpr Float3 operator+(const Float3& other) const noexcept;
+    DLLEXPORT inline Float3& operator+=(const Float3& other) noexcept;
 
     // subtracts all elements //
-    DLLEXPORT constexpr Float3 operator-(const Float3& val) const noexcept;
-    DLLEXPORT inline Float3& operator-=(const Float3& val) noexcept;
+    DLLEXPORT constexpr Float3 operator-(const Float3& other) const noexcept;
+    DLLEXPORT inline Float3& operator-=(const Float3& other) noexcept;
 
     // negates all elements //
     DLLEXPORT constexpr Float3 operator-() const noexcept;
@@ -38,20 +38,20 @@ public:
     DLLEXPORT constexpr Float3 operator+() const noexcept;
 
     // multiplies elements together //
-    DLLEXPORT constexpr Float3 operator*(const Float3& val) const noexcept;
-    DLLEXPORT inline Float3& operator*=(const Float3& val) noexcept;
+    DLLEXPORT constexpr Float3 operator*(const Float3& other) const noexcept;
+    DLLEXPORT inline Float3& operator*=(const Float3& other) noexcept;
 
     // Divides all elements by float //
-    DLLEXPORT constexpr Float3 operator/(const float& val) const;
-    DLLEXPORT inline Float3& operator/=(const float& val);
+    DLLEXPORT constexpr Float3 operator/(float val) const;
+    DLLEXPORT inline Float3& operator/=(float val);
 
     // multiply  by scalar f //
-    DLLEXPORT constexpr Float3 operator*(float f) const noexcept;
-    DLLEXPORT inline Float3& operator*=(float f) noexcept;
+    DLLEXPORT constexpr Float3 operator*(float val) const noexcept;
+    DLLEXPORT inline Float3& operator*=(float val) noexcept;
 
     // divides all elements //
-    DLLEXPORT constexpr Float3 operator/(const Float3& val) const;
-    DLLEXPORT inline Float3& operator/=(const Float3& val);
+    DLLEXPORT constexpr Float3 operator/(const Float3& other) const;
+    DLLEXPORT inline Float3& operator/=(const Float3& other);
 
     // ---- comparison operators ---- //
     // element by element comparison with operators //

@@ -55,30 +55,30 @@ DLLEXPORT constexpr float& Float3::operator[](const int& nindex)
 
 // ------------------- Operators ----------------- //
 
-DLLEXPORT constexpr Float3 Float3::operator+(const Float3& val) const noexcept
+DLLEXPORT constexpr Float3 Float3::operator+(const Float3& other) const noexcept
 {
-    return Float3(X + val.X, Y + val.Y, Z + val.Z);
+    return Float3(X + other.X, Y + other.Y, Z + other.Z);
 }
 
-DLLEXPORT inline Float3& Float3::operator+=(const Float3& val) noexcept
+DLLEXPORT inline Float3& Float3::operator+=(const Float3& other) noexcept
 {
-    X += val.X;
-    Y += val.Y;
-    Z += val.Z;
+    X += other.X;
+    Y += other.Y;
+    Z += other.Z;
     return *this;
 }
 
-DLLEXPORT inline Float3& Float3::operator-=(const Float3& val) noexcept
+DLLEXPORT inline Float3& Float3::operator-=(const Float3& other) noexcept
 {
-    X -= val.X;
-    Y -= val.Y;
-    Z -= val.Z;
+    X -= other.X;
+    Y -= other.Y;
+    Z -= other.Z;
     return *this;
 }
 
-DLLEXPORT constexpr Float3 Float3::operator-(const Float3& val) const noexcept
+DLLEXPORT constexpr Float3 Float3::operator-(const Float3& other) const noexcept
 {
-    return Float3(X - val.X, Y - val.Y, Z - val.Z);
+    return Float3(X - other.X, Y - other.Y, Z - other.Z);
 }
 
 DLLEXPORT constexpr Float3 Float3::operator-() const noexcept
@@ -91,26 +91,26 @@ DLLEXPORT constexpr Float3 Float3::operator+() const noexcept
     return Float3(*this);
 }
 
-DLLEXPORT constexpr Float3 Float3::operator*(const Float3& val) const noexcept
+DLLEXPORT constexpr Float3 Float3::operator*(const Float3& other) const noexcept
 {
-    return Float3(X * val.X, Y * val.Y, Z * val.Z);
+    return Float3(X * other.X, Y * other.Y, Z * other.Z);
 }
 
-DLLEXPORT inline Float3& Float3::operator*=(const Float3& val) noexcept
+DLLEXPORT inline Float3& Float3::operator*=(const Float3& other) noexcept
 {
-    X *= val.X;
-    Y *= val.Y;
-    Z *= val.Z;
+    X *= other.X;
+    Y *= other.Y;
+    Z *= other.Z;
     DO_NAN_CHECK;
     return *this;
 }
 
-DLLEXPORT constexpr Float3 Float3::operator/(const float& val) const
+DLLEXPORT constexpr Float3 Float3::operator/(float val) const
 {
     return Float3(X / val, Y / val, Z / val);
 }
 
-DLLEXPORT inline Float3& Float3::operator/=(const float& val)
+DLLEXPORT inline Float3& Float3::operator/=(float val)
 {
     X /= val;
     Y /= val;
@@ -119,30 +119,30 @@ DLLEXPORT inline Float3& Float3::operator/=(const float& val)
     return *this;
 }
 
-DLLEXPORT constexpr Float3 Float3::operator*(float f) const noexcept
+DLLEXPORT constexpr Float3 Float3::operator*(float val) const noexcept
 {
-    return Float3(X * f, Y * f, Z * f);
+    return Float3(X * val, Y * val, Z * val);
 }
 
-DLLEXPORT inline Float3& Float3::operator*=(float f) noexcept
+DLLEXPORT inline Float3& Float3::operator*=(float val) noexcept
 {
-    X *= f;
-    Y *= f;
-    Z *= f;
+    X *= val;
+    Y *= val;
+    Z *= val;
     DO_NAN_CHECK;
     return *this;
 }
 
-DLLEXPORT constexpr Float3 Float3::operator/(const Float3& val) const
+DLLEXPORT constexpr Float3 Float3::operator/(const Float3& other) const
 {
-    return Float3(X / val.X, Y / val.Y, Z / val.Z);
+    return Float3(X / other.X, Y / other.Y, Z / other.Z);
 }
 
-DLLEXPORT inline Float3& Float3::operator/=(const Float3& val)
+DLLEXPORT inline Float3& Float3::operator/=(const Float3& other)
 {
-    X /= val.X;
-    Y /= val.Y;
-    Z /= val.Z;
+    X /= other.X;
+    Y /= other.Y;
+    Z /= other.Z;
     DO_NAN_CHECK;
     return *this;
 }

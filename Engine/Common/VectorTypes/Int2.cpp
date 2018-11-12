@@ -108,22 +108,22 @@ DLLEXPORT inline Int2& Int2::operator/=(int val)
 
 DLLEXPORT constexpr bool Int2::operator<(const Int2& other) const noexcept
 {
-    return X < other.X && Y < other.Y;
+    return std::tie(X, Y) < std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Int2::operator<=(const Int2& other) const noexcept
 {
-    return X <= other.X && Y <= other.Y;
+    return std::tie(X, Y) <= std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Int2::operator>(const Int2& other) const noexcept
 {
-    return X > other.X && Y > other.Y;
+    return std::tie(X, Y) > std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Int2::operator>=(const Int2& other) const noexcept
 {
-    return X >= other.X && Y >= other.Y;
+    return std::tie(X, Y) >= std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Int2::operator==(const Int2& other) const noexcept
@@ -133,7 +133,7 @@ DLLEXPORT constexpr bool Int2::operator==(const Int2& other) const noexcept
 
 DLLEXPORT constexpr bool Int2::operator!=(const Int2& other) const noexcept
 {
-    return X != other.X && Y != other.Y;
+    return X != other.X || Y != other.Y;
 }
 
 // ------------------ Functions ------------------ //

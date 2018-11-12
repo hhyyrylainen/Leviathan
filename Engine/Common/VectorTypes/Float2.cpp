@@ -129,22 +129,22 @@ DLLEXPORT inline Float2& Float2::operator/=(float val)
 
 DLLEXPORT constexpr bool Float2::operator<(const Float2& other) const noexcept
 {
-    return X < other.X && Y < other.Y;
+    return std::tie(X, Y) < std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Float2::operator<=(const Float2& other) const noexcept
 {
-    return X <= other.X && Y <= other.Y;
+    return std::tie(X, Y) <= std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Float2::operator>(const Float2& other) const noexcept
 {
-    return X > other.X && Y > other.Y;
+    return std::tie(X, Y) > std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Float2::operator>=(const Float2& other) const noexcept
 {
-    return X >= other.X && Y >= other.Y;
+    return std::tie(X, Y) >= std::tie(other.X, other.Y);
 }
 
 DLLEXPORT constexpr bool Float2::operator==(const Float2& other) const noexcept
@@ -154,7 +154,7 @@ DLLEXPORT constexpr bool Float2::operator==(const Float2& other) const noexcept
 
 DLLEXPORT constexpr bool Float2::operator!=(const Float2& other) const noexcept
 {
-    return X != other.X && Y != other.Y;
+    return X != other.X || Y != other.Y;
 }
 
 // ------------------ Functions ------------------ //

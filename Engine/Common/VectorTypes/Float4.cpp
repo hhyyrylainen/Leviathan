@@ -166,22 +166,22 @@ DLLEXPORT inline Float4& Float4::operator/=(float val)
 
 DLLEXPORT constexpr bool Float4::operator<(const Float4& other) const noexcept
 {
-    return X < other.X && Y < other.Y && Z < other.Z && W < other.W;
+    return std::tie(X, Y, Z, W) < std::tie(other.X, other.Y, other.Z, other.W);
 }
 
 DLLEXPORT constexpr bool Float4::operator<=(const Float4& other) const noexcept
 {
-    return X <= other.X && Y <= other.Y && Z <= other.Z && W <= other.W;
+    return std::tie(X, Y, Z, W) <= std::tie(other.X, other.Y, other.Z, other.W);
 }
 
 DLLEXPORT constexpr bool Float4::operator>(const Float4& other) const noexcept
 {
-    return X > other.X && Y > other.Y && Z > other.Z && W > other.W;
+    return std::tie(X, Y, Z, W) > std::tie(other.X, other.Y, other.Z, other.W);
 }
 
 DLLEXPORT constexpr bool Float4::operator>=(const Float4& other) const noexcept
 {
-    return X >= other.X && Y >= other.Y && Z >= other.Z && W >= other.W;
+    return std::tie(X, Y, Z, W) >= std::tie(other.X, other.Y, other.Z, other.W);
 }
 
 DLLEXPORT constexpr bool Float4::operator==(const Float4& other) const noexcept
@@ -191,7 +191,7 @@ DLLEXPORT constexpr bool Float4::operator==(const Float4& other) const noexcept
 
 DLLEXPORT constexpr bool Float4::operator!=(const Float4& other) const noexcept
 {
-    return X != other.X && Y != other.Y && Z != other.Z && W != other.W;
+    return X != other.X || Y != other.Y || Z != other.Z || W != other.W;
 }
 
 // ------------------ Functions ------------------ //

@@ -152,22 +152,22 @@ DLLEXPORT inline Float3& Float3::operator/=(const Float3& other)
 
 DLLEXPORT constexpr bool Float3::operator<(const Float3& other) const noexcept
 {
-    return X < other.X && Y < other.Y && Z < other.Z;
+    return std::tie(X, Y, Z) < std::tie(other.X, other.Y, other.Z);
 }
 
 DLLEXPORT constexpr bool Float3::operator<=(const Float3& other) const noexcept
 {
-    return X <= other.X && Y <= other.Y && Z <= other.Z;
+    return std::tie(X, Y, Z) <= std::tie(other.X, other.Y, other.Z);
 }
 
 DLLEXPORT constexpr bool Float3::operator>(const Float3& other) const noexcept
 {
-    return X > other.X && Y > other.Y && Z > other.Z;
+    return std::tie(X, Y, Z) > std::tie(other.X, other.Y, other.Z);
 }
 
 DLLEXPORT constexpr bool Float3::operator>=(const Float3& other) const noexcept
 {
-    return X >= other.X && Y >= other.Y && Z > other.Z;
+    return std::tie(X, Y, Z) >= std::tie(other.X, other.Y, other.Z);
 }
 
 DLLEXPORT constexpr bool Float3::operator==(const Float3& other) const noexcept
@@ -177,7 +177,7 @@ DLLEXPORT constexpr bool Float3::operator==(const Float3& other) const noexcept
 
 DLLEXPORT constexpr bool Float3::operator!=(const Float3& other) const noexcept
 {
-    return !(*this == other);
+    return X != other.X || Y != other.Y || Z != other.Z;
 }
 
 // ------------------ Functions ------------------ //

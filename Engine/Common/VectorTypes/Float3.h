@@ -20,7 +20,7 @@ public:
     DLLEXPORT inline void CheckForNans() const;
 
     // access operator //
-    DLLEXPORT constexpr float& operator[](const int& nindex);
+    DLLEXPORT constexpr float& operator[](int nindex);
 
     // ------------------- Operators ----------------- //
     // add elements //
@@ -69,9 +69,9 @@ public:
     DLLEXPORT constexpr float GetZ() const noexcept;
 
     // setters //
-    DLLEXPORT inline void SetX(const float& val);
-    DLLEXPORT inline void SetY(const float& val);
-    DLLEXPORT inline void SetZ(const float& val);
+    DLLEXPORT inline void SetX(float val);
+    DLLEXPORT inline void SetY(float val);
+    DLLEXPORT inline void SetZ(float val);
 
     // add all elements together //
     DLLEXPORT constexpr float HAdd() const noexcept;

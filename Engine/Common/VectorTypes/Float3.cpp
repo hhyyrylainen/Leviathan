@@ -42,12 +42,13 @@ DLLEXPORT inline void Float3::CheckForNans() const
     }
 }
 
-DLLEXPORT constexpr float& Float3::operator[](const int& nindex)
+DLLEXPORT constexpr float& Float3::operator[](int nindex)
 {
     switch(nindex) {
 	    case 0: return X;
 	    case 1: return Y;
-	    case 2: return Z;
+        case 2: return Z;
+        default: break;
     }
     LEVIATHAN_ASSERT(0, "invalid [] access");
     return X;
@@ -196,19 +197,19 @@ DLLEXPORT constexpr float Float3::GetZ() const noexcept
     return Z;
 }
 
-DLLEXPORT inline void Float3::SetX(const float& val)
+DLLEXPORT inline void Float3::SetX(float val)
 {
     X = val;
     DO_NAN_CHECK;
 }
 
-DLLEXPORT inline void Float3::SetY(const float& val)
+DLLEXPORT inline void Float3::SetY(float val)
 {
     Y = val;
     DO_NAN_CHECK;
 }
 
-DLLEXPORT inline void Float3::SetZ(const float& val)
+DLLEXPORT inline void Float3::SetZ(float val)
 {
     Z = val;
     DO_NAN_CHECK;
@@ -370,6 +371,8 @@ DLLEXPORT inline Float3::operator btVector3() const
 }
 
 #endif // LEVIATHAN_USING_OGRE
+
+// ------------------------------------ //
 
 DLLEXPORT std::ostream& Leviathan::operator<<(std::ostream& stream, const Float3& value)
 {

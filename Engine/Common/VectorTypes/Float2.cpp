@@ -2,16 +2,13 @@
 
 using namespace Leviathan;
 
-DLLEXPORT constexpr Float2::Float2(float x, float y)
+DLLEXPORT constexpr Float2::Float2(float x, float y) : X(x), Y(y)
 {
-    X = x;
-    Y = y;
     DO_NAN_CHECK;
 }
 
-DLLEXPORT constexpr Float2::Float2(float both)
+DLLEXPORT constexpr Float2::Float2(float data) : X(data), Y(data)
 {
-    X = Y = both;
     DO_NAN_CHECK;
 }
 
@@ -28,11 +25,12 @@ DLLEXPORT inline void Float2::CheckForNans() const
     }
 }
 
-DLLEXPORT constexpr float& Float2::operator[](const int& nindex)
+DLLEXPORT constexpr float& Float2::operator[](int nindex)
 {
     switch(nindex) {
 	    case 0: return X;
 	    case 1: return Y;
+	    default: break;
     }
 
     LEVIATHAN_ASSERT(0, "invalid [] access");
@@ -171,13 +169,13 @@ DLLEXPORT constexpr float Float2::GetY() const noexcept
     return Y;
 }
 
-DLLEXPORT inline void Float2::SetX(const float& val)
+DLLEXPORT inline void Float2::SetX(float val)
 {
     X = val;
     DO_NAN_CHECK;
 }
 
-DLLEXPORT inline void Float2::SetY(const float& val)
+DLLEXPORT inline void Float2::SetY(float val)
 {
     Y = val;
     DO_NAN_CHECK;
@@ -275,7 +273,7 @@ DLLEXPORT constexpr Float2 Float2::one() noexcept
     return Float2(1.f);
 }
 
-DLLEXPORT constexpr Float2 Float2::x_asix() noexcept
+DLLEXPORT constexpr Float2 Float2::x_axis() noexcept
 {
     return Float2(1.f, 0.f);
 }
@@ -284,6 +282,8 @@ DLLEXPORT constexpr Float2 Float2::y_axis() noexcept
 {
     return Float2(0.f, 1.f);
 }
+
+// ------------------------------------ //
 
 DLLEXPORT std::ostream& Leviathan::operator<<(std::ostream& stream, const Leviathan::Float2& value)
 {

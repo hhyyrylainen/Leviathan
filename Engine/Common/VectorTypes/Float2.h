@@ -10,13 +10,13 @@ public:
     DLLEXPORT constexpr Float2() noexcept = default;
 
     DLLEXPORT constexpr Float2(float x, float y);
-    DLLEXPORT constexpr explicit Float2(float both);
+    DLLEXPORT constexpr explicit Float2(float data);
 
     DLLEXPORT inline bool HasInvalidValues() const noexcept;
     DLLEXPORT inline void CheckForNans() const;
 
     // access operator //
-    DLLEXPORT constexpr float& operator[](const int& nindex);
+    DLLEXPORT constexpr float& operator[](int nindex);
 
     // ------------------- Operators ----------------- //
     // add elements //
@@ -64,8 +64,8 @@ public:
     DLLEXPORT constexpr float GetY() const noexcept;
 
     // setters //
-    DLLEXPORT inline void SetX(const float& val);
-    DLLEXPORT inline void SetY(const float& val);
+    DLLEXPORT inline void SetX(float val);
+    DLLEXPORT inline void SetY(float val);
 
     // add all elements together //
     DLLEXPORT constexpr float HAdd() const noexcept;
@@ -113,7 +113,7 @@ public:
     DLLEXPORT constexpr static Float2 one() noexcept;
 
     // unitary vector x, to work with ozz declarations //
-    DLLEXPORT constexpr static Float2 x_asix() noexcept;
+    DLLEXPORT constexpr static Float2 x_axis() noexcept;
 
     // unitary vector y //
     DLLEXPORT constexpr static Float2 y_axis() noexcept;

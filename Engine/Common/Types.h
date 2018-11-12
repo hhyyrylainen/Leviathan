@@ -11,18 +11,17 @@
 #include "VectorTypes/Int3.h"
 
 #include "OgreVector4.h"
+#include <optional>
 
 namespace Leviathan {
 
 
 struct PotentiallySetIndex {
-
     inline PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {}
     inline PotentiallySetIndex() = default;
 
     inline operator bool() const
     {
-
         return ValueSet;
     }
 
@@ -38,32 +37,14 @@ struct PotentiallySetIndex {
 
     bool operator==(const PotentiallySetIndex& other) const
     {
-
         if(!ValueSet)
             return ValueSet == other.ValueSet;
 
         return Index == other.Index;
     }
 
-    PotentiallySetIndex& operator=(const PotentiallySetIndex& other)
-    {
-
-        ValueSet = other.ValueSet;
-        Index = other.Index;
-        return *this;
-    }
-
-    inline PotentiallySetIndex& operator=(const size_t& value)
-    {
-
-        ValueSet = true;
-        Index = value;
-        return *this;
-    }
-
     inline bool IsSet() const
     {
-
         return ValueSet;
     }
 
@@ -72,35 +53,31 @@ struct PotentiallySetIndex {
 };
 
 struct StartEndIndex {
+    constexpr StartEndIndex(size_t start, size_t end) noexcept : Start(start), End(end) {}
 
-    using Index = PotentiallySetIndex;
+    constexpr StartEndIndex(size_t start) noexcept  : Start(start) {}
 
-    inline StartEndIndex(size_t start, size_t end) : Start(start), End(end) {}
-
-    inline StartEndIndex(size_t start) : Start(start) {}
-
-    inline StartEndIndex() = default;
+    constexpr StartEndIndex() noexcept = default;
 
     //! Reset the Start and End to unset
-    inline void Reset()
+    inline void Reset() noexcept
     {
-        Start = Index();
-        End = Index();
+        Start.reset();
+        End.reset();
     }
 
     //! Calculates the length of the indexes between start and end
     //! \returns The length or if either is unset 0 Or if Start > End
-    inline size_t Length() const
+    constexpr size_t Length() const noexcept
     {
-        if(!Start || !End || static_cast<size_t>(Start) > static_cast<size_t>(End))
+        if(!Start.has_value() || !End.has_value() || Start.value() > End.value())
             return 0;
 
-        return 1 + (static_cast<size_t>(End) - static_cast<size_t>(Start));
+        return 1 + (End.value() - Start.value());
     }
 
-
-    Index Start;
-    Index End;
+	std::optional<size_t> Start;
+    std::optional<size_t> End;
 };
 
 // Stream operators //

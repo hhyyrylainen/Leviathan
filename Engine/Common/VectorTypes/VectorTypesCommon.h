@@ -3,12 +3,12 @@
 #include "Define.h"
 
 #ifdef LEVIATHAN_FULL
-#include "LinearMath/btQuaternion.h"
-#include "LinearMath/btVector3.h"
-#include "OgreColourValue.h"
-#include "OgreQuaternion.h"
-#include "OgreVector3.h"
-#include "OgreVector4.h"
+#include <LinearMath/btQuaternion.h>
+#include <LinearMath/btVector3.h>
+#include <OgreColourValue.h>
+#include <OgreQuaternion.h>
+#include <OgreVector3.h>
+#include <OgreVector4.h>
 #endif // LEVIATHAN_USING_OGRE
 
 // Uncomment for debugging and major slow downs

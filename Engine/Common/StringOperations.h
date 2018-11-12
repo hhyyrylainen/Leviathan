@@ -541,8 +541,8 @@ public:
             return data;
         }
 
-        PotentiallySetIndex copystart;
-        PotentiallySetIndex copyend;
+        std::optional<size_t> copystart;
+        std::optional<size_t> copyend;
 
         // loop through data and copy final characters to out string //
         for(size_t i = 0; i < data.size(); i++) {
@@ -566,16 +566,16 @@ public:
 
                 if(IsMatch || toreplace.size() == 1) {
 
-                    if(copystart && !copyend)
+                    if(copystart.has_value() && !copyend.has_value())
                         copyend = copystart;
 
                     // First add proper characters //
-                    if(copystart && copyend)
-                        out += data.substr(copystart,
-                            static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
+                    if(copystart.has_value() && copyend.has_value())
+                        out += data.substr(copystart.value(),
+                            copyend.value() - copystart.value() + 1);
 
-                    copystart.ValueSet = false;
-                    copyend.ValueSet = false;
+                    copystart.reset();
+                    copyend.reset();
 
                     // it is a match, copy everything in replacer and
                     // add toreplace length to i
@@ -587,17 +587,17 @@ public:
             }
 
             // non matching character mark as to copy //
-            if(!copystart) {
-                copystart = i;
+            if(!copystart.has_value()) {
+                copystart.emplace(i);
             } else {
-                copyend = i;
+                copyend.emplace(i);
             }
         }
 
         // Copy rest to out //
-        if(copystart && copyend)
+        if(copystart.has_value() && copyend.has_value())
             out += data.substr(
-                copystart, static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
+                copystart.value(), copyend.value() - copystart.value() + 1);
 
         // Return finished string //
         return out;

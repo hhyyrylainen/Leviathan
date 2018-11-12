@@ -54,20 +54,6 @@ void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol /*= 1.0
 
 // ------------------ Stream operators ------------------ //
 
-DLLEXPORT std::ostream& operator<<(std::ostream& stream, const PotentiallySetIndex& value)
-{
-    if(value.IsSet()) {
-
-        stream << value.Index;
-
-    } else {
-
-        stream << "NOT SET (" << value.Index << ")";
-    }
-
-    return stream;
-}
-
 DLLEXPORT std::ostream& operator<<(std::ostream& stream, const StartEndIndex& value)
 {
     stream << "[";

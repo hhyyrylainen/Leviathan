@@ -15,43 +15,6 @@
 
 namespace Leviathan {
 
-
-struct PotentiallySetIndex {
-    inline PotentiallySetIndex(size_t index) : ValueSet(true), Index(index) {}
-    inline PotentiallySetIndex() = default;
-
-    inline operator bool() const
-    {
-        return ValueSet;
-    }
-
-    inline operator size_t() const
-    {
-#ifdef _DEBUG
-        LEVIATHAN_ASSERT(
-            ValueSet, "PotentiallySetIndex size_t() called when ValueSet is false");
-#endif // _DEBUG
-
-        return Index;
-    }
-
-    bool operator==(const PotentiallySetIndex& other) const
-    {
-        if(!ValueSet)
-            return ValueSet == other.ValueSet;
-
-        return Index == other.Index;
-    }
-
-    inline bool IsSet() const
-    {
-        return ValueSet;
-    }
-
-    bool ValueSet = false;
-    size_t Index = 0;
-};
-
 struct StartEndIndex {
     constexpr StartEndIndex(size_t start, size_t end) noexcept : Start(start), End(end) {}
 
@@ -84,9 +47,6 @@ struct StartEndIndex {
 
 DLLEXPORT std::ostream& operator<<(
     std::ostream& stream, const Leviathan::StartEndIndex& value);
-
-DLLEXPORT std::ostream& operator<<(
-    std::ostream& stream, const Leviathan::PotentiallySetIndex& value);
 
 #ifdef LEVIATHAN_USING_OGRE
 //! \brief Newton compatible matrix orthogonal check

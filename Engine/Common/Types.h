@@ -9,7 +9,6 @@
 #include "VectorTypes/Float4.h"
 #include "VectorTypes/Int2.h"
 #include "VectorTypes/Int3.h"
-#include "VectorTypes/Int4.h"
 
 #include "OgreVector4.h"
 

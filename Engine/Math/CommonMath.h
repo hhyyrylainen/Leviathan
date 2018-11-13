@@ -36,4 +36,9 @@ DLLEXPORT bool IsEqual(float x, float y) noexcept;
 
 constexpr double FLOATING_POINT_COMPARISON_EPSILON = 1e-5;
 
+DLLEXPORT constexpr int GreatestCommonDivisor(int a, int b)
+{
+    return b == 0 ? a : GreatestCommonDivisor(b, a % b);
+}
+
 }

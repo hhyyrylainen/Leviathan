@@ -17,11 +17,6 @@ DLLEXPORT double MMath::AngleBetweenPoints(Float2 v1, Float2 v2) noexcept
     return MMath::AngleBetweenPoints(v1.X, v2.X, v1.Y, v2.Y);
 }
 
-DLLEXPORT constexpr int MMath::GreatestCommonDivisor(int a, int b)
-{
-	return b == 0 ? a : GreatestCommonDivisor(b, a%b);
-}
-
 DLLEXPORT bool Leviathan::MMath::IsPointInsidePolygon(const std::vector<Float3>& polygon,
     const Float3& point)
 {

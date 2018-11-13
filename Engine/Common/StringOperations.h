@@ -279,8 +279,8 @@ public:
                 && (i == 0 || input[i - 1] != WINDOWS_LINE_SEPARATOR[0])) {
                 // Found a line separator //
                 // Copy the current thing //
-                if(copyparts.Start && copyparts.End)
-                    results += input.substr(copyparts.Start, copyparts.Length());
+                if(copyparts.Start.has_value() && copyparts.End.has_value())
+                    results += input.substr(copyparts.Start.value(), copyparts.Length());
 
                 copyparts.Reset();
 
@@ -289,15 +289,15 @@ public:
                 continue;
             }
 
-            if(!copyparts.Start)
-                copyparts.Start = i;
+            if(!copyparts.Start.has_value())
+                copyparts.Start.emplace(i);
 
             // Change the end copy //
-            copyparts.End = i;
+            copyparts.End.emplace(i);
         }
 
-        if(copyparts.End && copyparts.Start)
-            results += input.substr(copyparts.Start, copyparts.Length());
+        if(copyparts.End.has_value() && copyparts.Start.has_value())
+            results += input.substr(copyparts.Start.value(), copyparts.Length());
 
         return results;
     }

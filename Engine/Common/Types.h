@@ -9,44 +9,9 @@
 #include "VectorTypes/Float4.h"
 #include "VectorTypes/Int2.h"
 #include "VectorTypes/Int3.h"
+#include "StartEndIndex.h"
 
 #include "OgreVector4.h"
-#include <optional>
-
-namespace Leviathan {
-
-struct StartEndIndex {
-    constexpr StartEndIndex(size_t start, size_t end) noexcept : Start(start), End(end) {}
-
-    constexpr StartEndIndex(size_t start) noexcept  : Start(start) {}
-
-    constexpr StartEndIndex() noexcept = default;
-
-    //! Reset the Start and End to unset
-    inline void Reset() noexcept
-    {
-        Start.reset();
-        End.reset();
-    }
-
-    //! Calculates the length of the indexes between start and end
-    //! \returns The length or if either is unset 0 Or if Start > End
-    constexpr size_t Length() const noexcept
-    {
-        if(!Start.has_value() || !End.has_value() || Start.value() > End.value())
-            return 0;
-
-        return 1 + (End.value() - Start.value());
-    }
-
-	std::optional<size_t> Start;
-    std::optional<size_t> End;
-};
-
-// Stream operators //
-
-DLLEXPORT std::ostream& operator<<(
-    std::ostream& stream, const Leviathan::StartEndIndex& value);
 
 #ifdef LEVIATHAN_USING_OGRE
 //! \brief Newton compatible matrix orthogonal check
@@ -57,8 +22,6 @@ DLLEXPORT std::ostream& operator<<(
 //! orthogonal
 void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol = 1.0e-4f);
 #endif
-
-}
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::Float2;

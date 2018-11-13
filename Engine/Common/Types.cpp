@@ -14,6 +14,7 @@
 namespace Leviathan {
 
 #ifdef LEVIATHAN_USING_OGRE
+
 void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol /*= 1.0e-4f*/)
 {
     DEBUG_BREAK;
@@ -50,20 +51,7 @@ void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol /*= 1.0
     //     throw InvalidArgument(
     //         "Not orthogonal n.Dot(m_right) wasn't 1, it was: " + std::to_string(d));
 }
+
 #endif
-
-// ------------------ Stream operators ------------------ //
-
-DLLEXPORT std::ostream& operator<<(std::ostream& stream, const StartEndIndex& value)
-{
-    stream << "[";
-    if(value.Start.has_value()) stream << value.Start.value();
-    else stream << "NOT SET";
-    stream << " | ";
-    if(value.End.has_value()) stream << value.End.value();
-    else stream << "NOT SET";
-    stream << "]";
-    return stream;
-}
 
 }

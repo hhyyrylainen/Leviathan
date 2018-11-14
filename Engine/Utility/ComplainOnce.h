@@ -1,26 +1,35 @@
 #pragma once
 // ------------------------------------ //
 #include "Include.h"
-#include <vector>
-#include <string>
+#include "Threading/Monitor.h"
+
 #include <memory>
+#include <string>
+#include <vector>
 
-namespace Leviathan{
+namespace Leviathan {
 
-    //! \todo Make this thread safe
-	class ComplainOnce{
-	public:
+class ComplainOnce {
+public:
+    ComplainOnce() = delete;
 
-		DLLEXPORT static bool PrintWarningOnce(const std::string& warning,
-            const std::string& message);
-		DLLEXPORT static bool PrintErrorOnce(const std::string& error, const std::string& message);
+    DLLEXPORT static bool PrintWarningOnce(const std::string& warning, const std::string& message);
+    DLLEXPORT static bool PrintErrorOnce(const std::string& error, const std::string& message);
 
-	private:
-		ComplainOnce() = delete;
+private:
+    class ThreadUnsafeComplainOnce {
+    public:
+        bool PrintWarningOnce(const std::string& warning, const std::string& message);
+        bool PrintErrorOnce(const std::string& error, const std::string& message);
 
-		// fired warnings/errors //
-		static std::vector<std::shared_ptr<std::string>> FiredErrors;
-	};
+    private:
+        bool wasErrorLogged(const std::string& warning);
+
+        // fired warnings/errors //
+        std::vector<std::shared_ptr<std::string>> FiredErrors;
+    };
+
+    static Monitor<ThreadUnsafeComplainOnce> mon;
+};
 
 }
-

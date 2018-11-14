@@ -85,8 +85,6 @@ else()
     )
   
   set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
-    "Math/RayTracing.cpp" "Math/RayTracing.h"
-    "Math/TriangulateDelaunay.cpp" "Math/TriangulateDelaunay.h"
     )
 
   set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"

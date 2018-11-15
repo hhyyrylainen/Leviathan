@@ -304,7 +304,7 @@ DLLEXPORT constexpr int Int2::Dot(const Int2& val) const noexcept
 
 DLLEXPORT inline float Int2::Length() const noexcept
 {
-    return sqrt(X * X + Y * Y);
+    return static_cast<float>(sqrt(X * X + Y * Y));
 }
 
 DLLEXPORT constexpr unsigned int Int2::LengthSquared() const noexcept

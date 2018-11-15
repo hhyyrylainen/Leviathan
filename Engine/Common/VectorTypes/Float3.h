@@ -415,7 +415,7 @@ DLLEXPORT constexpr Float3 Float3::Cross(const Float3& val) const
 
 DLLEXPORT inline float Float3::Length() const noexcept
 {
-    return sqrt(X * X + Y * Y + Z * Z);
+    return static_cast<float>(sqrt(X * X + Y * Y + Z * Z));
 }
 
 DLLEXPORT constexpr float Float3::LengthSquared() const noexcept
@@ -428,19 +428,16 @@ DLLEXPORT inline Float3 Float3::Normalize() const
     const float length = Length();
     if(length == 0)
         return Float3(0, 0, 0);
-    return Float3(X / length, Y / length, Z / length);
+    return (*this) / length;
 }
 
 DLLEXPORT inline Float3 Float3::NormalizeSafe(const Float3& safer) const noexcept
 {
     // security //
-    // assert(safer.IsNormalized() && "safer not normalized");
-    const float len = X * X + Y * Y + Z * Z;
-    if(len == 0) {
-        return safer;
-    }
-    const float length = sqrt(len);
-    return Float3(X / length, Y / length, Z / length);
+    LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
+    if(LengthSquared() == 0) return safer;
+    const float length = Length();
+    return (*this) / length;
 }
 
 DLLEXPORT inline bool Float3::IsNormalized() const noexcept

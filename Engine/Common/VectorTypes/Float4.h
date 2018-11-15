@@ -492,7 +492,7 @@ DLLEXPORT constexpr float Float4::Dot(const Float4& val) const noexcept
 
 DLLEXPORT inline float Float4::Length() const noexcept
 {
-    return sqrt(X * X + Y * Y + Z * Z + W * W);
+    return static_cast<float>(sqrt(X * X + Y * Y + Z * Z + W * W));
 }
 
 DLLEXPORT constexpr float Float4::LengthSquared() const noexcept
@@ -509,19 +509,16 @@ DLLEXPORT inline Float4 Float4::Normalize() const
         return Float4(0, 0, 0, 1);
     }
 
-    return Float4(X / length, Y / length, Z / length, W / length);
+    return (*this) / length;
 }
 
 DLLEXPORT inline Float4 Float4::NormalizeSafe(const Float4& safer) const noexcept
 {
     // security //
-    const float len = X * X + Y * Y + Z * Z + W * W;
-    if(len == 0) {
-        return safer;
-    }
-
-    const float length = sqrt(len);
-    return Float4(X / length, Y / length, Z / length, W / length);
+    LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
+    if(LengthSquared() == 0) return safer;
+    const float length = Length();
+    return (*this) / length;
 }
 
 DLLEXPORT inline bool Float4::IsNormalized() const noexcept
@@ -787,8 +784,8 @@ DLLEXPORT inline Float4 Float4::QuaternionLookAt(
 DLLEXPORT inline Float4 Float4::CreateQuaternionFromAxisAngle(
     const Float3& axis, float angle) noexcept
 {
-    const auto s = std::sin(angle / 2.0);
-    const auto w = std::cos(angle / 2.0);
+    const float s = static_cast<float>(std::sin(angle / 2.0));
+    const float w = static_cast<float>(std::cos(angle / 2.0));
     return Float4(axis * s, w);
 }
 

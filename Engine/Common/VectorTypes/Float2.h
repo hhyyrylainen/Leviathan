@@ -349,7 +349,7 @@ DLLEXPORT constexpr float Float2::Dot(const Float2& val) const noexcept
 
 DLLEXPORT inline float Float2::Length() const noexcept
 {
-    return sqrt(X * X + Y * Y);
+    return static_cast<float>(sqrt(X * X + Y * Y));
 }
 
 DLLEXPORT constexpr float Float2::LengthSquared() const noexcept
@@ -362,19 +362,16 @@ DLLEXPORT inline Float2 Float2::Normalize() const
     const float length = Length();
     if(length == 0)
         return Float2(0, 0);
-    return Float2(X / length, Y / length);
+    return (*this) / length;
 }
 
 DLLEXPORT inline Float2 Float2::NormalizeSafe(const Float2& safer) const noexcept
 {
     // security //
     LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
-    const float len = X * X + Y * Y;
-    if(len == 0) {
-        return safer;
-    }
-    const float length = sqrt(len);
-    return Float2(X / length, Y / length);
+    if(LengthSquared() == 0) return safer;
+    const float length = Length();
+    return (*this) / length;
 }
 
 DLLEXPORT inline bool Float2::IsNormalized() const noexcept

@@ -338,7 +338,7 @@ DLLEXPORT constexpr Int3 Int3::Cross(const Int3& val) const
 
 DLLEXPORT inline float Int3::Length() const noexcept
 {
-    return sqrt(X * X + Y * Y + Z * Z);
+    return static_cast<float>(sqrt(X * X + Y * Y + Z * Z));
 }
 
 DLLEXPORT constexpr unsigned int Int3::LengthSquared() const noexcept

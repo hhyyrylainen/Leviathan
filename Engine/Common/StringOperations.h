@@ -571,8 +571,8 @@ public:
 
                     // First add proper characters //
                     if(copystart.has_value() && copyend.has_value())
-                        out += data.substr(copystart.value(),
-                            copyend.value() - copystart.value() + 1);
+                        out += data.substr(
+                            copystart.value(), copyend.value() - copystart.value() + 1);
 
                     copystart.reset();
                     copyend.reset();
@@ -596,8 +596,7 @@ public:
 
         // Copy rest to out //
         if(copystart.has_value() && copyend.has_value())
-            out += data.substr(
-                copystart.value(), copyend.value() - copystart.value() + 1);
+            out += data.substr(copystart.value(), copyend.value() - copystart.value() + 1);
 
         // Return finished string //
         return out;
@@ -947,7 +946,8 @@ public:
                 result += indentstr;
 
                 if(currentcut.Start)
-                    result += str.substr(currentcut.Start.value(), i - currentcut.Start.value());
+                    result +=
+                        str.substr(currentcut.Start.value(), i - currentcut.Start.value());
 
                 result += "\n";
                 currentcut = StartEndIndex();

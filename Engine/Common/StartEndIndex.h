@@ -29,7 +29,9 @@ DLLEXPORT std::ostream& operator<<(
 
 //// ------------------  IMPLEMENTATION ------------------  ////
 
-constexpr StartEndIndex::StartEndIndex(size_t start, size_t end) noexcept : Start(start), End(end) {}
+constexpr StartEndIndex::StartEndIndex(size_t start, size_t end) noexcept :
+    Start(start), End(end)
+{}
 
 constexpr StartEndIndex::StartEndIndex(size_t start) noexcept : Start(start) {}
 
@@ -47,4 +49,4 @@ constexpr size_t StartEndIndex::Length() const noexcept
     return 1 + (End.value() - Start.value());
 }
 
-}
+} // namespace Leviathan

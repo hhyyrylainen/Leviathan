@@ -77,7 +77,7 @@ public:
     // value clamping //
     DLLEXPORT constexpr Int2 Clamp(const Int2& min, const Int2& max) const noexcept;
 
-	// Why these two?
+    // Why these two?
     DLLEXPORT void SetData(const int& data);
     DLLEXPORT void SetData(const int& data1, const int& data2);
 
@@ -335,4 +335,4 @@ DLLEXPORT constexpr Int2 Int2::y_axis() noexcept
     return Int2(0, 1);
 }
 
-}
+} // namespace Leviathan

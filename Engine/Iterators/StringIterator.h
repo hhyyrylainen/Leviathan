@@ -194,7 +194,8 @@ public:
             return nullptr;
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
     //! \brief Gets the next number
@@ -227,7 +228,8 @@ public:
             data.Positions.End.emplace(GetLastValidCharIndex());
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
     //! \brief Gets the next sequence of characters according to stopcaseflags
@@ -255,7 +257,8 @@ public:
 
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
     //! \brief Gets the string that is before the equality assignment
@@ -285,7 +288,8 @@ public:
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
 
@@ -326,7 +330,8 @@ public:
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
 
@@ -353,7 +358,8 @@ public:
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
     //! \brief Gets characters until a character or all remaining characters
@@ -415,7 +421,8 @@ public:
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
     //! \brief Gets characters inside brackets
@@ -444,7 +451,8 @@ public:
             return nullptr;
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start.value(), data.Positions.End.value());
+        return GetSubstringFromIndexes<RStrType>(
+            data.Positions.Start.value(), data.Positions.End.value());
     }
 
     //! \brief Skips until characters that are not whitespace are found

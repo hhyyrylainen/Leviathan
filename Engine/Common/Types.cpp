@@ -54,4 +54,4 @@ void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol /*= 1.0
 
 #endif
 
-}
+} // namespace Leviathan

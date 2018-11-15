@@ -10,7 +10,8 @@ bool ComplainOnce::ThreadUnsafeComplainOnce::PrintWarningOnce(
     const std::string& warning, const std::string& message)
 {
     // Print only once to log //
-    if(wasErrorLogged(warning)) return false;
+    if(wasErrorLogged(warning))
+        return false;
 
     // Value wasn't there, print //
     Logger::Get()->Warning(message);
@@ -23,7 +24,8 @@ bool ComplainOnce::ThreadUnsafeComplainOnce::PrintErrorOnce(
     const std::string& error, const std::string& message)
 {
     // Print only once to log //
-    if(wasErrorLogged(error)) return false;
+    if(wasErrorLogged(error))
+        return false;
 
     // Value wasn't there, print //
     Logger::Get()->Error(message);
@@ -35,19 +37,20 @@ bool ComplainOnce::ThreadUnsafeComplainOnce::PrintErrorOnce(
 bool ComplainOnce::ThreadUnsafeComplainOnce::wasErrorLogged(const std::string& warning)
 {
     for(auto iter = FiredErrors.begin(); iter != FiredErrors.end(); ++iter)
-        if(**iter == warning) return true;
+        if(**iter == warning)
+            return true;
 
-	return false;
+    return false;
 }
 
-DLLEXPORT bool Leviathan::ComplainOnce::PrintWarningOnce(const std::string& warning,
-    const std::string& message)
+DLLEXPORT bool Leviathan::ComplainOnce::PrintWarningOnce(
+    const std::string& warning, const std::string& message)
 {
     return mon->PrintWarningOnce(warning, message);
 }
 
-DLLEXPORT  bool Leviathan::ComplainOnce::PrintErrorOnce(const std::string& error,
-    const std::string& message)
+DLLEXPORT bool Leviathan::ComplainOnce::PrintErrorOnce(
+    const std::string& error, const std::string& message)
 {
     return mon->PrintErrorOnce(error, message);
 }

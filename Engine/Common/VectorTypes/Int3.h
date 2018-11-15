@@ -373,4 +373,4 @@ DLLEXPORT constexpr Int3 Int3::z_axis() noexcept
     return Int3(0, 0, 1);
 }
 
-}
+} // namespace Leviathan

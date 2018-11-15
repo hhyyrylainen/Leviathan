@@ -103,7 +103,8 @@ public:
     DLLEXPORT inline Float4 Normalize() const;
 
     // safe version of normalization //
-    DLLEXPORT inline Float4 NormalizeSafe(const Float4& safer = Float4(1, 0, 0, 0)) const noexcept;
+    DLLEXPORT inline Float4 NormalizeSafe(const Float4& safer = Float4(1, 0, 0, 0)) const
+        noexcept;
 
     // checks is the vector normalized //
     DLLEXPORT inline bool IsNormalized() const noexcept;
@@ -196,7 +197,7 @@ public:
     DLLEXPORT static inline Float4 CreateQuaternionFromAxisAngle(
         const Float3& axis, float angle) noexcept;
 
-	// NOT IMPLEMENTED,
+    // NOT IMPLEMENTED,
     DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3& angles);
 
     VALUE_TYPE(Float4);
@@ -516,7 +517,8 @@ DLLEXPORT inline Float4 Float4::NormalizeSafe(const Float4& safer) const noexcep
 {
     // security //
     LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
-    if(LengthSquared() == 0) return safer;
+    if(LengthSquared() == 0)
+        return safer;
     const float length = Length();
     return (*this) / length;
 }
@@ -796,4 +798,4 @@ DLLEXPORT inline Float4 Float4::CreateAxisAngleFromEuler(const Float3& angles)
     // return Float4();
 }
 
-}
+} // namespace Leviathan

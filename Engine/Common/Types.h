@@ -4,12 +4,12 @@
 #include "Define.h"
 // ------------------------------------ //
 
+#include "StartEndIndex.h"
 #include "VectorTypes/Float2.h"
 #include "VectorTypes/Float3.h"
 #include "VectorTypes/Float4.h"
 #include "VectorTypes/Int2.h"
 #include "VectorTypes/Int3.h"
-#include "StartEndIndex.h"
 
 #include "OgreVector4.h"
 

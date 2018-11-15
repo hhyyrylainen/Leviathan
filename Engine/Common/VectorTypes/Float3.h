@@ -102,7 +102,8 @@ public:
     DLLEXPORT inline Float3 Normalize() const;
 
     // safe version of normalization //
-    DLLEXPORT inline Float3 NormalizeSafe(const Float3& safer = Float3(1, 0, 0)) const noexcept;
+    DLLEXPORT inline Float3 NormalizeSafe(const Float3& safer = Float3(1, 0, 0)) const
+        noexcept;
 
     // checks is the vector normalized //
     DLLEXPORT inline bool IsNormalized() const noexcept;
@@ -114,7 +115,8 @@ public:
     // compares distance between vectors to tolerance, returns true if less //
     DLLEXPORT constexpr bool Compare(const Float3& other, float tolerance) const noexcept;
 
-    DLLEXPORT static inline Float3 CreateVectorFromAngles(const float& yaw, const float& pitch) noexcept;
+    DLLEXPORT static inline Float3 CreateVectorFromAngles(
+        const float& yaw, const float& pitch) noexcept;
 
     // ------------------------------------ //
     // functions to be compatible with ozz functions //
@@ -135,7 +137,7 @@ public:
     DLLEXPORT constexpr static Float3 z_axis() noexcept;
 
     // ----------------- casts ------------------- //
-	// Should this macro be replaced by a constexpr if in the cpp file?
+    // Should this macro be replaced by a constexpr if in the cpp file?
 #ifdef LEVIATHAN_FULL
     DLLEXPORT inline Float3(const Ogre::Vector3& vec);
     DLLEXPORT inline operator Ogre::Vector3() const;
@@ -435,7 +437,8 @@ DLLEXPORT inline Float3 Float3::NormalizeSafe(const Float3& safer) const noexcep
 {
     // security //
     LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
-    if(LengthSquared() == 0) return safer;
+    if(LengthSquared() == 0)
+        return safer;
     const float length = Length();
     return (*this) / length;
 }
@@ -522,4 +525,4 @@ DLLEXPORT inline Float3::operator btVector3() const
 
 #endif // LEVIATHAN_USING_OGRE
 
-}
+} // namespace Leviathan

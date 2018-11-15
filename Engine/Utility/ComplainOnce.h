@@ -13,7 +13,8 @@ class ComplainOnce {
 public:
     ComplainOnce() = delete;
 
-    DLLEXPORT static bool PrintWarningOnce(const std::string& warning, const std::string& message);
+    DLLEXPORT static bool PrintWarningOnce(
+        const std::string& warning, const std::string& message);
     DLLEXPORT static bool PrintErrorOnce(const std::string& error, const std::string& message);
 
 private:
@@ -32,4 +33,4 @@ private:
     static Monitor<ThreadUnsafeComplainOnce> mon;
 };
 
-}
+} // namespace Leviathan

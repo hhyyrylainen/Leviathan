@@ -606,10 +606,11 @@ DLLEXPORT constexpr Float3 Float4::RotateVector(const Float3& vector) const
 
     // Math taken from Ogre::Quaternion
     Float3 qvec(X, Y, Z);
-    Float3 uv = qvec.Cross(vector) * 2.0f * W;
-    Float3 uuv = qvec.Cross(uv) * 2.0f;
+    const Float3 uv1 = qvec.Cross(vector);
+    const Float3 uuv = qvec.Cross(uv1) * 2.0f;
+    const Float3 uv2 = uv1 * 2.0f * W;
 
-    return vector + uv + uuv;
+    return vector + uv2 + uuv;
 }
 
 // ------------------------------------ //

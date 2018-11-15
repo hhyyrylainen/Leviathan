@@ -14,7 +14,7 @@ public:
     DLLEXPORT constexpr Float3(float x, float y, float z);
     DLLEXPORT constexpr Float3(Float2 floats, float z);
     DLLEXPORT constexpr explicit Float3(float data);
-    DLLEXPORT constexpr Float3(const Int3& values);
+    DLLEXPORT constexpr Float3(const Int3& values) noexcept;
 
     DLLEXPORT inline bool HasInvalidValues() const noexcept;
     DLLEXPORT inline void CheckForNans() const;
@@ -175,7 +175,7 @@ DLLEXPORT constexpr Float3::Float3(float data) : X(data), Y(data), Z(data)
     DO_NAN_CHECK;
 }
 
-DLLEXPORT constexpr Float3::Float3(const Int3& values) :
+DLLEXPORT constexpr Float3::Float3(const Int3& values) noexcept :
     X(static_cast<float>(values.X)), Y(static_cast<float>(values.Y)),
     Z(static_cast<float>(values.Z))
 {

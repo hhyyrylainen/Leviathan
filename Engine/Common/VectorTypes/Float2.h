@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Define.h"
+#include "Int3.h"
 #include "VectorTypesCommon.h"
 
 namespace Leviathan {
@@ -10,6 +11,7 @@ public:
     DLLEXPORT constexpr Float2() noexcept = default;
 
     DLLEXPORT constexpr Float2(float x, float y);
+    DLLEXPORT constexpr Float2(const Int2& values) noexcept;
     DLLEXPORT constexpr explicit Float2(float data);
 
     DLLEXPORT inline bool HasInvalidValues() const noexcept;
@@ -141,6 +143,12 @@ DLLEXPORT constexpr Float2::Float2(float x, float y) : X(x), Y(y)
 }
 
 DLLEXPORT constexpr Float2::Float2(float data) : X(data), Y(data)
+{
+    DO_NAN_CHECK;
+}
+
+DLLEXPORT constexpr Float2::Float2(const Int2& values) noexcept :
+    X(static_cast<float>(values.X)), Y(static_cast<float>(values.Y))
 {
     DO_NAN_CHECK;
 }
@@ -369,7 +377,8 @@ DLLEXPORT inline Float2 Float2::NormalizeSafe(const Float2& safer) const noexcep
 {
     // security //
     LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
-    if(LengthSquared() == 0) return safer;
+    if(LengthSquared() == 0)
+        return safer;
     const float length = Length();
     return (*this) / length;
 }
@@ -415,4 +424,4 @@ DLLEXPORT constexpr Float2 Float2::y_axis() noexcept
 
 // ------------------------------------ //
 
-}
+} // namespace Leviathan

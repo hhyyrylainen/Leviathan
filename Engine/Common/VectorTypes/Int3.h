@@ -15,7 +15,7 @@ public:
     DLLEXPORT constexpr explicit Int3(int data);
 
     // access operator //
-    DLLEXPORT constexpr int& operator[](int nindex);
+    DLLEXPORT inline int& operator[](int nindex);
 
     // ------------------- Operators ----------------- //
     // add elements //
@@ -127,7 +127,7 @@ DLLEXPORT constexpr Int3::Int3(Int2 ints, int z) : X(ints.X), Y(ints.Y), Z(z) {}
 
 DLLEXPORT constexpr Int3::Int3(int data) : X(data), Y(data), Z(data) {}
 
-DLLEXPORT constexpr int& Int3::operator[](int nindex)
+DLLEXPORT inline int& Int3::operator[](int nindex)
 {
     switch(nindex) {
     case 0: return X;

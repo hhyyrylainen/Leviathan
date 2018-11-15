@@ -12,7 +12,7 @@ public:
     DLLEXPORT constexpr explicit Int2(int data) noexcept;
 
     // access operator //
-    DLLEXPORT constexpr int& operator[](int nindex);
+    DLLEXPORT inline int& operator[](int nindex);
 
     // ------------------- Operators ----------------- //
     // add elements //
@@ -119,7 +119,7 @@ DLLEXPORT constexpr Int2::Int2(int data) noexcept : X(data), Y(data) {}
 
 // ------------------------------------ //
 
-DLLEXPORT constexpr int& Int2::operator[](int nindex)
+DLLEXPORT inline int& Int2::operator[](int nindex)
 {
     switch(nindex) {
     case 0: return X;

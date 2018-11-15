@@ -2,6 +2,8 @@
 
 #include "Define.h"
 
+#include <cmath>
+
 #ifdef LEVIATHAN_FULL
 #include <LinearMath/btQuaternion.h>
 #include <LinearMath/btVector3.h>

@@ -18,7 +18,7 @@ public:
     DLLEXPORT inline void CheckForNans() const;
 
     // access operator //
-    DLLEXPORT constexpr float& operator[](int nindex);
+    DLLEXPORT inline float& operator[](int nindex);
 
     // ------------------- Operators ----------------- //
     // add elements //
@@ -166,7 +166,7 @@ DLLEXPORT inline void Float2::CheckForNans() const
     }
 }
 
-DLLEXPORT constexpr float& Float2::operator[](int nindex)
+DLLEXPORT inline float& Float2::operator[](int nindex)
 {
     switch(nindex) {
     case 0: return X;

@@ -20,7 +20,7 @@ public:
     DLLEXPORT inline void CheckForNans() const;
 
     // access operator //
-    DLLEXPORT constexpr float& operator[](int nindex);
+    DLLEXPORT inline float& operator[](int nindex);
 
     //! return first value of {X, Y, Z, W} as a pointer
     DLLEXPORT constexpr operator float*() noexcept;
@@ -257,7 +257,7 @@ DLLEXPORT inline void Float4::CheckForNans() const
     }
 }
 
-DLLEXPORT constexpr float& Float4::operator[](int nindex)
+DLLEXPORT inline float& Float4::operator[](int nindex)
 {
     switch(nindex) {
     case 0: return X;

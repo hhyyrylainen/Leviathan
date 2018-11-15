@@ -3,6 +3,7 @@
 #include "Define.h"
 
 #include <cmath>
+#include <tuple>
 
 #ifdef LEVIATHAN_FULL
 #include <LinearMath/btQuaternion.h>

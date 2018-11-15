@@ -2,6 +2,7 @@
 
 #include "Define.h"
 
+#include <iostream>
 #include <optional>
 
 namespace Leviathan {

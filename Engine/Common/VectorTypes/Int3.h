@@ -281,19 +281,16 @@ DLLEXPORT constexpr int Int3::GetZ() const noexcept
 DLLEXPORT inline void Int3::SetX(int val)
 {
     X = val;
-    DO_NAN_CHECK;
 }
 
 DLLEXPORT inline void Int3::SetY(int val)
 {
     Y = val;
-    DO_NAN_CHECK;
 }
 
 DLLEXPORT inline void Int3::SetZ(int val)
 {
     Z = val;
-    DO_NAN_CHECK;
 }
 
 DLLEXPORT constexpr int Int3::HAdd() const noexcept

@@ -99,6 +99,13 @@ thingsToGenerate = [
      Variable.new("UpdateData", "sf::Packet", move: true ),
    ]],
 
+  ["StartWorldReceive",
+   [
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("WorldType", "int32_t"),
+     Variable.new("ExtraOptions", "std::string", default: "\"\""),
+   ]],
+
   ["EntityCreation",
    [
      Variable.new("WorldID", "int32_t"),

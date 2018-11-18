@@ -49,6 +49,11 @@ thingsToGenerate = [
      Variable.new("MasterServerToken", "int32_t"),
    ]],
 
+  ["JoinGame",
+   [
+     Variable.new("Options", "std::string", default: %{""}),
+   ]],
+
   ["GetSingleSyncValue",
    [
      Variable.new("NameOfValue", "std::string"),
@@ -75,7 +80,7 @@ thingsToGenerate = [
   ["DoRemoteConsoleOpen",
    [
      Variable.new("Token", "int32_t"),
-   ]]
+   ]],
   
 ]
 

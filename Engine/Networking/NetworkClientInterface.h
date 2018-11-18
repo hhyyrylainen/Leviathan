@@ -122,11 +122,36 @@ protected:
     //! \brief Called when this class generates a new update message
     DLLEXPORT virtual void _OnNewConnectionStatusMessage(const std::string& message) {}
 
-    //! \brief Called when the server has confirmed the join and we are a player on the server
+    //! \brief This is used to get the target window for a world that we have been notified
+    //! that we have joined and will receive updates
+    DLLEXPORT virtual Window* GetWindowForWorldJoin(const std::string& extraoptions);
+
+    //! \brief This is called to get physics materials for a world
+    //!
+    //! If this returns null physics won't be initialized for the received world.
+    DLLEXPORT virtual std::shared_ptr<PhysicsMaterialManager>
+        GetPhysicsMaterialsForReceivedWorld(
+            int32_t worldtype, const std::string& extraoptions);
+
+    //! \brief Called when the server has confirmed the join and we are a player on the
+    //! server
     //!
     //! This is where the game needs to request joining a GameWorld or do some other game
     //! specific logic
     DLLEXPORT virtual void _OnProperlyConnected() = 0;
+
+    //! \brief This is a helper for _OnProperlyConnected to
+    DLLEXPORT std::shared_ptr<SentRequest> DoJoinDefaultWorld();
+
+    //! \brief Called when joining a world has succeeded and the client has created the
+    //! clientside world object. This should attach the world to be drawn and do any special
+    //! setup required on it
+    DLLEXPORT virtual void _OnWorldJoined(std::shared_ptr<GameWorld> world);
+
+    //! \brief This is called when we receive a packet from the server indicating that we
+    //! should create a new world and expect to receive updates for it
+    DLLEXPORT virtual void _HandleWorldJoinResponse(
+        int32_t worldid, int32_t worldtype, const std::string& extraoptions);
 
 private:
     //! \brief Helper for TickIt to handle server connection state
@@ -183,6 +208,10 @@ protected:
 
     //! Our player id, this is required for some requests
     int OurPlayerID = -1;
+
+    //! Our current received world. This is kept here to automatically apply update messages to
+    //! it.
+    std::shared_ptr<GameWorld> OurReceivedWorld;
 };
 
 } // namespace Leviathan

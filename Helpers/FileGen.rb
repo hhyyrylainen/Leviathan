@@ -478,12 +478,15 @@ end
 
 class GameWorldClass < OutputClass
 
+  attr_accessor :WorldType
+
   def initialize(name, componentTypes: [], systems: [], systemspreticksetup: nil,
                  framesystemrun: "")
 
     super name
 
     @BaseClass = "GameWorld"
+    @WorldType = "-1 /* unset, won't work over the network */"
 
     @FrameSystemRun = framesystemrun
     @SystemsPreTickSetup = systemspreticksetup
@@ -513,11 +516,22 @@ class GameWorldClass < OutputClass
             "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials)"
     
     if opts.include?(:impl)
-      f.puts " : #{@BaseClass}(physicsMaterials) "
+      f.puts " : #{@BaseClass}(#{@WorldType},\n physicsMaterials) "
       f.puts "{}"
     else
       f.puts ";"
     end
+
+    # Child class type overwrite constructor
+    f.write "#{export}#{qualifier opts}#{@Name}(int32_t typeoverride, const " +
+            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials)"
+    
+    if opts.include?(:impl)
+      f.puts " : #{@BaseClass}(typeoverride, physicsMaterials) "
+      f.puts "{}"
+    else
+      f.puts ";"
+    end    
 
   end
 

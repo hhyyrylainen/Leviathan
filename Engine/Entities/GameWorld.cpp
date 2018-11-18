@@ -72,9 +72,9 @@ public:
 
 // ------------------------------------ //
 DLLEXPORT GameWorld::GameWorld(
-    const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials) :
+    int32_t worldtype, const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials) :
     pimpl(std::make_unique<Implementation>()),
-    PhysicsMaterials(physicsMaterials), ID(IDFactory::GetID())
+    PhysicsMaterials(physicsMaterials), ID(IDFactory::GetID()), WorldType(worldtype)
 {}
 
 DLLEXPORT GameWorld::~GameWorld()
@@ -88,9 +88,9 @@ DLLEXPORT GameWorld::~GameWorld()
         Entities.empty(), "GameWorld: Entities not empty in destructor. Was Release called?");
 }
 // ------------------------------------ //
-DLLEXPORT bool GameWorld::Init(NETWORKED_TYPE type, Ogre::Root* ogre)
+DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Ogre::Root* ogre)
 {
-    IsOnServer = (type == NETWORKED_TYPE::Server);
+    NetworkSettings = network;
 
     // Detecting non-GUI mode //
     if(ogre) {
@@ -365,7 +365,6 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object)
 
 DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const
 {
-
     // Fail if there is no active camera //
     if(CameraEntity == NULL_OBJECT)
         throw InvalidState("This world has no active CameraEntity");
@@ -381,13 +380,11 @@ DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const
 DLLEXPORT bool GameWorld::ShouldPlayerReceiveEntity(
     Position& atposition, Connection& connection)
 {
-
     return true;
 }
 
 DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection& connection) const
 {
-
     for(auto& player : ReceivingPlayers) {
 
         if(player->GetConnection().get() == &connection) {
@@ -401,7 +398,6 @@ DLLEXPORT bool GameWorld::IsConnectionInWorld(Connection& connection) const
 
 DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply)
 {
-
     // Skip if already added //
     for(auto& player : ReceivingPlayers) {
 
@@ -411,8 +407,7 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
         }
     }
 
-    Logger::Get()->Info(
-        "GameWorld: player(\"" + ply->GetNickname() + "\") is now receiving world");
+    LOG_INFO("GameWorld: player(\"" + ply->GetNickname() + "\") is now receiving world");
 
     // Add them to the list of receiving players //
     ReceivingPlayers.push_back(ply);
@@ -424,6 +419,13 @@ DLLEXPORT void GameWorld::SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer>
                              "connection");
 
         return;
+    }
+
+    {
+        // Start world receive information
+        ply->GetConnection()->SendPacketToConnection(
+            std::make_shared<ResponseStartWorldReceive>(0, ID, WorldType),
+            RECEIVE_GUARANTEE::Critical);
     }
 
     // Update the position data //
@@ -565,7 +567,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
 
     // Sendable objects may need something to be done //
 
-    if(IsOnServer) {
+    if(NetworkSettings.IsAuthoritative) {
 
         // Notify new entities //
         // DEBUG_BREAK;
@@ -692,7 +694,7 @@ DLLEXPORT ObjectID GameWorld::CreateEntity()
 
 DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id)
 {
-    if(IsOnServer) {
+    if(NetworkSettings.IsAuthoritative) {
 
         // This is at least a decent place to send them,
         Sendable* issendable = nullptr;
@@ -868,7 +870,7 @@ void GameWorld::_DoDestroy(ObjectID id)
 {
     // LOG_INFO("GameWorld destroying object " + Convert::ToString(id));
 
-    if(IsOnServer)
+    if(NetworkSettings.IsAuthoritative)
         _ReportEntityDestruction(id);
 
     // TODO: find a better way to do this

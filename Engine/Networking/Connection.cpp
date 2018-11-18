@@ -605,6 +605,15 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(
         }
     }
 
+#ifdef SPAM_ME_SOME_PACKETS
+    if(!possiblerequest) {
+        LOG_WRITE(SPAM_PREFIX + "Response only received: response type " +
+                  std::to_string(static_cast<int>(response->GetType())) +
+                  " (id: " + std::to_string(response->GetResponseID()) + ") from " +
+                  GenerateFormatedAddressString());
+    }
+#endif
+
     if(_HandleInternalResponse(response))
         return;
 
@@ -1206,7 +1215,6 @@ DLLEXPORT void Leviathan::Connection::_FailPacketAcks(uint32_t packetid)
 
 DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type)
 {
-
     LOG_ERROR("Connection: received a non-valid packet "
               "in restrict mode(" +
               Convert::ToString(static_cast<int>(RestrictType)) +

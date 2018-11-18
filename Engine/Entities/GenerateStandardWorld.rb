@@ -12,6 +12,9 @@ generator.useNamespace
 generator.addInclude "Entities/GameWorld.h"
 generator.addInclude "Entities/Components.h"
 generator.addInclude "Entities/Systems.h"
+# Needed for standard type id
+generator.addInclude "Entities/GameWorldFactory.h"
+
 # Needs script include for stuff
 generator.addInclude "Script/ScriptTypeResolver.h"
 
@@ -122,7 +125,7 @@ END
                        ),
   framesystemrun: (<<-END
     // Client interpolation //
-    if(!IsOnServer){
+    if(GetNetworkSettings().DoInterpolation){
 
         //const float interpolatepercentage = std::max(0.f, timeintick / (float)TICKSPEED);
 
@@ -140,7 +143,7 @@ END
                  )
 )
 
-
+worldClass.WorldType = "static_cast<int32_t>(Leviathan::INBUILT_WORLD_TYPE::Standard)"
 generator.add worldClass
 
 

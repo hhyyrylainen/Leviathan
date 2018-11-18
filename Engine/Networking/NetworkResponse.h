@@ -86,6 +86,9 @@ enum class NETWORK_RESPONSE_TYPE : uint16_t {
     //! Client sents this when they want input to be destroyed
     DisconnectInput,
 
+    //! Contains information about a world that is about to be sent to the client
+    StartWorldReceive,
+
     //! A new entity was created on the server
     EntityCreation,
 
@@ -152,7 +155,6 @@ public:
 
     inline NETWORK_RESPONSE_TYPE GetType() const
     {
-
         return Type;
     }
 

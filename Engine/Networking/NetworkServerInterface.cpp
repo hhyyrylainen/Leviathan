@@ -70,11 +70,64 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
     }
     case NETWORK_REQUEST_TYPE::JoinServer: {
         // Call handling function //
-        Logger::Get()->Info("NetworkServerInterface: player on " +
-                            connection.GenerateFormatedAddressString() +
-                            "is trying to connect");
+        LOG_INFO("NetworkServerInterface: player on " +
+                 connection.GenerateFormatedAddressString() + "is trying to connect");
 
         _HandleServerJoinRequest(request, connection);
+        return;
+    }
+    case NETWORK_REQUEST_TYPE::JoinGame: {
+
+        auto player = GetPlayerForConnection(connection);
+
+        if(!player) {
+            LOG_WARNING("NetworkServerInterface: got JoinGame from non-player connection");
+
+            ResponseServerDisallow response(request->GetMessageNumber(), "",
+                NETWORK_RESPONSE_INVALIDREASON::Unauthenticated);
+
+            connection.SendPacketToConnection(response);
+        }
+
+        auto* data = static_cast<RequestJoinGame*>(request.get());
+
+        LOG_INFO("NetworkServerInterface: player \"" + player->GetUniqueName() +
+                 "\" is joining an active GameWorld (" + data->Options + ")");
+
+        auto world = _GetWorldForJoinTarget(data->Options);
+
+        if(!world) {
+            LOG_WARNING(
+                "NetworkServerInterface: no world found with options: " + data->Options);
+
+            ResponseServerDisallow response(request->GetMessageNumber(),
+                "No valid world to join found",
+                NETWORK_RESPONSE_INVALIDREASON::InvalidParameters);
+
+            connection.SendPacketToConnection(response);
+
+            return;
+        }
+
+        // TODO: make sure that the player is only in one world at a time. Or add some
+        // limitations for staying in multiple worlds at once
+
+        if(world->IsConnectionInWorld(connection)) {
+            LOG_WARNING("NetworkServerInterface: player is already in world");
+
+            ResponseServerDisallow response(request->GetMessageNumber(),
+                "Already connected to this world",
+                NETWORK_RESPONSE_INVALIDREASON::InvalidParameters);
+
+            connection.SendPacketToConnection(response);
+            return;
+        }
+
+        ResponseServerAllow response(request->GetMessageNumber(), SERVER_ACCEPTED_TYPE::Done);
+
+        connection.SendPacketToConnection(response);
+
+        world->SetPlayerReceiveWorld(player);
         return;
     }
     default: break;
@@ -148,7 +201,6 @@ DLLEXPORT std::shared_ptr<ConnectedPlayer> NetworkServerInterface::GetPlayerForC
     Connection& connection)
 {
     // Search through the connections //
-
     for(size_t i = 0; i < ServerPlayers.size(); i++) {
         // Check with the pointer //
         if(ServerPlayers[i]->IsConnectionYours(&connection))
@@ -292,6 +344,12 @@ DLLEXPORT void NetworkServerInterface::PlayerPreconnect(
     Connection& connection, std::shared_ptr<NetworkRequest> joinrequest)
 {}
 
+DLLEXPORT std::shared_ptr<GameWorld> NetworkServerInterface::_GetWorldForJoinTarget(
+    const std::string& options)
+{
+    return nullptr;
+}
+
 DLLEXPORT void NetworkServerInterface::RegisterCustomCommandHandlers(CommandHandler* addhere)
 {}
 // ------------------------------------ //
@@ -329,7 +387,6 @@ void NetworkServerInterface::_OnReportPlayerConnected(
 // ------------------------------------ //
 DLLEXPORT void NetworkServerInterface::TickIt()
 {
-
     // Check for closed connections //
     auto end = ServerPlayers.end();
     for(auto iter = ServerPlayers.begin(); iter != end;) {
@@ -348,7 +405,6 @@ DLLEXPORT void NetworkServerInterface::TickIt()
         (*iter)->UpdateHeartbeats();
         ++iter;
     }
-
 
     // Update the command handling //
     _CommandHandler->UpdateStatus();

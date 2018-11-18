@@ -7,6 +7,7 @@
 #include "Common/ThreadSafe.h"
 #include "Component.h"
 #include "Networking/CommonNetwork.h"
+#include "WorldNetworkSettings.h"
 
 #include <type_traits>
 
@@ -93,18 +94,13 @@ class GameWorld {
     class Implementation;
 
 public:
-    DLLEXPORT GameWorld(const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
+    DLLEXPORT GameWorld(
+        int32_t worldtype, const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
     DLLEXPORT ~GameWorld();
-
-    //! \brief Returns the unique ID of this world
-    DLLEXPORT inline int GetID() const
-    {
-        return ID;
-    }
 
     //! \brief Creates resources for the world to work
     //! \post The world can be used after this
-    DLLEXPORT bool Init(NETWORKED_TYPE type, Ogre::Root* ogre);
+    DLLEXPORT bool Init(const WorldNetworkSettings& network, Ogre::Root* ogre);
 
     //! Release to not use Ogre when deleting
     DLLEXPORT void Release();
@@ -289,6 +285,23 @@ public:
     inline PhysicalWorld* GetPhysicalWorld()
     {
         return _PhysicalWorld.get();
+    }
+
+    //! \returns the unique ID of this world
+    DLLEXPORT inline int GetID() const
+    {
+        return ID;
+    }
+
+    //! \returns the type of this world
+    DLLEXPORT inline int32_t GetType() const
+    {
+        return WorldType;
+    }
+
+    DLLEXPORT inline const auto& GetNetworkSettings() const
+    {
+        return NetworkSettings;
     }
 
     //! \todo Synchronize this over the network
@@ -482,10 +495,6 @@ protected:
     //! Used on dedicated servers and other headless applications
     bool GraphicalMode = false;
 
-    //! Bool flag telling whether this is a master world (on a server) or
-    //! a mirroring world (client)
-    bool IsOnServer = false;
-
 private:
     // pimpl to reduce need of including tons of headers (this causes
     // a double pointer dereference so don't put performance critical
@@ -519,6 +528,9 @@ private:
     //! \todo Change this to an object that holds more than the player pointer
     std::vector<std::shared_ptr<ConnectedPlayer>> ReceivingPlayers;
 
+    //! Primary network settings for controlling what state synchronization methods are called
+    WorldNetworkSettings NetworkSettings;
+
     // Entities //
     std::vector<ObjectID> Entities;
 
@@ -527,7 +539,11 @@ private:
     std::vector<std::tuple<ObjectID, ObjectID>> Parents;
 
     //! The unique ID
-    int ID;
+    const int ID;
+
+    //! The world type. This is needed for telling clients which world objects to create when
+    //! they connect
+    const int32_t WorldType;
 
     //! The current tick number
     //! This should be the same on all clients as closely as possible

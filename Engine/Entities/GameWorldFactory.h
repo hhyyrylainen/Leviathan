@@ -34,7 +34,7 @@ protected:
 };
 
 //! \brief Types of inbuilt world types
-enum class INBUILT_WORLD_TYPE { Standard = 1024 };
+enum class INBUILT_WORLD_TYPE : int32_t { Standard = 1024 };
 
 //! \brief Factory for inbuilt world types
 class InbuiltWorldFactory {

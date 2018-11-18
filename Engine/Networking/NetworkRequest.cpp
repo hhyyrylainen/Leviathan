@@ -2,15 +2,15 @@
 #ifndef LEVIATHAN_NETWORKREQUEST
 #include "NetworkRequest.h"
 #endif
-#include "Exceptions.h"
-#include "GameSpecificPacketHandler.h"
 #include "../Handlers/IDFactory.h"
 #include "../Utility/Convert.h"
+#include "Exceptions.h"
+#include "GameSpecificPacketHandler.h"
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
-DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Packet &packet,
-    uint32_t messagenumber)
+DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(
+    sf::Packet& packet, uint32_t messagenumber)
 {
     // Get the heading data //
     uint16_t tmpval;
@@ -22,7 +22,7 @@ DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Pac
     const NETWORK_REQUEST_TYPE requesttype = static_cast<NETWORK_REQUEST_TYPE>(tmpval);
 
     // Try to create the additional data if required for this type //
-    switch(requesttype){
+    switch(requesttype) {
     case NETWORK_REQUEST_TYPE::Echo:
         return std::make_shared<RequestNone>(requesttype, messagenumber, packet);
     case NETWORK_REQUEST_TYPE::Connect:
@@ -33,18 +33,13 @@ DLLEXPORT std::shared_ptr<NetworkRequest> NetworkRequest::LoadFromPacket(sf::Pac
         return std::make_shared<RequestAuthenticate>(messagenumber, packet);
     case NETWORK_REQUEST_TYPE::JoinServer:
         return std::make_shared<RequestJoinServer>(messagenumber, packet);
-    default:
-        {
-            Logger::Get()->Warning("NetworkRequest: unused type: "+
-                Convert::ToString(static_cast<int>(requesttype)));
-            throw InvalidArgument("packet has request type that is missing from "
-                "switch(requesttype)");
-        }
-        break;
+    case NETWORK_REQUEST_TYPE::JoinGame:
+        return std::make_shared<RequestJoinGame>(messagenumber, packet);
+    default: {
+        Logger::Get()->Warning("NetworkRequest: unused type: " +
+                               Convert::ToString(static_cast<int>(requesttype)));
+        throw InvalidArgument("packet has request type that is missing from "
+                              "switch(requesttype)");
+    } break;
     }
 }
-
-
-
-
-

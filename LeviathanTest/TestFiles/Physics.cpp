@@ -21,7 +21,7 @@ TEST_CASE("Physics world creates collisions", "[physics]")
     StandardWorld world(std::make_unique<PhysicsMaterialManager>());
     world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
+    REQUIRE(world.Init(WorldNetworkSettings::GetSettingsForClient(), nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
@@ -42,7 +42,7 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
     StandardWorld world(std::make_unique<PhysicsMaterialManager>());
     world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
+    REQUIRE(world.Init(WorldNetworkSettings::GetSettingsForClient(), nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
@@ -120,7 +120,7 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
     StandardWorld world(std::move(physMan));
     world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
+    REQUIRE(world.Init(WorldNetworkSettings::GetSettingsForClient(), nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);
@@ -194,7 +194,7 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
     StandardWorld world(std::move(physMan));
     world.SetRunInBackground(true);
 
-    REQUIRE(world.Init(NETWORKED_TYPE::Client, nullptr));
+    REQUIRE(world.Init(WorldNetworkSettings::GetSettingsForClient(), nullptr));
 
     PhysicalWorld* physWorld = world.GetPhysicalWorld();
     REQUIRE(physWorld);

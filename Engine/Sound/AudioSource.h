@@ -66,6 +66,13 @@ public:
         return false;
     }
 
+    //! \param volume 0-1.f is normal range
+    DLLEXPORT inline void SetVolume(float volume)
+    {
+        if(Source)
+            Source->setVolume(volume);
+    }
+
     REFERENCE_COUNTED_PTR_TYPE(AudioSource);
 
 private:

@@ -109,6 +109,7 @@ else()
     "Entities/StateHolder.h" "Entities/StateHolder.cpp" 
     "Entities/StateInterpolator.h"
     "Entities/EntityCommon.h"
+    "Entities/WorldNetworkSettings.h"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
     "Entities/ScriptComponentHolder.cpp" "Entities/ScriptComponentHolder.h"
     "Entities/ScriptSystemWrapper.cpp" "Entities/ScriptSystemWrapper.h"

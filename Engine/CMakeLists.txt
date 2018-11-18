@@ -17,6 +17,7 @@ if(CREATE_UE4_PLUGIN)
     "Common/ThreadSafe.h" 
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
+    "Common/CommonMath.cpp" "Common/CommonMath.h"
     )
   
   set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
@@ -26,8 +27,6 @@ if(CREATE_UE4_PLUGIN)
   set(GroupUtility "Utility/Convert.cpp" "Utility/Convert.h"
     "Utility/Random.cpp" "Utility/Random.h"
     )
-  
-  set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h")
 
   set(GroupEntities "Entities/EntityCommon.h")
 
@@ -67,14 +66,10 @@ else()
     "Common/ThreadSafe.h" 
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
-    "Common/MimeTypes.cpp" "Common/MimeTypes.h"    
+    "Common/MimeTypes.cpp" "Common/MimeTypes.h"
+    "Common/CommonMath.cpp" "Common/CommonMath.h"
     )
   
-  set(GroupMath "Math/CommonMath.cpp" "Math/CommonMath.h"
-    "Math/RayTracing.cpp" "Math/RayTracing.h"
-    "Math/TriangulateDelaunay.cpp" "Math/TriangulateDelaunay.h"
-    )
-
   set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
     "Utility/Convert.cpp" "Utility/Convert.h"
     "Utility/DebugVariableNotifier.cpp" "Utility/DebugVariableNotifier.h"
@@ -350,7 +345,6 @@ if(USE_ANGELSCRIPT)
 endif()
 
 # set groups
-source_group("Math" FILES ${GroupMath})
 source_group("Sound" FILES ${GroupSound})
 source_group("Scripting" FILES ${GroupScript})
 source_group("Scripting\\AngelAddons" FILES ${GroupScriptAddons})
@@ -406,7 +400,7 @@ endif()
 
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
-  ${GroupMath} ${GroupSound}
+  ${GroupSound}
   ${GroupScript} ${GroupScriptInterface} ${GroupScriptBindings}
   ${GroupGUI} ${GroupGUIWidgets} ${GroupEvents}
   ${GroupInput} ${GroupHandlers} ${GroupCommon} ${GroupApplication} ${GroupExceptions}
@@ -507,9 +501,6 @@ if(CREATE_UE4_PLUGIN)
 
   RemoveSourceFilesFromList(GroupUtility)
   install(FILES ${GroupUtility} DESTINATION "include/leviathan/Utility")
-  
-  RemoveSourceFilesFromList(GroupMath)
-  install(FILES ${GroupMath} DESTINATION "include/leviathan/Math")
   
   install(FILES ${GroupEntities} DESTINATION "include/leviathan/Entities")
   

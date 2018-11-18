@@ -179,7 +179,6 @@ class ScriptModule;
 class ScriptScript;
 class Event;
 class GenericEvent;
-struct Int1;
 struct Int2;
 struct Int3;
 class LeviathanApplication;

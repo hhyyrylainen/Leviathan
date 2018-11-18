@@ -1595,7 +1595,6 @@ void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol = 1.0e-
 using Leviathan::Float2;
 using Leviathan::Float3;
 using Leviathan::Float4;
-using Leviathan::Int1;
 using Leviathan::Int2;
 using Leviathan::Int3;
 #endif

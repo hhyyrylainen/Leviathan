@@ -16,12 +16,17 @@ class btRigidBody;
 namespace Leviathan {
 
 class PhysicalMaterial;
+class PhysicsDataBridge;
 
 //! \brief This acts as a bridge between Leviathan positions and physics engine positions
 //! \todo This should have a property for the object deriving from this to be able to tell that
 //! it has destructed
 class PhysicsPositionProvider : public btMotionState {
+    friend PhysicsDataBridge;
+
 public:
+    DLLEXPORT ~PhysicsPositionProvider();
+
     // These need to be implemented by Leviathan position giver
     virtual void GetPositionDataForPhysics(
         const Float3*& position, const Float4*& orientation) const = 0;
@@ -31,6 +36,37 @@ public:
     // These then automatically send the data to the physics engine
     DLLEXPORT void getWorldTransform(btTransform& worldTrans) const override final;
     DLLEXPORT void setWorldTransform(const btTransform& worldTrans) override final;
+
+protected:
+    DLLEXPORT void _OnAttachBridge(PhysicsDataBridge* bridge);
+
+private:
+    PhysicsDataBridge* AttachedBridge = nullptr;
+};
+
+//! \brief This is an indirection helper for allowing world entities to detach from physics
+//! objects if they get destroyed
+class PhysicsDataBridge : public btMotionState {
+    friend PhysicsPositionProvider;
+
+public:
+    DLLEXPORT PhysicsDataBridge(PhysicsPositionProvider* provider);
+    DLLEXPORT ~PhysicsDataBridge();
+
+    inline auto GetDataSource() const
+    {
+        return AttachedProvider;
+    }
+
+    // These are proxies to the AttachedProvider (otherwise these don't touch the transforms)
+    DLLEXPORT void getWorldTransform(btTransform& worldTrans) const override final;
+    DLLEXPORT void setWorldTransform(const btTransform& worldTrans) override final;
+
+protected:
+    DLLEXPORT void _OnDetachBridge(PhysicsPositionProvider* provider);
+
+private:
+    PhysicsPositionProvider* AttachedProvider;
 };
 
 
@@ -41,10 +77,12 @@ class PhysicsBody : public ReferenceCounted {
 protected:
     friend ReferenceCounted;
     DLLEXPORT PhysicsBody(std::unique_ptr<btRigidBody>&& body, float mass,
-        const PhysicsShape::pointer& shape, PhysicsPositionProvider* positionsynchronization,
-        int materialid);
+        const PhysicsShape::pointer& shape,
+        std::unique_ptr<PhysicsDataBridge>&& positionsynchronization, int materialid);
 
 public:
+    DLLEXPORT ~PhysicsBody();
+
     //! \param point Is relative position of the impulse given
     //! \exception InvalidArgument if deltaspeed or point has non-finite values
     DLLEXPORT void GiveImpulse(const Float3& deltaspeed, const Float3& point = Float3(0));
@@ -72,7 +110,12 @@ public:
 
     //! \brief Sets the physical material ID of this object
     //! \note You have to fetch the ID from the world's corresponding PhysicalMaterialManager
-    DLLEXPORT void SetPhysicalMaterialID(int ID);
+    //! \todo There needs to be a physical world helper for actually applying the new
+    //! properties
+    DLLEXPORT void SetPhysicalMaterialID(int id)
+    {
+        PhysicalMaterialID = id;
+    }
 
     //! \brief Sets the linear dampening which slows down the object and angular dampening
     //!
@@ -176,8 +219,8 @@ private:
     //! mass this is required
     PhysicsShape::pointer Shape;
 
-    //! This will be used at some point to notify the other object if this is destroyed
-    PhysicsPositionProvider* PositionUpdate;
+    //! Hold our side of the bridge open
+    std::unique_ptr<PhysicsDataBridge> PositionUpdate;
 
 
     int PhysicalMaterialID;

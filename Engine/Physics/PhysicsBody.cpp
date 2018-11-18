@@ -11,10 +11,10 @@
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT PhysicsBody::PhysicsBody(std::unique_ptr<btRigidBody>&& body, float mass,
-    const PhysicsShape::pointer& shape, PhysicsPositionProvider* positionsynchronization,
-    int materialid) :
+    const PhysicsShape::pointer& shape,
+    std::unique_ptr<PhysicsDataBridge>&& positionsynchronization, int materialid) :
     Body(std::move(body)),
-    Mass(mass), Shape(shape), PositionUpdate(positionsynchronization),
+    Mass(mass), Shape(shape), PositionUpdate(std::move(positionsynchronization)),
     PhysicalMaterialID(materialid)
 {
     if(!Body)
@@ -24,10 +24,21 @@ DLLEXPORT PhysicsBody::PhysicsBody(std::unique_ptr<btRigidBody>&& body, float ma
     Body->setUserPointer(this);
 }
 
+DLLEXPORT PhysicsBody::~PhysicsBody()
+{
+    if(Body) {
+        LOG_ERROR("PhysicsBody: destroyed before being removed from a world");
+        DetachResources();
+    }
+}
+
 DLLEXPORT void PhysicsBody::DetachResources()
 {
+    Body->setUserPointer(nullptr);
     Body.reset();
-    // TODO: unhook position synchronization
+    PositionUpdate.reset();
+
+    Shape.reset();
 }
 // ------------------------------------ //
 DLLEXPORT void PhysicsBody::ApplyShapeChange(const PhysicsShape::pointer& shape)
@@ -165,7 +176,6 @@ DLLEXPORT Float3 PhysicsBody::GetVelocity() const
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
 
-
     return Body->getLinearVelocity();
 }
 // ------------------------------------ //
@@ -173,7 +183,6 @@ DLLEXPORT Float3 PhysicsBody::GetAngularVelocity() const
 {
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
-
 
     return Body->getAngularVelocity();
 }
@@ -288,6 +297,19 @@ DLLEXPORT void PhysicsBody::ApplyMaterial(PhysicalMaterial& material)
     // TODO: properties
 }
 // ------------------------------------ //
+// PhysicsPositionProvider
+DLLEXPORT PhysicsPositionProvider::~PhysicsPositionProvider()
+{
+    _OnAttachBridge(nullptr);
+}
+
+DLLEXPORT void PhysicsPositionProvider::_OnAttachBridge(PhysicsDataBridge* bridge)
+{
+    if(AttachedBridge)
+        AttachedBridge->_OnDetachBridge(this);
+    AttachedBridge = bridge;
+}
+// ------------------------------------ //
 DLLEXPORT void PhysicsPositionProvider::getWorldTransform(btTransform& worldTrans) const
 {
     const Float3* position;
@@ -305,4 +327,45 @@ DLLEXPORT void PhysicsPositionProvider::setWorldTransform(const btTransform& wor
     const Float4 orientation = worldTrans.getRotation();
 
     SetPositionDataFromPhysics(position, orientation);
+}
+// ------------------------------------ //
+// PhysicsDataBridge
+DLLEXPORT PhysicsDataBridge::PhysicsDataBridge(PhysicsPositionProvider* provider)
+{
+    if(provider) {
+        AttachedProvider = provider;
+        AttachedProvider->_OnAttachBridge(this);
+    }
+}
+
+DLLEXPORT PhysicsDataBridge::~PhysicsDataBridge()
+{
+    if(AttachedProvider) {
+
+        // This calls _OnDetachBridge on us
+        AttachedProvider->_OnAttachBridge(nullptr);
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void PhysicsDataBridge::_OnDetachBridge(PhysicsPositionProvider* provider)
+{
+    if(AttachedProvider == provider) {
+        AttachedProvider = nullptr;
+    } else {
+        LOG_ERROR("PhysicsDataBridge: wrong provider called _OnDetachBridge, expected: " +
+                  Convert::ToHexadecimalString(AttachedProvider) +
+                  " got: " + Convert::ToHexadecimalString(provider));
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void PhysicsDataBridge::getWorldTransform(btTransform& worldTrans) const
+{
+    if(AttachedProvider)
+        AttachedProvider->getWorldTransform(worldTrans);
+}
+
+DLLEXPORT void PhysicsDataBridge::setWorldTransform(const btTransform& worldTrans)
+{
+    if(AttachedProvider)
+        AttachedProvider->setWorldTransform(worldTrans);
 }

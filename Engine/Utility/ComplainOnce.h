@@ -9,7 +9,7 @@
 namespace Leviathan {
 
 //! \brief Prints a warning or an error once
-class ComplainOnce : public ThreadSafe {
+class ComplainOnce {
 public:
     ComplainOnce() = delete;
     DLLEXPORT static bool PrintWarningOnce(
@@ -17,8 +17,10 @@ public:
     DLLEXPORT static bool PrintErrorOnce(const std::string& error, const std::string& message);
 
 private:
-    // fired warnings/errors //
+    //! fired warnings/errors
     static std::unordered_set<std::string> FiredErrors;
+
+    static Mutex ErrorsMutex;
 };
 
 } // namespace Leviathan

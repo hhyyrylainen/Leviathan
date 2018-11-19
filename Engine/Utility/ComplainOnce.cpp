@@ -7,6 +7,8 @@ using namespace Leviathan;
 DLLEXPORT bool Leviathan::ComplainOnce::PrintWarningOnce(
     const std::string& warning, const std::string& message)
 {
+    Lock lock(ErrorsMutex);
+
     // Print only once to log //
     if(FiredErrors.find(warning) != FiredErrors.end())
         return false;
@@ -21,6 +23,8 @@ DLLEXPORT bool Leviathan::ComplainOnce::PrintWarningOnce(
 DLLEXPORT bool Leviathan::ComplainOnce::PrintErrorOnce(
     const std::string& error, const std::string& message)
 {
+    Lock lock(ErrorsMutex);
+
     // Print only once to log //
     if(FiredErrors.find(error) != FiredErrors.end())
         return false;
@@ -33,4 +37,5 @@ DLLEXPORT bool Leviathan::ComplainOnce::PrintErrorOnce(
 }
 
 std::unordered_set<std::string> ComplainOnce::FiredErrors;
+Mutex ComplainOnce::ErrorsMutex;
 // ------------------------------------ //

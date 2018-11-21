@@ -771,3 +771,24 @@ TEST_CASE("Script exception errors report std::exception derived message", "[scr
 
 #endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 
+TEST_CASE("Script anonymous delegates don't leak GC objects", "[script]")
+{
+    PartialEngine<false> engine;
+
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/AnonymousDelegateLeak.as"));
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup("RunTest");
+
+    auto returned = exec.RunScript<void>(mod, ssetup);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+}

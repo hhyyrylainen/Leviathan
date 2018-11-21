@@ -1182,7 +1182,8 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
 }
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, int worldtype,
-    const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials)
+    const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials,
+    const WorldNetworkSettings& networking)
 {
     std::shared_ptr<GameWorld> world;
     if(worldtype >= 1024) {
@@ -1200,7 +1201,7 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, i
         return nullptr;
     }
 
-    world->Init(_NetworkHandler->GetNetworkType(), NoGui ? nullptr : Graph->GetOgreRoot());
+    world->Init(networking, NoGui ? nullptr : Graph->GetOgreRoot());
 
     if(owningwindow)
         owningwindow->LinkObjects(world);

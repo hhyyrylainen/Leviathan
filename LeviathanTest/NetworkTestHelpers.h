@@ -10,8 +10,15 @@
 
 #include "PartialEngine.h"
 
-namespace Leviathan { namespace Test {
+namespace Leviathan {
 
+class StandardWorld;
+
+namespace Test {
+
+//
+// Basic test interfaces
+//
 class TestClientInterface : public NetworkClientInterface {
 public:
     virtual void HandleResponseOnlyPacket(
@@ -19,7 +26,7 @@ public:
     {}
 
     int ConnectedCallbackCount = 0;
-    
+
 protected:
     virtual void _OnProperlyConnected() override
     {
@@ -44,6 +51,39 @@ public:
     }
 };
 
+//
+// World joining test
+//
+class TestWorldClientInterface : public NetworkClientInterface {
+public:
+    virtual void _OnWorldJoined(std::shared_ptr<GameWorld> world) override
+    {
+        CHECK(OurReceivedWorld);
+        CHECK(world == OurReceivedWorld);
+    }
+
+    auto& GetWorld()
+    {
+        return OurReceivedWorld;
+    }
+
+protected:
+    virtual void _OnProperlyConnected() override
+    {
+        NetworkClientInterface::DoJoinDefaultWorld();
+    }
+};
+
+class TestWorldServerInterface : public NetworkServerInterface {
+public:
+    TestWorldServerInterface();
+
+    virtual std::shared_ptr<GameWorld> _GetWorldForJoinTarget(
+        const std::string& options) override;
+
+    std::shared_ptr<StandardWorld> World;
+};
+
 //! Test fixture for testing client to server messaging
 class ConnectionTestFixture {
 protected:
@@ -51,7 +91,6 @@ protected:
         Client(NETWORKED_TYPE::Client, &ClientInterface),
         Server(NETWORKED_TYPE::Server, &ServerInterface)
     {
-
         REQUIRE(Client.Init(sf::Socket::AnyPort));
         REQUIRE(Server.Init(sf::Socket::AnyPort));
 
@@ -73,7 +112,6 @@ protected:
 
     void RunListeningLoop(int times = 3)
     {
-
         for(int i = 0; i < times; ++i) {
 
             Server.UpdateAllConnections();
@@ -84,7 +122,6 @@ protected:
     //! Makes sure the connection is established
     void VerifyEstablishConnection()
     {
-
         RunListeningLoop(6);
 
         // Should have been enough time to move to CONNECTION_STATE::Authenticated
@@ -95,7 +132,6 @@ protected:
     //! Makes sure that the server is started and clients can join (localhost only)
     void VerifyServerStarted()
     {
-
         ServerInterface.SetServerAllowPlayers(true);
         ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
     }
@@ -103,7 +139,6 @@ protected:
     //! If VerifyServerStarted this should be called to make sure the server is closed properly
     void CloseServerProperly()
     {
-
         ServerInterface.CloseDown();
     }
 
@@ -121,13 +156,84 @@ protected:
     std::shared_ptr<Connection> ServerConnection;
 };
 
+//! Test fixture for testing client getting entity synchronization data
+class WorldSynchronizationTestFixture {
+protected:
+    WorldSynchronizationTestFixture() :
+        Client(NETWORKED_TYPE::Client, &ClientInterface),
+        Server(NETWORKED_TYPE::Server, &ServerInterface)
+    {
+        REQUIRE(Client.Init(sf::Socket::AnyPort));
+        REQUIRE(Server.Init(sf::Socket::AnyPort));
+
+        ClientConnection =
+            std::make_shared<Connection>(sf::IpAddress::LocalHost, Server.GetOurPort());
+
+        ServerConnection =
+            std::make_shared<Connection>(sf::IpAddress::LocalHost, Client.GetOurPort());
+
+        Server._RegisterConnection(ServerConnection);
+        Client._RegisterConnection(ClientConnection);
+
+        ClientConnection->Init(&Client);
+        ServerConnection->Init(&Server);
+
+        CHECK(ClientConnection->GetState() == CONNECTION_STATE::NothingReceived);
+        CHECK(ServerConnection->GetState() == CONNECTION_STATE::NothingReceived);
+    }
+
+    void RunListeningLoop(int times = 3)
+    {
+        for(int i = 0; i < times; ++i) {
+
+            Server.UpdateAllConnections();
+            Client.UpdateAllConnections();
+        }
+    }
+
+    //! Makes sure the connection is established
+    void VerifyEstablishConnection()
+    {
+        RunListeningLoop(6);
+
+        // Should have been enough time to move to CONNECTION_STATE::Authenticated
+        CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
+        CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+    }
+
+    //! Makes sure that the server is started and clients can join (localhost only)
+    void VerifyServerStarted()
+    {
+        ServerInterface.SetServerAllowPlayers(true);
+        ServerInterface.SetServerStatus(Leviathan::SERVER_STATUS::Running);
+    }
+
+    //! If VerifyServerStarted this should be called to make sure the server is closed properly
+    void CloseServerProperly()
+    {
+        ServerInterface.CloseDown();
+    }
+
+protected:
+    PartialEngine<false> engine;
+
+    TestWorldClientInterface ClientInterface;
+    NetworkHandler Client;
+
+
+    TestWorldServerInterface ServerInterface;
+    NetworkHandler Server;
+
+    std::shared_ptr<Connection> ClientConnection;
+    std::shared_ptr<Connection> ServerConnection;
+};
+
 
 //! Test fixture for testing client sent messages to a raw socket
 class ClientConnectionTestFixture {
 protected:
     ClientConnectionTestFixture() : Client(NETWORKED_TYPE::Client, &ClientInterface)
     {
-
         RawSocket.setBlocking(false);
         REQUIRE(RawSocket.bind(sf::Socket::AnyPort) == sf::Socket::Done);
 
@@ -149,7 +255,6 @@ protected:
     //! packets for opening a connection
     void DoConnectionOpening()
     {
-
         sf::Packet packet;
 
         // Read connect
@@ -276,7 +381,6 @@ protected:
 
     bool ReadPacket(sf::Packet& packet)
     {
-
         sf::IpAddress sender;
         unsigned short sentport;
         return RawSocket.receive(packet, sender, sentport) == sf::Socket::Done;
@@ -284,13 +388,11 @@ protected:
 
     void SendPacket(sf::Packet& packet)
     {
-
         RawSocket.send(packet, sf::IpAddress::LocalHost, Client.GetOurPort());
     }
 
     void RunListeningLoop(int times = 1)
     {
-
         for(int i = 0; i < times; ++i) {
 
             Client.UpdateAllConnections();
@@ -370,4 +472,5 @@ public:
 };
 
 
-}} // namespace Leviathan::Test
+} // namespace Test
+} // namespace Leviathan

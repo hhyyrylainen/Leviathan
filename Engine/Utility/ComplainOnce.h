@@ -1,36 +1,26 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
-#include "Include.h"
-#include "Threading/Monitor.h"
+#include "Common/ThreadSafe.h"
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <unordered_set>
 
 namespace Leviathan {
 
+//! \brief Prints a warning or an error once
 class ComplainOnce {
 public:
     ComplainOnce() = delete;
-
     DLLEXPORT static bool PrintWarningOnce(
         const std::string& warning, const std::string& message);
     DLLEXPORT static bool PrintErrorOnce(const std::string& error, const std::string& message);
 
 private:
-    class ThreadUnsafeComplainOnce {
-    public:
-        bool PrintWarningOnce(const std::string& warning, const std::string& message);
-        bool PrintErrorOnce(const std::string& error, const std::string& message);
+    //! fired warnings/errors
+    static std::unordered_set<std::string> FiredErrors;
 
-    private:
-        bool wasErrorLogged(const std::string& warning);
-
-        // fired warnings/errors //
-        std::vector<std::shared_ptr<std::string>> FiredErrors;
-    };
-
-    static Monitor<ThreadUnsafeComplainOnce> mon;
+    static Mutex ErrorsMutex;
 };
 
 } // namespace Leviathan

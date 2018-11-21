@@ -5,7 +5,7 @@ if(LEVIATHAN_FULL_BUILD)
     resource.h
     TestMain.cpp
     PartialEngine.h PartialEngine.cpp
-    NetworkTestHelpers.h
+    NetworkTestHelpers.h NetworkTestHelpers.cpp
 
     TestFiles/ReferenceCounted.cpp
     TestFiles/StringIterator.cpp
@@ -40,6 +40,8 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/MimeTypes.cpp
     
     TestFiles/CoreEngineTests.cpp
+
+    TestFiles/EntitySynchronizationAndInterpolation.cpp
     )
 else()
   # Just a few tests required

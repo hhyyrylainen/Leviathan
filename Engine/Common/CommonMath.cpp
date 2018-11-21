@@ -1,11 +1,9 @@
 // ------------------------------------ //
 #include "CommonMath.h"
-using namespace Leviathan;
-using namespace std;
-// ------------------------------------ //
-#include "Utility/Random.h"
 
-#include <cmath>
+#include "Utility/Random.h"
+using namespace Leviathan;
+// ------------------------------------ //
 
 DLLEXPORT double MMath::AngleBetweenPoints(float x1, float x2, float y1, float y2) noexcept
 {

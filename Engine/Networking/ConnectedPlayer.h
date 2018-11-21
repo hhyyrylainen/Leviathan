@@ -10,20 +10,23 @@
 
 #include <string>
 
-namespace Leviathan{
+namespace Leviathan {
 
 //! \brief A class that represents a human player
 //! \todo Add a kick method and use it in NetworkServerInterface::CloseDownServer
-class ConnectedPlayer : public CommandSender{
+class ConnectedPlayer : public CommandSender {
 public:
     DLLEXPORT ConnectedPlayer(std::shared_ptr<Connection> connection,
         NetworkServerInterface* owninginstance, int plyid);
-    
+
     //! \brief Empty destructor for exporting
     DLLEXPORT ~ConnectedPlayer();
 
     //! \brief Checks is the given connection same as ours
-    DLLEXPORT bool IsConnectionYours(Connection* checkconnection);
+    DLLEXPORT inline bool IsConnectionYours(Connection* checkconnection)
+    {
+        return CorrespondingConnection.get() == checkconnection;
+    }
 
     //! \returns True if this player's connection is closed and this object should be
     //! disposed of
@@ -31,7 +34,7 @@ public:
 
     //! \brief Call this when the player is kicked
     //! \todo Add the reason to the packet
-    DLLEXPORT void OnKicked(const std::string &reason);
+    DLLEXPORT void OnKicked(const std::string& reason);
 
     //! \brief Starts requiring the player to send heartbeats
     DLLEXPORT void StartHeartbeats();
@@ -42,12 +45,14 @@ public:
     //! \brief Call this at any appropriate time to update heartbeat statistics
     DLLEXPORT void UpdateHeartbeats();
 
-    inline std::shared_ptr<Connection> GetConnection() {
+    inline std::shared_ptr<Connection> GetConnection()
+    {
         return CorrespondingConnection;
     }
 
     //! \brief Gets the unique identifier of the player, valid for this session
-    inline int GetID() const {
+    inline int GetID() const
+    {
         return ID;
     }
 
@@ -56,19 +61,20 @@ public:
     DLLEXPORT ObjectID GetPositionInWorld(GameWorld* world) const;
 
 
-    const std::string& GetUniqueName() override{
+    const std::string& GetUniqueName() override
+    {
         return UniqueName;
     }
 
-    const std::string& GetNickname() override{
+    const std::string& GetNickname() override
+    {
         return DisplayName;
     }
 
     DLLEXPORT COMMANDSENDER_PERMISSIONMODE GetPermissionMode() override;
 
 protected:
-
-    DLLEXPORT bool _OnSendPrivateMessage(const std::string &message) override;
+    DLLEXPORT bool _OnSendPrivateMessage(const std::string& message) override;
     // ------------------------------------ //
 
     std::shared_ptr<Connection> CorrespondingConnection;
@@ -100,4 +106,4 @@ protected:
     int ID;
 };
 
-}
+} // namespace Leviathan

@@ -32,20 +32,27 @@ public:
         const btCollisionObject* obj1 =
             static_cast<btCollisionObject*>(proxy1->m_clientObject);
 
-        PhysicsBody* body1 = static_cast<PhysicsBody*>(obj0->getUserPointer());
-        PhysicsBody* body2 = static_cast<PhysicsBody*>(obj1->getUserPointer());
+        // TODO: remove this check once it is confirmed that both objects must always exist
+        if(obj0 && obj1) {
 
-        const auto materialID1 = body1->GetPhysicalMaterialID();
-        const auto materialID2 = body2->GetPhysicalMaterialID();
+            PhysicsBody* body1 = static_cast<PhysicsBody*>(obj0->getUserPointer());
+            PhysicsBody* body2 = static_cast<PhysicsBody*>(obj1->getUserPointer());
 
-        // Find contact callbacks
-        if(materialID1 >= 0 && materialID2 >= 0) {
+            if(body1 && body2) {
 
-            auto pair = World->GetMaterialPair(materialID1, materialID2);
+                const auto materialID1 = body1->GetPhysicalMaterialID();
+                const auto materialID2 = body2->GetPhysicalMaterialID();
 
-            if(pair && pair->AABBCallback) {
+                // Find contact callbacks
+                if(materialID1 >= 0 && materialID2 >= 0) {
 
-                return pair->AABBCallback(*World, *body1, *body2);
+                    auto pair = World->GetMaterialPair(materialID1, materialID2);
+
+                    if(pair && pair->AABBCallback) {
+
+                        return pair->AABBCallback(*World, *body1, *body2);
+                    }
+                }
             }
         }
 
@@ -136,22 +143,26 @@ void PhysicalWorld::OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep)
         const btCollisionObject* objA = contactManifold->getBody0();
         const btCollisionObject* objB = contactManifold->getBody1();
 
-        const int numContacts = contactManifold->getNumContacts();
+        // TODO: remove this check once it is confirmed that both objects must always exist
+        if(objA && objB) {
 
-        bool handled = false;
+            const int numContacts = contactManifold->getNumContacts();
 
-        for(int j = 0; j < numContacts; j++) {
+            bool handled = false;
 
-            const btManifoldPoint& contactPoint = contactManifold->getContactPoint(j);
+            for(int j = 0; j < numContacts; j++) {
 
-            if(contactPoint.getDistance() < 0.f) {
+                const btManifoldPoint& contactPoint = contactManifold->getContactPoint(j);
 
-                if(handled)
-                    continue;
+                if(contactPoint.getDistance() < 0.f) {
 
-                handled = true;
-                leviathanWorld->OnManifoldWithContact(
-                    contactManifold, contactPoint, objA, objB);
+                    if(handled)
+                        continue;
+
+                    handled = true;
+                    leviathanWorld->OnManifoldWithContact(
+                        contactManifold, contactPoint, objA, objB);
+                }
             }
         }
     }
@@ -170,17 +181,20 @@ void PhysicalWorld::OnManifoldWithContact(btPersistentManifold* contactManifold,
     PhysicsBody* body1 = static_cast<PhysicsBody*>(objA->getUserPointer());
     PhysicsBody* body2 = static_cast<PhysicsBody*>(objB->getUserPointer());
 
-    const auto materialID1 = body1->GetPhysicalMaterialID();
-    const auto materialID2 = body2->GetPhysicalMaterialID();
+    if(body1 && body2) {
 
-    // Find contact callbacks
-    if(materialID1 >= 0 && materialID2 >= 0) {
+        const auto materialID1 = body1->GetPhysicalMaterialID();
+        const auto materialID2 = body2->GetPhysicalMaterialID();
 
-        auto pair = GetMaterialPair(materialID1, materialID2);
+        // Find contact callbacks
+        if(materialID1 >= 0 && materialID2 >= 0) {
 
-        if(pair && pair->ContactCallback) {
+            auto pair = GetMaterialPair(materialID1, materialID2);
 
-            pair->ContactCallback(*this, *body1, *body2);
+            if(pair && pair->ContactCallback) {
+
+                pair->ContactCallback(*this, *body1, *body2);
+            }
         }
     }
 }
@@ -188,12 +202,27 @@ void PhysicalWorld::OnManifoldWithContact(btPersistentManifold* contactManifold,
 const PhysMaterialDataPair* PhysicalWorld::GetMaterialPair(int id1, int id2) const
 {
     const auto material1 = PhysicsMaterials->GetMaterial(id1);
-    const PhysMaterialDataPair* pair = material1->GetPairWith(id2);
+
+    const PhysMaterialDataPair* pair = nullptr;
+
+    // The logs in this method will absolutely trash performance if they get hit as there will
+    // be tons of calls with the same parameters
+
+    if(material1) {
+        pair = material1->GetPairWith(id2);
+    } else {
+        LOG_ERROR("PhysicsBody has invalid material ID: " + std::to_string(id1));
+    }
 
     if(!pair) {
 
         const auto material2 = PhysicsMaterials->GetMaterial(id2);
-        pair = material2->GetPairWith(id1);
+
+        if(material2) {
+            pair = material2->GetPairWith(id1);
+        } else {
+            LOG_ERROR("PhysicsBody has invalid material ID: " + std::to_string(id2));
+        }
     }
 
     return pair;
@@ -226,15 +255,7 @@ DLLEXPORT PhysicsShape::pointer PhysicalWorld::CreateCompound()
 DLLEXPORT PhysicsShape::pointer PhysicalWorld::CreateSphere(float radius)
 {
 #ifdef CHECK_FOR_NANS
-    bool matrixNans = false;
-    for(size_t i = 0; i < 16; ++i) {
-        if(std::isnan(*(offset[0] + i))) {
-            matrixNans = true;
-            break;
-        }
-    }
-
-    if(std::isnan(radius) || matrixNans) {
+    if(std::isnan(radius)) {
 
         DEBUG_BREAK;
         throw std::runtime_error("CreateSphere has NaNs in it!");
@@ -279,28 +300,39 @@ DLLEXPORT PhysicsBody::pointer PhysicalWorld::CreateBodyFromCollision(
 
     // To not have to lookup all positions all the time we use the position synchronization
     // object
+    std::unique_ptr<PhysicsDataBridge> positionBridge;
+
+    if(positionsynchronization)
+        positionBridge = std::make_unique<PhysicsDataBridge>(positionsynchronization);
+
     btRigidBody::btRigidBodyConstructionInfo info(
-        mass, positionsynchronization, shape->GetShape(), localInertia);
+        mass, positionBridge.get(), shape->GetShape(), localInertia);
 
     auto body = PhysicsBody::MakeShared<PhysicsBody>(std::make_unique<btRigidBody>(info), mass,
-        shape, positionsynchronization, physicsmaterialid);
+        shape, std::move(positionBridge), physicsmaterialid);
+
+    if(!body->GetBody()) {
+        LOG_ERROR("PhysicalWorld: CreateBodyFromCollision: failed to create bullet body");
+        return nullptr;
+    }
 
     // Apply material
     if(physicsmaterialid != -1 && PhysicsMaterials) {
-
         auto material = PhysicsMaterials->GetMaterial(physicsmaterialid);
 
         if(!material) {
             LOG_ERROR(
                 "PhysicalWorld: CreateBodyFromCollision: can't find physics material id: " +
                 std::to_string(physicsmaterialid));
+            body->SetPhysicalMaterialID(-1);
         } else {
 
             body->ApplyMaterial(*material);
         }
     }
 
-    // Dirty hack to make bodies not sleep
+    // Dirty hack to make bodies not sleep. This makes apply force work (another approach would
+    // be to wake any body that has force applied to it)
     body->GetBody()->setActivationState(DISABLE_DEACTIVATION);
 
     DynamicsWorld->addRigidBody(body->GetBody());
@@ -328,19 +360,19 @@ DLLEXPORT bool PhysicalWorld::ChangeBodyShape(
 
 DLLEXPORT void PhysicalWorld::DestroyBody(PhysicsBody* body)
 {
-    DynamicsWorld->removeRigidBody(body->GetBody());
-    body->DetachResources();
-
-    // Remove from alive bodies
+    // Remove from alive bodies. This also checks that the body is in this world
     for(auto iter = PhysicsBodies.begin(); iter != PhysicsBodies.end(); ++iter) {
 
         if(iter->get() == body) {
+
+            DynamicsWorld->removeRigidBody(body->GetBody());
+            body->DetachResources();
             PhysicsBodies.erase(iter);
             return;
         }
     }
 
-    LOG_WARNING("PhysicalWorld: DestroyBody: called with body that wasn't in PhysicsBodies");
+    LOG_ERROR("PhysicalWorld: DestroyBody: called with body that wasn't in this world");
 }
 
 // ------------------------------------ //

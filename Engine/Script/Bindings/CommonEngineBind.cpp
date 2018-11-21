@@ -1033,6 +1033,11 @@ bool BindAudioSource(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("AudioSource", "void SetVolume(float volume)",
+           asMETHOD(AudioSource, SetVolume), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("AudioSource", "cAudio::IAudioSource& Get()",
            asMETHOD(AudioSource, Get), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

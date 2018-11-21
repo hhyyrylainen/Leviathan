@@ -4,6 +4,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
+#include "Entities/WorldNetworkSettings.h"
 #include "Networking/CommonNetwork.h"
 
 #include <functional>
@@ -121,9 +122,11 @@ public:
     //! registered world factory. Types over 1024 are reserved for inbuilt types and are needed
     //! for example things like the editor
     //! \param physicsMaterials The physical materials used for the world. This must be
-    //! non-null if physics is wanted for this world
+    //! non-null if physics is wanted for this world. This is here in order to allow inbuilt
+    //! worlds to have custom materials
     DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(Window* owningwindow, int worldtype,
-        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
+        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials,
+        const WorldNetworkSettings& networking);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy. This is taken as a const reference to allow

@@ -1,8 +1,6 @@
 // ------------------------------------ //
 #include "NetworkClientInterface.h"
 
-#include "../TimeIncludes.h"
-#include "../Utility/Convert.h"
 #include "Application/Application.h"
 #include "Connection.h"
 #include "Engine.h"
@@ -15,18 +13,19 @@
 #include "Networking/SentNetworkThing.h"
 #include "SyncedVariables.h"
 #include "Threading/ThreadingManager.h"
-using namespace Leviathan;
-using namespace std;
-// ------------------------------------ //
+#include "TimeIncludes.h"
+#include "Utility/Convert.h"
 
-// ------------------ NetworkClientInterface ------------------ //
-DLLEXPORT Leviathan::NetworkClientInterface::NetworkClientInterface() :
+#include "Engine.h"
+using namespace Leviathan;
+// ------------------------------------ //
+DLLEXPORT NetworkClientInterface::NetworkClientInterface() :
     NetworkInterface(NETWORKED_TYPE::Client)
 {}
 
-DLLEXPORT Leviathan::NetworkClientInterface::~NetworkClientInterface() {}
+DLLEXPORT NetworkClientInterface::~NetworkClientInterface() {}
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::HandleRequestPacket(
+DLLEXPORT void NetworkClientInterface::HandleRequestPacket(
     std::shared_ptr<NetworkRequest> request, Connection& connection)
 {
     if(_HandleDefaultRequest(request, connection))
@@ -42,7 +41,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::HandleRequestPacket(
               Convert::ToString(static_cast<int>(request->GetType())));
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::HandleResponseOnlyPacket(
+DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
     std::shared_ptr<NetworkResponse> message, Connection& connection)
 {
     LEVIATHAN_ASSERT(message, "_HandleClientResponseOnly message is null");
@@ -51,6 +50,13 @@ DLLEXPORT void Leviathan::NetworkClientInterface::HandleResponseOnlyPacket(
         return;
 
     switch(message->GetType()) {
+    case NETWORK_RESPONSE_TYPE::StartWorldReceive: {
+
+        auto data = static_cast<ResponseStartWorldReceive*>(message.get());
+
+        _HandleWorldJoinResponse(data->WorldID, data->WorldType, data->ExtraOptions);
+        return;
+    }
     case NETWORK_RESPONSE_TYPE::ServerHeartbeat: {
         // We got a heartbeat //
         _OnHeartbeat();
@@ -84,8 +90,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::HandleResponseOnlyPacket(
               Convert::ToString(static_cast<int>(message->GetType())));
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
-    shared_ptr<Connection> connectiontouse)
+DLLEXPORT bool NetworkClientInterface::JoinServer(std::shared_ptr<Connection> connectiontouse)
 {
     // Fail if already connected //
     if(ServerConnection) {
@@ -117,7 +122,7 @@ DLLEXPORT bool Leviathan::NetworkClientInterface::JoinServer(
     return true;
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(
+DLLEXPORT void NetworkClientInterface::DisconnectFromServer(
     const std::string& reason, bool connectiontimedout)
 {
     // Return if no connection //
@@ -153,7 +158,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::DisconnectFromServer(
 }
 
 DLLEXPORT std::vector<std::shared_ptr<Leviathan::Connection>>&
-    Leviathan::NetworkClientInterface::GetClientConnections()
+    NetworkClientInterface::GetClientConnections()
 {
     LOG_FATAL("Calling GetClientConnections on a client interface");
     throw Exception("Calling GetClientConnections on a client interface");
@@ -205,7 +210,7 @@ void NetworkClientInterface::_TickServerConnectionState()
     _UpdateHeartbeats();
 }
 
-DLLEXPORT void Leviathan::NetworkClientInterface::TickIt()
+DLLEXPORT void NetworkClientInterface::TickIt()
 {
     _TickServerConnectionState();
 
@@ -249,7 +254,7 @@ sentrequestloopbegin:
     }
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
+void NetworkClientInterface::_ProcessCompletedRequest(
     std::shared_ptr<SentRequest> tmpsendthing, std::shared_ptr<NetworkResponse> response)
 {
     LEVIATHAN_ASSERT(tmpsendthing->SentRequestData,
@@ -326,7 +331,7 @@ void Leviathan::NetworkClientInterface::_ProcessCompletedRequest(
     }
 }
 
-void Leviathan::NetworkClientInterface::_ProcessFailedRequest(
+void NetworkClientInterface::_ProcessFailedRequest(
     std::shared_ptr<SentRequest> tmpsendthing, std::shared_ptr<NetworkResponse> response)
 {
     LEVIATHAN_ASSERT(tmpsendthing->SentRequestData,
@@ -349,7 +354,7 @@ void Leviathan::NetworkClientInterface::_ProcessFailedRequest(
     }
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer()
+void NetworkClientInterface::_ProperlyConnectedToServer()
 {
     // Set the variables //
     ConnectState = CLIENT_CONNECTION_STATE::Connected;
@@ -365,14 +370,64 @@ void Leviathan::NetworkClientInterface::_ProperlyConnectedToServer()
     _OnProperlyConnected();
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::OnUpdateFullSynchronizationState(
+DLLEXPORT std::shared_ptr<SentRequest> NetworkClientInterface::DoJoinDefaultWorld()
+{
+    if(ConnectState != CLIENT_CONNECTION_STATE::Connected || !ServerConnection) {
+        LOG_ERROR("NetworkClientInterface: DoJoinDefaultWorld: not connected to a server");
+        return nullptr;
+    }
+
+    return ServerConnection->SendPacketToConnection(
+        std::make_shared<RequestJoinGame>(), RECEIVE_GUARANTEE::Critical);
+}
+
+DLLEXPORT void NetworkClientInterface::_OnWorldJoined(std::shared_ptr<GameWorld> world)
+{
+    LOG_WARNING(
+        "Joined world but OnWorldJoined is not overridden, the world won't be displayed");
+}
+
+DLLEXPORT void NetworkClientInterface::_HandleWorldJoinResponse(
+    int32_t worldid, int32_t worldtype, const std::string& extraoptions)
+{
+    auto world = Engine::Get()->CreateWorld(GetWindowForWorldJoin(extraoptions), worldtype,
+        GetPhysicsMaterialsForReceivedWorld(worldtype, extraoptions),
+        WorldNetworkSettings::GetSettingsForClient());
+
+    if(!world) {
+
+        LOG_ERROR("NetworkClientInterface: _HandleWorldJoinResponse: failed to create world");
+        DisconnectFromServer("Cannot create requested world type");
+        return;
+    }
+
+    OurReceivedWorld = world;
+    _OnWorldJoined(OurReceivedWorld);
+}
+
+DLLEXPORT Window* NetworkClientInterface::GetWindowForWorldJoin(
+    const std::string& extraoptions)
+{
+    return Engine::Get()->GetWindowEntity();
+}
+
+DLLEXPORT std::shared_ptr<PhysicsMaterialManager>
+    NetworkClientInterface::GetPhysicsMaterialsForReceivedWorld(
+        int32_t worldtype, const std::string& extraoptions)
+{
+    LOG_INFO("NetworkClientInterface: default GetPhysicsMaterialsForReceivedWorld called, "
+             "world won't have physics");
+    return nullptr;
+}
+// ------------------------------------ //
+DLLEXPORT void NetworkClientInterface::OnUpdateFullSynchronizationState(
     size_t variablesgot, size_t expectedvariables)
 {
     _OnNewConnectionStatusMessage("Syncing variables, " + Convert::ToString(variablesgot) +
                                   "/" + Convert::ToString(expectedvariables));
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::CloseDown()
+DLLEXPORT void NetworkClientInterface::CloseDown()
 {
     _OnCloseDown();
 
@@ -382,8 +437,7 @@ DLLEXPORT void Leviathan::NetworkClientInterface::CloseDown()
     }
 }
 // ------------------------------------ //
-DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(
-    const string& messagestr)
+DLLEXPORT void NetworkClientInterface::SendCommandStringToServer(const std::string& messagestr)
 {
     // Make sure that we are connected to a server //
     if(ConnectState != CLIENT_CONNECTION_STATE::Connected) {
@@ -406,13 +460,13 @@ DLLEXPORT void Leviathan::NetworkClientInterface::SendCommandStringToServer(
     OurSentRequests.push_back(sendthing);
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::NetworkClientInterface::IsConnected() const
+DLLEXPORT bool NetworkClientInterface::IsConnected() const
 {
     return ConnectState != CLIENT_CONNECTION_STATE::None &&
            ConnectState != CLIENT_CONNECTION_STATE::Closed;
 }
 // ------------------------------------ //
-void Leviathan::NetworkClientInterface::_OnStartHeartbeats()
+void NetworkClientInterface::_OnStartHeartbeats()
 {
     // Ignore if already started /
     if(UsingHeartbeats)
@@ -428,14 +482,14 @@ void Leviathan::NetworkClientInterface::_OnStartHeartbeats()
     UsingHeartbeats = true;
 }
 
-void Leviathan::NetworkClientInterface::_OnHeartbeat()
+void NetworkClientInterface::_OnHeartbeat()
 {
     // Reset the times //
     LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
     SecondsWithoutConnection = 0.f;
 }
 
-void Leviathan::NetworkClientInterface::_UpdateHeartbeats()
+void NetworkClientInterface::_UpdateHeartbeats()
 {
     // Skip if not in use //
     if(!UsingHeartbeats)
@@ -467,12 +521,12 @@ void Leviathan::NetworkClientInterface::_UpdateHeartbeats()
     }
 }
 // ------------------------------------ //
-DLLEXPORT int Leviathan::NetworkClientInterface::GetOurID() const
+DLLEXPORT int NetworkClientInterface::GetOurID() const
 {
     return OurPlayerID;
 }
 
-DLLEXPORT std::shared_ptr<Connection> Leviathan::NetworkClientInterface::GetServerConnection()
+DLLEXPORT std::shared_ptr<Connection> NetworkClientInterface::GetServerConnection()
 {
     return ServerConnection;
 }

@@ -1,10 +1,11 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
-#include "../Common/Types.h"
-#include <vector>
+#include "Types.h"
 
+#include <cmath>
+#include <vector>
 
 namespace Leviathan::MMath {
 
@@ -14,7 +15,10 @@ DLLEXPORT double AngleBetweenPoints(Float2 v1, Float2 v2) noexcept;
 DLLEXPORT bool IsPointInsidePolygon(const std::vector<Float3>& polygon, const Float3& point);
 
 // greatest common divisor, courtesy of Wikipedia
-DLLEXPORT constexpr int GreatestCommonDivisor(int a, int b);
+DLLEXPORT constexpr int GreatestCommonDivisor(int a, int b)
+{
+    return b == 0 ? a : GreatestCommonDivisor(b, a % b);
+}
 
 // calculates a normal for triangle and returns in normalized //
 DLLEXPORT Float3 CalculateNormal(const Float3& p1, const Float3& p2, const Float3& p3);
@@ -33,10 +37,5 @@ DLLEXPORT bool IsEqual(double x, double y) noexcept;
 DLLEXPORT bool IsEqual(float x, float y) noexcept;
 
 constexpr double FLOATING_POINT_COMPARISON_EPSILON = 1e-5;
-
-DLLEXPORT constexpr int GreatestCommonDivisor(int a, int b)
-{
-    return b == 0 ? a : GreatestCommonDivisor(b, a % b);
-}
 
 } // namespace Leviathan::MMath

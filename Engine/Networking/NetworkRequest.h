@@ -44,6 +44,10 @@ enum class NETWORK_REQUEST_TYPE : uint16_t {
     //! MasterServerToken The ID given by the master server
     JoinServer,
 
+    //! Client requests to join active gamestate (if the options is not empty then the client
+    //! is asking to join something specific)
+    JoinGame,
+
     GetSingleSyncValue,
 
     GetAllSyncValues,

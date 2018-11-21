@@ -56,8 +56,8 @@ void DemosApplication::CustomizeEnginePostLoad()
 
     // Create game world //
     // TODO: physics materials
-    World = std::dynamic_pointer_cast<Leviathan::StandardWorld>(
-        engine->CreateWorld(window1, 0, nullptr));
+    World = std::dynamic_pointer_cast<Leviathan::StandardWorld>(engine->CreateWorld(
+        window1, 0, nullptr, WorldNetworkSettings::GetSettingsForClient()));
 
     LEVIATHAN_ASSERT(World, "World creation failed");
 

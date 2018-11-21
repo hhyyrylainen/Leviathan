@@ -315,8 +315,7 @@ public:
             std::make_unique<Leviathan::PhysicalMaterial>("GoalAreaMaterial", 5);
 
         // Set callbacks //
-        BallMaterial
-            ->FormPairWith(*PaddleMaterial)
+        BallMaterial->FormPairWith(*PaddleMaterial)
             /*.SetSoftness(1.f)
             .SetElasticity(1.0f)
             .SetFriction(1.f, 1.f)*/
@@ -360,8 +359,8 @@ public:
 
         // Setup world //
         WorldOfPong = std::dynamic_pointer_cast<Leviathan::StandardWorld>(
-            Engine::GetEngine()->CreateWorld(
-                Engine::Get()->GetWindowEntity(), 0, std::move(tmp)));
+            Engine::GetEngine()->CreateWorld(Engine::Get()->GetWindowEntity(), 0,
+                std::move(tmp), Leviathan::WorldNetworkSettings::GetSettingsForHybrid()));
 
         // create playing field manager with the world //
         GameArena = unique_ptr<Arena>(new Arena(WorldOfPong.get()));

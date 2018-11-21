@@ -279,8 +279,8 @@ public:
                 && (i == 0 || input[i - 1] != WINDOWS_LINE_SEPARATOR[0])) {
                 // Found a line separator //
                 // Copy the current thing //
-                if(copyparts.Start.has_value() && copyparts.End.has_value())
-                    results += input.substr(copyparts.Start.value(), copyparts.Length());
+                if(copyparts.Start && copyparts.End)
+                    results += input.substr(*copyparts.Start, copyparts.Length());
 
                 copyparts.Reset();
 
@@ -289,15 +289,15 @@ public:
                 continue;
             }
 
-            if(!copyparts.Start.has_value())
+            if(!copyparts.Start)
                 copyparts.Start.emplace(i);
 
             // Change the end copy //
             copyparts.End.emplace(i);
         }
 
-        if(copyparts.End.has_value() && copyparts.Start.has_value())
-            results += input.substr(copyparts.Start.value(), copyparts.Length());
+        if(copyparts.End && copyparts.Start)
+            results += input.substr(*copyparts.Start, copyparts.Length());
 
         return results;
     }
@@ -465,8 +465,8 @@ public:
 
         if(CopyOperations.size() < 2) {
 
-            vec.push_back(strtocut.substr(CopyOperations.front().Start.value(),
-                CopyOperations.front().End.value() - CopyOperations.front().Start.value()));
+            vec.push_back(strtocut.substr(*CopyOperations.front().Start,
+                *CopyOperations.front().End - *CopyOperations.front().Start));
 
             // would be just one string, for legacy
             // (actually we don't want caller to think it got cut) reasons we return nothing //
@@ -483,7 +483,7 @@ public:
         for(auto& operations : CopyOperations) {
             // copy using std::wstring method for speed //
             vec.push_back(strtocut.substr(
-                operations.Start.value(), operations.End.value() - operations.Start.value()));
+                *operations.Start, *operations.End - *operations.Start));
         }
 
         // cutting succeeded //
@@ -566,13 +566,13 @@ public:
 
                 if(IsMatch || toreplace.size() == 1) {
 
-                    if(copystart.has_value() && !copyend.has_value())
+                    if(copystart && !copyend)
                         copyend = copystart;
 
                     // First add proper characters //
-                    if(copystart.has_value() && copyend.has_value())
+                    if(copystart && copyend)
                         out += data.substr(
-                            copystart.value(), copyend.value() - copystart.value() + 1);
+                            *copystart, *copyend - *copystart + 1);
 
                     copystart.reset();
                     copyend.reset();
@@ -587,7 +587,7 @@ public:
             }
 
             // non matching character mark as to copy //
-            if(!copystart.has_value()) {
+            if(!copystart) {
                 copystart.emplace(i);
             } else {
                 copyend.emplace(i);
@@ -595,8 +595,8 @@ public:
         }
 
         // Copy rest to out //
-        if(copystart.has_value() && copyend.has_value())
-            out += data.substr(copystart.value(), copyend.value() - copystart.value() + 1);
+        if(copystart && copyend)
+            out += data.substr(*copystart, *copyend - *copystart + 1);
 
         // Return finished string //
         return out;
@@ -828,8 +828,8 @@ public:
             str.clear();
             return;
         }
-        if(!CutPositions.End.has_value()) {
-            if(!CutPositions.Start.has_value()) {
+        if(!CutPositions.End) {
+            if(!CutPositions.Start) {
                 // just the first character required //
                 CutPositions.End = CutPositions.Start;
             } else {
@@ -839,7 +839,7 @@ public:
         }
 
         // set the wstring as it's sub string //
-        str = str.substr(CutPositions.Start.value(), CutPositions.Length());
+        str = str.substr(*CutPositions.Start, CutPositions.Length());
     }
 
     template<class StringTypeN>
@@ -947,7 +947,7 @@ public:
 
                 if(currentcut.Start)
                     result +=
-                        str.substr(currentcut.Start.value(), i - currentcut.Start.value());
+                        str.substr(*currentcut.Start, i - *currentcut.Start);
 
                 result += "\n";
                 currentcut = StartEndIndex();
@@ -957,18 +957,18 @@ public:
                     ++i;
             }
 
-            if(!currentcut.Start.has_value() && !IsCharacterWhitespace(str[i])) {
+            if(!currentcut.Start && !IsCharacterWhitespace(str[i])) {
 
                 // Started a line //
                 currentcut.Start.emplace(i);
             }
         }
 
-        if(currentcut.Start.has_value()) {
+        if(currentcut.Start) {
 
             currentcut.End.emplace(str.size());
 
-            result += indentstr + str.substr(currentcut.Start.value(), currentcut.Length());
+            result += indentstr + str.substr(*currentcut.Start, currentcut.Length());
         }
 
         return result;

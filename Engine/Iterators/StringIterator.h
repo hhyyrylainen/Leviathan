@@ -190,12 +190,12 @@ public:
         std::unique_ptr<RStrType> resultstr;
 
         // NULL if nothing found //
-        if(!data.Positions.Start.has_value() || !data.Positions.End.has_value())
+        if(!data.Positions.Start || !data.Positions.End)
             return nullptr;
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets the next number
@@ -216,7 +216,7 @@ public:
             specialflags, &StringIterator::FindNextNumber, &data, decimal, specialflags);
 
         // Check for nothing found //
-        if(!data.Positions.Start.has_value()) {
+        if(!data.Positions.Start) {
             return nullptr;
         }
 
@@ -224,12 +224,12 @@ public:
 
 
         // Make sure end is fine //
-        if(!data.Positions.End.has_value())
+        if(!data.Positions.End)
             data.Positions.End.emplace(GetLastValidCharIndex());
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets the next sequence of characters according to stopcaseflags
@@ -247,18 +247,18 @@ public:
             stopcaseflags, specialflags);
 
         // check for nothing found //
-        if(!data.Positions.Start.has_value()) {
+        if(!data.Positions.Start) {
             return NULL;
         }
 
         // Make sure end is fine //
-        if(!data.Positions.End.has_value())
+        if(!data.Positions.End)
             data.Positions.End.emplace(GetLastValidCharIndex());
 
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets the string that is before the equality assignment
@@ -277,19 +277,19 @@ public:
             specialflags, &StringIterator::FindUntilEquality, &data, stopcase, specialflags);
 
         // Check for validity //
-        if(!data.Positions.Start.has_value() || data.SeparatorFound == false) {
+        if(!data.Positions.Start || data.SeparatorFound == false) {
             // nothing found //
             return nullptr;
         }
 
-        if(!data.Positions.End.has_value()) {
+        if(!data.Positions.End) {
             // Set to start, this only happens if there is just one character //
             data.Positions.End = data.Positions.Start;
         }
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
 
@@ -319,19 +319,19 @@ public:
         StartIterating(0, &StringIterator::FindUntilNewLine, &data);
 
         // Check for validity //
-        if(!data.Positions.Start.has_value()) {
+        if(!data.Positions.Start) {
             // Nothing found //
             return nullptr;
         }
 
-        if(!data.Positions.End.has_value()) {
+        if(!data.Positions.End) {
             // Set to end of string //
             data.Positions.End.emplace(GetLastValidCharIndex());
         }
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
 
@@ -352,14 +352,14 @@ public:
         auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
         // Check was the end found //
-        if(!data.FoundEnd || !data.Positions.Start.has_value()) {
+        if(!data.FoundEnd || !data.Positions.Start) {
             // not found the ending character //
             return nullptr;
         }
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets characters until a character or all remaining characters
@@ -375,7 +375,7 @@ public:
     {
         auto data = GetPositionsUntilACharacter(charactertolookfor, specialflags);
 
-        if(!data.Positions.Start.has_value() || !data.Positions.End.has_value()) {
+        if(!data.Positions.Start || !data.Positions.End) {
             // return empty string //
             return nullptr;
         }
@@ -384,12 +384,12 @@ public:
         if(!data.FoundEnd &&
             (!data.NewLineBreak || !(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP))) {
             return GetSubstringFromIndexes<RStrType>(
-                data.Positions.Start.value(), GetLastValidCharIndex());
+                *data.Positions.Start, GetLastValidCharIndex());
         }
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets all characters until a sequence is matched
@@ -408,21 +408,21 @@ public:
             specialflags, &StringIterator::FindUntilSequence<RStrType>, &data, specialflags);
 
         // Check for validity //
-        if(!data.Positions.Start.has_value()) {
+        if(!data.Positions.Start) {
             // Nothing found //
             return nullptr;
         }
 
         // This only happens when the string ends with a partial match //
         // Example: look for "this", string is like this: my super nice th
-        if(!data.Positions.End.has_value()) {
+        if(!data.Positions.End) {
             // Set to end of string //
             data.Positions.End.emplace(GetLastValidCharIndex());
         }
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets characters inside brackets
@@ -447,12 +447,12 @@ public:
         std::unique_ptr<RStrType> resultstr;
 
         // NULL if nothing found //
-        if(!data.Positions.Start.has_value() || !data.Positions.End.has_value())
+        if(!data.Positions.Start || !data.Positions.End)
             return nullptr;
 
         // Return the wanted part //
         return GetSubstringFromIndexes<RStrType>(
-            data.Positions.Start.value(), data.Positions.End.value());
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Skips until characters that are not whitespace are found

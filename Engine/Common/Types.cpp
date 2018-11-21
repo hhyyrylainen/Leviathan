@@ -62,33 +62,31 @@ void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol /*= 1.0
 
 #endif
 
-DLLEXPORT std::ostream& Leviathan::operator<<(
-    std::ostream& stream, const Leviathan::Int2& value)
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Int2& value)
 {
     stream << "[" << value.X << ", " << value.Y << "]";
     return stream;
 }
 
-DLLEXPORT std::ostream& Leviathan::operator<<(std::ostream& stream, const Int3& value)
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Int3& value)
 {
     stream << "[" << value.X << ", " << value.Y << ", " << value.Z << "]";
     return stream;
 }
 
-DLLEXPORT std::ostream& Leviathan::operator<<(
-    std::ostream& stream, const Leviathan::Float2& value)
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Float2& value)
 {
     stream << "[" << value.X << ", " << value.Y << "]";
     return stream;
 }
 
-DLLEXPORT std::ostream& Leviathan::operator<<(std::ostream& stream, const Float3& value)
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Float3& value)
 {
     stream << "[" << value.X << ", " << value.Y << ", " << value.Z << "]";
     return stream;
 }
 
-DLLEXPORT std::ostream& Leviathan::operator<<(std::ostream& stream, const Float4& value)
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Float4& value)
 {
     stream << "[" << value.X << ", " << value.Y << ", " << value.Z << ", " << value.W << "]";
     return stream;

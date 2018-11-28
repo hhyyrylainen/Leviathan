@@ -33,9 +33,14 @@ This function uses Fermat's Theorem 100 times to test the primeness of a
 // DLLEXPORT static bool IsPrime(const mpuint &p);
 
 // float and double comparison //
-DLLEXPORT bool IsEqual(double x, double y) noexcept;
-DLLEXPORT bool IsEqual(float x, float y) noexcept;
+DLLEXPORT inline bool IsEqual(double x, double y) noexcept
+{
+    return abs(x - y) <= EPSILON * abs(x);
+}
 
-constexpr double FLOATING_POINT_COMPARISON_EPSILON = 1e-5;
+DLLEXPORT inline bool IsEqual(float x, float y) noexcept
+{
+    return abs(x - y) <= EPSILON * abs(x);
+}
 
 } // namespace Leviathan::MMath

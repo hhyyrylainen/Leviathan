@@ -38,16 +38,6 @@ DLLEXPORT bool Leviathan::MMath::IsPointInsidePolygon(
     return true;
 }
 
-DLLEXPORT bool Leviathan::MMath::IsEqual(double x, double y) noexcept
-{
-    return abs(x - y) <= MMath::FLOATING_POINT_COMPARISON_EPSILON * abs(x);
-}
-
-DLLEXPORT bool Leviathan::MMath::IsEqual(float x, float y) noexcept
-{
-    return abs(x - y) <= MMath::FLOATING_POINT_COMPARISON_EPSILON * abs(x);
-}
-
 DLLEXPORT Float3 Leviathan::MMath::CalculateNormal(
     const Float3& p1, const Float3& p2, const Float3& p3)
 {

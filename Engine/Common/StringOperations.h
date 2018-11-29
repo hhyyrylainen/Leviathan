@@ -35,23 +35,13 @@ public:
     template<typename CharType>
     static bool IsCharacterWhitespace(CharType character)
     {
-        if((int)character <= 32)
-            return true;
-
-        if(IsLineTerminator(character))
-            return true;
-
-        return false;
+        return static_cast<int>(character) <= 32 || IsLineTerminator(character);
     }
 
     template<typename CharType>
     static bool IsCharacterQuote(CharType character)
     {
-
-        if(character == '"' || character == '\'')
-            return true;
-
-        return false;
+        return character == '"' || character == '\'';
     }
 
     // Helper functions //
@@ -290,7 +280,7 @@ public:
                 // Found a line separator //
                 // Copy the current thing //
                 if(copyparts.Start && copyparts.End)
-                    results += input.substr(copyparts.Start, copyparts.Length());
+                    results += input.substr(*copyparts.Start, copyparts.Length());
 
                 copyparts.Reset();
 
@@ -300,14 +290,14 @@ public:
             }
 
             if(!copyparts.Start)
-                copyparts.Start = i;
+                copyparts.Start.emplace(i);
 
             // Change the end copy //
-            copyparts.End = i;
+            copyparts.End.emplace(i);
         }
 
         if(copyparts.End && copyparts.Start)
-            results += input.substr(copyparts.Start, copyparts.Length());
+            results += input.substr(*copyparts.Start, copyparts.Length());
 
         return results;
     }
@@ -421,7 +411,7 @@ public:
             if(!PositionStarted) {
                 PositionStarted = true;
                 // add new position index //
-                CopyOperations.push_back(StartEndIndex(i));
+                CopyOperations.emplace_back(i);
             }
 
             if(strtocut[i] == separator[0]) {
@@ -475,9 +465,8 @@ public:
 
         if(CopyOperations.size() < 2) {
 
-            vec.push_back(strtocut.substr(CopyOperations.front().Start,
-                static_cast<size_t>(CopyOperations.front().End) -
-                    static_cast<size_t>(CopyOperations.front().Start)));
+            vec.push_back(strtocut.substr(*CopyOperations.front().Start,
+                *CopyOperations.front().End - *CopyOperations.front().Start));
 
             // would be just one string, for legacy
             // (actually we don't want caller to think it got cut) reasons we return nothing //
@@ -491,11 +480,10 @@ public:
         vec.reserve(CopyOperations.size());
 
         // loop through positions and copy substrings to result vector //
-        for(size_t i = 0; i < CopyOperations.size(); i++) {
+        for(auto& operations : CopyOperations) {
             // copy using std::wstring method for speed //
             vec.push_back(strtocut.substr(
-                CopyOperations[i].Start, static_cast<size_t>(CopyOperations[i].End) -
-                                             static_cast<size_t>(CopyOperations[i].Start)));
+                *operations.Start, *operations.End - *operations.Start));
         }
 
         // cutting succeeded //
@@ -553,8 +541,8 @@ public:
             return data;
         }
 
-        PotentiallySetIndex copystart;
-        PotentiallySetIndex copyend;
+        std::optional<size_t> copystart;
+        std::optional<size_t> copyend;
 
         // loop through data and copy final characters to out string //
         for(size_t i = 0; i < data.size(); i++) {
@@ -583,11 +571,11 @@ public:
 
                     // First add proper characters //
                     if(copystart && copyend)
-                        out += data.substr(copystart,
-                            static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
+                        out += data.substr(
+                            *copystart, *copyend - *copystart + 1);
 
-                    copystart.ValueSet = false;
-                    copyend.ValueSet = false;
+                    copystart.reset();
+                    copyend.reset();
 
                     // it is a match, copy everything in replacer and
                     // add toreplace length to i
@@ -600,16 +588,15 @@ public:
 
             // non matching character mark as to copy //
             if(!copystart) {
-                copystart = i;
+                copystart.emplace(i);
             } else {
-                copyend = i;
+                copyend.emplace(i);
             }
         }
 
         // Copy rest to out //
         if(copystart && copyend)
-            out += data.substr(
-                copystart, static_cast<size_t>(copyend) - static_cast<size_t>(copystart) + 1);
+            out += data.substr(*copystart, *copyend - *copystart + 1);
 
         // Return finished string //
         return out;
@@ -847,12 +834,12 @@ public:
                 CutPositions.End = CutPositions.Start;
             } else {
                 // no need to cut from the end //
-                CutPositions.End = str.length() - 1;
+                CutPositions.End.emplace(str.length() - 1);
             }
         }
 
         // set the wstring as it's sub string //
-        str = str.substr(CutPositions.Start, CutPositions.Length());
+        str = str.substr(*CutPositions.Start, CutPositions.Length());
     }
 
     template<class StringTypeN>
@@ -959,8 +946,8 @@ public:
                 result += indentstr;
 
                 if(currentcut.Start)
-                    result += str.substr(
-                        currentcut.Start, i - static_cast<size_t>(currentcut.Start));
+                    result +=
+                        str.substr(*currentcut.Start, i - *currentcut.Start);
 
                 result += "\n";
                 currentcut = StartEndIndex();
@@ -973,15 +960,15 @@ public:
             if(!currentcut.Start && !IsCharacterWhitespace(str[i])) {
 
                 // Started a line //
-                currentcut.Start = i;
+                currentcut.Start.emplace(i);
             }
         }
 
         if(currentcut.Start) {
 
-            currentcut.End = str.size();
+            currentcut.End.emplace(str.size());
 
-            result += indentstr + str.substr(currentcut.Start, currentcut.Length());
+            result += indentstr + str.substr(*currentcut.Start, currentcut.Length());
         }
 
         return result;
@@ -1014,11 +1001,7 @@ public:
     //! \returns True if two characters are a line terminating sequence
     static bool IsLineTerminator(int32_t codepoint1, int32_t codepoint2)
     {
-        if(codepoint1 == '\r' && codepoint2 == '\n') {
-            return true;
-        }
-
-        return false;
+        return codepoint1 == '\r' && codepoint2 == '\n';
     }
 
 private:

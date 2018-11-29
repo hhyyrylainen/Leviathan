@@ -14,7 +14,8 @@ if(CREATE_UE4_PLUGIN)
     "Common/ReferenceCounted.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
     "Common/ExtraAlgorithms.h"
-    "Common/ThreadSafe.h" 
+    "Common/ThreadSafe.h"
+    "Common/StartEndIndex.h" "Common/StartEndIndex.cpp"
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
     "Common/CommonMath.cpp" "Common/CommonMath.h"
@@ -64,6 +65,7 @@ else()
     "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
     "Common/StringOperations.cpp" "Common/StringOperations.h"
     "Common/ThreadSafe.h" 
+    "Common/StartEndIndex.h" "Common/StartEndIndex.cpp"
     "Common/Types.h" "Common/Types.cpp"
     "Common/Visitor.cpp" "Common/Visitor.h"
     "Common/MimeTypes.cpp" "Common/MimeTypes.h"
@@ -247,9 +249,6 @@ else()
   set(GroupEntitiesSerializers
     "Entities/Serializers/EntitySerializer.cpp" "Entities/Serializers/EntitySerializer.h"
     )
-
-
-  
   
   set(GroupEvents
     "Events/AutoUpdateable.cpp" "Events/AutoUpdateable.h"

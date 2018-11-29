@@ -194,7 +194,8 @@ public:
             return nullptr;
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets the next number
@@ -224,10 +225,11 @@ public:
 
         // Make sure end is fine //
         if(!data.Positions.End)
-            data.Positions.End = GetLastValidCharIndex();
+            data.Positions.End.emplace(GetLastValidCharIndex());
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets the next sequence of characters according to stopcaseflags
@@ -245,18 +247,18 @@ public:
             stopcaseflags, specialflags);
 
         // check for nothing found //
-        if(!data.Positions.Start && !data.Positions.Start) {
-
+        if(!data.Positions.Start) {
             return NULL;
         }
 
         // Make sure end is fine //
         if(!data.Positions.End)
-            data.Positions.End = GetLastValidCharIndex();
+            data.Positions.End.emplace(GetLastValidCharIndex());
 
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets the string that is before the equality assignment
@@ -286,7 +288,8 @@ public:
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
 
@@ -323,11 +326,12 @@ public:
 
         if(!data.Positions.End) {
             // Set to end of string //
-            data.Positions.End = GetLastValidCharIndex();
+            data.Positions.End.emplace(GetLastValidCharIndex());
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
 
@@ -354,7 +358,8 @@ public:
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets characters until a character or all remaining characters
@@ -379,11 +384,12 @@ public:
         if(!data.FoundEnd &&
             (!data.NewLineBreak || !(specialflags & SPECIAL_ITERATOR_ONNEWLINE_STOP))) {
             return GetSubstringFromIndexes<RStrType>(
-                data.Positions.Start, GetLastValidCharIndex());
+                *data.Positions.Start, GetLastValidCharIndex());
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets all characters until a sequence is matched
@@ -411,11 +417,12 @@ public:
         // Example: look for "this", string is like this: my super nice th
         if(!data.Positions.End) {
             // Set to end of string //
-            data.Positions.End = GetLastValidCharIndex();
+            data.Positions.End.emplace(GetLastValidCharIndex());
         }
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Gets characters inside brackets
@@ -444,7 +451,8 @@ public:
             return nullptr;
 
         // Return the wanted part //
-        return GetSubstringFromIndexes<RStrType>(data.Positions.Start, data.Positions.End);
+        return GetSubstringFromIndexes<RStrType>(
+            *data.Positions.Start, *data.Positions.End);
     }
 
     //! \brief Skips until characters that are not whitespace are found
@@ -486,14 +494,12 @@ public:
     //! class (mostly expensive for UTF8 strings)
     inline size_t GetPosition()
     {
-
         return DataIterator->CurrentIteratorPosition();
     }
 
     //! \brief Returns the current line the processing is happening
     inline size_t GetCurrentLine()
     {
-
         return DataIterator->GetCurrentLineNumber();
     }
 

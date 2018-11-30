@@ -26,7 +26,7 @@ DLLEXPORT NetworkClientInterface::NetworkClientInterface() :
 DLLEXPORT NetworkClientInterface::~NetworkClientInterface() {}
 // ------------------------------------ //
 DLLEXPORT void NetworkClientInterface::HandleRequestPacket(
-    std::shared_ptr<NetworkRequest> request, Connection& connection)
+    const std::shared_ptr<NetworkRequest>& request, Connection& connection)
 {
     if(_HandleDefaultRequest(request, connection))
         return;
@@ -42,7 +42,7 @@ DLLEXPORT void NetworkClientInterface::HandleRequestPacket(
 }
 
 DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
-    std::shared_ptr<NetworkResponse> message, Connection& connection)
+    const std::shared_ptr<NetworkResponse>& message, Connection& connection)
 {
     LEVIATHAN_ASSERT(message, "_HandleClientResponseOnly message is null");
 
@@ -78,6 +78,51 @@ DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
                         "update failed");
         }
 
+        return;
+    }
+    case NETWORK_RESPONSE_TYPE::EntityCreation: {
+        auto data = static_cast<ResponseEntityCreation*>(message.get());
+
+        auto world = _GetWorldForEntityMessage(data->WorldID);
+
+        // TODO: this needs to be queued if we haven't received the world yet
+        if(!world) {
+            LOG_WARNING("NetworkClientInterface: no world found for EntityCreation. TODO: "
+                        "queue this message");
+            return;
+        }
+
+        world->HandleEntityPacket(*data);
+        return;
+    }
+    case NETWORK_RESPONSE_TYPE::EntityDestruction: {
+        auto data = static_cast<ResponseEntityDestruction*>(message.get());
+
+        auto world = _GetWorldForEntityMessage(data->WorldID);
+
+        // TODO: this needs to be queued if we haven't received the world yet
+        if(!world) {
+            LOG_WARNING("NetworkClientInterface: no world found for EntityCreation. TODO: "
+                        "queue this message");
+            return;
+        }
+
+        world->HandleEntityPacket(*data);
+        return;
+    }
+    case NETWORK_RESPONSE_TYPE::EntityUpdate: {
+        auto data = static_cast<ResponseEntityUpdate*>(message.get());
+
+        auto world = _GetWorldForEntityMessage(data->WorldID);
+
+        // TODO: this needs to be queued if we haven't received the world yet
+        if(!world) {
+            LOG_WARNING("NetworkClientInterface: no world found for EntityCreation. TODO: "
+                        "queue this message");
+            return;
+        }
+
+        world->HandleEntityPacket(std::move(*data));
         return;
     }
     default: break;
@@ -392,7 +437,7 @@ DLLEXPORT void NetworkClientInterface::_HandleWorldJoinResponse(
 {
     auto world = Engine::Get()->CreateWorld(GetWindowForWorldJoin(extraoptions), worldtype,
         GetPhysicsMaterialsForReceivedWorld(worldtype, extraoptions),
-        WorldNetworkSettings::GetSettingsForClient());
+        WorldNetworkSettings::GetSettingsForClient(), worldid);
 
     if(!world) {
 
@@ -417,6 +462,17 @@ DLLEXPORT std::shared_ptr<PhysicsMaterialManager>
 {
     LOG_INFO("NetworkClientInterface: default GetPhysicsMaterialsForReceivedWorld called, "
              "world won't have physics");
+    return nullptr;
+}
+
+DLLEXPORT GameWorld* NetworkClientInterface::_GetWorldForEntityMessage(int32_t worldid)
+{
+    if(OurReceivedWorld && OurReceivedWorld->GetID() == worldid)
+        return OurReceivedWorld.get();
+
+    LOG_WARNING("NetworkClientInterface: failed to find world with id for entity update "
+                "message, id: " +
+                std::to_string(worldid));
     return nullptr;
 }
 // ------------------------------------ //

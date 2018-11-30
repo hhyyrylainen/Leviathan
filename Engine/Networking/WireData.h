@@ -1,19 +1,19 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 
 #include "CommonNetwork.h"
+#include <functional>
 #include <memory>
 #include <vector>
-#include <functional>
 
-namespace sf{
+namespace sf {
 class Packet;
 }
 
-namespace Leviathan{
+namespace Leviathan {
 
 class SentRequest;
 class SentResponse;
@@ -27,9 +27,8 @@ class NetworkAckField;
 //! sent over the network
 //!
 //! Used by Connection and tests to format NetworkResponse and NetworkRequest objects
-class WireData final{
+class WireData final {
 public:
-
     //! Return value for controlling how DecodeIncomingData continues after the callback
     enum class DECODE_CALLBACK_RESULT {
 
@@ -46,37 +45,44 @@ public:
     //! \param messagenumber The unique message id for request
     //! \param localpacketid The unique id for the final network packet
     DLLEXPORT static std::shared_ptr<SentRequest> FormatRequestBytes(
-        const std::shared_ptr<NetworkRequest> &request, RECEIVE_GUARANTEE guarantee,
-        uint32_t messagenumber, uint32_t localpacketid,
-        const NetworkAckField* acks, sf::Packet &bytesreceiver);
+        const std::shared_ptr<NetworkRequest>& request, RECEIVE_GUARANTEE guarantee,
+        uint32_t messagenumber, uint32_t localpacketid, const NetworkAckField* acks,
+        sf::Packet& bytesreceiver);
 
     //! \brief Constructs a request without creating a SentRequest
     //!
     //! This is used for resends
-    DLLEXPORT static void FormatRequestBytes(const NetworkRequest &request,
-        uint32_t messagenumber, uint32_t localpacketid,
-        const NetworkAckField* acks, sf::Packet &bytesreceiver);
+    DLLEXPORT static void FormatRequestBytes(const NetworkRequest& request,
+        uint32_t messagenumber, uint32_t localpacketid, const NetworkAckField* acks,
+        sf::Packet& bytesreceiver);
 
     //! \brief Constructs a single response message
     //! \see FormatRequestBytes
     DLLEXPORT static std::shared_ptr<SentResponse> FormatResponseBytes(
-        const std::shared_ptr<NetworkResponse> &response, RECEIVE_GUARANTEE guarantee,
-        uint32_t messagenumber, uint32_t localpacketid,
-        const NetworkAckField* acks, sf::Packet &bytesreceiver);
+        const std::shared_ptr<NetworkResponse>& response, RECEIVE_GUARANTEE guarantee,
+        uint32_t messagenumber, uint32_t localpacketid, const NetworkAckField* acks,
+        sf::Packet& bytesreceiver);
+
+    //! \brief Constructs a single response message that can't be resent
+    //! \see FormatRequestBytes
+    //! \todo This has a lot of duplicated code with FormatResponseBytes
+    DLLEXPORT static std::shared_ptr<SentResponse> FormatResponseBytesTracked(
+        const NetworkResponse& response, uint32_t messagenumber, uint32_t localpacketid,
+        const NetworkAckField* acks, sf::Packet& bytesreceiver);
 
     //! \brief Constructs a single response message
     //! \note This version is meant for unreliable responses as this doesn't return a
     //! SentResponse. This is also used for resends
     //! \see FormatRequestBytes
-    DLLEXPORT static void FormatResponseBytes(const NetworkResponse &response,
-        uint32_t messagenumber, uint32_t localpacketid,
-        const NetworkAckField* acks, sf::Packet &bytesreceiver);
+    DLLEXPORT static void FormatResponseBytes(const NetworkResponse& response,
+        uint32_t messagenumber, uint32_t localpacketid, const NetworkAckField* acks,
+        sf::Packet& bytesreceiver);
 
 
     //! \brief Constructs an ack only packet with the specified acks
-    DLLEXPORT static void FormatAckOnlyPacket(const std::vector<uint32_t> &packetstoack,
-        sf::Packet &bytesreceiver);
-    
+    DLLEXPORT static void FormatAckOnlyPacket(
+        const std::vector<uint32_t>& packetstoack, sf::Packet& bytesreceiver);
+
 
 
     //! \brief Decodes a packet to the right objects and invokes the callbacks
@@ -92,15 +98,14 @@ public:
     //! \param messagereceived Called once for every message. The actual message data
     //! is still in the packet and needs to be decoded. The callback parameters are:
     //! message type and message number
-    DLLEXPORT static void DecodeIncomingData(sf::Packet &packet,
-        const std::function<DECODE_CALLBACK_RESULT (NetworkAckField&)> &ackcallback,
-        const std::function<void (uint32_t)> &singleack,
-        const std::function<DECODE_CALLBACK_RESULT (uint32_t)> &packetnumberreceived,
-        const std::function<DECODE_CALLBACK_RESULT (uint8_t, uint32_t,
-            sf::Packet&)> &messagereceived
-        );
-    
-    
+    DLLEXPORT static void DecodeIncomingData(sf::Packet& packet,
+        const std::function<DECODE_CALLBACK_RESULT(NetworkAckField&)>& ackcallback,
+        const std::function<void(uint32_t)>& singleack,
+        const std::function<DECODE_CALLBACK_RESULT(uint32_t)>& packetnumberreceived,
+        const std::function<DECODE_CALLBACK_RESULT(uint8_t, uint32_t, sf::Packet&)>&
+            messagereceived);
+
+
 
     //! \protected Not meant to be called directly
     //!
@@ -108,16 +113,14 @@ public:
     //! \param firstmessagenumber Pointer to first message number
     //! \param messagenumbercount Number of message numbers in firstmessagenumber
     DLLEXPORT static void PrepareHeaderForPacket(uint32_t localpacketid,
-        uint32_t* firstmessagenumber, size_t messagenumbercount,
-        const NetworkAckField* acks, sf::Packet &tofill);
+        uint32_t* firstmessagenumber, size_t messagenumbercount, const NetworkAckField* acks,
+        sf::Packet& tofill);
 
     //! \protected Format ack part of header
     //!
     //! used by PrepareHeaderForPacket. Split out for testing purposes
-    DLLEXPORT static void FillHeaderAckData(const NetworkAckField* acks,
-        sf::Packet &tofill);
-
+    DLLEXPORT static void FillHeaderAckData(const NetworkAckField* acks, sf::Packet& tofill);
 };
 
 
-}
+} // namespace Leviathan

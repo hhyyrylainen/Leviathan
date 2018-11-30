@@ -1,10 +1,8 @@
 // ------------------------------------ //
 #include "GameWorld.h"
 
-#include "ScriptComponentHolder.h"
-#include "ScriptSystemWrapper.h"
-
 #include "Common/DataStoring/NamedVars.h"
+#include "Components.h"
 #include "Engine.h"
 #include "Handlers/IDFactory.h"
 #include "Networking/Connection.h"
@@ -16,7 +14,9 @@
 #include "Physics/PhysicsMaterialManager.h"
 #include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
-#include "Serializers/EntitySerializer.h"
+#include "ScriptComponentHolder.h"
+#include "ScriptSystemWrapper.h"
+#include "Sound/SoundDevice.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
@@ -24,7 +24,7 @@
 #include "Generated/ComponentStates.h"
 #include "StateInterpolator.h"
 
-#include "Sound/SoundDevice.h"
+#include "Exceptions.h"
 
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorWorkspace.h"
@@ -34,11 +34,6 @@
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
-#include "OgreViewport.h"
-
-#include "Exceptions.h"
-
-#include "add_on/scriptarray/scriptarray.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -68,13 +63,18 @@ public:
 
     std::map<std::string, ScriptComponentHolder::pointer> RegisteredScriptComponents;
     std::map<std::string, std::unique_ptr<ScriptSystemWrapper>> RegisteredScriptSystems;
+
+    //! Queued entity updates. Contains the time it was received in order to throw out old ones
+    std::vector<std::tuple<WantedClockType::time_point, ResponseEntityUpdate>>
+        QueuedEntityUpdates;
 };
 
 // ------------------------------------ //
-DLLEXPORT GameWorld::GameWorld(
-    int32_t worldtype, const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials) :
+DLLEXPORT GameWorld::GameWorld(int32_t worldtype,
+    const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials, int worldid /*= -1*/) :
     pimpl(std::make_unique<Implementation>()),
-    PhysicsMaterials(physicsMaterials), ID(IDFactory::GetID()), WorldType(worldtype)
+    PhysicsMaterials(physicsMaterials), ID(worldid >= 0 ? worldid : IDFactory::GetID()),
+    WorldType(worldtype)
 {}
 
 DLLEXPORT GameWorld::~GameWorld()
@@ -513,6 +513,23 @@ DLLEXPORT void GameWorld::SendToAllPlayers(
     }
 }
 // ------------------------------------ //
+DLLEXPORT void GameWorld::CaptureEntityState(ObjectID id, EntityState& curstate) const {}
+
+DLLEXPORT uint32_t GameWorld::CaptureEntityStaticState(ObjectID id, sf::Packet& receiver) const
+{
+    return 0;
+}
+
+DLLEXPORT void GameWorld::_CreateComponentsFromCreationMessage(
+    ObjectID id, sf::Packet& data, int entriesleft, int decodedtype)
+{
+    if(entriesleft < 1)
+        return;
+
+    LOG_ERROR("GameWorld: entity static state decoding was not complete before calling base "
+              "GameWorld implementation. Received entity won't be fully constructed");
+}
+// ------------------------------------ //
 DLLEXPORT void GameWorld::Tick(int currenttick)
 {
     if(InBackground && !TickWhileInBackground)
@@ -531,12 +548,14 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
 
     // Remove closed player connections //
 
-    for(auto iter = ReceivingPlayers.begin(); iter != ReceivingPlayers.end(); ++iter) {
+    for(auto iter = ReceivingPlayers.begin(); iter != ReceivingPlayers.end();) {
 
         if(!(*iter)->GetConnection()->IsValidForSend()) {
 
+            LOG_INFO("GameWorld: a player has diconnected, removing. TODO: release Sendable "
+                     "memory");
             DEBUG_BREAK;
-
+            iter = ReceivingPlayers.erase(iter);
         } else {
 
             ++iter;
@@ -549,7 +568,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         // TODO: a game type that is a client and server at  the same time
         // if(IsOnServer) {
 
-        _ApplyEntityUpdatePackets();
+        // _ApplyEntityUpdatePackets();
         if(_PhysicalWorld)
             _PhysicalWorld->SimulateWorld(TICKSPEED / 1000.f);
 
@@ -637,7 +656,7 @@ DLLEXPORT void GameWorld::_ResetOrReleaseComponents()
 DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick)
 {
     // Don't have any systems, but these updates may be important for interpolation //
-    _ApplyEntityUpdatePackets();
+    // _ApplyEntityUpdatePackets();
 
     // TODO: if there are any impactful simulation done here it needs to be also inside a block
     // where TickInProgress is set to true
@@ -653,11 +672,6 @@ DLLEXPORT void GameWorld::_RunTickSystems()
     }
 }
 // ------------------------------------ //
-DLLEXPORT int GameWorld::GetTickNumber() const
-{
-    return TickNumber;
-}
-
 DLLEXPORT float GameWorld::GetTickProgress() const
 {
     float progress = Engine::Get()->GetTimeSinceLastTick() / (float)TICKSPEED;
@@ -689,53 +703,15 @@ DLLEXPORT ObjectID GameWorld::CreateEntity()
 
     Entities.push_back(id);
 
-    return id;
-}
-
-DLLEXPORT void GameWorld::NotifyEntityCreate(ObjectID id)
-{
     if(NetworkSettings.IsAuthoritative) {
+        // NewlyCreatedEntities.push_back(id);
 
-        // This is at least a decent place to send them,
-        Sendable* issendable = nullptr;
-
-        try {
-            issendable = &GetComponent<Sendable>(id);
-
-        } catch(const NotFound&) {
-
-            // Not sendable no point in continuing //
-            return;
+        if(NetworkSettings.AutoCreateNetworkComponents) {
+            _CreateSendableComponentForEntity(id);
         }
-
-        LEVIATHAN_ASSERT(issendable, "GetComponent didn't throw");
-
-        auto end = ReceivingPlayers.end();
-        for(auto iter = ReceivingPlayers.begin(); iter != end; ++iter) {
-
-            auto safe = (*iter)->GetConnection();
-
-            if(!safe->IsValidForSend()) {
-                // Player has probably closed their connection //
-                continue;
-            }
-
-            // TODO: pass issendable here to avoid an extra lookup
-            if(!SendEntityToConnection(id, safe)) {
-
-                Logger::Get()->Warning("GameWorld: CreateEntity: failed to send "
-                                       "object to player (" +
-                                       (*iter)->GetNickname() + ")");
-
-                continue;
-            }
-        }
-
-    } else {
-
-        // Clients register received objects here //
-        Entities.push_back(id);
     }
+
+    return id;
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ClearEntities()
@@ -810,7 +786,6 @@ DLLEXPORT void GameWorld::QueueDestroyEntity(ObjectID id)
 
 void GameWorld::_HandleDelayedDelete()
 {
-
     // We might want to delete everything //
     if(ClearAllEntities) {
 
@@ -1017,6 +992,18 @@ DLLEXPORT void GameWorld::_DoResumeSystems()
     }
 }
 
+DLLEXPORT void GameWorld::_CreateSendableComponentForEntity(ObjectID id)
+{
+    LOG_ERROR("GameWorld: base version of _CreateSendableComponentForEntity, this shouldn't "
+              "happen with correct configuration");
+}
+
+DLLEXPORT void GameWorld::_CreateReceivedComponentForEntity(ObjectID id)
+{
+    LOG_ERROR("GameWorld: base version of _CreateReceivedComponentForEntity, this shouldn't "
+              "happen with correct configuration");
+}
+
 // ------------------------------------ //
 DLLEXPORT void GameWorld::DestroyAllIn(ObjectID id)
 {
@@ -1038,7 +1025,6 @@ void GameWorld::_ReportEntityDestruction(ObjectID id)
     SendToAllPlayers(std::make_shared<ResponseEntityDestruction>(0, this->ID, id),
         RECEIVE_GUARANTEE::Critical);
 }
-
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetWorldPhysicsFrozenState(bool frozen)
 {
@@ -1127,181 +1113,133 @@ void GameWorld::UpdatePlayersPositionData(ConnectedPlayer& ply)
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool GameWorld::SendEntityToConnection(
-    ObjectID id, std::shared_ptr<Connection> connection)
+DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityUpdate&& message)
 {
-    // First create a packet which will be the object's data //
+    if(NetworkSettings.IsAuthoritative) {
 
-    sf::Packet packet;
+        LOG_WARNING(
+            "GameWorld: TODO: implement authoritative world handling ResponseEntityUpdate");
+        return;
+    }
+
+    // DEBUG_BREAK;
+}
+
+DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
+{
+    if(NetworkSettings.IsAuthoritative) {
+
+        LOG_WARNING("GameWorld: authoritative world is ignoring ResponseEntityCreation");
+        return;
+    }
+
+    if(message.ComponentCount > 1024) {
+        LOG_ERROR("GameWorld: HandleEntityPacket: entity has more than 1000 components. "
+                  "Packet is likely corrupted / forged, ignoring");
+        return;
+    }
+
+    // TODO: somehow detect if the ID collides with local entities (once those are allowed)
+    Entities.push_back(message.EntityID);
+
+    if(!NetworkSettings.IsAuthoritative) {
+
+        if(NetworkSettings.AutoCreateNetworkComponents) {
+            _CreateReceivedComponentForEntity(message.EntityID);
+        }
+    }
+
+    try {
+        _CreateComponentsFromCreationMessage(
+            message.EntityID, message.InitialComponentData, message.ComponentCount, -1);
+    } catch(const InvalidArgument& e) {
+        LOG_ERROR(
+            "GameWorld: HandleEntityPacket: trying to load packet data caused an exception: ");
+        e.PrintToLog();
+        LOG_INFO("GameWorld: destroying invalid received entity: " +
+                 std::to_string(message.EntityID));
+        DestroyEntity(message.EntityID);
+    }
+}
+
+DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityDestruction& message)
+{
+    if(NetworkSettings.IsAuthoritative) {
+
+        LOG_WARNING("GameWorld: authoritative world is ignoring ResponseEntityCreation");
+        return;
+    }
 
     DEBUG_BREAK;
-    // try {
-    //     if (!Engine::Get()->GetEntitySerializer()->CreatePacketForConnection(this, id,
-    //         GetComponent<Sendable>(id), packet, *connection))
-    //     {
-    //         return false;
-    //     }
-    // }
-    // catch (const NotFound&) {
-    //     return false;
-    // }
-
-    // Then gather all sorts of other stuff to make an response //
-    return connection
-                   ->SendPacketToConnection(
-                       std::make_shared<ResponseEntityCreation>(0, id, std::move(packet)),
-                       RECEIVE_GUARANTEE::Critical)
-                   .get() ?
-               true :
-               false;
-}
-// ------------------------------------ //
-DLLEXPORT void GameWorld::HandleEntityInitialPacket(
-    std::shared_ptr<NetworkResponse> message, ResponseEntityCreation* data)
-{
-    if(!data)
-        return;
-
-    InitialEntityPackets.push_back(message);
-}
-
-void GameWorld::_ApplyInitialEntityPackets()
-{
-    auto serializer = Engine::Get()->GetEntitySerializer();
-
-    for(auto& response : InitialEntityPackets) {
-
-        LEVIATHAN_ASSERT(response->GetType() == NETWORK_RESPONSE_TYPE::EntityCreation,
-            "invalid type in InitialEntityPackets");
-
-        ObjectID id = 0;
-
-        DEBUG_BREAK;
-        // serializer->DeserializeWholeEntityFromPacket(this, id,
-        //     static_cast<ResponseEntityCreation*>(response.get())->InitialEntity);
-
-        if(id < 1) {
-
-            Logger::Get()->Error("GameWorld: handle initial packet: failed to create entity");
-        }
-    }
-
-    InitialEntityPackets.clear();
-}
-
-DLLEXPORT void GameWorld::HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message)
-{
-    if(message->GetType() == NETWORK_RESPONSE_TYPE::EntityUpdate)
-        return;
-
-    EntityUpdatePackets.push_back(message);
-}
-
-void GameWorld::_ApplyEntityUpdatePackets()
-{
-    auto serializer = Engine::Get()->GetEntitySerializer();
-
-    for(auto& response : EntityUpdatePackets) {
-
-        // Data cannot be nullptr here //
-        ResponseEntityUpdate* data = static_cast<ResponseEntityUpdate*>(response.get());
-
-        bool found = false;
-
-        // Just check if the entity is created/exists //
-        for(auto iter = Entities.begin(); iter != Entities.end(); ++iter) {
-
-            if((*iter) == data->EntityID) {
-
-                found = true;
-
-                // Apply the update //
-                DEBUG_BREAK;
-                // if(!serializer->ApplyUpdateFromPacket(this, guard, data->EntityID,
-                //         data->TickNumber, data->ReferenceTick, data->UpdateData))
-                // {
-                //     Logger::Get()->Warning("GameWorld("+Convert::ToString(ID)+"): "
-                //         "applying update to entity " +
-                //         Convert::ToString(data->EntityID) + " failed");
-                // }
-
-                break;
-            }
-        }
-
-        if(!found) {
-            // It hasn't been created yet //
-            Logger::Get()->Warning("GameWorld(" + Convert::ToString(ID) + "): has no entity " +
-                                   Convert::ToString(data->EntityID) +
-                                   ", ignoring an update packet");
-        }
-    }
-
-    EntityUpdatePackets.clear();
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ApplyQueuedPackets()
 {
-    if(!InitialEntityPackets.empty())
-        _ApplyInitialEntityPackets();
-
-    if(!EntityUpdatePackets.empty())
-        _ApplyEntityUpdatePackets();
-}
-// ------------------------------------ //
-DLLEXPORT void GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data)
-{
-    Logger::Get()->Info(
-        "GameWorld: adjusting our clock: Absolute: " + Convert::ToString(data->Absolute) +
-        ", tick: " + Convert::ToString(data->Ticks) +
-        ", engine ms: " + Convert::ToString(data->EngineMSTweak));
-
-    // Change our TickNumber to match //
-    Engine::Get()->_AdjustTickNumber(data->Ticks, data->Absolute);
-
-    if(data->EngineMSTweak)
-        Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
-}
-// ------------------------------------ //
-DLLEXPORT void GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data)
-{
-    Logger::Get()->Info(
-        "GameWorld(" + Convert::ToString(ID) +
-        "): frozen state updated, now: " + Convert::ToString<int>(data->Frozen) +
-        ", tick: " + Convert::ToString(data->TickNumber) +
-        " (our tick:" + Convert::ToString(TickNumber) + ")");
-
-    if(data->TickNumber > TickNumber) {
-
-        Logger::Get()->Write("TODO: freeze the world in the future");
+    if(!pimpl->QueuedEntityUpdates.empty()) {
     }
 
-    // Set the state //
-    SetWorldPhysicsFrozenState(data->Frozen);
+    // Applies packets that were received out of order. And throws out any too old packets
 
-    // Simulate ticks if required //
-    if(!data->Frozen) {
+    // if(!InitialEntityPackets.empty())
+    //     _ApplyInitialEntityPackets();
 
-        // Check how many ticks we are behind and simulate that number of physical updates //
-        int tickstosimulate = TickNumber - data->TickNumber;
-
-        if(tickstosimulate > 0) {
-
-            Logger::Get()->Info("GameWorld: unfreezing and simulating " +
-                                Convert::ToString(tickstosimulate * TICKSPEED) +
-                                " ms worth of more physical updates");
-
-            DEBUG_BREAK;
-            // _PhysicalWorld->AdjustClock(tickstosimulate * TICKSPEED);
-        }
-
-
-    } else {
-
-        // Snap objects back //
-        Logger::Get()->Info("TODO: world freeze snap things back a bit");
-    }
+    // if(!EntityUpdatePackets.empty())
+    //     _ApplyEntityUpdatePackets();
 }
+// ------------------------------------ //
+// DLLEXPORT void GameWorld::HandleClockSyncPacket(RequestWorldClockSync* data)
+// {
+//     Logger::Get()->Info(
+//         "GameWorld: adjusting our clock: Absolute: " + Convert::ToString(data->Absolute) +
+//         ", tick: " + Convert::ToString(data->Ticks) +
+//         ", engine ms: " + Convert::ToString(data->EngineMSTweak));
+
+//     // Change our TickNumber to match //
+//     Engine::Get()->_AdjustTickNumber(data->Ticks, data->Absolute);
+
+//     if(data->EngineMSTweak)
+//         Engine::Get()->_AdjustTickClock(data->EngineMSTweak, data->Absolute);
+// }
+// // ------------------------------------ //
+// DLLEXPORT void GameWorld::HandleWorldFrozenPacket(ResponseWorldFrozen* data)
+// {
+//     Logger::Get()->Info(
+//         "GameWorld(" + Convert::ToString(ID) +
+//         "): frozen state updated, now: " + Convert::ToString<int>(data->Frozen) +
+//         ", tick: " + Convert::ToString(data->TickNumber) +
+//         " (our tick:" + Convert::ToString(TickNumber) + ")");
+
+//     if(data->TickNumber > TickNumber) {
+
+//         Logger::Get()->Write("TODO: freeze the world in the future");
+//     }
+
+//     // Set the state //
+//     SetWorldPhysicsFrozenState(data->Frozen);
+
+//     // Simulate ticks if required //
+//     if(!data->Frozen) {
+
+//         // Check how many ticks we are behind and simulate that number of physical updates
+//         // int tickstosimulate = TickNumber - data->TickNumber;
+
+//         if(tickstosimulate > 0) {
+
+//             Logger::Get()->Info("GameWorld: unfreezing and simulating " +
+//                                 Convert::ToString(tickstosimulate * TICKSPEED) +
+//                                 " ms worth of more physical updates");
+
+//             DEBUG_BREAK;
+//             // _PhysicalWorld->AdjustClock(tickstosimulate * TICKSPEED);
+//         }
+
+
+//     } else {
+
+//         // Snap objects back //
+//         Logger::Get()->Info("TODO: world freeze snap things back a bit");
+//     }
+// }
 // ------------------------------------ //
 DLLEXPORT CScriptArray* GameWorld::GetRemovedIDsForComponents(CScriptArray* componenttypes)
 {

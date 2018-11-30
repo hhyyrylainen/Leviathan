@@ -50,7 +50,7 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
     auto object1 = world.CreateEntity();
 
     auto& pos = world.Create_Position(object1, Float3(0, 10, 0), Float4::IdentityQuaternion());
-    auto& physics = world.Create_Physics(object1, &world, pos);
+    auto& physics = world.Create_Physics(object1, pos);
 
     CHECK(physics.CreatePhysicsBody(physWorld, physWorld->CreateSphere(1), 10));
 
@@ -136,7 +136,7 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
     const auto boxInitialPos = Float3(0, 5, 0);
 
     auto& pos1 = world.Create_Position(box, boxInitialPos, Float4::IdentityQuaternion());
-    auto& physics1 = world.Create_Physics(box, &world, pos1);
+    auto& physics1 = world.Create_Physics(box, pos1);
 
     CHECK(
         physics1.CreatePhysicsBody(physWorld, physWorld->CreateSphere(1), 10, boxMaterialID));
@@ -148,7 +148,7 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
     auto plane = world.CreateEntity();
 
     auto& pos2 = world.Create_Position(plane, Float3(0, 0, 0), Float4::IdentityQuaternion());
-    auto& physics2 = world.Create_Physics(plane, &world, pos2);
+    auto& physics2 = world.Create_Physics(plane, pos2);
 
     CHECK(physics2.CreatePhysicsBody(
         physWorld, physWorld->CreateBox(10, 1, 10), 0, planeMaterialID));
@@ -202,7 +202,7 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
     auto box = world.CreateEntity();
 
     auto& pos1 = world.Create_Position(box, Float3(-5, 5, 0), Float4::IdentityQuaternion());
-    auto& physics1 = world.Create_Physics(box, &world, pos1);
+    auto& physics1 = world.Create_Physics(box, pos1);
 
     auto shape1 = physWorld->CreateCompound();
 
@@ -219,7 +219,7 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
     shape2->AddChildShape(physWorld->CreateBox(10, 1, 10));
 
     auto& pos2 = world.Create_Position(plane, Float3(5, 0, 0), Float4::IdentityQuaternion());
-    auto& physics2 = world.Create_Physics(plane, &world, pos2);
+    auto& physics2 = world.Create_Physics(plane, pos2);
 
     CHECK(physics2.CreatePhysicsBody(physWorld, shape2, 0, material2));
 

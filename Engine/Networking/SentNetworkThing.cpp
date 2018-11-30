@@ -6,48 +6,49 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-DLLEXPORT Leviathan::SentNetworkThing::SentNetworkThing(uint32_t packetid,
-    uint32_t messagenumber, RECEIVE_GUARANTEE guarantee)  :
-    PacketNumber(packetid), MessageNumber(messagenumber), Resend(guarantee), 
-    RequestStartTime(Time::GetTimeMs64())
+DLLEXPORT Leviathan::SentNetworkThing::SentNetworkThing(
+    uint32_t packetid, uint32_t messagenumber, RECEIVE_GUARANTEE guarantee) :
+    PacketNumber(packetid),
+    MessageNumber(messagenumber), Resend(guarantee), RequestStartTime(Time::GetTimeMs64())
+{}
+
+DLLEXPORT void SentNetworkThing::ResetStartTime()
 {
-
-}
-
-DLLEXPORT void SentNetworkThing::ResetStartTime(){
 
     RequestStartTime = Time::GetTimeMs64();
 }
 
-DLLEXPORT void SentNetworkThing::SetWaitStatus(bool status){
-    
+DLLEXPORT void SentNetworkThing::SetWaitStatus(bool status)
+{
+
     IsDone.store(status ? DONE_STATUS::DONE : DONE_STATUS::FAILED, std::memory_order_release);
 
     if(Callback)
         (*Callback)(status, *this);
 }
 
-DLLEXPORT void Leviathan::SentNetworkThing::OnFinalized(bool succeeded){
+DLLEXPORT void Leviathan::SentNetworkThing::OnFinalized(bool succeeded)
+{
 
-    if(!succeeded){
+    if(!succeeded) {
 
         SetWaitStatus(false);
         return;
     }
 
-    if(ConfirmReceiveTime.load(std::memory_order_consume) == 1){
+    if(ConfirmReceiveTime.load(std::memory_order_consume) == 1) {
 
-        ConfirmReceiveTime.store(Time::GetTimeMs64(),
-            std::memory_order_release);
+        ConfirmReceiveTime.store(Time::GetTimeMs64(), std::memory_order_release);
     }
 
     // We want to notify all waiters that it has been received //
     SetWaitStatus(true);
 }
 
-DLLEXPORT bool SentNetworkThing::GetStatus(){
+DLLEXPORT bool SentNetworkThing::GetStatus()
+{
 
-    while(IsDone.load(std::memory_order_acquire) == DONE_STATUS::WAITING){
+    while(IsDone.load(std::memory_order_acquire) == DONE_STATUS::WAITING) {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -55,8 +56,9 @@ DLLEXPORT bool SentNetworkThing::GetStatus(){
     return IsDone == DONE_STATUS::DONE;
 }
 
-DLLEXPORT void SentNetworkThing::SetAsTimed(){
-    
+DLLEXPORT void SentNetworkThing::SetAsTimed()
+{
+
     ConfirmReceiveTime.store(1, std::memory_order_release);
 }
 
@@ -65,7 +67,8 @@ DLLEXPORT void SentNetworkThing::SetCallback(std::shared_ptr<CallbackType> func)
     Callback = func;
 }
 
-DLLEXPORT void Leviathan::SentNetworkThing::SetCallbackFunc(CallbackType func){
+DLLEXPORT void Leviathan::SentNetworkThing::SetCallbackFunc(CallbackType func)
+{
 
     Callback = std::make_shared<CallbackType>(std::move(func));
 }
@@ -73,18 +76,20 @@ DLLEXPORT void Leviathan::SentNetworkThing::SetCallbackFunc(CallbackType func){
 // ------------------------------------ //
 // SentRequest
 DLLEXPORT SentRequest::SentRequest(uint32_t sentinpacket, uint32_t messagenumber,
-    RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkRequest> request) :
-    SentNetworkThing(sentinpacket, messagenumber, guarantee), SentRequestData(request)
-{
-
-}
+    RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkRequest>& request) :
+    SentNetworkThing(sentinpacket, messagenumber, guarantee),
+    SentRequestData(request)
+{}
 
 // ------------------------------------ //
 // SentRequest
 DLLEXPORT SentResponse::SentResponse(uint32_t sentinpacket, uint32_t messagenumber,
-    RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkResponse> response) :
-    SentNetworkThing(sentinpacket, messagenumber, guarantee), SentResponseData(response)
-{
-    
-}
+    RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkResponse>& response) :
+    SentNetworkThing(sentinpacket, messagenumber, guarantee),
+    SentResponseData(response)
+{}
 
+DLLEXPORT SentResponse::SentResponse(
+    uint32_t sentinpacket, uint32_t messagenumber, const NetworkResponse& response) :
+    SentNetworkThing(sentinpacket, messagenumber, RECEIVE_GUARANTEE::None)
+{}

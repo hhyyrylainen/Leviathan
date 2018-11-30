@@ -38,6 +38,12 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
         return std::make_shared<ResponseServerDisallow>(responseid, packet);
     case NETWORK_RESPONSE_TYPE::StartWorldReceive:
         return std::make_shared<ResponseStartWorldReceive>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::EntityCreation:
+        return std::make_shared<ResponseEntityCreation>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::EntityDestruction:
+        return std::make_shared<ResponseEntityDestruction>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::EntityUpdate:
+        return std::make_shared<ResponseEntityUpdate>(responseid, packet);
     // None based types
     case NETWORK_RESPONSE_TYPE::None:
         return std::make_shared<ResponseNone>(responsetype, responseid, packet);

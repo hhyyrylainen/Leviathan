@@ -22,8 +22,7 @@ namespace Leviathan {
 
 // ------------------------------------ //
 // State creation systems
-class PositionStateSystem : public StateCreationSystem<Position, PositionState> {
-};
+class PositionStateSystem : public StateCreationSystem<Position, PositionState> {};
 
 
 // ------------------------------------ //
@@ -126,14 +125,13 @@ private:
 
 
 //! \brief Sends updated entities from server to clients
-//! \todo Change this to take distance into account
-//! don't send as many updates to clients far away
+//! \todo Change this to take distance into account don't send as many updates to clients far
+//! away
 class SendableSystem {
 public:
     //! \pre Final states for entities have been created for current tick
-    void Run(std::unordered_map<ObjectID, Sendable*>& index, GameWorld& world)
+    void Run(GameWorld& world, std::unordered_map<ObjectID, Sendable*>& index)
     {
-
         for(auto iter = index.begin(); iter != index.end(); ++iter) {
 
             auto& node = *iter->second;
@@ -148,12 +146,14 @@ public:
     }
 
 protected:
+    //! \todo Something should be done with the required state allocation in this method
     DLLEXPORT void HandleNode(ObjectID id, Sendable& obj, GameWorld& world);
 };
 
 //! \brief Interpolates states for received objects and handles locally controlled entities
 class ReceivedSystem {
 public:
-    DLLEXPORT void Run(std::unordered_map<ObjectID, Received*>& index, GameWorld& world);
+    //! \todo This is now unused
+    DLLEXPORT void Run(GameWorld& world, std::unordered_map<ObjectID, Received*>& index) {}
 };
 } // namespace Leviathan

@@ -45,7 +45,7 @@ public:
     //! \brief Call this at any appropriate time to update heartbeat statistics
     DLLEXPORT void UpdateHeartbeats();
 
-    inline std::shared_ptr<Connection> GetConnection()
+    inline const std::shared_ptr<Connection>& GetConnection()
     {
         return CorrespondingConnection;
     }

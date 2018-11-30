@@ -23,8 +23,10 @@ worldClass = GameWorldClass.new(
     EntityComponent.new("Position",
                         [ConstructorInfo.new(
                            [
-                             Variable.new("position", "Float3"),
-                             Variable.new("orientation", "Float4")
+                             Variable.new("position", "Float3",
+                                          memberaccess: "Members._Position"),
+                             Variable.new("orientation", "Float4",
+                                          memberaccess: "Members._Orientation")
                            ], usedatastruct: true)
                         ], statetype: true),
     EntityComponent.new("RenderNode", [ConstructorInfo.new(
@@ -32,26 +34,29 @@ worldClass = GameWorldClass.new(
                                            Variable.new("GetScene()", "",
                                                         nonMethodParam: true),
                                          ])], releaseparams: ["GetScene()"]),
-    EntityComponent.new("Sendable", [ConstructorInfo.new([])]),
-    EntityComponent.new("Received", [ConstructorInfo.new([])]),
+    EntityComponent.new("Sendable", [ConstructorInfo.new([])], nosynchronize: true),
+    EntityComponent.new("Received", [ConstructorInfo.new([])], nosynchronize: true),
     EntityComponent.new("Model", [ConstructorInfo.new(
                                     [
                                       Variable.new("GetScene()", "",
                                                    nonMethodParam: true),
                                       Variable.new("parent", "Ogre::SceneNode*",
-                                                   noRef: true
+                                                   noRef: true, nonserializeparam: true
                                                   ),
-                                      Variable.new("model", "std::string")
+                                      Variable.new("model", "std::string",
+                                                   memberaccess: "MeshName")
                                     ]
                                   )], releaseparams: ["GetScene()"]),
     EntityComponent.new("Physics", [
                           ConstructorInfo.new(
                             [
                               Variable.new("id", "ObjectID",
+                                           nonMethodParam: true, nonserializeparam: true),
+                              Variable.new("this", "GameWorld*", noRef: true,
                                            nonMethodParam: true),
-                              Variable.new("world", "GameWorld*", noRef: true),
                               Variable.new("updatepos", "Position",
                                            noConst: true,
+                                           nonserializeparam: true,
                                            angelScriptUseInstead:
                                              Variable.new("updatepos", "Position*",
                                                           noRef: true)),
@@ -60,8 +65,8 @@ worldClass = GameWorldClass.new(
     EntityComponent.new("BoxGeometry",
                         [ConstructorInfo.new(
                            [
-                             Variable.new("size", "Float3"),
-                             Variable.new("material", "std::string")
+                             Variable.new("size", "Float3", memberaccess: "Sizes"),
+                             Variable.new("material", "std::string", memberaccess: "Material")
                            ], usedatastruct: false)]),
     EntityComponent.new("ManualObject", [ConstructorInfo.new(
                                            [
@@ -72,9 +77,10 @@ worldClass = GameWorldClass.new(
     EntityComponent.new("Camera",
                         [ConstructorInfo.new(
                            [
-                             Variable.new("fov", "uint8_t", default: "90"),
-                             Variable.new("soundperceiver", "bool", default:
-                                                                      "true")
+                             Variable.new("fov", "uint8_t", default: "90",
+                                          memberaccess: "FOVY"),
+                             Variable.new("soundperceiver", "bool",
+                                          default: "true", memberaccess: "SoundPerceiver")
                            ])
                         ]),
     EntityComponent.new("Plane",
@@ -83,11 +89,13 @@ worldClass = GameWorldClass.new(
                              Variable.new("GetScene()", "",
                                           nonMethodParam: true),
                              Variable.new("parent", "Ogre::SceneNode*",
-                                          noRef: true),
-                             Variable.new("material", "std::string"),
-                             Variable.new("plane", "Ogre::Plane"),
-                             Variable.new("size", "Float2"),
+                                          noRef: true, nonserializeparam: true),
+                             Variable.new("material", "std::string", memberaccess: "Material"),
+                             Variable.new("plane", "Ogre::Plane",
+                                          memberaccess: "PlaneDefinition"),
+                             Variable.new("size", "Float2", memberaccess: "Size"),
                              Variable.new("uvupvector", "Ogre::Vector3",
+                                          memberaccess: "UpVector",
                                           default: "Ogre::Vector3::UNIT_Y"),
                            ])
                         ]),
@@ -95,9 +103,9 @@ worldClass = GameWorldClass.new(
                         [ConstructorInfo.new(
                            [
                              Variable.new("item", "Ogre::Item*",
-                                          noRef: true)
+                                          noRef: true, nonserializeparam: true)
                            ])
-                        ]),    
+                        ]),
   ],
   systems: [
     EntitySystem.new("RenderingPositionSystem", ["RenderNode", "Position"],
@@ -109,8 +117,12 @@ worldClass = GameWorldClass.new(
     EntitySystem.new("AnimationTimeAdder", [],
                      runrender: {group: 60, parameters: ["ComponentAnimated.GetIndex()",
                                                          "calculatedTick", "progressInTick"]}),
-    EntitySystem.new("ReceivedSystem", []), 
-    EntitySystem.new("SendableSystem", []), 
+    EntitySystem.new("ReceivedSystem", [],
+                     runtick: {group: 60,
+                               parameters: ["ComponentReceived.GetIndex()"]}),
+    EntitySystem.new("SendableSystem", [],
+                     runtick: {group: 70,
+                               parameters: ["ComponentSendable.GetIndex()"]}),
     EntitySystem.new("PositionStateSystem", [], runtick: {
                        group: 50,
                        parameters: ["ComponentPosition.GetIndex()", "PositionStates",
@@ -129,7 +141,7 @@ END
 
         //const float interpolatepercentage = std::max(0.f, timeintick / (float)TICKSPEED);
 
-        _ReceivedSystem.Run(ComponentReceived.GetIndex(), *this);
+        // _ReceivedSystem.Run(*this, ComponentReceived.GetIndex());
     }
 
     // Skip in non-gui mode //

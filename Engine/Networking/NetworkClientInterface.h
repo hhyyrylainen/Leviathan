@@ -43,10 +43,10 @@ public:
 
 
     DLLEXPORT virtual void HandleRequestPacket(
-        std::shared_ptr<NetworkRequest> request, Connection& connection) override;
+        const std::shared_ptr<NetworkRequest>& request, Connection& connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection) override;
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) override;
 
     //! \brief Connects the client to a server
     //! \return Returns true when successfully started the join process,
@@ -152,6 +152,11 @@ protected:
     //! should create a new world and expect to receive updates for it
     DLLEXPORT virtual void _HandleWorldJoinResponse(
         int32_t worldid, int32_t worldtype, const std::string& extraoptions);
+
+    //! \brief This needs to lookup a GameWorld for an entity update message by id
+    //!
+    //! The default implementation only looks at OurReceivedWorld
+    DLLEXPORT virtual GameWorld* _GetWorldForEntityMessage(int32_t worldid);
 
 private:
     //! \brief Helper for TickIt to handle server connection state

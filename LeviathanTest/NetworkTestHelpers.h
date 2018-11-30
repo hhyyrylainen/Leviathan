@@ -22,7 +22,7 @@ namespace Test {
 class TestClientInterface : public NetworkClientInterface {
 public:
     virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection) override
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) override
     {}
 
     int ConnectedCallbackCount = 0;
@@ -39,7 +39,7 @@ public:
     TestServerInterface() : NetworkServerInterface(1, "TestServer") {}
 
     virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection) override
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) override
     {}
 };
 
@@ -77,6 +77,7 @@ protected:
 class TestWorldServerInterface : public NetworkServerInterface {
 public:
     TestWorldServerInterface();
+    ~TestWorldServerInterface();
 
     virtual std::shared_ptr<GameWorld> _GetWorldForJoinTarget(
         const std::string& options) override;
@@ -450,7 +451,7 @@ public:
     {}
 
     virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection) override
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) override
     {
         if(message->GetType() == CheckForType) {
 

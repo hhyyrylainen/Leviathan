@@ -103,9 +103,9 @@ else()
     "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )  
   
-  set(GroupEntities "Entities/CommonStateObjects.cpp" "Entities/CommonStateObjects.h"
-    "Entities/Components.cpp" "Entities/Components.h"
-    "Entities/Component.h" "Entities/ComponentState.h" 
+  set(GroupEntities "Entities/Components.cpp" "Entities/Components.h"
+    "Entities/Component.h"
+    "Entities/ComponentState.cpp" "Entities/ComponentState.h"
     "Entities/StateHolder.h" "Entities/StateHolder.cpp" 
     "Entities/StateInterpolator.h"
     "Entities/EntityCommon.h"
@@ -243,12 +243,6 @@ else()
     "Physics/PhysicsBody.cpp" "Physics/PhysicsBody.h"
     )
 
-
-  set(GroupEntitiesSerializers
-    "Entities/Serializers/EntitySerializer.cpp" "Entities/Serializers/EntitySerializer.h"
-    )
-
-
   
   
   set(GroupEvents
@@ -364,7 +358,6 @@ source_group("Libraries\\json-cpp" FILES ${GroupJsoncpp})
 source_group("Libraries\\utf8" FILES ${Grouputf8})
 
 source_group("Entities" FILES ${GroupEntities})
-source_group("Entities\\Serializers" FILES ${GroupEntitiesSerializers})
 
 source_group("Utility" FILES ${GroupUtility})
 source_group("Utility\\Statistics" FILES ${GroupStatistics})
@@ -410,7 +403,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupRenderingGUI} ${GroupPhysics}
   ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
   ${GroupGameplay} 
-  ${GroupPermissions} ${GroupEntitiesSerializers} ${GroupLZ4} ${GroupJsoncpp}
+  ${GroupPermissions} ${GroupLZ4} ${GroupJsoncpp}
   ${GeneratorInput} ${GroupGeneratedFiles}
   ${Grouputf8} ${GroupEditor} ${GroupGeneratedFiles}
   )

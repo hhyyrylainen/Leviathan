@@ -109,7 +109,9 @@ thingsToGenerate = [
   ["EntityCreation",
    [
      Variable.new("WorldID", "int32_t"),
-     Variable.new("InitialEntity", "sf::Packet", move: true),
+     Variable.new("EntityID", "int32_t"),
+     Variable.new("ComponentCount", "uint32_t"),
+     Variable.new("InitialComponentData", "sf::Packet", move: true),
    ]],
 
   ["EntityDestruction",

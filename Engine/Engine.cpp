@@ -11,7 +11,6 @@
 #include "Editor/Editor.h"
 #include "Entities/GameWorld.h"
 #include "Entities/GameWorldFactory.h"
-#include "Entities/Serializers/EntitySerializer.h"
 #include "Events/EventHandler.h"
 #include "FileSystem.h"
 #include "GUI/GuiManager.h"
@@ -251,14 +250,6 @@ DLLEXPORT bool Engine::Init(
             returnvalue.set_value(true);
         },
         std::ref(ScriptInterfaceResult), this)));
-
-    // Create the default serializer //
-    _EntitySerializer = std::make_unique<EntitySerializer>();
-    if(!_EntitySerializer) {
-
-        Logger::Get()->Error("Engine: Init: failed to instantiate entity serializer");
-        return false;
-    }
 
     // Check if we don't want a window //
     if(NoGui) {
@@ -582,8 +573,6 @@ void Engine::Release(bool forced)
 
 
     SAFE_DELETE(RenderTimer);
-
-    _EntitySerializer.reset();
 
     SAFE_RELEASEDEL(Sound);
     SAFE_DELETE(Mainstore);
@@ -1183,15 +1172,16 @@ DLLEXPORT void Engine::RunOnMainThread(const std::function<void()>& function)
 // ------------------------------------ //
 DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, int worldtype,
     const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials,
-    const WorldNetworkSettings& networking)
+    const WorldNetworkSettings& networking, int overrideid /*= -1*/)
 {
     std::shared_ptr<GameWorld> world;
     if(worldtype >= 1024) {
         // Standard world types
         world = InbuiltWorldFactory::CreateNewWorld(
-            static_cast<INBUILT_WORLD_TYPE>(worldtype), physicsMaterials);
+            static_cast<INBUILT_WORLD_TYPE>(worldtype), physicsMaterials, overrideid);
     } else {
-        world = GameWorldFactory::Get()->CreateNewWorld(worldtype, physicsMaterials);
+        world =
+            GameWorldFactory::Get()->CreateNewWorld(worldtype, physicsMaterials, overrideid);
     }
 
     if(!world) {

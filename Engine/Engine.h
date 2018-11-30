@@ -124,9 +124,11 @@ public:
     //! \param physicsMaterials The physical materials used for the world. This must be
     //! non-null if physics is wanted for this world. This is here in order to allow inbuilt
     //! worlds to have custom materials
+    //! \param overrideid Set to >= 0 if this is a clientside world and must have the specific
+    //! id
     DLLEXPORT std::shared_ptr<GameWorld> CreateWorld(Window* owningwindow, int worldtype,
         const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials,
-        const WorldNetworkSettings& networking);
+        const WorldNetworkSettings& networking, int overrideid = -1);
 
     //! \brief Releases a GameWorld
     //! \param world The world to destroy. This is taken as a const reference to allow
@@ -216,10 +218,6 @@ public:
     inline ResourceRefreshHandler* GetResourceRefreshHandler()
     {
         return _ResourceRefreshHandler;
-    }
-    inline EntitySerializer* GetEntitySerializer()
-    {
-        return _EntitySerializer.get();
     }
     inline RemoteConsole* GetRemoteConsole()
     {
@@ -323,7 +321,6 @@ protected:
     ResourceRefreshHandler* _ResourceRefreshHandler = nullptr;
 
     std::unique_ptr<ConsoleInput> _ConsoleInput;
-    std::unique_ptr<EntitySerializer> _EntitySerializer;
     std::unique_ptr<GameModuleLoader> _GameModuleLoader;
     std::vector<std::unique_ptr<Editor::Editor>> OpenedEditors;
 

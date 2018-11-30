@@ -189,6 +189,35 @@ DLLEXPORT bool Connection::SendPacketToConnection(const NetworkResponse& respons
     return true;
 }
 
+DLLEXPORT std::shared_ptr<SentResponse>
+    Connection::SendPacketToConnectionWithTrackingWithoutGuarantee(
+        const NetworkResponse& response)
+{
+    if(!IsValidForSend())
+        return nullptr;
+
+#ifdef SPAM_ME_SOME_PACKETS
+    LOG_WRITE(SPAM_PREFIX + "Sending: only tracked response " +
+              std::to_string(static_cast<int>(response.GetType())) +
+              " (to: " + std::to_string(response.GetResponseID()) + ") to " +
+              GenerateFormatedAddressString());
+#endif
+
+    // Find acks to send //
+    const auto fullpacketid = ++LastUsedLocalID;
+    auto acks = _GetAcksToSend(fullpacketid);
+
+    // Generate a packet from the request //
+    auto sentthing = WireData::FormatResponseBytesTracked(
+        response, ++LastUsedMessageNumber, fullpacketid, acks.get(), StoredWireData);
+
+    _SendPacketToSocket(StoredWireData);
+
+    // Add to the sent packets //
+    ResponsesNeedingConfirmation.push_back(sentthing);
+    return sentthing;
+}
+
 DLLEXPORT std::shared_ptr<SentResponse> Connection::SendPacketToConnection(
     const std::shared_ptr<NetworkResponse>& response, RECEIVE_GUARANTEE guarantee)
 {
@@ -197,7 +226,7 @@ DLLEXPORT std::shared_ptr<SentResponse> Connection::SendPacketToConnection(
 
     if(guarantee == RECEIVE_GUARANTEE::None) {
 
-        LOG_WARNING("Connection: SendPacketToConnection: wrong send response called "
+        LOG_WARNING("Connection: SendPacketToConnection: wrong send response variant called "
                     "with none guarantee");
 
         SendPacketToConnection(*response);

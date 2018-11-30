@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -27,9 +27,14 @@ namespace Leviathan {
 class Camera;
 class PhysicalWorld;
 class ScriptComponentHolder;
+class ResponseEntityCreation;
+class ResponseEntityDestruction;
+class ResponseEntityUpdate;
 
 template<class StateT>
 class StateHolder;
+
+class EntityState;
 
 struct ComponentTypeInfo {
 
@@ -94,8 +99,10 @@ class GameWorld {
     class Implementation;
 
 public:
-    DLLEXPORT GameWorld(
-        int32_t worldtype, const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
+    //! \param worldid If >= then uses the specified ID for this world. Otherwise one is
+    //! automatically generated from IDFactory
+    DLLEXPORT GameWorld(int32_t worldtype,
+        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials, int worldid = -1);
     DLLEXPORT ~GameWorld();
 
     //! \brief Creates resources for the world to work
@@ -131,7 +138,10 @@ public:
     DLLEXPORT void Render(int mspassed, int tick, int timeintick);
 
     //! \brief Returns the current tick
-    DLLEXPORT int GetTickNumber() const;
+    DLLEXPORT inline int GetTickNumber() const
+    {
+        return TickNumber;
+    }
 
     //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
     DLLEXPORT float GetTickProgress() const;
@@ -171,14 +181,6 @@ public:
     //! \note Doesn't check that the entitiy ids exist
     DLLEXPORT void SetEntitysParent(ObjectID child, ObjectID parent);
 
-    //! \brief Notifies others that we have created a new entity
-    //! \note This is called after all components are set up and it is ready to be sent to
-    //! other players
-    //! \note Clients should also call this function
-    //! \todo Allow to set the world to queue objects and send them in
-    //! big bunches to players
-    DLLEXPORT void NotifyEntityCreate(ObjectID id);
-
 
     //! \brief Removes all components from an entity
     DLLEXPORT virtual void DestroyAllIn(ObjectID id);
@@ -190,7 +192,6 @@ public:
     template<class TComponent>
     TComponent& GetComponent(ObjectID id)
     {
-
         std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
 
         if(!std::get<1>(component))
@@ -222,7 +223,6 @@ public:
     template<class TComponent>
     StateHolder<typename TComponent::StateT>& GetStatesFor()
     {
-
         std::tuple<void*, bool> stateHolder = GetStatesFor(TComponent::TYPE);
 
         if(!std::get<1>(stateHolder))
@@ -260,9 +260,18 @@ public:
     DLLEXPORT bool GetAddedForScriptDefined(const std::string& name,
         std::vector<std::tuple<asIScriptObject*, ObjectID, ScriptComponentHolder*>>& result);
 
+    //! \brief Captures the current state of an entity
+    DLLEXPORT virtual void CaptureEntityState(ObjectID id, EntityState& curstate) const;
+
+    //! \brief Captures the initial parameters of an entity with components that don't have
+    //! current state synchronization and also types of all components
+    //! \returns The count of component data entries in receiver
+    DLLEXPORT virtual uint32_t CaptureEntityStaticState(
+        ObjectID id, sf::Packet& receiver) const;
+
     //! \brief Sets the entity that acts as a camera.
     //!
-    //! The entity needs atleast Position and Camera components
+    //! The entity needs at least Position and Camera components
     //! \exception InvalidArgument if the object is missing required components
     DLLEXPORT void SetCamera(ObjectID object);
 
@@ -325,39 +334,36 @@ public:
     //! \brief Verifies that player is receiving this world
     DLLEXPORT void SetPlayerReceiveWorld(std::shared_ptr<ConnectedPlayer> ply);
 
+    //! \brief This is used by Sendable system to loop all players
+    //! \returns The list of players in this world
+    inline const auto& GetConnectedPlayers() const
+    {
+        return ReceivingPlayers;
+    }
+
     //! \brief Sends a packet to all connected players
     DLLEXPORT void SendToAllPlayers(
         const std::shared_ptr<NetworkResponse>& response, RECEIVE_GUARANTEE guarantee) const;
 
-    //! \brief Sends an entity to a connection and sets everything up
-    //! \post The connection will receive updates from the entity
-    //! \return True when a packet was sent false otherwise
-    DLLEXPORT bool SendEntityToConnection(
-        ObjectID obj, std::shared_ptr<Connection> connection);
+    //! \brief Applies an entity update packet
+    //! \note With updates the message is queued (and moved) if we don't have the entity
+    //! specified by the id
+    //! \todo If we receive an update after an entity is destroyed the message should not be
+    //! queued
+    DLLEXPORT void HandleEntityPacket(ResponseEntityUpdate&& message);
 
-    //! \brief Creates a new entity from initial entity response
-    //! \note This should only be called on the client
-    DLLEXPORT void HandleEntityInitialPacket(
-        std::shared_ptr<NetworkResponse> message, ResponseEntityCreation* data);
+    DLLEXPORT void HandleEntityPacket(ResponseEntityCreation& message);
 
-    //! \brief Applies an update packet
-    //!
-    //! If the entity is not found the packet is discarded
-    //! \todo Cache the update data for 1 second and apply it if a matching entity is
-    //! created during that time
-    DLLEXPORT void HandleEntityUpdatePacket(std::shared_ptr<NetworkResponse> message);
+    DLLEXPORT void HandleEntityPacket(ResponseEntityDestruction& message);
 
-    //! \brief Handles a world clock synchronizing packet
-    //! \note This should only be allowed to be called on a client that has connected
-    //! to a server
-    DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSync* data);
+    // //! \brief Handles a world clock synchronizing packet
+    // //! \note This should only be allowed to be called on a client that has connected
+    // //! to a server
+    // DLLEXPORT void HandleClockSyncPacket(RequestWorldClockSync* data);
 
-    //! \brief Handles a world freeze/unfreeze packet
-    //! \note Should only be called on a client
-    DLLEXPORT void HandleWorldFrozenPacket(ResponseWorldFrozen* data);
-
-    //! \brief Applies packets that have been received after the last call to this
-    DLLEXPORT void ApplyQueuedPackets();
+    // //! \brief Handles a world freeze/unfreeze packet
+    // //! \note Should only be called on a client
+    // DLLEXPORT void HandleWorldFrozenPacket(ResponseWorldFrozen* data);
 
     //! \todo Fix this for Ogre 2.1
     DLLEXPORT void SetFog();
@@ -422,6 +428,10 @@ public:
     REFERENCE_HANDLE_UNCOUNTED_TYPE(GameWorld);
 
 protected:
+    //! \brief Applies packets that were received out of order. And throws out any too old
+    //! packets
+    DLLEXPORT void ApplyQueuedPackets();
+
     //! \brief Called by Render which is called from a
     //! Window if this is linked to one
     DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
@@ -464,6 +474,20 @@ protected:
     //! \brief Opposite of _DoSuspendSystems
     DLLEXPORT virtual void _DoResumeSystems();
 
+    //! \brief Called when this base class wants to create a Sendable component
+    DLLEXPORT virtual void _CreateSendableComponentForEntity(ObjectID id);
+
+    //! \brief Called when this base class wants to create a Received component
+    DLLEXPORT virtual void _CreateReceivedComponentForEntity(ObjectID id);
+
+    //! \brief Called to deserialize initial entity components and their static state
+    //!
+    //! This is the reverse operation for CaptureEntityStaticState
+    //! \param decodedtype This is used to move unrecognized types up to the base class. -1 if
+    //! not fetched yet
+    DLLEXPORT virtual void _CreateComponentsFromCreationMessage(
+        ObjectID id, sf::Packet& data, int entriesleft, int decodedtype);
+
 private:
     //! \brief Updates a players position info in this world
     void UpdatePlayersPositionData(ConnectedPlayer& ply);
@@ -472,7 +496,6 @@ private:
     void _HandleDelayedDelete();
 
     //! \brief Reports an entity deletion to clients
-    //! \todo Potentially send these in a big blob
     void _ReportEntityDestruction(ObjectID id);
 
     //! \brief Implementation of doing actual destroy part of removing an entity
@@ -482,11 +505,6 @@ private:
     //! \brief Sends sendable updates to all clients
     void _SendEntityUpdates(ObjectID id, Sendable& sendable, int tick);
 
-
-    // Packet apply functions //
-    void _ApplyInitialEntityPackets();
-
-    void _ApplyEntityUpdatePackets();
 
 protected:
     //! \brief If false a graphical Ogre window hasn't been created
@@ -530,6 +548,10 @@ private:
 
     //! Primary network settings for controlling what state synchronization methods are called
     WorldNetworkSettings NetworkSettings;
+
+    // //! List of newly created entities that need to be created (or they have added new
+    // //! components and the initial value needs to be sent again)
+    // std::vector<ObjectID> NewlyCreatedEntities;
 
     // Entities //
     std::vector<ObjectID> Entities;
@@ -582,20 +604,6 @@ private:
 
     //! If true any pointers to this world are invalid
     std::shared_ptr<bool> WorldDestroyed = std::make_shared<bool>(false);
-
-    //! Mutex for ConstraintList
-    Mutex ConstraintListMutex;
-
-    //! List of constraints in this world
-    //!
-    //! Used to send full lists to clients
-    std::vector<std::shared_ptr<BaseConstraint>> ConstraintList;
-
-    //! Waiting entity packets
-    std::vector<std::shared_ptr<NetworkResponse>> InitialEntityPackets;
-
-    //! Waiting update packets
-    std::vector<std::shared_ptr<NetworkResponse>> EntityUpdatePackets;
 };
 
 } // namespace Leviathan

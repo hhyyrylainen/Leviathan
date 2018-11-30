@@ -43,10 +43,10 @@ public:
 
 
     DLLEXPORT virtual void HandleRequestPacket(
-        std::shared_ptr<NetworkRequest> request, Connection& connection) override;
+        const std::shared_ptr<NetworkRequest>& request, Connection& connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection) override;
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) override;
 
     //! \brief Updates status of the status of the server's clients
     //!

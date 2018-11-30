@@ -1,7 +1,6 @@
 // ------------------------------------ //
 #include "Components.h"
 
-#include "CommonStateObjects.h"
 #include "GameWorld.h"
 #include "Handlers/IDFactory.h"
 #include "Networking/Connection.h"
@@ -51,7 +50,8 @@ DLLEXPORT Plane::Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
     const std::string& material, const Ogre::Plane& plane, const Float2& size,
     const Ogre::Vector3& uvupvector /*= Ogre::Vector3::UNIT_Y*/) :
     Component(TYPE),
-    GeneratedMeshName("Plane_Component_Mesh_" + std::to_string(IDFactory::GetID()))
+    GeneratedMeshName("Plane_Component_Mesh_" + std::to_string(IDFactory::GetID())),
+    Material(material), PlaneDefinition(plane), Size(size), UpVector(uvupvector)
 {
     const auto mesh = Ogre::v1::MeshManager::getSingleton().createPlane(
         GeneratedMeshName + "_v1", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
@@ -133,48 +133,48 @@ DLLEXPORT bool Physics::ChangeShape(PhysicalWorld* world, const PhysicsShape::po
 }
 
 // ------------------ Received ------------------ //
-DLLEXPORT void Received::GetServerSentStates(
-    StoredState const** first, StoredState const** second, int tick, float& progress) const
-{
-    // Used to find the first tick before or on tick //
-    int firstinpast = std::numeric_limits<int>::max();
-    int secondfound = 0;
+// DLLEXPORT void Received::GetServerSentStates(
+//     StoredState const** first, StoredState const** second, int tick, float& progress) const
+// {
+//     // Used to find the first tick before or on tick //
+//     int firstinpast = std::numeric_limits<int>::max();
+//     int secondfound = 0;
 
-    for(auto& obj : ClientStateBuffer) {
+//     for(auto& obj : ClientStateBuffer) {
 
-        if(tick - obj.Tick < firstinpast && tick - obj.Tick >= 0) {
+//         if(tick - obj.Tick < firstinpast && tick - obj.Tick >= 0) {
 
-            // This is (potentially) the first state //
-            firstinpast = tick - obj.Tick;
+//             // This is (potentially) the first state //
+//             firstinpast = tick - obj.Tick;
 
-            *first = &obj;
-        }
+//             *first = &obj;
+//         }
 
-        // For this to be found the client should be around 50-100 milliseconds in the past
-        if(obj.Tick > tick && (secondfound == 0 || obj.Tick - tick < secondfound)) {
+//         // For this to be found the client should be around 50-100 milliseconds in the past
+//         if(obj.Tick > tick && (secondfound == 0 || obj.Tick - tick < secondfound)) {
 
-            // The second state //
-            *second = &obj;
+//             // The second state //
+//             *second = &obj;
 
-            secondfound = obj.Tick - tick;
-            continue;
-        }
-    }
+//             secondfound = obj.Tick - tick;
+//             continue;
+//         }
+//     }
 
-    if(firstinpast == std::numeric_limits<int>::max() || secondfound == 0) {
+//     if(firstinpast == std::numeric_limits<int>::max() || secondfound == 0) {
 
-        throw InvalidState("No stored server states around tick");
-    }
+//         throw InvalidState("No stored server states around tick");
+//     }
 
-    // If the range is not 1, meaning firstinpast != 0 || secondfound > 1 we need to adjust
-    // progress
-    int range = firstinpast + secondfound;
+//     // If the range is not 1, meaning firstinpast != 0 || secondfound > 1 we need to adjust
+//     // progress
+//     int range = firstinpast + secondfound;
 
-    if(range == 1)
-        return;
+//     if(range == 1)
+//         return;
 
-    progress = ((tick + progress) - (*first)->Tick) / range;
-}
+//     progress = ((tick + progress) - (*first)->Tick) / range;
+// }
 // // ------------------ Trail ------------------ //
 // DLLEXPORT bool Trail::SetTrailProperties(const Properties &variables, bool force /*=
 // false*/){
@@ -234,14 +234,13 @@ DLLEXPORT void Received::GetServerSentStates(
 // ------------------ Sendable ------------------ //
 DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets()
 {
-
     if(SentPackets.empty())
         return;
 
     // Looped in reverse to hopefully remove only last elements //
     for(int i = static_cast<int>(SentPackets.size() - 1); i >= 0;) {
 
-        const auto& tuple = SentPackets[i];
+        auto& tuple = SentPackets[i];
 
         if(std::get<2>(tuple)->IsFinalized()) {
 
@@ -251,7 +250,9 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets()
                 if(std::get<0>(tuple) > LastConfirmedTickNumber) {
 
                     LastConfirmedTickNumber = std::get<0>(tuple);
-                    LastConfirmedData = std::get<1>(tuple);
+
+                    // This is always erased (a few lines later) so it's fine to swap
+                    LastConfirmedData = std::move(std::get<1>(tuple));
                 }
             }
 
@@ -268,15 +269,16 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets()
 
     if(SentPackets.capacity() > 10) {
 
-        Logger::Get()->Warning("Sendable::ActiveConnection: SentPackets has space for over 10 "
-                               "sent packets");
+        LOG_WARNING("Sendable::ActiveConnection: SentPackets has space for over 10 "
+                    "sent packets");
         SentPackets.shrink_to_fit();
     }
 }
 // ------------------------------------ //
 DLLEXPORT Model::Model(
     Ogre::SceneManager* scene, Ogre::SceneNode* parent, const std::string& meshname) :
-    Component(TYPE)
+    Component(TYPE),
+    MeshName(meshname)
 {
     GraphicalObject = scene->createItem(meshname);
     GraphicalObject->setRenderQueueGroup(DEFAULT_RENDER_QUEUE);

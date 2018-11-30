@@ -35,7 +35,7 @@ DLLEXPORT NetworkServerInterface::~NetworkServerInterface()
 }
 // ------------------------------------ //
 DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
-    std::shared_ptr<NetworkRequest> request, Connection& connection)
+    const std::shared_ptr<NetworkRequest>& request, Connection& connection)
 {
     LEVIATHAN_ASSERT(request, "request is null");
 
@@ -141,7 +141,7 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
 }
 
 DLLEXPORT void NetworkServerInterface::HandleResponseOnlyPacket(
-    std::shared_ptr<NetworkResponse> message, Connection& connection)
+    const std::shared_ptr<NetworkResponse>& message, Connection& connection)
 {
     LEVIATHAN_ASSERT(message, "message is null");
 

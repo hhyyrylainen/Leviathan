@@ -15,6 +15,8 @@ posState = ComponentState.new(
   "PositionState", members: [
     Variable.new("_Position", "Float3"),
     Variable.new("_Orientation", "Float4")],
+  copyconstructors: true,
+  copyoperators: true,
   constructors: [
     # Empty unitialized constructor
     ConstructorInfo.new(
@@ -24,11 +26,22 @@ posState = ComponentState.new(
         Variable.new("tick", "int", noRef: true),
         Variable.new("data", "Leviathan::Position")
       ],
+      baseparameters: "tick, COMPONENT_TYPE::Position",
       memberinitializers: [
-        ["TickNumber", "tick"],
         ["_Position", "data.Members._Position"],
         ["_Orientation", "data.Members._Orientation"],
       ]),
+    ConstructorInfo.new(
+      [
+        Variable.new("tick", "int", noRef: true),
+        Variable.new("_Position", "Float3"),
+        Variable.new("_Orientation", "Float4")
+      ],
+      baseparameters: "tick, COMPONENT_TYPE::Position",
+      memberinitializers: [
+        ["_Position", "_position"],
+        ["_Orientation", "_orientation"],
+      ]),    
   ], methods: [
     GeneratedMethod.new(
       "DoesMatchState", "bool",

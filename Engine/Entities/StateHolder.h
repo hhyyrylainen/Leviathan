@@ -1,12 +1,12 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ObjectPool.h"
 #include "EntityCommon.h"
 
-#include <array>
+#include <memory>
 
 namespace Leviathan {
 
@@ -16,22 +16,13 @@ constexpr auto KEPT_STATES_COUNT = 5;
 template<class StateT>
 class StateHolder;
 
+//! \brief Holds state objects of type StateT related to a single entity
 template<class StateT>
 class ObjectsComponentStates {
 public:
-    ObjectsComponentStates()
-    {
-
-        for(size_t i = 0; i < StoredStates.size(); ++i) {
-
-            StoredStates[i] = nullptr;
-        }
-    }
-
     //! \brief Returns the state with the highest tick number
     StateT* GetNewest() const
     {
-
         StateT* newest = nullptr;
         int newestTick = 0;
 
@@ -50,7 +41,6 @@ public:
     //! \brief Returns the state with the lowest tick number
     StateT* GetOldest() const
     {
-
         StateT* oldest = nullptr;
         int oldestTick = std::numeric_limits<int>::max();
 
@@ -74,7 +64,6 @@ public:
     //! the later state
     StateT* GetMatchingOrNewer(int ticknumber) const
     {
-
         StateT* closest = nullptr;
         int closestBy = std::numeric_limits<int>::max();
 
@@ -102,7 +91,6 @@ public:
     //! \brief Returns state matching tick number
     StateT* GetState(int ticknumber) const
     {
-
         for(StateT* state : StoredStates) {
 
             if(state && state->TickNumber == ticknumber)
@@ -115,7 +103,6 @@ public:
     //! \brief Returns true if state is still valid
     bool IsStateValid(StateT* statetocheck) const
     {
-
         for(StateT* state : StoredStates) {
             if(state == statetocheck)
                 return true;
@@ -125,9 +112,10 @@ public:
     }
 
     //! \brief Appends a new state removing old states if they don't fit anymore
+    //! \todo It is probably more efficient to use a swap algorithm for ading new states
+    //! instead of this
     void Append(StateT* newstate, StateHolder<StateT>& stateowner)
     {
-
         // Fill from the back and pop from the front if states don't fit //
 
         // This would only speed up the first added state, so maybe the performance
@@ -156,7 +144,6 @@ public:
     //! \returns A number in range [0, KEPT_STATES_COUNT]
     auto GetNumberOfStates() const
     {
-
         int count = 0;
 
         for(StateT* state : StoredStates) {
@@ -220,17 +207,23 @@ public:
         return true;
     }
 
+    //! \brief Creates a state object for sending
+    template<class ComponentT>
+    StateT CreateStateForSending(const ComponentT& component, int ticknumber) const
+    {
+        return StateT(ticknumber, component);
+    }
+
+
     //! \brief Returns the number of entities that have states
     auto GetNumberOfEntitiesWithStates() const
     {
-
         return StateObjects.GetObjectCount();
     }
 
     //! \brief Returns a pointer to entity's states if they exist
     ObjectsComponentStates<StateT> const* GetEntityStates(ObjectID id) const
     {
-
         return StateObjects.Find(id);
     }
 
@@ -238,13 +231,11 @@ protected:
     template<typename... Args>
     StateT* _CreateNewState(Args&&... args)
     {
-
         return StatePool.ConstructNew(std::forward<Args>(args)...);
     }
 
     void _DestroyStateObject(StateT* state)
     {
-
         StatePool.Destroy(state);
     }
 

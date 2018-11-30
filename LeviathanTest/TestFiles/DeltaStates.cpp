@@ -1,5 +1,5 @@
 #include "Entities/GameWorld.h"
-#include "Entities/CommonStateObjects.h"
+#include "Generated/ComponentStates.h"
 #include "Engine.h"
 #include "Common/SFMLPackets.h"
 #include "Entities/Components.h"

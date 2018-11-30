@@ -67,8 +67,6 @@ class ManualObject;
 
 
 
-class EntitySerializer;
-
 
 // Networking //
 class RemoteConsole;
@@ -103,7 +101,6 @@ class ObjectFileList;
 
 // Network Response //
 class ResponseCacheUpdated;
-class ResponseEntityCreation;
 class ResponseWorldFrozen;
 class ResponseCacheRemoved;
 class ResponseIdentification;

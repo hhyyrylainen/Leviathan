@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 
 //! \file This file contains common components for entities
@@ -13,7 +13,7 @@
 #include "Component.h"
 #include "ComponentState.h"
 
-#include "boost/circular_buffer.hpp"
+#include <OgrePlane.h>
 
 #include <functional>
 
@@ -29,15 +29,6 @@ namespace Test {
 class TestComponentCreation;
 }
 
-//! brief Class containing residue static helper functions
-class ComponentHelpers {
-
-    ComponentHelpers() = delete;
-
-    //! \brief Creates a component state from a packet
-    static std::shared_ptr<ComponentState> DeSerializeState(sf::Packet& packet);
-};
-
 class PositionState;
 
 //! \brief Entity has position and direction it is looking at
@@ -46,7 +37,7 @@ class PositionState;
 //! have the state instead the first state would be guaranteed to be sent after it
 class Position : public ComponentWithStates<PositionState>, public PhysicsPositionProvider {
 public:
-    struct Data : public ComponentData {
+    struct Data {
 
         Data(const Float3& position, const Float4& orientation) :
             _Position(position), _Orientation(orientation)
@@ -110,6 +101,10 @@ public:
 
 //! \brief Entity is sendable to clients
 //! \note This will only be in the entity on the server
+//!
+//! It can get pretty expensive to remove closed connections from all Sendable objects
+//! \todo The world needs to clean ActiveConnection objects from all Sendables related to a
+//! closed connection
 class Sendable : public Component {
 public:
     //! \note This is not thread safe do not call CheckReceivedPackets and AddSentPacket
@@ -118,8 +113,8 @@ public:
     //! stopped moving ages ago to free up memory
     class ActiveConnection {
     public:
-        inline ActiveConnection(std::shared_ptr<Connection> connection) :
-            CorrespondingConnection(connection), LastConfirmedTickNumber(-1)
+        inline ActiveConnection(const std::shared_ptr<Connection>& connection) :
+            CorrespondingConnection(connection)
         {}
 
         //! \brief Checks has any packet been successfully received and updates
@@ -127,10 +122,10 @@ public:
         DLLEXPORT void CheckReceivedPackets();
 
         //! \brief Adds a package to be checked for finalization in CheckReceivedPackages
-        inline void AddSentPacket(int tick, std::shared_ptr<ComponentState> state,
+        inline void AddSentPacket(int tick, std::unique_ptr<EntityState>&& state,
             std::shared_ptr<SentNetworkThing> packet)
         {
-            SentPackets.push_back(std::make_tuple(tick, state, packet));
+            SentPackets.push_back(std::make_tuple(tick, std::move(state), packet));
         }
 
         std::shared_ptr<Connection> CorrespondingConnection;
@@ -138,33 +133,26 @@ public:
         //! Data used to build a delta update packet
         //! \note This is set to be the last known successfully sent state to
         //! avoid having to resend intermediate steps
-        std::shared_ptr<ComponentState> LastConfirmedData;
+        std::unique_ptr<EntityState> LastConfirmedData;
 
         //! The tick number of the confirmed state
         //! If a state is confirmed as received that has number higher than this
         // LastConfirmedData will be replaced.
-        int LastConfirmedTickNumber;
+        int LastConfirmedTickNumber = -1;
 
         //! Holds packets sent to this connection that haven't failed or been received yet
-        //! \todo Move this into GameWorld to keep a single list of connected players
-        std::vector<std::tuple<int, std::shared_ptr<ComponentState>,
-            std::shared_ptr<SentNetworkThing>>>
+        std::vector<
+            std::tuple<int, std::unique_ptr<EntityState>, std::shared_ptr<SentNetworkThing>>>
             SentPackets;
     };
 
 public:
     inline Sendable() : Component(TYPE) {}
 
-    inline void AddConnectionToReceivers(std::shared_ptr<Connection> connection)
-    {
-
-        UpdateReceivers.push_back(std::make_shared<ActiveConnection>(connection));
-    }
-
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Sendable);
 
     //! Clients we have already sent a state to
-    std::vector<std::shared_ptr<ActiveConnection>> UpdateReceivers;
+    std::vector<ActiveConnection> UpdateReceivers;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Sendable;
 };
@@ -174,34 +162,36 @@ public:
 //! Sendable counterpart on the client
 class Received : public Component {
 public:
-    //! \brief Storage class for ObjectDeltaStateData
-    //! \todo Possibly add move constructors
-    class StoredState {
-    public:
-        inline StoredState(std::shared_ptr<ComponentState> safedata, int tick, void* data) :
-            DeltaData(safedata), Tick(tick), DirectData(data)
-        {}
+    // //! \brief Storage class for ObjectDeltaStateData
+    // //! \todo Possibly add move constructors
+    // class StoredState {
+    // public:
+    //     inline StoredState(std::shared_ptr<ComponentState> safedata, int tick, void* data) :
+    //         DeltaData(safedata), Tick(tick), DirectData(data)
+    //     {}
 
-        std::shared_ptr<ComponentState> DeltaData;
+    //     std::shared_ptr<ComponentState> DeltaData;
 
-        //! Tick number, should be retrieved from DeltaData
-        int Tick;
+    //     //! Tick number, should be retrieved from DeltaData
+    //     int Tick;
 
-        //! This avoids using dynamic_cast
-        void* DirectData;
-    };
+    //     //! This avoids using dynamic_cast
+    //     void* DirectData;
+    // };
 
 public:
-    inline Received() : Component(TYPE), ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES)
+    inline Received() :
+        Component(TYPE) //, ClientStateBuffer(BASESENDABLE_STORED_RECEIVED_STATES)
     {}
 
-    DLLEXPORT void GetServerSentStates(StoredState const** first, StoredState const** second,
-        int tick, float& progress) const;
+    // DLLEXPORT void GetServerSentStates(StoredState const** first, StoredState const**
+    // second,
+    //     int tick, float& progress) const;
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Received);
 
-    //! Client side buffer of past states
-    boost::circular_buffer<StoredState> ClientStateBuffer;
+    // //! Client side buffer of past states
+    // boost::circular_buffer<StoredState> ClientStateBuffer;
 
     //! If true this uses local control and will send updates to the server
     bool LocallyControlled = false;
@@ -244,6 +234,9 @@ public:
 
     //! The entity that has this model's mesh loaded
     Ogre::Item* GraphicalObject = nullptr;
+
+    //! \note Changing this currently does nothing
+    std::string MeshName;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;
 };
@@ -319,6 +312,12 @@ public:
     Ogre::Item* GraphicalObject = nullptr;
 
     const std::string GeneratedMeshName;
+
+    // Changing any of these does nothing
+    std::string Material;
+    Ogre::Plane PlaneDefinition;
+    Float2 Size;
+    Float3 UpVector;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Plane;
 };

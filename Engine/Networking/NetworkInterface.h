@@ -34,7 +34,7 @@ public:
     //! since it can become invalid after this function returns. Get a shared pointer
     //! from NetworkHandler instead
     DLLEXPORT virtual void HandleRequestPacket(
-        std::shared_ptr<NetworkRequest> request, Connection& connection) = 0;
+        const std::shared_ptr<NetworkRequest>& request, Connection& connection) = 0;
 
     //! \brief Called by ConnectionInfo to verify that a response is good.
     //!
@@ -42,7 +42,7 @@ public:
     //! if the response is no good
     //! When returning false the connection will pretend that the response never arrived
     //! and possibly resends the request
-    DLLEXPORT virtual bool PreHandleResponse(std::shared_ptr<NetworkResponse> response,
+    DLLEXPORT virtual bool PreHandleResponse(const std::shared_ptr<NetworkResponse>& response,
         SentNetworkThing* originalrequest, Connection& connection);
 
 
@@ -59,7 +59,7 @@ public:
     //! by setting dontmarkasreceived as true.
     //! This function shouldn't throw any exceptions.
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection) = 0;
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) = 0;
 
 
     //! \brief Called by Connection just before terminating an inactive connection
@@ -91,13 +91,13 @@ public:
 
 protected:
     virtual bool _CustomHandleRequestPacket(
-        std::shared_ptr<NetworkRequest> request, Connection& connection)
+        const std::shared_ptr<NetworkRequest>& request, Connection& connection)
     {
         return false;
     }
 
     virtual bool _CustomHandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection& connection)
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection)
     {
         return false;
     }
@@ -106,14 +106,14 @@ protected:
     //!
     //! Handles default types of request packages and returns true if processed.
     DLLEXPORT bool _HandleDefaultRequest(
-        std::shared_ptr<NetworkRequest> request, Connection& connectiontosendresult);
+        const std::shared_ptr<NetworkRequest>& request, Connection& connectiontosendresult);
 
     //! \brief Utility function for subclasses to call for default handling of
     //! non-request responses
     //!
     //! Handles default types of response packages and returns true if processed.
     DLLEXPORT bool _HandleDefaultResponseOnly(
-        std::shared_ptr<NetworkResponse> message, Connection& connection);
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection);
 
     DLLEXPORT void SetOwner(NetworkHandler* owner);
 

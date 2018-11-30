@@ -1,7 +1,6 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "NetworkInterface.h"
@@ -9,7 +8,7 @@
 
 
 
-namespace Leviathan{
+namespace Leviathan {
 
 
 //! \brief Class that encapsulates common networking functionality
@@ -18,17 +17,16 @@ namespace Leviathan{
 //! More specific version of NetworkInterface and should be included additionally in
 //! server network interface classes.
 //! \see NetworkInterface
-class NetworkMasterServerInterface : public NetworkInterface{
+class NetworkMasterServerInterface : public NetworkInterface {
 public:
-
     DLLEXPORT NetworkMasterServerInterface();
     DLLEXPORT ~NetworkMasterServerInterface();
-   
-    DLLEXPORT virtual void HandleRequestPacket(std::shared_ptr<NetworkRequest> request,
-        Connection &connection) override;
+
+    DLLEXPORT virtual void HandleRequestPacket(
+        const std::shared_ptr<NetworkRequest>& request, Connection& connection) override;
 
     DLLEXPORT virtual void HandleResponseOnlyPacket(
-        std::shared_ptr<NetworkResponse> message, Connection &connection) override;
+        const std::shared_ptr<NetworkResponse>& message, Connection& connection) override;
 
     DLLEXPORT void TickIt() override;
 
@@ -38,15 +36,11 @@ public:
     DLLEXPORT virtual void CloseDown() override;
 
 
-    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>& GetClientConnections() 
-        override;
+    DLLEXPORT virtual std::vector<std::shared_ptr<Connection>>&
+        GetClientConnections() override;
 
 protected:
-
     // ------------------------------------ //
-
-
 };
 
-}
-
+} // namespace Leviathan

@@ -5,16 +5,15 @@
 // ------------------------------------ //
 #include "CommonNetwork.h"
 
-#include <memory>
 #include <future>
+#include <memory>
 
-namespace Leviathan{
+namespace Leviathan {
 
 //! Represents a sent packet and holds all kinds of data for it
-class SentNetworkThing{
+class SentNetworkThing {
 public:
-
-    enum class DONE_STATUS{
+    enum class DONE_STATUS {
 
         WAITING,
         DONE,
@@ -23,14 +22,15 @@ public:
 
     using CallbackType = std::function<void(bool, SentNetworkThing&)>;
 
-    DLLEXPORT SentNetworkThing(uint32_t packetid, uint32_t messagenumber,
-        RECEIVE_GUARANTEE guarantee);
-        
-    DLLEXPORT ~SentNetworkThing() { }
+    DLLEXPORT SentNetworkThing(
+        uint32_t packetid, uint32_t messagenumber, RECEIVE_GUARANTEE guarantee);
+
+    DLLEXPORT ~SentNetworkThing() {}
 
     //! \brief Returns true once the packet has been received by the target or lost
     //! too many times
-    inline bool IsFinalized(){
+    inline bool IsFinalized()
+    {
 
         return IsDone.load(std::memory_order_consume) != DONE_STATUS::WAITING;
     }
@@ -42,14 +42,14 @@ public:
     //! \return True when the packet has been successfully received, false if lost
     //! \todo Make sure this cannot deadlock
     DLLEXPORT bool GetStatus();
-        
+
     //! \brief Sets the status of the wait object notifying all waiters that this has
     //! succeeded or failed
     //!
     //! Will also call the Callback if one is set
     //! \note May only be called once
     DLLEXPORT void SetWaitStatus(bool status);
-        
+
     //! \brief Sets this packet as a timed packet
     //! \note A timed package will have the ConfirmReceiveTime set to the time a response
     //! (or receive notification) is received
@@ -94,23 +94,22 @@ public:
     //! \note This will only be set if this value is set to 1 before the packet is sent
     //! \note This value is only valid if the packet wasn't lost
     //! (failed requests have this unset)
-    std::atomic<int64_t> ConfirmReceiveTime { 0 };
+    std::atomic<int64_t> ConfirmReceiveTime{0};
 
     //! \brief Time this was started. Used to time out this packet and
     //! calculate round trip time
-    int64_t RequestStartTime { 0 };
+    int64_t RequestStartTime{0};
 
     //! Set to true once this object is no longer used
-    std::atomic<DONE_STATUS> IsDone { DONE_STATUS::WAITING };
+    std::atomic<DONE_STATUS> IsDone{DONE_STATUS::WAITING};
 };
 
 
 //! \brief Stores Requests while they are waiting for a response
-class SentRequest : public SentNetworkThing{
+class SentRequest : public SentNetworkThing {
 public:
-    
     DLLEXPORT SentRequest(uint32_t sentinpacket, uint32_t messagenumber,
-        RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkRequest> request);
+        RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkRequest>& request);
 
 
     std::shared_ptr<NetworkResponse> GotResponse;
@@ -119,20 +118,22 @@ public:
 };
 
 //! \brief Stores Responses that want confirmation that they have arrived
-class SentResponse : public SentNetworkThing{
+class SentResponse : public SentNetworkThing {
 public:
-    
     DLLEXPORT SentResponse(uint32_t sentinpacket, uint32_t messagenumber,
-        RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkResponse> response);
+        RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkResponse>& response);
+
+    //! This is a variant that can't be resent
+    DLLEXPORT SentResponse(
+        uint32_t sentinpacket, uint32_t messagenumber, const NetworkResponse& response);
 
     std::shared_ptr<NetworkResponse> SentResponseData;
 };
 
 
-}
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
-using Leviathan::SentResponse;
 using Leviathan::SentRequest;
+using Leviathan::SentResponse;
 #endif
-

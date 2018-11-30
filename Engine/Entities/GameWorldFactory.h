@@ -23,8 +23,8 @@ public:
     //! GameWorld class that should be created is known
     //! \param worldtype Application specific type that can be used to pass the wanted type of
     //! world around
-    DLLEXPORT virtual std::shared_ptr<GameWorld> CreateNewWorld(
-        int worldtype, const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
+    DLLEXPORT virtual std::shared_ptr<GameWorld> CreateNewWorld(int worldtype,
+        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials, int overrideid = -1);
 
     DLLEXPORT static GameWorldFactory* Get();
 
@@ -40,7 +40,7 @@ enum class INBUILT_WORLD_TYPE : int32_t { Standard = 1024 };
 class InbuiltWorldFactory {
 public:
     static std::shared_ptr<GameWorld> CreateNewWorld(INBUILT_WORLD_TYPE worldtype,
-        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials);
+        const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials, int overrideid = -1);
 };
 
 } // namespace Leviathan

@@ -25,6 +25,7 @@ if(LEVIATHAN_FULL_BUILD)
     TestFiles/NamedVars.cpp
     TestFiles/Components.cpp
     TestFiles/StdBehaviour.cpp
+    TestFiles/Archive.cpp
     TestFiles/PacketFormat.cpp
     TestFiles/PacketsAndConnection.cpp
     TestFiles/GuiTests.cpp

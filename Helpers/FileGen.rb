@@ -124,7 +124,8 @@ end
 
 class OutputClass
 
-  def initialize(name, members: [], constructors: nil, nodllexport: false, methods: nil)
+  def initialize(name, members: [], constructors: nil, nodllexport: false, methods: nil,
+                 copyconstructors: false, copyoperators: false)
 
     @Name = name
     @Members = members
@@ -135,7 +136,8 @@ class OutputClass
     @Constructors = constructors
     @NoDLLExport = nodllexport
     @Methods = methods
-    
+    @CopyConstructors = copyconstructors
+    @CopyOperators = copyoperators
   end
 
   def setExport(exportmacro)
@@ -170,6 +172,17 @@ class OutputClass
     if not @Members.empty?
       # A constructor
       genMemberConstructor f, opts
+    end
+
+    if @CopyConstructors
+
+      genCopyConstructors f, opts
+      f.puts ""
+    end
+
+    if @CopyOperators
+      genCopyOperators f, opts
+      f.puts ""
     end
     
     genMethods f, opts
@@ -256,7 +269,28 @@ class OutputClass
         if opts.include?(:impl)
           f.write ")"
 
-          f.puts constructor.formatMemberInitializers
+          memberInitializers = constructor.formatMemberInitializers
+
+          # Base constructor
+          if constructor.BaseParameters
+            if not memberInitializers.empty?
+              f.write " : #{@BaseClass}(#{constructor.BaseParameters}),\n"
+              memberInitializers.sub! " : ", ""
+            else
+              f.write " : #{@BaseClass}(#{constructor.BaseParameters})\n"
+            end
+          else
+            if not @BaseConstructor.empty?
+              if not memberInitializers.empty?
+                f.write " : #{@BaseClass}(#{@BaseConstructor}),\n"
+                memberInitializers.sub! " : ", ""
+              else
+                f.write " : #{@BaseClass}(#{@BaseConstructor})\n"
+              end
+            end
+          end
+          
+          f.puts memberInitializers
 
           f.puts "{"
 
@@ -267,6 +301,112 @@ class OutputClass
         
       }
       
+    end
+  end
+
+  def genCopyConstructors(f, opts)
+    # copy
+    f.write "#{export}#{qualifier opts}#{@Name}(const #{@Name}& other) noexcept"
+
+    if opts.include?(:impl)
+      f.puts " :"
+
+      # Base
+      if @BaseClass
+        f.write "#{@BaseClass}(other)"
+
+        if not @Members.empty?
+          f.write ", "
+        end
+      end
+      
+      f.puts @Members.map{|a|
+
+        a.formatCopy
+        
+      }.join(", ")
+
+      f.puts "{}"
+      
+    else
+      f.puts ";"
+    end
+
+    # move
+    f.write "#{export}#{qualifier opts}#{@Name}(#{@Name}&& other) noexcept"
+
+    if opts.include?(:impl)
+      f.puts " :"
+
+      # Base
+      if @BaseClass
+        f.write "#{@BaseClass}(std::move(other))"
+
+        if not @Members.empty?
+          f.write ", "
+        end
+      end
+      
+      f.puts @Members.map{|a|
+
+        a.formatMove
+        
+      }.join(", ")
+
+      f.puts "{}"
+      
+    else
+      f.puts ";"
+    end
+  end
+
+  def genCopyOperators(f, opts)
+    # copy
+    f.write "#{export}#{@Name}& #{qualifier opts}operator=(const #{@Name}& other) noexcept"
+
+    if opts.include?(:impl)
+
+      f.puts "{"
+      
+      # Base
+      if @BaseClass
+        f.puts "#{@BaseClass}::operator=(other);"
+      end
+      
+      @Members.each{|a|
+
+        f.puts a.Name + " = other.#{a.Name};"
+      }
+
+      f.puts "return *this;"
+      f.puts "}"
+      
+    else
+      f.puts ";"
+    end
+
+    # move
+    f.write "#{export}#{@Name}& #{qualifier opts}operator=(#{@Name}&& other) noexcept"
+
+    if opts.include?(:impl)
+
+      f.puts "{"      
+
+      # Base
+      if @BaseClass
+        f.puts "#{@BaseClass}::operator=(std::move(other));"
+      end
+      
+      @Members.each{|a|
+
+        f.puts a.Name + " = std::move(other.#{a.Name});"
+      }
+
+      f.puts "return *this;"
+      f.puts "}"
+      
+    else
+      f.puts ";"
     end
   end
   
@@ -318,6 +458,15 @@ class OutputClass
   def virtual(opts)
     if opts.include?(:header)
       "virtual"
+    else
+      ""
+    end
+  end
+
+  # Returns value if :header set
+  def default(opts, value)
+    if opts.include?(:header)
+      " = #{value}"
     else
       ""
     end
@@ -462,16 +611,60 @@ end
 
 class ComponentState < SFMLSerializeClass
 
-  def initialize(name, members: [], constructors: nil, methods: nil)
+  def initialize(name, members: [], constructors: nil, methods: nil, statebits: nil,
+                 copyconstructors: false, copyoperators: false)
 
-    members = [Variable.new("TickNumber", "int", noRef: true)] + members
+    # members = [Variable.new("TickNumber", "int", noRef: true)] + members
     
-    super name, members: members, constructors: constructors, methods: methods
+    super name, members: members, constructors: constructors, methods: methods,
+          copyconstructors: copyconstructors, copyoperators: copyoperators
 
     @BaseClass = "BaseComponentState"
+    @StateBits = statebits
+
+    @Type = "COMPONENT_TYPE::#{name.sub 'State', ''}"
+    @BaseConstructor = "-1, #{@Type}"
   end
 
-  
+  def genSerializer(f, opts)
+
+    f.write "#{export}void #{qualifier opts}AddDataToPacket(sf::Packet &packet, " +
+            "BaseComponentState* olderstate) const#{override opts}"
+    if opts.include?(:impl)
+      f.puts "{\n"
+      f.puts "packet << static_cast<uint16_t>(#{@Type});"
+      f.puts genToPacket + ";"
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+  end
+
+  def genMethods(f, opts)
+
+    super f, opts
+    
+    f.puts ""
+
+    f.write "#{export}bool #{qualifier opts}FillMissingData(BaseComponentState& otherstate)" +
+            "#{override opts}"
+    if opts.include?(:impl)
+      f.puts "{"
+
+      if @StateBits
+
+        puts "statebits handling not implemented"
+        exit 2 
+      else
+        f.puts "// This has no state subdivision //"
+        f.puts "return true;"
+      end
+      
+      f.puts "}"
+    else
+      f.puts ";"
+    end
+  end
   
 end
 
@@ -481,10 +674,12 @@ class GameWorldClass < OutputClass
   attr_accessor :WorldType
 
   def initialize(name, componentTypes: [], systems: [], systemspreticksetup: nil,
-                 framesystemrun: "")
+                 framesystemrun: "", networking: true)
 
     super name
 
+    @NetworkingEnabled = networking
+    
     @BaseClass = "GameWorld"
     @WorldType = "-1 /* unset, won't work over the network */"
 
@@ -493,6 +688,8 @@ class GameWorldClass < OutputClass
 
     @ComponentTypes = componentTypes
     @Systems = systems
+    # Used for a few specific things that need to be generated in this case
+    @HasSendable = false
 
     @ComponentTypes.each{|c|
       @Members.push(Variable.new("Component" + c.type, "Leviathan::ComponentHolder<" + c.type +
@@ -501,6 +698,14 @@ class GameWorldClass < OutputClass
       if c.StateType
         @Members.push(Variable.new(c.type + "States", "Leviathan::StateHolder<" + c.type +
                                                       "State>"))
+      end
+
+      if c.type == "Sendable"
+        @HasSendable = true
+      end
+
+      if c.type == "Received"
+        @HasReceived = true
       end
     }
 
@@ -513,10 +718,11 @@ class GameWorldClass < OutputClass
   def genMemberConstructor(f, opts)
 
     f.write "#{export}#{qualifier opts}#{@Name}(const " +
-            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials)"
+            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials, " +
+            "int worldid#{default opts, '-1'})"
     
     if opts.include?(:impl)
-      f.puts " : #{@BaseClass}(#{@WorldType},\n physicsMaterials) "
+      f.puts " : #{@BaseClass}(#{@WorldType},\n physicsMaterials, worldid) "
       f.puts "{}"
     else
       f.puts ";"
@@ -524,10 +730,11 @@ class GameWorldClass < OutputClass
 
     # Child class type overwrite constructor
     f.write "#{export}#{qualifier opts}#{@Name}(int32_t typeoverride, const " +
-            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials)"
+            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials, " +
+            "int worldid#{default opts, '-1'})"
     
     if opts.include?(:impl)
-      f.puts " : #{@BaseClass}(typeoverride, physicsMaterials) "
+      f.puts " : #{@BaseClass}(typeoverride, physicsMaterials, worldid) "
       f.puts "{}"
     else
       f.puts ";"
@@ -918,7 +1125,82 @@ END
     else
       f.puts ";"
     end
-    
+
+    if @NetworkingEnabled
+      
+      f.write "#{export}#{virtual opts} void #{qualifier opts}CaptureEntityState(" +
+              "ObjectID id, Leviathan::EntityState& curstate) " +
+              "const #{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+
+        @ComponentTypes.each{|c|
+
+          if !c.StateType
+            next
+          end
+
+          f.puts ""
+          f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
+          f.puts "if(#{c.type.downcase})"
+          f.puts "    curstate.Append(std::make_unique<#{c.type}State>(#{c.type}States." +
+                 "CreateStateForSending("
+          f.puts "        *#{c.type.downcase}, GetTickNumber())));"
+        }
+
+        f.puts ""
+        f.puts "#{@BaseClass}::CaptureEntityState(id, curstate);"
+        f.puts "}"
+      else
+        f.puts ";"
+      end
+      
+      f.write "#{export}#{virtual opts} uint32_t #{qualifier opts}CaptureEntityStaticState(" +
+              "ObjectID id, sf::Packet& receiver) " +
+              "const #{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+
+        f.puts "uint32_t addedComponentCount = 0;"
+        
+        @ComponentTypes.each{|c|
+
+          # Skip types like Sendable and Received
+          if c.NoSynchronize
+            next
+          end
+
+          f.puts ""
+          f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
+          f.puts "if(#{c.type.downcase}){"
+          f.puts "    ++addedComponentCount;"
+          f.puts "    receiver << static_cast<uint16_t>(#{c.type}::TYPE);"
+
+          c.constructors[0].Parameters.each{|p|
+
+            if p.NonMethodParam or p.NonSerializeParam
+              next
+            end
+
+            f.puts "    receiver << #{c.type.downcase}->#{p.MemberAccess};"
+          }
+          
+          f.puts "}"
+        }
+
+        f.puts ""
+        f.puts "return addedComponentCount + " +
+               "#{@BaseClass}::CaptureEntityStaticState(id, receiver);"
+        f.puts "}"
+      else
+        f.puts ";"
+      end
+
+      f.puts ""
+
+    end
 
     f.write "#{export}void #{qualifier opts}RunFrameRenderSystems(int tick, " +
             "int timeintick)#{override opts}"
@@ -1130,7 +1412,150 @@ END
       f.puts "}"
     else
       f.puts ";"
-    end    
+    end
+
+    if @HasSendable
+      f.write "#{export}void #{qualifier opts}_CreateSendableComponentForEntity(" +
+              "ObjectID id)#{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+        f.puts "Create_Sendable(id);"
+        f.puts "}"
+      else
+        f.puts ";"
+      end      
+    end
+
+    if @HasReceived
+      f.write "#{export}void #{qualifier opts}_CreateReceivedComponentForEntity(" +
+              "ObjectID id)#{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+        f.puts "Create_Received(id);"
+        f.puts "}"
+      else
+        f.puts ";"
+      end      
+    end
+
+
+    if @NetworkingEnabled
+      f.write "#{export}void #{qualifier opts}_CreateComponentsFromCreationMessage(" +
+              "ObjectID id, sf::Packet& data, int entriesleft, int decodedtype)" +
+              "#{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+
+        f.puts "while(entriesleft > 0){"
+
+        f.puts "if(decodedtype == -1){"
+        f.puts "    // Type not decoded yet"
+        f.puts "    uint16_t tmpType;"
+        f.puts "    data >> tmpType;"
+        f.puts "    decodedtype = tmpType;"
+        f.puts "}"
+        f.puts "if(!data){"
+        f.puts %{    LOG_ERROR("GameWorld: entity decode: packet data ended too soon");}
+        f.puts "    return;"
+        f.puts "}"
+        
+        f.puts ""
+
+        f.puts "switch(decodedtype){"
+
+        counter = 0
+
+        @ComponentTypes.each{|c|
+
+          # Skip types like Sendable and Received
+          if c.NoSynchronize
+            next
+          end
+
+          f.puts "case static_cast<int>(#{c.type}::TYPE):"
+          f.puts "{"
+
+          # parameter decoding
+          c.constructors[0].Parameters.each{|p|
+
+            if p.NonMethodParam or p.NonSerializeParam
+              next
+            end
+
+            f.puts "#{p.Type} #{p.Name.downcase};"
+            f.puts "data >> #{p.Name.downcase};"
+          }
+
+          f.puts "if(!data){"
+          f.puts %{    LOG_ERROR("GameWorld: entity decode: packet data ended } +
+                 %{too soon (no component parameters)");}
+          f.puts "    return;"
+          f.puts "}"
+
+          # Figuring out where to grab this data is hard...
+          # should make the ECS used by Leviathan to be more pure to have this data
+          # available easier
+          c.constructors[0].Parameters.each{|p|
+
+            if p.NonMethodParam or !p.NonSerializeParam
+              next
+            end
+
+            helper = "helper#{counter += 1}"
+
+            errorhelper = <<-END
+if(!#{helper}){
+LOG_ERROR("GameWorld: entity decode: magic deserialize on type '#{p.Type}' failed,"
+"canceling entity creation");
+throw InvalidArgument("can't find related required deserialize resources");
+}
+END
+
+            case p.Type
+            when "Ogre::SceneNode*"
+              f.puts "auto #{helper} = GetComponentPtr_RenderNode(id);"
+              f.puts errorhelper
+              helperProperty = helper + "->Node";
+            when "Ogre::Item*"
+              # This won't be good enough once there can be multiple different types of these
+              f.puts "auto #{helper} = GetComponentPtr_Model(id);"
+              f.puts errorhelper
+              helperProperty = helper + "->GraphicalObject";
+            when "Position"
+              f.puts "auto #{helper} = GetComponentPtr_Position(id);"
+              f.puts errorhelper
+              helperProperty = "*" + helper;
+            else
+              abort("Can't do magic deserialize on Variable: #{p.Type}")
+            end
+
+            f.puts "#{p.Type}& #{p.formatForArgumentList} = #{helperProperty};"  
+          }        
+          
+          f.puts "Create_#{c.type}(id" + c.constructors[0].formatNamesForForward + ");"
+          f.puts "--entriesleft;"
+          f.puts "decodedtype = -1;"
+          f.puts "continue;"
+
+          f.puts "}"
+        }
+
+        f.puts "default:"
+        f.puts "return #{@BaseClass}::_CreateComponentsFromCreationMessage(id, data, " +
+               "entriesleft, decodedtype);"      
+        
+        f.puts "}"
+        
+        f.puts "}"
+        f.puts "}"
+
+      else
+        f.puts ";"
+      end
+    end
     
     # f.puts "public:"
     
@@ -1190,14 +1615,15 @@ END
 end
 
 class ConstructorInfo
-  attr_reader :Parameters, :UseDataStruct, :NoAngelScript
+  attr_reader :Parameters, :UseDataStruct, :NoAngelScript, :BaseParameters
 
   def initialize(parameters, usedatastruct: false, memberinitializers: nil,
-                 noangelscript: false)
+                 noangelscript: false, baseparameters: nil)
     @Parameters = parameters
     @UseDataStruct = usedatastruct
     @MemberInitializers = memberinitializers
     @NoAngelScript= noangelscript
+    @BaseParameters = baseparameters
   end
 
   def formatMemberInitializers
@@ -1244,6 +1670,15 @@ class ConstructorInfo
     end
   end
 
+  def formatNamesForForward(leadingcomma: true)
+    if @Parameters.empty? or @Parameters.select{|p| !p.NonMethodParam}.empty?
+      ""
+    else
+      (if leadingcomma then ", " else "" end) + @Parameters.select{|p| !p.NonMethodParam}.
+                                                  map(&:formatForArgumentList).join(", ")
+    end    
+  end
+
   def formatNames(componentclass)
     if @Parameters.empty?
       if @UseDataStruct
@@ -1264,15 +1699,21 @@ class ConstructorInfo
 end
 
 class Variable
-  attr_reader :Name, :Type, :Default, :NonMethodParam, :AngelScriptRef, :AngelScriptUseInstead
+  attr_reader :Name, :Type, :Default, :NonMethodParam, :AngelScriptRef, :AngelScriptUseInstead,
+              :MemberAccess, :NonSerializeParam, :NoConst
 
   def initialize(name, type, default: nil, noRef: false, noConst: false, nonMethodParam: false,
                  move: false, serializeas: nil,
-                 angelScriptRef: "in", angelScriptUseInstead: nil)
+                 angelScriptRef: "in", angelScriptUseInstead: nil, memberaccess: nil,
+                 nonserializeparam: false)
 
     @Name = name
     @Type = type
     @Default = default
+    # This is for accessing this parameter from the finished object, instead of the normal
+    # way around
+    @MemberAccess = memberaccess
+    @NonSerializeParam = nonserializeparam
 
     if !@Default.nil?
       if @Default == true
@@ -1404,6 +1845,14 @@ class Variable
     end
   end
 
+  def formatCopy()
+    "#{@Name}(other.#{@Name})" 
+  end
+
+  def formatMove()
+    "#{@Name}(std::move(other.#{@Name}))" 
+  end  
+
   def formatDeserializer(packetname)
     if @SerializeAs.nil?
       "#{packetname} >> #{@Name};"
@@ -1442,13 +1891,18 @@ end
 # Components for adding to gameworld
 class EntityComponent
   
-  attr_reader :type, :constructors, :StateType, :Release
+  attr_reader :type, :constructors, :StateType, :Release, :CustomStaticSerializer,
+              :CustomStaticLoader, :NoSynchronize
   
-  def initialize(type, constructors=[ConstructorInfo.new], statetype: nil, releaseparams: nil)
+  def initialize(type, constructors=[ConstructorInfo.new], statetype: nil, releaseparams: nil,
+                 customstaticserializer: nil, customstaticloader: nil, nosynchronize: false)
     @type = type
     @constructors = constructors
     @StateType = statetype
     @Release = releaseparams
+    @CustomStaticSerializer = customstaticserializer
+    @CustomStaticLoader = customstaticloader
+    @NoSynchronize = nosynchronize
   end
 
 end

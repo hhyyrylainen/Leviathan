@@ -17,14 +17,15 @@ DLLEXPORT NetworkInterface::NetworkInterface(NETWORKED_TYPE type) : OurNetworkTy
 
 DLLEXPORT NetworkInterface::~NetworkInterface() {}
 // ------------------------------------ //
-DLLEXPORT bool NetworkInterface::PreHandleResponse(std::shared_ptr<NetworkResponse> response,
-    SentNetworkThing* originalrequest, Connection& connection)
+DLLEXPORT bool NetworkInterface::PreHandleResponse(
+    const std::shared_ptr<NetworkResponse>& response, SentNetworkThing* originalrequest,
+    Connection& connection)
 {
     return true;
 }
 // ------------------------------------ //
 DLLEXPORT void NetworkInterface::HandleRequestPacket(
-    std::shared_ptr<NetworkRequest> request, Connection& connection)
+    const std::shared_ptr<NetworkRequest>& request, Connection& connection)
 {
     // We can only try the default handle function //
     if(!_HandleDefaultRequest(request, connection)) {
@@ -35,7 +36,7 @@ DLLEXPORT void NetworkInterface::HandleRequestPacket(
 }
 // ------------------------------------ //
 bool NetworkInterface::_HandleDefaultRequest(
-    std::shared_ptr<NetworkRequest> request, Connection& connection)
+    const std::shared_ptr<NetworkRequest>& request, Connection& connection)
 {
     // Switch based on type //
 
@@ -96,7 +97,7 @@ bool NetworkInterface::_HandleDefaultRequest(
 }
 // ------------------------------------ //
 bool NetworkInterface::_HandleDefaultResponseOnly(
-    std::shared_ptr<NetworkResponse> message, Connection& connection)
+    const std::shared_ptr<NetworkResponse>& message, Connection& connection)
 {
     // See if it is a sync packet //
     if(Owner->GetSyncedVariables()->HandleResponseOnlySync(message, &connection))

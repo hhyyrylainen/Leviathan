@@ -624,6 +624,8 @@ class ComponentState < SFMLSerializeClass
 
     @Type = "COMPONENT_TYPE::#{name.sub 'State', ''}"
     @BaseConstructor = "-1, #{@Type}"
+
+    self.addDeserializeArg "#{name}* referencestate"
   end
 
   def genSerializer(f, opts)
@@ -1555,6 +1557,61 @@ END
       else
         f.puts ";"
       end
+
+      f.puts ""
+
+      f.write "#{export}void #{qualifier opts}_CreateStatesFromUpdateMessage(" +
+              "ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, " +
+              "int decodedtype)" +
+              "#{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+
+        f.puts "while(true){"
+
+        f.puts "if(decodedtype == -1){"
+        f.puts "    // Type not decoded yet"
+        f.puts "    uint16_t tmpType;"
+        f.puts "    data >> tmpType;"
+        f.puts "    decodedtype = tmpType;"
+        f.puts "}"
+        f.puts "if(!data){"
+        f.puts %{    // Ended, there is no entry count in the message}
+        f.puts "    return;"
+        f.puts "}"
+        
+        f.puts ""
+
+        f.puts "switch(decodedtype){"
+
+        @ComponentTypes.each{|c|
+
+          if !c.StateType
+            next
+          end
+
+          f.puts "case static_cast<int>(#{c.type}::TYPE):"
+          f.puts "{"
+
+          f.puts "#{c.type}States.DeserializeState(id, ticknumber, data, referencetick);"
+          f.puts "decodedtype = -1;"
+          f.puts "continue;"
+          f.puts "}"
+        }
+
+        f.puts "default:"
+        f.puts "return #{@BaseClass}::_CreateStatesFromUpdateMessage(id, ticknumber, data, " +
+               "referencetick, decodedtype);"      
+        
+        f.puts "}"
+        
+        f.puts "}"
+        f.puts "}"
+
+      else
+        f.puts ";"
+      end      
     end
     
     # f.puts "public:"

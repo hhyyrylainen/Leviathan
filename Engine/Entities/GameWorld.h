@@ -488,6 +488,12 @@ protected:
     DLLEXPORT virtual void _CreateComponentsFromCreationMessage(
         ObjectID id, sf::Packet& data, int entriesleft, int decodedtype);
 
+    //! \brief Called to deserialize entity component states from a packet
+    //! \param decodedtype This is used to move unrecognized types up to the base class. -1 if
+    //! not fetched yet
+    DLLEXPORT virtual void _CreateStatesFromUpdateMessage(ObjectID id, int32_t ticknumber,
+        sf::Packet& data, int32_t referencetick, int decodedtype);
+
 private:
     //! \brief Updates a players position info in this world
     void UpdatePlayersPositionData(ConnectedPlayer& ply);

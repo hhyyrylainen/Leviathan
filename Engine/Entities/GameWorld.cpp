@@ -529,6 +529,14 @@ DLLEXPORT void GameWorld::_CreateComponentsFromCreationMessage(
     LOG_ERROR("GameWorld: entity static state decoding was not complete before calling base "
               "GameWorld implementation. Received entity won't be fully constructed");
 }
+
+DLLEXPORT void GameWorld::_CreateStatesFromUpdateMessage(
+    ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, int decodedtype)
+{
+    LOG_ERROR(
+        "GameWorld: entity component state decoding was not complete before calling base "
+        "GameWorld implementation. Not all states have been decoded");
+}
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Tick(int currenttick)
 {
@@ -1122,7 +1130,36 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityUpdate&& message)
         return;
     }
 
-    // DEBUG_BREAK;
+    // Don't apply if we don't have the entity
+    bool found = false;
+
+    for(auto entity : Entities) {
+        if(entity == message.EntityID) {
+
+            found = true;
+            break;
+        }
+    }
+
+    if(!found) {
+
+        LOG_WARNING(
+            "GameWorld: HandleEntityPacket: received update for non-existing entity, id: " +
+            std::to_string(message.EntityID) +
+            " TODO: queue for later applying in case packets are out of order");
+        return;
+    }
+
+    try {
+        _CreateStatesFromUpdateMessage(message.EntityID, message.TickNumber,
+            message.UpdateData, message.ReferenceTick, -1);
+    } catch(const InvalidArgument& e) {
+        LOG_ERROR("GameWorld: HandleEntityPacket: trying to load update packet data caused an "
+                  "exception: ");
+        e.PrintToLog();
+        LOG_INFO("GameWorld: note: entity may have partially updated states, id: " +
+                 std::to_string(message.EntityID));
+    }
 }
 
 DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
@@ -1133,7 +1170,7 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
         return;
     }
 
-    if(message.ComponentCount > 1024) {
+    if(message.ComponentCount > 1000) {
         LOG_ERROR("GameWorld: HandleEntityPacket: entity has more than 1000 components. "
                   "Packet is likely corrupted / forged, ignoring");
         return;
@@ -1170,7 +1207,17 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityDestruction& message)
         return;
     }
 
-    DEBUG_BREAK;
+    for(auto entity : Entities) {
+        if(entity == message.EntityID) {
+
+            DestroyEntity(message.EntityID);
+            return;
+        }
+    }
+
+    // TODO: queue if we don't have an entity with the ID
+    LOG_WARNING("GameWorld: HandleEntityPacket: received destruction message for unknown "
+                "entity, TODO: queue");
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ApplyQueuedPackets()

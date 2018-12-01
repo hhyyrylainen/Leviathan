@@ -1,4 +1,6 @@
 #include "Common/SFMLPackets.h"
+#include "Generated/ComponentStates.h"
+#include "Entities/Components.h"
 
 #include "catch.hpp"
 
@@ -66,3 +68,27 @@ TEST_CASE("Nested sf::Packets work correctly", "[networking]")
         }
     }
 }
+
+TEST_CASE("Loading PositionState from directly created packet works", "[networking][entity]")
+{
+    sf::Packet data;
+
+    const Float3 pos = {1, 2, 3};
+    const Float4 orientation = {4, 5, 6, 7};
+
+    PositionState state(1, pos, orientation);
+    state.AddDataToPacket(data, nullptr);
+
+    uint16_t type;
+    data >> type;
+    REQUIRE(data);
+
+    CHECK(type == static_cast<uint16_t>(Position::TYPE));
+
+    PositionState loaded(nullptr, data);
+    CHECK(data);
+
+    CHECK(loaded._Position == pos);
+    CHECK(loaded._Orientation == orientation);
+}
+

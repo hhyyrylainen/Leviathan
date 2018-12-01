@@ -4,7 +4,9 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ObjectPool.h"
+#include "Common/SFMLPackets.h"
 #include "EntityCommon.h"
+
 
 #include <memory>
 
@@ -179,12 +181,7 @@ public:
     template<class ComponentT>
     bool CreateStateIfChanged(ObjectID id, const ComponentT& component, int ticknumber)
     {
-        ObjectsComponentStates<StateT>* entityStates = StateObjects.Find(id);
-
-        if(!entityStates) {
-
-            entityStates = StateObjects.ConstructNew(id);
-        }
+        auto entityStates = GetStateFor(id);
 
         // Get latest state to compare current values against //
         StateT* latestState = entityStates->GetNewest();
@@ -205,6 +202,37 @@ public:
         StateT* newState = _CreateNewState(ticknumber, component);
         entityStates->Append(newState, *this);
         return true;
+    }
+
+    //! \brief Deserializes a state for entity's component from an archive
+    void DeserializeState(
+        ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick)
+    {
+        auto entityStates = GetStateFor(id);
+
+        StateT* reference = nullptr;
+
+        if(referencetick != -1) {
+            reference = entityStates->GetState(referencetick);
+
+            if(!reference) {
+
+                LOG_WARNING("StateHolder: DeserializeState: can't find reference tick: " +
+                            std::to_string(referencetick) +
+                            " for entity: " + std::to_string(id));
+
+                reference = entityStates->GetNewest();
+            }
+        }
+
+        // Create a new state //
+        StateT* newState = _CreateNewState(reference, data);
+        // This can't be deserialized from data so we forward it
+        newState->TickNumber = ticknumber;
+
+        // TODO: do we need to check whether the states already contain a state for this
+        // tick?
+        entityStates->Append(newState, *this);
     }
 
     //! \brief Creates a state object for sending
@@ -228,6 +256,18 @@ public:
     }
 
 protected:
+    inline ObjectsComponentStates<StateT>* GetStateFor(ObjectID id)
+    {
+        ObjectsComponentStates<StateT>* entityStates = StateObjects.Find(id);
+
+        if(!entityStates) {
+
+            entityStates = StateObjects.ConstructNew(id);
+        }
+
+        return entityStates;
+    }
+
     template<typename... Args>
     StateT* _CreateNewState(Args&&... args)
     {

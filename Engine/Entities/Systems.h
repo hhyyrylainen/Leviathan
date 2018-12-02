@@ -1,10 +1,8 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2016 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
-
 //! \file Contains all common systems that GameWorld will run on its components
 //! at specified times
-
 // ------------------------------------ //
 #include "Include.h"
 
@@ -148,6 +146,38 @@ public:
 protected:
     //! \todo Something should be done with the required state allocation in this method
     DLLEXPORT void HandleNode(ObjectID id, Sendable& obj, GameWorld& world);
+};
+
+//! \brief System type for marking Sendable as marked if a component of type T is marked
+template<class T>
+class SendableMarkFromSystem : public System<std::tuple<Sendable&, T&>> {
+public:
+    void Run(GameWorld& world)
+    {
+        auto& index = this->CachedComponents.GetIndex();
+        for(auto iter = index.begin(); iter != index.end(); ++iter) {
+
+            if(std::get<1>(*iter->second).Marked) {
+                std::get<0>(*iter->second).Marked = true;
+            }
+        }
+    }
+
+    void CreateNodes(const std::vector<std::tuple<Sendable*, ObjectID>>& firstdata,
+        const std::vector<std::tuple<Position*, ObjectID>>& seconddata,
+        const ComponentHolder<Sendable>& firstholder,
+        const ComponentHolder<Position>& secondholder)
+    {
+        this->TupleCachedComponentCollectionHelper(
+            this->CachedComponents, firstdata, seconddata, firstholder, secondholder);
+    }
+
+    void DestroyNodes(const std::vector<std::tuple<Sendable*, ObjectID>>& firstdata,
+        const std::vector<std::tuple<Position*, ObjectID>>& seconddata)
+    {
+        this->CachedComponents.RemoveBasedOnKeyTupleList(firstdata);
+        this->CachedComponents.RemoveBasedOnKeyTupleList(seconddata);
+    }
 };
 
 //! \brief Interpolates states for received objects and handles locally controlled entities

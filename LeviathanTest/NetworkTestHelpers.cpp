@@ -25,3 +25,25 @@ std::shared_ptr<GameWorld> TestWorldServerInterface::_GetWorldForJoinTarget(
     CHECK(options.empty());
     return World;
 }
+// ------------------------------------ //
+void WorldSynchronizationTestFixture::ConnectClientToServerWorld()
+{
+    REQUIRE(ServerInterface.World);
+
+    VerifyEstablishConnection();
+
+    VerifyServerStarted();
+
+    // Client requests to join game //
+    REQUIRE(ClientInterface.JoinServer(ClientConnection));
+
+    RunListeningLoop(8);
+
+    CHECK(ClientInterface.GetServerConnectionState() ==
+          NetworkClientInterface::CLIENT_CONNECTION_STATE::Connected);
+
+    CHECK(ServerInterface.World->IsConnectionInWorld(*ServerConnection));
+
+    REQUIRE(ClientInterface.GetWorld());
+    CHECK(ClientInterface.GetWorld()->GetID() == ServerInterface.World->GetID());    
+}

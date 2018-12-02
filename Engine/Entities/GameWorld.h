@@ -432,10 +432,15 @@ protected:
     //! packets
     DLLEXPORT void ApplyQueuedPackets();
 
+public:
     //! \brief Called by Render which is called from a
     //! Window if this is linked to one
+    //! \protected
+    //! \note This is public to allow tests to test interpolation. It might be worth it to make
+    //! a separate function that is similar to Render but can be called even in non-gui mode
     DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
 
+protected:
     //! \brief Called by Tick
     //!
     //! Derived worls should run their systems that need to be ran before the basic systems

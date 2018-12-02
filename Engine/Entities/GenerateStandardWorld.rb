@@ -120,6 +120,11 @@ worldClass = GameWorldClass.new(
     EntitySystem.new("ReceivedSystem", [],
                      runtick: {group: 60,
                                parameters: ["ComponentReceived.GetIndex()"]}),
+
+    # This needs to be ran before systems that unmark the Position
+    EntitySystem.new("SendableMarkFromSystem<Position>", ["Sendable", "Position"],
+                     runtick: {group: 20,
+                               parameters: []}),
     EntitySystem.new("SendableSystem", [],
                      runtick: {group: 70,
                                parameters: ["ComponentSendable.GetIndex()"]}),

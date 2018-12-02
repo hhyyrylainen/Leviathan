@@ -1,6 +1,11 @@
 # Common classes for generating C++ code with cmake
 require 'fileutils'
 
+# Sanitizes a type for use as a name
+# Removes <>'s and other stuff
+def sanitizeName(name)
+  name.gsub(/<|>/i, "")
+end
 
 class Generator
   def initialize(outputFile, separateFiles: false, bareOutput: false)
@@ -712,7 +717,7 @@ class GameWorldClass < OutputClass
     }
 
     @Systems.each{|s|
-      @Members.push(Variable.new("_" + s.Type, s.Type))
+      @Members.push(Variable.new("_" + s.Name, s.Type))
     }
     
   end
@@ -786,7 +791,7 @@ class GameWorldClass < OutputClass
       @Systems.each{|s|
 
         if !s.NodeComponents.empty? and !s.NoState
-          f.puts "_#{s.Type}.Clear();"
+          f.puts "_#{s.Name}.Clear();"
         end
       }
       f.puts "}"
@@ -1055,7 +1060,7 @@ class GameWorldClass < OutputClass
       f.puts "// System gets"
       @Systems.each{|s|
 
-        f.puts "#{export}#{s.Type}& Get#{s.Type}(){ return _#{s.Type}; }"
+        f.puts "#{export}#{s.Type}& Get#{s.Name}(){ return _#{s.Name}; }"
       }
 
       f.puts ""
@@ -1225,7 +1230,7 @@ END
           f.puts "// Begin of group #{s.RunRender[:group]} //"
         end
         
-        f.puts "_#{s.Type}.Run(*this" +
+        f.puts "_#{s.Name}.Run(*this" +
                formatEntitySystemParameters(s.RunRender) + ");"
       }
       
@@ -1265,7 +1270,7 @@ END
           f.puts "// Begin of group #{s.RunTick[:group]} //"
         end
         
-        f.puts "_#{s.Type}.Run(*this" +
+        f.puts "_#{s.Name}.Run(*this" +
                formatEntitySystemParameters(s.RunTick) + ");"
       }
       f.puts "}"
@@ -1335,7 +1340,7 @@ END
           f.write "if(" + s.NodeComponents.map{|c| "!added" + c + ".empty()" }.join(" || ")
           f.puts "){"
           
-          f.puts "    _#{s.Type}.CreateNodes("
+          f.puts "    _#{s.Name}.CreateNodes("
           f.puts "        " + (s.NodeComponents.map{|c| "added" + c }.join(", ")) + ","
           f.puts "        " + (s.NodeComponents.map{|c| "Component" + c }.join(", ")) + ");"
           f.puts "}"
@@ -1354,7 +1359,7 @@ END
           f.write "if(" + s.NodeComponents.map{|c| "!removed" + c + ".empty()" }.join(" || ")
           f.puts "){"
           
-          f.puts "    _#{s.Type}.DestroyNodes("
+          f.puts "    _#{s.Name}.DestroyNodes("
           f.puts "        " + (s.NodeComponents.map{|c| "removed" + c }.join(", ")) + ");"
           f.puts "}"
         end
@@ -1391,7 +1396,7 @@ END
       @Systems.each{|s|
 
         if s.Init
-          f.puts "_#{s.Type}.Init(#{s.Init.map(&:formatForArgumentList).join(', ')});"
+          f.puts "_#{s.Name}.Init(#{s.Init.map(&:formatForArgumentList).join(', ')});"
         end
       }
       f.puts "}"
@@ -1408,7 +1413,7 @@ END
       @Systems.each{|s|
 
         if s.Release
-          f.puts "_#{s.Type}.Release(#{s.Release.map(&:formatForArgumentList).join(', ')});"
+          f.puts "_#{s.Name}.Release(#{s.Release.map(&:formatForArgumentList).join(', ')});"
         end
       }
       f.puts "}"
@@ -1593,7 +1598,17 @@ END
 
           f.puts "case static_cast<int>(#{c.type}::TYPE):"
           f.puts "{"
-
+          # This is needed for the interpolation system to be able to
+          # know that it should interpolate stuff          
+          f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
+          f.puts "if(#{c.type.downcase}){"
+          f.puts "     #{c.type.downcase}->StateMarked = true;"
+          f.puts "} else {"
+          f.puts %{    LOG_ERROR("GameWorld: received states for not created Component, "}
+          f.puts %{        "can't mark states as active. And the states may now be } +
+                 %{kept forever");}
+          f.puts "}"
+          f.puts ""
           f.puts "#{c.type}States.DeserializeState(id, ticknumber, data, referencetick);"
           f.puts "decodedtype = -1;"
           f.puts "continue;"
@@ -1661,8 +1676,8 @@ END
 
     @Systems.each{|s|
       if s.VisibleToScripts
-        str += %{if(engine->RegisterObjectMethod(classname, "#{s.Type}@ Get#{s.Type}()",\n} +
-               %{asMETHOD(WorldType, Get#{s.Type}), asCALL_THISCALL) < 0)\n} +
+        str += %{if(engine->RegisterObjectMethod(classname, "#{s.Type}@ Get#{s.Name}()",\n} +
+               %{asMETHOD(WorldType, Get#{s.Name}), asCALL_THISCALL) < 0)\n} +
                "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
       end
     }
@@ -1966,12 +1981,13 @@ end
 
 class EntitySystem
   attr_reader :Type, :NodeComponents, :RunTick, :RunRender, :Init, :Release, :NoState,
-              :VisibleToScripts
+              :VisibleToScripts, :Name
 
   # Leave nodeComponens empty if not using combined nodes
   def initialize(type, nodeComponents=[], runtick: nil, runrender: nil, init: nil, 
                  release: nil, nostate: nil, visibletoscripts: false)
     @Type = type
+    @Name = sanitizeName(type)
     @NodeComponents = nodeComponents
     @RunTick = runtick
     @RunRender = runrender

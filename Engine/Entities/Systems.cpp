@@ -86,8 +86,9 @@ DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld&
                 // Do not use last confirmed if it is too old
                 int referencetick = -1;
 
-                if(ticknumber <
-                    iter->LastConfirmedTickNumber + BASESENDABLE_STORED_RECEIVED_STATES - 1) {
+                if(iter->LastConfirmedData &&
+                    (ticknumber < iter->LastConfirmedTickNumber +
+                                      BASESENDABLE_STORED_RECEIVED_STATES - 1)) {
                     referencetick = iter->LastConfirmedTickNumber;
 
                     // Now calculate a delta update from curstate to the last confirmed state
@@ -95,7 +96,7 @@ DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld&
 
                 } else {
 
-                    // Data is too old and cannot be used //
+                    // Data is too old (or doesn't exist) and cannot be used //
                     curstate->AddDataToPacket(updateData);
 
                     iter->LastConfirmedTickNumber = -1;

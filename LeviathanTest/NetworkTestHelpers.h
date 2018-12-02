@@ -183,6 +183,8 @@ protected:
         CHECK(ServerConnection->GetState() == CONNECTION_STATE::NothingReceived);
     }
 
+    void ConnectClientToServerWorld();
+
     void RunListeningLoop(int times = 3)
     {
         for(int i = 0; i < times; ++i) {

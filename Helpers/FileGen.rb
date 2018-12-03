@@ -1191,7 +1191,7 @@ END
               next
             end
 
-            f.puts "    receiver << #{c.type.downcase}->#{p.MemberAccess};"
+            f.puts "    receiver << " + p.formatMemberSerializer(c.type.downcase + "->") + ";"
           }
           
           f.puts "}"
@@ -1493,7 +1493,7 @@ END
             end
 
             f.puts "#{p.Type} #{p.Name.downcase};"
-            f.puts "data >> #{p.Name.downcase};"
+            f.puts p.formatDeserializer("data", target: p.Name.downcase)
           }
 
           f.puts "if(!data){"
@@ -1917,6 +1917,14 @@ class Variable
     end
   end
 
+  def formatMemberSerializer(variable)
+    if @SerializeAs.nil?
+      "#{variable + @MemberAccess}"
+    else
+      "static_cast<#{@SerializeAs}>(#{variable + @MemberAccess})"
+    end
+  end
+
   def formatCopy()
     "#{@Name}(other.#{@Name})" 
   end
@@ -1925,17 +1933,20 @@ class Variable
     "#{@Name}(std::move(other.#{@Name}))" 
   end  
 
-  def formatDeserializer(packetname)
-    if @SerializeAs.nil?
-      "#{packetname} >> #{@Name};"
-    else
-      tempName = "temp_" + @Name
-      str = "#{@SerializeAs} #{tempName};\n"
-      str += "#{packetname} >> #{tempName};\n"
-      str += "#{@Name} = static_cast<#{@Type}>(#{tempName});\n"
-      str
+  def formatDeserializer(packetname, target: nil)
+    if not target
+      target = @Name
     end
     
+    if @SerializeAs.nil?
+      "#{packetname} >> #{target};"
+    else
+      tempName = "temp_" + target
+      str = "#{@SerializeAs} #{tempName};\n"
+      str += "#{packetname} >> #{tempName};\n"
+      str += "#{target} = static_cast<#{@Type}>(#{tempName});\n"
+      str
+    end
   end
 end
 

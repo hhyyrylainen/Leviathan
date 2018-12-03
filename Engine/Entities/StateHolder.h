@@ -8,6 +8,7 @@
 #include "EntityCommon.h"
 
 
+#include <array>
 #include <memory>
 
 namespace Leviathan {

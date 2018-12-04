@@ -114,7 +114,6 @@ public:
 
     DLLEXPORT inline asIScriptModule* GetModule()
     {
-
         GUARD_LOCK();
         return GetModule(guard);
     }

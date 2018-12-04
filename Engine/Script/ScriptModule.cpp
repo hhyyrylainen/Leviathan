@@ -347,13 +347,13 @@ std::map<std::string, std::shared_ptr<ValidListenerData>>::iterator
 
 DLLEXPORT void Leviathan::ScriptModule::PrintFunctionsInModule()
 {
-
     GUARD_LOCK();
+
     // list consoles' global variables //
     Logger::Get()->Info(Name + " instance functions: ");
 
     // List the user functions in the module
-    asIScriptModule* mod = GetModule();
+    asIScriptModule* mod = GetModule(guard);
 
     const asUINT FuncCount = mod->GetFunctionCount();
 

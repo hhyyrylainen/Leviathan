@@ -744,13 +744,23 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(
         SendPacketToConnection(std::make_shared<ResponseConnect>(request->GetIDForResponse()),
             RECEIVE_GUARANTEE::Critical);
 
-        // Client should also make sure that a request is sent //
-        if(Owner->GetNetworkType() == NETWORKED_TYPE::Client &&
-            (State == CONNECTION_STATE::NothingReceived ||
-                State == CONNECTION_STATE::Initial)) {
-            // TODO: test that this is sent
-            SendPacketToConnection(
-                std::make_shared<RequestConnect>(), RECEIVE_GUARANTEE::Critical);
+        if(State == CONNECTION_STATE::NothingReceived || State == CONNECTION_STATE::Initial) {
+
+            State = CONNECTION_STATE::Connected;
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX +
+                      "received: request connect, moving to state Connected with " +
+                      GenerateFormatedAddressString());
+#endif
+            // Client will do security setup here. This is duplicated from the response state
+            // move as the server and client can do a simultaneous open //
+            // TODO: figure out how master server connections should work
+            if(Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
+
+                SendPacketToConnection(
+                    std::make_shared<RequestSecurity>(CONNECTION_ENCRYPTION::None),
+                    RECEIVE_GUARANTEE::Critical);
+            }
         }
 
         return true;
@@ -768,6 +778,13 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(
                                    request->GetIDForResponse(), CONNECTION_ENCRYPTION::None),
             RECEIVE_GUARANTEE::Critical);
 
+        State = CONNECTION_STATE::Secured;
+
+#ifdef SPAM_ME_SOME_PACKETS
+        LOG_WRITE(SPAM_PREFIX + "received: request security, moving to state Secured with " +
+                  GenerateFormatedAddressString());
+#endif
+
         return true;
     }
     case NETWORK_REQUEST_TYPE::Authenticate: {
@@ -778,8 +795,20 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(
             return true;
         }
 
+        // State must be security
+        if(State != CONNECTION_STATE::Secured) {
+
+            return true;
+        }
+
         // Connection is now authenticated //
         State = CONNECTION_STATE::Authenticated;
+
+#ifdef SPAM_ME_SOME_PACKETS
+        LOG_WRITE(SPAM_PREFIX +
+                  "received: request authenticate, moving to state Authenticated with " +
+                  GenerateFormatedAddressString());
+#endif
 
         LOG_INFO("Connection: Authenticate request accepted from: " +
                  GenerateFormatedAddressString());
@@ -816,6 +845,11 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
         // Forced disconnect //
         State = CONNECTION_STATE::Closed;
 
+#ifdef SPAM_ME_SOME_PACKETS
+        LOG_WRITE(SPAM_PREFIX + "received: response close, moving to state Closed from " +
+                  GenerateFormatedAddressString());
+#endif
+
         // Release will be called by NetworkHandler which sends a close connection packet
         return true;
     }
@@ -826,6 +860,12 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
 
             State = CONNECTION_STATE::Connected;
 
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX +
+                      "received: response Connect, moving to state Connected with " +
+                      GenerateFormatedAddressString());
+#endif
+
             // Client will do security setup here //
             // TODO: figure out how master server connections should work
             if(Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
@@ -835,6 +875,7 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
                     RECEIVE_GUARANTEE::Critical);
             }
         }
+
         return true;
     }
     case NETWORK_RESPONSE_TYPE::Security: {
@@ -855,6 +896,11 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
 
         State = CONNECTION_STATE::Secured;
 
+#ifdef SPAM_ME_SOME_PACKETS
+        LOG_WRITE(SPAM_PREFIX + "received: response Security, moving to state Secured with " +
+                  GenerateFormatedAddressString());
+#endif
+
         // TODO: send an empty authentication request if this is a master server connection
         if(Owner->GetNetworkType() == NETWORKED_TYPE::Client) {
 
@@ -865,6 +911,11 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
         return true;
     }
     case NETWORK_RESPONSE_TYPE::Authenticate: {
+        if(State != CONNECTION_STATE::Secured) {
+
+            return true;
+        }
+
         // Connection is now good to go //
 
         auto* authresponse = static_cast<ResponseAuthenticate*>(response.get());
@@ -872,6 +923,12 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
         // authresponse->UserID;
 
         State = CONNECTION_STATE::Authenticated;
+
+#ifdef SPAM_ME_SOME_PACKETS
+        LOG_WRITE(SPAM_PREFIX +
+                  "received: response Authenticate, moving to state Authenticated with " +
+                  GenerateFormatedAddressString());
+#endif
 
         LOG_INFO(
             "Connection: Authenticate succeeded from: " + GenerateFormatedAddressString());

@@ -1,7 +1,6 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "NetworkInterface.h"

@@ -79,6 +79,9 @@ TEST_CASE_METHOD(ClientConnectionTestFixture, "Client sends JoinServer message w
 
     REQUIRE(ClientInterface.JoinServer(ClientConnection));
 
+    // It sends it on the next tick when it is confirmed that the state is fine
+    ClientInterface.TickIt();
+
     // Read the message
     sf::Packet packet;
     REQUIRE(ReadPacket(packet));

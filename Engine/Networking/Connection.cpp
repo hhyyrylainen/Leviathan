@@ -143,8 +143,7 @@ DLLEXPORT std::shared_ptr<SentRequest> Connection::SendPacketToConnection(
         return nullptr;
 
 #ifdef SPAM_ME_SOME_PACKETS
-    LOG_WRITE(SPAM_PREFIX + "Sending: request " +
-              std::to_string(static_cast<int>(request->GetType())) +
+    LOG_WRITE(SPAM_PREFIX + "Sending: request " + request->GetTypeStr() +
               " (message number: " + std::to_string(LastUsedMessageNumber + 1) + ") to " +
               GenerateFormatedAddressString());
 #endif
@@ -170,8 +169,7 @@ DLLEXPORT bool Connection::SendPacketToConnection(const NetworkResponse& respons
         return false;
 
 #ifdef SPAM_ME_SOME_PACKETS
-    LOG_WRITE(SPAM_PREFIX + "Sending: response " +
-              std::to_string(static_cast<int>(response.GetType())) +
+    LOG_WRITE(SPAM_PREFIX + "Sending: response " + response.GetTypeStr() +
               " (to: " + std::to_string(response.GetResponseID()) + ") to " +
               GenerateFormatedAddressString());
 #endif
@@ -197,8 +195,7 @@ DLLEXPORT std::shared_ptr<SentResponse>
         return nullptr;
 
 #ifdef SPAM_ME_SOME_PACKETS
-    LOG_WRITE(SPAM_PREFIX + "Sending: only tracked response " +
-              std::to_string(static_cast<int>(response.GetType())) +
+    LOG_WRITE(SPAM_PREFIX + "Sending: only tracked response " + response.GetTypeStr() +
               " (to: " + std::to_string(response.GetResponseID()) + ") to " +
               GenerateFormatedAddressString());
 #endif
@@ -234,8 +231,7 @@ DLLEXPORT std::shared_ptr<SentResponse> Connection::SendPacketToConnection(
     }
 
 #ifdef SPAM_ME_SOME_PACKETS
-    LOG_WRITE(SPAM_PREFIX + "Sending: guaranteed response " +
-              std::to_string(static_cast<int>(response->GetType())) +
+    LOG_WRITE(SPAM_PREFIX + "Sending: guaranteed response " + response->GetTypeStr() +
               " (to: " + std::to_string(response->GetResponseID()) + ") to " +
               GenerateFormatedAddressString());
 #endif
@@ -274,8 +270,7 @@ DLLEXPORT void Connection::SendCloseConnectionPacket()
 void Connection::_Resend(SentRequest& toresend)
 {
 #ifdef SPAM_ME_SOME_PACKETS
-    LOG_WRITE(SPAM_PREFIX + "Resending: request " +
-              std::to_string(static_cast<int>(toresend.SentRequestData->GetType())) +
+    LOG_WRITE(SPAM_PREFIX + "Resending: request " + toresend.SentRequestData->GetTypeStr() +
               " (id: " + std::to_string(toresend.SentRequestData->GetIDForResponse()) +
               "), attempt number: " + std::to_string(toresend.AttemptNumber) + " to " +
               GenerateFormatedAddressString());
@@ -300,8 +295,7 @@ void Connection::_Resend(SentRequest& toresend)
 void Connection::_Resend(SentResponse& toresend)
 {
 #ifdef SPAM_ME_SOME_PACKETS
-    LOG_WRITE(SPAM_PREFIX + "Resending: response " +
-              std::to_string(static_cast<int>(toresend.SentResponseData->GetType())) +
+    LOG_WRITE(SPAM_PREFIX + "Resending: response " + toresend.SentResponseData->GetTypeStr() +
               " (to: " + std::to_string(toresend.SentResponseData->GetResponseID()) +
               "), attempt number: " + std::to_string(toresend.AttemptNumber) + " to " +
               GenerateFormatedAddressString());
@@ -329,7 +323,7 @@ DLLEXPORT inline void Connection::HandleRemoteAck(uint32_t localidconfirmedassen
         LastConfirmedSent = localidconfirmedassent;
 
     for(auto iter = ResponsesNeedingConfirmation.begin();
-        iter != ResponsesNeedingConfirmation.end(); ++iter) {
+        iter != ResponsesNeedingConfirmation.end();) {
         if(localidconfirmedassent == (*iter)->PacketNumber) {
 
 #ifdef SPAM_ME_SOME_PACKETS
@@ -339,9 +333,9 @@ DLLEXPORT inline void Connection::HandleRemoteAck(uint32_t localidconfirmedassen
 #endif
 
             (*iter)->OnFinalized(true);
-
-            ResponsesNeedingConfirmation.erase(iter);
-            break;
+            iter = ResponsesNeedingConfirmation.erase(iter);
+        } else {
+            ++iter;
         }
     }
 
@@ -368,13 +362,21 @@ void Leviathan::Connection::_HandleTimeouts(
 {
     for(auto iter = sentthing.begin(); iter != sentthing.end();) {
 
+        // Ignore already finalized things
+        if((*iter)->IsDone != SentNetworkThing::DONE_STATUS::WAITING) {
+
+            LOG_ERROR("Connection: sent things contained a finalized packet, removed it");
+            iter = sentthing.erase(iter);
+            continue;
+        }
+
         // Second timeout //
         if((timems - (*iter)->RequestStartTime > PACKET_LOST_AFTER_MILLISECONDS) ||
             (LastConfirmedSent > (*iter)->PacketNumber + PACKET_LOST_AFTER_RECEIVED_NEWER)) {
 
 #ifdef SPAM_ME_SOME_PACKETS
-            LOG_WRITE(SPAM_PREFIX + ("Timeout for ") + typeid(TSentType).name() + " to " +
-                      GenerateFormatedAddressString() +
+            LOG_WRITE(SPAM_PREFIX + "Timeout for " + (*iter)->GetTypeStr() + " (" +
+                      typeid(TSentType).name() + " to " + GenerateFormatedAddressString() +
                       " message number: " + std::to_string((*iter)->MessageNumber) +
                       " was sent in packet: " + std::to_string((*iter)->PacketNumber));
 #endif
@@ -399,7 +401,8 @@ void Leviathan::Connection::_HandleTimeouts(
                               GenerateFormatedAddressString());
 
                     (*iter)->OnFinalized(false);
-                    Owner->CloseConnection(*this);
+                    iter = sentthing.erase(iter);
+                    SendCloseConnectionPacket();
                     return;
                 }
 
@@ -413,6 +416,14 @@ void Leviathan::Connection::_HandleTimeouts(
 
             // Failed //
             (*iter)->OnFinalized(false);
+
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX + "Packet failed, type: " + (*iter)->GetTypeStr() + " to " +
+                      GenerateFormatedAddressString() +
+                      " message number: " + std::to_string((*iter)->MessageNumber) +
+                      " was sent in packet: " + std::to_string((*iter)->PacketNumber));
+#endif
+
             _FailPacketAcks((*iter)->PacketNumber);
             iter = sentthing.erase(iter);
 
@@ -434,7 +445,7 @@ DLLEXPORT void Connection::UpdateListening()
         LOG_WARNING("Connection: timing out connection to " + GenerateFormatedAddressString());
 
         // Mark us as closing //
-        Owner->CloseConnection(*this);
+        SendCloseConnectionPacket();
         return;
     }
 
@@ -499,6 +510,11 @@ DLLEXPORT void Connection::UpdateListening()
             }
 
             WireData::FormatAckOnlyPacket(ackNumbers, StoredWireData);
+
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX + "Sending ack only packet: ack count: " +
+                      std::to_string(ackNumbers.size()));
+#endif
 
             _SendPacketToSocket(StoredWireData);
 
@@ -611,33 +627,44 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(
     if(possiblerequest) {
         possiblerequest->GotResponse = response;
 
+        bool found = false;
+
         // Finalizing it must always happen
         for(auto iter = PendingRequests.begin(); iter != PendingRequests.end(); ++iter) {
 
             if((*iter).get() == possiblerequest.get()) {
 
 #ifdef SPAM_ME_SOME_PACKETS
-                LOG_WRITE(
-                    SPAM_PREFIX + "Response received: request type " +
-                    std::to_string(
-                        static_cast<int>(possiblerequest->SentRequestData->GetType())) +
-                    " (id: " +
-                    std::to_string(possiblerequest->SentRequestData->GetIDForResponse()) +
-                    ") from " + GenerateFormatedAddressString());
+                LOG_WRITE(SPAM_PREFIX + "Response received: request type " +
+                          possiblerequest->SentRequestData->GetTypeStr() +
+                          " (id: " + std::to_string(response->GetResponseID()) + ") from " +
+                          GenerateFormatedAddressString());
 #endif
 
                 // Notify that the request is done /
                 possiblerequest->OnFinalized(true);
                 PendingRequests.erase(iter);
+                found = true;
                 break;
             }
+        }
+
+        if(!found) {
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX +
+                      "Response received (but wasn't found in pending): request type " +
+                      possiblerequest->SentRequestData->GetTypeStr() +
+                      " (id: " + std::to_string(response->GetResponseID()) + ") from " +
+                      GenerateFormatedAddressString());
+#endif
+            possiblerequest->OnFinalized(true);
         }
     }
 
 #ifdef SPAM_ME_SOME_PACKETS
     if(!possiblerequest) {
         LOG_WRITE(SPAM_PREFIX + "Response only received: response type " +
-                  std::to_string(static_cast<int>(response->GetType())) +
+                  response->GetTypeStr() +
                   " (id: " + std::to_string(response->GetResponseID()) + ") from " +
                   GenerateFormatedAddressString());
     }
@@ -701,6 +728,12 @@ DLLEXPORT void Leviathan::Connection::_HandleRequestPacket(
         return;
     }
 
+#ifdef SPAM_ME_SOME_PACKETS
+    LOG_WRITE(SPAM_PREFIX + "Request received: type " + request->GetTypeStr() +
+              " (id for resp: " + std::to_string(request->GetIDForResponse()) + ") from " +
+              GenerateFormatedAddressString());
+#endif
+
     if(_HandleInternalRequest(request))
         return;
 
@@ -741,10 +774,11 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(
 {
     switch(request->GetType()) {
     case NETWORK_REQUEST_TYPE::Connect: {
-        SendPacketToConnection(std::make_shared<ResponseConnect>(request->GetIDForResponse()),
-            RECEIVE_GUARANTEE::Critical);
 
-        if(State == CONNECTION_STATE::NothingReceived || State == CONNECTION_STATE::Initial) {
+        SendPacketToConnection(std::make_shared<ResponseConnect>(request->GetIDForResponse()),
+            RECEIVE_GUARANTEE::ResendOnce);
+
+        if(State == CONNECTION_STATE::Initial) {
 
             State = CONNECTION_STATE::Connected;
 #ifdef SPAM_ME_SOME_PACKETS
@@ -828,8 +862,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalRequest(
     // Eat up all the packets if not properly opened yet
     if(State != CONNECTION_STATE::Authenticated) {
 
-        LOG_WARNING("Connection: not yet properly open, ignoring packet from: " +
-                    GenerateFormatedAddressString());
+        LOG_WARNING("Connection: not yet properly open, ignoring packet (request type: " +
+                    request->GetTypeStr() + ") from: " + GenerateFormatedAddressString());
         return true;
     }
 
@@ -941,8 +975,8 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
     // Eat up all the packets if not properly opened yet
     if(State != CONNECTION_STATE::Authenticated) {
 
-        LOG_WARNING("Connection: not yet properly open, ignoring packet from: " +
-                    GenerateFormatedAddressString());
+        LOG_WARNING("Connection: not yet properly open, ignoring packet (response type: " +
+                    response->GetTypeStr() + ") from: " + GenerateFormatedAddressString());
         return true;
     }
 
@@ -1307,6 +1341,6 @@ DLLEXPORT void Leviathan::Connection::_OnRestrictFail(uint16_t type)
               ") type: " + Convert::ToString(static_cast<int>(type)) +
               " from: " + GenerateFormatedAddressString());
 
-    Owner->CloseConnection(*this);
+    SendCloseConnectionPacket();
 }
 // ------------------------------------ //

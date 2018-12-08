@@ -30,6 +30,9 @@ public:
         //! object to become open
         WaitingForOpening,
 
+        //! Sent join request, waiting for it to succeed
+        SentJoinRequest,
+
         //! Properly connected
         Connected,
 

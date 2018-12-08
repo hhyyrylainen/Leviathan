@@ -68,3 +68,50 @@ DLLEXPORT void Leviathan::NetworkResponse::LimitResponseSize(
         response.UserReadableData = "";
     }
 }
+// ------------------------------------ //
+DLLEXPORT std::string NetworkResponse::GetTypeStr() const
+{
+    switch(Type) {
+    case NETWORK_RESPONSE_TYPE::Connect: return "ResponseConnect";
+    case NETWORK_RESPONSE_TYPE::Security: return "ResponseSecurity";
+    case NETWORK_RESPONSE_TYPE::Authenticate: return "ResponseAuthenticate";
+    case NETWORK_RESPONSE_TYPE::Identification: return "ResponseIdentification";
+    case NETWORK_RESPONSE_TYPE::Keepalive: return "ResponseKeepalive";
+    case NETWORK_RESPONSE_TYPE::CloseConnection: return "ResponseCloseConnection";
+    case NETWORK_RESPONSE_TYPE::RemoteConsoleClosed: return "ResponseRemoteConsoleClosed";
+    case NETWORK_RESPONSE_TYPE::RemoteConsoleOpened: return "ResponseRemoteConsoleOpened";
+    case NETWORK_RESPONSE_TYPE::InvalidRequest: return "ResponseInvalidRequest";
+    case NETWORK_RESPONSE_TYPE::ServerDisallow: return "ResponseServerDisallow";
+    case NETWORK_RESPONSE_TYPE::ServerAllow: return "ResponseServerAllow";
+    case NETWORK_RESPONSE_TYPE::ServerStatus: return "ResponseServerStatus";
+    case NETWORK_RESPONSE_TYPE::SyncValData: return "ResponseSyncValData";
+    case NETWORK_RESPONSE_TYPE::SyncDataEnd: return "ResponseSyncDataEnd";
+    case NETWORK_RESPONSE_TYPE::SyncResourceData: return "ResponseSyncResourceData";
+    case NETWORK_RESPONSE_TYPE::CreateNetworkedInput: return "ResponseCreateNetworkedInput";
+    case NETWORK_RESPONSE_TYPE::UpdateNetworkedInput: return "ResponseUpdateNetworkedInput";
+    case NETWORK_RESPONSE_TYPE::DisconnectInput: return "ResponseDisconnectInput";
+    case NETWORK_RESPONSE_TYPE::StartWorldReceive: return "ResponseStartWorldReceive";
+    case NETWORK_RESPONSE_TYPE::EntityCreation: return "ResponseEntityCreation";
+    case NETWORK_RESPONSE_TYPE::EntityUpdate: return "ResponseEntityUpdate";
+    case NETWORK_RESPONSE_TYPE::EntityDestruction: return "ResponseEntityDestruction";
+    case NETWORK_RESPONSE_TYPE::CacheUpdated: return "ResponseCacheUpdated";
+    case NETWORK_RESPONSE_TYPE::CacheRemoved: return "ResponseCacheRemoved";
+    case NETWORK_RESPONSE_TYPE::WorldFrozen: return "ResponseWorldFrozen";
+    case NETWORK_RESPONSE_TYPE::ServerHeartbeat: return "ResponseServerHeartbeat";
+    case NETWORK_RESPONSE_TYPE::StartHeartbeats: return "ResponseStartHeartbeats";
+    case NETWORK_RESPONSE_TYPE::None: return "ResponseNone";
+    default: break;
+    }
+
+    if(Type > NETWORK_RESPONSE_TYPE::Custom) {
+
+        return "ResponseCustom(+" +
+               std::to_string(
+                   static_cast<int>(Type) - static_cast<int>(NETWORK_RESPONSE_TYPE::Custom)) +
+               ")";
+
+    } else {
+
+        return std::to_string(static_cast<int>(Type));
+    }
+}

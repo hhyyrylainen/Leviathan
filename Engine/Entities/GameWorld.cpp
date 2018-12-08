@@ -165,8 +165,11 @@ void GameWorld::_CreateOgreResources(Ogre::Root* ogre)
     const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
 
     // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
-    WorldsScene = ogre->createSceneManager(Ogre::ST_GENERIC, threads,
-        Ogre::INSTANCING_CULLING_THREADED, "MainSceneManager_" + Convert::ToString(ID));
+
+    // The ID is not used here to work with client received worlds
+    WorldsScene =
+        ogre->createSceneManager(Ogre::ST_GENERIC, threads, Ogre::INSTANCING_CULLING_THREADED,
+            "MainSceneManager_" + std::to_string(IDFactory::GetID()));
 
     // These are a bit higher than the Ogre "sane" values of 500.0f
     WorldsScene->setShadowDirectionalLightExtrusionDistance(1000.f);
@@ -707,19 +710,29 @@ DLLEXPORT std::tuple<int, int> GameWorld::GetTickAndTime() const
 // ------------------ Object managing ------------------ //
 DLLEXPORT ObjectID GameWorld::CreateEntity()
 {
-    auto id = static_cast<ObjectID>(IDFactory::GetID());
+    if(!GetNetworkSettings().IsAuthoritative) {
+        // Clients create high number entities. This is not optimal but good enough for now
+        auto id = (1 << 31) | static_cast<ObjectID>(IDFactory::GetID());
 
-    Entities.push_back(id);
+        Entities.push_back(id);
 
-    if(NetworkSettings.IsAuthoritative) {
-        // NewlyCreatedEntities.push_back(id);
+        return id;
 
-        if(NetworkSettings.AutoCreateNetworkComponents) {
-            _CreateSendableComponentForEntity(id);
+    } else {
+        auto id = static_cast<ObjectID>(IDFactory::GetID());
+
+        Entities.push_back(id);
+
+        if(NetworkSettings.IsAuthoritative) {
+            // NewlyCreatedEntities.push_back(id);
+
+            if(NetworkSettings.AutoCreateNetworkComponents) {
+                _CreateSendableComponentForEntity(id);
+            }
         }
-    }
 
-    return id;
+        return id;
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ClearEntities()

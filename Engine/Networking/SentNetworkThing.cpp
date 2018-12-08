@@ -1,6 +1,9 @@
 // ------------------------------------ //
 #include "SentNetworkThing.h"
 
+#include "NetworkRequest.h"
+#include "NetworkResponse.h"
+
 #include "TimeIncludes.h"
 
 using namespace Leviathan;
@@ -20,7 +23,6 @@ DLLEXPORT void SentNetworkThing::ResetStartTime()
 
 DLLEXPORT void SentNetworkThing::SetWaitStatus(bool status)
 {
-
     IsDone.store(status ? DONE_STATUS::DONE : DONE_STATUS::FAILED, std::memory_order_release);
 
     if(Callback)
@@ -29,7 +31,6 @@ DLLEXPORT void SentNetworkThing::SetWaitStatus(bool status)
 
 DLLEXPORT void Leviathan::SentNetworkThing::OnFinalized(bool succeeded)
 {
-
     if(!succeeded) {
 
         SetWaitStatus(false);
@@ -81,15 +82,31 @@ DLLEXPORT SentRequest::SentRequest(uint32_t sentinpacket, uint32_t messagenumber
     SentRequestData(request)
 {}
 
+DLLEXPORT std::string SentRequest::GetTypeStr()
+{
+    if(SentRequestData) {
+        return SentRequestData->GetTypeStr();
+    } else {
+        return "null";
+    }
+}
+
 // ------------------------------------ //
 // SentRequest
 DLLEXPORT SentResponse::SentResponse(uint32_t sentinpacket, uint32_t messagenumber,
     RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkResponse>& response) :
     SentNetworkThing(sentinpacket, messagenumber, guarantee),
-    SentResponseData(response)
+    SentResponseData(response), StoredType(static_cast<int>(response->GetType()))
 {}
 
 DLLEXPORT SentResponse::SentResponse(
     uint32_t sentinpacket, uint32_t messagenumber, const NetworkResponse& response) :
-    SentNetworkThing(sentinpacket, messagenumber, RECEIVE_GUARANTEE::None)
+    SentNetworkThing(sentinpacket, messagenumber, RECEIVE_GUARANTEE::None),
+    StoredType(static_cast<int>(response.GetType()))
 {}
+
+DLLEXPORT std::string SentResponse::GetTypeStr()
+{
+    // A bit hacky way to call the member function
+    return ResponseNone(static_cast<NETWORK_RESPONSE_TYPE>(StoredType), 0).GetTypeStr();
+}

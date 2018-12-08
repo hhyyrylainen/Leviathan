@@ -22,7 +22,6 @@ DLLEXPORT NetworkServerInterface::NetworkServerInterface(int maxplayers,
 
 DLLEXPORT NetworkServerInterface::~NetworkServerInterface()
 {
-
     // Release the memory //
     for(auto iter = ServerPlayers.begin(); iter != ServerPlayers.end();) {
 
@@ -71,7 +70,7 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
     case NETWORK_REQUEST_TYPE::JoinServer: {
         // Call handling function //
         LOG_INFO("NetworkServerInterface: player on " +
-                 connection.GenerateFormatedAddressString() + "is trying to connect");
+                 connection.GenerateFormatedAddressString() + " is trying to connect");
 
         _HandleServerJoinRequest(request, connection);
         return;
@@ -83,10 +82,11 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
         if(!player) {
             LOG_WARNING("NetworkServerInterface: got JoinGame from non-player connection");
 
-            ResponseServerDisallow response(request->GetMessageNumber(), "",
+            ResponseServerDisallow response(request->GetIDForResponse(), "",
                 NETWORK_RESPONSE_INVALIDREASON::Unauthenticated);
 
             connection.SendPacketToConnection(response);
+            return;
         }
 
         auto* data = static_cast<RequestJoinGame*>(request.get());
@@ -100,12 +100,11 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
             LOG_WARNING(
                 "NetworkServerInterface: no world found with options: " + data->Options);
 
-            ResponseServerDisallow response(request->GetMessageNumber(),
+            ResponseServerDisallow response(request->GetIDForResponse(),
                 "No valid world to join found",
                 NETWORK_RESPONSE_INVALIDREASON::InvalidParameters);
 
             connection.SendPacketToConnection(response);
-
             return;
         }
 
@@ -115,7 +114,7 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
         if(world->IsConnectionInWorld(connection)) {
             LOG_WARNING("NetworkServerInterface: player is already in world");
 
-            ResponseServerDisallow response(request->GetMessageNumber(),
+            ResponseServerDisallow response(request->GetIDForResponse(),
                 "Already connected to this world",
                 NETWORK_RESPONSE_INVALIDREASON::InvalidParameters);
 
@@ -123,9 +122,10 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
             return;
         }
 
-        ResponseServerAllow response(request->GetMessageNumber(), SERVER_ACCEPTED_TYPE::Done);
+        auto response = std::make_shared<ResponseServerAllow>(
+            request->GetIDForResponse(), SERVER_ACCEPTED_TYPE::Done);
 
-        connection.SendPacketToConnection(response);
+        connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
 
         world->SetPlayerReceiveWorld(player);
         return;
@@ -243,7 +243,7 @@ DLLEXPORT void NetworkServerInterface::_HandleServerJoinRequest(
 {
     if(!AllowJoin) {
 
-        ResponseServerDisallow response(request->GetMessageNumber(),
+        ResponseServerDisallow response(request->GetIDForResponse(),
             "Server is not accepting any players at this time",
             NETWORK_RESPONSE_INVALIDREASON::ServerNotAcceptingPlayers);
 
@@ -254,7 +254,7 @@ DLLEXPORT void NetworkServerInterface::_HandleServerJoinRequest(
     // Check is the player already connected //
     if(GetPlayerForConnection(connection)) {
 
-        ResponseServerDisallow response(request->GetMessageNumber(),
+        ResponseServerDisallow response(request->GetIDForResponse(),
             "You are already connected to this server, disconnect first",
             NETWORK_RESPONSE_INVALIDREASON::ServerAlreadyConnectedToYou);
 
@@ -270,7 +270,7 @@ DLLEXPORT void NetworkServerInterface::_HandleServerJoinRequest(
 
         std::string plys = Convert::ToString(ServerPlayers.size());
 
-        ResponseServerDisallow response(request->GetMessageNumber(),
+        ResponseServerDisallow response(request->GetIDForResponse(),
             "Server is at maximum capacity, " + plys + "/" + plys,
             NETWORK_RESPONSE_INVALIDREASON::ServerFull);
 
@@ -281,7 +281,7 @@ DLLEXPORT void NetworkServerInterface::_HandleServerJoinRequest(
     // Connection security check //
     if(connection.GetState() != CONNECTION_STATE::Authenticated) {
 
-        ResponseServerDisallow response(request->GetMessageNumber(),
+        ResponseServerDisallow response(request->GetIDForResponse(),
             "Connection state is invalid", NETWORK_RESPONSE_INVALIDREASON::Unauthenticated);
 
         connection.SendPacketToConnection(response);
@@ -296,7 +296,7 @@ DLLEXPORT void NetworkServerInterface::_HandleServerJoinRequest(
 
     if(!AllowPlayerConnectVeto(request, connection, disallowmessage)) {
 
-        ResponseServerDisallow response(request->GetMessageNumber(), disallowmessage,
+        ResponseServerDisallow response(request->GetIDForResponse(), disallowmessage,
             NETWORK_RESPONSE_INVALIDREASON::ServerCustom);
 
         connection.SendPacketToConnection(response);
@@ -311,14 +311,13 @@ DLLEXPORT void NetworkServerInterface::_HandleServerJoinRequest(
 
     _OnReportPlayerConnected(ServerPlayers.back(), connection);
 
-    Logger::Get()->Info(
-        "NetworkServerInterface: accepted a new player, ID: " + Convert::ToString(newid));
+    LOG_INFO("NetworkServerInterface: accepted a new player, ID: " + Convert::ToString(newid));
 
     // Send connection notification back to the client //
-    ResponseServerAllow response(request->GetMessageNumber(),
+    auto response = std::make_shared<ResponseServerAllow>(request->GetIDForResponse(),
         SERVER_ACCEPTED_TYPE::ConnectAccepted, "Allowed, ID: " + Convert::ToString(newid));
 
-    connection.SendPacketToConnection(response);
+    connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
 }
 // ------------------ Default callbacks ------------------ //
 DLLEXPORT void NetworkServerInterface::_OnPlayerConnected(
@@ -368,7 +367,7 @@ void NetworkServerInterface::_OnReportCloseConnection(std::shared_ptr<ConnectedP
     }
 
     Logger::Get()->Info(
-        "NetworkServerInterface: player \"" + plyptr->GetNickname() + "\" unconnected");
+        "NetworkServerInterface: player \"" + plyptr->GetNickname() + "\" disconnected");
 
     _OnPlayerDisconnect(plyptr);
 }

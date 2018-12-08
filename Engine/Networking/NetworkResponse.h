@@ -121,12 +121,12 @@ enum class NETWORK_RESPONSE_TYPE : uint16_t {
     //! Marks that the client is required to send heartbeats
     StartHeartbeats,
 
+    //! Empty response, used for keeping alive/nothing
+    None,
+
     //! The packet is a game specific packet!
     //! \see GameSpecificPacketHandler BaseGameSpecificFactory BaseGameSpecificResponsePacket
-    Custom,
-
-    //! Empty response, used for keeping alive/nothing
-    None
+    Custom
 };
 
 
@@ -157,6 +157,9 @@ public:
     {
         return Type;
     }
+
+    //! \returns Name of this type. For prettier debug printing
+    DLLEXPORT std::string GetTypeStr() const;
 
     inline auto GetResponseID() const
     {

@@ -167,7 +167,6 @@ DLLEXPORT void WireData::DecodeIncomingData(sf::Packet& packet,
     const std::function<DECODE_CALLBACK_RESULT(uint8_t, uint32_t, sf::Packet&)>&
         messagereceived)
 {
-
     // Header //
     uint16_t leviathanMagic = 0;
     packet >> leviathanMagic;
@@ -286,8 +285,6 @@ DLLEXPORT void WireData::DecodeIncomingData(sf::Packet& packet,
     }
     }
 }
-
-
 
 // ------------------------------------ //
 DLLEXPORT void WireData::PrepareHeaderForPacket(uint32_t localpacketid,

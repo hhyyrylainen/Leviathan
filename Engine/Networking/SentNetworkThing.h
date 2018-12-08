@@ -31,7 +31,6 @@ public:
     //! too many times
     inline bool IsFinalized()
     {
-
         return IsDone.load(std::memory_order_consume) != DONE_STATUS::WAITING;
     }
 
@@ -65,6 +64,8 @@ public:
 
 
     DLLEXPORT void SetCallbackFunc(CallbackType func);
+
+    virtual std::string GetTypeStr() = 0;
 
 
     //! Contained in Local packet id
@@ -111,6 +112,7 @@ public:
     DLLEXPORT SentRequest(uint32_t sentinpacket, uint32_t messagenumber,
         RECEIVE_GUARANTEE guarantee, const std::shared_ptr<NetworkRequest>& request);
 
+    DLLEXPORT std::string GetTypeStr() override;
 
     std::shared_ptr<NetworkResponse> GotResponse;
 
@@ -127,7 +129,12 @@ public:
     DLLEXPORT SentResponse(
         uint32_t sentinpacket, uint32_t messagenumber, const NetworkResponse& response);
 
+    DLLEXPORT std::string GetTypeStr() override;
+
     std::shared_ptr<NetworkResponse> SentResponseData;
+
+    //! Stored for GetTypeStr with non-resendable responses
+    int StoredType;
 };
 
 

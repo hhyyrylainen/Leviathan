@@ -98,6 +98,9 @@ public:
         return Type;
     }
 
+    //! \returns Name of this type. For prettier debug printing
+    DLLEXPORT std::string GetTypeStr() const;
+
     inline uint32_t GetMessageNumber() const
     {
         return MessageNumber;

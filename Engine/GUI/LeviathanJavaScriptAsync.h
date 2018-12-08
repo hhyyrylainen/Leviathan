@@ -36,7 +36,7 @@ public:
     DLLEXPORT virtual void CancelQuery(LeviathanJavaScriptAsync* caller, int64 queryid) = 0;
 
 
-    //! \brief Called when JSAsyncCustom is unconnected from a LeviathanJavaScriptAsync and
+    //! \brief Called when JSAsyncCustom is disconnected from a LeviathanJavaScriptAsync and
     //! this should CancelQuery all queries associated with that object
     DLLEXPORT virtual void CancelAllMine(LeviathanJavaScriptAsync* me) = 0;
 };

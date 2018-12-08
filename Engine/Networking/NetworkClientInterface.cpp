@@ -131,7 +131,7 @@ DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
     if(_CustomHandleResponseOnlyPacket(message, connection))
         return;
 
-    LOG_ERROR("NetworkClientInterface: failed to handle response of type: " +
+    LOG_ERROR("NetworkClientInterface: failed to handle response only of type: " +
               Convert::ToString(static_cast<int>(message->GetType())));
 }
 // ------------------------------------ //
@@ -157,12 +157,6 @@ DLLEXPORT bool NetworkClientInterface::JoinServer(std::shared_ptr<Connection> co
     // Send message //
     _OnNewConnectionStatusMessage("Trying to connect to a server on " +
                                   ServerConnection->GenerateFormatedAddressString());
-
-    auto sentthing = ServerConnection->SendPacketToConnection(
-        std::make_shared<RequestJoinServer>(-1), RECEIVE_GUARANTEE::Critical);
-
-    // Monitor result
-    OurSentRequests.push_back(sentthing);
 
     return true;
 }
@@ -194,6 +188,11 @@ DLLEXPORT void NetworkClientInterface::DisconnectFromServer(
     // Close connection //
     LOG_WRITE("TODO: send disconnect reason to server");
     Owner->CloseConnection(*ServerConnection);
+
+    if(ServerConnection) {
+        ServerConnection->SendCloseConnectionPacket();
+    }
+
     ServerConnection.reset();
 
     ConnectState = CLIENT_CONNECTION_STATE::Closed;
@@ -228,8 +227,22 @@ void NetworkClientInterface::_TickServerConnectionState()
             return;
         }
 
+        if(ServerConnection->GetState() == CONNECTION_STATE::Authenticated) {
+
+            LOG_INFO("NetworkClientInterface: sending JoinServer request");
+
+            auto sentthing = ServerConnection->SendPacketToConnection(
+                std::make_shared<RequestJoinServer>(-1), RECEIVE_GUARANTEE::Critical);
+
+            // Monitor result
+            OurSentRequests.push_back(sentthing);
+
+            ConnectState = CLIENT_CONNECTION_STATE::SentJoinRequest;
+        }
+
         return;
     }
+    case CLIENT_CONNECTION_STATE::SentJoinRequest: return;
     case CLIENT_CONNECTION_STATE::Connected: break;
     }
 
@@ -239,7 +252,7 @@ void NetworkClientInterface::_TickServerConnectionState()
     // Check did The connection close //
     if(!ServerConnection->IsValidForSend()) {
         LOG_WARNING("NetworkClientInterface: Connection to server died");
-        DisconnectFromServer("Lost connection to server", true);
+        DisconnectFromServer("Lost connection to server", false);
         return;
     }
 
@@ -266,6 +279,11 @@ sentrequestloopbegin:
 
         // Check can we handle it //
         if((*iter)->IsFinalized()) {
+
+            // Store a copy and delete from the vector //
+            auto tmpsendthing = *iter;
+            iter = OurSentRequests.erase(iter);
+
             // Handle the request //
             if(!(*iter)->GetStatus() || !(*iter)->GotResponse) {
                 // It failed //
@@ -273,25 +291,18 @@ sentrequestloopbegin:
                 Logger::Get()->Warning("NetworkClientInterface: request to server failed, "
                                        "possibly retrying:");
 
-                // Store a copy and delete from the vector //
-                auto& tmpsendthing = *iter;
-                iter = OurSentRequests.erase(iter);
-
                 _ProcessFailedRequest(tmpsendthing, tmpsendthing->GotResponse);
+            } else {
 
-                // We need to loop again, because our iterator is now invalid, because
-                // quite often failed things are retried
-                goto sentrequestloopbegin;
+                Logger::Get()->Info("Received a response to client request");
+
+                // Handle it //
+                _ProcessCompletedRequest(tmpsendthing, tmpsendthing->GotResponse);
             }
 
-            Logger::Get()->Info("Received a response to client request");
-
-            // Handle it //
-            _ProcessCompletedRequest(*iter, (*iter)->GotResponse);
-
-            // This is now received/handled //
-            iter = OurSentRequests.erase(iter);
-            continue;
+            // We need to loop again, because our iterator is now invalid, because
+            // quite often failed things are retried
+            goto sentrequestloopbegin;
         }
 
         // Can't handle, continue looping //
@@ -422,6 +433,7 @@ DLLEXPORT std::shared_ptr<SentRequest> NetworkClientInterface::DoJoinDefaultWorl
         return nullptr;
     }
 
+    LOG_INFO("NetworkClientInterface: requesting to join default world on server");
     return ServerConnection->SendPacketToConnection(
         std::make_shared<RequestJoinGame>(), RECEIVE_GUARANTEE::Critical);
 }

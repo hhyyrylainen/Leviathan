@@ -23,9 +23,6 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
 
     // Process based on the type //
     switch(responsetype) {
-    case NETWORK_RESPONSE_TYPE::CloseConnection:
-    case NETWORK_RESPONSE_TYPE::Keepalive:
-
     case NETWORK_RESPONSE_TYPE::Connect:
         return std::make_shared<ResponseConnect>(responseid, packet);
     case NETWORK_RESPONSE_TYPE::Authenticate:
@@ -45,6 +42,8 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
     case NETWORK_RESPONSE_TYPE::EntityUpdate:
         return std::make_shared<ResponseEntityUpdate>(responseid, packet);
     // None based types
+    case NETWORK_RESPONSE_TYPE::CloseConnection:
+    case NETWORK_RESPONSE_TYPE::Keepalive:
     case NETWORK_RESPONSE_TYPE::None:
         return std::make_shared<ResponseNone>(responsetype, responseid, packet);
 

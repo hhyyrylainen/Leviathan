@@ -888,6 +888,14 @@ DLLEXPORT bool Leviathan::Connection::_HandleInternalResponse(
         return true;
     }
     case NETWORK_RESPONSE_TYPE::Connect: {
+
+        if(static_cast<ResponseConnect*>(response.get())->CheckValue != 42) {
+
+            LOG_ERROR(
+                "Connection: received ResponseConnect with invalid check value, ignoring it");
+            return true;
+        }
+
         // The first packet of this type that is in response to our initial request
         // moves this connection to Connected on our side
         if(State == CONNECTION_STATE::NothingReceived || State == CONNECTION_STATE::Initial) {

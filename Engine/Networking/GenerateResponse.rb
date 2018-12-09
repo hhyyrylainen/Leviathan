@@ -120,6 +120,13 @@ thingsToGenerate = [
      Variable.new("EntityID", "ObjectID"),
    ]],
 
+  ["EntityLocalControlStatus",
+   [
+     Variable.new("WorldID", "int32_t"),
+     Variable.new("EntityID", "ObjectID"),
+     Variable.new("Enabled", "bool"),
+   ]],
+
   ["WorldFrozen",
    [
      Variable.new("WorldID", "int32_t"),

@@ -14,6 +14,7 @@
 #include "OgreMeshManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreRibbonTrail.h"
+#include "OgreRoot.h"
 #include "OgreSceneManager.h"
 
 #include <limits>
@@ -25,6 +26,10 @@ DLLEXPORT RenderNode::RenderNode(Ogre::SceneManager* scene) : Component(TYPE)
 {
     Marked = false;
 
+    // Skip if no graphics
+    if(!Ogre::Root::getSingletonPtr())
+        return;
+
     // TODO: allow for static render nodes
     Node = scene->getRootSceneNode(Ogre::SCENE_DYNAMIC)
                ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
@@ -34,7 +39,8 @@ DLLEXPORT RenderNode::RenderNode(Ogre::SceneManager* scene) : Component(TYPE)
 
 DLLEXPORT void RenderNode::Release(Ogre::SceneManager* worldsscene)
 {
-    worldsscene->destroySceneNode(Node);
+    if(Node)
+        worldsscene->destroySceneNode(Node);
     Node = nullptr;
 }
 // ------------------------------------ //
@@ -280,6 +286,10 @@ DLLEXPORT Model::Model(
     Component(TYPE),
     MeshName(meshname)
 {
+    // Skip if no graphics
+    if(!Ogre::Root::getSingletonPtr())
+        return;
+
     GraphicalObject = scene->createItem(meshname);
     GraphicalObject->setRenderQueueGroup(DEFAULT_RENDER_QUEUE);
     parent->attachObject(GraphicalObject);
@@ -287,7 +297,8 @@ DLLEXPORT Model::Model(
 
 DLLEXPORT void Model::Release(Ogre::SceneManager* scene)
 {
-    scene->destroyItem(GraphicalObject);
+    if(GraphicalObject)
+        scene->destroyItem(GraphicalObject);
 }
 
 // ------------------ ManualObject ------------------ //

@@ -102,6 +102,10 @@ enum class NETWORK_RESPONSE_TYPE : uint16_t {
     //! Contains (list) an ID for entity to be deleted
     EntityDestruction,
 
+    //! Grants or revokes local control from a client (this is used to notify the clients what
+    //! is the status)
+    EntityLocalControlStatus,
+
     //! Contains an updated cache variable
     CacheUpdated,
 
@@ -147,7 +151,6 @@ public:
 
     inline void AddDataToPacket(sf::Packet& packet) const
     {
-
         packet << static_cast<uint16_t>(Type) << ResponseID;
 
         _SerializeCustom(packet);

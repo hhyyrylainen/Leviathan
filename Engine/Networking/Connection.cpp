@@ -144,7 +144,8 @@ DLLEXPORT std::shared_ptr<SentRequest> Connection::SendPacketToConnection(
 
 #ifdef SPAM_ME_SOME_PACKETS
     LOG_WRITE(SPAM_PREFIX + "Sending: request " + request->GetTypeStr() +
-              " (message number: " + std::to_string(LastUsedMessageNumber + 1) + ") to " +
+              " (message number: " + std::to_string(LastUsedMessageNumber + 1) +
+              ") in packet: " + std::to_string(LastUsedLocalID + 1) + " to " +
               GenerateFormatedAddressString());
 #endif
 
@@ -170,8 +171,8 @@ DLLEXPORT bool Connection::SendPacketToConnection(const NetworkResponse& respons
 
 #ifdef SPAM_ME_SOME_PACKETS
     LOG_WRITE(SPAM_PREFIX + "Sending: response " + response.GetTypeStr() +
-              " (to: " + std::to_string(response.GetResponseID()) + ") to " +
-              GenerateFormatedAddressString());
+              " (to: " + std::to_string(response.GetResponseID()) + ") in packet: " +
+              std::to_string(LastUsedLocalID + 1) + " to " + GenerateFormatedAddressString());
 #endif
 
     // Find acks to send //
@@ -196,8 +197,8 @@ DLLEXPORT std::shared_ptr<SentResponse>
 
 #ifdef SPAM_ME_SOME_PACKETS
     LOG_WRITE(SPAM_PREFIX + "Sending: only tracked response " + response.GetTypeStr() +
-              " (to: " + std::to_string(response.GetResponseID()) + ") to " +
-              GenerateFormatedAddressString());
+              " (to: " + std::to_string(response.GetResponseID()) + ") in packet: " +
+              std::to_string(LastUsedLocalID + 1) + " to " + GenerateFormatedAddressString());
 #endif
 
     // Find acks to send //
@@ -232,8 +233,8 @@ DLLEXPORT std::shared_ptr<SentResponse> Connection::SendPacketToConnection(
 
 #ifdef SPAM_ME_SOME_PACKETS
     LOG_WRITE(SPAM_PREFIX + "Sending: guaranteed response " + response->GetTypeStr() +
-              " (to: " + std::to_string(response->GetResponseID()) + ") to " +
-              GenerateFormatedAddressString());
+              " (to: " + std::to_string(response->GetResponseID()) + ") in packet: " +
+              std::to_string(LastUsedLocalID + 1) + " to " + GenerateFormatedAddressString());
 #endif
 
     // Find acks to send //
@@ -272,7 +273,9 @@ void Connection::_Resend(SentRequest& toresend)
 #ifdef SPAM_ME_SOME_PACKETS
     LOG_WRITE(SPAM_PREFIX + "Resending: request " + toresend.SentRequestData->GetTypeStr() +
               " (id: " + std::to_string(toresend.SentRequestData->GetIDForResponse()) +
-              "), attempt number: " + std::to_string(toresend.AttemptNumber) + " to " +
+              ", message number: " + std::to_string(toresend.MessageNumber) +
+              ") in packet: " + std::to_string(LastUsedLocalID + 1) +
+              " attempt number: " + std::to_string(toresend.AttemptNumber) + " to " +
               GenerateFormatedAddressString());
 #endif
 
@@ -297,7 +300,9 @@ void Connection::_Resend(SentResponse& toresend)
 #ifdef SPAM_ME_SOME_PACKETS
     LOG_WRITE(SPAM_PREFIX + "Resending: response " + toresend.SentResponseData->GetTypeStr() +
               " (to: " + std::to_string(toresend.SentResponseData->GetResponseID()) +
-              "), attempt number: " + std::to_string(toresend.AttemptNumber) + " to " +
+              ", message number: " + std::to_string(toresend.MessageNumber) +
+              ") in packet: " + std::to_string(LastUsedLocalID + 1) +
+              " attempt number: " + std::to_string(toresend.AttemptNumber) + " to " +
               GenerateFormatedAddressString());
 #endif
 
@@ -319,6 +324,12 @@ void Connection::_Resend(SentResponse& toresend)
 // ------------------------------------ //
 DLLEXPORT inline void Connection::HandleRemoteAck(uint32_t localidconfirmedassent)
 {
+#ifdef SPAM_ME_SOME_PACKETS
+    LOG_WRITE(SPAM_PREFIX +
+              "Received ack for our packet: " + std::to_string(localidconfirmedassent) +
+              " from " + GenerateFormatedAddressString());
+#endif
+
     if(localidconfirmedassent > LastConfirmedSent)
         LastConfirmedSent = localidconfirmedassent;
 
@@ -365,7 +376,9 @@ void Leviathan::Connection::_HandleTimeouts(
         // Ignore already finalized things
         if((*iter)->IsDone != SentNetworkThing::DONE_STATUS::WAITING) {
 
-            LOG_ERROR("Connection: sent things contained a finalized packet, removed it");
+            // This is triggered a ton...
+            // TODO: figure that out
+            // LOG_ERROR("Connection: sent things contained a finalized packet, removed it");
             iter = sentthing.erase(iter);
             continue;
         }
@@ -512,8 +525,13 @@ DLLEXPORT void Connection::UpdateListening()
             WireData::FormatAckOnlyPacket(ackNumbers, StoredWireData);
 
 #ifdef SPAM_ME_SOME_PACKETS
+            std::string acks;
+
+            for(auto ack : ackNumbers)
+                acks += " " + std::to_string(ack);
+
             LOG_WRITE(SPAM_PREFIX + "Sending ack only packet: ack count: " +
-                      std::to_string(ackNumbers.size()));
+                      std::to_string(ackNumbers.size()) + " acks:" + acks);
 #endif
 
             _SendPacketToSocket(StoredWireData);
@@ -550,6 +568,13 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet& packet)
         },
         [&](uint32_t ack) -> void { HandleRemoteAck(ack); },
         [&](uint32_t packetnumber) -> WireData::DECODE_CALLBACK_RESULT {
+
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX +
+                      "received: packet number: " + std::to_string(packetnumber) + " from " +
+                      GenerateFormatedAddressString());
+#endif
+
             // Report the packet as received //
             ReceivedRemotePackets[packetnumber] = RECEIVED_STATE::StateReceived;
 
@@ -574,10 +599,16 @@ DLLEXPORT void Connection::HandlePacket(sf::Packet& packet)
                 alreadyReceived = true;
             }
 
+#ifdef SPAM_ME_SOME_PACKETS
+            LOG_WRITE(SPAM_PREFIX +
+                      "received: message number: " + std::to_string(messagenumber) +
+                      ", already received: " + std::to_string(alreadyReceived) + " from " +
+                      GenerateFormatedAddressString());
+#endif
+
             switch(messagetype) {
             case NORMAL_RESPONSE_TYPE: {
                 _HandleResponsePacket(packet, alreadyReceived);
-
                 break;
             }
             case NORMAL_REQUEST_TYPE: {
@@ -659,6 +690,14 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(
 #endif
             possiblerequest->OnFinalized(true);
         }
+    } else {
+
+        if(response->GetResponseID() != 0) {
+            LOG_WARNING("Connection: received response (" + response->GetTypeStr() +
+                        ") that is a response to message number: " +
+                        std::to_string(response->GetResponseID()) +
+                        ", but no request was found with that number");
+        }
     }
 
 #ifdef SPAM_ME_SOME_PACKETS
@@ -705,13 +744,13 @@ DLLEXPORT void Leviathan::Connection::_HandleResponsePacket(
 }
 
 DLLEXPORT void Leviathan::Connection::_HandleRequestPacket(
-    sf::Packet& packet, uint32_t packetnumber, bool alreadyreceived)
+    sf::Packet& packet, uint32_t messagenumber, bool alreadyreceived)
 {
     // Generate a request object and make the interface handle it //
     std::shared_ptr<NetworkRequest> request;
     try {
 
-        request = NetworkRequest::LoadFromPacket(packet, packetnumber);
+        request = NetworkRequest::LoadFromPacket(packet, messagenumber);
 
         if(!request)
             throw InvalidArgument("request is null");
@@ -1256,7 +1295,6 @@ DLLEXPORT void Leviathan::Connection::SetPacketsReceivedIfNotSet(NetworkAckField
 
 DLLEXPORT void Leviathan::Connection::RemoveSucceededAcks(NetworkAckField& acks)
 {
-
     // We need to loop through all our acks and erase them from the map (if set) //
     for(uint32_t i = 0; i < static_cast<uint32_t>(acks.Acks.size()); i++) {
 
@@ -1274,7 +1312,6 @@ DLLEXPORT void Leviathan::Connection::RemoveSucceededAcks(NetworkAckField& acks)
 
 DLLEXPORT std::vector<uint32_t> Connection::GetCurrentlySentAcks()
 {
-
     std::vector<uint32_t> ids;
 
     for(const auto& acks : SentAckPackets) {
@@ -1305,14 +1342,25 @@ DLLEXPORT void Leviathan::Connection::_SendPacketToSocket(sf::Packet& actualpack
     Owner->_Socket.send(actualpackettosend, TargetHost, TargetPortNumber);
 }
 // ------------------------------------ //
-bool Connection::_IsAlreadyReceived(uint32_t packetid)
+bool Connection::_IsAlreadyReceived(uint32_t messagenumber)
 {
+    // If it is more than KEEP_IDS_FOR_DISCARD older than the first packet in
+    // LastReceivedMessageNumbers
+    if(!LastReceivedMessageNumbers.empty()) {
+
+        if(messagenumber + (KEEP_IDS_FOR_DISCARD * 2) < LastReceivedMessageNumbers.front()) {
+
+            LOG_WARNING("Connection: received very old message, ignoring it, message id: " +
+                        std::to_string(messagenumber));
+            return true;
+        }
+    }
 
     // It is moved through in reverse to quickly return matches,
     // but receiving the same packet twice isn't that common
     for(auto id : LastReceivedMessageNumbers) {
 
-        if(id == packetid) {
+        if(id == messagenumber) {
 
             // Found a match, this is an already received packet //
             return true;
@@ -1320,7 +1368,7 @@ bool Connection::_IsAlreadyReceived(uint32_t packetid)
     }
 
     // Not found, add for future searches //
-    LastReceivedMessageNumbers.push_back(packetid);
+    LastReceivedMessageNumbers.push_back(messagenumber);
 
     // It wasn't there //
     return false;
@@ -1330,7 +1378,6 @@ bool Connection::_IsAlreadyReceived(uint32_t packetid)
 
 DLLEXPORT void Leviathan::Connection::_FailPacketAcks(uint32_t packetid)
 {
-
     for(auto iter = SentAckPackets.begin(); iter != SentAckPackets.end(); ++iter) {
 
         if((*iter)->InsidePacket == packetid) {

@@ -161,6 +161,12 @@ protected:
     //! The default implementation only looks at OurReceivedWorld
     DLLEXPORT virtual GameWorld* _GetWorldForEntityMessage(int32_t worldid);
 
+    //! \brief Called when local control has been changed
+    DLLEXPORT virtual void _OnLocalControlChanged(GameWorld* world);
+
+    //! \brief Called when an entity creation packet has been passed to the GameWorld.
+    DLLEXPORT virtual void _OnEntityReceived(GameWorld* world, ObjectID created);
+
 private:
     //! \brief Helper for TickIt to handle server connection state
     //! \todo Why are both heartbeats and keepalives used?

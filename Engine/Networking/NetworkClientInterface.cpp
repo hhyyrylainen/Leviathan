@@ -37,8 +37,8 @@ DLLEXPORT void NetworkClientInterface::HandleRequestPacket(
     if(_CustomHandleRequestPacket(request, connection))
         return;
 
-    LOG_ERROR("NetworkClientInterface: failed to handle request of type: " +
-              Convert::ToString(static_cast<int>(request->GetType())));
+    LOG_ERROR(
+        "NetworkClientInterface: failed to handle request of type: " + request->GetTypeStr());
 }
 
 DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
@@ -92,7 +92,10 @@ DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
             return;
         }
 
-        world->HandleEntityPacket(*data);
+        ObjectID created = world->HandleEntityPacket(*data);
+
+        if(created != NULL_OBJECT)
+            _OnEntityReceived(world, created);
         return;
     }
     case NETWORK_RESPONSE_TYPE::EntityDestruction: {
@@ -102,7 +105,7 @@ DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
 
         // TODO: this needs to be queued if we haven't received the world yet
         if(!world) {
-            LOG_WARNING("NetworkClientInterface: no world found for EntityCreation. TODO: "
+            LOG_WARNING("NetworkClientInterface: no world found for EntityDestruction. TODO: "
                         "queue this message");
             return;
         }
@@ -117,12 +120,29 @@ DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
 
         // TODO: this needs to be queued if we haven't received the world yet
         if(!world) {
-            LOG_WARNING("NetworkClientInterface: no world found for EntityCreation. TODO: "
+            LOG_WARNING("NetworkClientInterface: no world found for EntityUpdate. TODO: "
                         "queue this message");
             return;
         }
 
-        world->HandleEntityPacket(std::move(*data));
+        world->HandleEntityPacket(std::move(*data), connection);
+        return;
+    }
+    case NETWORK_RESPONSE_TYPE::EntityLocalControlStatus: {
+        auto data = static_cast<ResponseEntityLocalControlStatus*>(message.get());
+
+        auto world = _GetWorldForEntityMessage(data->WorldID);
+
+        // TODO: this needs to be queued if we haven't received the world yet
+        if(!world) {
+            LOG_WARNING(
+                "NetworkClientInterface: no world found for EntityLocalControlStatus. TODO: "
+                "queue this message");
+            return;
+        }
+
+        world->HandleEntityPacket(*data);
+        _OnLocalControlChanged(world);
         return;
     }
     default: break;
@@ -132,7 +152,7 @@ DLLEXPORT void NetworkClientInterface::HandleResponseOnlyPacket(
         return;
 
     LOG_ERROR("NetworkClientInterface: failed to handle response only of type: " +
-              Convert::ToString(static_cast<int>(message->GetType())));
+              message->GetTypeStr());
 }
 // ------------------------------------ //
 DLLEXPORT bool NetworkClientInterface::JoinServer(std::shared_ptr<Connection> connectiontouse)
@@ -458,6 +478,8 @@ DLLEXPORT void NetworkClientInterface::_HandleWorldJoinResponse(
         return;
     }
 
+    world->SetServerForLocalControl(ServerConnection);
+
     OurReceivedWorld = world;
     _OnWorldJoined(OurReceivedWorld);
 }
@@ -487,6 +509,14 @@ DLLEXPORT GameWorld* NetworkClientInterface::_GetWorldForEntityMessage(int32_t w
                 std::to_string(worldid));
     return nullptr;
 }
+
+DLLEXPORT void NetworkClientInterface::_OnLocalControlChanged(GameWorld* world)
+{
+    LOG_WARNING(
+        "NetworkClientInterface: base implementation of _OnLocalControlChanged called");
+}
+
+DLLEXPORT void NetworkClientInterface::_OnEntityReceived(GameWorld* world, ObjectID created) {}
 // ------------------------------------ //
 DLLEXPORT void NetworkClientInterface::OnUpdateFullSynchronizationState(
     size_t variablesgot, size_t expectedvariables)

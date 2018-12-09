@@ -47,13 +47,11 @@ TEST_CASE(
 
     SECTION("Direct pass packet")
     {
-
         ClientConnection->HandlePacket(response);
     }
 
     SECTION("Through socket")
     {
-
         REQUIRE(socket.send(response, sf::IpAddress::LocalHost, Client.GetOurPort()) ==
                 sf::Socket::Done);
 
@@ -127,6 +125,12 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Connect to localhost socket", "[network
     // Should have been enough time to move to CONNECTION_STATE::Authenticated
     CHECK(ClientConnection->GetState() == CONNECTION_STATE::Authenticated);
     CHECK(ServerConnection->GetState() == CONNECTION_STATE::Authenticated);
+
+    // And all but the last response should be accounted for
+    CHECK(ClientConnection->GetPendingRequests().size() == 0);
+    CHECK(ClientConnection->GetResponsesNeedingConfirmation().size() == 0);
+    CHECK(ServerConnection->GetPendingRequests().size() == 0);
+    CHECK(ServerConnection->GetResponsesNeedingConfirmation().size() == 1);
 }
 
 // TEST_CASE_METHOD(ConnectionTestFixture, "No infinite acks", "[networking]"){
@@ -162,6 +166,12 @@ TEST_CASE_METHOD(ConnectionTestFixture, "Test server join", "[networking]")
     CHECK(ServerInterface.GetClientConnections().size() == 1);
 
     CHECK(ClientInterface.ConnectedCallbackCount == 1);
+
+    // And all but the last response should be accounted for
+    CHECK(ClientConnection->GetPendingRequests().size() == 0);
+    CHECK(ClientConnection->GetResponsesNeedingConfirmation().size() == 0);
+    CHECK(ServerConnection->GetPendingRequests().size() == 0);
+    CHECK(ServerConnection->GetResponsesNeedingConfirmation().size() == 1);    
 
     CloseServerProperly();
 }

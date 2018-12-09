@@ -1134,7 +1134,8 @@ void GameWorld::UpdatePlayersPositionData(ConnectedPlayer& ply)
     }
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityUpdate&& message)
+DLLEXPORT void GameWorld::HandleEntityPacket(
+    ResponseEntityUpdate&& message, Connection& connection)
 {
     if(NetworkSettings.IsAuthoritative) {
 
@@ -1175,18 +1176,18 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityUpdate&& message)
     }
 }
 
-DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
+DLLEXPORT ObjectID GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
 {
     if(NetworkSettings.IsAuthoritative) {
 
         LOG_WARNING("GameWorld: authoritative world is ignoring ResponseEntityCreation");
-        return;
+        return NULL_OBJECT;
     }
 
     if(message.ComponentCount > 1000) {
         LOG_ERROR("GameWorld: HandleEntityPacket: entity has more than 1000 components. "
                   "Packet is likely corrupted / forged, ignoring");
-        return;
+        return NULL_OBJECT;
     }
 
     // TODO: somehow detect if the ID collides with local entities (once those are allowed)
@@ -1202,6 +1203,8 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
     try {
         _CreateComponentsFromCreationMessage(
             message.EntityID, message.InitialComponentData, message.ComponentCount, -1);
+
+        return message.EntityID;
     } catch(const InvalidArgument& e) {
         LOG_ERROR(
             "GameWorld: HandleEntityPacket: trying to load packet data caused an exception: ");
@@ -1209,6 +1212,8 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityCreation& message)
         LOG_INFO("GameWorld: destroying invalid received entity: " +
                  std::to_string(message.EntityID));
         DestroyEntity(message.EntityID);
+
+        return NULL_OBJECT;
     }
 }
 
@@ -1231,6 +1236,63 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityDestruction& message)
     // TODO: queue if we don't have an entity with the ID
     LOG_WARNING("GameWorld: HandleEntityPacket: received destruction message for unknown "
                 "entity, TODO: queue");
+}
+
+DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityLocalControlStatus& message)
+{
+    if(!message.Enabled) {
+
+        for(auto iter = OurActiveLocalControl.begin(); iter != OurActiveLocalControl.end();
+            ++iter) {
+
+            if(*iter == message.EntityID) {
+                OurActiveLocalControl.erase(iter);
+                return;
+            }
+        }
+
+        LOG_WARNING("GameWorld: received disable local control message for entity that wasn't "
+                    "controlled by us");
+    } else {
+
+        // Ignore duplicates
+        for(auto controlled : OurActiveLocalControl)
+            if(controlled == message.EntityID)
+                return;
+
+        OurActiveLocalControl.push_back(message.EntityID);
+
+        try {
+            _CreateSendableComponentForEntity(message.EntityID);
+        } catch(const InvalidState&) {
+        }
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::SetLocalControl(
+    ObjectID id, bool enabled, const std::shared_ptr<Connection>& allowedconnection)
+{
+    // Apply the change
+    if(enabled) {
+
+        // TODO: detect changing owner
+        ActiveLocalControl[id] = allowedconnection.get();
+    } else {
+
+        auto found = ActiveLocalControl.find(id);
+
+        if(found != ActiveLocalControl.end()) {
+            ActiveLocalControl.erase(found);
+        } else {
+            LOG_ERROR("GameWorld: SetLocalControl: disable called on entity that wasn't being "
+                      "controlled");
+        }
+    }
+
+    // Notify
+    auto response = std::make_shared<ResponseEntityLocalControlStatus>(0, ID, id, enabled);
+
+    allowedconnection->SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ApplyQueuedPackets()

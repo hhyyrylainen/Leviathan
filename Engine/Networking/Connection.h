@@ -48,6 +48,10 @@ constexpr auto DEFAULT_PACKET_FILL_AMOUNT = 512;
 //! rely on getting a resend if the acks are lost)
 constexpr auto KEEP_IDS_FOR_DISCARD = 50;
 
+//! This is for debugging purposes to make sure that packet numbers and message numbers aren't
+//! used interchangeably anywhere
+constexpr auto PACKET_NUMBERING_OFFSET = 1000;
+
 //! \brief Fail reason for ConnectionInfo::CalculateNetworkPing
 enum class PING_FAIL_REASON {
 
@@ -116,7 +120,6 @@ public:
     //! \brief Returns true if this socket is valid for sending
     inline bool IsValidForSend() const
     {
-
         return State != CONNECTION_STATE::Closed;
     }
 
@@ -132,7 +135,6 @@ public:
     //! \returns True if sender and sentport match the ones in this connection
     inline bool IsThisYours(const sf::IpAddress& sender, unsigned short sentport)
     {
-
         return sentport == TargetPortNumber && sender == TargetHost;
     }
 
@@ -209,6 +211,19 @@ public:
     const auto& GetReceivedPackets() const
     {
         return ReceivedRemotePackets;
+    }
+
+    //! \brief Returns the pending requests
+    const auto& GetPendingRequests() const
+    {
+        return PendingRequests;
+    }
+
+    //! \brief Returns responses that are tracked and haven't been acknowledged by the other
+    //! side
+    const auto& GetResponsesNeedingConfirmation() const
+    {
+        return ResponsesNeedingConfirmation;
     }
 
 protected:
@@ -290,7 +305,7 @@ protected:
     //! packet ids different
     //! \note The world will break once this wraps around and reaches 0
     //! \todo Fix that
-    uint32_t LastUsedLocalID = 0;
+    uint32_t LastUsedLocalID = PACKET_NUMBERING_OFFSET;
 
     //! Holds the number of last sent message (NetworkResponse or NetworkRequest object)
     uint32_t LastUsedMessageNumber = 0;
@@ -330,7 +345,7 @@ protected:
 
     //! Numbers of messages that have been received before, used to skip processing duplicates
     //! \todo Implement a lower bound (under which everything is dropped) and make this smaller
-    boost::circular_buffer<uint32_t> LastReceivedMessageNumbers;
+    boost::circular_buffer<uint32_t> LastReceivedMessageNumbers{KEEP_IDS_FOR_DISCARD};
 
     //! The remote port
     uint16_t TargetPortNumber;

@@ -30,6 +30,7 @@ class ScriptComponentHolder;
 class ResponseEntityCreation;
 class ResponseEntityDestruction;
 class ResponseEntityUpdate;
+class ResponseEntityLocalControlStatus;
 
 template<class StateT>
 class StateHolder;
@@ -345,16 +346,43 @@ public:
     DLLEXPORT void SendToAllPlayers(
         const std::shared_ptr<NetworkResponse>& response, RECEIVE_GUARANTEE guarantee) const;
 
+    //! \brief Sets local control on a client over an entity or disables it
+    //!
+    //! \note Only one player can have local control over a single entity at once
+    DLLEXPORT void SetLocalControl(
+        ObjectID id, bool enabled, const std::shared_ptr<Connection>& allowedconnection);
+
+    //! \returns The list of entities that this client has control over
+    DLLEXPORT const auto& GetOurLocalControl() const
+    {
+        return OurActiveLocalControl;
+    }
+
+    //! \brief Sets a connection that will be used to send local control entity updates to the
+    //! server
+    DLLEXPORT void SetServerForLocalControl(const std::shared_ptr<Connection>& connection)
+    {
+        ClientToServerConnection = connection;
+    }
+
+    DLLEXPORT const auto& GetServerForLocalControl() const
+    {
+        return ClientToServerConnection;
+    }
+
     //! \brief Applies an entity update packet
     //! \note With updates the message is queued (and moved) if we don't have the entity
     //! specified by the id
     //! \todo If we receive an update after an entity is destroyed the message should not be
     //! queued
-    DLLEXPORT void HandleEntityPacket(ResponseEntityUpdate&& message);
+    DLLEXPORT void HandleEntityPacket(ResponseEntityUpdate&& message, Connection& connection);
 
-    DLLEXPORT void HandleEntityPacket(ResponseEntityCreation& message);
+    //! \returns The id of the created entity or NULL_OBJECT
+    DLLEXPORT ObjectID HandleEntityPacket(ResponseEntityCreation& message);
 
     DLLEXPORT void HandleEntityPacket(ResponseEntityDestruction& message);
+
+    DLLEXPORT void HandleEntityPacket(ResponseEntityLocalControlStatus& message);
 
     // //! \brief Handles a world clock synchronizing packet
     // //! \note This should only be allowed to be called on a client that has connected
@@ -556,6 +584,16 @@ private:
     //! location entities (if any)
     //! \todo Change this to an object that holds more than the player pointer
     std::vector<std::shared_ptr<ConnectedPlayer>> ReceivingPlayers;
+
+    //! Active local control entities on clients (this variant is on the Server,
+    //! OurActiveLocalControl is on the client)
+    std::map<ObjectID, Connection*> ActiveLocalControl;
+
+    //! Connection from client world to server world. Used to send local control updates
+    std::shared_ptr<Connection> ClientToServerConnection;
+
+    //! Active local controls for this client world
+    std::vector<ObjectID> OurActiveLocalControl;
 
     //! Primary network settings for controlling what state synchronization methods are called
     WorldNetworkSettings NetworkSettings;

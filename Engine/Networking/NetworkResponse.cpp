@@ -41,6 +41,8 @@ DLLEXPORT std::shared_ptr<NetworkResponse> NetworkResponse::LoadFromPacket(sf::P
         return std::make_shared<ResponseEntityDestruction>(responseid, packet);
     case NETWORK_RESPONSE_TYPE::EntityUpdate:
         return std::make_shared<ResponseEntityUpdate>(responseid, packet);
+    case NETWORK_RESPONSE_TYPE::EntityLocalControlStatus:
+        return std::make_shared<ResponseEntityLocalControlStatus>(responseid, packet);
     // None based types
     case NETWORK_RESPONSE_TYPE::CloseConnection:
     case NETWORK_RESPONSE_TYPE::Keepalive:
@@ -93,6 +95,8 @@ DLLEXPORT std::string NetworkResponse::GetTypeStr() const
     case NETWORK_RESPONSE_TYPE::EntityCreation: return "ResponseEntityCreation";
     case NETWORK_RESPONSE_TYPE::EntityUpdate: return "ResponseEntityUpdate";
     case NETWORK_RESPONSE_TYPE::EntityDestruction: return "ResponseEntityDestruction";
+    case NETWORK_RESPONSE_TYPE::EntityLocalControlStatus:
+        return "ResponseEntityLocalControlStatus";
     case NETWORK_RESPONSE_TYPE::CacheUpdated: return "ResponseCacheUpdated";
     case NETWORK_RESPONSE_TYPE::CacheRemoved: return "ResponseCacheRemoved";
     case NETWORK_RESPONSE_TYPE::WorldFrozen: return "ResponseWorldFrozen";

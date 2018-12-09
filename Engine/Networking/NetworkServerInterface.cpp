@@ -128,6 +128,7 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
         connection.SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
 
         world->SetPlayerReceiveWorld(player);
+        _OnPlayerJoinedWorld(player, world);
         return;
     }
     default: break;
@@ -136,8 +137,8 @@ DLLEXPORT void NetworkServerInterface::HandleRequestPacket(
     if(_CustomHandleRequestPacket(request, connection))
         return;
 
-    LOG_ERROR("NetworkServerInterface: failed to handle request of type: " +
-              Convert::ToString(static_cast<int>(request->GetType())));
+    LOG_ERROR(
+        "NetworkServerInterface: failed to handle request of type: " + request->GetTypeStr());
 }
 
 DLLEXPORT void NetworkServerInterface::HandleResponseOnlyPacket(
@@ -167,14 +168,28 @@ DLLEXPORT void NetworkServerInterface::HandleResponseOnlyPacket(
 
         return;
     }
+    case NETWORK_RESPONSE_TYPE::EntityUpdate: {
+        auto data = static_cast<ResponseEntityUpdate*>(message.get());
+
+        auto world = _GetWorldForEntityMessage(data->WorldID);
+
+        // TODO: this needs to be queued if we haven't received the world yet
+        if(!world) {
+            LOG_WARNING("NetworkServerInterface: no world found for EntityUpdate");
+            return;
+        }
+
+        world->HandleEntityPacket(std::move(*data), connection);
+        return;
+    }
     default: break;
     }
 
     if(_CustomHandleResponseOnlyPacket(message, connection))
         return;
 
-    LOG_ERROR("NetworkServerInterface: failed to handle response of type: " +
-              Convert::ToString(static_cast<int>(message->GetType())));
+    LOG_ERROR(
+        "NetworkServerInterface: failed to handle response of type: " + message->GetTypeStr());
 }
 // ------------------------------------ //
 DLLEXPORT void NetworkServerInterface::CloseDown()
@@ -349,7 +364,18 @@ DLLEXPORT std::shared_ptr<GameWorld> NetworkServerInterface::_GetWorldForJoinTar
     return nullptr;
 }
 
+DLLEXPORT GameWorld* NetworkServerInterface::_GetWorldForEntityMessage(int32_t worldid)
+{
+    LOG_WARNING(
+        "NetworkServerInterface: base implementation of _GetWorldForEntityMessage called");
+    return nullptr;
+}
+
 DLLEXPORT void NetworkServerInterface::RegisterCustomCommandHandlers(CommandHandler* addhere)
+{}
+
+DLLEXPORT void NetworkServerInterface::_OnPlayerJoinedWorld(
+    const std::shared_ptr<ConnectedPlayer>& player, const std::shared_ptr<GameWorld>& world)
 {}
 // ------------------------------------ //
 void NetworkServerInterface::_OnReportCloseConnection(std::shared_ptr<ConnectedPlayer> plyptr)

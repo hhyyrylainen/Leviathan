@@ -96,6 +96,13 @@ void PrintASCallStack()
     ScriptExecutor::PrintCallstack(ctx, *Logger::Get());
 }
 
+bool IsInGraphicalMode()
+{
+    // The C++ code uses more this: if(Ogre::Root::getSingletonPtr()) but as this doesn't
+    // require scripts to include huge extra headers this is used here
+    return !Engine::Get()->GetNoGui();
+}
+
 // Event
 GenericEvent* WrapperGenericEventFactory(const std::string& name)
 {
@@ -1209,6 +1216,11 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
     }
     if(engine->RegisterGlobalFunction("void assert(bool expression)",
            asFUNCTION(AngelScriptAssertWrapper), asCALL_GENERIC) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction(
+           "bool IsInGraphicalMode()", asFUNCTION(IsInGraphicalMode), asCALL_CDECL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

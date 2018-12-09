@@ -209,7 +209,7 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Packet header bytes test", "[networ
         received >> packetID;
         REQUIRE(received);
 
-        CHECK(packetID == 1);
+        CHECK(packetID == PACKET_NUMBERING_OFFSET + 1);
 
         // Acks. Needs to be 0 and the next fields need to be missing
         uint32_t startAck = 5;
@@ -956,7 +956,7 @@ TEST_CASE_METHOD(
         received >> packetID;
         REQUIRE(received);
 
-        CHECK(packetID == 2);
+        CHECK(packetID == PACKET_NUMBERING_OFFSET + 2);
 
         uint32_t startAck;
         received >> startAck;
@@ -1080,12 +1080,12 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Requests get completed", "[n
     // Create packet //
     sf::Packet response;
 
-    response << LEVIATHAN_NORMAL_PACKET << uint32_t(1) << uint32_t(0) << uint8_t(1)
+    response << LEVIATHAN_NORMAL_PACKET << uint32_t(1) << uint32_t(0) << uint8_t(0x1)
              << NORMAL_RESPONSE_TYPE << uint32_t(1);
 
     {
         ResponseServerAllow responseAllow(
-            sent->PacketNumber, SERVER_ACCEPTED_TYPE::RequestQueued, "response");
+            sent->MessageNumber, SERVER_ACCEPTED_TYPE::RequestQueued, "response");
         responseAllow.AddDataToPacket(response);
     }
 
@@ -1108,7 +1108,7 @@ TEST_CASE_METHOD(
 
     const auto inPacket = sent->PacketNumber;
 
-    CHECK(inPacket == 2);
+    CHECK(inPacket == PACKET_NUMBERING_OFFSET + 2);
 
     sf::Packet received;
 
@@ -1141,7 +1141,7 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
 
     const auto inPacket = sent->PacketNumber;
 
-    CHECK(inPacket == 2);
+    CHECK(inPacket == PACKET_NUMBERING_OFFSET + 2);
 
     bool successSet = false;
     bool callbackCalled = false;
@@ -1163,7 +1163,7 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
             NetworkAckField::PacketReceiveStatus fakeReceived;
             fakeReceived[inPacket] = RECEIVED_STATE::StateReceived;
 
-            NetworkAckField tosend(1, 32, fakeReceived);
+            NetworkAckField tosend(PACKET_NUMBERING_OFFSET + 1, 32, fakeReceived);
 
             ackPacket << LEVIATHAN_NORMAL_PACKET << uint32_t(1);
             // Ack header start
@@ -1175,16 +1175,10 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
 
         SECTION("Manual bytes")
         {
-
-            NetworkAckField::PacketReceiveStatus fakeReceived;
-            fakeReceived[inPacket] = RECEIVED_STATE::StateReceived;
-
-            NetworkAckField tosend(1, 32, fakeReceived);
-
             ackPacket << LEVIATHAN_NORMAL_PACKET
                       << uint32_t(1)
                       // Ack header start
-                      << uint32_t(2) << uint8_t(1) << uint8_t(0x1) <<
+                      << uint32_t(PACKET_NUMBERING_OFFSET + 2) << uint8_t(1) << uint8_t(0x1) <<
                 // No messages
                 uint8_t(0);
         }
@@ -1192,7 +1186,6 @@ TEST_CASE_METHOD(UDPSocketAndClientFixture, "Client Responses get acks", "[netwo
 
     SECTION("Ack only packet")
     {
-
         ackPacket << LEVIATHAN_ACK_PACKET << uint8_t(1) << inPacket;
     }
 

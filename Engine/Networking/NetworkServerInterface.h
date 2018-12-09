@@ -125,6 +125,11 @@ protected:
     DLLEXPORT virtual std::shared_ptr<GameWorld> _GetWorldForJoinTarget(
         const std::string& options);
 
+    //! \brief This needs to lookup a GameWorld for an entity update message by id
+    //!
+    //! The default implementation always return nullptr
+    DLLEXPORT virtual GameWorld* _GetWorldForEntityMessage(int32_t worldid);
+
     //! Internally called when a player is about to be deleted
     //!
     //! Will call virtual notify functions
@@ -133,6 +138,10 @@ protected:
     //! Internally used to detect when a new player has connected
     void _OnReportPlayerConnected(
         std::shared_ptr<ConnectedPlayer> plyptr, Connection& connection);
+
+    //! \brief Called when a player has joined a world
+    DLLEXPORT virtual void _OnPlayerJoinedWorld(const std::shared_ptr<ConnectedPlayer>& player,
+        const std::shared_ptr<GameWorld>& world);
 
 protected:
     // Server variables //

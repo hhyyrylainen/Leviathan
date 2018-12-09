@@ -372,7 +372,7 @@ protected:
 
         constexpr auto dummyID = 12;
         WireData::FormatResponseBytes(
-            ResponseAuthenticate(security->GetIDForResponse(), dummyID), 2, 2, nullptr,
+            ResponseAuthenticate(authenticate->GetIDForResponse(), dummyID), 3, 3, nullptr,
             packet);
 
         SendPacket(packet);

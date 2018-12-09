@@ -514,7 +514,8 @@ DLLEXPORT void Connection::UpdateListening()
                     // These are deleted because there is no other way to mark them as sent
                     // In case this is lost and the received doesn't get the acks they should
                     // resend all the things and combined with the previous message ids
-                    iter = ReceivedRemotePackets.erase(iter);
+                    // iter = ReceivedRemotePackets.erase(iter);
+                    ++iter;
 
                 } else {
 

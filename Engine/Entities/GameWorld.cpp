@@ -95,12 +95,13 @@ DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Ogre::Root* 
     // Detecting non-GUI mode //
     if(ogre) {
 
-        if(!ogre)
-            return false;
-
         GraphicalMode = true;
         // these are always required for worlds //
         _CreateOgreResources(ogre);
+    } else {
+
+        GraphicalMode = false;
+        InBackground = false;
     }
 
     // Acquire physics engine world only if we have been given physical materials indicating
@@ -543,7 +544,7 @@ DLLEXPORT void GameWorld::_CreateStatesFromUpdateMessage(
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Tick(int currenttick)
 {
-    if(InBackground && !TickWhileInBackground)
+    if(InBackground && !TickWhileInBackground && GraphicalMode)
         return;
 
     TickNumber = currenttick;

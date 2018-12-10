@@ -409,13 +409,23 @@ void Leviathan::Connection::_HandleTimeouts(
                 // If a critical one fails the connection must be closed //
                 if(++(*iter)->AttemptNumber > CRITICAL_PACKET_MAX_TRIES) {
 
+                    // LOG_ERROR("Connection: Lost critical packet too many times, "
+                    //           "closing connection to: " +
+                    //           GenerateFormatedAddressString());
+
                     LOG_ERROR("Connection: Lost critical packet too many times, "
-                              "closing connection to: " +
+                              "not closing to get this to work somewhat: " +
                               GenerateFormatedAddressString());
+
+                    LOG_INFO(
+                        "Connection: critical message was type: " + (*iter)->GetTypeStr() +
+                        " number: " + std::to_string((*iter)->MessageNumber) +
+                        " in packet: " + std::to_string((*iter)->PacketNumber));
 
                     (*iter)->OnFinalized(false);
                     iter = sentthing.erase(iter);
-                    SendCloseConnectionPacket();
+                    // TODO: re-enable when there is time to debug this
+                    // SendCloseConnectionPacket();
                     return;
                 }
 

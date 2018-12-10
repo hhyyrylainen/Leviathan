@@ -85,6 +85,7 @@ TEST_CASE("PositionStateSystem creates state objects", "[entity]"){
     ComponentHolder<Position> ComponentPosition;
 
     StandardWorld dummyWorld(nullptr);
+    dummyWorld.Init(WorldNetworkSettings::GetSettingsForHybrid(), nullptr);
 
     ObjectID id = 36;
 
@@ -157,6 +158,7 @@ TEST_CASE("PositionStateSystem single state is interpolated", "[entity]"){
     ComponentHolder<Position> ComponentPosition;
 
     StandardWorld dummyWorld(nullptr);
+    dummyWorld.Init(WorldNetworkSettings::GetSettingsForHybrid(), nullptr);
 
     ObjectID id = 36;
 
@@ -215,6 +217,7 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]"){
     ComponentHolder<Position> ComponentPosition;
 
     StandardWorld dummyWorld(nullptr);
+    dummyWorld.Init(WorldNetworkSettings::GetSettingsForHybrid(), nullptr);
 
     ObjectID id = 36;
 
@@ -281,6 +284,7 @@ TEST_CASE("PositionStateSystem multiple states with gaps can be interpolated", "
     ComponentHolder<Position> ComponentPosition;
 
     StandardWorld dummyWorld(nullptr);
+    dummyWorld.Init(WorldNetworkSettings::GetSettingsForHybrid(), nullptr);
 
     ObjectID id = 12;
 

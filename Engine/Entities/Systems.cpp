@@ -14,20 +14,106 @@
 using namespace Leviathan;
 // ------------------------------------ //
 // SendableSystem
-DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld& world)
+//! \brief Helper for SendableSystem::HandleNode to not have as much code duplication for
+//! client and server code
+void SendableHandleHelper(ObjectID id, Sendable& obj, GameWorld& world,
+    const std::shared_ptr<Connection>& connection,
+    const std::shared_ptr<EntityState>& curstate, bool server)
 {
     const auto ticknumber = world.GetTickNumber();
 
+    // Determine if this is initial data or an update
+    bool initial = true;
+
+    for(auto iter = obj.UpdateReceivers.begin(); iter != obj.UpdateReceivers.end(); ++iter) {
+
+        if(iter->CorrespondingConnection == connection) {
+
+            // Updating an existing connection
+            initial = false;
+
+            // Prepare the update packet data  //
+            sf::Packet updateData;
+
+            // Do not use last confirmed if it is too old
+            int referencetick = -1;
+
+            if(iter->LastConfirmedData &&
+                (ticknumber <
+                    iter->LastConfirmedTickNumber + BASESENDABLE_STORED_RECEIVED_STATES - 1)) {
+                referencetick = iter->LastConfirmedTickNumber;
+
+                // Now calculate a delta update from curstate to the last confirmed state
+                curstate->CreateUpdatePacket(*iter->LastConfirmedData, updateData);
+
+            } else {
+
+                // Data is too old (or doesn't exist) and cannot be used //
+                curstate->AddDataToPacket(updateData);
+
+                iter->LastConfirmedTickNumber = -1;
+                iter->LastConfirmedData.reset();
+            }
+
+            // Send the update packet
+            auto sentThing = connection->SendPacketToConnectionWithTrackingWithoutGuarantee(
+                ResponseEntityUpdate(
+                    0, world.GetID(), ticknumber, referencetick, id, std::move(updateData)));
+
+            iter->AddSentPacket(ticknumber, curstate, sentThing);
+
+            break;
+        }
+    }
+
+    if(initial) {
+
+        // Only server sends the static state, as the server doesn't want to receive that data,
+        // because it was the one who initially sent it to any client that has local control
+        if(server) {
+            // First create a packet which will store the component initial data and lists all
+            // the components
+            // TODO: this data could be cached when an entity is created as it will be sent to
+            // all the players
+            sf::Packet initialComponentData;
+            uint32_t componentCount = world.CaptureEntityStaticState(id, initialComponentData);
+
+            // Send the initial response
+            connection->SendPacketToConnection(
+                std::make_shared<ResponseEntityCreation>(
+                    0, world.GetID(), id, componentCount, std::move(initialComponentData)),
+                RECEIVE_GUARANTEE::Critical);
+        }
+
+        // And then send the initial state packet
+        sf::Packet updateData;
+
+        curstate->AddDataToPacket(updateData);
+
+        auto sentThing = connection->SendPacketToConnectionWithTrackingWithoutGuarantee(
+            ResponseEntityUpdate(0, world.GetID(), ticknumber, -1, id, std::move(updateData)));
+
+        // And add the connection to the receivers
+        obj.UpdateReceivers.emplace_back(connection);
+        obj.UpdateReceivers.back().AddSentPacket(ticknumber, curstate, sentThing);
+    }
+}
+
+DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld& world)
+{
+    const bool isServer = world.GetNetworkSettings().IsAuthoritative;
+
     const auto& players = world.GetConnectedPlayers();
+    const auto& serverConnection = world.GetServerForLocalControl();
 
     // Create current state here as one or more connections should require it //
     // TODO: this could be removed entirely if we don't allow delta compression within a single
     // component. Other possible approach is to recycle old captured state objects
-    std::unique_ptr<EntityState> curstate = std::make_unique<EntityState>();
+    auto curState = std::make_shared<EntityState>();
 
-    world.CaptureEntityState(id, *curstate);
+    world.CaptureEntityState(id, *curState);
 
-    if(!curstate) {
+    if(!curState) {
 
         LOG_ERROR(
             "SendableSystem: created invalid state for entity, id: " + Convert::ToString(id));
@@ -42,14 +128,22 @@ DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld&
             continue;
         }
 
-        // Or if the player has been removed from the world
         bool exists = false;
-        for(const auto& player : players) {
 
-            if(iter->CorrespondingConnection == player->GetConnection()) {
-                exists = true;
-                break;
+        if(isServer) {
+            // Or if the player has been removed from the world
+
+            for(const auto& player : players) {
+
+                if(iter->CorrespondingConnection == player->GetConnection()) {
+                    exists = true;
+                    break;
+                }
             }
+        } else {
+
+            if(iter->CorrespondingConnection == serverConnection)
+                exists = true;
         }
 
         if(!exists) {
@@ -65,82 +159,18 @@ DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld&
     }
 
     // Handle sending updates
-    for(const auto& player : players) {
+    if(isServer) {
+        for(const auto& player : players) {
 
-        const auto& connection = player->GetConnection();
+            const auto& connection = player->GetConnection();
 
-        // Determine if this is initial data or an update
-        bool initial = true;
-
-        for(auto iter = obj.UpdateReceivers.begin(); iter != obj.UpdateReceivers.end();
-            ++iter) {
-
-            if(iter->CorrespondingConnection == connection) {
-
-                // Updating an existing connection
-                initial = false;
-
-                // Prepare the update packet data  //
-                sf::Packet updateData;
-
-                // Do not use last confirmed if it is too old
-                int referencetick = -1;
-
-                if(iter->LastConfirmedData &&
-                    (ticknumber < iter->LastConfirmedTickNumber +
-                                      BASESENDABLE_STORED_RECEIVED_STATES - 1)) {
-                    referencetick = iter->LastConfirmedTickNumber;
-
-                    // Now calculate a delta update from curstate to the last confirmed state
-                    curstate->CreateUpdatePacket(*iter->LastConfirmedData, updateData);
-
-                } else {
-
-                    // Data is too old (or doesn't exist) and cannot be used //
-                    curstate->AddDataToPacket(updateData);
-
-                    iter->LastConfirmedTickNumber = -1;
-                    iter->LastConfirmedData.reset();
-                }
-
-                // Send the update packet
-                auto sentThing =
-                    connection->SendPacketToConnectionWithTrackingWithoutGuarantee(
-                        ResponseEntityUpdate(0, world.GetID(), ticknumber, referencetick, id,
-                            std::move(updateData)));
-
-                iter->AddSentPacket(ticknumber, std::move(curstate), sentThing);
-
-                break;
-            }
+            SendableHandleHelper(id, obj, world, connection, curState, isServer);
         }
+    } else {
 
-        if(initial) {
+        if(serverConnection && serverConnection->IsValidForSend()) {
 
-            // First create a packet which will store the component initial data and lists all
-            // the components
-            sf::Packet initialComponentData;
-            uint32_t componentCount = world.CaptureEntityStaticState(id, initialComponentData);
-
-            // Send the initial response
-            connection->SendPacketToConnection(
-                std::make_shared<ResponseEntityCreation>(
-                    0, world.GetID(), id, componentCount, std::move(initialComponentData)),
-                RECEIVE_GUARANTEE::Critical);
-
-            // And then send the initial state packet
-            sf::Packet updateData;
-
-            curstate->AddDataToPacket(updateData);
-
-            auto sentThing = connection->SendPacketToConnectionWithTrackingWithoutGuarantee(
-                ResponseEntityUpdate(
-                    0, world.GetID(), ticknumber, -1, id, std::move(updateData)));
-
-            // And add the connection to the receivers
-            obj.UpdateReceivers.emplace_back(connection);
-            obj.UpdateReceivers.back().AddSentPacket(
-                ticknumber, std::move(curstate), sentThing);
+            SendableHandleHelper(id, obj, world, serverConnection, curState, isServer);
         }
     }
 }

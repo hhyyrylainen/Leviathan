@@ -1598,10 +1598,10 @@ END
 
           f.puts "case static_cast<int>(#{c.type}::TYPE):"
           f.puts "{"
-          # This is needed for the interpolation system to be able to
-          # know that it should interpolate stuff          
           f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
           f.puts "if(#{c.type.downcase}){"
+          # This is needed for the interpolation system to be able to
+          # know that it should interpolate stuff
           f.puts "     #{c.type.downcase}->StateMarked = true;"
           f.puts "} else {"
           f.puts %{    LOG_ERROR("GameWorld: received states for not created Component, "}
@@ -1626,7 +1626,73 @@ END
 
       else
         f.puts ";"
-      end      
+      end
+
+      f.puts ""
+
+      f.write "#{export}void #{qualifier opts}_ApplyLocalControlUpdateMessage(" +
+              "ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, " +
+              "int decodedtype)" +
+              "#{override opts}"
+
+      if opts.include?(:impl)
+        f.puts "{"
+
+        f.puts "while(true){"
+
+        f.puts "if(decodedtype == -1){"
+        f.puts "    // Type not decoded yet"
+        f.puts "    uint16_t tmpType;"
+        f.puts "    data >> tmpType;"
+        f.puts "    decodedtype = tmpType;"
+        f.puts "}"
+        f.puts "if(!data){"
+        f.puts %{    // Ended, there is no entry count in the message}
+        f.puts "    return;"
+        f.puts "}"
+        
+        f.puts ""
+
+        f.puts "switch(decodedtype){"
+
+        @ComponentTypes.each{|c|
+
+          if !c.StateType
+            next
+          end
+
+          f.puts "case static_cast<int>(#{c.type}::TYPE):"
+          f.puts "{"
+          f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
+          f.puts "if(#{c.type.downcase}){"
+          # This is will mark the component if this is a newer state
+          # update than the latest. In the future it would be nice to
+          # just be able to echo the update message to other clients
+          f.puts "    #{c.type}States.DeserializeAndApplyState(id, *#{c.type.downcase}, " +
+                 "ticknumber, data, referencetick);"
+          f.puts "} else {"
+          f.puts %{    LOG_ERROR("GameWorld: received local control states for not created , "}
+          f.puts %{        "Component, this is the client's fault");}
+          f.puts "}"
+          f.puts ""
+
+          f.puts "decodedtype = -1;"
+          f.puts "continue;"
+          f.puts "}"
+        }
+
+        f.puts "default:"
+        f.puts "return #{@BaseClass}::_ApplyLocalControlUpdateMessage(id, ticknumber, data, " +
+               "referencetick, decodedtype);"      
+        
+        f.puts "}"
+        
+        f.puts "}"
+        f.puts "}"
+
+      else
+        f.puts ";"
+      end
     end
     
     # f.puts "public:"

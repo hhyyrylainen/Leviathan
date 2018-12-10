@@ -541,6 +541,13 @@ DLLEXPORT void GameWorld::_CreateStatesFromUpdateMessage(
         "GameWorld: entity component state decoding was not complete before calling base "
         "GameWorld implementation. Not all states have been decoded");
 }
+
+DLLEXPORT void GameWorld::_ApplyLocalControlUpdateMessage(
+    ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, int decodedtype)
+{
+    LOG_ERROR("GameWorld: entity component state decoding for local control was not complete "
+              "before calling base GameWorld implementation");
+}
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Tick(int currenttick)
 {
@@ -566,7 +573,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
 
             LOG_INFO("GameWorld: a player has diconnected, removing. TODO: release Sendable "
                      "memory");
-            DEBUG_BREAK;
+            // DEBUG_BREAK;
             iter = ReceivingPlayers.erase(iter);
         } else {
 
@@ -1140,8 +1147,28 @@ DLLEXPORT void GameWorld::HandleEntityPacket(
 {
     if(NetworkSettings.IsAuthoritative) {
 
+        // Find matching local control before allowing
+        auto found = ActiveLocalControl.find(message.EntityID);
+
+        if(found != ActiveLocalControl.end()) {
+
+            if(found->second != &connection) {
+
+                // It's unsafe to dereference found->second here
+                LOG_WARNING("GameWorld: wrong player sent local control message, entity: " +
+                            std::to_string(message.EntityID));
+                return;
+            }
+
+            _ApplyLocalControlUpdateMessage(message.EntityID, message.TickNumber,
+                message.UpdateData, message.ReferenceTick, -1);
+            _OnLocalControlUpdatedEntity(message.EntityID, message.TickNumber);
+            return;
+        }
+
         LOG_WARNING(
-            "GameWorld: TODO: implement authoritative world handling ResponseEntityUpdate");
+            "GameWorld: didn't find local control entity for ResponseEntityUpdate, entity: " +
+            std::to_string(message.EntityID));
         return;
     }
 
@@ -1163,6 +1190,16 @@ DLLEXPORT void GameWorld::HandleEntityPacket(
             std::to_string(message.EntityID) +
             " TODO: queue for later applying in case packets are out of order");
         return;
+    }
+
+    // If this is controlled by us this is handled differently
+    for(auto entity : OurActiveLocalControl) {
+
+        if(entity == message.EntityID) {
+
+            // TODO: apply corrections if our simulation was incorrect / not allowed
+            return;
+        }
     }
 
     try {
@@ -1263,9 +1300,16 @@ DLLEXPORT void GameWorld::HandleEntityPacket(ResponseEntityLocalControlStatus& m
 
         OurActiveLocalControl.push_back(message.EntityID);
 
-        try {
-            _CreateSendableComponentForEntity(message.EntityID);
-        } catch(const InvalidState&) {
+        if(NetworkSettings.AutoCreateNetworkComponents) {
+            try {
+                _CreateSendableComponentForEntity(message.EntityID);
+                LOG_INFO("GameWorld: created Sendable for locally controlled entity: " +
+                         std::to_string(message.EntityID));
+            } catch(const InvalidState&) {
+                LOG_WARNING(
+                    "GameWorld: couldn't create Sendable for now locally controlled entity:" +
+                    std::to_string(message.EntityID));
+            }
         }
     }
 }
@@ -1294,6 +1338,20 @@ DLLEXPORT void GameWorld::SetLocalControl(
     auto response = std::make_shared<ResponseEntityLocalControlStatus>(0, ID, id, enabled);
 
     allowedconnection->SendPacketToConnection(response, RECEIVE_GUARANTEE::Critical);
+}
+
+DLLEXPORT void GameWorld::_OnLocalControlUpdatedEntity(ObjectID id, int32_t ticknumber)
+{
+    Position* position = GetComponentPtr<Position>(id);
+    Physics* physics = GetComponentPtr<Physics>(id);
+
+    if(position && physics) {
+
+        if(position->Marked) {
+
+            physics->JumpTo(*position);
+        }
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::ApplyQueuedPackets()

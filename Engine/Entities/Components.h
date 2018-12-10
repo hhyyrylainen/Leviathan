@@ -65,6 +65,10 @@ public:
         Marked = true;
     }
 
+    //! \brief Applies the state and marks this as changed. Doesn't check if the state is
+    //! actually different
+    DLLEXPORT void ApplyState(const PositionState& state);
+
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Position);
 
     Data Members;
@@ -122,10 +126,10 @@ public:
         DLLEXPORT void CheckReceivedPackets();
 
         //! \brief Adds a package to be checked for finalization in CheckReceivedPackages
-        inline void AddSentPacket(int tick, std::unique_ptr<EntityState>&& state,
+        inline void AddSentPacket(int tick, const std::shared_ptr<EntityState>& state,
             std::shared_ptr<SentNetworkThing> packet)
         {
-            SentPackets.push_back(std::make_tuple(tick, std::move(state), packet));
+            SentPackets.emplace_back(tick, state, packet);
         }
 
         std::shared_ptr<Connection> CorrespondingConnection;
@@ -133,7 +137,7 @@ public:
         //! Data used to build a delta update packet
         //! \note This is set to be the last known successfully sent state to
         //! avoid having to resend intermediate steps
-        std::unique_ptr<EntityState> LastConfirmedData;
+        std::shared_ptr<EntityState> LastConfirmedData;
 
         //! The tick number of the confirmed state
         //! If a state is confirmed as received that has number higher than this
@@ -142,7 +146,7 @@ public:
 
         //! Holds packets sent to this connection that haven't failed or been received yet
         std::vector<
-            std::tuple<int, std::unique_ptr<EntityState>, std::shared_ptr<SentNetworkThing>>>
+            std::tuple<int, std::shared_ptr<EntityState>, std::shared_ptr<SentNetworkThing>>>
             SentPackets;
     };
 

@@ -2,6 +2,7 @@
 #include "Components.h"
 
 #include "GameWorld.h"
+#include "Generated/ComponentStates.h"
 #include "Handlers/IDFactory.h"
 #include "Networking/Connection.h"
 #include "Networking/SentNetworkThing.h"
@@ -20,6 +21,13 @@
 #include <limits>
 using namespace Leviathan;
 // ------------------------------------ //
+// Position
+DLLEXPORT void Position::ApplyState(const PositionState& state)
+{
+    Members._Orientation = state._Orientation;
+    Members._Position = state._Position;
+    Marked = true;
+}
 
 // ------------------ RenderNode ------------------ //
 DLLEXPORT RenderNode::RenderNode(Ogre::SceneManager* scene) : Component(TYPE)

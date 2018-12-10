@@ -206,6 +206,23 @@ public:
         return *static_cast<TComponent*>(ptr);
     }
 
+    //! Helper for getting component of type. This is much slower than
+    //! direct lookups with the actual implementation class' GetComponent_Position etc.
+    //! methods
+    //! \returns null if not found
+    template<class TComponent>
+    TComponent* GetComponentPtr(ObjectID id)
+    {
+        std::tuple<void*, bool> component = GetComponent(id, TComponent::TYPE);
+
+        void* ptr = std::get<0>(component);
+
+        if(!ptr)
+            return nullptr;
+
+        return static_cast<TComponent*>(ptr);
+    }
+
     //! \brief Gets a component of type or returns nullptr
     //!
     //! \returns Tuple of pointer to component and boolean indicating if the type is known
@@ -356,6 +373,18 @@ public:
     DLLEXPORT const auto& GetOurLocalControl() const
     {
         return OurActiveLocalControl;
+    }
+
+    //! \returns True if entity is under our local control
+    //! \note It doesn't make sense to call this on a server. So if this is needed to be called
+    //! where a server might call this you should use "GetNetworkSettings().IsAuthoritative"
+    //! instead
+    DLLEXPORT inline bool IsUnderOurLocalControl(ObjectID id)
+    {
+        for(const auto& entity : OurActiveLocalControl)
+            if(entity == id)
+                return true;
+        return false;
     }
 
     //! \brief Sets a connection that will be used to send local control entity updates to the
@@ -526,6 +555,22 @@ protected:
     //! not fetched yet
     DLLEXPORT virtual void _CreateStatesFromUpdateMessage(ObjectID id, int32_t ticknumber,
         sf::Packet& data, int32_t referencetick, int decodedtype);
+
+    //! \brief Called to apply local control from a clients message
+    //!
+    //! Before this is called it is already verified that the update is allowed, but this
+    //! method should have cheat checking if that is required
+    //! \param decodedtype This is used to move unrecognized types up to the base class. -1 if
+    //! not fetched yet
+    DLLEXPORT virtual void _ApplyLocalControlUpdateMessage(ObjectID id, int32_t ticknumber,
+        sf::Packet& data, int32_t referencetick, int decodedtype);
+
+
+    //! \brief This method is for doing checks after applying client sent state to the server
+    //!
+    //! For example to block cheating and reset things on the server. Right now the base
+    //! implementation resets the physics position of a moved entity
+    DLLEXPORT virtual void _OnLocalControlUpdatedEntity(ObjectID id, int32_t ticknumber);
 
 private:
     //! \brief Updates a players position info in this world

@@ -7,7 +7,6 @@
 #include "Common/SFMLPackets.h"
 #include "EntityCommon.h"
 
-
 #include <array>
 #include <memory>
 
@@ -211,29 +210,40 @@ public:
     {
         auto entityStates = GetStateFor(id);
 
-        StateT* reference = nullptr;
+        this->_DeserializeState(entityStates, id, ticknumber, data, referencetick);
+    }
 
-        if(referencetick != -1) {
-            reference = entityStates->GetState(referencetick);
+    //! \brief Deserializes a state for entity's component from an archive and applies it if it
+    //! is the newest
+    template<class ComponentT>
+    void DeserializeAndApplyState(ObjectID id, ComponentT& component, int32_t ticknumber,
+        sf::Packet& data, int32_t referencetick)
+    {
+        auto entityStates = GetStateFor(id);
 
-            if(!reference) {
+        // Deserialize
+        auto* deserialized =
+            this->_DeserializeState(entityStates, id, ticknumber, data, referencetick);
 
-                LOG_WARNING("StateHolder: DeserializeState: can't find reference tick: " +
-                            std::to_string(referencetick) +
-                            " for entity: " + std::to_string(id));
-
-                reference = entityStates->GetNewest();
-            }
+        if(!deserialized) {
+            LOG_ERROR("StateHolder: failed to deserialize state");
+            return;
         }
 
-        // Create a new state //
-        StateT* newState = _CreateNewState(reference, data);
-        // This can't be deserialized from data so we forward it
-        newState->TickNumber = ticknumber;
+        // And apply it if it is newest
+        auto* newest = entityStates->GetNewest();
 
-        // TODO: do we need to check whether the states already contain a state for this
-        // tick?
-        entityStates->Append(newState, *this);
+        if(deserialized == newest) {
+
+            component.ApplyState(*newest);
+        } else {
+            int newestNumber = newest ? newest->TickNumber : -1;
+
+            LOG_WARNING("StateHolder: DeserializeAndApplyState: received not the newest "
+                        "packet, received: " +
+                        std::to_string(deserialized->TickNumber) +
+                        ", newest: " + std::to_string(newestNumber));
+        }
     }
 
     //! \brief Creates a state object for sending
@@ -257,6 +267,36 @@ public:
     }
 
 protected:
+    inline StateT* _DeserializeState(ObjectsComponentStates<StateT>* entityStates, ObjectID id,
+        int32_t ticknumber, sf::Packet& data, int32_t referencetick)
+    {
+        StateT* reference = nullptr;
+
+        if(referencetick != -1) {
+            reference = entityStates->GetState(referencetick);
+
+            if(!reference) {
+
+                LOG_WARNING("StateHolder: DeserializeState: can't find reference tick: " +
+                            std::to_string(referencetick) +
+                            " for entity: " + std::to_string(id));
+
+                reference = entityStates->GetNewest();
+            }
+        }
+
+        // Create a new state //
+        StateT* newState = _CreateNewState(reference, data);
+
+        // This can't be deserialized from data so we forward it
+        newState->TickNumber = ticknumber;
+
+        // TODO: do we need to check whether the states already contain a state for this
+        // tick?
+        entityStates->Append(newState, *this);
+        return newState;
+    }
+
     inline ObjectsComponentStates<StateT>* GetStateFor(ObjectID id)
     {
         ObjectsComponentStates<StateT>* entityStates = StateObjects.Find(id);

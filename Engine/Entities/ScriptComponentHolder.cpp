@@ -17,6 +17,7 @@ DLLEXPORT ScriptComponentHolder::ScriptComponentHolder(
     if(!Factory)
         throw InvalidArgument("ScriptComponentHolder not given a factory function");
 }
+
 DLLEXPORT ScriptComponentHolder::~ScriptComponentHolder()
 {
     // Make sure all are released

@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 // angelscript //
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
@@ -54,6 +55,9 @@ private:
 //! \brief Handles ScriptModule creation and AngelScript code execution
 class ScriptExecutor {
     friend CustomScriptRun;
+    friend asIScriptContext* RequestContextCallback(asIScriptEngine* engine, void* userdata);
+    friend void ReturnContextCallback(
+        asIScriptEngine* engine, asIScriptContext* context, void* userdata);
 
 public:
     DLLEXPORT ScriptExecutor();
@@ -329,6 +333,7 @@ private:
             // func->GetParam
             // TODO: is there a better way than to have this mess here?
 
+            // TODO: this might have been resolved with the latest visual studio 2017 updates
 #ifdef _MSC_VER // Microsoft, fix your shit
             // MSVC can't handle the good looking constexpr if things so this is a butchered
             // version
@@ -858,12 +863,11 @@ private:
         asIScriptContext* ScriptContext, ScriptRunningSetup& parameters,
         ScriptModule* scriptmodule);
 
+protected:
     //! \brief Called when a context is required for script execution
-    //! \todo Allow recursive calls and more context reuse (a pool from which these are
-    //! retrieved)
+    //! \todo Allow recursive calls
     DLLEXPORT asIScriptContext* _GetContextForExecution();
 
-protected:
     //! \brief Called after a script has been executed and the context is no longer needed
     //! \note Also called from CustomScriptRun
     DLLEXPORT void _DoneWithContext(asIScriptContext* context);
@@ -877,6 +881,12 @@ private:
     std::vector<std::shared_ptr<ScriptModule>> AllocatedScriptModules;
 
     Mutex ModulesLock;
+
+    //! Created context objects that can be reused for faster script execution
+    std::vector<asIScriptContext*> ContextPool;
+
+    //! Must be locked when touching ContextPool
+    Mutex ContextPoolLock;
 
     static ScriptExecutor* instance;
 };

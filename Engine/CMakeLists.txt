@@ -76,6 +76,7 @@ else()
     "Utility/MD5Generator.cpp" "Utility/MD5Generator.h"
     "Utility/Random.cpp" "Utility/Random.h"
     "Utility/well.h" "Utility/InstanceCounter.h"
+    "Utility/DebugObjectTracker.h"
     )
   
   set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"

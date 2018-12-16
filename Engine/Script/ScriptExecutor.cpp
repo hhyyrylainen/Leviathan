@@ -96,6 +96,16 @@ void ScriptTranslateExceptionCallback(asIScriptContext* context, void* userdata)
 }
 #endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 
+asIScriptContext* RequestContextCallback(asIScriptEngine* engine, void* userdata)
+{
+    return static_cast<ScriptExecutor*>(userdata)->_GetContextForExecution();
+}
+
+void ReturnContextCallback(asIScriptEngine* engine, asIScriptContext* context, void* userdata)
+{
+    static_cast<ScriptExecutor*>(userdata)->_DoneWithContext(context);
+}
+
 } // namespace Leviathan
 
 ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
@@ -126,6 +136,9 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     engine->SetTranslateAppExceptionCallback(
         asFUNCTION(ScriptTranslateExceptionCallback), nullptr, asCALL_CDECL);
 #endif // ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
+
+    // Context pool usage callbacks
+    engine->SetContextCallbacks(RequestContextCallback, ReturnContextCallback, this);
 
 
     // Builtins are in this access group //
@@ -228,6 +241,13 @@ ScriptExecutor::~ScriptExecutor()
         // release/delete all modules //
         AllocatedScriptModules.clear();
     }
+
+    // Release all context objects
+    for(asIScriptContext* context : ContextPool) {
+        context->Release();
+    }
+
+    ContextPool.clear();
 
     // release AngelScript //
     if(engine) {
@@ -436,21 +456,43 @@ DLLEXPORT bool Leviathan::ScriptExecutor::_PrepareContextForPassingParameters(
 // ------------------------------------ //
 DLLEXPORT asIScriptContext* Leviathan::ScriptExecutor::_GetContextForExecution()
 {
-    // TODO: pool context and detect already acive context and push state and use that
-    asIScriptContext* ScriptContext = engine->CreateContext();
+    // TODO: check for recursive call
 
-    if(!ScriptContext) {
+    Lock guard(ContextPoolLock);
+
+    // Get from pool if possible
+    if(!ContextPool.empty()) {
+        auto* ptr = ContextPool.back();
+        ContextPool.pop_back();
+        return ptr;
+    }
+
+    // Needs more contexts
+    asIScriptContext* scriptContext = engine->CreateContext();
+
+    if(!scriptContext) {
 
         LOG_ERROR("ScriptExecutor: _GetContextForExecution: Failed to create a new context");
         return nullptr;
     }
 
-    return ScriptContext;
+    return scriptContext;
 }
 
 DLLEXPORT void Leviathan::ScriptExecutor::_DoneWithContext(asIScriptContext* context)
 {
-    context->Release();
+    Lock guard(ContextPoolLock);
+
+    // Only keep 1000 contexts at most
+    if(ContextPool.size() < 1000) {
+
+        ContextPool.push_back(context);
+        context->Unprepare();
+
+    } else {
+
+        context->Release();
+    }
 }
 // ------------------------------------ //
 DLLEXPORT std::weak_ptr<ScriptModule> Leviathan::ScriptExecutor::GetModule(const int& ID)

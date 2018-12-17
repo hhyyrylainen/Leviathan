@@ -25,14 +25,6 @@ set_property(TARGET ${CurrentProjectName} PROPERTY CXX_EXTENSIONS OFF)
 
 install(TARGETS ${CurrentProjectName} DESTINATION bin)
 
-# Strip symbols
-if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
-  
-  # Install code that strips the symbols
-  install(CODE "execute_process(COMMAND strip ${CurrentProjectName} WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/bin\")")
-
-endif()
-
 # linking to engine
 target_link_libraries(${CurrentProjectName} Engine)
 

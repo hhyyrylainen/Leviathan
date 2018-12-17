@@ -9,7 +9,6 @@ project(ProjectName)
 # Options
 option(USE_BREAKPAD "For enabling breakpad crash handling, set off for local debugging" OFF)
 option(COPY_BOOST_TO_PACKAGE "If on copies all boost libraries to package" ON)
-option(STRIP_SYMBOLS_ON_INSTALL "For stripping debug symbols on install" ON)
 
 
 set(LEVIATHAN_SRC "${PROJECT_SOURCE_DIR}/../leviathan" CACHE FILEPATH
@@ -39,8 +38,6 @@ include(cotire)
 include(LeviathanUtility)
 
 # Leviathan Required settings
-set(CMAKE_INSTALL_PREFIX "./Install" CACHE FILEPATH "Install path")
-
 DefinePreprocessorMacro(USE_BREAKPAD LEVIATHAN_USING_BREAKPAD)
 
 include(LeviathanDefaultFileCopy)
@@ -104,13 +101,6 @@ endif()
 # Include dirs
 include_directories("${LEVIATHAN_SRC}/Engine")
 include_directories("${CMAKE_SOURCE_DIR}/Common")
-
-if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
-  
-  # Install code that strips the symbols
-  install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
-
-endif()
 
 set(DEPENDENT_LIBS ${LEVIATHAN_APPLICATION_LIBRARIES})
 

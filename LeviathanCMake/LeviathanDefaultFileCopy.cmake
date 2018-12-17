@@ -1,30 +1,11 @@
 message(STATUS "Copying Leviathan files...")
 
-######### Debugging Symbols
-# Create debugging info directory
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols")
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/Symbols/Dumps")
-
+# Data directories
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data/Shaders")
-
-
-# Copy the tools
-# Set the symbol tool name
-if(UNIX)
-  set(SYMBOL_EXTRACTOR "${LEVIATHAN_SRC}/CreateSymbolsForTarget.sh")
-elseif(WIN32)
-  set(SYMBOL_EXTRACTOR "${LEVIATHAN_SRC}/CreateSymbolsForTarget.bat")
-endif()
-
-file(COPY "${LEVIATHAN_SRC}/MoveSymbolFile.sh"
-  "${LEVIATHAN_SRC}/MoveSymbolFile.bat" 
-  "${LEVIATHAN_SRC}/CreateSymbolsForTarget.sh"
-  "${LEVIATHAN_SRC}/CreateSymbolsForTarget.bat"
-  DESTINATION "${PROJECT_BINARY_DIR}/Symbols")
 
 
 # copy data from bin directory
@@ -69,7 +50,7 @@ if(NOT ONLY_DOCUMENTATION)
   file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/bin/CoreOgreScripts/*")
   file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION
     "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
-  install(DIRECTORY "${LEVIATHAN_SRC}/CoreOgreScripts" DESTINATION "bin/CoreOgreScripts")
+  install(DIRECTORY "${LEVIATHAN_SRC}/bin/CoreOgreScripts" DESTINATION "bin")
 
   # And core shaders and materials
   file(COPY "${LEVIATHAN_SRC}/bin/Data/Shaders/CoreShaders" DESTINATION
@@ -95,17 +76,30 @@ if(NOT ONLY_DOCUMENTATION)
   # Copy additional CEF stuff
   file(GLOB CEF_BLOBS "${LEVIATHAN_SRC}/build/ThirdParty/cefextrablobs/*.bin")
   file(COPY ${CEF_BLOBS} DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+  install(FILES ${CEF_BLOBS} DESTINATION "bin")
+  
   file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
     DESTINATION "${PROJECT_BINARY_DIR}/bin")
+  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
+    DESTINATION "bin")
   
   if(UNIX)
     file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/bin/chrome-sandbox"
       DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    install(FILES "${LEVIATHAN_SRC}/build/ThirdParty/bin/chrome-sandbox"
+      DESTINATION "bin")    
   endif()
   
-  file(GLOB CEF_RESOURCES "${LEVIATHAN_SRC}/build/ThirdParty/Resources/*")
-  file(COPY ${CEF_RESOURCES}
-    DESTINATION "${PROJECT_BINARY_DIR}/bin/")
+  file(GLOB CEF_RESOURCE_FILES "${LEVIATHAN_SRC}/build/ThirdParty/Resources/*.*")
+  file(COPY ${CEF_RESOURCE_FILES}
+    DESTINATION "${PROJECT_BINARY_DIR}/bin")
+  file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/Resources/locales"
+    DESTINATION "${PROJECT_BINARY_DIR}/bin")  
+  
+  install(FILES ${CEF_RESOURCE_FILES}
+    DESTINATION "bin")  
+  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/Resources/locales"
+    DESTINATION "bin")
 
 endif()
 
@@ -175,10 +169,14 @@ if(WIN32)
   # To be able to debug move all the dlls to the bin folder
   file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
   file(COPY ${RawFilesToMove} DESTINATION "${PROJECT_BINARY_DIR}/bin")
+  install(FILES ${RawFilesToMove} DESTINATION "bin")
 else()
   file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/lib")
   file(COPY ${RawFilesToMove} DESTINATION "${PROJECT_BINARY_DIR}/bin/lib")
+  install(FILES ${RawFilesToMove} DESTINATION "bin/lib")  
 endif()
+
+include(InstallRequiredSystemLibraries)
 
 # Tools
 # file(GLOB AllTools "${LEVIATHAN_SRC}/build/ThirdParty/bin/*")

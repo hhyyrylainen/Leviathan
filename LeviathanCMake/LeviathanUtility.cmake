@@ -125,3 +125,20 @@ macro(StandardConfigureExecutableMainAndInclude IncludeFileName MainFileName Uni
   
 endmacro()
 
+# Helper for installing the contents of a folder
+function(InstallContentsOfFolder folder target)
+
+  file(GLOB MIXED "${folder}/*")
+
+  foreach(ITEM ${MIXED})
+    if(IS_DIRECTORY "${ITEM}")
+      list(APPEND FOUND_DIRS "${ITEM}")
+    else()
+      list(APPEND FOUND_FILES "${ITEM}")
+    endif()
+  endforeach()
+
+  install(FILES ${FOUND_FILES} DESTINATION "${target}")
+  install(DIRECTORY ${FOUND_DIRS} DESTINATION "${target}")
+
+endfunction()

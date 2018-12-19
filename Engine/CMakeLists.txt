@@ -190,7 +190,6 @@ else()
     "Script/ScriptCallingHelpers.h"
     "Script/CustomScriptRunHelpers.h"
     "Script/ScriptConversionHelpers.h"
-    "Script/MSVCAlternativeConstexprStuff.h"
     )
 
   set(GroupScriptInterface

@@ -289,10 +289,6 @@ public:
     DLLEXPORT static ScriptExecutor* Get();
 
 private:
-#ifdef _MSC_VER
-    // Helpers for the alternative to constexpr ifs in _DoPassEachParameter
-#include "MSVCAlternativeConstexprStuff.h"
-#endif //_MSC_VER
 
     //! Helper for _PassParametersToScript
     //! \todo When passing signed types do we need to reinterpret_cast them to unsigned types
@@ -332,76 +328,6 @@ private:
             // This is not the most optimal as this results in a duplicate call to
             // func->GetParam
             // TODO: is there a better way than to have this mess here?
-
-            // TODO: this might have been resolved with the latest visual studio 2017 updates
-#ifdef _MSC_VER // Microsoft, fix your shit
-            // MSVC can't handle the good looking constexpr if things so this is a butchered
-            // version
-            if(wantedTypeID == AngelScriptTypeIDResolver<int32_t>::Get(this)) {
-                // Uncommenting constexpr here causes:
-                // MSVCAlternativeConstexprStuff.h(227): fatal error C1001: An internal error
-                // has occurred in the compiler. 2>(compiler file
-                // 'f:\dd\vctools\compiler\cxxfe\sl\p1\c\parsetree.cpp', line 1691)
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, int32_t>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int32_t>>::f<
-                        int32_t>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint32_t>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, uint32_t>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint32_t>>::f<
-                        uint32_t>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint64_t>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, uint64_t>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint64_t>>::f<
-                        uint64_t>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<int64_t>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, int64_t>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int64_t>>::f<
-                        int64_t>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<int8_t>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, int8_t>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, int8_t>>::f<
-                        int8_t>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint8_t>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, uint8_t>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, uint8_t>>::f<
-                        uint8_t>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<float>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, float>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, float>>::f<float>(
-                        this, parameterc, i, scriptcontext, setup, module, func, current,
-                        std::forward<Args>(args)...);
-                }
-            } else if(wantedTypeID == AngelScriptTypeIDResolver<double>::Get(this)) {
-
-                if /*constexpr*/ (std::is_convertible_v<CurrentT, double>) {
-                    return _MSVCHelperDoConv<std::is_convertible_v<CurrentT, double>>::f<
-                        double>(this, parameterc, i, scriptcontext, setup, module, func,
-                        current, std::forward<Args>(args)...);
-                }
-            }
-#else //_MSC_VER
-
-            // NOTE: IF THIS OR THE MSVCAlternativeConstexprStuff IS CHANGED THE OTHER MUST
-            // ALSO BE CHANGED!
 
             if(wantedTypeID == AngelScriptTypeIDResolver<int32_t>::Get(this)) {
 
@@ -454,7 +380,6 @@ private:
                         func, static_cast<double>(current), std::forward<Args>(args)...);
                 }
             }
-#endif //_MSC_VER
 
             // No conversion possible //
             return _DoPassParameterTypeError(setup, module, i, wantedTypeID, parameterType);

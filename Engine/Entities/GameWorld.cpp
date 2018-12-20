@@ -791,13 +791,16 @@ DLLEXPORT int GameWorld::GetPhysicalMaterial(const std::string& name)
 // ------------------------------------ //
 DLLEXPORT void GameWorld::DestroyEntity(ObjectID id)
 {
+    // Fail if trying to delete NULL_OBJECT
+    if(id == NULL_OBJECT)
+        throw InvalidArgument("Cannot destroy NULL_OBJECT");
+
     // Fail if ticking currently //
     if(TickInProgress)
         throw InvalidState(
             "Cannot DestroyEntity while ticking. Use QueueDestroyEntity instead");
 
-    auto end = Entities.end();
-    for(auto iter = Entities.begin(); iter != end; ++iter) {
+    for(auto iter = Entities.begin(); iter != Entities.end(); ++iter) {
 
         if(*iter == id) {
 
@@ -806,11 +809,39 @@ DLLEXPORT void GameWorld::DestroyEntity(ObjectID id)
             return;
         }
     }
+
+    LOG_ERROR("GameWorld: DestroyEntity: unknown entity id: " + std::to_string(id));
 }
 
 DLLEXPORT void GameWorld::QueueDestroyEntity(ObjectID id)
 {
+    // Fail if trying to delete NULL_OBJECT
+    if(id == NULL_OBJECT)
+        throw InvalidArgument("Cannot destroy NULL_OBJECT");
+
+    // This is a sanity check, can be disabled (or made cheaper when the world no longer uses
+    // IDFactory) when crashing stops
+    bool exists = false;
+
+    for(auto existingId : Entities) {
+        if(existingId == id) {
+            exists = true;
+            break;
+        }
+    }
+
+    if(!exists) {
+        LOG_ERROR("GameWorld: QueueDestroyEntity: unknown entity id: " + std::to_string(id));
+        return;
+    }
+
     Lock lock(DeleteMutex);
+
+    // Skip duplicates
+    for(auto alreadyQueued : DelayedDeleteIDS)
+        if(id == alreadyQueued)
+            return;
+
     DelayedDeleteIDS.push_back(id);
 }
 

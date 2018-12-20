@@ -211,7 +211,7 @@ private:
     std::unique_ptr<btRigidBody> Body;
 
     //! For access from physics callbacks
-    ObjectID ThisEntity;
+    ObjectID ThisEntity = NULL_OBJECT;
 
     float Mass;
 

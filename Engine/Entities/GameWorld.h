@@ -182,6 +182,17 @@ public:
     //! \note Doesn't check that the entitiy ids exist
     DLLEXPORT void SetEntitysParent(ObjectID child, ObjectID parent);
 
+    //! \brief Returns true if entity exists
+    DLLEXPORT bool DoesEntityExist(ObjectID id) const
+    {
+        for(const auto& entity : Entities) {
+            if(id == entity)
+                return true;
+        }
+
+        return false;
+    }
+
 
     //! \brief Removes all components from an entity
     DLLEXPORT virtual void DestroyAllIn(ObjectID id);

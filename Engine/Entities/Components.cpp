@@ -107,8 +107,11 @@ DLLEXPORT Physics::~Physics()
 
 DLLEXPORT void Physics::Release(PhysicalWorld* world)
 {
-    if(Body)
+    if(Body) {
+        Body->SetOwningEntity(NULL_OBJECT);
         world->DestroyBody(Body.get());
+    }
+
     Body.reset();
 }
 // ------------------------------------ //

@@ -397,8 +397,8 @@ public:
 public:
     inline Physics(const Data& args) :
         Component(TYPE), ThisEntity(args.id), _Position(args.updatepos)
-
     {}
+
     DLLEXPORT ~Physics();
 
     //! \brief Destroys the physical body

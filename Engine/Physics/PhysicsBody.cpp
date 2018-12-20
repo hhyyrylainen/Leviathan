@@ -35,6 +35,7 @@ DLLEXPORT PhysicsBody::~PhysicsBody()
 DLLEXPORT void PhysicsBody::DetachResources()
 {
     Body->setUserPointer(nullptr);
+    Body->setMotionState(nullptr);
     Body.reset();
     PositionUpdate.reset();
 

@@ -581,6 +581,9 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         }
     }
 
+    // Set this to disallow deleting while running physics as well
+    TickInProgress = true;
+
     // Simulate physics //
     if(!WorldFrozen) {
 
@@ -596,8 +599,6 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         // Simulate direct control //
         // }
     }
-
-    TickInProgress = true;
 
     _RunTickSystems();
 

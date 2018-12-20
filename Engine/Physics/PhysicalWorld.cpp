@@ -350,7 +350,9 @@ DLLEXPORT bool PhysicalWorld::ChangeBodyShape(
 
     // const auto oldTransform = body->GetBody()->getCenterOfMassTransform();
 
-    DynamicsWorld->removeRigidBody(body->GetBody());
+    // DynamicsWorld->removeRigidBody(body->GetBody());
+    // This variant is used by the bullet examples
+    DynamicsWorld->removeCollisionObject(body->GetBody());
 
     body->ApplyShapeChange(shape);
 
@@ -365,7 +367,11 @@ DLLEXPORT void PhysicalWorld::DestroyBody(PhysicsBody* body)
 
         if(iter->get() == body) {
 
-            DynamicsWorld->removeRigidBody(body->GetBody());
+            // DynamicsWorld->removeRigidBody(body->GetBody());
+
+            // This is used by the bullet example. Not sure if this is better than the other
+            // one
+            DynamicsWorld->removeCollisionObject(body->GetBody());
             body->DetachResources();
             PhysicsBodies.erase(iter);
             return;

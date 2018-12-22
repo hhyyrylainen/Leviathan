@@ -4,6 +4,11 @@ message(STATUS "Adding project: " ${CurrentProjectName})
 
 add_definitions(-DLEVIATHAN_BUILD)
 
+# # This doesn't work as this requires absolute paths...
+# if(EXISTS /lib64/ld-linux-x86-64.so.2)
+#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--dynamic-linker=$ORIGIN/lib/ld-linux.so.2")
+# endif()
+
 # Define the project
 if(WIN32 AND NOT CREATE_CONSOLE_APP)
     add_executable(${CurrentProjectName} WIN32 ${AllProjectFiles})

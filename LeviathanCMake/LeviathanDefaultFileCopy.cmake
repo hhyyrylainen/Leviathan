@@ -148,6 +148,16 @@ else()
   
 endif(WIN32)
 
+# See note in LeviathanCoreProject why this doesn't work
+# if(EXISTS /lib64/ld-linux-x86-64.so.2)
+
+#   file(GLOB LD_LIBS "/lib64/ld-*")
+
+#   # Part of a huge hack for working around different libc versions
+#   list(APPEND ALL_DYNAMIC_LIBRARIES ${LD_LIBS})
+# endif()
+
+
 if(UNIX)
   # Go through all the libraries and add all name variants to the moved files
   GlobAllVariants(ALL_DYNAMIC_LIBRARIES SanitizedList)

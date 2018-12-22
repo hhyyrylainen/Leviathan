@@ -176,6 +176,8 @@ else()
   install(FILES ${RawFilesToMove} DESTINATION "bin/lib")  
 endif()
 
+set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+
 include(InstallRequiredSystemLibraries)
 
 # Tools

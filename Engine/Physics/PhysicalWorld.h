@@ -90,10 +90,15 @@ public:
         int physicsmaterialid = -1);
 
     //! \brief Applies a changed shape to a body
+    //! \todo Find out if it is required to remove and add the body back to the world (and if
+    //! that can be done in a physics callback)
     DLLEXPORT bool ChangeBodyShape(
         const PhysicsBody::pointer& body, const PhysicsShape::pointer& shape);
 
-    DLLEXPORT void DestroyBody(PhysicsBody* body);
+    //! \brief Destroys a physics body
+    //!
+    //! May not be called while a physics update is in progress
+    DLLEXPORT bool DestroyBody(PhysicsBody* body);
 
 
     //! \brief Finds the information for contact between objects with two materials
@@ -142,6 +147,9 @@ protected:
 
     GameWorld* OwningWorld;
     PhysicsMaterialManager* PhysicsMaterials;
+
+    //! This is a small sanity check for preventing destroying physics bodies during a tick
+    bool PhysicsUpdateInProgress = false;
 
     // Bullet resources
     std::unique_ptr<btDefaultCollisionConfiguration> CollisionConfiguration;

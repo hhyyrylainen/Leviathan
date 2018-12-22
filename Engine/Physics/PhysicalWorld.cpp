@@ -53,7 +53,12 @@ public:
                         return pair->AABBCallback(*World, *body1, *body2);
                     }
                 }
+            } else {
+                LOG_ERROR("Physics body doesn't have user pointer");
             }
+
+        } else {
+            LOG_ERROR("Physics btCollisionObject doesn't exist");
         }
 
         // Needs collision
@@ -121,7 +126,11 @@ DLLEXPORT PhysicalWorld::~PhysicalWorld()
 // ------------------------------------ //
 DLLEXPORT void PhysicalWorld::SimulateWorld(float secondspassed, int maxsubsteps /*= 4*/)
 {
+    PhysicsUpdateInProgress = true;
+
     DynamicsWorld->stepSimulation(secondspassed, maxsubsteps);
+
+    PhysicsUpdateInProgress = false;
 }
 
 void PhysicalWorld::OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep)
@@ -335,6 +344,11 @@ DLLEXPORT PhysicsBody::pointer PhysicalWorld::CreateBodyFromCollision(
     // be to wake any body that has force applied to it)
     body->GetBody()->setActivationState(DISABLE_DEACTIVATION);
 
+    if(PhysicsUpdateInProgress) {
+        // This might be okay...
+        // DEBUG_BREAK;
+    }
+
     DynamicsWorld->addRigidBody(body->GetBody());
 
     // Make sure it is alive as long as it is in the world
@@ -348,37 +362,71 @@ DLLEXPORT bool PhysicalWorld::ChangeBodyShape(
     if(!body || !shape || !body->GetBody())
         return false;
 
-    // const auto oldTransform = body->GetBody()->getCenterOfMassTransform();
+    // Debug safety code
+    bool found = false;
+    for(auto iter = PhysicsBodies.begin(); iter != PhysicsBodies.end(); ++iter) {
+        if(iter->get() == body.get()) {
 
-    // DynamicsWorld->removeRigidBody(body->GetBody());
-    // This variant is used by the bullet examples
-    DynamicsWorld->removeCollisionObject(body->GetBody());
+            found = true;
+            break;
+        }
+    }
+
+    if(!found) {
+        LOG_ERROR("PhysicalWorld: ChangeBodyShape: passed body not part of this world");
+        DEBUG_BREAK;
+        return false;
+    }
+
+    // This might be fine as it will be added back in
+    if(body->GetBody()->getNumConstraintRefs() > 0) {
+        // "undestroyed constraints on entity";
+    }
+
+    if(PhysicsUpdateInProgress) {
+        // This might be okay...
+        // DEBUG_BREAK;
+    }
+
+    DynamicsWorld->removeRigidBody(body->GetBody());
 
     body->ApplyShapeChange(shape);
 
     DynamicsWorld->addRigidBody(body->GetBody());
+
     return true;
 }
 
-DLLEXPORT void PhysicalWorld::DestroyBody(PhysicsBody* body)
+DLLEXPORT bool PhysicalWorld::DestroyBody(PhysicsBody* body)
 {
+    if(PhysicsUpdateInProgress) {
+        DEBUG_BREAK;
+        LOG_FATAL("PhysicalWorld: DestroyBody: called while physics update is in progress");
+        return false;
+    }
+
     // Remove from alive bodies. This also checks that the body is in this world
     for(auto iter = PhysicsBodies.begin(); iter != PhysicsBodies.end(); ++iter) {
 
         if(iter->get() == body) {
 
-            // DynamicsWorld->removeRigidBody(body->GetBody());
+            if(body->GetBody()->getNumConstraintRefs() > 0) {
 
-            // This is used by the bullet example. Not sure if this is better than the other
-            // one
-            DynamicsWorld->removeCollisionObject(body->GetBody());
+                LOG_ERROR("PhysicalWorld: DestroyBody: body has undestroyed constraints, "
+                          "can't safely destroy");
+                return false;
+            }
+
+            DynamicsWorld->removeRigidBody(body->GetBody());
+
             body->DetachResources();
             PhysicsBodies.erase(iter);
-            return;
+            return true;
         }
     }
 
     LOG_ERROR("PhysicalWorld: DestroyBody: called with body that wasn't in this world");
+    return false;
 }
 
 // ------------------------------------ //

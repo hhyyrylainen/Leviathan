@@ -101,7 +101,7 @@ DLLEXPORT void Plane::Release(Ogre::SceneManager* scene)
 DLLEXPORT Physics::~Physics()
 {
     if(Body) {
-        LOG_ERROR("Physics: Release not called before destructor!");
+        LOG_FATAL("Physics: Release not called before destructor!");
     }
 }
 

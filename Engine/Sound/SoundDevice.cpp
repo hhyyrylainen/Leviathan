@@ -59,17 +59,30 @@ bool SoundDevice::Init(bool simulatesound /*= false*/, bool noconsolelog /*= fal
     // There's no print error here if missing to make tests run
     ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
         Engine::Get()->GetDefinition()->GetValues(), "AudioDevice", selectedDevice,
-        devices[defaultDevice]);
+        "default");
 
-    if(std::find(devices.begin(), devices.end(), selectedDevice) == devices.end()) {
+	if(selectedDevice == "default") {
+        if(std::find(devices.begin(), devices.end(), devices[defaultDevice]) == devices.end()) {
+			//I have no clue how it would ever get here, but you never know
+            LOG_ERROR("SoundDevice: Default device doesn't exist. The code should not have been able to get here.");
+        }
+	}
+    else if(std::find(devices.begin(), devices.end(), selectedDevice) == devices.end()) {
         LOG_ERROR("SoundDevice: selected audio device \"" + selectedDevice +
                   "\" doesn't exists. Using default");
-        selectedDevice = devices[defaultDevice];
+        selectedDevice = "default";
     }
 
     LOG_INFO("SoundDevice: Initializing sound with device: " + selectedDevice);
 
-    if(!AudioManager->initialize(selectedDevice.c_str())) {
+    if(selectedDevice == "default") {
+        if(!AudioManager->initialize(devices[defaultDevice].c_str())) {
+
+            LOG_ERROR("SoundDevice: initializing failed");
+            return false;
+		}
+    }
+	else if(!AudioManager->initialize(selectedDevice.c_str())) {
 
         LOG_ERROR("SoundDevice: initializing failed");
         return false;

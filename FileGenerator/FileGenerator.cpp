@@ -97,6 +97,9 @@ bool FileGenerator::DoJSExtensionGeneration(
 
     writer.close();
 
+    // Set file to read-only after we're done with it
+    SetFileAttributes((LPCWSTR)output.c_str(), FILE_ATTRIBUTE_READONLY);
+
     cout << "Done generating file: " << output << endl;
     return true;
 }

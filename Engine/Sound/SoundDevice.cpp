@@ -48,6 +48,12 @@ bool SoundDevice::Init(bool simulatesound /*= false*/, bool noconsolelog /*= fal
         return false;
     }
 
+    if(std::find(devices.begin(), devices.end(), devices[defaultDevice]) == devices.end()) {
+        // I have no clue how it would ever get here, but you never know
+        LOG_ERROR("SoundDevice: Default device doesn't exist. The code should not have "
+                  "been able to get here.");
+    }
+
     LOG_INFO("Detected audio devices: ");
 
     for(const auto& dev : devices)
@@ -61,27 +67,18 @@ bool SoundDevice::Init(bool simulatesound /*= false*/, bool noconsolelog /*= fal
         Engine::Get()->GetDefinition()->GetValues(), "AudioDevice", selectedDevice, "default");
 
     if(selectedDevice == "default") {
-        if(std::find(devices.begin(), devices.end(), devices[defaultDevice]) ==
-            devices.end()) {
-            // I have no clue how it would ever get here, but you never know
-            LOG_ERROR("SoundDevice: Default device doesn't exist. The code should not have "
-                      "been able to get here.");
-        }
+
+        selectedDevice = devices[defaultDevice];
+
     } else if(std::find(devices.begin(), devices.end(), selectedDevice) == devices.end()) {
         LOG_ERROR("SoundDevice: selected audio device \"" + selectedDevice +
                   "\" doesn't exists. Using default");
-        selectedDevice = "default";
+        selectedDevice = devices[defaultDevice];
     }
 
     LOG_INFO("SoundDevice: Initializing sound with device: " + selectedDevice);
 
-    if(selectedDevice == "default") {
-        if(!AudioManager->initialize(devices[defaultDevice].c_str())) {
-
-            LOG_ERROR("SoundDevice: initializing failed");
-            return false;
-        }
-    } else if(!AudioManager->initialize(selectedDevice.c_str())) {
+    if(!AudioManager->initialize(selectedDevice.c_str())) {
 
         LOG_ERROR("SoundDevice: initializing failed");
         return false;

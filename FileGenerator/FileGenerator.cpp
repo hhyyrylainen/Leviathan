@@ -98,7 +98,10 @@ bool FileGenerator::DoJSExtensionGeneration(
     writer.close();
 
     // Set file to read-only after we're done with it
-    SetFileAttributes((LPCWSTR)output.c_str(), FILE_ATTRIBUTE_READONLY);
+    {
+        using namespace boost::filesystem;
+        permissions(path(output), remove_perms | owner_write | others_write | group_write);
+    }
 
     cout << "Done generating file: " << output << endl;
     return true;

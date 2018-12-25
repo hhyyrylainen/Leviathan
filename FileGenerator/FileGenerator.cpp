@@ -9,11 +9,16 @@
 bool FileGenerator::DoJSExtensionGeneration(
     string input, string output, const std::string& name)
 {
-
     // There should be no '"' characters //
 
     // Create folders
     boost::filesystem::create_directories(boost::filesystem::path(output).parent_path());
+
+    // If the output exists we delete it in order to write updates to it
+    if(boost::filesystem::exists(output)){
+
+        boost::filesystem::remove(output);
+    }
 
     // Write stuff over the file //
     ofstream writer(output);
@@ -96,6 +101,12 @@ bool FileGenerator::DoJSExtensionGeneration(
     writer << endl << "}";
 
     writer.close();
+
+    // Set file to read-only after we're done with it
+    {
+        using namespace boost::filesystem;
+        permissions(output, remove_perms | owner_write | others_write | group_write);
+    }
 
     cout << "Done generating file: " << output << endl;
     return true;

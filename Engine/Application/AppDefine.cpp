@@ -222,23 +222,9 @@ DLLEXPORT bool AppDef::FillDefaultEngineConf(NamedVars& variables)
 
     if(variables.ShouldAddValueIfNotFoundOrWrongType<std::string>("AudioDevice")) {
 
-        LOG_INFO("AppDefine: Detecting default audio device for creating default config");
-
-        size_t defaultDevice = 0;
-        const auto devices = SoundDevice::GetAudioDevices(&defaultDevice);
-
-        if(devices.empty() || defaultDevice >= devices.size()) {
-
-            LOG_ERROR("AppDefine: Couldn't detect default audio device");
-
-        } else {
-
-            LOG_INFO("AppDefine: default audio device is: " + devices[defaultDevice]);
-
-            changed = true;
-            variables.Add(
-                std::make_shared<NamedVariableList>("AudioDevice", devices[defaultDevice]));
-        }
+        changed = true;
+        variables.Add(
+            std::make_shared<NamedVariableList>("AudioDevice", new StringBlock("default")));
     }
 
     return changed;
@@ -253,8 +239,7 @@ Leviathan::WindowDataDetails::WindowDataDetails(const std::string& title, const 
     Title(title),
     Width(width), Height(height), FullScreen(fullscreen), VSync(vsync), UseGamma(gamma),
     DisplayNumber(displaynumber), FSAA(fsaa), Icon(icon)
-{
-}
+{}
 #else
 Leviathan::WindowDataDetails::WindowDataDetails(const std::string& title, const int& width,
     const int& height, const std::string& fullscreen, bool vsync, bool gamma,
@@ -263,8 +248,7 @@ Leviathan::WindowDataDetails::WindowDataDetails(const std::string& title, const 
     Title(title),
     Height(height), Width(width), FullScreen(fullscreen), VSync(vsync), UseGamma(gamma),
     DisplayNumber(displaynumber), FSAA(fsaa)
-{
-}
+{}
 #endif
 
 Leviathan::WindowDataDetails::WindowDataDetails() {}

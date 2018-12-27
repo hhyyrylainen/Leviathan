@@ -48,9 +48,6 @@ option(CREATE_SHIPPING "SET THIS ON WHEN BUILDING END USER BINARIES. Will disabl
 # \todo this option to copy right libs
 option(CREATE_SDK "For creating SDKs for developers" ON)
 
-# Automatically builds symbols as part of the build and enables google breakpad handler
-option(USE_BREAKPAD "For enabling google breakpad crash handling, set off for local debugging" ON)
-
 # Copies boost libraries to distributions
 option(COPY_BOOST_TO_PACKAGE "For copying all boost libraries to run on system that don't have it" OFF)
 
@@ -68,6 +65,7 @@ option(USE_LEAP "Set to on when using Leap motion, will auto disable if files ar
 # Option for only building the documentation (for lighter jenkins)
 option(ONLY_DOCUMENTATION "If true only documentation can be built correctly" OFF)
 
+option(MAKE_RELEASE "Enabled breakpad crash reporting and some game specific options" OFF)
 
 option(LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
   "Set to false to use new/delete instead of object pools. Provided for debugging memory issues with valgrind" ON)
@@ -76,7 +74,7 @@ option(LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
 if(ONLY_DOCUMENTATION)
 
-  set(USE_BREAKPAD OFF)
+  set(MAKE_RELEASE OFF)
   
 endif()
 
@@ -95,15 +93,6 @@ if(LEVIATHAN_FULL_BUILD)
     set(CMAKE_INSTALL_PREFIX "../SDK")
   
   endif()
-
-  if(USE_BREAKPAD)
-
-    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Breakpad/include")
-      message(SEND_ERROR "Breakpad include dir is missing")
-    endif()
-    
-  endif()
-  
 else()
 
   message(STATUS "Creating UE4 Compatible Static Library")
@@ -113,7 +102,7 @@ else()
   set(USE_NEWTON OFF)
   set(COPY_BOOST_TO_PACKAGE OFF)
   set(CREATE_STATIC ON)
-  set(USE_BREAKPAD OFF)
+  set(MAKE_RELEASE OFF)
   set(USE_SFML OFF)
   set(USE_SDL2 OFF)
   
@@ -224,25 +213,10 @@ if(NOT ONLY_DOCUMENTATION)
       add_subdirectory(Demos)
     endif()
   endif()
-  
-  # Strip symbols
-  if(STRIP_SYMBOLS_ON_INSTALL AND UNIX)
-    
-    # Install code that strips the symbols
-    install(SCRIPT LeviathanCMake/StripSymbolsFromDependencies.cmake)
-    
-  endif()
 
   # Set the tests as the default startup project
   set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY
     VS_STARTUP_PROJECT LeviathanTest)
-endif()
-
-##### All symbol creating target
-if(USE_BREAKPAD)
-  add_custom_target(All_Symbols ALL DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
-else()
-  add_custom_target(All_Symbols DEPENDS Engine_Symbols Pong_Symbols PongServer_Symbols PongMasterServer_Symbols)
 endif()
 
 # .desktop files
@@ -277,51 +251,3 @@ if(UNIX)
   
 endif()
 
-
-# CPack support
-if(NOT CREATE_UE4_PLUGIN)
-  # TODO: fix this
-    include(InstallRequiredSystemLibraries)
-
-    SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Leviathan Game Engine")
-    SET(CPACK_PACKAGE_VENDOR "Henri Hyyryläinen")
-    SET(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
-    set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/License.txt")
-    set(CPACK_PACKAGE_VERSION_MAJOR "${LEVIATHAN_VERSION_STABLE}.${LEVIATHAN_VERSION_MAJOR}")
-    set(CPACK_PACKAGE_VERSION_MINOR "${LEVIATHAN_VERSION_MINOR}")
-
-    if(INSTALL_CREATE_SDK)
-        set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}-sdk")
-    else(INSTALL_CREATE_SDK)
-        set(CPACK_PACKAGE_VERSION_PATCH "${LEVIATHAN_VERSION_PATCH}")
-    endif(INSTALL_CREATE_SDK)
-
-    if(STRIP_SYMBOLS_ON_INSTALL)
-      set(CPACK_STRIP_FILES true)
-    endif()
-
-    if(WIN32)
-      # There is a bug in NSIS that does not handle full unix paths properly. Make
-      # sure there is at least one set of four (4) backlasshes.
-      set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}\\\\LeviathanIcon.bmp")
-      set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
-      set(CPACK_NSIS_HELP_LINK "http:\\\\\\\\boostslair.com/Projects/Leviathan/doxygen/")
-      set(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\\\\\www.boostslair.com/Projects/Leviathan/")
-      set(CPACK_NSIS_CONTACT "boost@boostslair.com")
-      set(CPACK_NSIS_MODIFY_PATH OFF)
-    else(WIN32)
-      set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/LeviathanIcon.bmp")
-      set(CPACK_NSIS_DISPLAY_NAME "Leviathan Game Engine")
-      set(CPACK_NSIS_HELP_LINK "http://www.boostslair.com/Projects/Leviathan/doxygen/")
-      set(CPACK_NSIS_URL_INFO_ABOUT "http://www.boostslair.com/Projects/Leviathan/")
-      set(CPACK_NSIS_CONTACT "boost@boostslair.com")
-      set(CPACK_NSIS_MODIFY_PATH OFF)
-    endif(WIN32)
-
-    include(CPack)
-
-else()
-
-    # Includes for UE4 are setup in Engine cmake file
-
-endif()

@@ -4,6 +4,10 @@ message(STATUS "Adding project: " ${CurrentProjectName})
 
 add_definitions(-DLEVIATHAN_BUILD)
 
+if(MAKE_RELEASE)
+  add_definitions(-DMAKE_RELEASE)
+endif()
+
 # # This doesn't work as this requires absolute paths...
 # if(EXISTS /lib64/ld-linux-x86-64.so.2)
 #   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--dynamic-linker=$ORIGIN/lib/ld-linux.so.2")
@@ -45,15 +49,5 @@ if(WIN32)
     "${CMAKE_BINARY_DIR}/bin")
 
 endif(WIN32)
-
-# Creating symbols after building
-# When not USE_BREAKPAD this won't be ran automatically
-if(USE_BREAKPAD)
-  if(UNIX)
-    add_custom_target(${CurrentProjectName}_Symbols ${SYMBOL_EXTRACTOR}
-      "${CMAKE_BINARY_DIR}/bin/${CurrentProjectName}"
-      DEPENDS ${CurrentProjectName} WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
-  endif()
-endif()
 
 

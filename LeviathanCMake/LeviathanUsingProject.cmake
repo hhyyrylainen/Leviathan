@@ -1,5 +1,9 @@
 # File that defines common project based on variables
 
+if(MAKE_RELEASE)
+  add_definitions("-DMAKE_RELEASE")
+endif()
+
 # Define the project
 if(WIN32 AND NOT CREATE_CONSOLE_APP)
     add_executable(${CurrentProjectName} WIN32 ${AllProjectFiles})
@@ -29,16 +33,4 @@ if(WIN32)
     "${CMAKE_BINARY_DIR}/bin")
 
 endif(WIN32)
-
-# Creating symbols after building
-# When not USE_BREAKPAD this won't be ran automatically
-if(USE_BREAKPAD)
-  if(UNIX)
-    add_custom_target(${CurrentProjectName}_Symbols ${SYMBOL_EXTRACTOR}
-      "${CMAKE_BINARY_DIR}/bin/${CurrentProjectName}"
-      DEPENDS ${CurrentProjectName} WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Symbols VERBATIM)
-  endif()
-endif()
-
-
 

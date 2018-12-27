@@ -8,6 +8,7 @@ require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
+require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -121,6 +122,11 @@ $cef = CEF.new(
   version: "3.3497.1837.g00188c7"
 )
 
+$breakpad = Breakpad.new(
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true
+)
+
 $leviathanSelfLib = Leviathan.new({})
 
 if OS.windows?
@@ -156,6 +162,10 @@ end
 
 $leviathanLibList =
   [$bullet, $angelscript, $sfml, $cef, $ffmpeg]
+
+if true
+  $leviathanLibList += [$breakpad]
+end
 
 # Ogre windows deps and other windows only deps
 # sdl is also used by Leviathan directly

@@ -174,8 +174,7 @@ Dir.chdir(File.join(ProjectDir, "build")) do
   if !runCMakeConfigure [
        # This is done automatically
        # "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-       "-DOGRE_HOME=#{THIRD_PARTY_INSTALL}",
-       "-DUSE_BREAKPAD=OFF"
+       "-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"
      ]
     onError "Failed to configure Leviathan"
   end

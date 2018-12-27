@@ -34,15 +34,15 @@
 
 
 // Breakpad is used to detect and report crashes
-#ifdef LEVIATHAN_USING_BREAKPAD
+#ifdef MAKE_RELEASE
 #ifdef __linux
 #include "client/linux/handler/exception_handler.h"
 #elif defined(_WIN32)
-#include "client/windows/handler/exception_handler.h"
+#include "breakpad/client/windows/handler/exception_handler.h"
 #else
 #error no breakpad on platform
 #endif
-#endif //USE_BREAKPAD
+#endif //MAKE_RELEASE
 
 using namespace @ProgramNamespace@;
 // This is for easier logic with using standard classes instead of application specific
@@ -50,17 +50,16 @@ using namespace Leviathan;
 
 // Don't look at the mess ahead, just set the variables in your cmake file //
 
-#if LEVIATHAN_USING_BREAKPAD
+#if MAKE_RELEASE
 #ifdef _WIN32
 #ifndef _DEBUG
 bool DumpCallback(const wchar_t* dump_path,
     const wchar_t* minidump_id, void* context, EXCEPTION_POINTERS* exinfo,
     MDRawAssertionInfo* assertion, bool succeeded)
 {
-    
     const string path = Convert::WstringToString(dump_path);
     
-    printf("Dump path: %s\n", path.c_str());
+    printf("Created stack dump: %s\n", path.c_str());
     
     return succeeded;
 }
@@ -69,11 +68,11 @@ bool DumpCallback(const wchar_t* dump_path,
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context,
     bool succeeded)
 {
-    printf("Dump path: %s\n", descriptor.path());
+    printf("Created stack dump: %s\n", descriptor.path());
     return succeeded;
 }
 #endif
-#endif //USE_BREAKPAD
+#endif //MAKE_RELEASE
 
 #ifdef _WIN32
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
@@ -135,7 +134,7 @@ int main(int argcount, char* args[]){
 
 #endif
 
-#if LEVIATHAN_USING_BREAKPAD
+    #if MAKE_RELEASE
     // Crash handler //
 #ifdef _WIN32
 #ifndef _DEBUG
@@ -151,7 +150,7 @@ int main(int argcount, char* args[]){
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL,
         true, -1);
 #endif
-#endif //USE_BREAKPAD
+#endif //MAKE_RELEASE
 
     // Logger. This is here to make logging shutdown errors etc. possible //
     Logger mainLog("@PROGRAMLOG@" + std::string("Log.txt"));

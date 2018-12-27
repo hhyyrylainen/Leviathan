@@ -153,13 +153,11 @@ endif()
 
 
 # Breakpad libraries
-if(USE_BREAKPAD)
+if(MAKE_RELEASE)
 
-  if(NOT EXISTS "${LEVIATHAN_SRC}/Breakpad/include")
+  if(NOT EXISTS "${LEVIATHAN_SRC}/build/ThirdParty/include/breakpad")
     message(SEND_ERROR "Breakpad include dir is missing")
   endif()
-
-  include_directories("${LEVIATHAN_SRC}/Breakpad/include")
   
   if(UNIX)
     list(APPEND LEVIATHAN_APPLICATION_LIBRARIES optimized breakpad_client)
@@ -170,8 +168,11 @@ if(USE_BREAKPAD)
     
   endif()
 
-  # Link dir
-  link_directories("${LEVIATHAN_SRC}/Breakpad/lib")
+  include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include/breakpad")
+
+  if(UNIX)
+    add_definitions("-D__STDC_FORMAT_MACROS")
+  endif()
   
 endif()
 

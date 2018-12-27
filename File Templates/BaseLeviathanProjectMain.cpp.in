@@ -57,9 +57,11 @@ bool DumpCallback(const wchar_t* dump_path,
     const wchar_t* minidump_id, void* context, EXCEPTION_POINTERS* exinfo,
     MDRawAssertionInfo* assertion, bool succeeded)
 {
-    const string path = Convert::WstringToString(dump_path);
+    // This is probably better to use than the conversion function
+    std::wcout << dump_path << "\n";
     
-    printf("Created stack dump: %s\n", path.c_str());
+    // const std::string path = Convert::WstringToString(dump_path);
+    // printf("Created stack dump: %s\n", path.c_str());
     
     return succeeded;
 }
@@ -138,14 +140,14 @@ int main(int argcount, char* args[]){
     // Crash handler //
 #ifdef _WIN32
 #ifndef _DEBUG
-    google_breakpad::ExceptionHandler ExceptionHandler(L"C://tmp", NULL, DumpCallback, NULL, 
+    google_breakpad::ExceptionHandler ExceptionHandler(L"./", NULL, DumpCallback, NULL, 
         google_breakpad::ExceptionHandler::HANDLER_ALL,
         (MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
         (const wchar_t*)nullptr, NULL);
         
 #endif //_DEBUG
 #else
-    google_breakpad::MinidumpDescriptor descriptor("/tmp");
+    google_breakpad::MinidumpDescriptor descriptor("./");
 
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL,
         true, -1);

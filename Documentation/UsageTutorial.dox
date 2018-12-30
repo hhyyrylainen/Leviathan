@@ -211,6 +211,8 @@ should be installed and the gem installation should work.
 If it still doesn't work run `ridk exec pacman -S gmp-devel` and then
 run `ridk install` again.
 
+If you are a developer and want to use the Breakpad symbol uploader
+you additionally need the gem `httparty`.
 
 \subsection prerequisite_what_next Next
 To compile Leviathan see \ref compiling_leviathan

@@ -971,6 +971,7 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
                     if(ReadOnePacket(lock, DecodePriority::Video) == PacketReadResult::Ended) {
 
                         // There are no more frames, end the playback
+                        lock.unlock();
                         OnStreamEndReached();
                         return -1;
                     }

@@ -51,9 +51,17 @@ protected:
     };
 
     //! Holds converted audio data that could not be immediately returned by ReadAudioData
+    //! \todo Allow reuse here to reduce memory allocations
     struct ReadAudioPacket {
 
         std::vector<uint8_t> DecodedData;
+
+        //! This is used by the audio thread if it can't read the whole thing at once
+        //! in order to not need to free memory
+        size_t CurrentReadOffset = 0;
+
+        //! True once this has been played completely and can be recycled
+        bool Played = false;
     };
 
     //! Holds raw packets before sending
@@ -182,7 +190,7 @@ protected:
     bool DecodeVideoFrame();
 
     //! \brief Reads a single packet from the stream that matches Priority
-    PacketReadResult ReadOnePacket(DecodePriority priority);
+    PacketReadResult ReadOnePacket(Lock& packetmutex, DecodePriority priority);
 
     //! \brief Updates the texture
     void UpdateTexture();
@@ -220,22 +228,19 @@ protected:
 
     // AVIOContext* ResourceReader = nullptr;
 
-    // This seems to be not be used anymore
-    // AVCodecContext* Context = nullptr;
     AVFormatContext* FormatContext = nullptr;
 
-
-    // AVCodecParserContext* VideoParser = nullptr;
     AVCodecContext* VideoCodec = nullptr;
     int VideoIndex = 0;
-
-
-    //! How many timestamp units are in a second in the video stream
-    float VideoTimeBase = 1.f;
 
     // AVCodecParserContext* AudioParser = nullptr;
     AVCodecContext* AudioCodec = nullptr;
     int AudioIndex = 0;
+
+
+    SwsContext* ImageConverter = nullptr;
+
+    SwrContext* AudioConverter = nullptr;
 
     AVFrame* DecodedFrame = nullptr;
     AVFrame* DecodedAudio = nullptr;
@@ -244,17 +249,18 @@ protected:
     //! to a format that Ogre texture can accept
     AVFrame* ConvertedFrame = nullptr;
 
+    //! This is the backing buffer for ConvertedFrame
+    //! \note This is not a smart pointer because this needs to be released with av_freep
     uint8_t* ConvertedFrameBuffer = nullptr;
 
-    // Required size for a single converted frame
+    //! Required size for a single converted frame
     size_t ConvertedBufferSize = 0;
+
+    //! How many timestamp units are in a second in the video stream
+    float VideoTimeBase = 1.f;
 
     int32_t FrameWidth = 0;
     int32_t FrameHeight = 0;
-
-    SwsContext* ImageConverter = nullptr;
-
-    SwrContext* AudioConverter = nullptr;
 
     //! Audio sample rate
     int SampleRate = 0;
@@ -277,9 +283,13 @@ protected:
     bool NextFrameReady = false;
 
     //! Set to false if an error occurs and playback should stop
-    bool StreamValid = false;
+    std::atomic<bool> StreamValid{false};
 
     ClockType::time_point LastUpdateTime;
+
+    //! True when the playback has started and no frames have been decoded yet
+    //! Also if paused this will need to be set true when resuming
+    bool FirstCallbackAfterPlay = true;
 
     Mutex ReadPacketMutex;
     std::list<std::unique_ptr<ReadPacket>> WaitingVideoPackets;

@@ -197,7 +197,6 @@ DLLEXPORT void VideoPlayer::Stop()
 // ------------------------------------ //
 DLLEXPORT float VideoPlayer::GetDuration() const
 {
-
     if(!FormatContext)
         return 0;
 
@@ -229,7 +228,6 @@ bool VideoPlayer::OnVideoDataLoaded()
 // ------------------------------------ //
 bool VideoPlayer::FFMPEGLoadFile()
 {
-
     FormatContext = avformat_alloc_context();
     if(!FormatContext) {
         LOG_ERROR("VideoPlayer: FFMPEG: avformat_alloc_context failed");
@@ -416,7 +414,9 @@ bool VideoPlayer::FFMPEGLoadFile()
     }
 
     DumpInfo();
-    ResetClock();
+
+    // Clock is now reset in the callback
+    FirstCallbackAfterPlay = true;
 
     PassedTimeSeconds = 0.f;
     NextFrameReady = false;
@@ -431,7 +431,6 @@ bool VideoPlayer::FFMPEGLoadFile()
 
 bool VideoPlayer::OpenStream(unsigned int index, bool video)
 {
-
     auto* thisStreamCodec =
         avcodec_find_decoder(FormatContext->streams[index]->codecpar->codec_id);
 
@@ -498,7 +497,6 @@ bool VideoPlayer::OpenStream(unsigned int index, bool video)
 // ------------------------------------ //
 bool VideoPlayer::DecodeVideoFrame()
 {
-
     const auto result = avcodec_receive_frame(VideoCodec, DecodedFrame);
 
     if(result >= 0) {
@@ -538,12 +536,11 @@ bool VideoPlayer::DecodeVideoFrame()
     return false;
 }
 
-VideoPlayer::PacketReadResult VideoPlayer::ReadOnePacket(DecodePriority priority)
+VideoPlayer::PacketReadResult VideoPlayer::ReadOnePacket(
+    Lock& packetmutex, DecodePriority priority)
 {
     if(!FormatContext || !StreamValid)
         return PacketReadResult::Ended;
-
-    Lock lock(ReadPacketMutex);
 
     // Decode queued packets first
     if(priority == DecodePriority::Video && !WaitingVideoPackets.empty()) {
@@ -691,7 +688,6 @@ VideoPlayer::PacketReadResult VideoPlayer::ReadOnePacket(DecodePriority priority
 // ------------------------------------ //
 void VideoPlayer::UpdateTexture()
 {
-
     Ogre::PixelBox pixelView(FrameWidth, FrameHeight, 1, OGRE_IMAGE_FORMAT,
         // The data[0] buffer has some junk before the actual data so don't use that
         /*&ConvertedFrame->data[0]*/ ConvertedFrameBuffer);
@@ -703,21 +699,24 @@ void VideoPlayer::UpdateTexture()
 size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
 {
     Lock lock(AudioMutex);
+    Lock lock2(ReadPacketMutex);
 
-    if(amount < 1 || !AudioCodec || !StreamValid) {
+    if(!AudioCodec || !StreamValid) {
         return 0;
     }
 
-    // Receive audio packet //
-    while(true) {
+    size_t readAmount = 0;
+
+    // Read audio data until the stream ends or we have reached amount
+    while(amount > 0) {
 
         // First return from queue //
         if(!ReadAudioDataBuffer.empty()) {
 
             // Try to read from the queue //
-            const auto ReadAmount = ReadDataFromAudioQueue(lock, output, amount);
+            const auto read = ReadDataFromAudioQueue(lock, output, amount);
 
-            if(ReadAmount == 0) {
+            if(read == 0) {
 
                 // Queue is invalid... //
                 LOG_ERROR("Invalid audio queue, emptying the queue");
@@ -725,23 +724,28 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
                 continue;
             }
 
-            return ReadAmount;
-        }
-
-        const auto ReadResult = avcodec_receive_frame(AudioCodec, DecodedAudio);
-
-        if(ReadResult == AVERROR(EAGAIN)) {
-
-            if(this->ReadOnePacket(DecodePriority::Audio) == PacketReadResult::Ended) {
-
-                // Stream ended //
-                return 0;
-            }
-
+            // Adjust pointer and amount and try to read again if still some size left
+            readAmount += read;
+            output += read;
+            amount -= read;
             continue;
         }
 
-        if(ReadResult < 0) {
+        const auto result = avcodec_receive_frame(AudioCodec, DecodedAudio);
+
+        if(result == AVERROR(EAGAIN)) {
+
+            if(this->ReadOnePacket(lock2, DecodePriority::Audio) == PacketReadResult::Ended) {
+
+                // Stream ended //
+                return readAmount;
+            }
+
+            // We have now read more data, try decoding again
+            continue;
+        }
+
+        if(result < 0) {
 
             // Some error //
             LOG_ERROR("Failed receiving audio packet, stopping audio playback");
@@ -753,14 +757,14 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
 
         // This is verified in open when setting up converting
         // av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) could also be used here
-        const auto BytesPerSample = 2;
+        const auto bytesPerSample = 2;
 
-        const auto TotalSize = BytesPerSample * (DecodedAudio->nb_samples * ChannelCount);
+        const auto totalSize = bytesPerSample * (DecodedAudio->nb_samples * ChannelCount);
 
-        if(amount >= static_cast<size_t>(TotalSize)) {
+        if(amount >= static_cast<size_t>(totalSize)) {
 
             // Lets try to directly feed the converted data to the requester //
-            if(swr_convert(AudioConverter, &output, TotalSize,
+            if(swr_convert(AudioConverter, &output, totalSize,
                    const_cast<const uint8_t**>(DecodedAudio->data),
                    DecodedAudio->nb_samples) < 0) {
                 LOG_ERROR("Invalid audio stream, converting to audio read buffer failed");
@@ -768,18 +772,43 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
                 return 0;
             }
 
-            return TotalSize;
+            // Adjust pointer and amount and try to read again if still some size left
+            readAmount += totalSize;
+            output += totalSize;
+            amount -= totalSize;
+            continue;
         }
 
-        // We need a temporary buffer //
-        auto NewBuffer = std::unique_ptr<ReadAudioPacket>(new ReadAudioPacket());
+        // We need a buffer //
+        ReadAudioPacket* buffer = nullptr;
 
-        NewBuffer->DecodedData.resize(TotalSize);
+        // Try to find a recycled one
+        for(auto iter = ReadAudioDataBuffer.begin(); iter != ReadAudioDataBuffer.end();
+            ++iter) {
 
-        uint8_t* DecodeOutput = &NewBuffer->DecodedData[0];
+            if((*iter)->Played) {
+
+                buffer = iter->get();
+
+                // It needs to be moved to the back to play them in order
+                ReadAudioDataBuffer.splice(
+                    ReadAudioDataBuffer.end(), ReadAudioDataBuffer, iter);
+                break;
+            }
+        }
+
+        // Or make a new one
+        if(!buffer) {
+            ReadAudioDataBuffer.emplace_back(new ReadAudioPacket());
+            buffer = ReadAudioDataBuffer.back().get();
+        }
+
+        buffer->DecodedData.resize(totalSize);
+
+        uint8_t* decodeOutput = buffer->DecodedData.data();
 
         // Convert into the output data
-        if(swr_convert(AudioConverter, &DecodeOutput, TotalSize,
+        if(swr_convert(AudioConverter, &decodeOutput, totalSize,
                const_cast<const uint8_t**>(DecodedAudio->data),
                DecodedAudio->nb_samples) < 0) {
             LOG_ERROR("Invalid audio stream, converting failed");
@@ -787,45 +816,53 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
             return 0;
         }
 
-        ReadAudioDataBuffer.push_back(std::move(NewBuffer));
+        LEVIATHAN_ASSERT(decodeOutput == buffer->DecodedData.data(),
+            "Audio convert messed with our pointer");
+
+        // Reset played and offset
+        buffer->Played = false;
+        buffer->CurrentReadOffset = 0;
+
+        // Now we have more data so we can loop again to read from the buffer
         continue;
     }
 
-    LEVIATHAN_ASSERT(false, "Execution never reaches here");
+    return readAmount;
 }
 
 size_t VideoPlayer::ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, size_t amount)
 {
-    if(ReadAudioDataBuffer.empty())
-        return 0;
+    // Find one that wasn't played
+    for(auto iter = ReadAudioDataBuffer.begin(); iter != ReadAudioDataBuffer.end(); ++iter) {
 
-    auto& dataVector = ReadAudioDataBuffer.front()->DecodedData;
+        if((*iter)->Played)
+            continue;
 
-    if(amount >= dataVector.size()) {
+        // This hasn't been played
+        auto buffer = iter->get();
+        auto& dataVector = buffer->DecodedData;
 
-        // Can move an entire packet //
-        const auto movedDataCount = dataVector.size();
+        const auto dataLeft = dataVector.size() - buffer->CurrentReadOffset;
 
-        memcpy(output, &dataVector[0], movedDataCount);
+        if(amount >= dataLeft) {
 
-        ReadAudioDataBuffer.pop_front();
+            // Can move an entire packet //
+            std::memcpy(output, dataVector.data() + buffer->CurrentReadOffset, dataLeft);
 
-        return movedDataCount;
+            // Mark it as played
+            ReadAudioDataBuffer.pop_front();
+
+            return dataLeft;
+        }
+
+        // Only partial data is wanted
+        std::memcpy(output, dataVector.data() + buffer->CurrentReadOffset, amount);
+
+        buffer->CurrentReadOffset += amount;
+        return amount;
     }
 
-    // Need to return a partial packet //
-    const auto movedDataCount = amount;
-    const auto leftSize = dataVector.size() - movedDataCount;
-
-    memcpy(output, &dataVector[0], movedDataCount);
-
-    std::vector<uint8_t> newData;
-    newData.resize(dataVector.size() - leftSize);
-
-    std::copy(dataVector.begin() + leftSize, dataVector.end(), newData.begin());
-
-    dataVector = newData;
-    return movedDataCount;
+    return 0;
 }
 
 // ------------------------------------ //
@@ -896,6 +933,14 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
         const auto now = ClockType::now();
 
+        if(FirstCallbackAfterPlay) {
+
+            // Reset time now to get an accurate starting time
+            LastUpdateTime = now;
+
+            FirstCallbackAfterPlay = false;
+        }
+
         const auto elapsed = now - LastUpdateTime;
         LastUpdateTime = now;
 
@@ -916,10 +961,12 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
         while(PassedTimeSeconds >= CurrentlyDecodedTimeStamp) {
 
             // Only decode if there isn't a frame ready
+            Lock lock(ReadPacketMutex);
+
             while(!NextFrameReady) {
 
                 // Decode a packet if none are in queue
-                if(ReadOnePacket(DecodePriority::Video) == PacketReadResult::Ended) {
+                if(ReadOnePacket(lock, DecodePriority::Video) == PacketReadResult::Ended) {
 
                     // There are no more frames, end the playback
                     OnStreamEndReached();

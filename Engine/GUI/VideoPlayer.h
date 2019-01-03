@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2018 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -33,45 +33,37 @@ namespace Leviathan { namespace GUI {
 //! \todo Implement pausing and seeking
 //! \todo When Stop is called the OnPlaybackEnded should still be fired. If something was
 //! playing
+//! \todo This should probably be in the rendering folder instead of the GUI folder
 class VideoPlayer : public CallableObject {
 protected:
     using ClockType = std::chrono::steady_clock;
 
-    enum class PacketReadResult {
+    // These targets are attempted to be hit by the decoding
+    constexpr static auto TARGET_BUFFERED_FRAMES = 5;
+    constexpr static auto TARGET_BUFFERED_AUDIO = 60;
 
-        Ended,
-        Ok,
-        QueueFull
-    };
-
-    enum class DecodePriority {
-
-        Video,
-        Audio
-    };
-
-    //! Holds converted audio data that could not be immediately returned by ReadAudioData
-    struct ReadAudioPacket {
+    //! \brief Holds converted audio data that was decoded while decoding video frames
+    struct DecodedAudioData {
 
         std::vector<uint8_t> DecodedData;
+        //! This is used by the audio thread if it can't read the whole thing at once
+        //! in order to not need to free memory
+        size_t CurrentReadOffset = 0;
+
+        //! True once this has been played completely and can be recycled
+        bool Played = true;
     };
 
-    //! Holds raw packets before sending
-    struct ReadPacket {
+    //! brief Holds converted video data that hasn't bee displayed yet
+    struct DecodedVideoData {
 
-        ReadPacket(AVPacket* src)
-        {
+        std::vector<uint8_t> FrameData;
 
-            av_packet_move_ref(&packet, src);
-        }
+        //! The time in seconds when this frame should be displayed
+        float Timestamp = 0.f;
 
-        ~ReadPacket()
-        {
-
-            av_packet_unref(&packet);
-        }
-
-        AVPacket packet;
+        //! Once played this is refilled
+        bool Played = true;
     };
 
 public:
@@ -98,10 +90,11 @@ public:
     }
 
     //! \returns Current playback position, in seconds
-    //! The return value is directly read from the last decoded frame timestamp
+    //! \version This is now the actual time in seconds since the playback started and not the
+    //! timestamp of the current or next frame
     DLLEXPORT float GetCurrentTime() const
     {
-        return CurrentlyDecodedTimeStamp;
+        return PassedTimeSeconds;
     }
 
     //! \returns The total length of the video is seconds
@@ -136,7 +129,7 @@ public:
     //! \returns true if all the ffmpeg stream objects are valid for playback
     DLLEXPORT bool IsStreamValid() const
     {
-        return StreamValid && VideoCodec && ConvertedFrameBuffer;
+        return StreamValid && VideoCodec;
     }
 
     DLLEXPORT auto GetTextureName() const
@@ -179,25 +172,36 @@ protected:
 
     //! \brief Decodes one video frame. Returns false if more data is required
     //! by the decoder
+    //!
+    //! The decoded data is copied to DecodedVideoDataBuffer
     bool DecodeVideoFrame();
 
-    //! \brief Reads a single packet from the stream that matches Priority
-    PacketReadResult ReadOnePacket(DecodePriority priority);
+    //! \brief Decodes one audio frame. Returns false if more data is required
+    //! by the decoder
+    //!
+    //! The decoded data is copied to DecodedAudioDataBuffer
+    bool DecodeAudioFrame();
+
+    //! \brief Reads data and decodes it from the video and audio streams until
+    //! TARGET_BUFFERED_FRAMES and TARGET_BUFFERED_AUDIO are hit
+    void FillPlaybackBuffers();
 
     //! \brief Updates the texture
-    void UpdateTexture();
-
-    //! \brief Reads already decoded audio data. The audio data vector must be locked
-    //! before calling this
-    size_t ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, size_t amount);
-
-    //! \brief Resets timers. Call when playback start or resumes
-    void ResetClock();
+    //!
+    //! Also marks the frame as having been played
+    void UpdateTexture(DecodedVideoData& frametoshow);
 
     //! \brief Called when end of playback has been reached
     //!
     //! Closes the playback and invokes the delegates
     void OnStreamEndReached();
+
+    //! \returns The number of ready video frames
+    int CountReadyFrames() const;
+
+    //! \returns The number of ready audio "frames"
+    //! \todo Could have a method for determining how many *seconds* worth of audio is ready
+    int CountReadyAudioBuffers() const;
 
     //! Video streem seaking. Don't use as the audio will get out of sync
     DLLEXPORT void SeekVideo(float time);
@@ -218,24 +222,22 @@ protected:
     //! True when playing back something and frame start events do something
     bool IsPlaying = false;
 
+    // Could implement a custom file reader
     // AVIOContext* ResourceReader = nullptr;
 
-    // This seems to be not be used anymore
-    // AVCodecContext* Context = nullptr;
     AVFormatContext* FormatContext = nullptr;
 
-
-    // AVCodecParserContext* VideoParser = nullptr;
     AVCodecContext* VideoCodec = nullptr;
     int VideoIndex = 0;
-
-
-    //! How many timestamp units are in a second in the video stream
-    float VideoTimeBase = 1.f;
 
     // AVCodecParserContext* AudioParser = nullptr;
     AVCodecContext* AudioCodec = nullptr;
     int AudioIndex = 0;
+
+
+    SwsContext* ImageConverter = nullptr;
+
+    SwrContext* AudioConverter = nullptr;
 
     AVFrame* DecodedFrame = nullptr;
     AVFrame* DecodedAudio = nullptr;
@@ -244,26 +246,32 @@ protected:
     //! to a format that Ogre texture can accept
     AVFrame* ConvertedFrame = nullptr;
 
+    //! This is the backing buffer for ConvertedFrame
+    //! \note This is not a smart pointer because this needs to be released with av_freep
     uint8_t* ConvertedFrameBuffer = nullptr;
 
-    // Required size for a single converted frame
+    //! Required size for a single converted frame
     size_t ConvertedBufferSize = 0;
+
+    //! Decoded video data. It is stored here rather than as ffmpeg packets because we need to
+    //! read a pretty large buffer of audio and we might as well read video data as well
+    std::vector<DecodedVideoData> DecodedVideoDataBuffer;
+
+
+    //! How many timestamp units are in a second in the video stream
+    float VideoTimeBase = 1.f;
 
     int32_t FrameWidth = 0;
     int32_t FrameHeight = 0;
-
-    SwsContext* ImageConverter = nullptr;
-
-    SwrContext* AudioConverter = nullptr;
 
     //! Audio sample rate
     int SampleRate = 0;
     int ChannelCount = 0;
 
-    std::list<std::unique_ptr<ReadAudioPacket>> ReadAudioDataBuffer;
+    std::list<DecodedAudioData> DecodedAudioDataBuffer;
     Mutex AudioMutex;
 
-    //! Used to start the audio playback once
+    //! Used to start the audio playback once data has been decoded
     bool IsPlayingAudio = false;
 
     //! Audio output
@@ -272,25 +280,25 @@ protected:
 
     // Timing control
     float PassedTimeSeconds = 0.f;
-    float CurrentlyDecodedTimeStamp = 0.f;
-
-    bool NextFrameReady = false;
-
-    //! Set to false if an error occurs and playback should stop
-    bool StreamValid = false;
-
     ClockType::time_point LastUpdateTime;
 
-    Mutex ReadPacketMutex;
-    std::list<std::unique_ptr<ReadPacket>> WaitingVideoPackets;
-    std::list<std::unique_ptr<ReadPacket>> WaitingAudioPackets;
+    //! Set to false if an error occurs and playback should stop
+    std::atomic<bool> StreamValid{false};
+
+    //! Set to true when the stream has ended. This is separate because with the data buffering
+    //! there are still probably multiple frames to play
+    bool ReadReachedEnd = false;
+
+    //! True when the playback has started and no frames have been decoded yet
+    //! Also if paused this will need to be set true when resuming
+    bool FirstCallbackAfterPlay = true;
 
 public:
     //! Called when current video stops player
     //! \todo Should be renamed to OnPlaybackEnded
     Delegate OnPlayBackEnded;
 
-protected:
+private:
     //! Sequence number for video textures
     static std::atomic<int> TextureSequenceNumber;
 };

@@ -420,7 +420,8 @@ bool VideoPlayer::FFMPEGLoadFile()
 
     PassedTimeSeconds = 0.f;
     NextFrameReady = false;
-    CurrentlyDecodedTimeStamp = 0.f;
+    // This is -1 to make this smaller than 0
+    CurrentlyDecodedTimeStamp = -1.f;
 
     StreamValid = true;
 
@@ -958,27 +959,34 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
         }
 
         // This loops until we are displaying a frame we should be showing at this time //
-        while(PassedTimeSeconds >= CurrentlyDecodedTimeStamp) {
+        while(CurrentlyDecodedTimeStamp <= PassedTimeSeconds) {
 
-            // Only decode if there isn't a frame ready
-            Lock lock(ReadPacketMutex);
+            // Make sure the next frame is ready
+            if(!NextFrameReady) {
+                Lock lock(ReadPacketMutex);
 
-            while(!NextFrameReady) {
+                while(!NextFrameReady) {
 
-                // Decode a packet if none are in queue
-                if(ReadOnePacket(lock, DecodePriority::Video) == PacketReadResult::Ended) {
+                    // Decode a packet if none are in queue
+                    if(ReadOnePacket(lock, DecodePriority::Video) == PacketReadResult::Ended) {
 
-                    // There are no more frames, end the playback
-                    OnStreamEndReached();
-                    return -1;
+                        // There are no more frames, end the playback
+                        OnStreamEndReached();
+                        return -1;
+                    }
+
+                    NextFrameReady = DecodeVideoFrame();
                 }
-
-                NextFrameReady = DecodeVideoFrame();
             }
+
+            // Don't show a frame yet if it is too soon
+            if(PassedTimeSeconds < CurrentlyDecodedTimeStamp)
+                break;
 
             UpdateTexture();
             NextFrameReady = false;
         }
+
         return 0;
     }
     default:

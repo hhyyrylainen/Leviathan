@@ -39,8 +39,8 @@ public:
     REFERENCE_COUNTED_PTR_TYPE(VideoPlayerWidget);
 
 protected:
-    DLLEXPORT void OnAddedToContainer(WidgetContainer* container) override;
-    DLLEXPORT void OnRemovedFromContainer(WidgetContainer* container) override;
+    DLLEXPORT void OnAddedToContainer(WidgetLayer* container) override;
+    DLLEXPORT void OnRemovedFromContainer(WidgetLayer* container) override;
 
 private:
     void _DoCallback();
@@ -52,7 +52,7 @@ private:
     bool CanCallCallback = false;
     std::function<void()> Callback;
 
-    WidgetContainer* ContainedIn = nullptr;
+    WidgetLayer* ContainedIn = nullptr;
 
     Ogre::MaterialPtr Material;
     Ogre::SceneNode* Node = nullptr;

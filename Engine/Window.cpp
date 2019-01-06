@@ -24,15 +24,12 @@
 #include "XLibInclude.h"
 #endif
 
-#include "Compositor/OgreCompositorManager2.h"
-#include "Compositor/OgreCompositorNode.h"
-#include "Compositor/OgreCompositorWorkspace.h"
+
 #include "OgreCommon.h"
 #include "OgreRenderWindow.h"
 #include "OgreRoot.h"
-#include "OgreSceneManager.h"
+#include "OgreStringConverter.h"
 #include "OgreVector4.h"
-#include "OgreWindowEventUtilities.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -194,9 +191,6 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     tmpwindow->setActive(true);
     Focused = true;
 
-    // Overlay is needed for the GUI to register its views
-    _CreateOverlayScene();
-
     // create GUI //
     WindowsGui = std::make_unique<GUI::GuiManager>();
     if(!WindowsGui) {
@@ -247,8 +241,6 @@ DLLEXPORT Window::~Window()
     // Report that the window is now closed //
     Logger::Get()->Info(
         "Window: closing window(" + Convert::ToString(GetWindowNumber()) + ")");
-
-    _DestroyOverlay();
 
     // Close the window //
     OWindow->destroy();
@@ -965,42 +957,6 @@ DLLEXPORT void Window::SetCustomInputController(std::shared_ptr<InputController>
 {
     TertiaryReceiver = controller;
 }
-// ------------------------------------ //
-void Window::_CreateOverlayScene()
-{
-    Ogre::Root& ogre = Ogre::Root::getSingleton();
-
-    // create scene manager //
-    OverlayScene = ogre.createSceneManager(Ogre::ST_GENERIC, 1,
-        Ogre::INSTANCING_CULLING_SINGLETHREAD, "Overlay_window_" + Convert::ToString(ID));
-
-    // create camera //
-    OverlayCamera = OverlayScene->createCamera("overlay camera");
-
-    // Create the workspace for this scene
-    // Which will render after the normal scene
-    OverlayWorkspace = ogre.getCompositorManager2()->addWorkspace(
-        OverlayScene, OWindow, OverlayCamera, "OverlayWorkspace", true, 1000);
-}
-
-void Window::_DestroyOverlay()
-{
-    // Destroy the compositor //
-    Ogre::Root& ogre = Ogre::Root::getSingleton();
-
-    // Allow releasing twice
-    if(OverlayWorkspace) {
-        ogre.getCompositorManager2()->removeWorkspace(OverlayWorkspace);
-        OverlayWorkspace = nullptr;
-    }
-
-    if(OverlayScene) {
-        ogre.destroySceneManager(OverlayScene);
-        OverlayScene = nullptr;
-        OverlayCamera = nullptr;
-    }
-}
-
 // ------------------------------------ //
 GUI::Layer* Window::GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey)
 {

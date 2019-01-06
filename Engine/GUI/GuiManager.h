@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -14,8 +14,7 @@ class Layer;
 
 enum class INPUT_EVENT_TYPE : int { Keypress, Scroll, Other };
 
-//! \brief Main GUI controller
-//! \todo Add GUI window objects to this which are associated with different windows
+//! \brief GUI controller for a Window
 class GuiManager {
     struct CutscenePlayStatus;
 
@@ -23,7 +22,6 @@ public:
     DLLEXPORT GuiManager();
     DLLEXPORT ~GuiManager();
 
-    //! \param ismain Set to true for first created GuiManager
     DLLEXPORT bool Init(Graphics* graph, Window* window);
     DLLEXPORT void Release();
 
@@ -39,11 +37,15 @@ public:
     // file loading //
     //! \brief Loads a GUI file
     //! \todo Make sure that loading a path with spaces in it works
+    //! \note This is the CEF version of a GUI layer
     DLLEXPORT bool LoadGUIFile(const std::string& urlorpath, bool nochangelistener = false);
 
-    //! \brief Unloads the currently loaded file
-    //! \todo This needs to be reimplemented
-    DLLEXPORT void UnLoadGUIFile();
+    //! \brief Creates a new GUI layer that uses a widget layout
+    //!
+    //! \param layoutname The name of the layout file to load. If "" then creates an empty
+    //! layer
+    //! \param
+
 
     //! \brief Creates a new Widget Layer and plays a fullscreen video in it
     //!
@@ -109,6 +111,8 @@ private:
     //! rendered on the Window of this GuiManager
     //! \todo Layer pushing and popping needs to have logic for focus changes
     std::vector<boost::intrusive_ptr<GUI::Layer>> ManagedLayers;
+
+    int GuiViewCounter;
 
     //! Disables the GUI trying to capture the mouse when no collection is active
     bool DisableGuiMouseCapture = false;

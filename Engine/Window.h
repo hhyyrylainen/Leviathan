@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -165,11 +165,6 @@ public:
     DLLEXPORT inline Ogre::RenderWindow* GetOgreWindow() const
     {
         return OWindow;
-    };
-
-    DLLEXPORT inline Ogre::SceneManager* GetOverlayScene()
-    {
-        return OverlayScene;
     }
 
     //! Returns this windows creation number
@@ -218,11 +213,6 @@ protected:
     //! Layer has None as the input mode)
     GUI::Layer* GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE type, int mousex, int mousey);
 
-    //! \brief Creates an Ogre scene to display GUI on this window
-    void _CreateOverlayScene();
-
-    void _DestroyOverlay();
-
 #ifdef __linux
     //! \brief Called in SetX11Cursor (or after a slight delay)
     //!
@@ -258,8 +248,12 @@ private:
 
     bool Focused = true;
 
+    //! The state the GUI::GuiManager on this window wants CursorState to be
     bool ApplicationWantCursorState;
+    //! This is true when the mouse needs to be visible, for example when it is outside our
+    //! client area)
     bool ForceMouseVisible = false;
+    //! Controls whether hardware cursor should be visible
     bool CursorState = true;
 
     bool MouseCaptured = false;
@@ -276,10 +270,6 @@ private:
     Ogre::RenderWindow* OWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;
     std::unique_ptr<GUI::GuiManager> WindowsGui;
-
-    Ogre::CompositorWorkspace* OverlayWorkspace = nullptr;
-    Ogre::SceneManager* OverlayScene = nullptr;
-    Ogre::Camera* OverlayCamera = nullptr;
 
     //! Unique id of this window.
     //! Makes sure that created Ogre resources are unique

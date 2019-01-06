@@ -219,7 +219,7 @@ else()
     "GUI/CEFLocalResourceRequest.cpp" "GUI/CEFLocalResourceRequest.h"
     "GUI/CEFConversionHelpers.cpp" "GUI/CEFConversionHelpers.h"
     "GUI/GuiLayer.cpp" "GUI/GuiLayer.h"
-    "GUI/GuiWidgetContainer.cpp" "GUI/GuiWidgetContainer.h"
+    "GUI/GuiWidgetLayer.cpp" "GUI/GuiWidgetLayer.h"
     "GUI/GuiView.cpp" "GUI/GuiView.h"
     "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
     "GUI/JSNativeCoreAPI.cpp" "GUI/JSNativeCoreAPI.h"

@@ -1,9 +1,10 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ReferenceCounted.h"
+#include "Exceptions.h"
 #include "GuiInputSettings.h"
 
 #include "OgreMaterial.h"
@@ -14,35 +15,33 @@
 
 union SDL_Event;
 
+namespace Ogre {
+class Root;
+}
+
 namespace Leviathan { namespace GUI {
 
-//! \brief Base class for WidgetContainer and View (browser containers / CEF) to add to a
+constexpr auto GUI_WORKSPACE_BEGIN_ORDER = 1000;
+
+//! \brief Base class for WidgetLayer and View (browser containers / CEF) to add to a
 //! GuiManager
 class Layer : public ReferenceCounted {
 public:
-    DLLEXPORT Layer(GuiManager* owner, Window* window);
+    DLLEXPORT Layer(GuiManager* owner, Window* window, int renderorder);
     DLLEXPORT virtual ~Layer();
 
     //! \brief Must be called before destroying to release allocated Ogre and other resources
-    DLLEXPORT virtual void ReleaseResources();
+    DLLEXPORT void ReleaseResources();
 
-    //! \brief Notifies the internal browser that the window has resized
+    //! \brief Notifies all the widgets and layout that the size has changed
     //!
     //! Called by GuiManager
-    DLLEXPORT virtual void NotifyWindowResized();
+    DLLEXPORT void NotifyWindowResized();
 
-    //! \brief Notifies the internal browser that focus has been updated
+    //! \brief Notifies this view whether it is in focus or not
     //!
     //! Called by GuiManager
-    DLLEXPORT virtual void NotifyFocusUpdate(bool focused);
-
-    //! \brief Sets the order Layers are drawn in, higher value is draw under other Layers
-    //! \param zcoord The z-coordinate, should be between -1 and 1, higher lower values mean
-    //! that it will be drawn earlier
-    //! \note Actually it most likely won't be drawn earlier, but it will overwrite everything
-    //! below it (if it isn't transparent)
-    //! \todo This is unimplemented
-    DLLEXPORT virtual void SetZVal(float zcoord);
+    DLLEXPORT void NotifyFocusUpdate(bool focused);
 
     DLLEXPORT inline auto GetGuiManager() const
     {
@@ -78,6 +77,15 @@ public:
         return ScrollableElement;
     }
 
+    //! \brief Returns the main scene of this layer that contains all renderables
+    //! \exception InvalidState if this view has been released already
+    DLLEXPORT inline Ogre::SceneManager* GetScene()
+    {
+        if(!Scene)
+            throw InvalidState("This layer has been released already");
+        return Scene;
+    }
+
     // Input passing from Window
     //! \param specialkeymodifiers This has the Leviathan version of the modifier keys. Not
     //! needed often as the event contains this data, but CEF needs the CEF version of this so
@@ -94,6 +102,16 @@ public:
 
     DLLEXPORT virtual void OnMouseButton(const SDL_Event& event, bool down) {}
 
+protected:
+    // Callbacks vor derived classes
+    DLLEXPORT virtual void _DoReleaseResources() {}
+    DLLEXPORT virtual void _OnWindowResized() {}
+    DLLEXPORT virtual void _OnFocusChanged() {}
+
+
+    //! \brief Adjusts the orthographic properties of the camera to match the window size to
+    //! make the Scene world coordinates match up with pixels
+    DLLEXPORT void AdjustCameraProperties();
 
 protected:
     //! Unique ID
@@ -124,6 +142,9 @@ protected:
 
 
     // Rendering resources
+    Ogre::CompositorWorkspace* Workspace;
+    Ogre::SceneManager* Scene;
+    Ogre::Camera* Camera;
 };
 
 }} // namespace Leviathan::GUI

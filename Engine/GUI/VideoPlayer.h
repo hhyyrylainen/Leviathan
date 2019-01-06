@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -69,7 +69,6 @@ protected:
 
         ReadPacket(AVPacket* src)
         {
-
             av_packet_move_ref(&packet, src);
         }
 

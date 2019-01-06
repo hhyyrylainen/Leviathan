@@ -8,7 +8,7 @@
 #include "FileSystem.h"
 #include "GuiLayer.h"
 #include "GuiView.h"
-#include "GuiWidgetContainer.h"
+#include "GuiWidgetLayer.h"
 #include "Handlers/IDFactory.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Rendering/Graphics.h"
@@ -34,7 +34,7 @@ struct GuiManager::CutscenePlayStatus {
     boost::intrusive_ptr<VideoPlayerWidget> Player;
 };
 // ------------------------------------ //
-GuiManager::GuiManager() : ID(IDFactory::GetID()) {}
+GuiManager::GuiManager() : ID(IDFactory::GetID()), GuiViewCounter(GUI_WORKSPACE_BEGIN_ORDER) {}
 GuiManager::~GuiManager() {}
 // ------------------------------------ //
 bool GuiManager::Init(Graphics* graph, Window* window)
@@ -168,7 +168,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     MainGUIFile = urlorpath;
 
     // Create the view //
-    boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow));
+    boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow, GuiViewCounter++));
 
     // Create the final page //
     std::string finalpath;
@@ -213,11 +213,6 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     ManagedLayers.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
     return true;
 }
-
-DLLEXPORT void GuiManager::UnLoadGUIFile()
-{
-    DEBUG_BREAK;
-}
 // ------------------------------------ //
 DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
     std::function<void()> onfinished, std::function<void(const std::string&)> onerror,
@@ -235,7 +230,7 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
         return;
     }
 
-    auto container = WidgetContainer::MakeShared<WidgetContainer>(this, ThisWindow);
+    auto container = WidgetLayer::MakeShared<WidgetLayer>(this, ThisWindow, GuiViewCounter++);
 
     auto player = VideoPlayerWidget::MakeShared<VideoPlayerWidget>();
 
@@ -248,6 +243,7 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
         for(auto iter = ManagedLayers.begin(); iter != ManagedLayers.end(); ++iter) {
 
             if(*iter == container) {
+                (*iter)->ReleaseResources();
                 ManagedLayers.erase(iter);
                 break;
             }

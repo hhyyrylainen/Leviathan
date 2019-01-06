@@ -46,6 +46,7 @@ enum VIEW_SECURITYLEVEL {
 //! GUI can be layered by setting the z coordinate of Views different
 //! \todo Split the process messages away from this into the places that actually sent them
 //! "JSNativeCoreAPI.cpp" to be clearer
+//! \todo If this is to be kept around rename this to CEFLayer
 class View : public Layer,
              public CefClient,
              public CefContextMenuHandler,
@@ -62,20 +63,13 @@ class View : public Layer,
     friend class LeviathanJavaScriptAsync;
 
 public:
-    DLLEXPORT View(GuiManager* owner, Window* window,
+    DLLEXPORT View(GuiManager* owner, Window* window, int renderorder,
         VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
     DLLEXPORT ~View();
 
     //! \brief Must be called before using, initializes required Ogre resources
     //! \return True when succeeds
     DLLEXPORT bool Init(const std::string& filetoload, const NamedVars& headervars);
-
-    DLLEXPORT void ReleaseResources() override;
-
-    DLLEXPORT void NotifyWindowResized() override;
-
-    DLLEXPORT void NotifyFocusUpdate(bool focused) override;
-
 
     DLLEXPORT inline INPUT_MODE GetInputMode() const override
     {
@@ -272,6 +266,10 @@ public:
     }
 
 protected:
+    DLLEXPORT void _DoReleaseResources() override;
+    DLLEXPORT void _OnWindowResized() override;
+    DLLEXPORT void _OnFocusChanged() override;
+
     bool _PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message);
 
     //! \todo It would be quite good if this and HandleProcessMessage (the AudioSource part)

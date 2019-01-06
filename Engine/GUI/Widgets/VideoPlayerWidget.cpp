@@ -1,9 +1,8 @@
 // ------------------------------------ //
 #include "VideoPlayerWidget.h"
 
-#include "GUI/GuiWidgetContainer.h"
+#include "GUI/GuiWidgetLayer.h"
 #include "Rendering/GeometryHelpers.h"
-#include "Window.h"
 
 #include "OgreItem.h"
 #include "OgreMaterialManager.h"
@@ -54,7 +53,7 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 
 
     // Recreate item
-    Ogre::SceneManager* scene = ContainedIn->GetWindow()->GetOverlayScene();
+    Ogre::SceneManager* scene = ContainedIn->GetScene();
 
     if(QuadItem) {
         scene->destroyItem(QuadItem);
@@ -95,7 +94,7 @@ void VideoPlayerWidget::_DoCallback()
         Callback();
 }
 // ------------------------------------ //
-DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetContainer* container)
+DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
 {
     ContainedIn = container;
 
@@ -113,7 +112,7 @@ DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetContainer* container)
 
     Material = baseMaterial->clone("videoplayer_widget_" + std::to_string(ID) + "_material");
 
-    Ogre::SceneManager* scene = ContainedIn->GetWindow()->GetOverlayScene();
+    Ogre::SceneManager* scene = ContainedIn->GetScene();
 
     Node = scene->createSceneNode(Ogre::SCENE_STATIC);
 
@@ -122,12 +121,12 @@ DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetContainer* container)
     scene->getRenderQueue()->setRenderQueueMode(2, Ogre::RenderQueue::FAST);
 }
 
-DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetContainer* container)
+DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
 {
     if(!ContainedIn)
         return;
 
-    Ogre::SceneManager* scene = ContainedIn->GetWindow()->GetOverlayScene();
+    Ogre::SceneManager* scene = ContainedIn->GetScene();
 
     if(Node) {
         scene->destroySceneNode(Node);

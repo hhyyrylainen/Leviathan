@@ -36,9 +36,9 @@ using namespace Leviathan::GUI;
 // ------------------------------------ //
 constexpr auto CEF_BYTES_PER_PIXEL = 4;
 
-DLLEXPORT View::View(GuiManager* owner, Window* window,
+DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
-    Layer(owner, window),
+    Layer(owner, window, renderorder),
     ViewSecurity(security), OurAPIHandler(new LeviathanJavaScriptAsync(this)),
     TextureName("_ChromeOverlay_for_gui_" + Convert::ToString(ID)),
     MaterialName(TextureName + "_material")
@@ -82,9 +82,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // Unlock the buffer //
     pixelBuffer->unlock();
 
-    Ogre::SceneManager* scene = Wind->GetOverlayScene();
-
-    Node = scene->createSceneNode(Ogre::SCENE_STATIC);
+    Node = Scene->createSceneNode(Ogre::SCENE_STATIC);
 
     // This needs to be manually destroyed later
     QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(TextureName + "mesh", -1, -1, 2, 2);
@@ -109,9 +107,9 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
 
     // Setup render queue for it
     // TODO: different queues for different GUIs
-    scene->getRenderQueue()->setRenderQueueMode(1, Ogre::RenderQueue::FAST);
+    Scene->getRenderQueue()->setRenderQueueMode(1, Ogre::RenderQueue::FAST);
 
-    QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
+    QuadItem = Scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
     QuadItem->setCastShadows(false);
 
     // Need to edit the render queue and add it to an early one
@@ -141,7 +139,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     return true;
 }
 
-DLLEXPORT void View::ReleaseResources()
+DLLEXPORT void View::_DoReleaseResources()
 {
     // Stop all events //
     UnRegisterAllEvents();
@@ -166,15 +164,13 @@ DLLEXPORT void View::ReleaseResources()
     // Destroy all remaining proxy targets
     ProxyedObjects.clear();
 
-    Ogre::SceneManager* scene = Wind->GetOverlayScene();
-
     if(Node) {
-        scene->destroySceneNode(Node);
+        Scene->destroySceneNode(Node);
         Node = nullptr;
     }
 
     if(QuadItem) {
-        scene->destroyItem(QuadItem);
+        Scene->destroyItem(QuadItem);
         QuadItem = nullptr;
     }
 
@@ -188,7 +184,7 @@ DLLEXPORT void View::ReleaseResources()
     Texture.setNull();
 }
 // ------------------------------------ //
-DLLEXPORT void View::NotifyWindowResized()
+DLLEXPORT void View::_OnWindowResized()
 {
     if(OurBrowser.get()) {
 
@@ -196,14 +192,11 @@ DLLEXPORT void View::NotifyWindowResized()
     }
 }
 
-DLLEXPORT void View::NotifyFocusUpdate(bool focused)
+DLLEXPORT void View::_OnFocusChanged()
 {
-    // Update our focus //
-    OurFocus = focused;
-
     if(OurBrowser.get()) {
 
-        OurBrowser->GetHost()->SendFocusEvent(focused);
+        OurBrowser->GetHost()->SendFocusEvent(OurFocus);
     }
 }
 // ------------------------------------ //

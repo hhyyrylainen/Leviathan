@@ -7,11 +7,11 @@
 
 namespace Leviathan { namespace GUI {
 
-class WidgetContainer;
+class WidgetLayer;
 
 //! \brief Base class for all Leviathan GUI widgets
 class Widget : public ReferenceCounted {
-    friend WidgetContainer;
+    friend WidgetLayer;
 
 protected:
     DLLEXPORT Widget();
@@ -24,8 +24,8 @@ public:
 protected:
     // These are called by the widget container when this is added or removed. This is the
     // recommended place to acquire rendering resources
-    DLLEXPORT virtual void OnAddedToContainer(WidgetContainer* container);
-    DLLEXPORT virtual void OnRemovedFromContainer(WidgetContainer* container);
+    DLLEXPORT virtual void OnAddedToContainer(WidgetLayer* container);
+    DLLEXPORT virtual void OnRemovedFromContainer(WidgetLayer* container);
 
 public:
     REFERENCE_COUNTED_PTR_TYPE(Widget);

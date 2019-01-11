@@ -296,6 +296,30 @@ else()
     file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
   endif()
 
+  if(USE_ANGELSCRIPTJIT)
+    if(WIN32)
+      if(CMAKE_SIZEOF_VOID_P EQUAL 8) #64 bits
+        set(GroupAngelScriptJIT
+        "AngelScriptJIT/as_jit.cpp" "AngelScriptJIT/as_jit.h" "AngelScriptJIT/virtual_asm.h"
+        "AngelScriptJIT/virtual_asm_windows.cpp" "AngelScriptJIT/virtual_asm_x64.cpp")
+      elseif(CMAKE_SIZEOF_VOID_P EQUAL 4) #32 bits
+        set(GroupAngelScriptJIT
+        "AngelScriptJIT/as_jit.cpp" "AngelScriptJIT/as_jit.h" "AngelScriptJIT/virtual_asm.h"
+        "AngelScriptJIT/virtual_asm_windows.cpp" "AngelScriptJIT/virtual_asm_x86.cpp")
+      endif()
+    elseif(UNIX)
+      if(CMAKE_SIZEOF_VOID_P EQUAL 8) #64 bits, check if this works on linux
+        set(GroupAngelScriptJIT
+        "AngelScriptJIT/as_jit.cpp" "AngelScriptJIT/as_jit.h" "AngelScriptJIT/virtual_asm.h"
+        "AngelScriptJIT/virtual_asm_linux.cpp" "AngelScriptJIT/virtual_asm_x64.cpp")
+      elseif(CMAKE_SIZEOF_VOID_P EQUAL 4) #32 bits, check if this works on linux
+        set(GroupAngelScriptJIT
+        "AngelScriptJIT/as_jit.cpp" "AngelScriptJIT/as_jit.h" "AngelScriptJIT/virtual_asm.h"
+        "AngelScriptJIT/virtual_asm_linux.cpp" "AngelScriptJIT/virtual_asm_x86.cpp")
+      endif()
+    endif()
+  endif()
+
 endif()
 
 set(GroupObjectFiles
@@ -392,6 +416,10 @@ if(USE_LEAP)
   source_group("Leap" FILES ${GroupLeap})
 endif()
 
+if(USE_ANGELSCRIPTJIT)
+  source_group("AngelScriptJIT" FILES ${GroupAngelScriptJIT})
+endif()
+
 # collect all files to one group
 set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupSound}
@@ -412,6 +440,9 @@ if(USE_LEAP)
   set(EngineFiles ${EngineFiles} ${GroupLeap})
 endif()
 
+if(USE_ANGELSCRIPTJIT)
+  set(EngineFiles ${EngineFiles} ${GroupAngelScriptJIT})
+endif()
     
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)

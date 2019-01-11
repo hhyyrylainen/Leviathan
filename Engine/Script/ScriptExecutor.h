@@ -17,6 +17,7 @@
 
 // angelscript //
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
+#include "AngelScriptJIT/as_jit.h"
 #include "angelscript.h"
 
 
@@ -289,7 +290,6 @@ public:
     DLLEXPORT static ScriptExecutor* Get();
 
 private:
-
     //! Helper for _PassParametersToScript
     //! \todo When passing signed types do we need to reinterpret_cast them to unsigned types
     template<class CurrentT, class... Args>
@@ -800,6 +800,9 @@ protected:
 private:
     // AngelScript engine script executing part //
     asIScriptEngine* engine;
+
+    // AngelScript JIT Compiler
+    asCJITCompiler* jit;
 
     // list of modules that have been created, some might only have this as reference, and
     // could potentially be released

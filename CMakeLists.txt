@@ -62,6 +62,9 @@ option(BUILD_SAMPLES "Set to OFF to disable building demo programs" ON)
 # Check is leap motion used
 option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" ON)
 
+# Check if AngelScriptJIT is used
+option(USE_ANGELSCRIPTJIT "Set to on to enable AngelscriptJIT being built" ON)
+
 # Option for only building the documentation (for lighter jenkins)
 option(ONLY_DOCUMENTATION "If true only documentation can be built correctly" OFF)
 

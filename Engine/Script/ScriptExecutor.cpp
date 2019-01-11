@@ -108,7 +108,7 @@ void ReturnContextCallback(asIScriptEngine* engine, asIScriptContext* context, v
 
 } // namespace Leviathan
 
-ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
+ScriptExecutor::ScriptExecutor() : engine(nullptr), jit(nullptr), AllocatedScriptModules()
 {
 
     instance = this;
@@ -124,6 +124,12 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
                              "leviathan/Angelscript/include from your angelscript.zip");
         throw Exception("Failed to init angelscript");
     }
+
+    // Initialize JIT Compiler //
+    jit = new asCJITCompiler();
+    engine->SetEngineProperty(
+        asEP_INCLUDE_JIT_INSTRUCTIONS, 1); // Enable JIT Helper instructions
+    engine->SetJITCompiler(jit); // Bind JIT to engine
 
     // set callback to error report function //
     engine->SetMessageCallback(asFUNCTION(ScriptMessageCallback), 0, asCALL_CDECL);
@@ -255,6 +261,8 @@ ScriptExecutor::~ScriptExecutor()
         engine->Release();
         engine = nullptr;
     }
+
+    delete jit;
 
     instance = nullptr;
 }

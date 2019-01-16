@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../ThirdParty/angelscript/sdk/angelscript/source/as_callfunc.h"
 #include "../../ThirdParty/angelscript/sdk/angelscript/source/as_config.h"
+#include "../../ThirdParty/angelscript/sdk/angelscript/source/as_memory.h"
+
+#include "../../ThirdParty/angelscript/sdk/angelscript/source/as_callfunc.h"
 #include "../../ThirdParty/angelscript/sdk/angelscript/source/as_context.h"
 #include "../../ThirdParty/angelscript/sdk/angelscript/source/as_objecttype.h"
 #include "../../ThirdParty/angelscript/sdk/angelscript/source/as_scriptengine.h"

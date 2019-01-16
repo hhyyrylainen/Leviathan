@@ -17,8 +17,8 @@
 
 // angelscript //
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
-#include "AngelScriptJIT/as_jit.h"
 #include "angelscript.h"
+#include "AngelScriptJIT/as_jit.h"
 
 
 #if ANGELSCRIPT_VERSION >= 23300

@@ -15,7 +15,6 @@ DLLEXPORT LeviathanApplication::LeviathanApplication() : _Engine(new Engine(this
 
 DLLEXPORT LeviathanApplication::~LeviathanApplication()
 {
-
     // Release should have been called when exiting the main loop
     SAFE_DELETE(_Engine);
     Curapp = nullptr;
@@ -23,7 +22,6 @@ DLLEXPORT LeviathanApplication::~LeviathanApplication()
 
 DLLEXPORT LeviathanApplication* LeviathanApplication::Get()
 {
-
     return Curapp;
 }
 

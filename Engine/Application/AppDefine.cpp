@@ -106,6 +106,29 @@ DLLEXPORT AppDef* Leviathan::AppDef::GenerateAppdefine(const std::string& engine
     return tmpptr.release();
 }
 
+DLLEXPORT void AppDef::ReplaceGameAndKeyConfigInMemory(
+    std::function<void(Lock& guard, GameConfiguration* configobj)> configchecker /*= nullptr*/,
+    std::function<void(Lock& guard, KeyConfiguration* keysobject)> keychecker /*= nullptr*/)
+{
+    if(_GameConfiguration)
+        delete _GameConfiguration;
+
+    _GameConfiguration = new GameConfiguration();
+
+    if(!_GameConfiguration->Init(configchecker)) {
+
+        LOG_ERROR("AppDef: failed to init new in-memory game configuration");
+    }
+
+    // Load key configuration //
+    _KeyConfiguration = new KeyConfiguration();
+
+    if(!_KeyConfiguration->Init(keychecker)) {
+
+        LOG_ERROR("AppDef: failed to init new in-memory key configuration");
+    }
+}
+
 
 #ifdef _WIN32
 DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(const std::string& title,

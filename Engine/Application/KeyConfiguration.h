@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -16,6 +16,10 @@ class KeyConfiguration : public ThreadSafe {
 public:
     //! \param configfile The file which is used for saving and loading keys
     DLLEXPORT KeyConfiguration(const std::string& configfile);
+
+    //! Creates an in-memory only configuration
+    DLLEXPORT KeyConfiguration();
+
     DLLEXPORT ~KeyConfiguration();
 
     //! \brief Loads the defined keys from a file
@@ -64,6 +68,9 @@ private:
     std::atomic<bool> Marked = false;
 
     std::string KeyStorageFile;
+
+    //! If true this isn't saved / loaded from a file
+    bool InMemory = false;
 
     //! Not a bidirectional map to allow multiple keys to resolve to the same things
     std::map<std::string, std::shared_ptr<std::vector<GKey>>> KeyConfigurations;

@@ -127,6 +127,11 @@ public:
         return Entities.size();
     }
 
+    //! \brief Returns the created entity id vector
+    DLLEXPORT inline const auto& GetEntities() const
+    {
+        return Entities;
+    }
 
     //! \brief Used to keep track of passed ticks and trigger timed triggers
     //! \note This will be called (or should be) every time the engine ticks

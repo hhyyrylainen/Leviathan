@@ -50,7 +50,7 @@ class AppDef {
 
 public:
     DLLEXPORT AppDef(const bool& isdef = false);
-    DLLEXPORT ~AppDef();
+    DLLEXPORT virtual ~AppDef();
 
 
     DLLEXPORT NamedVars* GetValues();
@@ -137,6 +137,11 @@ public:
     //! This is also used to fill existing configs with missing values
     //! \returns True if options need to be saved (changes were made)
     DLLEXPORT virtual bool FillDefaultEngineConf(NamedVars& variables);
+
+    //! Creates game and key configurations without file backing that are empty
+    DLLEXPORT void ReplaceGameAndKeyConfigInMemory(
+        std::function<void(Lock& guard, GameConfiguration* configobj)> configchecker = nullptr,
+        std::function<void(Lock& guard, KeyConfiguration* keysobject)> keychecker = nullptr);
 
 protected:
     std::unique_ptr<NamedVars> ConfigurationValues;

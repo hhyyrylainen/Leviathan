@@ -44,6 +44,18 @@ struct WorldNetworkSettings {
         return settings;
     }
 
+    //! \brief Creates settings for worlds that have no interest in networking (singleplayer
+    //! only)
+    static inline WorldNetworkSettings GetSettingsForSinglePlayer()
+    {
+        WorldNetworkSettings settings;
+        settings.IsAuthoritative = true;
+        settings.AutoCreateNetworkComponents = false;
+        settings.DoInterpolation = false;
+
+        return settings;
+    }
+
     //! This is true on the server
     bool IsAuthoritative = false;
 

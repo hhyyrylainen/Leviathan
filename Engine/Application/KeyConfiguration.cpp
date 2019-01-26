@@ -7,8 +7,10 @@ using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT KeyConfiguration::KeyConfiguration(const std::string& configfile) :
     KeyStorageFile(configfile)
-{
-}
+{}
+
+//! Creates an in-memory only configuration
+DLLEXPORT KeyConfiguration::KeyConfiguration() : InMemory(true) {}
 
 DLLEXPORT KeyConfiguration::~KeyConfiguration()
 {
@@ -20,40 +22,38 @@ DLLEXPORT bool KeyConfiguration::Init(
 {
     GUARD_LOCK();
 
-    // Skip if not given a file //
-    if(KeyStorageFile.size() == 0)
-        return true;
-
     // Load the values from the file //
-    std::vector<std::shared_ptr<NamedVariableList>> tmpvalues;
+    if(!InMemory) {
+        std::vector<std::shared_ptr<NamedVariableList>> tmpvalues;
 
-    if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues, Logger::Get())) {
-        // Create keys from the values //
+        if(FileSystem::LoadDataDump(KeyStorageFile, tmpvalues, Logger::Get())) {
+            // Create keys from the values //
 
-        for(auto iter = tmpvalues.begin(); iter != tmpvalues.end(); ++iter) {
-            // Get name for storing //
-            auto name = (*iter)->GetName();
-            // Try to create a key //
-            auto keys = std::make_shared<std::vector<GKey>>();
+            for(auto iter = tmpvalues.begin(); iter != tmpvalues.end(); ++iter) {
+                // Get name for storing //
+                auto name = (*iter)->GetName();
+                // Try to create a key //
+                auto keys = std::make_shared<std::vector<GKey>>();
 
-            std::vector<VariableBlock*>& values = (*iter)->GetValues();
+                std::vector<VariableBlock*>& values = (*iter)->GetValues();
 
-            for(size_t i = 0; i < values.size(); i++) {
-                // Parse a key //
-                if(values[i]->IsConversionAllowedNonPtr<std::string>()) {
-                    keys->push_back(
-                        GKey::GenerateKeyFromString(values[i]->operator std::string()));
+                for(size_t i = 0; i < values.size(); i++) {
+                    // Parse a key //
+                    if(values[i]->IsConversionAllowedNonPtr<std::string>()) {
+                        keys->push_back(
+                            GKey::GenerateKeyFromString(values[i]->operator std::string()));
+                    }
                 }
-            }
 
-            // Assign to the map //
-            KeyConfigurations[name] = keys;
+                // Assign to the map //
+                KeyConfigurations[name] = keys;
+            }
         }
     }
 
-
     // Call the function with a pointer to this for it to verify loaded keys //
-    functocheck(guard, this);
+    if(functocheck)
+        functocheck(guard, this);
 
     if(Marked)
         Save(guard);
@@ -102,6 +102,9 @@ DLLEXPORT void KeyConfiguration::MarkAsChanged()
 // ------------------------------------ //
 DLLEXPORT void KeyConfiguration::Save(Lock& guard)
 {
+    if(InMemory)
+        return;
+
     // Skip if not given a file //
     if(KeyStorageFile.size() == 0)
         return;

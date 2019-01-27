@@ -18,12 +18,12 @@
 // angelscript //
 //#define ANGELSCRIPT_DLL_LIBRARY_IMPORT
 #include "angelscript.h"
-#include "AngelScriptJIT/as_jit.h"
-
 
 #if ANGELSCRIPT_VERSION >= 23300
 #define ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 #endif
+
+class asCJITCompiler;
 
 namespace Leviathan {
 

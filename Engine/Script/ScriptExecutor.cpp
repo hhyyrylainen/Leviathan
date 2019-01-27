@@ -31,6 +31,8 @@
 // Exception support
 #include "OgreException.h"
 
+#include "AngelScriptJIT/as_jit.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 namespace Leviathan {
@@ -128,8 +130,8 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), jit(nullptr), AllocatedScrip
     // Initialize JIT Compiler //
     jit = new asCJITCompiler();
     engine->SetEngineProperty(
-        asEP_INCLUDE_JIT_INSTRUCTIONS, 1); // Enable JIT Helper instructions
-    engine->SetJITCompiler(jit); // Bind JIT to engine
+        asEP_INCLUDE_JIT_INSTRUCTIONS, 0); // Enable JIT Helper instructions
+    //engine->SetJITCompiler(jit); // Bind JIT to engine
 
     // set callback to error report function //
     engine->SetMessageCallback(asFUNCTION(ScriptMessageCallback), 0, asCALL_CDECL);

@@ -17,6 +17,10 @@ class LeviathanApplication : public ThreadSafe {
 public:
     // creation and initialization //
     DLLEXPORT LeviathanApplication();
+
+    //! \brief Version for tests with incomplete engine instance
+    DLLEXPORT LeviathanApplication(Engine* engine);
+
     DLLEXPORT virtual ~LeviathanApplication();
 
     DLLEXPORT virtual bool Initialize(AppDef* configuration);
@@ -116,6 +120,9 @@ protected:
     //! This can be quickly set anywhere to quit sometime in the future
     bool QuitSometime = false;
 
+    //! If true then this was given the Engine instance from somewhere else (most likely
+    //! PartialEngine)
+    bool ExternalEngineInstance = false;
     Engine* _Engine;
     AppDef* ApplicationConfiguration = nullptr;
 

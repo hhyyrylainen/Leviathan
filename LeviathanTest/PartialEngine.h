@@ -200,7 +200,6 @@ class PartialEngine : public Engine {
 public:
     PartialEngine(NetworkHandler* handler = nullptr) : Engine(&App), Log("Test/TestLog.txt")
     {
-
         // Configure for test use //
         NoGui = true;
         NoLeap = true;
@@ -230,7 +229,6 @@ public:
 
     ~PartialEngine()
     {
-
         Log.Save();
 
         if(UseActualInit) {
@@ -252,7 +250,6 @@ public:
     //! Creates random support
     void InitRandomForTest()
     {
-
         // Always same number to have reproducible tests
         MainRandom = new Random(42);
         MainRandom->SetAsMain();
@@ -260,7 +257,6 @@ public:
 
     void ResetClock(int mstoset)
     {
-
         LastTickTime = Time::GetTimeMs64() - mstoset;
     }
 

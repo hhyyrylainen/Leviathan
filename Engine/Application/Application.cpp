@@ -13,10 +13,20 @@ DLLEXPORT LeviathanApplication::LeviathanApplication() : _Engine(new Engine(this
     Curapp = this;
 }
 
+//! \brief Version for tests with incomplete engine instance
+DLLEXPORT LeviathanApplication::LeviathanApplication(Engine* engine) :
+    ExternalEngineInstance(true), _Engine(engine)
+{
+    LEVIATHAN_ASSERT(_Engine, "no engine pointer given");
+    Curapp = this;
+}
+
 DLLEXPORT LeviathanApplication::~LeviathanApplication()
 {
     // Release should have been called when exiting the main loop
-    SAFE_DELETE(_Engine);
+    if(!ExternalEngineInstance)
+        SAFE_DELETE(_Engine);
+    _Engine = nullptr;
     Curapp = nullptr;
 }
 

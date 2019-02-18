@@ -17,6 +17,8 @@ using namespace Leviathan::GUI;
 // ------------------------------------ //
 
 // Ogre::PF_R8G8B8A8 results in incorrect images, for some reason
+// RGBA is an alias for: PF_BYTE_RGBA = PF_A8B8G8R8 so that probably explains.
+// Luckily it seems ffmpeg RGBA is also in the same order
 constexpr Ogre::PixelFormat OGRE_IMAGE_FORMAT = Ogre::PF_BYTE_RGBA;
 // This must match the above definition
 constexpr AVPixelFormat FFMPEG_DECODE_TARGET = AV_PIX_FMT_RGBA;

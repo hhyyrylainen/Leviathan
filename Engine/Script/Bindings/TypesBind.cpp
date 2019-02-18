@@ -8,7 +8,6 @@ using namespace Leviathan;
 
 // Proxies etc.
 // ------------------------------------ //
-// TODO: do these float types need destructor or should they be declared POD types
 
 ObjectID NULL_OBJECT_WRAPPER = NULL_OBJECT;
 

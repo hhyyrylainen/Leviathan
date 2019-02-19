@@ -104,6 +104,7 @@ $ffmpeg = FFMPEG.new(
 
 $ogre = Ogre.new(
   version: "v2-1",
+  epoch: 2,
   installPath: THIRD_PARTY_INSTALL,
   buildTools: true,
   noInstallSudo: true
@@ -111,6 +112,7 @@ $ogre = Ogre.new(
 
 $caudio = CAudio.new(
   version: "master",
+  epoch: 2,
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   noTutorials: true
@@ -143,7 +145,8 @@ if OS.windows?
   $freeimage = FreeImage.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
-    version: "master"
+    version: "master",
+    epoch: 3    
   )
 
   $sdl = SDL.new(

@@ -64,6 +64,10 @@ if(LEVIATHAN_FULL_BUILD)
     # Needed for CEF
     "${LEVIATHAN_SRC}/build/ThirdParty/"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE"
+    # Ogre now needs these to also be include directories
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Common"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Pbs"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Unlit"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bullet"
     )
 

@@ -9,11 +9,11 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Threading/ThreadingManager.h"
 
-#include "Hlms/Pbs/OgreHlmsPbs.h"
-#include "Hlms/Unlit/OgreHlmsUnlit.h"
 #include "OgreArchiveManager.h"
 #include "OgreFrameListener.h"
 #include "OgreHlmsManager.h"
+#include "OgreHlmsPbs.h"
+#include "OgreHlmsUnlit.h"
 #include "OgreLogManager.h"
 #include "OgreMaterialManager.h"
 #include "OgreMeshManager.h"

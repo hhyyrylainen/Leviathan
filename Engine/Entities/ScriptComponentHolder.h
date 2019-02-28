@@ -1,5 +1,6 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
+#pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ReferenceCounted.h"
@@ -51,7 +52,8 @@ public:
     //! \brief Destroys a component of held type for entity
     //! \note This is just a wrapper for ReleaseComponent to be more consistent with c++
     //! component types
-    DLLEXPORT inline bool Destroy(ObjectID entity){
+    DLLEXPORT inline bool Destroy(ObjectID entity)
+    {
         return ReleaseComponent(entity);
     }
 
@@ -60,6 +62,7 @@ public:
     //! Caller must release reference
     //! \todo Check can we somehow return all the keys and the objects to avoid having to call
     //! Find from scripts after this
+    //! \note This builds a new array object on each call.
     DLLEXPORT CScriptArray* GetIndex() const;
 
 

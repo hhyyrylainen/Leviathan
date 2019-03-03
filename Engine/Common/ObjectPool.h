@@ -667,6 +667,28 @@ public:
         return Index;
     }
 
+    inline auto GetIndexSize() const
+    {
+        return Index.size();
+    }
+
+    //! \brief Returns a created object by index
+    //!
+    //! Helper for exposing object pools to scripts
+    //! \note This is not optimal. It seems that with the map approach it's not possible to
+    //! have good random iterator access
+    inline ElementType* GetAtIndex(size_t index)
+    {
+        if(index >= Index.size())
+            throw InvalidArgument("index out of range");
+
+        auto iter = Index.begin();
+
+        for(size_t i = 0; i < index; ++i)
+            ++iter;
+        return iter->second;
+    }
+
 protected:
     //! \brief Removes an component from the index but doesn't destruct it
     //! \note The component will only be deallocated once this object is destructed

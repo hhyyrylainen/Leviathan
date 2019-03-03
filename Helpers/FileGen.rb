@@ -62,6 +62,15 @@ class Generator
         file.puts "#include \"#{i}\""
       }
 
+      @OutputObjs.each do |obj|
+
+        if obj.respond_to? :getExtraIncludes
+          obj.getExtraIncludes .each{|i|
+            file.puts "#include \"#{i}\""
+          }
+        end
+      end      
+
       if options.include?(:impl)
         @ImplIncludes.each{|i|
           file.puts "#include \"#{i}\""
@@ -719,7 +728,12 @@ class GameWorldClass < OutputClass
     @Systems.each{|s|
       @Members.push(Variable.new("_" + s.Name, s.Type))
     }
-    
+
+  end
+
+  # Default includes
+  def getExtraIncludes
+    return ["Script/ScriptConversionHelpers.h", "boost/range/adaptor/map.hpp"]
   end
 
   def genMemberConstructor(f, opts)
@@ -907,7 +921,7 @@ class GameWorldClass < OutputClass
         f.puts "}"
       else
         f.puts ";"
-      end      
+      end
 
       if opts.include?(:header)
         f.write "#{export}inline const auto& #{qualifier opts}GetComponentIndex_#{c.type}()"
@@ -916,6 +930,45 @@ class GameWorldClass < OutputClass
         f.puts "    return Component#{c.type}.GetIndex();"
         f.puts "}"
       end
+
+      if opts.include?(:header)
+        f.write "#{export}inline uint64_t #{qualifier opts}GetComponentCount_#{c.type}() " +
+                "const"
+
+        f.puts "{"
+        f.puts "    return Component#{c.type}.GetIndexSize();"
+        f.puts "}"
+      end
+
+      if opts.include?(:header)
+        f.write "#{export}inline #{c.type}* #{qualifier opts}GetComponentPtrByIndex_" +
+                "#{c.type}(uint64_t index)"
+
+        f.puts "{"
+        f.puts "    return Component#{c.type}.GetAtIndex(index);"
+        f.puts "}"
+      end
+
+      if opts.include?(:header)
+        f.puts "//! \\note This creates a new array object on each call"
+      end
+      f.write "#{export}CScriptArray* #{qualifier opts}GetComponentIndexWrapper_#{c.type}()"
+      if opts.include?(:impl)
+        f.puts "{"
+        f.puts "    const auto& index = Component#{c.type}.GetIndex();"
+        f.puts "    asIScriptContext* ctx = asGetActiveContext();"
+
+        f.puts "    asIScriptEngine* engine = ctx ? ctx->GetEngine() : " +
+               "Leviathan::ScriptExecutor::Get()->GetASEngine();"
+
+        f.puts "    return ConvertIteratorToASArray((index | " +
+               "boost::adaptors::map_keys).begin(),"
+        f.puts "          (index | boost::adaptors::map_keys).end(), " +
+               %{engine, "array<ObjectID>");}
+        f.puts "}"
+      else
+        f.puts ";"
+      end            
       
       f.puts ""
       firstLoop = false
@@ -1707,6 +1760,20 @@ END
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ GetComponent_#{c.type}} +
            %{(ObjectID id)", \n} +
            %{asMETHOD(WorldType, GetComponentPtr_#{c.type}), asCALL_THISCALL) < 0)\n} +
+           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+    str += %{if(engine->RegisterObjectMethod(classname, "array<ObjectID>@ GetComponentIndex_} +
+           %{#{c.type}()", \n} +
+           %{asMETHOD(WorldType, GetComponentIndexWrapper_#{c.type}), asCALL_THISCALL) } +
+           %{< 0)\n} +
+           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+    
+    str += %{if(engine->RegisterObjectMethod(classname, "uint64 GetComponentCount_#{c.type}} +
+           %{()", \n} +
+           %{asMETHOD(WorldType, GetComponentCount_#{c.type}), asCALL_THISCALL) < 0)\n} +
+           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+    str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ GetComponentByIndex_} +
+           %{#{c.type}(uint64 index)", \n} +
+           %{asMETHOD(WorldType, GetComponentPtrByIndex_#{c.type}), asCALL_THISCALL) < 0)\n} +
            "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ } +
            %{RemoveComponent_#{c.type}(ObjectID id)", \n} +

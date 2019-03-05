@@ -1,9 +1,11 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
 #include "AutoUpdateable.h"
 #include "CallableObject.h"
+#include "Script/ScriptModule.h"
 #include "Script/ScriptScript.h"
 
 

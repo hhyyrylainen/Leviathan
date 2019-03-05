@@ -6,6 +6,15 @@ if(WIN32)
   set(CMAKE_PREFIX_PATH "${LEVIATHAN_SRC}/build/ThirdParty")
 endif()
 
+# Detect library settings
+if(LEVIATHAN_USING_ANGELSCRIPT OR LEVIATHAN_USING_OGRE OR LEVIATHAN_USING_BULLET OR
+    LEVIATHAN_USING_CEF OR LEVIATHAN_USING_GUI OR LEVIATHAN_USING_SFML OR
+    LEVIATHAN_USING_SDL2 OR LEVIATHAN_USING_LEAP)
+    set(LEVIATHAN_USING_DEPENDENCIES ON)
+else()
+  set(LEVIATHAN_USING_DEPENDENCIES OFF)
+endif()
+
 # Find Boost
 if(TRUE)
 
@@ -50,7 +59,6 @@ set(LEVIATHAN_ENGINE_LIBRARIES ${Boost_LIBRARIES})
 # Plus of course linking against the Engine target
 set(LEVIATHAN_APPLICATION_LIBRARIES ${Boost_LIBRARIES})
 
-
 if(LEVIATHAN_USING_DEPENDENCIES)
 
   # Require build script to have been ran
@@ -89,9 +97,9 @@ if(LEVIATHAN_USING_DEPENDENCIES)
 
   # CEF must be linked to first in order for it to be loaded first to avoid a ton of problems
   if(NOT WIN32)
-    set(LEVIATHAN_ENGINE_LIBRARIES cef cef_dll_wrapper)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES cef cef_dll_wrapper)
   else()
-    set(LEVIATHAN_ENGINE_LIBRARIES libcef libcef_dll_wrapper)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES libcef libcef_dll_wrapper)
   endif()
 
   list(APPEND LEVIATHAN_ENGINE_LIBRARIES
@@ -127,9 +135,9 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   # theoretically these aren't always used by the game program but CEF will absolutely
   # break without them being loaded first and that doesn't happen when they aren't here
   if(NOT WIN32)
-    set(LEVIATHAN_APPLICATION_LIBRARIES cef cef_dll_wrapper)
+    list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef cef_dll_wrapper)
   else()
-    set(LEVIATHAN_APPLICATION_LIBRARIES libcef libcef_dll_wrapper)
+    list(APPEND LEVIATHAN_APPLICATION_LIBRARIES libcef libcef_dll_wrapper)
   endif()
 
   # # Currently disabled

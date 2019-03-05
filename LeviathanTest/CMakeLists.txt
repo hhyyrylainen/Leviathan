@@ -1,63 +1,49 @@
 # LeviathanTest application CMake
 
-if(LEVIATHAN_FULL_BUILD)
-  set(TestSources
-    resource.h
-    TestMain.cpp
-    PartialEngine.h PartialEngine.cpp
-    NetworkTestHelpers.h NetworkTestHelpers.cpp
+# TODO: split tests by enabled features
+set(TestSources
+  resource.h
+  TestMain.cpp
+  PartialEngine.h PartialEngine.cpp
+  NetworkTestHelpers.h NetworkTestHelpers.cpp
 
-    TestFiles/ReferenceCounted.cpp
-    TestFiles/StringIterator.cpp
-    TestFiles/StringOperations.cpp
-    TestFiles/ExtraAlgorithms.cpp
-    TestFiles/IDFactory.cpp
-    TestFiles/MathTypes.cpp
-    TestFiles/Script.cpp
-    TestFiles/ScriptConversions.cpp
-    TestFiles/HashTesting.cpp
-    TestFiles/ObjectFiles.cpp
-    TestFiles/Floats.cpp
-    TestFiles/Regex.cpp
-    TestFiles/DataBlock.cpp
-    TestFiles/DeltaStates.cpp
-    TestFiles/Sendable.cpp
-    TestFiles/NamedVars.cpp
-    TestFiles/Components.cpp
-    TestFiles/StdBehaviour.cpp
-    TestFiles/Archive.cpp
-    TestFiles/PacketFormat.cpp
-    TestFiles/PacketsAndConnection.cpp
-    TestFiles/GuiTests.cpp
-    TestFiles/Delegate.cpp
-    TestFiles/Task.cpp
-    TestFiles/Key.cpp
-    TestFiles/Events.cpp
-    TestFiles/GameModule.cpp
-    TestFiles/Physics.cpp
-    TestFiles/Entities.cpp
-    TestFiles/ScriptInterfaces.cpp
-    TestFiles/CustomScriptComponents.cpp
-    TestFiles/MimeTypes.cpp
-    
-    TestFiles/CoreEngineTests.cpp
+  TestFiles/ReferenceCounted.cpp
+  TestFiles/StringIterator.cpp
+  TestFiles/StringOperations.cpp
+  TestFiles/ExtraAlgorithms.cpp
+  TestFiles/IDFactory.cpp
+  TestFiles/MathTypes.cpp
+  TestFiles/Script.cpp
+  TestFiles/ScriptConversions.cpp
+  TestFiles/HashTesting.cpp
+  TestFiles/ObjectFiles.cpp
+  TestFiles/Floats.cpp
+  TestFiles/Regex.cpp
+  TestFiles/DataBlock.cpp
+  TestFiles/DeltaStates.cpp
+  TestFiles/Sendable.cpp
+  TestFiles/NamedVars.cpp
+  TestFiles/Components.cpp
+  TestFiles/StdBehaviour.cpp
+  TestFiles/Archive.cpp
+  TestFiles/PacketFormat.cpp
+  TestFiles/PacketsAndConnection.cpp
+  TestFiles/GuiTests.cpp
+  TestFiles/Delegate.cpp
+  TestFiles/Task.cpp
+  TestFiles/Key.cpp
+  TestFiles/Events.cpp
+  TestFiles/GameModule.cpp
+  TestFiles/Physics.cpp
+  TestFiles/Entities.cpp
+  TestFiles/ScriptInterfaces.cpp
+  TestFiles/CustomScriptComponents.cpp
+  TestFiles/MimeTypes.cpp
+  
+  TestFiles/CoreEngineTests.cpp
 
-    TestFiles/EntitySynchronizationAndInterpolation.cpp
-    )
-else()
-  # Just a few tests required
-  set(TestSources
-    resource.h
-    TestMain.cpp
-    TestFiles/StringIterator.cpp
-    TestFiles/StringOperations.cpp
-    TestFiles/ObjectFiles.cpp
-    TestFiles/Floats.cpp
-    TestFiles/Regex.cpp
-    TestFiles/NamedVars.cpp
-    TestFiles/StdBehaviour.cpp
-    )
-endif()
+  TestFiles/EntitySynchronizationAndInterpolation.cpp
+  )
 
 set(ExtraFiles "DummyLog.cpp" "DummyLog.h")
 

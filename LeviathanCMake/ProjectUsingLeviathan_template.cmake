@@ -23,14 +23,14 @@ include(LeviathanCompileOptions)
 include(LeviathanSetRPath)
 
 # Find required libraries
-set(LEVIATHAN_FULL_BUILD ON)
-# TODO: check are these used
-set(USE_ANGELSCRIPT ON)
-set(USE_BOOST ON)
-set(USE_OGRE ON)
-set(USE_NEWTON ON)
-set(USE_SFML ON)
-set(USE_SDL2 ON)
+set(LEVIATHAN_USING_ANGELSCRIPT ON)
+set(LEVIATHAN_USING_OGRE ON)
+set(LEVIATHAN_USING_BULLET ON)
+set(LEVIATHAN_USING_CEF ON)
+set(LEVIATHAN_USING_GUI ON)
+set(LEVIATHAN_USING_SFML ON)
+set(LEVIATHAN_USING_SDL2 ON)
+set(LEVIATHAN_USING_LEAP ON)
 
 include(LeviathanFindLibraries)
 

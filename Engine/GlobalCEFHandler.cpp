@@ -118,8 +118,8 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
     settings.external_message_pump = true;
 
     // Apparently this is missing from the windows version but not the linux version. For some
-    // reason? 
-	// settings.single_process = false;
+    // reason?
+    // settings.single_process = false;
 
     // // Enable remote debugging
     // settings.remote_debugging_port = 9090;
@@ -187,7 +187,7 @@ DLLEXPORT void Leviathan::GlobalCEFHandler::RegisterCustomJavaScriptQueryHandler
 DLLEXPORT void Leviathan::GlobalCEFHandler::UnRegisterCustomJavaScriptQueryHandler(
     GUI::JSAsyncCustom* toremove)
 {
-    boost::unique_lock<std::recursive_mutex> guard(JSCustomMutex);
+    std::unique_lock<std::recursive_mutex> guard(JSCustomMutex);
 
     // Notify all objects //
     for(size_t i = 0; i < JSAsynToNotify.size(); i++) {

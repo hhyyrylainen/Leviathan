@@ -1,6 +1,7 @@
 #include "../PartialEngine.h"
 #include "Engine.h"
 
+#include "Script/ScriptModule.h"
 #include "Utility/Random.h"
 
 #include "catch.hpp"
@@ -25,7 +26,6 @@ public:
 
 TEST_CASE("Invokes work", "[engine][threading]")
 {
-
     InvokeTestPartialEngine engine;
 
     SECTION("Basic")
@@ -46,7 +46,6 @@ TEST_CASE("Invokes work", "[engine][threading]")
         bool invokeCalled = false;
 
         engine.Invoke([&]() {
-
             engine.Invoke([&]() { engine.Invoke([&]() { invokeCalled = true; }); });
         });
 
@@ -58,7 +57,6 @@ TEST_CASE("Invokes work", "[engine][threading]")
 
 TEST_CASE("Invokes work from scripts", "[engine][script]")
 {
-
     CHECK(Engine::Get() == nullptr);
 
     InvokeTestPartialEngine engine;
@@ -130,7 +128,6 @@ Random* GetTestRandom()
 
 TEST_CASE("Random gives values between the correct things", "[engine][random]")
 {
-
     SECTION("0.f, 13.f")
     {
         Random random;
@@ -145,7 +142,6 @@ TEST_CASE("Random gives values between the correct things", "[engine][random]")
 
     SECTION("0, 1 gives both 0 and 1 at some point")
     {
-
         SECTION("C++ side")
         {
             Random random;

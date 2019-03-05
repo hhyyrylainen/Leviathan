@@ -443,7 +443,7 @@ if(NOT WIN32)
   
 endif(NOT WIN32)
 
-if(WIN32 AND LEVIATHAN_FULL_BUILD)
+if(WIN32 AND LEVIATHAN_USING_ANGELSCRIPT)
   
   # Angelscript needs /LTCG flag
   # It now actually doesn't with the new build setup stuff

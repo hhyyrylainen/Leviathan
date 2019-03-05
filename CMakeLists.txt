@@ -71,7 +71,7 @@ option(USE_GUI "Enable Leviathan GUI" ON)
 option(USE_SFML "Enable features needing SFML" ON)
 option(USE_SDL2 "Enable features needing SDL2" ON)
 
-option(LEVIATHAN_USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" OFF)
+option(USE_LEAP "Set to on when using Leap motion, will auto disable if files are not copied" OFF)
 
 # Builds Leviathan as an utility library
 option(LEVIATHAN_AS_LIBRARY "Builds standalone compatible Leviathan parts only" OFF)
@@ -106,35 +106,26 @@ else()
   set(LEVIATHAN_USING_GUI ${USE_GUI})
   set(LEVIATHAN_USING_SFML ${USE_SFML})
   set(LEVIATHAN_USING_SDL2 ${USE_SDL2})
-  set(LEVIATHAN_USING_LEAP ${USE_LEAP})  
-endif()
-
-
-if(LEVIATHAN_USING_ANGELSCRIPT OR LEVIATHAN_USING_OGRE OR LEVIATHAN_USING_BULLET OR
-    LEVIATHAN_USING_CEF OR LEVIATHAN_USING_GUI OR LEVIATHAN_USING_SFML OR
-    LEVIATHAN_USING_SDL2 OR LEVIATHAN_USING_LEAP)
-    set(LEVIATHAN_USING_DEPENDENCIES ON)
-else()
-  set(LEVIATHAN_USING_DEPENDENCIES OFF)
+  set(LEVIATHAN_USING_LEAP ${USE_LEAP})
 endif()
 
 # Configuration checks
-if(LEVIATHAN_USING_OGRE)
+if(LEVIATHAN_USING_OGRE AND NOT LEVIATHAN_USING_SDL2)
   message(SEND_ERROR "When using Ogre SDL2 must also be used")
 endif()
 
 # Check that leap motion can be enabled
-if(LEVIATHAN_USE_LEAP)
+if(LEVIATHAN_USING_LEAP)
   if(EXISTS "${LEVIATHAN_SRC}/Leap/include/Leap.h")
 
     message(STATUS "Leap motion includes found")
     
   else()
 
-    message(STATUS
+    message(WARNING
       "Leap motion files aren't installed in leviathan/Leap, Leap motion support is disabled")
     
-    set(LEVIATHAN_USE_LEAP OFF)
+    set(LEVIATHAN_USING_LEAP OFF)
     
   endif()
 endif()

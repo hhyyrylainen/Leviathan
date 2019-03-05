@@ -2,6 +2,8 @@
 // Copyright (c) 2012-2017 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
+#include "Logger.h"
+
 #include "angelscript.h"
 
 #include <map>

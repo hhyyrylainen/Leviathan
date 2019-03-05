@@ -31,7 +31,7 @@
 #include "OgreQuaternion.h"
 #include "OgreVector3.h"
 #include "OgreVector4.h"
-#endif // LEVIATHAN_FULL
+#endif // LEVIATHAN_USING_OGRE
 
 namespace Leviathan {
 

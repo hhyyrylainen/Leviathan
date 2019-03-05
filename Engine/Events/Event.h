@@ -5,7 +5,6 @@
 // ------------------------------------ //
 #include "Common/DataStoring/NamedVars.h"
 #include "Common/ReferenceCounted.h"
-#include "Script/ScriptModule.h"
 
 namespace Leviathan {
 
@@ -42,6 +41,30 @@ enum EVENT_TYPE {
     EVENT_TYPE_ALL
 };
 
+#define LISTENERNAME_ONSHOW "OnShow"
+#define LISTENERNAME_ONHIDE "OnHide"
+#define LISTENERNAME_ONLISTENUPDATE "OnListenUpdate"
+#define LISTENERNAME_ONCLICK "OnClick"
+#define LISTENERNAME_ONINIT "OnInit"
+#define LISTENERNAME_ONRELEASE "OnRelease"
+#define LISTENERNAME_ONVALUECHANGE "OnValueChange"
+#define LISTENERNAME_ONSUBMIT "OnSubmit"
+#define LISTENERNAME_ONTICK "OnTick"
+#define LISTENERNAME_ONCLOSECLICKED "OnCloseClicked"
+#define LISTENERNAME_LISTSELECTIONACCEPTED "OnListSelectionAccepted"
+
+#define LISTENERVALUE_ONSHOW 100
+#define LISTENERVALUE_ONHIDE 101
+#define LISTENERVALUE_ONLISTENUPDATE 102
+#define LISTENERVALUE_ONCLICK 103
+#define LISTENERVALUE_ONINIT 104
+#define LISTENERVALUE_ONRELEASE 105
+#define LISTENERVALUE_ONVALUECHANGE 106
+#define LISTENERVALUE_ONSUBMIT 107
+#define LISTENERVALUE_ONTICK 108
+#define LISTENERVALUE_ONCLOSECLICKED 109
+#define LISTENERVALUE_LISTSELECTIONACCEPTED 110
+
 //! Name of listener event type pairs, used by ResolveStringToType in CallableObject and
 //! EventableScriptObject to register for global events
 static const std::map<std::string, EVENT_TYPE> EventListenerNameToEventMap = {
@@ -58,8 +81,10 @@ static const std::map<std::string, EVENT_TYPE> EventListenerCommonNameToEventMap
 //! \note Child classes constructors should contain one for creating from a packet
 class BaseEventData {
 public:
+#ifdef LEVIATHAN_USING_SFML
     //! \brief Adds this to a packet for retrieving it later
     virtual void AddDataToPacket(sf::Packet& packet) = 0;
+#endif
 
     virtual ~BaseEventData();
 };
@@ -69,9 +94,11 @@ class ClientInterpolationEventData : public BaseEventData {
 public:
     DLLEXPORT ClientInterpolationEventData(int tick, int mspassed);
 
+#ifdef LEVIATHAN_USING_SFML
     DLLEXPORT ClientInterpolationEventData(sf::Packet& packet);
 
     DLLEXPORT void AddDataToPacket(sf::Packet& packet) override;
+#endif
 
 private:
     void CalculatePercentage();
@@ -95,11 +122,13 @@ public:
 class IntegerEventData : public BaseEventData {
 public:
     //! \brief Loads from a packet
-    DLLEXPORT IntegerEventData(sf::Packet& packet);
-
     DLLEXPORT IntegerEventData(int ticknumber);
 
+#ifdef LEVIATHAN_USING_SFML
+    DLLEXPORT IntegerEventData(sf::Packet& packet);
+
     virtual void AddDataToPacket(sf::Packet& packet);
+#endif
 
     //! Current engine tick count
     int IntegerDataValue;
@@ -108,8 +137,10 @@ public:
 //! \brief Class that represents a statically defined event
 class Event : public ReferenceCounted {
 public:
+#ifdef LEVIATHAN_USING_SFML
     //! \brief Loads this event from a packet
     DLLEXPORT Event(sf::Packet& packet);
+#endif
     //! \brief Creates a new event
     //! \warning Funky things can happen if the type doesn't match the type of data
     DLLEXPORT Event(EVENT_TYPE type, BaseEventData* data);
@@ -118,9 +149,10 @@ public:
     //! \brief Gets the Type of the event
     DLLEXPORT EVENT_TYPE GetType() const;
 
-
+#ifdef LEVIATHAN_USING_SFML
     //! \brief Saves this event to a packet
     DLLEXPORT void AddDataToPacket(sf::Packet& packet) const;
+#endif
 
     // Data getting functions //
     DLLEXPORT ClientInterpolationEventData* GetDataForClientInterpolationEvent() const;
@@ -140,8 +172,10 @@ protected:
 //! \brief Class that represents a dynamically defined event
 class GenericEvent : public ReferenceCounted {
 public:
+#ifdef LEVIATHAN_USING_SFML
     //! \brief Constructs this object from a packet
     DLLEXPORT GenericEvent(sf::Packet& packet);
+#endif
 
     //! \brief Constructs a generic event
     DLLEXPORT GenericEvent(const std::string& type, const NamedVars& copyvals);
@@ -153,8 +187,10 @@ public:
     DLLEXPORT GenericEvent(std::string* takeownershipstr, NamedVars* takeownershipvars);
     DLLEXPORT ~GenericEvent();
 
+#ifdef LEVIATHAN_USING_SFML
     //! \brief Serializes this event to a packet
     DLLEXPORT void AddDataToPacket(sf::Packet& packet) const;
+#endif
 
     //! \brief Gets this event's variables
     DLLEXPORT const NamedVars GetVariablesConst() const;

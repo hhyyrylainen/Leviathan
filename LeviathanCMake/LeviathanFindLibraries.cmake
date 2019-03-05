@@ -7,7 +7,8 @@ if(WIN32)
 endif()
 
 # Find Boost
-if(USE_BOOST)
+if(TRUE)
+
   # Uncomment the next line to get boost debug info
   # set(Boost_DEBUG ON)
 
@@ -41,9 +42,16 @@ if(USE_BOOST)
   # All libs are linked by cmake
   add_definitions(-DBOOST_ALL_NO_LIB)
   
-endif(USE_BOOST)
+endif(TRUE)
 
-if(LEVIATHAN_FULL_BUILD)
+# Libraries the engine links against
+set(LEVIATHAN_ENGINE_LIBRARIES ${Boost_LIBRARIES})
+
+# Plus of course linking against the Engine target
+set(LEVIATHAN_APPLICATION_LIBRARIES ${Boost_LIBRARIES})
+
+
+if(LEVIATHAN_USING_DEPENDENCIES)
 
   # Require build script to have been ran
   if(NOT EXISTS "${LEVIATHAN_SRC}/build/ThirdParty/lib")
@@ -54,12 +62,14 @@ if(LEVIATHAN_FULL_BUILD)
     message(SEND_ERROR "Leviathan build script hasn't installed headers")
   endif()
 
+  # TODO: make this use LEVIATHAN_USING_SDL2
+  
   # Set the setup script result directories
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib"
     "${LEVIATHAN_SRC}/build/ThirdParty/lib64"
     "${LEVIATHAN_SRC}/build/ThirdParty/bin"
     )
-  
+
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
     # Needed for CEF
     "${LEVIATHAN_SRC}/build/ThirdParty/"
@@ -72,7 +82,7 @@ if(LEVIATHAN_FULL_BUILD)
     )
 
   # Find SDL2
-  if(USE_SDL2)
+  if(LEVIATHAN_USING_SDL2)
     find_package(SDL2 REQUIRED)
     include_directories(${SDL2_INCLUDE_DIR})
   endif()
@@ -91,7 +101,7 @@ if(LEVIATHAN_FULL_BUILD)
     # ffmpeg
     avcodec avformat avutil swresample swscale
     cAudio
-    ${Boost_LIBRARIES} ${SDL2_LIBRARY} AngelScriptAddons
+    ${SDL2_LIBRARY} AngelScriptAddons
     )
 
 
@@ -127,21 +137,15 @@ if(LEVIATHAN_FULL_BUILD)
   #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
   # endif()  
   
-  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES ${Boost_LIBRARIES} OgreMain
+  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES OgreMain
     OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network AngelScriptAddons)
-
-  set(LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES)
-  
-else()
-
-  set(LEVIATHAN_ENGINE_LIBRARIES)
-
-  # Plus of course linking against the Engine target
-  set(LEVIATHAN_APPLICATION_LIBRARIES)
-  
   
 endif()
+  
+
+set(LEVIATHAN_APPLICATION_CUSTOMJS_LIBRARIES)
+  
 
 if(NOT WIN32)
 
@@ -149,7 +153,7 @@ if(NOT WIN32)
   
 endif()
 
-if(USING_LEAP)
+if(LEVIATHAN_USING_LEAP)
   include_directories("${LEVIATHAN_SRC}/Leap/include")
   include_directories("${LEVIATHAN_SRC}/Leap")
   link_directories("${LEVIATHAN_SRC}/Leap/lib/x64")
@@ -181,20 +185,8 @@ if(MAKE_RELEASE)
 endif()
 
 
-# Setup predefined macros
-DefinePreprocessorMacro(USE_ANGELSCRIPT LEVIATHAN_USING_ANGELSCRIPT)
-DefinePreprocessorMacro(USE_BOOST LEVIATHAN_USING_BOOST)
-DefinePreprocessorMacro(USE_OGRE LEVIATHAN_USING_OGRE)
-DefinePreprocessorMacro(USE_SFML LEVIATHAN_USING_SFML)
-DefinePreprocessorMacro(USE_LEAP LEVIATHAN_USING_LEAP)
-DefinePreprocessorMacro(USE_SDL2 LEVIATHAN_USING_SDL2)
-
-DefinePreprocessorMacro(USE_BREAKPAD LEVIATHAN_USING_BREAKPAD)
-
-DefinePreprocessorMacro(CREATE_SHIPPING LEVIATHAN_NO_DEBUG)
-
-
-DefinePreprocessorMacro(CREATE_UE4_PLUGIN LEVIATHAN_CREATE_UE4_PLUGIN)
+# Copy some macro values
+set(LEVIATHAN_NO_DEBUG ${CREATE_SHIPPING})
 
 
 

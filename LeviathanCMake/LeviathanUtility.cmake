@@ -1,17 +1,5 @@
 # Common macros for Leviathan cmake files to be shorter
 
-# Specifies values for c preprocessor use. First argument is the current value second is the
-# name to set the resulting value
-macro(DefinePreprocessorMacro CheckValue TargetValue)
-
-  if(${CheckValue})
-    set(${TargetValue} 1)
-  else()
-    set(${TargetValue} 0)
-  endif()
-  
-endmacro(DefinePreprocessorMacro CheckValue TargetValue)
-
 # Makes a list unique and removes debug and optimized
 macro(MakeUniqueAndSanitizeLibraryList TargetList)
   

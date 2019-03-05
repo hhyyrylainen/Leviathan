@@ -4,7 +4,10 @@
 #include "Define.h"
 // ------------------------------------ //
 
+#include "Logger.h"
+
 #include <cmath>
+#include <stdexcept>
 
 // Uncomment for debugging and major slow downs
 // #define CHECK_FOR_NANS
@@ -18,9 +21,12 @@
 #define DO_NAN_CHECK
 #endif // CHECK_FOR_NANS
 
-#ifdef LEVIATHAN_FULL
+#ifdef LEVIATHAN_USING_BULLET
 #include "LinearMath/btQuaternion.h"
 #include "LinearMath/btVector3.h"
+#endif
+
+#ifdef LEVIATHAN_USING_OGRE
 #include "OgreColourValue.h"
 #include "OgreQuaternion.h"
 #include "OgreVector3.h"
@@ -958,7 +964,7 @@ public:
         return Float3(0.f, 0.f, 1.f);
     }
     // ----------------- casts ------------------- //
-#ifdef LEVIATHAN_FULL
+#ifdef LEVIATHAN_USING_OGRE
     DLLEXPORT Float3(const Ogre::Vector3& vec)
     {
         // copy values //
@@ -1375,7 +1381,7 @@ public:
         return Float4(0.f, 0.f, 0.f, 1.f);
     }
 
-#ifdef LEVIATHAN_FULL
+#ifdef LEVIATHAN_USING_OGRE
     DLLEXPORT Float4(const Ogre::Quaternion& quat)
     {
         // copy values //

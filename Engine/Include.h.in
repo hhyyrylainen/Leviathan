@@ -1,27 +1,18 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2017 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 //
 // File configured by CMake do not edit Include.h //
 //
 
-// UE4 Plugin version
-#if @LEVIATHAN_CREATE_UE4_PLUGIN@ == 1
+// #define ALTERNATIVE_EXCEPTIONS_FATAL
+// #define NO_DEFAULT_DATAINDEX
 
-#ifndef LEVIATHAN_BUILD
-#define LEVIATHAN_ASSERT(x, msg) ensureMsgf(x, TEXT(msg))
-#endif //LEVIATHAN_BUILD
-
-#define DEBUG_BREAK LEVIATHAN_ASSERT(false, "Debug Break");
-
-#define LEVIATHAN_UE_PLUGIN
-#define ALTERNATIVE_EXCEPTIONS_FATAL
+// If defined some select classes are leaked into global namespace
+#define LEAK_INTO_GLOBAL
 #define ALLOW_INTERNAL_EXCEPTIONS
-#define NO_DEFAULT_DATAINDEX
 
-#else
-
-// Sandbox is only used on windows
+// Sandbox properly works on non-windows platforms
 #ifndef _WIN32
 #undef CEF_ENABLE_SANDBOB
 #else
@@ -31,54 +22,32 @@
 #undef CEF_ENABLE_SANDBOB
 #endif //_WIN32
 
-// If defined some select classes are leaked into global namespace
-#define LEAK_INTO_GLOBAL
-#define ALLOW_INTERNAL_EXCEPTIONS
-#define LEVIATHAN_FULL
-#endif
 
-#define LEVIATHAN_NO_DEBUG @LEVIATHAN_NO_DEBUG@
-#if LEVIATHAN_NO_DEBUG == 0
-#undef LEVIATHAN_NO_DEBUG
-#define LEVIATHAN_DEBUG
-#endif //LEVIATHAN_NO_DEBUG
 
-#define LEVIATHAN_USING_ANGELSCRIPT @LEVIATHAN_USING_ANGELSCRIPT@
-#if LEVIATHAN_USING_ANGELSCRIPT == 0
-#undef LEVIATHAN_USING_ANGELSCRIPT
-#endif //LEVIATHAN_USING_ANGELSCRIPT
+#cmakedefine LEVIATHAN_NO_DEBUG
 
-#define LEVIATHAN_USING_BOOST @LEVIATHAN_USING_BOOST@
-#if LEVIATHAN_USING_BOOST == 0
-#undef LEVIATHAN_USING_BOOST
-#endif //LEVIATHAN_USING_BOOST
+#cmakedefine LEVIATHAN_USING_ANGELSCRIPT
 
-#define LEVIATHAN_USING_OGRE @LEVIATHAN_USING_OGRE@
-#if LEVIATHAN_USING_OGRE == 0
-#undef LEVIATHAN_USING_OGRE
-#endif //LEVIATHAN_USING_OGRE
+// #cmakedefine LEVIATHAN_USING_BOOST
+// Can't be disabled
+#define LEVIATHAN_USING_BOOST
 
-#define LEVIATHAN_USING_SFML @LEVIATHAN_USING_SFML@
-#if LEVIATHAN_USING_SFML == 0
-#undef LEVIATHAN_USING_SFML
-#else
+#cmakedefine LEVIATHAN_USING_OGRE
+
+#cmakedefine LEVIATHAN_USING_ANGELSCRIPT
+
+#cmakedefine LEVIATHAN_USING_BULLET
+
+#cmakedefine LEVIATHAN_USING_CEF
+
+#cmakedefine LEVIATHAN_USING_SDL2
+
+#cmakedefine LEVIATHAN_USING_SFML
+#ifdef LEVIATHAN_USING_SFML
 #define SFML_PACKETS
-#endif //LEVIATHAN_USING_SFML
+#endif // LEVIATHAN_USING_SFML
 
-#define LEVIATHAN_USING_LEAP @LEVIATHAN_USING_LEAP@
-#if LEVIATHAN_USING_LEAP == 0
-#undef LEVIATHAN_USING_LEAP
-#endif
-
-#define LEVIATHAN_USING_BREAKPAD @LEVIATHAN_USING_BREAKPAD@
-#if LEVIATHAN_USING_BREAKPAD == 0
-#undef LEVIATHAN_USING_BREAKPAD
-#endif
-
-#define LEVIATHAN_USING_SDL2 @LEVIATHAN_USING_SDL2@
-#if LEVIATHAN_USING_SDL2 == 0
-#undef LEVIATHAN_USING_SDL2
-#endif //LEVIATHAN_USING_SDL2
+#cmakedefine LEVIATHAN_USING_LEAP
 
 #cmakedefine LEVIATHAN_USE_ACTUAL_OBJECT_POOLS
 
@@ -86,10 +55,10 @@
 #define LEVIATHAN_VERSIONS L"@LEVIATHAN_VERSION_STR@"
 #define LEVIATHAN_VERSION_ANSIS "@LEVIATHAN_VERSION_STR@"
 
-#define LEVIATHAN_VERSION_STABLE    @LEVIATHAN_VERSION_STABLE@
-#define LEVIATHAN_VERSION_MAJOR     @LEVIATHAN_VERSION_MAJOR@
-#define LEVIATHAN_VERSION_MINOR     @LEVIATHAN_VERSION_MINOR@
-#define LEVIATHAN_VERSION_PATCH     @LEVIATHAN_VERSION_PATCH@
+#define LEVIATHAN_VERSION_STABLE @LEVIATHAN_VERSION_STABLE@
+#define LEVIATHAN_VERSION_MAJOR @LEVIATHAN_VERSION_MAJOR@
+#define LEVIATHAN_VERSION_MINOR @LEVIATHAN_VERSION_MINOR@
+#define LEVIATHAN_VERSION_PATCH @LEVIATHAN_VERSION_PATCH@
 
 #define LEVIATHAN
 
@@ -100,19 +69,19 @@
 #ifndef DLLEXPORT
 #ifdef ENGINE_EXPORTS
 #ifdef _WIN32
-#define DLLEXPORT    __declspec( dllexport )
+#define DLLEXPORT __declspec(dllexport)
 #else
 // This might not be needed for gcc
-#define DLLEXPORT   __attribute__ ((visibility ("default")))
+#define DLLEXPORT __attribute__((visibility("default")))
 #endif
 // Json-cpp //
 #define JSON_DLL_BUILD
 #else
 
 #ifdef _WIN32
-#define DLLEXPORT __declspec( dllimport )
+#define DLLEXPORT __declspec(dllimport)
 #else
-#define DLLEXPORT 
+#define DLLEXPORT
 #endif
 
 
@@ -124,15 +93,13 @@
 #ifndef _WIN32
 
 #define FORCE_INLINE __attribute__((always_inline))
-    
+
 #else
 // Windows needs these //
-#define FORCE_INLINE    __forceinline
-#endif    
-#endif //FORCE_INLINE
+#define FORCE_INLINE __forceinline
+#endif
+#endif // FORCE_INLINE
 
 #ifndef NOT_UNUSED
 #define NOT_UNUSED(x) (void)x;
-#endif //NOT_UNUSED
-
-
+#endif // NOT_UNUSED

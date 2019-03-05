@@ -3,6 +3,8 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Logger.h"
+
 #include <memory>
 #include <mutex>
 #include <type_traits>
@@ -37,6 +39,18 @@ struct LockTypeResolver<RecursiveMutex> {
 
 
 class Locker {
+
+    template<typename T>
+    static T* TurnToPointer(const std::shared_ptr<T>& obj)
+    {
+        return obj.get();
+    }
+
+    template<typename T>
+    static T* TurnToPointer(const std::unique_ptr<T>& obj)
+    {
+        return obj.get();
+    }
 
     template<typename T>
     static T* TurnToPointer(T& obj)

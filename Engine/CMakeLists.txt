@@ -1,89 +1,73 @@
 # engine library Cmake file
 
-# get all files in their groups
-if(CREATE_UE4_PLUGIN)
+# Generate additional source files
+# This is here as an example to make this work later
+#add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h
+#   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h\""
+#   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h\""
+#   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h"
+#)
 
-  set(GroupCore "Define.cpp" "Define.h" "FileSystem.cpp" "FileSystem.h" "ForwardDeclarations.h"
-    "ErrorReporter.h" "Logger.cpp" "Logger.h" "utf8.h" "Include.h"
-    "Exceptions.h" "Exceptions.cpp"
-    "TimeIncludes.h" "TimeIncludes.cpp" "WindowsInclude.h"
-    )
-  
-  set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
-    "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ReferenceCounted.h"
-    "Common/StringOperations.cpp" "Common/StringOperations.h"
-    "Common/ExtraAlgorithms.h"
-    "Common/ThreadSafe.h" 
-    "Common/Types.h" "Common/Types.cpp"
-    "Common/Visitor.cpp" "Common/Visitor.h"
-    "Common/CommonMath.cpp" "Common/CommonMath.h"
-    )
-  
-  set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
-    "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
-    )
-  
-  set(GroupUtility "Utility/Convert.cpp" "Utility/Convert.h"
-    "Utility/Random.cpp" "Utility/Random.h"
-    )
+# Generate additional source files
+add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h"
+  COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
+  "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
+  DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"
+  )
 
-  set(GroupEntities "Entities/EntityCommon.h")
 
-else()
-  # Generate additional source files
-  # This is here as an example to make this work later
-  #add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h
-  #   COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h\"" 
-  #   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h\""
-  #   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/Generated.in.h"
-  #)
+set(GroupCore "Define.cpp" "Define.h" "FileSystem.cpp" "FileSystem.h"
+  "ForwardDeclarations.h"
+  "Logger.cpp" "Logger.h" "ErrorReporter.h"
+  "utf8.h" "Include.h"
+  "Exceptions.h" "Exceptions.cpp"
+  "TimeIncludes.h" "TimeIncludes.cpp"
+  "WindowsInclude.h"
+  )
 
-  # Generate additional source files
-  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h"
-    COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
-    "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
-    DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"
-    )
+if(NOT LEVIATHAN_AS_LIBRARY)
+  list(APPEND GroupCore "Engine.cpp" "Engine.h")
+endif()
 
-  
-  set(GroupCore "Define.cpp" "Define.h" "Engine.cpp" "Engine.h" "FileSystem.cpp" "FileSystem.h"
-    "ForwardDeclarations.h"
-    "Logger.cpp" "Logger.h" "ErrorReporter.h"
-    "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp" "utf8.h" "Include.h"
-    "Exceptions.h" "Exceptions.cpp"
-    "TimeIncludes.h" "TimeIncludes.cpp"
-    "WindowsInclude.h"
-    "GlobalCEFHandler.cpp" "GlobalCEFHandler.h"
-    )
-  
-  set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
-    "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
-    "Common/ObjectPool.h" "Common/ObjectPoolThreadSafe.h"
-    "Common/ReferenceCounted.h"
-    "Common/SFMLPackets.cpp" "Common/SFMLPackets.h"
-    "Common/StringOperations.cpp" "Common/StringOperations.h"
-    "Common/ThreadSafe.h" 
-    "Common/Types.h" "Common/Types.cpp"
-    "Common/Visitor.cpp" "Common/Visitor.h"
-    "Common/MimeTypes.cpp" "Common/MimeTypes.h"
-    "Common/CommonMath.cpp" "Common/CommonMath.h"
-    )
-  
-  set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
-    "Utility/Convert.cpp" "Utility/Convert.h"
-    "Utility/DebugVariableNotifier.cpp" "Utility/DebugVariableNotifier.h"
-    "Utility/MD5Generator.cpp" "Utility/MD5Generator.h"
-    "Utility/Random.cpp" "Utility/Random.h"
-    "Utility/well.h" "Utility/InstanceCounter.h"
-    "Utility/DebugObjectTracker.h"
-    )
-  
-  set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
-    "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
-    "Common/DataStoring/DataStore.cpp" "Common/DataStoring/DataStore.h"
-    )
+if(LEVIATHAN_USING_OGRE)
+  list(APPEND GroupCore "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp")
+endif()
 
+if(LEVIATHAN_USING_CEF)
+  list(APPEND GroupCore "GlobalCEFHandler.cpp" "GlobalCEFHandler.h")
+endif()
+
+set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
+  "Common/BaseNotifier.h" "Common/BaseNotifierImpl.h"
+  "Common/ObjectPool.h" "Common/ObjectPoolThreadSafe.h"
+  "Common/ReferenceCounted.h"
+  "Common/StringOperations.cpp" "Common/StringOperations.h"
+  "Common/ThreadSafe.h" 
+  "Common/Types.h" "Common/Types.cpp"
+  "Common/Visitor.cpp" "Common/Visitor.h"
+  "Common/MimeTypes.cpp" "Common/MimeTypes.h"
+  "Common/CommonMath.cpp" "Common/CommonMath.h"
+  )
+
+if(LEVIATHAN_USING_SFML)
+  list(APPEND GroupCommon "Common/SFMLPackets.cpp" "Common/SFMLPackets.h")
+endif()
+
+set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
+  "Utility/Convert.cpp" "Utility/Convert.h"
+  "Utility/DebugVariableNotifier.cpp" "Utility/DebugVariableNotifier.h"
+  "Utility/MD5Generator.cpp" "Utility/MD5Generator.h"
+  "Utility/Random.cpp" "Utility/Random.h"
+  "Utility/well.h" "Utility/InstanceCounter.h"
+  "Utility/DebugObjectTracker.h"
+  )
+
+set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
+  "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
+  "Common/DataStoring/DataStore.cpp" "Common/DataStoring/DataStore.h"
+  )
+
+if(LEVIATHAN_USING_OGRE)
   add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.cpp"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
@@ -119,7 +103,10 @@ else()
     "Generated/StandardWorld.h" "Generated/StandardWorld.cpp"
     "Generated/ComponentStates.h" "Generated/ComponentStates.cpp"
     )
-  
+
+endif()
+
+if(NOT LEVIATHAN_AS_LIBRARY)
   file(GLOB GroupApplication "Application/AppDefine.cpp" "Application/AppDefine.h"
     "Application/Application.cpp" "Application/Application.h"
     "Application/GameConfiguration.cpp" "Application/GameConfiguration.h"
@@ -129,7 +116,9 @@ else()
     "Application/ClientApplication.cpp" "Application/ClientApplication.h"
     "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
     )
+endif()
 
+if(LEVIATHAN_USING_SFML)
   add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
     COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
@@ -169,12 +158,16 @@ else()
     "Generated/RequestImpl.h" "Networking/GenerateRequest.rb"
     "Generated/ResponseImpl.h" "Networking/GenerateResponse.rb"
     )
-  
+endif()
+
+if(LEVIATHAN_USING_OGRE)
   set(GroupRendering
     "Rendering/GeometryHelpers.h" "Rendering/GeometryHelpers.cpp"
     "Rendering/Graphics.cpp" "Rendering/Graphics.h"
     )
-  
+endif()
+
+if(LEVIATHAN_USING_ANGELSCRIPT)
   set(GroupScript
     "Script/Console.cpp" "Script/Console.h"
     "Script/ScriptArgumentsProvider.cpp" "Script/ScriptArgumentsProvider.h"
@@ -209,9 +202,10 @@ else()
     "Script/Bindings/EntityBind.h" "Script/Bindings/EntityBind.cpp"
     "Script/Bindings/StandardWorldBindHelper.h" "Generated/StandardWorldBindings.h"
     )
-  
+endif()
 
 
+if(LEVIATHAN_USING_GUI)
   set(GroupGUI 
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
@@ -234,7 +228,9 @@ else()
     "GUI/Widgets/VideoPlayerWidget.h" "GUI/Widgets/VideoPlayerWidget.cpp"
     )
 
-  
+endif()
+
+if(LEVIATHAN_USING_BULLET)
   file(GLOB GroupPhysics 
     "Physics/PhysicalMaterial.cpp" "Physics/PhysicalMaterial.h"
     "Physics/PhysicsMaterialManager.cpp" "Physics/PhysicsMaterialManager.h"    
@@ -242,33 +238,43 @@ else()
     "Physics/PhysicsShape.cpp" "Physics/PhysicsShape.h"
     "Physics/PhysicsBody.cpp" "Physics/PhysicsBody.h"
     )
+endif()
 
-  
-  
-  set(GroupEvents
-    "Events/AutoUpdateable.cpp" "Events/AutoUpdateable.h"
-    "Events/CallableObject.cpp" "Events/CallableObject.h"
-    "Events/DelegateSlot.cpp" "Events/DelegateSlot.h"
-    "Events/EventableScriptObject.cpp" "Events/EventableScriptObject.h"
-    "Events/Event.cpp" "Events/Event.h"
-    "Events/EventHandler.cpp" "Events/EventHandler.h"
-    )
-  
-  file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
+
+set(GroupEvents
+  "Events/AutoUpdateable.cpp" "Events/AutoUpdateable.h"
+  "Events/DelegateSlot.cpp" "Events/DelegateSlot.h"
+  "Events/Event.cpp" "Events/Event.h"
+  "Events/EventHandler.cpp" "Events/EventHandler.h"
+  )
+
+if(NOT LEVIATHAN_AS_LIBRARY)
+  list(APPEND GroupEvents "Events/CallableObject.cpp" "Events/CallableObject.h")
+endif()
+
+if(LEVIATHAN_USING_ANGELSCRIPT)
+  list(APPEND GroupEvents "Events/EventableScriptObject.cpp" "Events/EventableScriptObject.h")
+endif()
+
+file(GLOB GroupExceptions "Exceptions/*.cpp" "Exceptions/*.h")
+
+if(LEVIATHAN_USING_DEPENDENCIES)
   set(GroupSound
     "Sound/SoundDevice.cpp" "Sound/SoundDevice.h"
     "Sound/AudioSource.h" "Sound/AudioSource.cpp"
     "Sound/ProceduralSound.h" "Sound/ProceduralSound.cpp"
     "Sound/SoundInternalTypes.h" "Sound/SoundInternalTypes.cpp"
     )
+endif()
 
-  set(GroupInput
-    "Input/InputController.cpp"
-    "Input/InputController.h"
-    "Input/Key.cpp"
-    "Input/Key.h"
-    )
+set(GroupInput
+  "Input/InputController.cpp"
+  "Input/InputController.h"
+  "Input/Key.cpp"
+  "Input/Key.h"
+  )
 
+if(LEVIATHAN_USING_DEPENDENCIES)  
   file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
 
   set(GroupAddons
@@ -278,24 +284,25 @@ else()
 
   file(GLOB GroupGameplay "Gameplay/*.cpp" "Gameplay/*.h")
   file(GLOB GroupPermissions "Gameplay/Permissions/*.cpp" "Gameplay/Permissions/*.h")
+endif()
 
+file(GLOB GroupStatistics "Statistics/*.cpp" "Statistics/*.h")
 
-  file(GLOB GroupStatistics "Statistics/*.cpp" "Statistics/*.h")
+file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
 
-  file(GLOB GroupUtilityFile "Utility/FileRelated/*.cpp" "Utility/FileRelated/*.h")
-  file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.h")
-
+if(LEVIATHAN_USING_DEPENDENCIES)
   set(GroupEditor
     "Editor/Editor.h" "Editor/Editor.cpp"
     )
+endif()
 
-  # Generated files
+# Generated files
+if(LEVIATHAN_USING_CEF)
   set(GroupGeneratedFiles "Generated/LeviathanV8CoreExt.h")
-  
-  if(USING_LEAP)
-    file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
-  endif()
+endif()
 
+if(LEVIATHAN_USING_LEAP)
+  file(GLOB GroupLeap "Leap/*.cpp" "Leap/*.h")
 endif()
 
 set(GroupObjectFiles
@@ -314,17 +321,17 @@ file(GLOB GeneratorInput "GeneratorInput/*.*")
 
 file(GLOB GroupLZ4 "lz4/*.c" "lz4/*.cpp" "lz4/*.h")
 
-if(NOT CREATE_UE4_PLUGIN)
-    set(GroupJsoncpp "jsoncpp.cpp" "json/json.h" "json/json-forwards.h")
-    # For building jsoncpp must have "JSON_DLL_BUILD" defined
-    set_source_files_properties("jsoncpp.cpp" PROPERTIES 
-      COMPILE_DEFINITIONS JSON_DLL_BUILD)
-endif()
+
+set(GroupJsoncpp "jsoncpp.cpp" "json/json.h" "json/json-forwards.h")
+# TODO: does this work as static library on windows?
+# For building jsoncpp must have "JSON_DLL_BUILD" defined
+set_source_files_properties("jsoncpp.cpp" PROPERTIES
+  COMPILE_DEFINITIONS JSON_DLL_BUILD)
 
 file(GLOB Grouputf8 "utf8/*.h" "utf8/*.cpp")
 
 # AngelScript addon sources
-if(USE_ANGELSCRIPT)
+if(LEVIATHAN_USING_ANGELSCRIPT)
   file(GLOB_RECURSE GroupScriptAddons "${LEVIATHAN_SRC}/build/ThirdParty/include/add_on/*.cpp"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/add_on/*.h")
 
@@ -362,7 +369,6 @@ source_group("Entities" FILES ${GroupEntities})
 source_group("Utility" FILES ${GroupUtility})
 source_group("Utility\\Statistics" FILES ${GroupStatistics})
 source_group("Iterators" FILES ${GroupIterators})
-source_group("Utility\\FileRelated" FILES ${GroupUtilityFile})
 source_group("Utility\\DataHandling" FILES ${GroupUtilityData})
 
 source_group("GUI" FILES ${GroupGUI})
@@ -408,7 +414,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${Grouputf8} ${GroupEditor} ${GroupGeneratedFiles}
   )
 
-if(USE_LEAP)
+if(LEVIATHAN_USING_LEAP)
   set(EngineFiles ${EngineFiles} ${GroupLeap})
 endif()
 
@@ -423,6 +429,9 @@ if(CREATE_STATIC)
 else()
   add_library(Engine SHARED ${EngineFiles})
 endif()
+
+# Anything linking against this gets the right include folder
+target_include_directories(Engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Link the engine against dependencies
 target_link_libraries(Engine PRIVATE ${LEVIATHAN_ENGINE_LIBRARIES})
@@ -465,53 +474,38 @@ set_target_properties(Engine PROPERTIES
 
 install(TARGETS Engine DESTINATION bin)
 
-if(CREATE_UE4_PLUGIN)
-  RemoveSourceFilesFromList(GroupCore)
-  list(REMOVE_ITEM GroupCore "Exceptions.h")
-  list(REMOVE_ITEM GroupCore "Logger.h")
+# # TODO: header installs
+# if()
+#   RemoveSourceFilesFromList(GroupCore)
   
-  install(FILES ${GroupCore} DESTINATION "include/leviathan")
+#   install(FILES ${GroupCore} DESTINATION "include/Leviathan")
   
-  RemoveSourceFilesFromList(GroupCommonData)
-  install(FILES ${GroupCommonData} DESTINATION "include/leviathan/Common/DataStoring")
+#   RemoveSourceFilesFromList(GroupCommonData)
+#   install(FILES ${GroupCommonData} DESTINATION "include/Leviathan/Common/DataStoring")
   
-  RemoveSourceFilesFromList(GroupObjectFiles)
-  install(FILES ${GroupObjectFiles} DESTINATION "include/leviathan/ObjectFiles")
+#   RemoveSourceFilesFromList(GroupObjectFiles)
+#   install(FILES ${GroupObjectFiles} DESTINATION "include/Leviathan/ObjectFiles")
 
-  RemoveSourceFilesFromList(GroupThreading)
-  install(FILES ${GroupThreading} DESTINATION "include/leviathan/Threading")
+#   RemoveSourceFilesFromList(GroupThreading)
+#   install(FILES ${GroupThreading} DESTINATION "include/Leviathan/Threading")
   
-  RemoveSourceFilesFromList(GroupIterators)
-  install(FILES ${GroupIterators} DESTINATION "include/leviathan/Iterators")
+#   RemoveSourceFilesFromList(GroupIterators)
+#   install(FILES ${GroupIterators} DESTINATION "include/Leviathan/Iterators")
   
-  RemoveSourceFilesFromList(GroupLZ4)
-  install(FILES ${GroupLZ4} DESTINATION "include/leviathan/lz4")
+#   RemoveSourceFilesFromList(GroupLZ4)
+#   install(FILES ${GroupLZ4} DESTINATION "include/Leviathan/lz4")
   
-  RemoveSourceFilesFromList(Grouputf8)
-  install(FILES ${Grouputf8} DESTINATION "include/leviathan/utf8")
+#   RemoveSourceFilesFromList(Grouputf8)
+#   install(FILES ${Grouputf8} DESTINATION "include/Leviathan/utf8")
 
-  RemoveSourceFilesFromList(GroupCommon)
-  install(FILES ${GroupCommon} DESTINATION "include/leviathan/Common")
+#   RemoveSourceFilesFromList(GroupCommon)
+#   install(FILES ${GroupCommon} DESTINATION "include/Leviathan/Common")
 
-  RemoveSourceFilesFromList(GroupUtility)
-  install(FILES ${GroupUtility} DESTINATION "include/leviathan/Utility")
+#   RemoveSourceFilesFromList(GroupUtility)
+#   install(FILES ${GroupUtility} DESTINATION "include/Leviathan/Utility")
   
-  install(FILES ${GroupEntities} DESTINATION "include/leviathan/Entities")
+#   install(FILES ${GroupEntities} DESTINATION "include/Leviathan/Entities")
   
   
-endif()
+# endif()
 
-# Strip symbols
-if(STRIP_SYMBOLS_ON_INSTALL AND UNIX AND NOT CREATE_STATIC)
-  
-  # Install code that strips the symbols
-  install(CODE "execute_process(COMMAND strip libEngine.so WORKING_DIRECTORY \"${CMAKE_INSTALL_PREFIX}/bin\")")
-
-endif()
-
-# post build copy
-if(WIN32 AND NOT MINGW)
-#ADD_CUSTOM_COMMAND(TARGET Engine POST_BUILD COMMAND copy ARGS 
-#    "\"$(SolutionDir)bin\\$(Configuration)\\$(TargetName).dll\" \"$(SolutionDir)bin\\$(TargetName).dll\""
-#)
-endif(WIN32 AND NOT MINGW)

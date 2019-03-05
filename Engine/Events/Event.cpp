@@ -31,6 +31,7 @@ DLLEXPORT EVENT_TYPE Leviathan::Event::GetType() const
     return Type;
 }
 // ------------------------------------ //
+#ifdef LEVIATHAN_USING_SFML
 DLLEXPORT void Leviathan::Event::AddDataToPacket(sf::Packet& packet) const
 {
     // Add the type first //
@@ -71,6 +72,7 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet& packet)
         Data = NULL;
     }
 }
+#endif // LEVIATHAN_USING_SFML
 // ------------------------------------ //
 DLLEXPORT ClientInterpolationEventData* Event::GetDataForClientInterpolationEvent() const
 {
@@ -110,6 +112,7 @@ DLLEXPORT Leviathan::GenericEvent::~GenericEvent()
     SAFE_RELEASE(Variables);
 }
 // ------------------------------------ //
+#ifdef LEVIATHAN_USING_SFML
 DLLEXPORT Leviathan::GenericEvent::GenericEvent(sf::Packet& packet)
 {
     // Load data from the packet //
@@ -136,6 +139,7 @@ DLLEXPORT void Leviathan::GenericEvent::AddDataToPacket(sf::Packet& packet) cons
 
     Variables->AddDataToPacket(packet);
 }
+#endif // LEVIATHAN_USING_SFML
 // ------------------------------------ //
 DLLEXPORT std::string* Leviathan::GenericEvent::GetTypePtr()
 {
@@ -185,6 +189,7 @@ DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(int tick, i
     CalculatePercentage();
 }
 
+#ifdef LEVIATHAN_USING_SFML
 DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(sf::Packet& packet)
 {
 
@@ -201,7 +206,9 @@ DLLEXPORT void ClientInterpolationEventData::AddDataToPacket(sf::Packet& packet)
 
     packet << TickNumber << TimeInTick;
 }
+#endif // LEVIATHAN_USING_SFML
 // ------------------ IntegerEventData ------------------ //
+#ifdef LEVIATHAN_USING_SFML
 DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet& packet)
 {
 
@@ -211,13 +218,14 @@ DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet& packet)
         throw InvalidArgument("packet has invalid format");
 }
 
-DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) :
-    IntegerDataValue(ticknumber)
-{}
-
 void Leviathan::IntegerEventData::AddDataToPacket(sf::Packet& packet)
 {
     packet << IntegerDataValue;
 }
+#endif // LEVIATHAN_USING_SFML
+
+DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) :
+    IntegerDataValue(ticknumber)
+{}
 // ------------------ BaseEventData ------------------ //
 BaseEventData::~BaseEventData() {}

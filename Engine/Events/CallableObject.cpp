@@ -9,7 +9,6 @@ using namespace Leviathan;
 CallableObject::CallableObject() {}
 CallableObject::~CallableObject()
 {
-
     if(HasRegisteredForSomeEvent) {
 
         // For easier debugging this

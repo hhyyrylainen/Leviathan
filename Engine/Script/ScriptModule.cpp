@@ -3,6 +3,7 @@
 
 #include "Common/StringOperations.h"
 #include "Events/CallableObject.h"
+#include "Events/Event.h"
 #include "FileSystem.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Iterators/StringIterator.h"

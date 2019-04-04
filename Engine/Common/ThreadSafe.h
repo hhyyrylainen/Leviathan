@@ -136,6 +136,8 @@ public:
 template<class MutexType>
 class ThreadSafeGeneric {
 public:
+    using LockT = typename LockTypeResolver<MutexType>::LType;
+
     DLLEXPORT ThreadSafeGeneric() {}
     DLLEXPORT ~ThreadSafeGeneric() {}
 

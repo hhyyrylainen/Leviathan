@@ -103,8 +103,7 @@ $ffmpeg = FFMPEG.new(
 )
 
 $ogre = Ogre.new(
-  version: "v2-1",
-  epoch: 2,
+  version: "a6204308c4fa",
   installPath: THIRD_PARTY_INSTALL,
   buildTools: true,
   noInstallSudo: true

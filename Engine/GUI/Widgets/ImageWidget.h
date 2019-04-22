@@ -15,7 +15,7 @@ protected:
     // These are protected for only constructing properly reference
     // counted instances through MakeShared
     friend ReferenceCounted;
-    DLLEXPORT ImageWidget(const std::string& image, int width, int height);
+    DLLEXPORT ImageWidget(const std::string& image);
 
 public:
     DLLEXPORT ~ImageWidget();

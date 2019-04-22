@@ -47,8 +47,8 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
         LOG_ERROR("Editor: failed to create needed world of type Standard for editor");
     }
 
-    // TODO: debugging code
-    ShownOnWindow->SetCustomCursor("thrivecursor.png");
+    // TODO: remove this debugging code
+    // ShownOnWindow->SetCustomCursor("thrivecursor.png");
 
     GuiManager* guiManager = ShownOnWindow->GetGui();
 

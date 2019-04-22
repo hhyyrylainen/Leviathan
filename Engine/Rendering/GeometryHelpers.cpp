@@ -31,9 +31,9 @@ DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateScreenSpaceQuad(
         // Second
         x + width, y, 0, 1, 1,
         // Third
-        x + width, y + width, 0, 1, 0,
+        x + width, y + height, 0, 1, 0,
         // Fourth
-        x, y + width, 0, 0, 0};
+        x, y + height, 0, 0, 0};
 
     Ogre::VertexBufferPacked* vertexBuffer = vaoManager->createVertexBuffer(
         vertexElements, 4, Ogre::BT_IMMUTABLE, &vertexData, false);
@@ -41,11 +41,8 @@ DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateScreenSpaceQuad(
     Ogre::VertexBufferPackedVec vertexBuffers;
     vertexBuffers.push_back(vertexBuffer);
 
-    // 1 to 1 index buffer mapping
     Ogre::uint16 indices[] = {3, 0, 1, 1, 2, 3};
 
-    // TODO: check if this is needed (when a 1 to 1 vertex and index mapping is
-    // used)
     Ogre::IndexBufferPacked* indexBuffer = vaoManager->createIndexBuffer(
         Ogre::IndexBufferPacked::IT_16BIT, 6, Ogre::BT_IMMUTABLE, &indices, false);
 
@@ -66,7 +63,57 @@ DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateScreenSpaceQuad(
 
     return mesh;
 }
+// ------------------------------------ //
+DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateWidgetGeometry(
+    const std::string& meshname, float width, float height)
+{
+    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(
+        meshname, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 
+    Ogre::SubMesh* subMesh = mesh->createSubMesh();
+
+    Ogre::RenderSystem* renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+    Ogre::VaoManager* vaoManager = renderSystem->getVaoManager();
+
+    Ogre::VertexElement2Vec vertexElements;
+    vertexElements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_POSITION));
+    vertexElements.push_back(
+        Ogre::VertexElement2(Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES));
+
+    // This is a fullscreen quad in screenspace (so no transform matrix is used)
+    float vertexData[] = {// First vertex
+        0, 0, 0, 0, 0,
+        // Second
+        0, -height, 0, 0, 1,
+        // Third
+        width, -height, 0, 1, 1,
+        // Fourth
+        width, 0, 0, 1, 0};
+
+    Ogre::VertexBufferPacked* vertexBuffer = vaoManager->createVertexBuffer(
+        vertexElements, 4, Ogre::BT_IMMUTABLE, &vertexData, false);
+
+    Ogre::VertexBufferPackedVec vertexBuffers;
+    vertexBuffers.push_back(vertexBuffer);
+
+    Ogre::uint16 indices[] = {0, 1, 2, 2, 3, 0};
+
+    Ogre::IndexBufferPacked* indexBuffer = vaoManager->createIndexBuffer(
+        Ogre::IndexBufferPacked::IT_16BIT, 6, Ogre::BT_IMMUTABLE, &indices, false);
+
+    Ogre::VertexArrayObject* vao = vaoManager->createVertexArrayObject(
+        vertexBuffers, indexBuffer, Ogre::OT_TRIANGLE_LIST);
+
+    subMesh->mVao[Ogre::VpNormal].push_back(vao);
+
+    // Set the bounds to get frustum culling and LOD to work correctly.
+    mesh->_setBounds(
+        Ogre::Aabb(Ogre::Vector3(width / 2, -height / 2, 0), Ogre::Vector3(width, height, 1)));
+
+    return mesh;
+}
+
+// ------------------------------------ //
 DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateXZPlane(
     const std::string& meshname, float width, float height)
 {

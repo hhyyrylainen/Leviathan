@@ -145,7 +145,8 @@ private:
     //! Disables the GUI trying to capture the mouse when no collection is active
     bool DisableGuiMouseCapture = false;
 
-    int CursorX = -100;
+    // Makes initial cursor position not visible
+    int CursorX = -100000;
     int CursorY = 0;
 
     std::unique_ptr<CutscenePlayStatus> CurrentlyPlayingCutscene;

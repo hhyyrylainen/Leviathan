@@ -149,7 +149,6 @@ DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
     // This will cause the capture state to be checked next tick
     GuiMouseUseUpdated = true;
 }
-
 // ------------------------------------ //
 void GuiManager::OnRender(float passed)
 {
@@ -313,7 +312,7 @@ void GUI::GuiManager::SetSoftwareCursor(const std::string& cursor)
         if(!SoftwareCursorWidget) {
             LOG_INFO("GuiManager: enabling software cursor with image: " + cursor);
 
-            SoftwareCursorWidget = ImageWidget::MakeShared<ImageWidget>(cursor, 32, 32);
+            SoftwareCursorWidget = ImageWidget::MakeShared<ImageWidget>(cursor);
 
             OverlayLayer->AddWidget(SoftwareCursorWidget);
             SoftwareCursorWidget->SetPosition(CursorX, CursorY);
@@ -330,6 +329,11 @@ void GUI::GuiManager::SetCursorPosition(int x, int y)
 {
     CursorX = x;
     CursorY = y;
+
+    int32_t width, height;
+    ThisWindow->GetSize(width, height);
+
+    SoftwareCursorWidget->SetPosition(CursorX, height - CursorY);
 }
 
 void GUI::GuiManager::SetSoftwareCursorVisible(bool visible)

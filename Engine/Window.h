@@ -261,6 +261,9 @@ private:
     //! Controls whether hardware cursor should be visible
     bool CursorState = true;
 
+    //! This is the state of what the hardware cursor is set to
+    bool HardwareCursorState = true;
+
     bool MouseCaptured = false;
 
     //! If true a custom cursor is used
@@ -268,6 +271,7 @@ private:
     std::string CustomCursorFile;
 
     //! If false the custom cursor is set using the OS cursor methods
+    //! \todo Implement this (this needs code for SDL image loading and finding)
     bool PreferSoftwareCursor = true;
 
     //! \todo Cache old cursors to avoid recreations

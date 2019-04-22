@@ -116,6 +116,8 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
         LOG_FATAL("SDL Window creation failed, error: " + std::string(SDL_GetError()));
     }
 
+    SDLWindow = sdlWindow;
+
     // SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindow);
 
     SDL_SysWMinfo wmInfo;
@@ -208,10 +210,8 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // create receiver interface //
     TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
 
-    SDLWindow = sdlWindow;
-
     // TODO: this needs to be only used when a text box etc. is used
-    // But that is quite hard to detect
+    // But that is quite hard to detect. With the upcoming GUI system that will be possible
     SDL_StartTextInput();
 
     // cursor on top of window isn't hidden //
@@ -377,8 +377,9 @@ DLLEXPORT void Window::SetCustomCursor(const std::string& cursor)
 
         WindowsGui->SetSoftwareCursor(cursor);
 
-        CursorState = false;
+        HardwareCursorState = false;
         SDL_ShowCursor(SDL_DISABLE);
+        _CheckMouseVisibilityStates();
 
     } else {
         DEBUG_BREAK;
@@ -825,52 +826,52 @@ DLLEXPORT void Window::SetHideCursor(bool toset)
 {
     ApplicationWantCursorState = toset;
 
+    // Don't do anything if window is not valid anymore //
+    if(!SDLWindow)
+        return;
+
     if(ForceMouseVisible) {
 
-        // Don't do anything if window is not valid anymore //
-        if(!SDLWindow)
-            return;
+        if(!HardwareCursorState) {
 
-        if(!CursorState) {
-            CursorState = true;
+            HardwareCursorState = true;
             SDL_ShowCursor(SDL_ENABLE);
-
 
             // WindowsGui->SetSoftwareCursorVisible(false);
         }
 
     } else {
 
+        // Unset after forcing
+        if(HardwareCursorState && UseCustomCursor && PreferSoftwareCursor) {
+
+            HardwareCursorState = false;
+            SDL_ShowCursor(SDL_DISABLE);
+        }
+
         if(!ApplicationWantCursorState) {
             // show cursor //
             if(!CursorState) {
                 CursorState = true;
 
-                // Don't do anything if window is not valid anymore //
-                if(!SDLWindow)
-                    return;
-
                 if(UseCustomCursor && PreferSoftwareCursor) {
                     // Using software cursor
                     WindowsGui->SetSoftwareCursorVisible(true);
                 } else {
+                    HardwareCursorState = true;
                     SDL_ShowCursor(SDL_ENABLE);
                 }
             }
         } else {
             // hide cursor //
             if(CursorState) {
-
                 CursorState = false;
-
-                // Don't do anything if window is not valid anymore //
-                if(!SDLWindow)
-                    return;
 
                 if(UseCustomCursor && PreferSoftwareCursor) {
                     // Using software cursor
                     WindowsGui->SetSoftwareCursorVisible(false);
                 } else {
+                    HardwareCursorState = false;
                     SDL_ShowCursor(SDL_DISABLE);
                 }
             }

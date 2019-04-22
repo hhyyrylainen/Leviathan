@@ -31,15 +31,18 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
 
     // Create an orthographic camera //
     Camera = Scene->createCamera("layer camera");
-    Camera->setFixedYawAxis(false);
+    // Camera->setFixedYawAxis(false);
     Camera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
     // Camera->setPosition(0, 0, 10000);
     Camera->setPosition(0, 0, 10000);
     Camera->lookAt(0, 0, 0);
+    // This is not an awesome idea
+    // Camera->roll(Ogre::Degree(180));
     Camera->setNearClipDistance(1000);
     Camera->setFarClipDistance(20000);
 
     // Update properties for the window size
+    // For some reason this doesn't work here
     AdjustCameraProperties();
 
     // Create the workspace for this layer that will render us after the normal scene
@@ -76,6 +79,7 @@ DLLEXPORT void Layer::ReleaseResources()
 DLLEXPORT void Layer::NotifyWindowResized()
 {
     // Adjust camera
+    AdjustCameraProperties();
 
     // And let derived classes do their thing
     _OnWindowResized();
@@ -97,9 +101,12 @@ DLLEXPORT void Layer::AdjustCameraProperties()
         int32_t height;
         Wind->GetSize(width, height);
 
+        LOG_INFO("Setting orthographic width: " + std::to_string(width) +
+                 " and height: " + std::to_string(height));
+
         // TODO: enable to make the GUI act nice with window resizing
-        // Camera->setPosition(width / 2, height / 2, -10);
-        // Camera->setOrthoWindow(width, height);
-        Camera->setOrthoWindow(100, 100);
+        Camera->setPosition(width / 2, height / 2, 10000); // at the bottom
+        // Camera->setPosition(width / 2, -height / 2, 10000);
+        Camera->setOrthoWindow(width, height);
     }
 }

@@ -18,9 +18,7 @@
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
-DLLEXPORT ImageWidget::ImageWidget(const std::string& image, int width, int height) :
-    ImageName(image), Width(width), Height(height)
-{}
+DLLEXPORT ImageWidget::ImageWidget(const std::string& image) : ImageName(image) {}
 
 DLLEXPORT ImageWidget::~ImageWidget() {}
 // ------------------------------------ //
@@ -34,9 +32,6 @@ DLLEXPORT void ImageWidget::SetImage(const std::string& imagename)
 // ------------------------------------ //
 DLLEXPORT void ImageWidget::_AcquireRenderResources()
 {
-    QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
-        "image_widget_" + std::to_string(ID) + "_mesh", 0, 0, Width, Height);
-
     Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
     Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
 
@@ -45,22 +40,26 @@ DLLEXPORT void ImageWidget::_AcquireRenderResources()
 
     const auto datablockName = "image_widget_" + std::to_string(ID);
 
-    Ogre::HlmsUnlitDatablock* datablock = static_cast<Ogre::HlmsUnlitDatablock*>(
-        hlmsUnlit->createDatablock(datablockName, datablockName, Ogre::HlmsMacroblock(),
-            Ogre::HlmsBlendblock(), Ogre::HlmsParamVec()));
+    Ogre::HlmsBlendblock blendblock;
+    blendblock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
 
-    // Ogre::HlmsTextureManager::TextureLocation texLocation =
-    //     hlmsTextureManager->createOrRetrieveTexture(
-    //         ImageName, Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
+    Ogre::HlmsUnlitDatablock* datablock =
+        static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->createDatablock(datablockName,
+            datablockName, Ogre::HlmsMacroblock(), blendblock, Ogre::HlmsParamVec()));
+
     Ogre::HlmsTextureManager::TextureLocation texLocation =
         hlmsTextureManager->createOrRetrieveTexture(
-            "patchy_cement1_Base_Color.png", Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
+            ImageName, Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
 
     datablock->setTexture(0, texLocation.xIdx, texLocation.texture);
 
+    Width = texLocation.texture->getWidth();
+    Height = texLocation.texture->getHeight();
+
+    QuadMesh = GeometryHelpers::CreateWidgetGeometry(
+        "image_widget_" + std::to_string(ID) + "_mesh", Width, Height);
+
     QuadItem = ContainedIn->GetScene()->createItem(QuadMesh, Ogre::SCENE_DYNAMIC);
-    // QuadItem = ContainedIn->GetScene()->createItem("UnitCube.mesh",
-    //     Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
     QuadItem->setDatablock(datablock);
 
     Node = ContainedIn->GetParentForWidgets()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
@@ -98,8 +97,6 @@ DLLEXPORT void ImageWidget::_ReleaseRenderResources()
 
 void ImageWidget::SetPosition(float x, float y)
 {
-    // if(Node)
-    //     Node->setPosition(x, y, 0);
-
-    Node->setPosition(0, 0, 0);
+    if(Node)
+        Node->setPosition(x, y, 0);
 }

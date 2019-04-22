@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -18,6 +18,13 @@ public:
     //! \todo Parameter to specify if shadow geometry is needed
     DLLEXPORT static Ogre::MeshPtr CreateScreenSpaceQuad(
         const std::string& meshname, float x, float y, float width, float height);
+
+    //! \brief Creates a quad of specified size for use in GUI widgets
+    //!
+    //! \param meshname The name of the created mesh, must be unique
+    //! \todo Allow specifying UV coordinates
+    DLLEXPORT static Ogre::MeshPtr CreateWidgetGeometry(
+        const std::string& meshname, float width, float height);
 
     //! \brief Creates a plane with specific size and UV coordinates with 0, 0 on top left
     //!

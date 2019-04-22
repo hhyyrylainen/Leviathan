@@ -330,10 +330,13 @@ void GUI::GuiManager::SetCursorPosition(int x, int y)
     CursorX = x;
     CursorY = y;
 
-    int32_t width, height;
-    ThisWindow->GetSize(width, height);
+    if(SoftwareCursorWidget) {
 
-    SoftwareCursorWidget->SetPosition(CursorX, height - CursorY);
+        int32_t width, height;
+        ThisWindow->GetSize(width, height);
+
+        SoftwareCursorWidget->SetPosition(CursorX, height - CursorY);
+    }
 }
 
 void GUI::GuiManager::SetSoftwareCursorVisible(bool visible)

@@ -157,31 +157,26 @@ void Int3DestructorProxy(void* memory)
 // Ogre conversions
 void Vector3Float3Proxy(void* memory, const Float3& vector)
 {
-
     new(memory) Ogre::Vector3(vector);
 }
 
 void Float3Vector3Proxy(void* memory, const Ogre::Vector3& vector)
 {
-
     new(memory) Float3(vector);
 }
 
 void QuaternionFloat4Proxy(void* memory, const Float4& vector)
 {
-
     new(memory) Ogre::Quaternion(vector);
 }
 
 void Float4QuaternionProxy(void* memory, const Ogre::Quaternion& quat)
 {
-
     new(memory) Float4(quat);
 }
 
 Float4 ConvertQuaternionToFloat4(Ogre::Quaternion* self)
 {
-
     return Float4(*self);
 }
 
@@ -208,7 +203,6 @@ namespace Leviathan {
 
 bool BindFloat2(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Float2", sizeof(Float2),
            asOBJ_VALUE | asGetTypeTraits<Float2>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -425,7 +419,7 @@ bool BindFloat3(asIScriptEngine* engine)
 
 
     // ------------------------------------ //
-    // Named ones
+    // Named Floats ones
     if(engine->SetDefaultNamespace("Float3") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -446,7 +440,6 @@ bool BindFloat3(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindFloat4(asIScriptEngine* engine)
 {
-
     // Float4
     if(engine->RegisterObjectType("Float4", sizeof(Float4),
            asOBJ_VALUE | asGetTypeTraits<Float4>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
@@ -597,7 +590,6 @@ bool BindFloat4(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindInt2(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Int2", sizeof(Int2),
            asOBJ_VALUE | asGetTypeTraits<Int2>() | asOBJ_APP_CLASS_ALLINTS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -667,7 +659,6 @@ bool BindInt2(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindInt3(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Int3", sizeof(Int3),
            asOBJ_VALUE | asGetTypeTraits<Int3>() | asOBJ_APP_CLASS_ALLINTS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -793,7 +784,6 @@ bool BindOgreConversions(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine)
 {
-
     if(engine->RegisterTypedef("ObjectID", "int32") < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;

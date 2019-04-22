@@ -215,6 +215,7 @@ if(LEVIATHAN_USING_GUI)
     "GUI/GuiLayer.cpp" "GUI/GuiLayer.h"
     "GUI/GuiWidgetLayer.cpp" "GUI/GuiWidgetLayer.h"
     "GUI/GuiView.cpp" "GUI/GuiView.h"
+    "GUI/BaseGuiContainer.h"
     "GUI/JavaScriptHelper.cpp" "GUI/JavaScriptHelper.h"
     "GUI/JSNativeCoreAPI.cpp" "GUI/JSNativeCoreAPI.h"
     "GUI/LeviathanJavaScriptAsync.cpp" "GUI/LeviathanJavaScriptAsync.h"
@@ -226,6 +227,7 @@ if(LEVIATHAN_USING_GUI)
   set(GroupGUIWidgets
     "GUI/Widgets/Widget.h" "GUI/Widgets/Widget.cpp"
     "GUI/Widgets/VideoPlayerWidget.h" "GUI/Widgets/VideoPlayerWidget.cpp"
+    "GUI/Widgets/ImageWidget.h" "GUI/Widgets/ImageWidget.cpp"
     )
 
 endif()

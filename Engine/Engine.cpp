@@ -45,6 +45,8 @@
 #include <SDL.h>
 #endif
 
+#include <boost/filesystem.hpp>
+
 #include <chrono>
 #include <future>
 
@@ -992,7 +994,12 @@ DLLEXPORT void Engine::SaveScreenShot()
     LEVIATHAN_ASSERT(!NoGui, "really shouldn't try to screenshot in text-only mode");
     GUARD_LOCK();
 
-    const string fileprefix = MainFileHandler->GetDataFolder() + "Screenshots/Captured_frame_";
+    const auto folder = MainFileHandler->GetDataFolder() + "Screenshots";
+
+    if(!boost::filesystem::exists(folder))
+        boost::filesystem::create_directories(folder);
+
+    const string fileprefix = folder + "/Captured_frame_";
 
     GraphicalEntity1->SaveScreenShot(fileprefix);
 }

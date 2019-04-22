@@ -12,6 +12,7 @@
 #include "Handlers/IDFactory.h"
 #include "Handlers/ResourceRefreshHandler.h"
 #include "Rendering/Graphics.h"
+#include "Widgets/ImageWidget.h"
 #include "Widgets/VideoPlayerWidget.h"
 #include "Window.h"
 
@@ -34,15 +35,18 @@ struct GuiManager::CutscenePlayStatus {
     boost::intrusive_ptr<VideoPlayerWidget> Player;
 };
 // ------------------------------------ //
-GuiManager::GuiManager() : ID(IDFactory::GetID()), GuiViewCounter(GUI_WORKSPACE_BEGIN_ORDER) {}
+GuiManager::GuiManager() : ID(IDFactory::GetID()) {}
 GuiManager::~GuiManager() {}
 // ------------------------------------ //
 bool GuiManager::Init(Graphics* graph, Window* window)
 {
     ThisWindow = window;
 
-    // All rendering is now handled by individual Layers and the
-    // Window full screen compositor passes
+    // Setup the overlay layer that has cutscenes and the software cursor
+    OverlayLayer =
+        WidgetLayer::MakeShared<WidgetLayer>(this, ThisWindow, GUI_WORKSPACE_OVERLAY);
+
+    ManagedLayers.push_back(OverlayLayer);
 
     return true;
 }
@@ -64,14 +68,20 @@ void GuiManager::Release()
 
     // Default mouse back //
     // show default window cursor //
-    ThisWindow->SetHideCursor(false);
+    if(SoftwareCursorWidget)
+        ThisWindow->SetHideCursor(false);
+    SoftwareCursorWidget.reset();
+
+    OverlayLayer.reset();
+    CurrentlyPlayingCutscene.reset();
 
     // Destroy the views //
     for(size_t i = 0; i < ManagedLayers.size(); i++) {
 
         ManagedLayers[i]->ReleaseResources();
-        ManagedLayers[i]->Release();
     }
+
+    ManagedLayers.clear();
 
     Logger::Get()->Info("GuiManager: Gui successfully closed on window");
 }
@@ -83,15 +93,15 @@ void GuiManager::GuiTick(int mspassed)
         ReloadQueued = false;
 
         // Reload //
-        LOG_INFO("GuiManager: reloading file: " + MainGUIFile);
+        LOG_INFO("GuiManager: reloading file");
         DEBUG_BREAK;
 
-        // Now load it //
-        if(!LoadGUIFile(MainGUIFile, true)) {
+        // // Now load it //
+        // if(!LoadGUIFile(MainGUIFile, true)) {
 
-            Logger::Get()->Error(
-                "GuiManager: file changed: couldn't load updated file: " + MainGUIFile);
-        }
+        //     Logger::Get()->Error(
+        //         "GuiManager: file changed: couldn't load updated file: " + MainGUIFile);
+        // }
 
         // Apply back the old states //
         // ApplyGuiStates(currentstate.get());
@@ -141,10 +151,13 @@ DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
 }
 
 // ------------------------------------ //
-void GuiManager::Render()
+void GuiManager::OnRender(float passed)
 {
-    // Browser textures are now updated in the event loop (on the main thread between
-    // rendering)
+    // Browser textures are updated in the main event loop
+
+    // Update all widget layers (the browser layers ignore this)
+    for(const auto& layer : ManagedLayers)
+        layer->OnRender(passed);
 }
 // ------------------------------------ //
 DLLEXPORT void GuiManager::OnResize()
@@ -163,12 +176,10 @@ DLLEXPORT void GuiManager::OnFocusChanged(bool focused)
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochangelistener)
+DLLEXPORT bool GuiManager::LoadCEFLayer(const std::string& urlorpath, bool nochangelistener)
 {
-    MainGUIFile = urlorpath;
-
     // Create the view //
-    boost::intrusive_ptr<View> loadingView(new View(this, ThisWindow, GuiViewCounter++));
+    auto loadingView = View::MakeShared<View>(this, ThisWindow, GuiViewCounter++);
 
     // Create the final page //
     std::string finalpath;
@@ -199,7 +210,6 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     if(!loadingView->Init(finalpath, varlist)) {
 
         loadingView->ReleaseResources();
-        loadingView->Release();
 
         Logger::Get()->Error(
             "GuiManager: LoadGUIFile: failed to initialize view for file: " + urlorpath);
@@ -212,6 +222,18 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
     // Set focus to the new Layer //
     ManagedLayers.back()->NotifyFocusUpdate(ThisWindow->IsWindowFocused());
     return true;
+}
+
+DLLEXPORT Layer* GuiManager::LoadGUILayer(
+    const std::string& layoutname, int renderorder /*= -1*/)
+{
+    DEBUG_BREAK;
+    if(renderorder <= 0) {
+
+        renderorder = GuiViewCounter++;
+    }
+
+    return nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
@@ -274,6 +296,48 @@ DLLEXPORT void GuiManager::CancelCutscene()
         // new video can be played)
         CurrentlyPlayingCutscene->Player->Stop();
     }
+}
+// ------------------------------------ //
+void GUI::GuiManager::SetSoftwareCursor(const std::string& cursor)
+{
+    if(cursor.empty()) {
+        // Disable
+        if(SoftwareCursorWidget) {
+
+            OverlayLayer->RemoveWidget(SoftwareCursorWidget.get());
+            SoftwareCursorWidget.reset();
+        }
+
+    } else {
+        // Enable or change image
+        if(!SoftwareCursorWidget) {
+            LOG_INFO("GuiManager: enabling software cursor with image: " + cursor);
+
+            SoftwareCursorWidget = ImageWidget::MakeShared<ImageWidget>(cursor, 32, 32);
+
+            OverlayLayer->AddWidget(SoftwareCursorWidget);
+            SoftwareCursorWidget->SetPosition(CursorX, CursorY);
+
+        } else {
+
+            // Already enabled, change the image
+            SoftwareCursorWidget->SetImage(cursor);
+        }
+    }
+}
+
+void GUI::GuiManager::SetCursorPosition(int x, int y)
+{
+    CursorX = x;
+    CursorY = y;
+}
+
+void GUI::GuiManager::SetSoftwareCursorVisible(bool visible)
+{
+    if(HideSoftwareCursor == !visible)
+        return;
+
+    HideSoftwareCursor = !visible;
 }
 // ------------------------------------ //
 DLLEXPORT Layer* Leviathan::GUI::GuiManager::GetLayerByIndex(size_t index)

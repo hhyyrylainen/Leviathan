@@ -70,7 +70,7 @@ void DemosApplication::CustomizeEnginePostLoad()
 
     GuiManager* guiManager = window1->GetGui();
 
-    if(!guiManager->LoadGUIFile("https://www.google.fi")) {
+    if(!guiManager->LoadCEFLayer("https://www.google.fi")) {
 
         Logger::Get()->Error("Demos: failed to load the GuiFile, quitting");
         LeviathanApplication::Get()->StartRelease();

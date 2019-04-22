@@ -21,8 +21,6 @@ class Root;
 
 namespace Leviathan { namespace GUI {
 
-constexpr auto GUI_WORKSPACE_BEGIN_ORDER = 1000;
-
 //! \brief Base class for WidgetLayer and View (browser containers / CEF) to add to a
 //! GuiManager
 class Layer : public ReferenceCounted {
@@ -42,6 +40,9 @@ public:
     //!
     //! Called by GuiManager
     DLLEXPORT void NotifyFocusUpdate(bool focused);
+
+    //! \brief Called by GuiManager on each frame
+    DLLEXPORT virtual void OnRender(float passed) {}
 
     DLLEXPORT inline auto GetGuiManager() const
     {

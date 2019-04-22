@@ -1,7 +1,7 @@
 // ------------------------------------ //
 #include "VideoPlayerWidget.h"
 
-#include "GUI/GuiWidgetLayer.h"
+#include "GUI/BaseGuiContainer.h"
 #include "Rendering/GeometryHelpers.h"
 
 #include "OgreItem.h"
@@ -94,10 +94,8 @@ void VideoPlayerWidget::_DoCallback()
         Callback();
 }
 // ------------------------------------ //
-DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
+DLLEXPORT void VideoPlayerWidget::_AcquireRenderResources()
 {
-    ContainedIn = container;
-
     QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
         "videoplayer_widget_" + std::to_string(ID) + "_mesh", -1, -1, 2, 2);
 
@@ -112,20 +110,15 @@ DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
 
     Material = baseMaterial->clone("videoplayer_widget_" + std::to_string(ID) + "_material");
 
-    Ogre::SceneManager* scene = ContainedIn->GetScene();
-
-    Node = scene->createSceneNode(Ogre::SCENE_STATIC);
+    Node = ContainedIn->GetParentForWidgets()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
 
     // Setup render queue for it
     // TODO: a proper system needs to be done for managing what is on top of what
-    scene->getRenderQueue()->setRenderQueueMode(2, Ogre::RenderQueue::FAST);
+    ContainedIn->GetScene()->getRenderQueue()->setRenderQueueMode(2, Ogre::RenderQueue::FAST);
 }
 
-DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
+DLLEXPORT void VideoPlayerWidget::_ReleaseRenderResources()
 {
-    if(!ContainedIn)
-        return;
-
     Ogre::SceneManager* scene = ContainedIn->GetScene();
 
     if(Node) {

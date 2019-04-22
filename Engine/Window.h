@@ -58,6 +58,11 @@ public:
     //! \returns true if succeeds, false if another window has input
     DLLEXPORT bool SetMouseCapture(bool state);
 
+    //! \brief Sets a custom cursor
+    //! \param cursor The name of the cursor file to set. Empty string disables
+    //! \note When a custom cursor is active any cursor changes from CEF is ignored
+    DLLEXPORT void SetCustomCursor(const std::string& cursor);
+
     //! \brief Tries to bring this window to front
     DLLEXPORT void BringToFront();
 
@@ -257,6 +262,13 @@ private:
     bool CursorState = true;
 
     bool MouseCaptured = false;
+
+    //! If true a custom cursor is used
+    bool UseCustomCursor = false;
+    std::string CustomCursorFile;
+
+    //! If false the custom cursor is set using the OS cursor methods
+    bool PreferSoftwareCursor = true;
 
     //! \todo Cache old cursors to avoid recreations
     std::unique_ptr<SDL_Cursor, void (*)(SDL_Cursor*)> CurrentCursor;

@@ -13,7 +13,7 @@ DLLEXPORT WidgetLayer::~WidgetLayer()
     RemoveAllWidgets();
 }
 // ------------------------------------ //
-DLLEXPORT void WidgetLayer::AddWidget(const boost::intrusive_ptr<Widget>& widget)
+DLLEXPORT bool WidgetLayer::AddWidget(const boost::intrusive_ptr<Widget>& widget)
 {
     // Don't allow duplicates. This is probably quite rare
     for(const auto& widget : Widgets) {
@@ -21,15 +21,17 @@ DLLEXPORT void WidgetLayer::AddWidget(const boost::intrusive_ptr<Widget>& widget
         if(widget == widget) {
 
             LOG_ERROR("WidgetLayer: AddWidget: trying to add the same widget again");
-            return;
+            return false;
         }
     }
 
     Widgets.push_back(widget);
+
     widget->OnAddedToContainer(this);
+    return true;
 }
 
-DLLEXPORT void WidgetLayer::RemoveWidget(Widget* widget)
+DLLEXPORT bool WidgetLayer::RemoveWidget(Widget* widget)
 {
     // For destructing is better to reverse iterate
     for(auto iter = Widgets.rbegin(); iter != Widgets.rend(); ++iter) {
@@ -38,11 +40,12 @@ DLLEXPORT void WidgetLayer::RemoveWidget(Widget* widget)
 
             widget->OnRemovedFromContainer(this);
             Widgets.erase(std::next(iter).base());
-            return;
+            return true;
         }
     }
 
     LOG_ERROR("WidgetLayer: RemoveWidget: this container has no specified widget");
+    return false;
 }
 // ------------------------------------ //
 DLLEXPORT void WidgetLayer::RemoveAllWidgets()
@@ -53,8 +56,20 @@ DLLEXPORT void WidgetLayer::RemoveAllWidgets()
         RemoveWidget(Widgets.back().get());
     }
 }
-
+// ------------------------------------ //
+DLLEXPORT void WidgetLayer::OnSizeChanged()
+{
+    // TODO: reposition all widgets
+}
+// ------------------------------------ //
 DLLEXPORT void WidgetLayer::_DoReleaseResources()
 {
     RemoveAllWidgets();
 }
+
+DLLEXPORT void WidgetLayer::_OnWindowResized()
+{
+    OnSizeChanged();
+}
+
+DLLEXPORT void WidgetLayer::_OnFocusChanged() {}

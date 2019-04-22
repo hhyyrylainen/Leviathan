@@ -47,19 +47,19 @@ enum VIEW_SECURITYLEVEL {
 //! \todo Split the process messages away from this into the places that actually sent them
 //! "JSNativeCoreAPI.cpp" to be clearer
 //! \todo If this is to be kept around rename this to CEFLayer
-class View : public Layer,
-             public CefClient,
-             public CefContextMenuHandler,
-             public CefDisplayHandler,
-             public CefDownloadHandler,
-             public CefDragHandler,
-             public CefKeyboardHandler,
-             public CefLifeSpanHandler,
-             public CefLoadHandler,
-             public CefRequestHandler,
-             public CefRenderHandler,
-             public ThreadSafe,
-             public CallableObject {
+class View final : public Layer,
+                   public CefClient,
+                   public CefContextMenuHandler,
+                   public CefDisplayHandler,
+                   public CefDownloadHandler,
+                   public CefDragHandler,
+                   public CefKeyboardHandler,
+                   public CefLifeSpanHandler,
+                   public CefLoadHandler,
+                   public CefRequestHandler,
+                   public CefRenderHandler,
+                   public ThreadSafe,
+                   public CallableObject {
     friend class LeviathanJavaScriptAsync;
 
 public:

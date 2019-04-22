@@ -40,6 +40,12 @@ constexpr auto PACKET_LOST_AFTER_RECEIVED_NEWER = 4;
 
 constexpr auto CRITICAL_PACKET_MAX_TRIES = 8;
 
+constexpr auto GUI_WORKSPACE_BEGIN_ORDER = 1000;
+//! This is for the cursor and cutscenes. Users should not define a
+//! workspace with greater than this renderorder should not be
+//! specified
+constexpr auto GUI_WORKSPACE_OVERLAY = 2000;
+
 //! For checking vector normalization
 constexpr float NORMALIZATION_TOLERANCE = 1e-6f;
 

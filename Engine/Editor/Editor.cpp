@@ -47,9 +47,12 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
         LOG_ERROR("Editor: failed to create needed world of type Standard for editor");
     }
 
+    // TODO: debugging code
+    ShownOnWindow->SetCustomCursor("thrivecursor.png");
+
     GuiManager* guiManager = ShownOnWindow->GetGui();
 
-    if(!guiManager->LoadGUIFile("Data/EditorResources/GUI/EditorGUI.html")) {
+    if(!guiManager->LoadCEFLayer("Data/EditorResources/GUI/EditorGUI.html")) {
 
         LOG_ERROR("Editor: failed to load the gui");
         return;

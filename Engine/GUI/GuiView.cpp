@@ -451,14 +451,12 @@ void View::OnCursorChange(CefRefPtr<CefBrowser> browser, CefCursorHandle cursor,
     if(!hwnd)
         return;
 
-    // Should not do this, but whatever //
-    // TODO: custom cursors
     Wind->SetWinCursor(cursor);
 #else
 #ifdef __linux
     Wind->SetX11Cursor(cursor);
 #else
-#error todo mac version
+    LOG_INFO("TODO: mac version of OnCursorChange");
 #endif
 
 #endif // _WIN32

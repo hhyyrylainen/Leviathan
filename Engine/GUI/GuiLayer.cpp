@@ -32,10 +32,13 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
 
     // Create an orthographic camera //
     Camera = Scene->createCamera("layer camera");
+    Camera->setFixedYawAxis(false);
     Camera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
-    // Setup permanent direction
-    Camera->setPosition(0, 0, -10);
+    // Camera->setPosition(0, 0, 10000);
+    Camera->setPosition(0, 0, 10);
     Camera->lookAt(0, 0, 0);
+    Camera->setNearClipDistance(1);
+    Camera->setFarClipDistance(1000);
 
     // Update properties for the window size
     AdjustCameraProperties();
@@ -95,7 +98,9 @@ DLLEXPORT void Layer::AdjustCameraProperties()
         int32_t height;
         Wind->GetSize(width, height);
 
+        // TODO: enable to make the GUI act nice with window resizing
         // Camera->setPosition(width / 2, height / 2, -10);
-        Camera->setOrthoWindow(width, height);
+        // Camera->setOrthoWindow(width, height);
+        Camera->setOrthoWindow(100, 100);
     }
 }

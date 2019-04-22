@@ -21,8 +21,6 @@ protected:
 public:
     DLLEXPORT ~VideoPlayerWidget();
 
-    DLLEXPORT void Tick() override {}
-
     //! \copydoc VideoPlayer::Play
     DLLEXPORT bool Play(const std::string& videofile);
 
@@ -39,8 +37,8 @@ public:
     REFERENCE_COUNTED_PTR_TYPE(VideoPlayerWidget);
 
 protected:
-    DLLEXPORT void OnAddedToContainer(WidgetLayer* container) override;
-    DLLEXPORT void OnRemovedFromContainer(WidgetLayer* container) override;
+    DLLEXPORT virtual void _AcquireRenderResources() override;
+    DLLEXPORT virtual void _ReleaseRenderResources() override;
 
 private:
     void _DoCallback();
@@ -51,8 +49,6 @@ private:
     //! Used to call callback only once
     bool CanCallCallback = false;
     std::function<void()> Callback;
-
-    WidgetLayer* ContainedIn = nullptr;
 
     Ogre::MaterialPtr Material;
     Ogre::SceneNode* Node = nullptr;

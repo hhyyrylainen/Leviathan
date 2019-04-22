@@ -297,7 +297,7 @@ DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
         LinkedWorld->Render(mspassed, tick, timeintick);
 
     // Update GUI before each frame //
-    WindowsGui->Render();
+    WindowsGui->OnRender(mspassed / 1000.f);
 
     // update window //
     Ogre::RenderWindow* tmpwindow = GetOgreWindow();
@@ -355,9 +355,43 @@ DLLEXPORT void Window::BringToFront()
 }
 
 // ------------------------------------ //
+DLLEXPORT void Window::SetCustomCursor(const std::string& cursor)
+{
+    if(cursor.empty()) {
+
+        if(UseCustomCursor) {
+
+            SDL_ShowCursor(SDL_ENABLE);
+            WindowsGui->SetSoftwareCursor("");
+            UseCustomCursor = false;
+
+            _CheckMouseVisibilityStates();
+        }
+
+        return;
+    }
+
+    UseCustomCursor = true;
+
+    if(PreferSoftwareCursor) {
+
+        WindowsGui->SetSoftwareCursor(cursor);
+
+        CursorState = false;
+        SDL_ShowCursor(SDL_DISABLE);
+
+    } else {
+        DEBUG_BREAK;
+    }
+}
+
 #ifdef __linux
 DLLEXPORT void Window::SetX11Cursor(int cursor, int retrycount /*= 10*/)
 {
+    // If custom cursor is set ignore this
+    if(UseCustomCursor)
+        return;
+
     if(retrycount <= 0) {
 
         LOG_ERROR("Window: SetX11Cursor: retrycount reached");
@@ -524,6 +558,10 @@ DLLEXPORT void Window::MakeX11CursorPermanent()
 #ifdef _WIN32
 DLLEXPORT void Window::SetWinCursor(HCURSOR cursor)
 {
+    // If custom cursor is set ignore this
+    if(UseCustomCursor)
+        return;
+
     std::unique_ptr<ICONINFO, void (*)(ICONINFO*)> info(new ICONINFO({0}), [](ICONINFO* icon) {
         if(icon->hbmColor)
             DeleteObject(icon->hbmColor);
@@ -787,30 +825,55 @@ DLLEXPORT void Window::SetHideCursor(bool toset)
 {
     ApplicationWantCursorState = toset;
 
-    if(!ApplicationWantCursorState || ForceMouseVisible) {
-        // show cursor //
+    if(ForceMouseVisible) {
+
+        // Don't do anything if window is not valid anymore //
+        if(!SDLWindow)
+            return;
+
         if(!CursorState) {
             CursorState = true;
-            Logger::Get()->Info("Showing cursor");
-
-            // Don't do anything if window is not valid anymore //
-            if(!SDLWindow)
-                return;
-
             SDL_ShowCursor(SDL_ENABLE);
+
+
+            // WindowsGui->SetSoftwareCursorVisible(false);
         }
+
     } else {
-        // hide cursor //
-        if(CursorState) {
 
-            CursorState = false;
-            Logger::Get()->Info("Hiding cursor");
+        if(!ApplicationWantCursorState) {
+            // show cursor //
+            if(!CursorState) {
+                CursorState = true;
 
-            // Don't do anything if window is not valid anymore //
-            if(!SDLWindow)
-                return;
+                // Don't do anything if window is not valid anymore //
+                if(!SDLWindow)
+                    return;
 
-            SDL_ShowCursor(SDL_DISABLE);
+                if(UseCustomCursor && PreferSoftwareCursor) {
+                    // Using software cursor
+                    WindowsGui->SetSoftwareCursorVisible(true);
+                } else {
+                    SDL_ShowCursor(SDL_ENABLE);
+                }
+            }
+        } else {
+            // hide cursor //
+            if(CursorState) {
+
+                CursorState = false;
+
+                // Don't do anything if window is not valid anymore //
+                if(!SDLWindow)
+                    return;
+
+                if(UseCustomCursor && PreferSoftwareCursor) {
+                    // Using software cursor
+                    WindowsGui->SetSoftwareCursorVisible(false);
+                } else {
+                    SDL_ShowCursor(SDL_DISABLE);
+                }
+            }
         }
     }
 }
@@ -862,7 +925,6 @@ DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y) const
 
 DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y) const
 {
-
     int xInt, yInt;
     GetRelativeMouse(xInt, yInt);
 
@@ -1061,7 +1123,7 @@ void Window::_CheckMouseVisibilityStates()
         ForceMouseVisible = false;
     }
 
-    // update cursor state //
+    // Update cursor state //
     SetHideCursor(ApplicationWantCursorState);
 }
 // ------------------ Input listener functions ------------------ //
@@ -1086,6 +1148,9 @@ DLLEXPORT void Window::InjectMouseMove(const SDL_Event& event)
 
     // Only pass this data if we aren't going to pass our own captured mouse //
     if(!MouseCaptured) {
+
+        // Always notify about position for custom cursor setting
+        WindowsGui->SetCursorPosition(event.motion.x, event.motion.y);
 
         auto* receiver =
             GetGUIEventReceiver(GUI::INPUT_EVENT_TYPE::Other, event.motion.x, event.motion.y);

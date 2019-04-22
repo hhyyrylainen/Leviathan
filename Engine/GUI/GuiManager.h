@@ -128,9 +128,9 @@ private:
     //! \todo Layer pushing and popping needs to have logic for focus changes
     std::vector<boost::intrusive_ptr<GUI::Layer>> ManagedLayers;
 
-    //! Used to assign consecutive render orders for ManagedLayers. Needs to be less than
-    //! GUI_WORKSPACE_OVERLAY
-    int GuiViewCounter = GUI_WORKSPACE_BEGIN_ORDER;
+    //! Used to assign consecutive render orders for ManagedLayers. While keeping the Overlay
+    //! last
+    int GuiViewCounter = GUI_WORKSPACES_BEFORE;
 
     //! This layer contains the software cursor (if enabled) and the cutscene player
     boost::intrusive_ptr<WidgetLayer> OverlayLayer;

@@ -60,7 +60,7 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
         QuadItem = nullptr;
     }
 
-    QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
+    QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_DYNAMIC);
     QuadItem->setCastShadows(false);
 
     QuadItem->setRenderQueueGroup(2);

@@ -21,7 +21,6 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
 {
     LEVIATHAN_ASSERT(Owner, "Layer has no owner");
     LEVIATHAN_ASSERT(Wind, "Layer has no window");
-    LEVIATHAN_ASSERT(renderorder >= GUI_WORKSPACE_BEGIN_ORDER, "invalid render order passed");
 
     // Setup the scene
     Ogre::Root& ogre = Ogre::Root::getSingleton();
@@ -35,10 +34,10 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     Camera->setFixedYawAxis(false);
     Camera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
     // Camera->setPosition(0, 0, 10000);
-    Camera->setPosition(0, 0, 10);
+    Camera->setPosition(0, 0, 10000);
     Camera->lookAt(0, 0, 0);
-    Camera->setNearClipDistance(1);
-    Camera->setFarClipDistance(1000);
+    Camera->setNearClipDistance(1000);
+    Camera->setFarClipDistance(20000);
 
     // Update properties for the window size
     AdjustCameraProperties();

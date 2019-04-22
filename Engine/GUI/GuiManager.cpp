@@ -43,8 +43,8 @@ bool GuiManager::Init(Graphics* graph, Window* window)
     ThisWindow = window;
 
     // Setup the overlay layer that has cutscenes and the software cursor
-    OverlayLayer =
-        WidgetLayer::MakeShared<WidgetLayer>(this, ThisWindow, GUI_WORKSPACE_OVERLAY);
+    // Care needs to be taken to keep this as the last workspace
+    OverlayLayer = WidgetLayer::MakeShared<WidgetLayer>(this, ThisWindow, -1);
 
     ManagedLayers.push_back(OverlayLayer);
 

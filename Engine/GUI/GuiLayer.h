@@ -44,6 +44,12 @@ public:
     //! \brief Called by GuiManager on each frame
     DLLEXPORT virtual void OnRender(float passed) {}
 
+
+    //! \brief Recreates the workspace to bring this back on top
+    //! \todo This is used to keep the overlay widgets on top of everything. A better solution
+    //! should be found
+    DLLEXPORT void BringToFront();
+
     DLLEXPORT inline auto GetGuiManager() const
     {
         return Owner;

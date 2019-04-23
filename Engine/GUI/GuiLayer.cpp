@@ -55,6 +55,20 @@ DLLEXPORT Layer::~Layer()
     LEVIATHAN_ASSERT(!Workspace, "ReleaseResources wasn't called on Layer");
 }
 // ------------------------------------ //
+DLLEXPORT void Layer::BringToFront()
+{
+    Ogre::Root& ogre = Ogre::Root::getSingleton();
+
+    auto target = Workspace->getFinalTarget();
+
+    // Allow releasing twice
+    ogre.getCompositorManager2()->removeWorkspace(Workspace);
+    Workspace = nullptr;
+
+    Workspace = ogre.getCompositorManager2()->addWorkspace(
+        Scene, target, Camera, "OverlayWorkspace", true, -1);
+}
+// ------------------------------------ //
 DLLEXPORT void Layer::ReleaseResources()
 {
     // Release derived type resources first

@@ -16,9 +16,9 @@ DLLEXPORT WidgetLayer::~WidgetLayer()
 DLLEXPORT bool WidgetLayer::AddWidget(const boost::intrusive_ptr<Widget>& widget)
 {
     // Don't allow duplicates. This is probably quite rare
-    for(const auto& widget : Widgets) {
+    for(const auto& existing : Widgets) {
 
-        if(widget == widget) {
+        if(widget == existing) {
 
             LOG_ERROR("WidgetLayer: AddWidget: trying to add the same widget again");
             return false;

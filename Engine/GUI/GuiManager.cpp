@@ -46,6 +46,9 @@ bool GuiManager::Init(Graphics* graph, Window* window)
     // Care needs to be taken to keep this as the last workspace
     OverlayLayer = WidgetLayer::MakeShared<WidgetLayer>(this, ThisWindow, -1);
 
+    // The overlay ignores input events for now
+    OverlayLayer->SetInputMode(INPUT_MODE::None);
+
     ManagedLayers.push_back(OverlayLayer);
 
     return true;
@@ -180,6 +183,8 @@ DLLEXPORT bool GuiManager::LoadCEFLayer(const std::string& urlorpath, bool nocha
     // Create the view //
     auto loadingView = View::MakeShared<View>(this, ThisWindow, GuiViewCounter++);
 
+    OverlayLayer->BringToFront();
+
     // Create the final page //
     std::string finalpath;
 
@@ -232,6 +237,8 @@ DLLEXPORT Layer* GuiManager::LoadGUILayer(
         renderorder = GuiViewCounter++;
     }
 
+    OverlayLayer->BringToFront();
+
     return nullptr;
 }
 // ------------------------------------ //
@@ -251,24 +258,14 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
         return;
     }
 
-    auto container = WidgetLayer::MakeShared<WidgetLayer>(this, ThisWindow, GuiViewCounter++);
-
     auto player = VideoPlayerWidget::MakeShared<VideoPlayerWidget>();
-
-    container->AddWidget(player);
+    OverlayLayer->AddWidget(player);
 
     player->SetEndCallback([=]() {
         // TODO: figure out if an error happened
         CurrentlyPlayingCutscene.reset();
 
-        for(auto iter = ManagedLayers.begin(); iter != ManagedLayers.end(); ++iter) {
-
-            if(*iter == container) {
-                (*iter)->ReleaseResources();
-                ManagedLayers.erase(iter);
-                break;
-            }
-        }
+        OverlayLayer->RemoveWidget(player.get());
 
         onfinished();
 
@@ -278,8 +275,6 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
     });
 
     player->Play(file);
-
-    ManagedLayers.push_back(container);
 
     CurrentlyPlayingCutscene = std::make_unique<CutscenePlayStatus>(player);
 

@@ -4,12 +4,12 @@
 #include "GUI/BaseGuiContainer.h"
 #include "Rendering/GeometryHelpers.h"
 
+#include "Hlms/Unlit/OgreHlmsUnlit.h"
+#include "Hlms/Unlit/OgreHlmsUnlitDatablock.h"
 #include "OgreItem.h"
 #include "OgreMaterialManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreSceneManager.h"
-#include "OgreSubMesh2.h"
-#include "OgreTechnique.h"
 
 using namespace Leviathan;
 using namespace Leviathan::GUI;
@@ -27,46 +27,60 @@ DLLEXPORT VideoPlayerWidget::~VideoPlayerWidget()
 // ------------------------------------ //
 DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 {
+    _ReleaseSingleRunResources();
+
     if(!Player.Play(videofile))
         return false;
 
     CanCallCallback = true;
 
     // The Play method creates the texture we want to display
+    // So we do the item and material setup here
+    Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
+    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
 
-    // Set the texture on our cloned material
-    auto* pass = Material->getTechnique(0)->getPass(0);
+    Ogre::HlmsUnlit* hlmsUnlit =
+        static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
 
-    Ogre::TextureUnitState* textureState;
+    const auto datablockName = GetNameForDatablock();
 
-    if(pass->getNumTextureUnitStates() < 1) {
-        textureState = Material->getTechnique(0)->getPass(0)->createTextureUnitState();
-    } else {
-        textureState = pass->getTextureUnitState(0);
-    }
+    Ogre::HlmsBlendblock blendblock;
+    // blendblock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+    blendblock.mSourceBlendFactor = Ogre::SBF_ONE;
+    blendblock.mDestBlendFactor = Ogre::SBF_ONE_MINUS_SOURCE_ALPHA;
 
-    textureState->setTexture(Player.GetTexture());
-    textureState->setHardwareGammaEnabled(true);
-    Material->compile();
+    Ogre::HlmsUnlitDatablock* datablock =
+        static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->createDatablock(datablockName,
+            datablockName, Ogre::HlmsMacroblock(), blendblock, Ogre::HlmsParamVec()));
 
-    QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
+    // Ogre::HlmsTextureManager::TextureLocation texLocation =
+    //     hlmsTextureManager->createOrRetrieveTexture(
+    //         "flagella_texture.png", Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
 
+    // datablock->setTexture(0, texLocation.xIdx, texLocation.texture);
 
-    // Recreate item
+    datablock->setTexture(0, 0, Player.GetTexture());
+
+    // datablock->setAlphaTest(Ogre::)
+
+    QuadMesh =
+        GeometryHelpers::CreateWidgetGeometry("video_widget_" + std::to_string(ID) + "_mesh",
+            Player.GetVideoWidth(), Player.GetVideoHeight());
+    // 200, 200);
+
+    QuadItem = ContainedIn->GetScene()->createItem(QuadMesh, Ogre::SCENE_DYNAMIC);
+    QuadItem->setDatablock(datablock);
+
     Ogre::SceneManager* scene = ContainedIn->GetScene();
 
-    if(QuadItem) {
-        scene->destroyItem(QuadItem);
-        QuadItem = nullptr;
-    }
-
     QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_DYNAMIC);
-    QuadItem->setCastShadows(false);
 
-    QuadItem->setRenderQueueGroup(2);
-
-    // Add it
     Node->attachObject(QuadItem);
+
+    // Center in container
+    LOG_WRITE("TODO: Center in container");
+    // DEBUG_BREAK;
+    Node->setPosition(0, 0, 2);
 
     return true;
 }
@@ -96,35 +110,12 @@ void VideoPlayerWidget::_DoCallback()
 // ------------------------------------ //
 DLLEXPORT void VideoPlayerWidget::_AcquireRenderResources()
 {
-    QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
-        "videoplayer_widget_" + std::to_string(ID) + "_mesh", -1, -1, 2, 2);
-
-    // Duplicate the material
-    Ogre::MaterialPtr baseMaterial =
-        Ogre::MaterialManager::getSingleton().getByName("GUIOverlay");
-
-    if(!baseMaterial)
-        LOG_FATAL(
-            "VideoPlayerWidget: GUIOverlay material doesn't exists! are the core Leviathan "
-            "materials and shaders copied?");
-
-    Material = baseMaterial->clone("videoplayer_widget_" + std::to_string(ID) + "_material");
-
     Node = ContainedIn->GetParentForWidgets()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
-
-    // Setup render queue for it
-    // TODO: a proper system needs to be done for managing what is on top of what
-    ContainedIn->GetScene()->getRenderQueue()->setRenderQueueMode(2, Ogre::RenderQueue::FAST);
 }
 
-DLLEXPORT void VideoPlayerWidget::_ReleaseRenderResources()
+void VideoPlayerWidget::_ReleaseSingleRunResources()
 {
     Ogre::SceneManager* scene = ContainedIn->GetScene();
-
-    if(Node) {
-        scene->destroySceneNode(Node);
-        Node = nullptr;
-    }
 
     if(QuadItem) {
         scene->destroyItem(QuadItem);
@@ -136,8 +127,27 @@ DLLEXPORT void VideoPlayerWidget::_ReleaseRenderResources()
         QuadMesh.reset();
     }
 
-    if(Material) {
-        Ogre::MaterialManager::getSingleton().remove(Material);
-        Material.reset();
+    if(DatablockCreated) {
+        DatablockCreated = false;
+
+        const auto datablockName = GetNameForDatablock();
+
+        Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
+        Ogre::HlmsUnlit* hlmsUnlit =
+            static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
+
+        hlmsUnlit->destroyDatablock(datablockName);
     }
+}
+
+DLLEXPORT void VideoPlayerWidget::_ReleaseRenderResources()
+{
+    Ogre::SceneManager* scene = ContainedIn->GetScene();
+
+    if(Node) {
+        scene->destroySceneNode(Node);
+        Node = nullptr;
+    }
+
+    _ReleaseSingleRunResources();
 }

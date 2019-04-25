@@ -212,8 +212,10 @@ bool VideoPlayer::OnVideoDataLoaded()
     TextureName = "Leviathan_VideoPlayer_" + std::to_string(number);
 
     VideoOutputTexture = Ogre::TextureManager::getSingleton().createManual(TextureName,
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D, FrameWidth,
-        FrameHeight, 0, OGRE_IMAGE_FORMAT, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE, 0,
+        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+        // This type is used to work with both unlit and pbs datablocks
+        Ogre::TEX_TYPE_2D_ARRAY, FrameWidth, FrameHeight, 1, OGRE_IMAGE_FORMAT,
+        Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE, 0,
         // Gamma correction
         true);
 

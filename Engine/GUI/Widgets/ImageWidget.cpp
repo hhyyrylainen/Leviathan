@@ -10,8 +10,6 @@
 #include "OgreMaterialManager.h"
 #include "OgreMeshManager2.h"
 #include "OgreSceneManager.h"
-#include "OgreSubMesh2.h"
-#include "OgreTechnique.h"
 
 #include "OgreRoot.h"
 
@@ -38,10 +36,14 @@ DLLEXPORT void ImageWidget::_AcquireRenderResources()
     Ogre::HlmsUnlit* hlmsUnlit =
         static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
 
-    const auto datablockName = "image_widget_" + std::to_string(ID);
+    const auto datablockName = GetNameForDatablock();
 
     Ogre::HlmsBlendblock blendblock;
-    blendblock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+    // blendblock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+    blendblock.mSourceBlendFactor = Ogre::SBF_ONE;
+    blendblock.mDestBlendFactor = Ogre::SBF_ONE_MINUS_SOURCE_ALPHA;
+    // blendblock.mSourceBlendFactor = Ogre::SBF_SOURCE_ALPHA;
+    // blendblock.mDestBlendFactor = Ogre::SBF_ONE_MINUS_SOURCE_ALPHA;
 
     Ogre::HlmsUnlitDatablock* datablock =
         static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->createDatablock(datablockName,
@@ -86,7 +88,7 @@ DLLEXPORT void ImageWidget::_ReleaseRenderResources()
         QuadMesh.reset();
     }
 
-    const auto datablockName = "image_widget_" + std::to_string(ID);
+    const auto datablockName = GetNameForDatablock();
 
     Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
     Ogre::HlmsUnlit* hlmsUnlit =
@@ -98,5 +100,15 @@ DLLEXPORT void ImageWidget::_ReleaseRenderResources()
 void ImageWidget::SetPosition(float x, float y)
 {
     if(Node)
-        Node->setPosition(x, y, 0);
+        Node->setPosition(x, -y, Z);
+}
+
+void ImageWidget::SetZ(float z)
+{
+    if(Node) {
+        Z = z;
+        auto pos = Node->getPosition();
+        pos.z = Z;
+        Node->setPosition(pos);
+    }
 }

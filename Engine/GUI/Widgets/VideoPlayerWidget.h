@@ -33,6 +33,10 @@ public:
     //! \brief Sets callback to call when video has ended
     DLLEXPORT void SetEndCallback(std::function<void()> callback);
 
+    inline const auto GetNameForDatablock() const
+    {
+        return "video_widget_" + std::to_string(ID);
+    }
 
     REFERENCE_COUNTED_PTR_TYPE(VideoPlayerWidget);
 
@@ -43,6 +47,8 @@ protected:
 private:
     void _DoCallback();
 
+    void _ReleaseSingleRunResources();
+
 private:
     VideoPlayer Player;
 
@@ -50,7 +56,7 @@ private:
     bool CanCallCallback = false;
     std::function<void()> Callback;
 
-    Ogre::MaterialPtr Material;
+    bool DatablockCreated = false;
     Ogre::SceneNode* Node = nullptr;
     Ogre::Item* QuadItem = nullptr;
     Ogre::MeshPtr QuadMesh;

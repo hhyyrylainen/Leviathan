@@ -48,7 +48,7 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
     }
 
     // TODO: remove this debugging code
-    // ShownOnWindow->SetCustomCursor("thrivecursor.png");
+    ShownOnWindow->SetCustomCursor("thrivecursor.png");
 
     GuiManager* guiManager = ShownOnWindow->GetGui();
 

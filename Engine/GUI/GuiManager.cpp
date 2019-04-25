@@ -49,6 +49,11 @@ bool GuiManager::Init(Graphics* graph, Window* window)
     // The overlay ignores input events for now
     OverlayLayer->SetInputMode(INPUT_MODE::None);
 
+    auto image = ImageWidget::MakeShared<ImageWidget>("oakfloor_basecolor.png");
+    OverlayLayer->AddWidget(image);
+    image->SetPosition(100, 100);
+    image->SetZ(2);
+
     ManagedLayers.push_back(OverlayLayer);
 
     return true;
@@ -246,6 +251,8 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
     std::function<void()> onfinished, std::function<void(const std::string&)> onerror,
     bool allowskip /*= true*/)
 {
+    const bool showUnderCursor = true;
+
     if(CurrentlyPlayingCutscene) {
         LOG_ERROR("GuiManager: PlayCutscene: can't play multiple cutscenes at the same time");
 
@@ -311,6 +318,7 @@ void GUI::GuiManager::SetSoftwareCursor(const std::string& cursor)
 
             OverlayLayer->AddWidget(SoftwareCursorWidget);
             SoftwareCursorWidget->SetPosition(CursorX, CursorY);
+            SoftwareCursorWidget->SetZ(20);
 
         } else {
 
@@ -330,7 +338,8 @@ void GUI::GuiManager::SetCursorPosition(int x, int y)
         int32_t width, height;
         ThisWindow->GetSize(width, height);
 
-        SoftwareCursorWidget->SetPosition(CursorX, height - CursorY);
+        SoftwareCursorWidget->SetPosition(CursorX, // height -
+            CursorY);
     }
 }
 

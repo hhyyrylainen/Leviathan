@@ -28,6 +28,8 @@ static inline void IncrementRefCountIfRefCountedType(T* current)
     if constexpr(IsTypeReferenceCounted<T>()) {
         if(current)
             current->AddRef();
+    } else {
+        UNUSED(current);
     }
 }
 
@@ -39,6 +41,8 @@ static inline void DecrementRefCountIfRefCountedType(T* current)
     if constexpr(IsTypeReferenceCounted<T>()) {
         if(current)
             current->Release();
+    } else {
+        UNUSED(current);
     }
 }
 

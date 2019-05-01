@@ -200,7 +200,7 @@ public:
     DLLEXPORT bool OnAddedToBridge(std::shared_ptr<ScriptArgumentsProviderBridge> bridge);
 
 private:
-    ScriptModule(const ScriptModule& other) {}
+    ScriptModule(const ScriptModule& other) = delete;
 
     void _FillParameterDataObject(
         int typeofas, int* paramtypeid, std::string* paramdecl, int* datablocktype);

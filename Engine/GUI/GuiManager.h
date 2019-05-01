@@ -79,6 +79,8 @@ public:
 
     //! \brief Gets a Layer by index
     //! \note The pointer is only safe to hang onto until a new gui layer is loaded or removed
+    //!
+    //! This ignores the overlay layer
     DLLEXPORT Layer* GetLayerByIndex(size_t index);
 
     //! Called when mouse cannot be captured (should force at least one collection on) //

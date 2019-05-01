@@ -97,6 +97,7 @@ DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateWidgetGeometry(
     vertexBuffers.push_back(vertexBuffer);
 
     Ogre::uint16 indices[] = {0, 1, 2, 2, 3, 0};
+    // Ogre::uint16 indices[] = {2, 1, 0, 0, 3, 2};
 
     Ogre::IndexBufferPacked* indexBuffer = vaoManager->createIndexBuffer(
         Ogre::IndexBufferPacked::IT_16BIT, 6, Ogre::BT_IMMUTABLE, &indices, false);

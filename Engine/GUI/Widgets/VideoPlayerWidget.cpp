@@ -2,12 +2,8 @@
 #include "VideoPlayerWidget.h"
 
 #include "GUI/BaseGuiContainer.h"
-#include "Rendering/GeometryHelpers.h"
 
-#include "Hlms/Unlit/OgreHlmsUnlit.h"
-#include "Hlms/Unlit/OgreHlmsUnlitDatablock.h"
-#include "OgreItem.h"
-#include "OgreMaterialManager.h"
+#include "OgreMesh2.h"
 #include "OgreMeshManager2.h"
 #include "OgreSceneManager.h"
 
@@ -16,6 +12,8 @@ using namespace Leviathan::GUI;
 // ------------------------------------ //
 DLLEXPORT VideoPlayerWidget::VideoPlayerWidget()
 {
+    DatablockName = "video_widget_" + std::to_string(ID);
+
     Player.OnPlayBackEnded.Register(LambdaDelegateSlot::MakeShared<LambdaDelegateSlot>(
         [=](const NamedVars::pointer& values) { _DoCallback(); }));
 }
@@ -34,54 +32,18 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 
     CanCallCallback = true;
 
+    NaturalWidth = Player.GetVideoWidth();
+    NaturalHeight = Player.GetVideoHeight();
+
     // The Play method creates the texture we want to display
     // So we do the item and material setup here
-    Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
-    Ogre::HlmsTextureManager* hlmsTextureManager = hlmsManager->getTextureManager();
+    _CreateDatablockWithTexture(0, Player.GetTexture());
 
-    Ogre::HlmsUnlit* hlmsUnlit =
-        static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
-
-    const auto datablockName = GetNameForDatablock();
-
-    Ogre::HlmsBlendblock blendblock;
-    // blendblock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
-    blendblock.mSourceBlendFactor = Ogre::SBF_ONE;
-    blendblock.mDestBlendFactor = Ogre::SBF_ONE_MINUS_SOURCE_ALPHA;
-
-    Ogre::HlmsUnlitDatablock* datablock =
-        static_cast<Ogre::HlmsUnlitDatablock*>(hlmsUnlit->createDatablock(datablockName,
-            datablockName, Ogre::HlmsMacroblock(), blendblock, Ogre::HlmsParamVec()));
-
-    // Ogre::HlmsTextureManager::TextureLocation texLocation =
-    //     hlmsTextureManager->createOrRetrieveTexture(
-    //         "flagella_texture.png", Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
-
-    // datablock->setTexture(0, texLocation.xIdx, texLocation.texture);
-
-    datablock->setTexture(0, 0, Player.GetTexture());
-
-    // datablock->setAlphaTest(Ogre::)
-
-    QuadMesh =
-        GeometryHelpers::CreateWidgetGeometry("video_widget_" + std::to_string(ID) + "_mesh",
-            Player.GetVideoWidth(), Player.GetVideoHeight());
+    _CreateStandardMeshAndItem(
+        "video_widget_" + std::to_string(ID) + "_mesh", NaturalWidth, NaturalHeight);
     // 200, 200);
 
-    QuadItem = ContainedIn->GetScene()->createItem(QuadMesh, Ogre::SCENE_DYNAMIC);
-    QuadItem->setDatablock(datablock);
-
-    Ogre::SceneManager* scene = ContainedIn->GetScene();
-
-    QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_DYNAMIC);
-
-    Node->attachObject(QuadItem);
-
-    // Center in container
-    LOG_WRITE("TODO: Center in container");
-    // DEBUG_BREAK;
-    Node->setPosition(0, 0, 2);
-
+    ContainedIn->OnSizeChanged();
     return true;
 }
 
@@ -108,46 +70,27 @@ void VideoPlayerWidget::_DoCallback()
         Callback();
 }
 // ------------------------------------ //
-DLLEXPORT void VideoPlayerWidget::_AcquireRenderResources()
-{
-    Node = ContainedIn->GetParentForWidgets()->createChildSceneNode(Ogre::SCENE_DYNAMIC);
-}
-
 void VideoPlayerWidget::_ReleaseSingleRunResources()
 {
     Ogre::SceneManager* scene = ContainedIn->GetScene();
 
-    if(QuadItem) {
-        scene->destroyItem(QuadItem);
-        QuadItem = nullptr;
+    if(Item) {
+        scene->destroyItem(Item);
+        Item = nullptr;
     }
 
-    if(QuadMesh) {
-        Ogre::MeshManager::getSingleton().remove(QuadMesh);
-        QuadMesh.reset();
+    if(Mesh) {
+        Ogre::MeshManager::getSingleton().remove(Mesh);
+        Mesh.reset();
     }
 
-    if(DatablockCreated) {
-        DatablockCreated = false;
-
-        const auto datablockName = GetNameForDatablock();
-
-        Ogre::HlmsManager* hlmsManager = Ogre::Root::getSingleton().getHlmsManager();
-        Ogre::HlmsUnlit* hlmsUnlit =
-            static_cast<Ogre::HlmsUnlit*>(hlmsManager->getHlms(Ogre::HLMS_UNLIT));
-
-        hlmsUnlit->destroyDatablock(datablockName);
-    }
+    _ReleaseDatablockIfCreated();
 }
 
-DLLEXPORT void VideoPlayerWidget::_ReleaseRenderResources()
+DLLEXPORT void VideoPlayerWidget::PerformOwnPositioning()
 {
-    Ogre::SceneManager* scene = ContainedIn->GetScene();
-
-    if(Node) {
-        scene->destroySceneNode(Node);
-        Node = nullptr;
-    }
-
-    _ReleaseSingleRunResources();
+    SetPixelPosition(0, 0);
+    int width, height;
+    ContainedIn->GetInnerSize(width, height);
+    SetAllocatedSize(width, height);
 }

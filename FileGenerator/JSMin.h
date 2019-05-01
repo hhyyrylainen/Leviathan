@@ -24,281 +24,262 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// Modified by Henri Hyyryläinen (2014) //
+// Modified by Henri Hyyryläinen (2014, 2019) //
 
 #include <stdio.h>
-
+#include <string>
 
 
 //! \brief Javascript compressor now in class form
 //! \note This is quite slow, but it is good enough - rewrite would be welcome though
-class JSMin{
+class JSMin {
 public:
+    JSMin() : theA(0), theB(0), theLookahead(EOF), theX(EOF), theY(EOF), ReadPos(0) {}
 
-	JSMin() : theA(0), theB(0), theLookahead(EOF), theX(EOF), theY(EOF), ReadPos(0){
+    /* isAlphanum -- return true if the character is a letter, digit, underscore,
+        dollar sign, or non-ASCII character.
+        */
+    static int isAlphanum(int c)
+    {
+        return ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
+                c == '_' || c == '$' || c == '\\' || c > 126);
+    }
 
-
-	}
-
-	/* isAlphanum -- return true if the character is a letter, digit, underscore,
-		dollar sign, or non-ASCII character.
-		*/
-	static int isAlphanum(int c)
-	{
-		return ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
-			(c >= 'A' && c <= 'Z') || c == '_' || c == '$' || c == '\\' ||
-			c > 126);
-	}
-
-	/* next -- get the next character, excluding comments. peek() is used to see
-		if a '/' is followed by a '/' or '*'.
-	*/
-	int next()
-	{
-		int c = get();
-		if  (c == '/') {
-			switch (peek()) {
-			case '/':
-				for (;;) {
-					c = get();
-					if (c <= '\n') {
-						break;
-					}
-				}
-				break;
-			case '*':
-				get();
-				while (c != ' ') {
-					switch (get()) {
-					case '*':
-						if (peek() == '/') {
-							get();
-							c = ' ';
-						}
-						break;
-					case EOF:
-						throw string("Unterminated comment.");
-					}
-				}
-				break;
-			}
-		}
-		theY = theX;
-		theX = c;
-		return c;
-	}
+    /* next -- get the next character, excluding comments. peek() is used to see
+        if a '/' is followed by a '/' or '*'.
+    */
+    int next()
+    {
+        int c = get();
+        if(c == '/') {
+            switch(peek()) {
+            case '/':
+                for(;;) {
+                    c = get();
+                    if(c <= '\n') {
+                        break;
+                    }
+                }
+                break;
+            case '*':
+                get();
+                while(c != ' ') {
+                    switch(get()) {
+                    case '*':
+                        if(peek() == '/') {
+                            get();
+                            c = ' ';
+                        }
+                        break;
+                    case EOF: throw std::string("Unterminated comment.");
+                    }
+                }
+                break;
+            }
+        }
+        theY = theX;
+        theX = c;
+        return c;
+    }
 
 
-	/* action -- do something! What you do is determined by the argument:
-			1   Output A. Copy B to A. Get the next B.
-			2   Copy B to A. Get the next B. (Delete A).
-			3   Get the next B. (Delete B).
-	   action treats a string as a single character. Wow!
-	   action recognizes a regular expression if it is preceded by ( or , or =.
-	*/
-	void action(int d)
-	{
-		switch (d) {
-		case 1:
-			TheOutput.push_back(theA);
-			if (
-				(theY == '\n' || theY == ' ') &&
-				(theA == '+' || theA == '-' || theA == '*' || theA == '/') &&
-				(theB == '+' || theB == '-' || theB == '*' || theB == '/')
-			) {
-				TheOutput.push_back(theY);
-			}
-		case 2:
-			theA = theB;
-			if (theA == '\'' || theA == '"' || theA == '`') {
-				for (;;) {
-					TheOutput.push_back(theA);
-					theA = get();
-					if (theA == theB) {
-						break;
-					}
-					if (theA == '\\') {
-						TheOutput.push_back(theA);
-						theA = get();
-					}
-					if (theA == EOF) {
-						throw string("Unterminated string literal.");
-					}
-				}
-			}
-		case 3:
-			theB = next();
-			if (theB == '/' && (
-				theA == '(' || theA == ',' || theA == '=' || theA == ':' ||
-				theA == '[' || theA == '!' || theA == '&' || theA == '|' ||
-				theA == '?' || theA == '+' || theA == '-' || theA == '~' ||
-				theA == '*' || theA == '/' || theA == '{' || theA == '\n'
-			)) {
-				TheOutput.push_back(theA);
-				if (theA == '/' || theA == '*') {
-					TheOutput.push_back(' ');
-				}
-				TheOutput.push_back(theB);
-				for (;;) {
-					theA = get();
-					if (theA == '[') {
-						for (;;) {
-							TheOutput.push_back(theA);
-							theA = get();
-							if (theA == ']') {
-								break;
-							}
-							if (theA == '\\') {
-								TheOutput.push_back(theA);
-								theA = get();
-							}
-							if (theA == EOF) {
-								throw string("Unterminated set in Regular Expression literal.");
-							}
-						}
-					} else if (theA == '/') {
-						switch (peek()) {
-						case '/':
-						case '*':
-							throw string("Unterminated set in Regular Expression literal.");
-						}
-						break;
-					} else if (theA =='\\') {
-						TheOutput.push_back(theA);
-						theA = get();
-					}
-					if (theA == EOF) {
-						throw string("Unterminated Regular Expression literal.");
-					}
-					TheOutput.push_back(theA);
-				}
-				theB = next();
-			}
-		}
-	}
+    /* action -- do something! What you do is determined by the argument:
+            1   Output A. Copy B to A. Get the next B.
+            2   Copy B to A. Get the next B. (Delete A).
+            3   Get the next B. (Delete B).
+       action treats a string as a single character. Wow!
+       action recognizes a regular expression if it is preceded by ( or , or =.
+    */
+    void action(int d)
+    {
+        switch(d) {
+        case 1:
+            TheOutput.push_back(theA);
+            if((theY == '\n' || theY == ' ') &&
+                (theA == '+' || theA == '-' || theA == '*' || theA == '/') &&
+                (theB == '+' || theB == '-' || theB == '*' || theB == '/')) {
+                TheOutput.push_back(theY);
+            }
+            [[fallthrough]];
+        case 2:
+            theA = theB;
+            if(theA == '\'' || theA == '"' || theA == '`') {
+                for(;;) {
+                    TheOutput.push_back(theA);
+                    theA = get();
+                    if(theA == theB) {
+                        break;
+                    }
+                    if(theA == '\\') {
+                        TheOutput.push_back(theA);
+                        theA = get();
+                    }
+                    if(theA == EOF) {
+                        throw std::string("Unterminated string literal.");
+                    }
+                }
+            }
+            [[fallthrough]];
+        case 3:
+            theB = next();
+            if(theB == '/' && (theA == '(' || theA == ',' || theA == '=' || theA == ':' ||
+                                  theA == '[' || theA == '!' || theA == '&' || theA == '|' ||
+                                  theA == '?' || theA == '+' || theA == '-' || theA == '~' ||
+                                  theA == '*' || theA == '/' || theA == '{' || theA == '\n')) {
+                TheOutput.push_back(theA);
+                if(theA == '/' || theA == '*') {
+                    TheOutput.push_back(' ');
+                }
+                TheOutput.push_back(theB);
+                for(;;) {
+                    theA = get();
+                    if(theA == '[') {
+                        for(;;) {
+                            TheOutput.push_back(theA);
+                            theA = get();
+                            if(theA == ']') {
+                                break;
+                            }
+                            if(theA == '\\') {
+                                TheOutput.push_back(theA);
+                                theA = get();
+                            }
+                            if(theA == EOF) {
+                                throw std::string(
+                                    "Unterminated set in Regular Expression literal.");
+                            }
+                        }
+                    } else if(theA == '/') {
+                        switch(peek()) {
+                        case '/':
+                        case '*':
+                            throw std::string(
+                                "Unterminated set in Regular Expression literal.");
+                        }
+                        break;
+                    } else if(theA == '\\') {
+                        TheOutput.push_back(theA);
+                        theA = get();
+                    }
+                    if(theA == EOF) {
+                        throw std::string("Unterminated Regular Expression literal.");
+                    }
+                    TheOutput.push_back(theA);
+                }
+                theB = next();
+            }
+        }
+    }
 
 
-	/* jsmin -- Copy the input to the output, deleting the characters which are
-		insignificant to JavaScript. Comments will be removed. Tabs will be
-		replaced with spaces. Carriage returns will be replaced with linefeeds.
-		Most spaces and linefeeds will be removed.
-	*/
-	void jsmin()
-	{
-		if (peek() == 0xEF) {
-			get();
-			get();
-			get();
-		}
-		theA = '\n';
-		action(3);
-		while (theA != EOF) {
-			switch (theA) {
-			case ' ':
-				action(isAlphanum(theB) ? 1 : 2);
-				break;
-			case '\n':
-				switch (theB) {
-				case '{':
-				case '[':
-				case '(':
-				case '+':
-				case '-':
-				case '!':
-				case '~':
-					action(1);
-					break;
-				case ' ':
-					action(3);
-					break;
-				default:
-					action(isAlphanum(theB) ? 1 : 2);
-				}
-				break;
-			default:
-				switch (theB) {
-				case ' ':
-					action(isAlphanum(theA) ? 1 : 3);
-					break;
-				case '\n':
-					switch (theA) {
-					case '}':
-					case ']':
-					case ')':
-					case '+':
-					case '-':
-					case '"':
-					case '\'':
-					case '`':
-						action(1);
-						break;
-					default:
-						action(isAlphanum(theA) ? 1 : 3);
-					}
-					break;
-				default:
-					action(1);
-					break;
-				}
-			}
-		}
-	}
+    /* jsmin -- Copy the input to the output, deleting the characters which are
+        insignificant to JavaScript. Comments will be removed. Tabs will be
+        replaced with spaces. Carriage returns will be replaced with linefeeds.
+        Most spaces and linefeeds will be removed.
+    */
+    void jsmin()
+    {
+        if(peek() == 0xEF) {
+            get();
+            get();
+            get();
+        }
+        theA = '\n';
+        action(3);
+        while(theA != EOF) {
+            switch(theA) {
+            case ' ': action(isAlphanum(theB) ? 1 : 2); break;
+            case '\n':
+                switch(theB) {
+                case '{':
+                case '[':
+                case '(':
+                case '+':
+                case '-':
+                case '!':
+                case '~': action(1); break;
+                case ' ': action(3); break;
+                default: action(isAlphanum(theB) ? 1 : 2);
+                }
+                break;
+            default:
+                switch(theB) {
+                case ' ': action(isAlphanum(theA) ? 1 : 3); break;
+                case '\n':
+                    switch(theA) {
+                    case '}':
+                    case ']':
+                    case ')':
+                    case '+':
+                    case '-':
+                    case '"':
+                    case '\'':
+                    case '`': action(1); break;
+                    default: action(isAlphanum(theA) ? 1 : 3);
+                    }
+                    break;
+                default: action(1); break;
+                }
+            }
+        }
+    }
 
 
-	void SetInput(const string &str){
+    void SetInput(const std::string& str)
+    {
 
-		ReadPos = 0;
-		// This trick is required for some reason //
-		InputString = " "+str;
-		TheOutput.clear();
-		TheOutput.reserve(InputString.size());
-	}
+        ReadPos = 0;
+        // This trick is required for some reason //
+        InputString = " " + str;
+        TheOutput.clear();
+        TheOutput.reserve(InputString.size());
+    }
 
-	string GetOutputString(){
-		return TheOutput;
-	}
+    std::string GetOutputString()
+    {
+        return TheOutput;
+    }
 
 
 protected:
+    //! \brief Returns the next character from input
+    int get()
+    {
+        if(ReadPos + 1 < InputString.size()) {
+            ReadPos++;
+            int c = InputString[ReadPos];
 
-	//! \brief Returns the next character from input
-	int get(){
-		if(ReadPos+1 < InputString.size()){
-			ReadPos++;
-			int c = InputString[ReadPos];
+            if(c >= ' ' || c == '\n' || c == EOF) {
+                return c;
+            }
+            if(c == '\r') {
+                return '\n';
+            }
+            return ' ';
+        }
+        return EOF;
+    }
 
-			if (c >= ' ' || c == '\n' || c == EOF) {
-				return c;
-			}
-			if (c == '\r') {
-				return '\n';
-			}
-			return ' ';
-		}
-		return EOF;
-	}
+    //! \brief Views the next character
+    int peek()
+    {
+        if(ReadPos + 1 < InputString.size()) {
 
-	//! \brief Views the next character
-	int	peek(){
-		if(ReadPos+1 < InputString.size()){
+            return InputString[ReadPos + 1];
+        }
+        return EOF;
+    }
 
-			return InputString[ReadPos+1];
-		}
-		return EOF;
-	}
+    // ------------------------------------ //
 
-	// ------------------------------------ //
+    int theA;
+    int theB;
+    int theLookahead;
+    int theX;
+    int theY;
 
-	int   theA;
-	int   theB;
-	int   theLookahead;
-	int   theX;
-	int   theY;
-
-	// The input string //
-	size_t ReadPos;
-	string InputString;
-	string TheOutput;
+    // The input string //
+    size_t ReadPos;
+    std::string InputString;
+    std::string TheOutput;
 };
-
-

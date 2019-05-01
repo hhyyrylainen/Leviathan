@@ -13,8 +13,6 @@
 #include <list>
 #include <vector>
 
-#define DEFAULT_THREADS_PER_CORE 1
-
 namespace Leviathan {
 
 #ifdef LEVIATHAN_USING_OGRE
@@ -40,7 +38,7 @@ class ThreadingManager : public ThreadSafe {
     friend void RunTaskQueuerThread(ThreadingManager* manager);
 
 public:
-    DLLEXPORT ThreadingManager(int basethreadspercore = DEFAULT_THREADS_PER_CORE);
+    DLLEXPORT ThreadingManager(int threads = -1);
     DLLEXPORT virtual ~ThreadingManager();
 
     //! Sets up the work queue
@@ -141,7 +139,7 @@ protected:
 
     static ThreadingManager* staticaccess;
 };
-}
+} // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
 using Leviathan::ConditionalDelayedTask;

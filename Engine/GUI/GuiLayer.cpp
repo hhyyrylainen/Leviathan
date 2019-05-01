@@ -22,6 +22,11 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     LEVIATHAN_ASSERT(Owner, "Layer has no owner");
     LEVIATHAN_ASSERT(Wind, "Layer has no window");
 
+    ReadWindowSize();
+
+    if(Width <= 1 || Height <= 1)
+        LEVIATHAN_ASSERT(false, "Gui Layer failed to get window size");
+
     // Setup the scene
     Ogre::Root& ogre = Ogre::Root::getSingleton();
 
@@ -29,17 +34,29 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     Scene = ogre.createSceneManager(Ogre::ST_GENERIC, 1, Ogre::INSTANCING_CULLING_SINGLETHREAD,
         "GUI_Layer_" + std::to_string(ID));
 
+    // Make all the layers work by setting the right render types on them
+    auto* queue = Scene->getRenderQueue();
+    for(int i = 0; i <= std::numeric_limits<uint8_t>::max(); ++i) {
+        queue->setRenderQueueMode(static_cast<uint8_t>(i), Ogre::RenderQueue::FAST);
+    }
+
     // Create an orthographic camera //
     Camera = Scene->createCamera("layer camera");
     // Camera->setFixedYawAxis(true, -Ogre::Vector3::UNIT_Y);
     Camera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
-    // Camera->setPosition(0, 0, 10000);
     Camera->setPosition(0, 0, 10000);
     Camera->lookAt(0, 0, 0);
     // This is not an awesome idea
     // Camera->roll(Ogre::Degree(180));
-    Camera->setNearClipDistance(1000);
-    Camera->setFarClipDistance(20000);
+    Camera->setNearClipDistance(1);
+
+    if(!ogre.getRenderSystem()->getCapabilities()->hasCapability(
+           Ogre::RSC_INFINITE_FAR_PLANE)) {
+
+        LOG_FATAL("Ogre render system reports infinite far plane not being available");
+    }
+
+    Camera->setFarClipDistance(0);
 
     // Update properties for the window size
     // For some reason this doesn't work here
@@ -92,6 +109,8 @@ DLLEXPORT void Layer::ReleaseResources()
 // ------------------------------------ //
 DLLEXPORT void Layer::NotifyWindowResized()
 {
+    ReadWindowSize();
+
     // Adjust camera
     AdjustCameraProperties();
 
@@ -111,16 +130,12 @@ DLLEXPORT void Layer::NotifyFocusUpdate(bool focused)
 DLLEXPORT void Layer::AdjustCameraProperties()
 {
     if(Camera) {
-        int32_t width;
-        int32_t height;
-        Wind->GetSize(width, height);
-
-        LOG_INFO("Setting orthographic width: " + std::to_string(width) +
-                 " and height: " + std::to_string(height));
-
-        // TODO: enable to make the GUI act nice with window resizing
-        Camera->setPosition(width / 2, -height / 2, 10000); // at the bottom
-        // Camera->setPosition(width / 2, -height / 2, 10000);
-        Camera->setOrthoWindow(width, height);
+        Camera->setPosition(Width / 2, -Height / 2, 10000);
+        Camera->setOrthoWindow(Width, Height);
     }
+}
+// ------------------------------------ //
+DLLEXPORT void Layer::ReadWindowSize()
+{
+    Wind->GetSize(Width, Height);
 }

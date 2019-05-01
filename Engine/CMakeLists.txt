@@ -345,6 +345,12 @@ if(LEVIATHAN_USING_ANGELSCRIPT)
 
   add_library(AngelScriptAddons ${GroupScriptAddons})
   set_target_properties(AngelScriptAddons PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+  if(NOT WIN32)
+    target_compile_options(AngelScriptAddons PRIVATE
+      "-Wno-cast-function-type" "-Wno-unused-but-set-variable" "-Wno-strict-aliasing"
+      "-Wno-unused-value" "-Wno-unused-parameter" "-Wno-type-limits"
+      "-Wno-nonnull-compare")
+  endif()
   
 endif()
 

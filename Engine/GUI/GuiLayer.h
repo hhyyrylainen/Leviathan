@@ -120,6 +120,8 @@ protected:
     //! make the Scene world coordinates match up with pixels
     DLLEXPORT void AdjustCameraProperties();
 
+    DLLEXPORT void ReadWindowSize();
+
 protected:
     //! Unique ID
     const int ID;
@@ -147,6 +149,10 @@ protected:
     //! \todo This needs to be tracked per frame for CEF browsers
     std::atomic<bool> ScrollableElement = false;
 
+    // The size of this layer
+    // Right now it is so that all layers are the size of the entire window
+    int32_t Width = -1;
+    int32_t Height = -1;
 
     // Rendering resources
     Ogre::CompositorWorkspace* Workspace;

@@ -64,7 +64,7 @@ else(WIN32)
   # Otherwise the dynamic library loading completely implodes. That could be worked around by
   # setting LD_LIBRARY_PATH before running (for example with a launch script) but that
   # would make debugging not work...
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wl,--no-allow-shlib-undefined -Wl,--disable-new-dtags -Wno-pragma-once-outside-header")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wno-unused-function -Wno-unknown-pragmas -Wno-unused-variable -Wl,--no-undefined -Wl,--no-allow-shlib-undefined -Wl,--disable-new-dtags -Wno-pragma-once-outside-header -Wno-unused-parameter -Wno-cast-function-type")
   # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
 
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")

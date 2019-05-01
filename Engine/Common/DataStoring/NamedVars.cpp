@@ -782,7 +782,7 @@ NamedVars::NamedVars() : Variables()
 {
     // nothing to initialize //
 }
-NamedVars::NamedVars(const NamedVars& other)
+NamedVars::NamedVars(const NamedVars& other) : ReferenceCounted()
 {
     // deep copy is required here //
     Variables.reserve(other.Variables.size());

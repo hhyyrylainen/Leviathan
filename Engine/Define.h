@@ -40,7 +40,10 @@ constexpr auto PACKET_LOST_AFTER_RECEIVED_NEWER = 4;
 
 constexpr auto CRITICAL_PACKET_MAX_TRIES = 8;
 
+constexpr auto LAST_GUI_LAYER = 255;
+
 //! Windows have one workspace before the GUI can add its own after that
+//! \note This currently doesn't work properly so the overlay workspace is always recreated
 constexpr auto GUI_WORKSPACES_BEFORE = 1;
 
 //! For checking vector normalization

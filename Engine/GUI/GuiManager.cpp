@@ -49,10 +49,10 @@ bool GuiManager::Init(Graphics* graph, Window* window)
     // The overlay ignores input events for now
     OverlayLayer->SetInputMode(INPUT_MODE::None);
 
-    auto image = ImageWidget::MakeShared<ImageWidget>("oakfloor_basecolor.png");
-    OverlayLayer->AddWidget(image);
-    image->SetPosition(100, 100);
-    image->SetZ(2);
+    // auto image = ImageWidget::MakeShared<ImageWidget>("oakfloor_basecolor.png");
+    // OverlayLayer->AddWidget(image);
+    // image->SetPixelPosition(100, 100);
+    // image->SetLayer(1);
 
     ManagedLayers.push_back(OverlayLayer);
 
@@ -169,7 +169,7 @@ void GuiManager::OnRender(float passed)
 // ------------------------------------ //
 DLLEXPORT void GuiManager::OnResize()
 {
-    // Resize all CEF browsers on this window //
+    // Resize all the layers on this window
     for(size_t i = 0; i < ManagedLayers.size(); i++) {
         ManagedLayers[i]->NotifyWindowResized();
     }
@@ -267,6 +267,7 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
 
     auto player = VideoPlayerWidget::MakeShared<VideoPlayerWidget>();
     OverlayLayer->AddWidget(player);
+    player->SetLayer(showUnderCursor ? 1 : LAST_GUI_LAYER);
 
     player->SetEndCallback([=]() {
         // TODO: figure out if an error happened
@@ -315,10 +316,11 @@ void GUI::GuiManager::SetSoftwareCursor(const std::string& cursor)
             LOG_INFO("GuiManager: enabling software cursor with image: " + cursor);
 
             SoftwareCursorWidget = ImageWidget::MakeShared<ImageWidget>(cursor);
+            SoftwareCursorWidget->SetPositionMode(POSITION_MODE::Manual);
 
             OverlayLayer->AddWidget(SoftwareCursorWidget);
-            SoftwareCursorWidget->SetPosition(CursorX, CursorY);
-            SoftwareCursorWidget->SetZ(20);
+            SoftwareCursorWidget->SetPixelPosition(CursorX, CursorY);
+            SoftwareCursorWidget->SetLayer(LAST_GUI_LAYER - 1);
 
         } else {
 
@@ -335,11 +337,10 @@ void GUI::GuiManager::SetCursorPosition(int x, int y)
 
     if(SoftwareCursorWidget) {
 
-        int32_t width, height;
-        ThisWindow->GetSize(width, height);
+        // int32_t width, height;
+        // ThisWindow->GetSize(width, height);
 
-        SoftwareCursorWidget->SetPosition(CursorX, // height -
-            CursorY);
+        SoftwareCursorWidget->SetPixelPosition(CursorX, CursorY);
     }
 }
 
@@ -353,6 +354,9 @@ void GUI::GuiManager::SetSoftwareCursorVisible(bool visible)
 // ------------------------------------ //
 DLLEXPORT Layer* Leviathan::GUI::GuiManager::GetLayerByIndex(size_t index)
 {
+    // Skip the overlay layer
+    ++index;
+
     if(index >= ManagedLayers.size())
         return nullptr;
 

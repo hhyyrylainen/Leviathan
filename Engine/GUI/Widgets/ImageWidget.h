@@ -5,12 +5,10 @@
 // ------------------------------------ //
 #include "Widget.h"
 
-#include "OgreMesh2.h"
-
 namespace Leviathan { namespace GUI {
 
 //! \brief A simple image showing widget
-class ImageWidget : public Widget {
+class ImageWidget : public WidgetWithStandardResources {
 protected:
     // These are protected for only constructing properly reference
     // counted instances through MakeShared
@@ -21,33 +19,22 @@ public:
     DLLEXPORT ~ImageWidget();
 
     //! \brief Sets the image shown by this widget
+    //! \todo Implement this for when this is already shown
     DLLEXPORT void SetImage(const std::string& imagename);
 
-
-    void SetPosition(float x, float y);
-    void SetZ(float z);
-
-    inline const auto GetNameForDatablock() const
+    // Widget overrides
+    DLLEXPORT virtual bool CanExpand() const override
     {
-        return "image_widget_" + std::to_string(ID);
+        return true;
     }
 
     REFERENCE_COUNTED_PTR_TYPE(ImageWidget);
 
 protected:
     DLLEXPORT virtual void _AcquireRenderResources() override;
-    DLLEXPORT virtual void _ReleaseRenderResources() override;
 
 private:
     std::string ImageName;
-
-    int Width;
-    int Height;
-    float Z = 0;
-
-    Ogre::SceneNode* Node = nullptr;
-    Ogre::Item* QuadItem = nullptr;
-    Ogre::MeshPtr QuadMesh;
 };
 
 }} // namespace Leviathan::GUI

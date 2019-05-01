@@ -1545,9 +1545,8 @@ public:
             static_cast<float>(w));
     }
 
-    DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3& angles)
+    DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3&)
     {
-
         throw std::exception();
         // return Float4();
     }

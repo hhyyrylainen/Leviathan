@@ -16,14 +16,12 @@ using namespace std;
 #ifdef LEVIATHAN_USING_OGRE
 void Leviathan::RegisterOgreOnThread()
 {
-
     Ogre::Root::getSingleton().getRenderSystem()->registerThread();
     Logger::Get()->Info("Thread registered to work with Ogre");
 }
 
 DLLEXPORT void Leviathan::UnregisterOgreOnThread()
 {
-
     // Release Ogre (if Ogre is still active) //
     Ogre::Root* tmproot = Ogre::Root::getSingletonPtr();
     LEVIATHAN_ASSERT(tmproot, "Calling UnregisterOgreOnThread after Ogre has been released");
@@ -34,13 +32,12 @@ DLLEXPORT void Leviathan::UnregisterOgreOnThread()
 #endif // LEVIATHAN_USING_OGRE
 
 // ------------------ ThreadingManager ------------------ //
-DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore
-    /*= DEFAULT_THREADS_PER_CORE*/) :
-    AllowStartTasksFromQueue(true),
-    StopProcessing(false), TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT),
-    AllowRepeats(true), AllowConditionalWait(true)
+DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int threads /*= -1*/) :
+    AllowStartTasksFromQueue(true), StopProcessing(false),
+    TaksMustBeRanBeforeState(TASK_MUSTBERAN_BEFORE_EXIT), AllowRepeats(true),
+    AllowConditionalWait(true)
 {
-    WantedThreadCount = std::thread::hardware_concurrency() * basethreadspercore;
+    WantedThreadCount = std::max(1, static_cast<int>(std::thread::hardware_concurrency() - 1));
 
     staticaccess = this;
 }
@@ -369,9 +366,9 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre()
 #ifdef LEVIATHAN_USING_OGRE
         for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter) {
 
-        //(*iter)->SetTaskAndNotify(
-        //   std::make_shared<QueuedTask>(std::bind(RegisterOgreOnThread)));
-        // Wait for it to end //
+            //(*iter)->SetTaskAndNotify(
+            //   std::make_shared<QueuedTask>(std::bind(RegisterOgreOnThread)));
+            // Wait for it to end //
 #ifdef __GNUC__
             while((*iter)->HasRunningTask()) {
                 try {

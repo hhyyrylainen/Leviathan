@@ -19,6 +19,8 @@ public:
     DLLEXPORT WidgetLayer(GuiManager* owner, Window* window, int renderorder);
     DLLEXPORT ~WidgetLayer();
 
+    DLLEXPORT void OnRender(float passed) override;
+
     DLLEXPORT void RemoveAllWidgets();
 
     // BaseGuiContainer interface
@@ -37,6 +39,12 @@ public:
         return Layer::GetScene();
     }
 
+    DLLEXPORT void GetInnerSize(int& width, int& height) override
+    {
+        width = Width;
+        height = Height;
+    }
+
 protected:
     // Layer interface
     DLLEXPORT void _DoReleaseResources() override;
@@ -45,6 +53,9 @@ protected:
 
 private:
     std::vector<boost::intrusive_ptr<Widget>> Widgets;
+
+    //! Used to defer layout updates until next render
+    bool LayoutDirty = true;
 };
 
 }} // namespace Leviathan::GUI

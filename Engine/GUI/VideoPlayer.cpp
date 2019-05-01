@@ -888,7 +888,6 @@ void VideoPlayer::OnStreamEndReached()
 
 void VideoPlayer::SeekVideo(float time)
 {
-
     if(time < 0)
         time = 0;
 
@@ -911,7 +910,6 @@ void VideoPlayer::SeekVideo(float time)
 // ------------------------------------ //
 void VideoPlayer::DumpInfo() const
 {
-
     if(FormatContext) {
         // Passing VideoFile here passes the name onto output, it's not needed
         // but it differentiates the output by file name
@@ -921,7 +919,6 @@ void VideoPlayer::DumpInfo() const
 // ------------------------------------ //
 DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 {
-
     switch(event->GetType()) {
     case EVENT_TYPE_FRAME_BEGIN: {
 
@@ -1002,7 +999,6 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
 DLLEXPORT int VideoPlayer::OnGenericEvent(GenericEvent* event)
 {
-
     return 0;
 }
 
@@ -1019,7 +1015,6 @@ static Mutex FFMPEGOutBufferMutex;
 //! \brief Custom callback for ffmpeg to pipe output to our logger class
 void FFMPEGCallback(void* ptr, int level, const char* fmt, va_list varg)
 {
-
     if(level > AV_LOG_INFO)
         return;
 
@@ -1074,7 +1069,6 @@ void FFMPEGCallback(void* ptr, int level, const char* fmt, va_list varg)
 
 void VideoPlayer::LoadFFMPEG()
 {
-
     // Makes sure all threads can pass only when ffmpeg is loaded
     Lock lock(FFMPEGLoadMutex);
 

@@ -13,6 +13,14 @@ DLLEXPORT WidgetLayer::~WidgetLayer()
     RemoveAllWidgets();
 }
 // ------------------------------------ //
+DLLEXPORT void WidgetLayer::OnRender(float passed)
+{
+    if(LayoutDirty) {
+        OnSizeChanged();
+        LayoutDirty = false;
+    }
+}
+// ------------------------------------ //
 DLLEXPORT bool WidgetLayer::AddWidget(const boost::intrusive_ptr<Widget>& widget)
 {
     // Don't allow duplicates. This is probably quite rare
@@ -28,6 +36,7 @@ DLLEXPORT bool WidgetLayer::AddWidget(const boost::intrusive_ptr<Widget>& widget
     Widgets.push_back(widget);
 
     widget->OnAddedToContainer(this);
+    LayoutDirty = true;
     return true;
 }
 
@@ -40,6 +49,7 @@ DLLEXPORT bool WidgetLayer::RemoveWidget(Widget* widget)
 
             widget->OnRemovedFromContainer(this);
             Widgets.erase(std::next(iter).base());
+            LayoutDirty = true;
             return true;
         }
     }
@@ -55,11 +65,18 @@ DLLEXPORT void WidgetLayer::RemoveAllWidgets()
 
         RemoveWidget(Widgets.back().get());
     }
+
+    LayoutDirty = true;
 }
 // ------------------------------------ //
 DLLEXPORT void WidgetLayer::OnSizeChanged()
 {
-    // TODO: reposition all widgets
+    // TODO: maybe it would be better that this container would also act like a Panel
+
+    // All widgets added directly to this layer must be able to calculate their own positions
+    // (top level widgets)
+    for(const auto& widget : Widgets)
+        widget->PerformOwnPositioning();
 }
 // ------------------------------------ //
 DLLEXPORT void WidgetLayer::_DoReleaseResources()

@@ -38,6 +38,9 @@ public:
     //!
     //! This allows things like some containers being a RTT instead of a main scene on a window
     DLLEXPORT virtual Ogre::SceneManager* GetScene() = 0;
+
+    //! \brief Returns the size that the contained widgets can use
+    DLLEXPORT virtual void GetInnerSize(int& width, int& height) = 0;
 };
 
 

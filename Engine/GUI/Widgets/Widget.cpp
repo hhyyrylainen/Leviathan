@@ -83,6 +83,7 @@ DLLEXPORT void WidgetWithStandardResources::SetAllocatedSize(int width, int heig
     if(width == NaturalWidth && height == NaturalHeight) {
 
         Node->setScale(1, 1, 1);
+        Node->setPosition(X, -Y, 0);
         return;
     }
 
@@ -170,7 +171,7 @@ DLLEXPORT void WidgetWithStandardResources::_CreateDatablockWithTexture(
 
     if(needsTransparency) {
         macroBlock.mDepthWrite = false;
-        // transparentMacro.mDepthCheck = false;
+        // macroBlock.mDepthCheck = false;
     }
 
     Ogre::HlmsMacroblock normalMacro;

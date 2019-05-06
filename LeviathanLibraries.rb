@@ -9,6 +9,7 @@ require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
+require_relative 'RubySetupSystem/Libraries/BSFramework.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -109,6 +110,15 @@ $ogre = Ogre.new(
   noInstallSudo: true
 )
 
+$bsf = BSFramework.new(
+  version: "master",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  renderAPI: "Vulkan",
+  physicsModule: "Null",
+  audioModule: "Null"
+)
+
 $caudio = CAudio.new(
   version: "master",
   epoch: 2,
@@ -175,7 +185,7 @@ if OS.windows?
   $leviathanLibList += [$zlib, $freeimage, $sdl, $freetype, $openalsoft]
 end
 
-$leviathanLibList += [$caudio, $ogre]
+$leviathanLibList += [$caudio, $ogre, $bsf]
 
 
 

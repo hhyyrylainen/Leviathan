@@ -87,6 +87,9 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Pbs"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Unlit"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bullet"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfEngine"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfCore"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfUtility"
     )
 
   # Find SDL2
@@ -110,6 +113,7 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     avcodec avformat avutil swresample swscale
     cAudio
     ${SDL2_LIBRARY} AngelScriptAddons
+    bsf
     )
 
 

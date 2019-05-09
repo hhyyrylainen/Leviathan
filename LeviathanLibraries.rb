@@ -9,7 +9,7 @@ require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
-require_relative 'RubySetupSystem/Libraries/BSFramework.rb'
+require_relative 'RubySetupSystem/Libraries/SetupBSFramework.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -115,6 +115,7 @@ $bsf = BSFramework.new(
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   renderAPI: "Vulkan",
+  buildAllRenderAPI: true,
   physicsModule: "Null",
   audioModule: "Null"
 )

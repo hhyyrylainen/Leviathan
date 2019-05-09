@@ -26,6 +26,10 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   file(GLOB DataMoveFiles "${LEVIATHAN_SRC}/bin/Data/*")
   file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
 
+  file(GLOB BSF_DATA_FILES "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/*")
+  file(COPY ${BSF_DATA_FILES} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")  
+  # TODO: install for bsf files
+  
   # The script files folder
   install(DIRECTORY "Scripts" DESTINATION bin/Data)
   install(DIRECTORY "CoreOgreScripts" DESTINATION bin)

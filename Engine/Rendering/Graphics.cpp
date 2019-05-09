@@ -20,6 +20,11 @@
 #include "OgreRoot.h"
 #include "OgreTextureManager.h"
 
+
+#include "BsApplication.h"
+#include "Components/BsCCamera.h"
+#include "Scene/BsSceneObject.h"
+
 #include <future>
 #include <regex>
 
@@ -71,6 +76,21 @@ Graphics* Graphics::Staticaccess = NULL;
 // ------------------------------------------- //
 bool Graphics::Init(AppDef* appdef)
 {
+    using namespace bs;
+
+    Application::startUp(VideoMode(1280, 720), // Window resolution
+        "My app", // Window title
+        false); // True for fullscreen, false for windowed
+
+    HSceneObject sceneCameraSO = SceneObject::create("SceneCamera");
+    HCamera sceneCamera = sceneCameraSO->addComponent<CCamera>();
+    sceneCamera->setMain(true);
+    sceneCameraSO->setPosition(Vector3(40.0f, 30.0f, 230.0f));
+    sceneCameraSO->lookAt(Vector3(0, 0, 0));
+    Application::instance().runMainLoop();
+    Application::shutDown();
+
+    return false;
 
     // save definition pointer //
     AppDefinition = appdef;
@@ -120,94 +140,97 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef)
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 
 
-    Ogre::String ConfigFileName = "";
-    Ogre::String PluginsFileName = "";
+    //     Ogre::String ConfigFileName = "";
+    //     Ogre::String PluginsFileName = "";
 
-    // Is this leaked?
-    Ogre::LogManager* logMgr = new Ogre::LogManager();
+    //     // Is this leaked?
+    //     Ogre::LogManager* logMgr = new Ogre::LogManager();
 
-    // Could also use the singleton access method here //
-    string ogrelogfile =
-        StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false) + "OGRE.txt";
+    //     // Could also use the singleton access method here //
+    //     string ogrelogfile =
+    //         StringOperations::RemoveExtension(Logger::Get()->GetLogFile(), false) +
+    //         "OGRE.txt";
 
-    OLog = logMgr->createLog(ogrelogfile, true, true, false);
-    OLog->setDebugOutputEnabled(true);
+    //     OLog = logMgr->createLog(ogrelogfile, true, true, false);
+    //     OLog->setDebugOutputEnabled(true);
 
-#ifdef OGRE_ALLOW_USEFULLOUTPUT
+    // #ifdef OGRE_ALLOW_USEFULLOUTPUT
 
-    bool usebore = false;
-    {
-        // Check if we want it //
-        GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
+    //     bool usebore = false;
+    //     {
+    //         // Check if we want it //
+    //         GAMECONFIGURATION_GET_VARIABLEACCESS(variables);
 
-        if(variables)
-            variables->GetValueAndConvertTo<bool>("OgreBoreMe", usebore);
-    }
+    //         if(variables)
+    //             variables->GetValueAndConvertTo<bool>("OgreBoreMe", usebore);
+    //     }
 
-    if(usebore) {
-        OLog->setLogDetail(Ogre::LL_BOREME);
+    //     if(usebore) {
+    //         OLog->setLogDetail(Ogre::LL_BOREME);
 
-    } else {
+    //     } else {
 
-        OLog->setLogDetail(Ogre::LL_NORMAL);
-    }
-#else
-    OLog->setLogDetail(Ogre::LL_NORMAL);
-#endif // OGRE_USEFULLOUTPUT
-
-
-    ORoot = std::unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName, ""));
-
-    // Still waiting for the GL3Plus render system to become usable... //
-    vector<Ogre::String> PluginNames = {"RenderSystem_GL3Plus",
-#ifdef _WIN32
-#ifndef LEVIATHAN_USING_SDL2
-        ("RenderSystem_Direct3D11"),
-#endif
-#endif
-        ("Plugin_ParticleFX")};
-    // This seems no longer be available //
-    /*("Plugin_CgProgramManager")*/
-    /*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
-
-    Ogre::String currentPlugin = "";
-
-    try {
-
-        for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++) {
-
-            currentPlugin = *Iter;
-
-            // append "_d" if in debug mode //
-#ifdef _DEBUG
-            currentPlugin.append("_d");
-#endif // _DEBUG
-
-#ifndef _WIN32
-            // On platforms where rpath works plugins are in the lib subdirectory
-            currentPlugin = "lib/" + currentPlugin;
-#endif
-            // load //
-            ORoot->loadPlugin(currentPlugin);
-        }
-
-    } catch(const Ogre::InternalErrorException& e) {
-
-        Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\"" + currentPlugin +
-                             "\"), exception: " + std::string(e.what()));
-        return false;
-    }
+    //         OLog->setLogDetail(Ogre::LL_NORMAL);
+    //     }
+    // #else
+    //     OLog->setLogDetail(Ogre::LL_NORMAL);
+    // #endif // OGRE_USEFULLOUTPUT
 
 
-    // Choose proper render system //
-    const Ogre::RenderSystemList& RSystemList = ORoot->getAvailableRenderers();
+    //     ORoot = std::unique_ptr<Ogre::Root>(new Ogre::Root(PluginsFileName, ConfigFileName,
+    //     ""));
 
-    if(RSystemList.size() == 0) {
-        // no render systems found //
+    //     // Still waiting for the GL3Plus render system to become usable... //
+    //     vector<Ogre::String> PluginNames = {"RenderSystem_GL3Plus",
+    // #ifdef _WIN32
+    // #ifndef LEVIATHAN_USING_SDL2
+    //         ("RenderSystem_Direct3D11"),
+    // #endif
+    // #endif
+    //         ("Plugin_ParticleFX")};
+    //     // This seems no longer be available //
+    //     /*("Plugin_CgProgramManager")*/
+    //     /*("OgrePaging")("OgreTerrain")("OgreOverlay")*/;
 
-        Logger::Get()->Error("Graphics: InitializeOgre: no render systems found");
-        return false;
-    }
+    //     Ogre::String currentPlugin = "";
+
+    //     try {
+
+    //         for(auto Iter = PluginNames.begin(); Iter != PluginNames.end(); Iter++) {
+
+    //             currentPlugin = *Iter;
+
+    //             // append "_d" if in debug mode //
+    // #ifdef _DEBUG
+    //             currentPlugin.append("_d");
+    // #endif // _DEBUG
+
+    // #ifndef _WIN32
+    //             // On platforms where rpath works plugins are in the lib subdirectory
+    //             currentPlugin = "lib/" + currentPlugin;
+    // #endif
+    //             // load //
+    //             ORoot->loadPlugin(currentPlugin);
+    //         }
+
+    //     } catch(const Ogre::InternalErrorException& e) {
+
+    //         Logger::Get()->Error("Graphics: init: failed to load ogre plugin (\"" +
+    //         currentPlugin +
+    //                              "\"), exception: " + std::string(e.what()));
+    //         return false;
+    //     }
+
+
+    //     // Choose proper render system //
+    //     const Ogre::RenderSystemList& RSystemList = ORoot->getAvailableRenderers();
+
+    //     if(RSystemList.size() == 0) {
+    //         // no render systems found //
+
+    //         Logger::Get()->Error("Graphics: InitializeOgre: no render systems found");
+    //         return false;
+    //     }
 
     // Create the regular expression it must match //
     string rendersystemname;
@@ -216,59 +239,61 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef)
         "RenderSystemName", rendersystemname, "OpenGL.*", Logger::Get(),
         "Graphics: Init: no selected render system,");
 
-    regex rendersystemnameregex(
-        rendersystemname, regex_constants::ECMAScript | regex_constants::icase);
+    // regex rendersystemnameregex(
+    //     rendersystemname, regex_constants::ECMAScript | regex_constants::icase);
 
-    Logger::Get()->Info("Graphics: preferred rendering system: \"" + rendersystemname + "\"");
+    // Logger::Get()->Info("Graphics: preferred rendering system: \"" + rendersystemname +
+    // "\"");
 
-    Ogre::RenderSystem* selectedrendersystem = NULL;
+    // Ogre::RenderSystem* selectedrendersystem = NULL;
 
-    // Choose the right render system //
-    for(size_t i = 0; i < RSystemList.size(); i++) {
+    // // Choose the right render system //
+    // for(size_t i = 0; i < RSystemList.size(); i++) {
 
-        const Ogre::String& rsystemname = RSystemList[i]->getName();
+    //     const Ogre::String& rsystemname = RSystemList[i]->getName();
 
-        if(regex_search(rsystemname, rendersystemnameregex)) {
+    //     if(regex_search(rsystemname, rendersystemnameregex)) {
 
-            // Matched //
-            selectedrendersystem = RSystemList[i];
-            break;
-        }
-    }
+    //         // Matched //
+    //         selectedrendersystem = RSystemList[i];
+    //         break;
+    //     }
+    // }
 
-    if(!selectedrendersystem) {
-        // Select the first one since none matched //
-        Logger::Get()->Warning("Graphics: Init: no render system matched regex, "
-                               "choosing default: " +
-                               RSystemList[0]->getName());
+    // if(!selectedrendersystem) {
+    //     // Select the first one since none matched //
+    //     Logger::Get()->Warning("Graphics: Init: no render system matched regex, "
+    //                            "choosing default: " +
+    //                            RSystemList[0]->getName());
 
-        selectedrendersystem = RSystemList[0];
-    }
+    //     selectedrendersystem = RSystemList[0];
+    // }
 
-    // \todo add device selecting feature //
+    // // \todo add device selecting feature //
 
-    Ogre::ConfigOptionMap& rconfig = selectedrendersystem->getConfigOptions();
-    if(rconfig.find("RTT Preferred Mode") != rconfig.end()) {
-        // set to copy, can fix problems //
-        // this causes spam on my setup and doesn't fix any issues
-        // selectedrendersystem->setConfigOption("RTT Preferred Mode","Copy");
-        // selectedrendersystem->setConfigOption("RTT Preferred Mode","FBO");
-    }
+    // Ogre::ConfigOptionMap& rconfig = selectedrendersystem->getConfigOptions();
+    // if(rconfig.find("RTT Preferred Mode") != rconfig.end()) {
+    //     // set to copy, can fix problems //
+    //     // this causes spam on my setup and doesn't fix any issues
+    //     // selectedrendersystem->setConfigOption("RTT Preferred Mode","Copy");
+    //     // selectedrendersystem->setConfigOption("RTT Preferred Mode","FBO");
+    // }
 
-    ORoot->setRenderSystem(selectedrendersystem);
+    // ORoot->setRenderSystem(selectedrendersystem);
 
-    bool gamma;
+    // bool gamma;
 
-    ObjectFileProcessor::LoadValueFromNamedVars<bool>(appdef->GetValues(), "UseGamma", gamma,
-        false, Logger::Get(), "Graphics: Init: no gamma option specified");
+    // ObjectFileProcessor::LoadValueFromNamedVars<bool>(appdef->GetValues(), "UseGamma",
+    // gamma,
+    //     false, Logger::Get(), "Graphics: Init: no gamma option specified");
 
-    if(gamma)
-        selectedrendersystem->setConfigOption("sRGB Gamma Conversion", "Yes");
+    // if(gamma)
+    //     selectedrendersystem->setConfigOption("sRGB Gamma Conversion", "Yes");
 
-    ORoot->initialise(false, "", "");
+    // ORoot->initialise(false, "", "");
 
-    // register listener //
-    ORoot->addFrameListener(this);
+    // // register listener //
+    // ORoot->addFrameListener(this);
 
     // TODO: Ogre HLMS needs these probably per material or something
     // Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(Ogre::TFO_ANISOTROPIC);
@@ -327,7 +352,7 @@ bool Leviathan::Graphics::InitializeOgre(AppDef* appdef)
     }
 
     // clear events that might have queued A LOT while starting up //
-    ORoot->clearEventTimes();
+    // ORoot->clearEventTimes();
 
     return true;
 }

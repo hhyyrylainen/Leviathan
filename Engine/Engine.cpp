@@ -1191,7 +1191,7 @@ DLLEXPORT std::shared_ptr<GameWorld> Engine::CreateWorld(Window* owningwindow, i
         return nullptr;
     }
 
-    world->Init(networking, NoGui ? nullptr : Graph->GetOgreRoot());
+    world->Init(networking, NoGui ? nullptr : Graph);
 
     if(owningwindow)
         owningwindow->LinkObjects(world);

@@ -454,7 +454,6 @@ size_t Leviathan::FileSystem::GetFileLength(const string& name)
 
 DLLEXPORT bool Leviathan::FileSystem::FileExists(const string& name)
 {
-
     return boost::filesystem::exists(name);
 }
 

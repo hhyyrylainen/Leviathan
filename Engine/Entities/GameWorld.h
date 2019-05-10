@@ -108,7 +108,7 @@ public:
 
     //! \brief Creates resources for the world to work
     //! \post The world can be used after this
-    DLLEXPORT bool Init(const WorldNetworkSettings& network, Ogre::Root* ogre);
+    DLLEXPORT bool Init(const WorldNetworkSettings& network, Graphics* graphics);
 
     //! Release to not use Ogre when deleting
     DLLEXPORT void Release();
@@ -592,7 +592,7 @@ private:
     //! \brief Updates a players position info in this world
     void UpdatePlayersPositionData(ConnectedPlayer& ply);
 
-    void _CreateOgreResources(Ogre::Root* ogre);
+    void _CreateRenderingResources(Graphics* graphics);
     void _HandleDelayedDelete();
 
     //! \brief Reports an entity deletion to clients

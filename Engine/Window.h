@@ -129,8 +129,12 @@ public:
 #ifdef _WIN32
     DLLEXPORT HWND GetNativeHandle() const;
 #else
-    DLLEXPORT uint32_t GetNativeHandle() const;
+    DLLEXPORT unsigned long GetNativeHandle() const;
 #endif //_WIN32
+
+#if defined(__linux)
+    DLLEXPORT unsigned long GetWindowXDisplay() const;
+#endif
 
     //! \brief Returns whether this window is focused
     //! \return True when the window has focus

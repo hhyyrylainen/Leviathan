@@ -25,12 +25,6 @@
 #endif
 
 
-#include "OgreCommon.h"
-#include "OgreRenderWindow.h"
-#include "OgreRoot.h"
-#include "OgreStringConverter.h"
-#include "OgreVector4.h"
-
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -54,31 +48,34 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 
     const WindowDataDetails& WData = windowproperties->GetWindowDetails();
 
-    // set some rendering specific parameters //
-    Ogre::NameValuePairList WParams;
+    // TODO: FSAA (if MSAA is disabled)
 
-    // variables //
-    Ogre::String fsaastr = Convert::ToString(WData.FSAA);
+    // // set some rendering specific parameters //
+    // Ogre::NameValuePairList WParams;
 
-    // Context needs to be reused for multiple windows
-    if(OpenWindowCount > 0) {
+    // // variables //
+    // Ogre::String fsaastr = Convert::ToString(WData.FSAA);
 
-        LOG_INFO("Window: using existing GLX context for creating");
+    // // Context needs to be reused for multiple windows
+    // if(OpenWindowCount > 0) {
 
-        WParams["currentGLContext"] = "true";
+    //     LOG_INFO("Window: using existing GLX context for creating");
 
-        // Needs to be forced off to not cause issues like vsyncing each window separately and
-        // dropping to "monitor refresh rate / window count" fps
-        WParams["vsync"] = "false";
+    //     WParams["currentGLContext"] = "true";
 
-    } else {
-        WParams["vsync"] = WData.VSync ? "true" : "false";
-    }
+    //     // Needs to be forced off to not cause issues like vsyncing each window separately
+    //     and
+    //     // dropping to "monitor refresh rate / window count" fps
+    //     WParams["vsync"] = "false";
 
-    WParams["FSAA"] = fsaastr;
-    WParams["gamma"] = WData.UseGamma ? "true" : "false";
+    // } else {
+    //     WParams["vsync"] = WData.VSync ? "true" : "false";
+    // }
 
-    Ogre::String wcaption = WData.Title;
+    // WParams["FSAA"] = fsaastr;
+    // WParams["gamma"] = WData.UseGamma ? "true" : "false";
+
+    // Ogre::String wcaption = WData.Title;
 
     int extraFlags = 0;
 
@@ -97,7 +94,7 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // High DPI OpenGL
     // canvas. https://wiki.libsdl.org/SDL_CreateWindow
 
-    SDL_Window* sdlWindow = SDL_CreateWindow(WData.Title.c_str(),
+    SDLWindow = SDL_CreateWindow(WData.Title.c_str(),
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber),
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber), WData.Width, WData.Height,
         // This seems to cause issues on Windows
@@ -111,64 +108,32 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // SDL_WINDOWPOS_UNDEFINED_DISPLAY(x)
     // SDL_WINDOWPOS_CENTERED_DISPLAY(x)
 
-    if(!sdlWindow) {
+    if(!SDLWindow) {
 
         LOG_FATAL("SDL Window creation failed, error: " + std::string(SDL_GetError()));
     }
 
-    // SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindow);
+    // SDL_GLContext glContext = SDL_GL_CreateContext(SDLWindow);
 
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
-    if(!SDL_GetWindowWMInfo(sdlWindow, &wmInfo)) {
+    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
 
         LOG_FATAL("Window: created sdl window failed to retrieve info");
     }
 
-#ifdef _WIN32
-    auto winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
-    // WParams["parentWindowHandle"] = Ogre::StringConverter::toString(winHandle);
-    // This seems to be the right name on windows
-    WParams["externalWindowHandle"] = Ogre::StringConverter::toString(winHandle);
-    // externalWindowHandle
-#else
-    WParams["parentWindowHandle"] =
-        Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.display) + ":" +
-        Ogre::StringConverter::toString(
-            (unsigned int)XDefaultScreen(wmInfo.info.x11.display)) +
-        ":" + Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.window);
+    auto tmpwindow = windowcreater->RegisterCreatedWindow(*this);
 
-#endif
-
-    Ogre::RenderWindow* tmpwindow;
-
-    try {
-        tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(
-            wcaption, WData.Width, WData.Height, false, &WParams);
-    } catch(const Ogre::RenderingAPIException& e) {
-
-        LOG_ERROR("Failed to create Ogre window, exception: " + std::string(e.what()));
-        throw;
+    if(!tmpwindow) {
+        throw Exception("Failed to create bsf window");
     }
 
-    int windowsafter = ++OpenWindowCount;
-
-    // Do some first window initialization //
-    if(windowsafter == 1) {
-
-        // Notify engine to register threads to work with Ogre //
-        Engine::GetEngine()->_NotifyThreadsRegisterOgre();
-
-        // Hlms is needed to parse scripts etc.
-        windowcreater->_LoadOgreHLMS();
-
-        FileSystem::RegisterOGREResourceGroups();
-    }
+    ++OpenWindowCount;
 
     // Store this window's number
     WindowNumber = ++TotalCreatedWindows;
 
-    OWindow = tmpwindow;
+    // OWindow = tmpwindow;
 
 #ifdef _WIN32
     // Fetch the windows handle from SDL //
@@ -185,10 +150,10 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 #else
     // \todo linux icon
 #endif
-    tmpwindow->setDeactivateOnFocusChange(false);
+    // tmpwindow->setDeactivateOnFocusChange(false);
 
     // set the new window to be active //
-    tmpwindow->setActive(true);
+    // tmpwindow->setActive(true);
     Focused = true;
 
     // create GUI //
@@ -207,8 +172,6 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 
     // create receiver interface //
     TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
-
-    SDLWindow = sdlWindow;
 
     // TODO: this needs to be only used when a text box etc. is used
     // But that is quite hard to detect
@@ -243,7 +206,7 @@ DLLEXPORT Window::~Window()
         "Window: closing window(" + Convert::ToString(GetWindowNumber()) + ")");
 
     // Close the window //
-    OWindow->destroy();
+    // OWindow->destroy();
 
     TertiaryReceiver.reset();
 
@@ -269,14 +232,14 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
 
     if(LinkedWorld) {
 
-        LinkedWorld->OnUnLinkedFromWindow(this, Graphics::Get()->GetOgreRoot());
+        // LinkedWorld->OnUnLinkedFromWindow(this, Graphics::Get()->GetOgreRoot());
     }
 
     LinkedWorld = world;
 
     if(LinkedWorld) {
 
-        LinkedWorld->OnLinkToWindow(this, Graphics::Get()->GetOgreRoot());
+        // LinkedWorld->OnLinkToWindow(this, Graphics::Get()->GetOgreRoot());
     }
 }
 
@@ -319,9 +282,9 @@ DLLEXPORT void Window::OnResize(int width, int height)
 // Notify Ogre //
 // This causes issues on Windows
 #ifdef __linux__
-    GetOgreWindow()->resize(width, height);
+    // GetOgreWindow()->resize(width, height);
 #endif
-    GetOgreWindow()->windowMovedOrResized();
+    // GetOgreWindow()->windowMovedOrResized();
 
     // send to GUI //
     WindowsGui->OnResize();
@@ -917,7 +880,7 @@ DLLEXPORT uint32_t Window::GetSDLID() const
 #ifdef _WIN32
 DLLEXPORT HWND Window::GetNativeHandle() const
 #else
-DLLEXPORT uint32_t Window::GetNativeHandle() const
+DLLEXPORT unsigned long Window::GetNativeHandle() const
 #endif //_WIN32
 {
     SDL_SysWMinfo wmInfo;
@@ -941,16 +904,34 @@ DLLEXPORT uint32_t Window::GetNativeHandle() const
 #endif
 #endif
 }
+
+#if defined(__linux)
+DLLEXPORT unsigned long Window::GetWindowXDisplay() const
+{
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
+
+        LOG_FATAL("Window: GetWindowXDisplay: failed to retrieve wm info");
+        return -1;
+    }
+
+    return (unsigned long)wmInfo.info.x11.display;
+}
+#endif
 // ------------------------------------ //
 DLLEXPORT void Window::SaveScreenShot(const std::string& filename)
 {
     // uses render target's capability to save it's contents //
-    GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
+    DEBUG_BREAK;
+    // GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
 }
 
 DLLEXPORT bool Window::GetVsync() const
 {
-    return OWindow->isVSyncEnabled();
+    DEBUG_BREAK;
+    return false;
+    // return OWindow->isVSyncEnabled();
 }
 
 DLLEXPORT void Window::SetCustomInputController(std::shared_ptr<InputController> controller)

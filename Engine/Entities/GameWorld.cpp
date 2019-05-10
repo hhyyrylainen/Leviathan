@@ -88,16 +88,16 @@ DLLEXPORT GameWorld::~GameWorld()
         Entities.empty(), "GameWorld: Entities not empty in destructor. Was Release called?");
 }
 // ------------------------------------ //
-DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Ogre::Root* ogre)
+DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Graphics* graphics)
 {
     NetworkSettings = network;
 
     // Detecting non-GUI mode //
-    if(ogre) {
+    if(graphics) {
 
         GraphicalMode = true;
         // these are always required for worlds //
-        _CreateOgreResources(ogre);
+        _CreateRenderingResources(graphics);
     } else {
 
         GraphicalMode = false;
@@ -159,51 +159,53 @@ DLLEXPORT void GameWorld::Release()
     pimpl.reset();
 }
 // ------------------------------------ //
-void GameWorld::_CreateOgreResources(Ogre::Root* ogre)
+void GameWorld::_CreateRenderingResources(Graphics* graphics)
 {
-    // create scene manager //
-    // Let's do what the Ogre samples do and use a bunch of threads for culling
-    const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
+    LOG_WRITE("TODO: reimplement _CreateRenderingResources");
+    // // create scene manager //
+    // // Let's do what the Ogre samples do and use a bunch of threads for culling
+    // const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
 
-    // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
+    // // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
 
-    // The ID is not used here to work with client received worlds
-    WorldsScene =
-        ogre->createSceneManager(Ogre::ST_GENERIC, threads, Ogre::INSTANCING_CULLING_THREADED,
-            "MainSceneManager_" + std::to_string(IDFactory::GetID()));
+    // // The ID is not used here to work with client received worlds
+    // WorldsScene =
+    //     ogre->createSceneManager(Ogre::ST_GENERIC, threads,
+    //     Ogre::INSTANCING_CULLING_THREADED,
+    //         "MainSceneManager_" + std::to_string(IDFactory::GetID()));
 
-    // These are a bit higher than the Ogre "sane" values of 500.0f
-    WorldsScene->setShadowDirectionalLightExtrusionDistance(1000.f);
-    WorldsScene->setShadowFarDistance(1000.f);
+    // // These are a bit higher than the Ogre "sane" values of 500.0f
+    // WorldsScene->setShadowDirectionalLightExtrusionDistance(1000.f);
+    // WorldsScene->setShadowFarDistance(1000.f);
 
-    // Setup v2 rendering for the default group
-    WorldsScene->getRenderQueue()->setRenderQueueMode(
-        DEFAULT_RENDER_QUEUE, Ogre::RenderQueue::FAST);
+    // // Setup v2 rendering for the default group
+    // WorldsScene->getRenderQueue()->setRenderQueueMode(
+    //     DEFAULT_RENDER_QUEUE, Ogre::RenderQueue::FAST);
 
-    // create camera //
-    WorldSceneCamera = WorldsScene->createCamera("Camera01");
+    // // create camera //
+    // WorldSceneCamera = WorldsScene->createCamera("Camera01");
 
-    // WorldSceneCamera->lookAt( Ogre::Vector3( 0, 0, 0 ) );
+    // // WorldSceneCamera->lookAt( Ogre::Vector3( 0, 0, 0 ) );
 
-    // near and far clipping planes //
-    WorldSceneCamera->setFOVy(Ogre::Degree(60));
-    WorldSceneCamera->setNearClipDistance(0.1f);
-    WorldSceneCamera->setFarClipDistance(50000.f);
-    WorldSceneCamera->setAutoAspectRatio(true);
+    // // near and far clipping planes //
+    // WorldSceneCamera->setFOVy(Ogre::Degree(60));
+    // WorldSceneCamera->setNearClipDistance(0.1f);
+    // WorldSceneCamera->setFarClipDistance(50000.f);
+    // WorldSceneCamera->setAutoAspectRatio(true);
 
-    // enable infinite far clip distance if supported //
-    if(ogre->getRenderSystem()->getCapabilities()->hasCapability(
-           Ogre::RSC_INFINITE_FAR_PLANE)) {
+    // // enable infinite far clip distance if supported //
+    // if(ogre->getRenderSystem()->getCapabilities()->hasCapability(
+    //        Ogre::RSC_INFINITE_FAR_PLANE)) {
 
-        WorldSceneCamera->setFarClipDistance(0);
-    }
+    //     WorldSceneCamera->setFarClipDistance(0);
+    // }
 
-    // // Orthographic test
-    // WorldSceneCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
-    // WorldSceneCamera->setOrthoWindow(85, 85);
+    // // // Orthographic test
+    // // WorldSceneCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
+    // // WorldSceneCamera->setOrthoWindow(85, 85);
 
-    // default sun //
-    SetSunlight();
+    // // default sun //
+    // SetSunlight();
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetFog()

@@ -4,17 +4,14 @@
 #include "Handlers/IDFactory.h"
 #include "Window.h"
 
-#include "Compositor/OgreCompositorManager2.h"
-#include "Compositor/OgreCompositorNode.h"
-#include "Compositor/OgreCompositorWorkspace.h"
-#include "OgreCamera.h"
-#include "OgreRenderWindow.h"
-#include "OgreRoot.h"
-#include "OgreSceneManager.h"
+#include "bsfCore/Components/BsCCamera.h"
+#include "bsfCore/Scene/BsSceneObject.h"
 
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
+int Layer::LayerNumber = 1;
+
 
 DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     ID(IDFactory::GetID()), Wind(window), Owner(owner)
@@ -24,30 +21,45 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     LEVIATHAN_ASSERT(renderorder >= GUI_WORKSPACE_BEGIN_ORDER, "invalid render order passed");
 
     // Setup the scene
-    Ogre::Root& ogre = Ogre::Root::getSingleton();
+    BSFLayerHack = 1 << (++LayerNumber);
 
-    // Create the scene manager //
-    Scene = ogre.createSceneManager(Ogre::ST_GENERIC, 1, Ogre::INSTANCING_CULLING_SINGLETHREAD,
-        "GUI_Layer_" + std::to_string(ID));
+    CameraSO = bs::SceneObject::create(("LayerCamera_" + std::to_string(ID)).c_str());
 
     // Create an orthographic camera //
-    Camera = Scene->createCamera("layer camera");
-    Camera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
+    Camera = CameraSO->addComponent<bs::CCamera>();
+    Camera->setProjectionType(bs::PT_ORTHOGRAPHIC);
+    // BSF has no multiple scenes so we do this
+    Camera->setLayers(BSFLayerHack);
+
     // Setup permanent direction
-    Camera->setPosition(0, 0, -10);
-    Camera->lookAt(0, 0, 0);
+    CameraSO->setPosition(bs::Vector3(0, 0, -10));
+    CameraSO->lookAt(bs::Vector3(0, 0, 0));
 
     // Update properties for the window size
     AdjustCameraProperties();
 
-    // Create the workspace for this layer that will render us after the normal scene
-    Workspace = ogre.getCompositorManager2()->addWorkspace(
-        Scene, window->GetOgreWindow(), Camera, "OverlayWorkspace", true, renderorder);
+    // Attach to window
+    const auto& viewport = Camera->getViewport();
+    viewport->setTarget(window->GetBSFWindow());
+    viewport->setClearFlags(bs::ClearFlagBits::Depth | bs::ClearFlagBits::Stencil);
+    auto& settings = Camera->getRenderSettings();
+    settings->autoExposure.minEyeAdaptation = 1;
+    settings->autoExposure.maxEyeAdaptation = 1;
+    settings->enableAutoExposure = false;
+    settings->enableHDR = false;
+    settings->enableLighting = false;
+    settings->enableShadows = false;
+    settings->enableTonemapping = false;
+    Camera->setRenderSettings(settings);
+
+    // Setup the order this is rendered in
+    // Higher priority is first so negating the order must make it be later
+    Camera->setPriority(-renderorder);
 }
 
 DLLEXPORT Layer::~Layer()
 {
-    LEVIATHAN_ASSERT(!Workspace, "ReleaseResources wasn't called on Layer");
+    LEVIATHAN_ASSERT(!CameraSO, "ReleaseResources wasn't called on Layer");
 }
 // ------------------------------------ //
 DLLEXPORT void Layer::ReleaseResources()
@@ -55,20 +67,8 @@ DLLEXPORT void Layer::ReleaseResources()
     // Release derived type resources first
     _DoReleaseResources();
 
-    // Destroy the compositor //
-    Ogre::Root& ogre = Ogre::Root::getSingleton();
-
-    // Allow releasing twice
-    if(Workspace) {
-        ogre.getCompositorManager2()->removeWorkspace(Workspace);
-        Workspace = nullptr;
-    }
-
-    if(Scene) {
-        ogre.destroySceneManager(Scene);
-        Scene = nullptr;
-        Camera = nullptr;
-    }
+    Camera = nullptr;
+    CameraSO->destroy();
 }
 // ------------------------------------ //
 DLLEXPORT void Layer::NotifyWindowResized()

@@ -10,6 +10,8 @@
 #include "WindowsInclude.h"
 #endif
 
+#include "bsfCore/RenderAPI/BsRenderWindow.h"
+
 #include <atomic>
 #include <memory>
 
@@ -171,6 +173,11 @@ public:
         return OWindow;
     }
 
+    DLLEXPORT inline const auto& GetBSFWindow() const
+    {
+        return BSFWindow;
+    }
+
     //! Returns this windows creation number
     //! \note This is quaranteed to be unique among all windows
     DLLEXPORT inline int GetWindowNumber() const
@@ -228,6 +235,8 @@ protected:
 private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
+
+    bs::SPtr<bs::RenderWindow> BSFWindow;
 
     //! This is retrieved from GuiManager at the start of a sequence of inputs based
     //! on the mouse position. The property of GUI_INPUT_MODE will determine how the input

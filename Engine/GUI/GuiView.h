@@ -14,6 +14,8 @@
 #include "include/cef_request_handler.h"
 #include "wrapper/cef_message_router.h"
 
+#include "bsfCore/Image/BsTexture.h"
+
 namespace Leviathan { namespace GUI {
 
 class LeviathanJavaScriptAsync;
@@ -67,8 +69,8 @@ public:
         VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
     DLLEXPORT ~View();
 
-    //! \brief Must be called before using, initializes required Ogre resources
-    //! \return True when succeeds
+    //! \brief Must be called before using, initializes teh required rendering resources
+    //! \return True on success
     DLLEXPORT bool Init(const std::string& filetoload, const NamedVars& headervars);
 
     DLLEXPORT inline INPUT_MODE GetInputMode() const override
@@ -307,18 +309,13 @@ protected:
     std::map<int, JSProxyable::pointer> ProxyedObjects;
 
     // Rendering resources
-    //! Name of the Ogre texture
-    const std::string TextureName;
+    bs::HMaterial Material;
 
-    //! Name of the Ogre material
-    const std::string MaterialName;
+    bs::HSceneObject Node;
+    bs::HRenderable Renderable;
 
-    Ogre::SceneNode* Node = nullptr;
-    Ogre::Item* QuadItem;
-    Ogre::MeshPtr QuadMesh;
-
-    //! The direct texture pointer
-    Ogre::TexturePtr Texture;
+    bs::HTexture Texture;
+    bs::SPtr<bs::PixelData> DataBuffer;
 };
 
 }} // namespace Leviathan::GUI

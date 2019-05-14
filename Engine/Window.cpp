@@ -122,9 +122,9 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
         LOG_FATAL("Window: created sdl window failed to retrieve info");
     }
 
-    auto tmpwindow = windowcreater->RegisterCreatedWindow(*this);
+    BSFWindow = windowcreater->RegisterCreatedWindow(*this);
 
-    if(!tmpwindow) {
+    if(!BSFWindow) {
         throw Exception("Failed to create bsf window");
     }
 
@@ -133,7 +133,6 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // Store this window's number
     WindowNumber = ++TotalCreatedWindows;
 
-    // OWindow = tmpwindow;
 
 #ifdef _WIN32
     // Fetch the windows handle from SDL //
@@ -212,16 +211,19 @@ DLLEXPORT Window::~Window()
 
     int windowsafter = --OpenWindowCount;
 
+    BSFWindow->destroy();
+    BSFWindow.reset();
+
     if(windowsafter == 0) {
 
         Logger::Get()->Info("Window: all windows have been closed, "
                             "should quit soon");
     }
 
-    LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
-              "GLX plugin uninstall");
-    // SDL_DestroyWindow(SDLWindow);
-    SDL_HideWindow(SDLWindow);
+    // LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
+    //           "GLX plugin uninstall");
+    SDL_DestroyWindow(SDLWindow);
+    // SDL_HideWindow(SDLWindow);
     SDLWindow = nullptr;
 }
 // ------------------------------------ //

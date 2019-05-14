@@ -345,7 +345,7 @@ bool Graphics::InitializeBSF(AppDef* appdef)
 #ifdef _WIN32
     else if(std::regex_match(renderAPI, directx)) {
         DEBUG_BREAK;
-        desc.renderAPI = "bsfDirectXRenderAPI";
+        desc.renderAPI = "bsfD3D11RenderAPI";
     }
 #endif //_WIN32
     else {

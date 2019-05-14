@@ -7,17 +7,11 @@
 #include "Exceptions.h"
 #include "GuiInputSettings.h"
 
-#include "OgreMaterial.h"
-#include "OgreTexture.h"
-
+#include "bsfCore/Components/BsCCamera.h"
 
 #include <atomic>
 
 union SDL_Event;
-
-namespace Ogre {
-class Root;
-}
 
 namespace Leviathan { namespace GUI {
 
@@ -30,7 +24,7 @@ public:
     DLLEXPORT Layer(GuiManager* owner, Window* window, int renderorder);
     DLLEXPORT virtual ~Layer();
 
-    //! \brief Must be called before destroying to release allocated Ogre and other resources
+    //! \brief Must be called before destroying to release allocated resources
     DLLEXPORT void ReleaseResources();
 
     //! \brief Notifies all the widgets and layout that the size has changed
@@ -79,11 +73,12 @@ public:
 
     //! \brief Returns the main scene of this layer that contains all renderables
     //! \exception InvalidState if this view has been released already
-    DLLEXPORT inline Ogre::SceneManager* GetScene()
+    // DLLEXPORT inline Ogre::SceneManager* GetScene()
+    DLLEXPORT inline int GetScene()
     {
-        if(!Scene)
+        if(!BSFLayerHack)
             throw InvalidState("This layer has been released already");
-        return Scene;
+        return BSFLayerHack;
     }
 
     // Input passing from Window
@@ -117,6 +112,9 @@ protected:
     //! Unique ID
     const int ID;
 
+    //! A temporary solution around no multiple scenes in BSF
+    static int LayerNumber;
+
     //! Stored access to matching window
     Window* const Wind;
 
@@ -142,9 +140,12 @@ protected:
 
 
     // Rendering resources
-    Ogre::CompositorWorkspace* Workspace;
-    Ogre::SceneManager* Scene;
-    Ogre::Camera* Camera;
+    int BSFLayerHack;
+    // Ogre::CompositorWorkspace* Workspace;
+    // Ogre::SceneManager* Scene;
+    // Ogre::Camera* Camera;
+    bs::HSceneObject CameraSO;
+    bs::HCamera Camera;
 };
 
 }} // namespace Leviathan::GUI

@@ -49,24 +49,25 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
     textureState->setHardwareGammaEnabled(true);
     Material->compile();
 
-    QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
+    DEBUG_BREAK;
+    // QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
 
 
-    // Recreate item
-    Ogre::SceneManager* scene = ContainedIn->GetScene();
+    // // Recreate item
+    // Ogre::SceneManager* scene = ContainedIn->GetScene();
 
-    if(QuadItem) {
-        scene->destroyItem(QuadItem);
-        QuadItem = nullptr;
-    }
+    // if(QuadItem) {
+    //     scene->destroyItem(QuadItem);
+    //     QuadItem = nullptr;
+    // }
 
-    QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
-    QuadItem->setCastShadows(false);
+    // QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
+    // QuadItem->setCastShadows(false);
 
-    QuadItem->setRenderQueueGroup(2);
+    // QuadItem->setRenderQueueGroup(2);
 
-    // Add it
-    Node->attachObject(QuadItem);
+    // // Add it
+    // Node->attachObject(QuadItem);
 
     return true;
 }
@@ -98,27 +99,30 @@ DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
 {
     ContainedIn = container;
 
-    QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
-        "videoplayer_widget_" + std::to_string(ID) + "_mesh", -1, -1, 2, 2);
+    DEBUG_BREAK;
 
-    // Duplicate the material
-    Ogre::MaterialPtr baseMaterial =
-        Ogre::MaterialManager::getSingleton().getByName("GUIOverlay");
+    // QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
+    //     "videoplayer_widget_" + std::to_string(ID) + "_mesh", -1, -1, 2, 2);
 
-    if(!baseMaterial)
-        LOG_FATAL(
-            "VideoPlayerWidget: GUIOverlay material doesn't exists! are the core Leviathan "
-            "materials and shaders copied?");
+    // // Duplicate the material
+    // Ogre::MaterialPtr baseMaterial =
+    //     Ogre::MaterialManager::getSingleton().getByName("GUIOverlay");
 
-    Material = baseMaterial->clone("videoplayer_widget_" + std::to_string(ID) + "_material");
+    // if(!baseMaterial)
+    //     LOG_FATAL(
+    //         "VideoPlayerWidget: GUIOverlay material doesn't exists! are the core Leviathan "
+    //         "materials and shaders copied?");
 
-    Ogre::SceneManager* scene = ContainedIn->GetScene();
+    // Material = baseMaterial->clone("videoplayer_widget_" + std::to_string(ID) +
+    // "_material");
 
-    Node = scene->createSceneNode(Ogre::SCENE_STATIC);
+    // Ogre::SceneManager* scene = ContainedIn->GetScene();
 
-    // Setup render queue for it
-    // TODO: a proper system needs to be done for managing what is on top of what
-    scene->getRenderQueue()->setRenderQueueMode(2, Ogre::RenderQueue::FAST);
+    // Node = scene->createSceneNode(Ogre::SCENE_STATIC);
+
+    // // Setup render queue for it
+    // // TODO: a proper system needs to be done for managing what is on top of what
+    // scene->getRenderQueue()->setRenderQueueMode(2, Ogre::RenderQueue::FAST);
 }
 
 DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
@@ -126,25 +130,27 @@ DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
     if(!ContainedIn)
         return;
 
-    Ogre::SceneManager* scene = ContainedIn->GetScene();
+    DEBUG_BREAK;
 
-    if(Node) {
-        scene->destroySceneNode(Node);
-        Node = nullptr;
-    }
+    // Ogre::SceneManager* scene = ContainedIn->GetScene();
 
-    if(QuadItem) {
-        scene->destroyItem(QuadItem);
-        QuadItem = nullptr;
-    }
+    // if(Node) {
+    //     scene->destroySceneNode(Node);
+    //     Node = nullptr;
+    // }
 
-    if(QuadMesh) {
-        Ogre::MeshManager::getSingleton().remove(QuadMesh);
-        QuadMesh.reset();
-    }
+    // if(QuadItem) {
+    //     scene->destroyItem(QuadItem);
+    //     QuadItem = nullptr;
+    // }
 
-    if(Material) {
-        Ogre::MaterialManager::getSingleton().remove(Material);
-        Material.reset();
-    }
+    // if(QuadMesh) {
+    //     Ogre::MeshManager::getSingleton().remove(QuadMesh);
+    //     QuadMesh.reset();
+    // }
+
+    // if(Material) {
+    //     Ogre::MaterialManager::getSingleton().remove(Material);
+    //     Material.reset();
+    // }
 }

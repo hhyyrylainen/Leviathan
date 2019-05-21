@@ -60,6 +60,32 @@
 #include "Utility/BsTime.h"
 #include "bsfCore/Managers/BsRenderAPIManager.h"
 
+// BsApplication
+#include "2D/BsSpriteManager.h"
+#include "BsEngineConfig.h"
+#include "CoreThread/BsCoreObjectManager.h"
+#include "CoreThread/BsCoreThread.h"
+#include "Debug/BsDebugDraw.h"
+#include "FileSystem/BsFileSystem.h"
+#include "GUI/BsGUIManager.h"
+#include "GUI/BsProfilerOverlay.h"
+#include "GUI/BsShortcutManager.h"
+#include "Importer/BsImporter.h"
+#include "Input/BsVirtualInput.h"
+#include "Platform/BsCursor.h"
+#include "Platform/BsPlatform.h"
+#include "Profiling/BsProfilingManager.h"
+#include "Renderer/BsRendererManager.h"
+#include "Renderer/BsRendererMaterialManager.h"
+#include "Resources/BsBuiltinResources.h"
+#include "Resources/BsEngineShaderIncludeHandler.h"
+#include "Resources/BsPlainTextImporter.h"
+#include "Resources/BsResources.h"
+#include "Scene/BsSceneManager.h"
+#include "Scene/BsSceneObject.h"
+#include "Script/BsScriptManager.h"
+
+
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -184,7 +210,7 @@ public:
     bs::START_UP_DESC BSFSettings;
     bs::DynLib* RendererPlugin = nullptr;
 
-    bool mIsFrameRenderingFinished = false;
+    bool mIsFrameRenderingFinished = true;
     bs::Mutex mFrameRenderingFinishedMutex;
     bs::Signal mFrameRenderingFinishedCondition;
 };
@@ -318,6 +344,10 @@ bool Graphics::InitializeBSF(AppDef* appdef)
     desc.renderer = "bsfRenderBeast";
     desc.physicsCooking = false;
 
+    desc.importers.push_back("bsfFreeImgImporter");
+    desc.importers.push_back("bsfFBXImporter");
+    desc.importers.push_back("bsfFontImporter");
+    desc.importers.push_back("bsfSL");
 
     std::string renderAPI;
     ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
@@ -447,7 +477,7 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         PhysicsManager::startUp(Pimpl->BSFSettings.physics, Pimpl->BSFSettings.physicsCooking);
         SceneManager::startUp();
         RendererManager::instance().setActive(Pimpl->BSFSettings.renderer);
-        RendererManager::instance().initialize();
+        // RendererManager::instance().initialize();
 
         ProfilerGPU::startUp();
         MeshManager::startUp();
@@ -462,6 +492,27 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         // Built-in importers
         FGAImporter* fgaImporter = bs_new<FGAImporter>();
         Importer::instance()._registerAssetImporter(fgaImporter);
+
+        // Code from BsApplication.cpp
+        PlainTextImporter* importer = bs_new<PlainTextImporter>();
+        Importer::instance()._registerAssetImporter(importer);
+
+        // VirtualInput::startUp();
+        BuiltinResources::startUp();
+        RendererMaterialManager::startUp();
+        RendererManager::instance().initialize();
+        SpriteManager::startUp();
+        // GUIManager::startUp();
+        // ShortcutManager::startUp();
+
+        // bs::Cursor::startUp();
+        // bs::Cursor::instance().setCursor(CursorType::Arrow);
+        // Platform::setIcon(BuiltinResources::instance().getFrameworkIcon());
+
+        SceneManager::instance().setMainRenderTarget(bsWindow);
+        DebugDraw::startUp();
+
+        // startUpScriptManager();
 
 
         // Notify engine to register threads to work with Ogre //
@@ -490,6 +541,33 @@ void Graphics::ShutdownBSF()
 {
     // A bunch of code here is copy pasted from BsCoreApplication.cpp
     using namespace bs;
+
+    // This part is from BsApplication.cpp
+    // Need to clear all objects before I unload any plugins, as they
+    // could have allocated parts or all of those objects.
+    SceneManager::instance().clearScene(true);
+
+    // Resources too (Prefabs especially, since they hold the same data as a scene)
+    Resources::instance().unloadAll();
+
+    // Shut down before script manager as scripts could have registered shortcut callbacks
+    ShortcutManager::shutDown();
+
+    ScriptManager::shutDown();
+    DebugDraw::shutDown();
+
+    // Cleanup any new objects queued for destruction by unloaded scripts
+    CoreObjectManager::instance().syncToCore();
+    gCoreThread().update();
+    gCoreThread().submitAll(true);
+
+    bs::Cursor::shutDown();
+
+    GUIManager::shutDown();
+    SpriteManager::shutDown();
+    BuiltinResources::shutDown();
+    RendererMaterialManager::shutDown();
+    // VirtualInput::shutDown();
 
     // Wait until last core frame is finished before exiting
     {

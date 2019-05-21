@@ -24,6 +24,7 @@
 #include "bsfCore/Importer/BsImporter.h"
 #include "bsfCore/Material/BsMaterial.h"
 #include "bsfCore/Scene/BsSceneObject.h"
+#include "bsfEngine/Resources/BsBuiltinResources.h"
 
 #include <SDL.h>
 
@@ -54,11 +55,12 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     Renderable = Node->addComponent<bs::CRenderable>();
     Renderable->setLayer(1 << GetScene());
 
-    // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2);
-    auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(0, 0, 1280, 720);
+    auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2);
+    // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(0, 0, 1280, 720);
 
     bs::HShader shader =
         bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
+    // bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::ParticlesUnlit);
     Material = bs::Material::create(shader);
 
     Renderable->setMesh(QuadMesh);
@@ -457,6 +459,11 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
 
     LEVIATHAN_ASSERT(DataBuffer->getSize() == buffSize, "CEF and BSF buffer size mismatch");
 
+    if(DataBuffer->isLocked()) {
+        // Just skip for now. in the future we'll want a few rotating buffers
+        return;
+    }
+
     bool fullOverwrite = false;
 
     // Copy the data over //
@@ -496,6 +503,7 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     if(!Texture) {
         Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
         Material->setTexture("image", Texture);
+        // Material->setTexture("gTexture", Texture);
     } else {
         Texture->writeData(DataBuffer, fullOverwrite);
     }

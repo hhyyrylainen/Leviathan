@@ -62,9 +62,9 @@ void GuiManager::Release()
         FileChangeID = 0;
     }
 
-    // Default mouse back //
-    // show default window cursor //
-    ThisWindow->SetHideCursor(false);
+    // // Default mouse back //
+    // // show default window cursor //
+    // ThisWindow->SetHideCursor(false);
 
     // Destroy the views //
     for(size_t i = 0; i < ManagedLayers.size(); i++) {

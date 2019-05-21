@@ -42,6 +42,7 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     const auto& viewport = Camera->getViewport();
     viewport->setTarget(window->GetBSFWindow());
     viewport->setClearFlags(bs::ClearFlagBits::Depth | bs::ClearFlagBits::Stencil);
+    viewport->setClearColorValue(bs::Color::White);
     auto& settings = Camera->getRenderSettings();
     settings->autoExposure.minEyeAdaptation = 1;
     settings->autoExposure.maxEyeAdaptation = 1;

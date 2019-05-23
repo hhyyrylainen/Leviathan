@@ -23,39 +23,39 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     // Setup the scene
     BSFLayerHack = 1 << (++LayerNumber);
 
-    CameraSO = bs::SceneObject::create(("LayerCamera_" + std::to_string(ID)).c_str());
+    // CameraSO = bs::SceneObject::create(("LayerCamera_" + std::to_string(ID)).c_str());
 
-    // Create an orthographic camera //
-    Camera = CameraSO->addComponent<bs::CCamera>();
-    Camera->setProjectionType(bs::PT_ORTHOGRAPHIC);
-    // BSF has no multiple scenes so we do this
-    Camera->setLayers(BSFLayerHack);
+    // // Create an orthographic camera //
+    // Camera = CameraSO->addComponent<bs::CCamera>();
+    // Camera->setProjectionType(bs::PT_ORTHOGRAPHIC);
+    // // BSF has no multiple scenes so we do this
+    // Camera->setLayers(BSFLayerHack);
 
-    // Setup permanent direction
-    CameraSO->setPosition(bs::Vector3(0, 0, -10));
-    CameraSO->lookAt(bs::Vector3(0, 0, 0));
+    // // Setup permanent direction
+    // CameraSO->setPosition(bs::Vector3(0, 0, -10));
+    // CameraSO->lookAt(bs::Vector3(0, 0, 0));
 
-    // Update properties for the window size
-    AdjustCameraProperties();
+    // // Update properties for the window size
+    // AdjustCameraProperties();
 
-    // Attach to window
-    const auto& viewport = Camera->getViewport();
-    viewport->setTarget(window->GetBSFWindow());
-    viewport->setClearFlags(bs::ClearFlagBits::Depth | bs::ClearFlagBits::Stencil);
-    viewport->setClearColorValue(bs::Color::White);
-    auto& settings = Camera->getRenderSettings();
-    settings->autoExposure.minEyeAdaptation = 1;
-    settings->autoExposure.maxEyeAdaptation = 1;
-    settings->enableAutoExposure = false;
-    settings->enableHDR = false;
-    settings->enableLighting = false;
-    settings->enableShadows = false;
-    settings->enableTonemapping = false;
-    Camera->setRenderSettings(settings);
+    // // Attach to window
+    // const auto& viewport = Camera->getViewport();
+    // viewport->setTarget(window->GetBSFWindow());
+    // viewport->setClearFlags(bs::ClearFlagBits::Depth | bs::ClearFlagBits::Stencil);
+    // viewport->setClearColorValue(bs::Color::White);
+    // auto& settings = Camera->getRenderSettings();
+    // settings->autoExposure.minEyeAdaptation = 1;
+    // settings->autoExposure.maxEyeAdaptation = 1;
+    // settings->enableAutoExposure = false;
+    // settings->enableHDR = false;
+    // settings->enableLighting = false;
+    // settings->enableShadows = false;
+    // settings->enableTonemapping = false;
+    // Camera->setRenderSettings(settings);
 
-    // Setup the order this is rendered in
-    // Higher priority is first so negating the order must make it be later
-    Camera->setPriority(-renderorder);
+    // // Setup the order this is rendered in
+    // // Higher priority is first so negating the order must make it be later
+    // Camera->setPriority(-renderorder);
 }
 
 DLLEXPORT Layer::~Layer()
@@ -68,8 +68,8 @@ DLLEXPORT void Layer::ReleaseResources()
     // Release derived type resources first
     _DoReleaseResources();
 
-    Camera = nullptr;
-    CameraSO->destroy();
+    // Camera = nullptr;
+    // CameraSO->destroy();
 }
 // ------------------------------------ //
 DLLEXPORT void Layer::NotifyWindowResized()
@@ -97,6 +97,6 @@ DLLEXPORT void Layer::AdjustCameraProperties()
         Wind->GetSize(width, height);
 
         // Camera->setPosition(width / 2, height / 2, -10);
-        Camera->setOrthoWindow(width, height);
+        // Camera->setOrthoWindow(width, height);
     }
 }

@@ -12,7 +12,7 @@ namespace Leviathan {
 class Graphics {
     friend Window;
 
-    class Impl;
+    class Private;
 
 public:
     DLLEXPORT Graphics();
@@ -22,6 +22,8 @@ public:
     DLLEXPORT void Release();
 
     DLLEXPORT bool Frame();
+
+    DLLEXPORT void UpdateShownOverlays(const std::vector<bs::SPtr<bs::Texture>>& overlays);
 
 #ifdef __linux
     //! \brief Returns true if our X11 error handler has been called. Remember to check this
@@ -46,6 +48,6 @@ private:
     bool Initialized = false;
     bool FirstWindowCreated = false;
 
-    std::unique_ptr<Impl> Pimpl;
+    std::unique_ptr<Private> Pimpl;
 };
 } // namespace Leviathan

@@ -6,10 +6,11 @@
 #include "Common/StringOperations.h"
 #include "Engine.h"
 #include "FileSystem.h"
+#include "GUIOverlayRenderer.h"
+#include "GeometryHelpers.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
-
 
 #include "BsApplication.h"
 #include "Components/BsCCamera.h"
@@ -126,7 +127,7 @@ public:
     }
 };
 
-class Graphics::Impl {
+class Graphics::Private {
 public:
     void* loadPlugin(const bs::String& pluginName, bs::DynLib** library = nullptr,
         void* passThrough = nullptr)
@@ -213,6 +214,8 @@ public:
     bool mIsFrameRenderingFinished = true;
     bs::Mutex mFrameRenderingFinishedMutex;
     bs::Signal mFrameRenderingFinishedCondition;
+
+    bs::SPtr<GUIOverlayRenderer> GUIRenderer;
 };
 
 #ifdef __linux
@@ -243,7 +246,7 @@ Graphics::~Graphics()
 // ------------------------------------------- //
 bool Graphics::Init(AppDef* appdef)
 {
-    Pimpl = std::make_unique<Impl>();
+    Pimpl = std::make_unique<Private>();
 
     // Startup SDL //
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0) {
@@ -520,6 +523,15 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
 
         // FileSystem::RegisterOGREResourceGroups();
 
+        auto shader =
+            bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
+
+        auto material = bs::Material::create(shader);
+
+        Pimpl->GUIRenderer =
+            RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
+                GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2)->getCore(),
+                material->getCore()});
 
         //
         // Sample content
@@ -551,7 +563,7 @@ void Graphics::ShutdownBSF()
     Resources::instance().unloadAll();
 
     // Shut down before script manager as scripts could have registered shortcut callbacks
-    ShortcutManager::shutDown();
+    // ShortcutManager::shutDown();
 
     ScriptManager::shutDown();
     DebugDraw::shutDown();
@@ -722,7 +734,7 @@ DLLEXPORT bool Graphics::Frame()
     }
 
     gCoreThread().queueCommand(
-        std::bind(&Impl::beginCoreProfiling, Pimpl.get()), CTQF_InternalQueue);
+        std::bind(&Private::beginCoreProfiling, Pimpl.get()), CTQF_InternalQueue);
     gCoreThread().queueCommand(&Platform::_coreUpdate, CTQF_InternalQueue);
     gCoreThread().queueCommand(
         std::bind(&ct::RenderWindowManager::_update, ct::RenderWindowManager::instancePtr()),
@@ -732,13 +744,13 @@ DLLEXPORT bool Graphics::Frame()
     gCoreThread().submitAll();
 
     gCoreThread().queueCommand(
-        std::bind(&Impl::frameRenderingFinishedCallback, Pimpl.get()), CTQF_InternalQueue);
+        std::bind(&Private::frameRenderingFinishedCallback, Pimpl.get()), CTQF_InternalQueue);
 
     gCoreThread().queueCommand(
         std::bind(&ct::QueryManager::_update, ct::QueryManager::instancePtr()),
         CTQF_InternalQueue);
     gCoreThread().queueCommand(
-        std::bind(&Impl::endCoreProfiling, Pimpl.get()), CTQF_InternalQueue);
+        std::bind(&Private::endCoreProfiling, Pimpl.get()), CTQF_InternalQueue);
 
     gProfilerCPU().endThread();
     gProfiler()._update();
@@ -746,6 +758,20 @@ DLLEXPORT bool Graphics::Frame()
     // At this point I think it is possible that a rendering operation is going on in the
     // background, but hopefully it is safe to execute game logic
     return true;
+}
+// ------------------------------------ //
+DLLEXPORT void Graphics::UpdateShownOverlays(
+    const std::vector<bs::SPtr<bs::Texture>>& overlays)
+{
+    std::vector<bs::SPtr<bs::ct::Texture>> coreVersion;
+    coreVersion.reserve(overlays.size());
+
+    std::transform(overlays.begin(), overlays.end(), std::back_inserter(coreVersion),
+        [](const bs::SPtr<bs::Texture>& item) { return item->getCore(); });
+
+    bs::gCoreThread().queueCommand([this, coreVersion = std::move(coreVersion)]() {
+        this->Pimpl->GUIRenderer->UpdateShownOverlays(coreVersion);
+    });
 }
 // ------------------------------------ //
 // X11 errors

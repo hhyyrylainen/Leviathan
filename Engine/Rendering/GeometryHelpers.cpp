@@ -15,9 +15,9 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
     meshDesc.usage = bs::MU_STATIC;
 
     bs::SPtr<bs::VertexDataDesc> vertexDesc = bs::VertexDataDesc::create();
-    vertexDesc->addVertElem(bs::VET_FLOAT3, bs::VES_POSITION);
+    vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_POSITION);
     vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_TEXCOORD);
-    const auto stride = 5;
+    const auto stride = 4;
     meshDesc.vertexDesc = vertexDesc;
 
     bs::SPtr<bs::MeshData> meshData = bs::MeshData::create(4, 6, vertexDesc, bs::IT_16BIT);
@@ -32,8 +32,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x;
         vertices[index * stride + 1] = y;
         vertices[index * stride + 2] = 0;
-        vertices[index * stride + 3] = 0;
-        vertices[index * stride + 4] = 1;
+        vertices[index * stride + 3] = 1;
     }
 
     {
@@ -41,9 +40,8 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         index = 1;
         vertices[index * stride + 0] = x + width;
         vertices[index * stride + 1] = y;
-        vertices[index * stride + 2] = 0;
+        vertices[index * stride + 2] = 1;
         vertices[index * stride + 3] = 1;
-        vertices[index * stride + 4] = 1;
     }
 
     {
@@ -51,9 +49,8 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         index = 2;
         vertices[index * stride + 0] = x + width;
         vertices[index * stride + 1] = y + height;
-        vertices[index * stride + 2] = 0;
-        vertices[index * stride + 3] = 1;
-        vertices[index * stride + 4] = 0;
+        vertices[index * stride + 2] = 1;
+        vertices[index * stride + 3] = 0;
     }
 
     {
@@ -63,7 +60,6 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 1] = y + height;
         vertices[index * stride + 2] = 0;
         vertices[index * stride + 3] = 0;
-        vertices[index * stride + 4] = 0;
     }
 
     // 1 to 1 index buffer mapping

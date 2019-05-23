@@ -164,6 +164,7 @@ if(LEVIATHAN_USING_OGRE)
   set(GroupRendering
     "Rendering/GeometryHelpers.h" "Rendering/GeometryHelpers.cpp"
     "Rendering/Graphics.cpp" "Rendering/Graphics.h"
+    "Rendering/GUIOverlayRenderer.cpp" "Rendering/GUIOverlayRenderer.h"
     )
 endif()
 

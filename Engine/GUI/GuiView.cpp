@@ -14,6 +14,8 @@
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
+#include "Rendering/Graphics.h"
+
 #include "include/cef_browser.h"
 #include "include/wrapper/cef_helpers.h"
 
@@ -51,20 +53,22 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     LEVIATHAN_ASSERT(bs::PixelUtil::getNumElemBytes(bs::PF_RGBA8) == CEF_BYTES_PER_PIXEL,
         "texture format size has changed");
 
-    Node = bs::SceneObject::create(("View_" + std::to_string(ID)).c_str());
-    Renderable = Node->addComponent<bs::CRenderable>();
-    Renderable->setLayer(1 << GetScene());
+    // Node = bs::SceneObject::create(("View_" + std::to_string(ID)).c_str());
+    // Renderable = Node->addComponent<bs::CRenderable>();
+    // Renderable->setLayer(1 << GetScene());
 
-    auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2);
-    // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(0, 0, 1280, 720);
+    // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2);
+    // // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(0, 0, 1280, 720);
 
-    bs::HShader shader =
-        bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
-    // bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::ParticlesUnlit);
-    Material = bs::Material::create(shader);
+    // bs::HShader shader =
+    //     bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
+    // // bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::ParticlesUnlit);
+    // Material = bs::Material::create(shader);
 
-    Renderable->setMesh(QuadMesh);
-    Renderable->setMaterial(Material);
+    // Renderable->setMesh(QuadMesh);
+    // Renderable->setMaterial(Material);
+
+    // Node->setPosition(bs::Vector3(0, 0, 0));
 
     // Now we can create the browser //
     CefWindowInfo info;
@@ -95,6 +99,8 @@ DLLEXPORT void View::_DoReleaseResources()
     // Lock us //
     GUARD_LOCK();
 
+    Engine::Get()->GetGraphics()->UpdateShownOverlays({});
+
     // Kill the javascript async //
     OurAPIHandler->BeforeRelease();
 
@@ -112,12 +118,12 @@ DLLEXPORT void View::_DoReleaseResources()
     // Destroy all remaining proxy targets
     ProxyedObjects.clear();
 
-    if(Node) {
-        Node->destroy();
-    }
+    // if(Node) {
+    //     Node->destroy();
+    // }
 
-    Material = nullptr;
-    Renderable = nullptr;
+    // Material = nullptr;
+    // Renderable = nullptr;
 
     Texture = nullptr;
     DataBuffer.reset();
@@ -421,7 +427,8 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     // As we are always on the main thread
     GUARD_LOCK();
 
-    if(!Node) {
+    // if(!Node) {
+    if(Texture && Texture->isDestroyed()) {
         // Released already
         LOG_WARNING("View: OnPaint called after release");
         return;
@@ -502,7 +509,8 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
 
     if(!Texture) {
         Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
-        Material->setTexture("image", Texture);
+        Engine::Get()->GetGraphics()->UpdateShownOverlays({Texture.getInternalPtr()});
+        // Material->setTexture("image", Texture);
         // Material->setTexture("gTexture", Texture);
     } else {
         Texture->writeData(DataBuffer, fullOverwrite);

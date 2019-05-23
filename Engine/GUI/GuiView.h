@@ -309,10 +309,10 @@ protected:
     std::map<int, JSProxyable::pointer> ProxyedObjects;
 
     // Rendering resources
-    bs::HMaterial Material;
+    // bs::HMaterial Material;
 
-    bs::HSceneObject Node;
-    bs::HRenderable Renderable;
+    // bs::HSceneObject Node;
+    // bs::HRenderable Renderable;
 
     bs::HTexture Texture;
     bs::SPtr<bs::PixelData> DataBuffer;

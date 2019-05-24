@@ -21,7 +21,7 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     LEVIATHAN_ASSERT(renderorder >= GUI_WORKSPACE_BEGIN_ORDER, "invalid render order passed");
 
     // Setup the scene
-    BSFLayerHack = 1 << (++LayerNumber);
+    // BSFLayerHack = 1 << (++LayerNumber);
 
     // CameraSO = bs::SceneObject::create(("LayerCamera_" + std::to_string(ID)).c_str());
 
@@ -60,7 +60,7 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
 
 DLLEXPORT Layer::~Layer()
 {
-    LEVIATHAN_ASSERT(!CameraSO, "ReleaseResources wasn't called on Layer");
+    // LEVIATHAN_ASSERT(!CameraSO, "ReleaseResources wasn't called on Layer");
 }
 // ------------------------------------ //
 DLLEXPORT void Layer::ReleaseResources()
@@ -91,12 +91,12 @@ DLLEXPORT void Layer::NotifyFocusUpdate(bool focused)
 // ------------------------------------ //
 DLLEXPORT void Layer::AdjustCameraProperties()
 {
-    if(Camera) {
-        int32_t width;
-        int32_t height;
-        Wind->GetSize(width, height);
+    // if(Camera) {
+    //     int32_t width;
+    //     int32_t height;
+    //     Wind->GetSize(width, height);
 
-        // Camera->setPosition(width / 2, height / 2, -10);
-        // Camera->setOrthoWindow(width, height);
-    }
+    //     Camera->setPosition(width / 2, height / 2, -10);
+    //     Camera->setOrthoWindow(width, height);
+    // }
 }

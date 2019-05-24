@@ -48,7 +48,7 @@ void GUIOverlayRenderer::render(const bs::ct::Camera& camera)
         QuadMaterial->setTexture("image", texture);
         QuadParamsSet->update(QuadMaterial->_getInternalParams());
 
-        LOG_WRITE("drawing");
+        // LOG_WRITE("drawing");
         bs::ct::gRendererUtility().draw(ScreenQuad);
     }
 }

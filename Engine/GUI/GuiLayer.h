@@ -7,6 +7,7 @@
 #include "Exceptions.h"
 #include "GuiInputSettings.h"
 
+#include "bsfCore/BsCorePrerequisites.h"
 #include "bsfCore/Components/BsCCamera.h"
 
 #include <atomic>
@@ -76,9 +77,11 @@ public:
     // DLLEXPORT inline Ogre::SceneManager* GetScene()
     DLLEXPORT inline int GetScene()
     {
-        if(!BSFLayerHack)
-            throw InvalidState("This layer has been released already");
-        return BSFLayerHack;
+        // if(!BSFLayerHack)
+        //     throw InvalidState("This layer has been released already");
+        // return BSFLayerHack;
+        DEBUG_BREAK;
+        return -1;
     }
 
     // Input passing from Window
@@ -140,12 +143,12 @@ protected:
 
 
     // Rendering resources
-    int BSFLayerHack;
+    // int BSFLayerHack;
     // Ogre::CompositorWorkspace* Workspace;
     // Ogre::SceneManager* Scene;
     // Ogre::Camera* Camera;
-    bs::HSceneObject CameraSO;
-    bs::HCamera Camera;
+    // bs::HSceneObject CameraSO;
+    // bs::HCamera Camera;
 };
 
 }} // namespace Leviathan::GUI

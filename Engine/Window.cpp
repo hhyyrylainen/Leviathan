@@ -281,6 +281,10 @@ DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
 
 DLLEXPORT void Window::OnResize(int width, int height)
 {
+    // Notify bsf
+    // TODO: something better
+    BSFWindow->resize(width, height);
+
 // Notify Ogre //
 // This causes issues on Windows
 #ifdef __linux__

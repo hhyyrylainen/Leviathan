@@ -13,6 +13,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
     meshDesc.numIndices = 6;
     meshDesc.indexType = bs::IT_16BIT;
     meshDesc.usage = bs::MU_STATIC;
+    meshDesc.subMeshes.push_back(bs::SubMesh(0, 6, bs::DOT_TRIANGLE_LIST));
 
     bs::SPtr<bs::VertexDataDesc> vertexDesc = bs::VertexDataDesc::create();
     vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_POSITION);
@@ -65,7 +66,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
     // 1 to 1 index buffer mapping
     constexpr uint16_t indicesData[] = {3, 0, 1, 1, 2, 3};
 
-    std::memcpy(meshData->getIndices16(), indicesData, 6);
+    std::memcpy(meshData->getIndices16(), indicesData, sizeof(indicesData));
 
     return bs::Mesh::create(meshData, meshDesc);
 

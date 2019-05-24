@@ -21,12 +21,7 @@
 
 #include "utf8.h"
 
-#include "bsfCore/Components/BsCRenderable.h"
 #include "bsfCore/Image/BsTexture.h"
-#include "bsfCore/Importer/BsImporter.h"
-#include "bsfCore/Material/BsMaterial.h"
-#include "bsfCore/Scene/BsSceneObject.h"
-#include "bsfEngine/Resources/BsBuiltinResources.h"
 
 #include <SDL.h>
 
@@ -35,6 +30,7 @@ using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
 constexpr auto CEF_BYTES_PER_PIXEL = 4;
+constexpr auto BS_PIXEL_FORMAT = bs::PF_BGRA8;
 
 DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
@@ -50,25 +46,8 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     GUARD_LOCK();
 
     // We now only create the texture once we get some data to display
-    LEVIATHAN_ASSERT(bs::PixelUtil::getNumElemBytes(bs::PF_RGBA8) == CEF_BYTES_PER_PIXEL,
+    LEVIATHAN_ASSERT(bs::PixelUtil::getNumElemBytes(BS_PIXEL_FORMAT) == CEF_BYTES_PER_PIXEL,
         "texture format size has changed");
-
-    // Node = bs::SceneObject::create(("View_" + std::to_string(ID)).c_str());
-    // Renderable = Node->addComponent<bs::CRenderable>();
-    // Renderable->setLayer(1 << GetScene());
-
-    // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2);
-    // // auto QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(0, 0, 1280, 720);
-
-    // bs::HShader shader =
-    //     bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
-    // // bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::ParticlesUnlit);
-    // Material = bs::Material::create(shader);
-
-    // Renderable->setMesh(QuadMesh);
-    // Renderable->setMaterial(Material);
-
-    // Node->setPosition(bs::Vector3(0, 0, 0));
 
     // Now we can create the browser //
     CefWindowInfo info;
@@ -461,7 +440,7 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     if(!Texture) {
 
         LOG_INFO("GuiView: creating texture for CEF");
-        DataBuffer = bs::PixelData::create(width, height, 1, bs::PF_RGBA8);
+        DataBuffer = bs::PixelData::create(width, height, 1, BS_PIXEL_FORMAT);
     }
 
     LEVIATHAN_ASSERT(DataBuffer->getSize() == buffSize, "CEF and BSF buffer size mismatch");
@@ -510,10 +489,8 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     if(!Texture) {
         Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
         Engine::Get()->GetGraphics()->UpdateShownOverlays({Texture.getInternalPtr()});
-        // Material->setTexture("image", Texture);
-        // Material->setTexture("gTexture", Texture);
     } else {
-        Texture->writeData(DataBuffer, fullOverwrite);
+        Texture->writeData(DataBuffer, 0, 0, fullOverwrite);
     }
 }
 // ------------------------------------ //

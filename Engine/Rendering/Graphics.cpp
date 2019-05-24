@@ -565,7 +565,7 @@ void Graphics::ShutdownBSF()
     // Shut down before script manager as scripts could have registered shortcut callbacks
     // ShortcutManager::shutDown();
 
-    ScriptManager::shutDown();
+    // ScriptManager::shutDown();
     DebugDraw::shutDown();
 
     // Cleanup any new objects queued for destruction by unloaded scripts
@@ -573,9 +573,9 @@ void Graphics::ShutdownBSF()
     gCoreThread().update();
     gCoreThread().submitAll(true);
 
-    bs::Cursor::shutDown();
+    // bs::Cursor::shutDown();
 
-    GUIManager::shutDown();
+    // GUIManager::shutDown();
     SpriteManager::shutDown();
     BuiltinResources::shutDown();
     RendererMaterialManager::shutDown();

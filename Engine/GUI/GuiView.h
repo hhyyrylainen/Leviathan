@@ -14,8 +14,6 @@
 #include "include/cef_request_handler.h"
 #include "wrapper/cef_message_router.h"
 
-#include "bsfCore/Image/BsTexture.h"
-
 namespace Leviathan { namespace GUI {
 
 class LeviathanJavaScriptAsync;
@@ -309,11 +307,6 @@ protected:
     std::map<int, JSProxyable::pointer> ProxyedObjects;
 
     // Rendering resources
-    // bs::HMaterial Material;
-
-    // bs::HSceneObject Node;
-    // bs::HRenderable Renderable;
-
     bs::HTexture Texture;
     bs::SPtr<bs::PixelData> DataBuffer;
 };

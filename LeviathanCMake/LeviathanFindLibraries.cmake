@@ -149,8 +149,7 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
   # endif()  
   
-  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES OgreMain
-    OgreHlmsUnlit OgreHlmsPbs
+  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES bsf
     sfml-system sfml-network AngelScriptAddons)
   
 endif()

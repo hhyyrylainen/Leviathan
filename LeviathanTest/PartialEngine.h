@@ -11,8 +11,8 @@
 #include "TimeIncludes.h"
 
 #include "FileSystem.h"
-#include "OgreLogManager.h"
-#include "OgreRoot.h"
+// #include "OgreLogManager.h"
+// #include "OgreRoot.h"
 
 #include "Utility/Random.h"
 
@@ -266,6 +266,7 @@ public:
 };
 
 //! Partial Engine with window-less Ogre for GUI and other tests that need Ogre components
+//! \todo Do something with this now that Ogre is gone
 class PartialEngineWithOgre : public PartialEngine<false> {
 public:
     PartialEngineWithOgre(NetworkHandler* handler = nullptr, SoundDevice* sound = nullptr) :
@@ -273,30 +274,30 @@ public:
     {
         // TODO: allow the Graphics object to be used here
         // Suppress log
-        Ogre::Log* ogreLog =
-            OgreLogManager.createLog("Test/TestOgreLog.txt", true, false, false);
+        //         Ogre::Log* ogreLog =
+        //             OgreLogManager.createLog("Test/TestOgreLog.txt", true, false, false);
 
-        REQUIRE(ogreLog == OgreLogManager.getDefaultLog());
+        //         REQUIRE(ogreLog == OgreLogManager.getDefaultLog());
 
-        root = new Ogre::Root("", "", "");
+        //         root = new Ogre::Root("", "", "");
 
-        Ogre::String renderSystemName = "RenderSystem_GL3Plus";
+        //         Ogre::String renderSystemName = "RenderSystem_GL3Plus";
 
-#ifdef _DEBUG
-        renderSystemName.append("_d");
-#endif // _DEBUG
+        // #ifdef _DEBUG
+        //         renderSystemName.append("_d");
+        // #endif // _DEBUG
 
-#ifndef _WIN32
-        // On platforms where rpath works plugins are in the lib subdirectory
-        renderSystemName = "lib/" + renderSystemName;
-#endif
+        // #ifndef _WIN32
+        //         // On platforms where rpath works plugins are in the lib subdirectory
+        //         renderSystemName = "lib/" + renderSystemName;
+        // #endif
 
-        root->loadPlugin(renderSystemName);
-        const auto& renderers = root->getAvailableRenderers();
-        REQUIRE(renderers.size() > 0);
-        REQUIRE(renderers[0]);
-        root->setRenderSystem(renderers[0]);
-        root->initialise(false, "", "");
+        //         root->loadPlugin(renderSystemName);
+        //         const auto& renderers = root->getAvailableRenderers();
+        //         REQUIRE(renderers.size() > 0);
+        //         REQUIRE(renderers[0]);
+        //         root->setRenderSystem(renderers[0]);
+        //         root->initialise(false, "", "");
 
         MainFileHandler = new FileSystem();
 
@@ -310,13 +311,12 @@ public:
 
     ~PartialEngineWithOgre()
     {
-
         SAFE_DELETE(MainFileHandler);
-        SAFE_DELETE(root);
+        // SAFE_DELETE(root);
     }
 
-    Ogre::LogManager OgreLogManager;
-    Ogre::Root* root;
+    // Ogre::LogManager OgreLogManager;
+    // Ogre::Root* root;
 };
 
 }} // namespace Leviathan::Test

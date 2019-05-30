@@ -7,9 +7,6 @@
 #include "Exceptions.h"
 #include "GuiInputSettings.h"
 
-#include "bsfCore/BsCorePrerequisites.h"
-#include "bsfCore/Components/BsCCamera.h"
-
 #include <atomic>
 
 union SDL_Event;
@@ -115,9 +112,6 @@ protected:
     //! Unique ID
     const int ID;
 
-    //! A temporary solution around no multiple scenes in BSF
-    static int LayerNumber;
-
     //! Stored access to matching window
     Window* const Wind;
 
@@ -143,7 +137,6 @@ protected:
 
 
     // Rendering resources
-    // int BSFLayerHack;
     // Ogre::CompositorWorkspace* Workspace;
     // Ogre::SceneManager* Scene;
     // Ogre::Camera* Camera;

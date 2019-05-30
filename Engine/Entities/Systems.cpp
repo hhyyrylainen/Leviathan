@@ -8,9 +8,9 @@
 #include "Networking/NetworkResponse.h"
 #include "Networking/SentNetworkThing.h"
 
-#include "Animation/OgreSkeletonAnimation.h"
-#include "Animation/OgreSkeletonInstance.h"
-#include "OgreItem.h"
+// #include "Animation/OgreSkeletonAnimation.h"
+// #include "Animation/OgreSkeletonInstance.h"
+// #include "OgreItem.h"
 using namespace Leviathan;
 // ------------------------------------ //
 // SendableSystem
@@ -229,78 +229,82 @@ DLLEXPORT void AnimationTimeAdder::Run(
 
         Animated& animated = *iter->second;
 
-        if(!animated.GraphicalObject)
+        if(!animated.Animation)
             continue;
 
-        auto skeleton = animated.GraphicalObject->getSkeletonInstance();
+        // auto skeleton = animated.GraphicalObject->getSkeletonInstance();
 
-        if(!skeleton) {
+        // if(!skeleton) {
 
-            LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
-                        ") has an Item that has no skeleton instance");
-            continue;
-        }
+        //     LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
+        //                 ") has an Item that has no skeleton instance");
+        //     continue;
+        // }
 
         if(animated.Marked) {
             animated.Marked = false;
 
-            // Apply all properties and stop not playing animations
-            for(const auto& animation : animated.Animations) {
+            LOG_WRITE("TODO: animation activation");
 
-                try {
+            // // Apply all properties and stop not playing animations
+            // for(const auto& animation : animated.Animations) {
 
-                    // Documentation says that this throws if not found
-                    Ogre::SkeletonAnimation* ogreAnim = skeleton->getAnimation(animation.Name);
+            //     try {
 
-                    ogreAnim->setEnabled(true);
-                    ogreAnim->setLoop(animation.Loop);
+            //         // Documentation says that this throws if not found
+            //         Ogre::SkeletonAnimation* ogreAnim =
+            //         skeleton->getAnimation(animation.Name);
 
-                } catch(const Ogre::Exception& e) {
+            //         ogreAnim->setEnabled(true);
+            //         ogreAnim->setLoop(animation.Loop);
 
-                    LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
-                                ") has no animation named: " + animation.ReadableName +
-                                ", exception: " + e.what());
-                }
-            }
+            //     } catch(const Ogre::Exception& e) {
 
-            // Then disable
-            for(const auto& ogreAnimation : skeleton->getAnimations()) {
+            //         LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
+            //                     ") has no animation named: " + animation.ReadableName +
+            //                     ", exception: " + e.what());
+            //     }
+            // }
 
-                bool found = false;
+            // // Then disable
+            // for(const auto& ogreAnimation : skeleton->getAnimations()) {
 
-                for(const auto& animation : animated.Animations) {
+            //     bool found = false;
 
-                    if(animation.Name == ogreAnimation.getName()) {
-                        found = true;
-                        break;
-                    }
-                }
+            //     for(const auto& animation : animated.Animations) {
 
-                if(!found) {
+            //         if(animation.Name == ogreAnimation.getName()) {
+            //             found = true;
+            //             break;
+            //         }
+            //     }
 
-                    skeleton->getAnimation(ogreAnimation.getName())->setEnabled(false);
-                }
-            }
+            //     if(!found) {
+
+            //         skeleton->getAnimation(ogreAnimation.getName())->setEnabled(false);
+            //     }
+            // }
         }
 
-        // Update animation time
-        for(const auto& animation : animated.Animations) {
+        // // Update animation time
+        // for(const auto& animation : animated.Animations) {
 
-            if(animation.Paused)
-                return;
+        //     if(animation.Paused)
+        //         return;
 
-            try {
+        //     try {
 
-                // Documentation says that this throws if not found
-                Ogre::SkeletonAnimation* ogreAnim = skeleton->getAnimation(animation.Name);
-                ogreAnim->addTime(passed * animation.SpeedFactor);
+        //         // Documentation says that this throws if not found
+        //         Ogre::SkeletonAnimation* ogreAnim = skeleton->getAnimation(animation.Name);
+        //         ogreAnim->addTime(passed * animation.SpeedFactor);
 
-            } catch(const Ogre::Exception& e) {
+        //     } catch(const Ogre::Exception& e) {
 
-                LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
-                            ") has no animation named (in update): " + animation.ReadableName +
-                            ", exception: " + e.what());
-            }
-        }
+        //         LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
+        //                     ") has no animation named (in update): " +
+        //                     animation.ReadableName +
+        //                     ", exception: " + e.what());
+        //     }
+        // }
     }
 }

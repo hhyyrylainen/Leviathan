@@ -94,8 +94,8 @@ static uint16_t ReceivedTYPEProxy = static_cast<uint16_t>(Received::TYPE);
 static uint16_t ModelTYPEProxy = static_cast<uint16_t>(Model::TYPE);
 static uint16_t BoxGeometryTYPEProxy = static_cast<uint16_t>(BoxGeometry::TYPE);
 static uint16_t CameraTYPEProxy = static_cast<uint16_t>(Camera::TYPE);
-static uint16_t ManualObjectTYPEProxy = static_cast<uint16_t>(ManualObject::TYPE);
-static uint16_t PlaneTYPEProxy = static_cast<uint16_t>(Plane::TYPE);
+// static uint16_t ManualObjectTYPEProxy = static_cast<uint16_t>(ManualObject::TYPE);
+// static uint16_t PlaneTYPEProxy = static_cast<uint16_t>(Plane::TYPE);
 static uint16_t AnimatedTYPEProxy = static_cast<uint16_t>(Animated::TYPE);
 
 //! Helper for BindComponentTypes
@@ -203,7 +203,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectProperty(
-           "RenderNode", "Ogre::SceneNode@ Node", asOFFSET(RenderNode, Node)) < 0) {
+           "RenderNode", "bs::HSceneObject Node", asOFFSET(RenderNode, Node)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -257,7 +257,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
         return false;
 
     if(engine->RegisterObjectProperty(
-           "Model", "Ogre::Item@ GraphicalObject", asOFFSET(Model, GraphicalObject)) < 0) {
+           "Model", "bs::HRenderable GraphicalObject", asOFFSET(Model, GraphicalObject)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -275,19 +275,19 @@ bool BindComponentTypes(asIScriptEngine* engine)
     if(!BindComponentTypeID(engine, "BoxGeometry", &BoxGeometryTYPEProxy))
         return false;
 
-    // ------------------------------------ //
-    // ManualObject
-    if(engine->RegisterObjectType("ManualObject", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // // ------------------------------------ //
+    // // ManualObject
+    // if(engine->RegisterObjectType("ManualObject", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
-    if(engine->RegisterObjectProperty(
-           "ManualObject", "bool Marked", asOFFSET(ManualObject, Marked)) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectProperty(
+    //        "ManualObject", "bool Marked", asOFFSET(ManualObject, Marked)) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
-    if(!BindComponentTypeID(engine, "ManualObject", &ManualObjectTYPEProxy))
-        return false;
+    // if(!BindComponentTypeID(engine, "ManualObject", &ManualObjectTYPEProxy))
+    //     return false;
 
     // ------------------------------------ //
     // Camera
@@ -299,7 +299,7 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectProperty("Camera", "uint8 FOVY", asOFFSET(Camera, FOVY)) < 0) {
+    if(engine->RegisterObjectProperty("Camera", "uint8 FOV", asOFFSET(Camera, FOV)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -312,23 +312,24 @@ bool BindComponentTypes(asIScriptEngine* engine)
         return false;
 
 
-    // ------------------------------------ //
-    // Plane
-    if(engine->RegisterObjectType("Plane", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // // ------------------------------------ //
+    // // Plane
+    // if(engine->RegisterObjectType("Plane", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
-    if(engine->RegisterObjectProperty("Plane", "bool Marked", asOFFSET(Plane, Marked)) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectProperty("Plane", "bool Marked", asOFFSET(Plane, Marked)) < 0)
+    // {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
-    if(!BindComponentTypeID(engine, "Plane", &PlaneTYPEProxy))
-        return false;
+    // if(!BindComponentTypeID(engine, "Plane", &PlaneTYPEProxy))
+    //     return false;
 
-    if(engine->RegisterObjectProperty(
-           "Plane", "Ogre::Item@ GraphicalObject", asOFFSET(Plane, GraphicalObject)) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectProperty(
+    //        "Plane", "Ogre::Item@ GraphicalObject", asOFFSET(Plane, GraphicalObject)) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     // ------------------------------------ //
     // Animated
@@ -344,10 +345,10 @@ bool BindComponentTypes(asIScriptEngine* engine)
     if(!BindComponentTypeID(engine, "Animated", &AnimatedTYPEProxy))
         return false;
 
-    if(engine->RegisterObjectProperty("Animated", "Ogre::Item@ GraphicalObject",
-           asOFFSET(Animated, GraphicalObject)) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectProperty("Animated", "Ogre::Item@ GraphicalObject",
+    //        asOFFSET(Animated, GraphicalObject)) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     // ------------------------------------ //
     // SimpleAnimation

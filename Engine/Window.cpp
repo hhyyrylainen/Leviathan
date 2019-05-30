@@ -234,14 +234,14 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
 
     if(LinkedWorld) {
 
-        // LinkedWorld->OnUnLinkedFromWindow(this, Graphics::Get()->GetOgreRoot());
+        LinkedWorld->OnUnLinkedFromWindow(this, Engine::Get()->GetGraphics());
     }
 
     LinkedWorld = world;
 
     if(LinkedWorld) {
 
-        // LinkedWorld->OnLinkToWindow(this, Graphics::Get()->GetOgreRoot());
+        LinkedWorld->OnLinkToWindow(this, Engine::Get()->GetGraphics());
     }
 }
 

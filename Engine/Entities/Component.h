@@ -35,11 +35,11 @@ enum class COMPONENT_TYPE : uint16_t {
 
     Model,
 
-    ManualObject,
+    // ManualObject,
 
     Camera,
 
-    Plane,
+    // Plane,
 
     Animated,
 

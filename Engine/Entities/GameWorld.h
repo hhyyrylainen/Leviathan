@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -9,18 +9,13 @@
 #include "Networking/CommonNetwork.h"
 #include "WorldNetworkSettings.h"
 
-#include <type_traits>
+// #include <type_traits>
 
 
 class CScriptArray;
 class asIScriptObject;
 class asIScriptFunction;
 
-namespace Ogre {
-
-class CompositorWorkspace;
-class Plane;
-} // namespace Ogre
 
 namespace Leviathan {
 
@@ -110,7 +105,7 @@ public:
     //! \post The world can be used after this
     DLLEXPORT bool Init(const WorldNetworkSettings& network, Graphics* graphics);
 
-    //! Release to not use Ogre when deleting
+    //! Release resources
     DLLEXPORT void Release();
 
     //! \brief Marks all entities to be deleted
@@ -314,12 +309,13 @@ public:
     //! \param y Normalized y coordinate (range [0, 1])
     //! \exception InvalidState if this world has no active camera
     //! \see SetCamera
-    DLLEXPORT Ogre::Ray CastRayFromCamera(float x, float y) const;
+    DLLEXPORT bs::Ray CastRayFromCamera(float x, float y) const;
 
     // Ogre get functions //
-    inline Ogre::SceneManager* GetScene()
+    inline bs::Scene* GetScene()
     {
-        return WorldsScene;
+        return &BSFLayerHack;
+        // return WorldsScene;
     }
 
     // physics functions //
@@ -438,17 +434,14 @@ public:
     // //! \note Should only be called on a client
     // DLLEXPORT void HandleWorldFrozenPacket(ResponseWorldFrozen* data);
 
-    //! \todo Fix this for Ogre 2.1
-    DLLEXPORT void SetFog();
-
     DLLEXPORT void SetSunlight();
     DLLEXPORT void RemoveSunlight();
     //! \brief Sets the sunlight properties
     //! \pre SetSunlight has been called
-    DLLEXPORT void SetLightProperties(const Ogre::ColourValue& diffuse,
-        const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
-        const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
-        const Ogre::Vector3& hemispheredir, float envmapscale = 1.0f);
+    // DLLEXPORT void SetLightProperties(const Ogre::ColourValue& diffuse,
+    //     const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
+    //     const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
+    //     const Ogre::Vector3& hemispheredir, float envmapscale = 1.0f);
 
     // ------------------------------------ //
     // Script proxies for script system implementation (don't use from c++ systems)
@@ -488,11 +481,11 @@ public:
 
     //! \brief Used to detect that this world is in the background and should not tick
     //! \note Removes the workspace created in OnLinkToWindow
-    DLLEXPORT virtual void OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre);
+    DLLEXPORT virtual void OnUnLinkedFromWindow(Window* window, Graphics* graphics);
 
     //! \brief Called when this is added to a Window
     //! \note This creates a compositor workspace that renders this world's scene to the window
-    DLLEXPORT virtual void OnLinkToWindow(Window* window, Ogre::Root* ogre);
+    DLLEXPORT virtual void OnLinkToWindow(Window* window, Graphics* graphics);
 
     //! \brief Configures this world to run tick even when not attached to a window
     DLLEXPORT virtual void SetRunInBackground(bool tickinbackground);
@@ -593,6 +586,8 @@ private:
     void UpdatePlayersPositionData(ConnectedPlayer& ply);
 
     void _CreateRenderingResources(Graphics* graphics);
+    void _DestroyRenderingResources();
+
     void _HandleDelayedDelete();
 
     //! \brief Reports an entity deletion to clients
@@ -619,16 +614,19 @@ private:
     // stuff here)
     std::unique_ptr<Implementation> pimpl;
 
-    Ogre::Camera* WorldSceneCamera = nullptr;
-    Ogre::SceneManager* WorldsScene = nullptr;
+    //! A temporary solution around no multiple scenes in BSF
+    bs::Scene BSFLayerHack = 0;
 
-    Ogre::CompositorWorkspace* WorldWorkspace = nullptr;
+    // Ogre::Camera* WorldSceneCamera = nullptr;
+    // Ogre::SceneManager* WorldsScene = nullptr;
+
+    // Ogre::CompositorWorkspace* WorldWorkspace = nullptr;
 
     //! The world is now always linked to a window
     Window* LinkedToWindow = nullptr;
 
-    Ogre::Light* Sunlight = nullptr;
-    Ogre::SceneNode* SunLightNode = nullptr;
+    // Ogre::Light* Sunlight = nullptr;
+    // Ogre::SceneNode* SunLightNode = nullptr;
 
     // physics //
     std::shared_ptr<PhysicsMaterialManager> PhysicsMaterials;
@@ -712,8 +710,8 @@ private:
     //! This vector is used for delayed deletion
     std::vector<ObjectID> DelayedDeleteIDS;
 
-    //! If true any pointers to this world are invalid
-    std::shared_ptr<bool> WorldDestroyed = std::make_shared<bool>(false);
+    // //! If true any pointers to this world are invalid
+    // std::shared_ptr<bool> WorldDestroyed = std::make_shared<bool>(false);
 };
 
 } // namespace Leviathan

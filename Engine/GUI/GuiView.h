@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,6 +7,8 @@
 #include "Events/CallableObject.h"
 #include "GuiLayer.h"
 #include "JSProxyable.h"
+
+#include "bsfCore/BsCorePrerequisites.h"
 
 #include "include/cef_client.h"
 #include "include/cef_context_menu_handler.h"

@@ -4,15 +4,9 @@
 #include "Handlers/IDFactory.h"
 #include "Window.h"
 
-#include "bsfCore/Components/BsCCamera.h"
-#include "bsfCore/Scene/BsSceneObject.h"
-
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
-int Layer::LayerNumber = 1;
-
-
 DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     ID(IDFactory::GetID()), Wind(window), Owner(owner)
 {

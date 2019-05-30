@@ -27,10 +27,10 @@
 #endif
 
 #ifdef LEVIATHAN_USING_OGRE
-#include "OgreColourValue.h"
-#include "OgreQuaternion.h"
-#include "OgreVector3.h"
-#include "OgreVector4.h"
+#include "bsfUtility/Image/BsColor.h"
+#include "bsfUtility/Math/BsQuaternion.h"
+#include "bsfUtility/Math/BsVector3.h"
+#include "bsfUtility/Math/BsVector4.h"
 #endif // LEVIATHAN_USING_OGRE
 
 namespace Leviathan {
@@ -965,7 +965,7 @@ public:
     }
     // ----------------- casts ------------------- //
 #ifdef LEVIATHAN_USING_OGRE
-    DLLEXPORT Float3(const Ogre::Vector3& vec)
+    DLLEXPORT Float3(const bs::Vector3& vec)
     {
         // copy values //
         X = vec.x;
@@ -974,9 +974,9 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline operator Ogre::Vector3() const
+    DLLEXPORT inline operator bs::Vector3() const
     {
-        return Ogre::Vector3(X, Y, Z);
+        return bs::Vector3(X, Y, Z);
     }
 
     DLLEXPORT Float3(const btVector3& vec)
@@ -1335,7 +1335,7 @@ public:
         //     + vector * (W*W - u.Dot(u))
         //     + u.Cross(vector) * 2.0f * W;
 
-        // Math taken from Ogre::Quaternion
+        // Math taken from bs::Quaternion
         Float3 uv;
         Float3 uuv;
         Float3 qvec(X, Y, Z);
@@ -1382,7 +1382,7 @@ public:
     }
 
 #ifdef LEVIATHAN_USING_OGRE
-    DLLEXPORT Float4(const Ogre::Quaternion& quat)
+    DLLEXPORT Float4(const bs::Quaternion& quat)
     {
         // copy values //
         X = quat.x;
@@ -1392,7 +1392,7 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT Float4(const Ogre::ColourValue& colour)
+    DLLEXPORT Float4(const bs::Color& colour)
     {
         // copy values //
         X = colour.r;
@@ -1402,20 +1402,20 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline operator Ogre::Quaternion() const
+    DLLEXPORT inline operator bs::Quaternion() const
     {
         // Ogre has these in different order
-        return Ogre::Quaternion(W, X, Y, Z);
+        return bs::Quaternion(W, X, Y, Z);
     }
 
-    DLLEXPORT inline operator Ogre::ColourValue() const
+    DLLEXPORT inline operator bs::Color() const
     {
-        return Ogre::ColourValue(X, Y, Z, W);
+        return bs::Color(X, Y, Z, W);
     }
 
-    DLLEXPORT inline operator Ogre::Vector4() const
+    DLLEXPORT inline operator bs::Vector4() const
     {
-        return Ogre::Vector4(X, Y, Z, W);
+        return bs::Vector4(X, Y, Z, W);
     }
 
     DLLEXPORT Float4(const btQuaternion& colour)
@@ -1584,16 +1584,6 @@ DLLEXPORT std::ostream& operator<<(
 
 DLLEXPORT std::ostream& operator<<(
     std::ostream& stream, const Leviathan::PotentiallySetIndex& value);
-
-#ifdef LEVIATHAN_USING_OGRE
-//! \brief Newton compatible matrix orthogonal check
-//! \exception InvalidArgument if the matrix isn't orthogonal
-//! \warning The matrix needs to be transposed with PrepareOgreMatrixForNewton
-//! \todo Fix this. This doesn't work because I used Float3 here instead of Float4 as that
-//! doesn't have Cross or Dot and this seems to claim that not even an identity matrix is
-//! orthogonal
-void ThrowIfMatrixIsNotOrthogonal(const Ogre::Matrix4& matrix, float tol = 1.0e-4f);
-#endif
 
 } // namespace Leviathan
 

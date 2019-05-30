@@ -68,24 +68,23 @@ set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataB
   )
 
 if(LEVIATHAN_USING_OGRE)
-  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
+  file(GLOB STANDARD_GENERATOR_FILES "${PROJECT_SOURCE_DIR}/Engine/Entities/*.rb")
+  
+  AddRubyGeneratedFile(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.cpp"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
-    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
+    PARAMS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
-    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateStandardWorld.rb"
-    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
+    DEPENDS ${STANDARD_GENERATOR_FILES}
     )
-
-  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.h"
+  
+  AddRubyGeneratedFile(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.h"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.cpp"
     #"${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStatesBindings.h"
-    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
+    PARAMS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates"
     #"${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
-    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
-    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )  
   
   set(GroupEntities "Entities/Components.cpp" "Entities/Components.h"
@@ -119,18 +118,14 @@ if(NOT LEVIATHAN_AS_LIBRARY)
 endif()
 
 if(LEVIATHAN_USING_SFML)
-  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
-    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
+  AddRubyGeneratedFile(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
+    PARAMS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/RequestImpl.h"
-    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateRequest.rb"
-    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
 
-  add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
-    COMMAND "ruby" "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
+  AddRubyGeneratedFile(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
+    PARAMS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
-    DEPENDS "${PROJECT_SOURCE_DIR}/Engine/Networking/GenerateResponse.rb"
-    "${PROJECT_SOURCE_DIR}/Helpers/FileGen.rb"
     )
 
   

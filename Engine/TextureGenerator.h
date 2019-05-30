@@ -2,18 +2,16 @@
 // ------------------------------------ //
 #include "Common/Types.h"
 
-namespace Leviathan{
+namespace Leviathan {
 
-	class TextureGenerator{
-	public:
+class TextureGenerator {
+public:
+    // DLLEXPORT static bool LoadSolidColourLightMaterialToMemory(const std::string &name,
+    //     const Float4 &diffusecolour= Float4(1));
 
-		DLLEXPORT static bool LoadSolidColourLightMaterialToMemory(const std::string &name,
-            const Float4 &diffusecolour= Float4(1));
 
-        
-	private:
-		TextureGenerator() = delete;
-	};
+private:
+    TextureGenerator() = delete;
+};
 
-}
-
+} // namespace Leviathan

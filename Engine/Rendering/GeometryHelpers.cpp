@@ -33,7 +33,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x;
         vertices[index * stride + 1] = y;
         vertices[index * stride + 2] = 0;
-        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 3] = 0;
     }
 
     {
@@ -42,7 +42,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x + width;
         vertices[index * stride + 1] = y;
         vertices[index * stride + 2] = 1;
-        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 3] = 0;
     }
 
     {
@@ -51,7 +51,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x + width;
         vertices[index * stride + 1] = y + height;
         vertices[index * stride + 2] = 1;
-        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 3] = 1;
     }
 
     {
@@ -60,7 +60,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x;
         vertices[index * stride + 1] = y + height;
         vertices[index * stride + 2] = 0;
-        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 3] = 1;
     }
 
     // 1 to 1 index buffer mapping

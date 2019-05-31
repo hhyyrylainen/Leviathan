@@ -191,7 +191,7 @@ void ColorFloat4Proxy(void* memory, const Float4& values)
     new(memory) bs::Color(values);
 }
 
-void Float4ColourValueProxy(void* memory, const bs::Color& values)
+void Float4ColorProxy(void* memory, const bs::Color& values)
 {
     new(memory) Float4(values);
 }
@@ -361,8 +361,7 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // Return value isn't actually void here
-    if(engine->RegisterObjectMethod("Float3", "void opDivAssign(const float &in value)",
+    if(engine->RegisterObjectMethod("Float3", "Float3& opDivAssign(const float &in value)",
            asMETHODPR(Float3, operator/=,(const float&), Float3&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -774,7 +773,7 @@ bool BindBSFConversions(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
-           "void f(const bs::ColourValue &in colour)", asFUNCTION(Float4ColourValueProxy),
+           "void f(const bs::Color &in colour)", asFUNCTION(Float4ColorProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -789,7 +788,6 @@ bool BindBSFConversions(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine)
 {
-
     if(engine->RegisterTypedef("ObjectID", "int32") < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;

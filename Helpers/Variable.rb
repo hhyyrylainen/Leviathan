@@ -26,10 +26,10 @@ class Variable
       if @Default.is_a? String and @Default == ""
 
         @Default = %{""}
-        
+
       end
     end
-    
+
     @NoRef = noRef
     @NoConst = noConst
     @NonMethodParam = nonMethodParam
@@ -82,7 +82,7 @@ class Variable
       else
         "const #{@Type}&"
       end
-    end    
+    end
   end
 
 
@@ -94,18 +94,28 @@ class Variable
       "string"
     when "uint8_t"
       "uint8"
+    when "uint16_t"
+      "uint16"
+    when "uint32_t"
+      "uint32"
+    when "int8_t"
+      "int8"
+    when "int16_t"
+      "int16"
+    when "int32_t"
+      "int32"
     else
       @Type.sub('*', '@')
     end
   end
-  
+
   # Formats full definition for use in parameter list
   def formatForParamsAngelScript()
 
     if(@AngelScriptUseInstead)
       return @AngelScriptUseInstead.formatForParamsAngelScript()
     end
-    
+
     opts = {header: true}
     if @NoRef
       "#{self.TypeAS} #{@Name.downcase}#{formatDefault opts}"
@@ -118,7 +128,7 @@ class Variable
         "const #{self.TypeAS} &#{@AngelScriptRef} #{@Name.downcase}#{formatDefault opts}"
       end
     end
-  end  
+  end
 
   def formatForArgumentList()
     if !@NonMethodParam
@@ -131,9 +141,9 @@ class Variable
   def formatInitializer()
     if @Move
       # Move constructor
-      "#{@Name}(std::move(#{@Name.downcase}))" 
+      "#{@Name}(std::move(#{@Name.downcase}))"
     else
-      "#{@Name}(#{@Name.downcase})" 
+      "#{@Name}(#{@Name.downcase})"
     end
   end
 
@@ -154,18 +164,18 @@ class Variable
   end
 
   def formatCopy()
-    "#{@Name}(other.#{@Name})" 
+    "#{@Name}(other.#{@Name})"
   end
 
   def formatMove()
-    "#{@Name}(std::move(other.#{@Name}))" 
-  end  
+    "#{@Name}(std::move(other.#{@Name}))"
+  end
 
   def formatDeserializer(packetname, target: nil)
     if not target
       target = @Name
     end
-    
+
     if @SerializeAs.nil?
       "#{packetname} >> #{target};"
     else

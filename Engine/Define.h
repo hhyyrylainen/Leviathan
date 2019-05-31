@@ -65,7 +65,7 @@ constexpr float EPSILON = 0.00000001f;
 
 // This is here until bsf implements separate scenes
 namespace bs {
-using Scene = int;
+using Scene = int32_t;
 }
 
 

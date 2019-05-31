@@ -191,7 +191,7 @@ if(LEVIATHAN_USING_ANGELSCRIPT)
     "Script/Bindings/BindHelpers.h"
     "Script/Bindings/BindStandardFunctions.h" "Script/Bindings/BindStandardFunctions.cpp"
     "Script/Bindings/CommonEngineBind.h" "Script/Bindings/CommonEngineBind.cpp"
-    "Script/Bindings/OgreBind.h" "Script/Bindings/OgreBind.cpp"
+    "Script/Bindings/BSFBind.h" "Script/Bindings/BSFBind.cpp"
     "Script/Bindings/PhysicsBind.h" "Script/Bindings/PhysicsBind.cpp"
     "Script/Bindings/GuiScriptBind.h" "Script/Bindings/GuiScriptBind.cpp"
     "Script/Bindings/TypesBind.h" "Script/Bindings/TypesBind.cpp"

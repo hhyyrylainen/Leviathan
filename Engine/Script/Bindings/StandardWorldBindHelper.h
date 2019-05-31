@@ -55,7 +55,7 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     // }
 
     if(engine->RegisterObjectMethod(classname,
-           "Ogre::Ray CastRayFromCamera(float x, float y) const",
+           "bs::Ray CastRayFromCamera(float x, float y) const",
            asMETHOD(WorldType, CastRayFromCamera), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -106,7 +106,7 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     // ------------------------------------ //
-    if(engine->RegisterObjectMethod(classname, "Ogre::SceneManager@ GetScene()",
+    if(engine->RegisterObjectMethod(classname, "bs::Scene GetScene()",
            asMETHOD(WorldType, GetScene), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

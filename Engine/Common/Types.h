@@ -6,7 +6,6 @@
 
 #include "Logger.h"
 
-#include <cmath>
 #include <stdexcept>
 
 // Uncomment for debugging and major slow downs
@@ -321,47 +320,15 @@ public:
     }
 
     // ----------------- Vector math ------------------- //
-    // dot product of the vectors //
-    DLLEXPORT constexpr int Dot(const Int2& val) const noexcept
-    {
-        return X * val.X + Y * val.Y;
-    }
-
     // length of the vector //
     DLLEXPORT inline float Length() const noexcept
     {
-        return static_cast<float>(sqrt(X * X + Y * Y));
+        return std::sqrt(static_cast<float>(LengthSquared()));
     }
 
     DLLEXPORT constexpr unsigned int LengthSquared() const noexcept
     {
         return X * X + Y * Y;
-    }
-
-    // ------------------------------------ //
-    // static returns //
-    // creates a Int2 with all zeros //
-    DLLEXPORT constexpr static Int2 zero() noexcept
-    {
-        return Int2(0);
-    }
-
-    // creates a Int2 with all ones //
-    DLLEXPORT constexpr static Int2 one() noexcept
-    {
-        return Int2(1);
-    }
-
-    // unitary vector x, to work with ozz declarations //
-    DLLEXPORT constexpr static Int2 x_axis() noexcept
-    {
-        return Int2(1, 0);
-    }
-
-    // unitary vector y //
-    DLLEXPORT constexpr static Int2 y_axis() noexcept
-    {
-        return Int2(0, 1);
     }
 
     VALUE_TYPE(Int2);
@@ -587,59 +554,15 @@ public:
     }
 
     // ----------------- Vector math ------------------- //
-    // dot product of the vectors //
-    DLLEXPORT constexpr int Dot(const Int3& val) const noexcept
-    {
-        return X * val.X + Y * val.Y + Z * val.Z;
-    }
-
-    DLLEXPORT constexpr Int3 Cross(const Int3& val) const
-    {
-        return Int3(Y * val.Z - val.Y * Z, Z * val.X - val.Z * X, X * val.Y - val.X * Y);
-    }
-
     // length of the vector //
     DLLEXPORT inline float Length() const noexcept
     {
-        return static_cast<float>(sqrt(X * X + Y * Y + Z * Z));
+        return std::sqrt(static_cast<float>(LengthSquared()));
     }
 
     DLLEXPORT constexpr unsigned int LengthSquared() const noexcept
     {
         return X * X + Y * Y + Z * Z;
-    }
-
-    // ------------------------------------ //
-    // functions to be compatible with ozz functions //
-    // all zero values object //
-    DLLEXPORT constexpr static Int3 zero() noexcept
-    {
-        return Int3(0);
-    }
-
-    // all ones //
-    DLLEXPORT constexpr static Int3 one() noexcept
-    {
-        return Int3(1);
-    }
-
-    // unitary vectors //
-    // x axis
-    DLLEXPORT constexpr static Int3 x_axis() noexcept
-    {
-        return Int3(1, 0, 0);
-    }
-
-    // y axis
-    DLLEXPORT constexpr static Int3 y_axis() noexcept
-    {
-        return Int3(0, 1, 0);
-    }
-
-    // z axis
-    DLLEXPORT constexpr static Int3 z_axis() noexcept
-    {
-        return Int3(0, 0, 1);
     }
 
     // ------------------------------------ //
@@ -889,7 +812,7 @@ public:
     // length of the vector //
     DLLEXPORT inline float Length() const noexcept
     {
-        return static_cast<float>(sqrt(X * X + Y * Y));
+        return std::sqrt(LengthSquared());
     }
 
     DLLEXPORT inline float LengthSquared() const noexcept
@@ -936,32 +859,6 @@ public:
     {
         const Float2 difference = (*this) - other;
         return difference.Dot(difference) < tolerance * tolerance;
-    }
-
-    // ------------------------------------ //
-    // static returns //
-    // creates a Float2 with all zeros //
-    DLLEXPORT inline static Float2 zero() noexcept
-    {
-        return Float2(0.f);
-    }
-
-    // creates a Float2 with all ones //
-    DLLEXPORT inline static Float2 one() noexcept
-    {
-        return Float2(1.f);
-    }
-
-    // unitary vector x, to work with ozz declarations //
-    DLLEXPORT inline static Float2 x_axis() noexcept
-    {
-        return Float2(1.f, 0.f);
-    }
-
-    // unitary vector y //
-    DLLEXPORT inline static Float2 y_axis() noexcept
-    {
-        return Float2(0.f, 1.f);
     }
 
     // ----------------- casts ------------------- //
@@ -1251,7 +1148,7 @@ public:
     // length of the vector //
     DLLEXPORT inline float Length() const noexcept
     {
-        return static_cast<float>(sqrt(X * X + Y * Y + Z * Z));
+        return std::sqrt(LengthSquared());
     }
 
     DLLEXPORT inline float LengthSquared() const noexcept
@@ -1306,39 +1203,6 @@ public:
         return Float3(-sin(yaw * DEGREES_TO_RADIANS), sin(pitch * DEGREES_TO_RADIANS),
             -cos(yaw * DEGREES_TO_RADIANS))
             .NormalizeSafe(Zeroed);
-    }
-
-    // ------------------------------------ //
-    // functions to be compatible with ozz functions //
-    // all zero values object //
-    DLLEXPORT inline static Float3 zero() noexcept
-    {
-        return Float3(0.f);
-    }
-
-    // all ones //
-    DLLEXPORT inline static Float3 one() noexcept
-    {
-        return Float3(1.f);
-    }
-
-    // unitary vectors //
-    // x axis
-    DLLEXPORT inline static Float3 x_axis() noexcept
-    {
-        return Float3(1.f, 0.f, 0.f);
-    }
-
-    // y axis
-    DLLEXPORT inline static Float3 y_axis() noexcept
-    {
-        return Float3(0.f, 1.f, 0.f);
-    }
-
-    // z axis
-    DLLEXPORT inline static Float3 z_axis() noexcept
-    {
-        return Float3(0.f, 0.f, 1.f);
     }
 
     // ----------------- casts ------------------- //
@@ -1674,7 +1538,7 @@ public:
     // length of the vector //
     DLLEXPORT inline float Length() const noexcept
     {
-        return static_cast<float>(sqrt(X * X + Y * Y + Z * Z + W * W));
+        return std::sqrt(LengthSquared());
     }
 
     DLLEXPORT inline float LengthSquared() const noexcept
@@ -1811,45 +1675,6 @@ public:
         return vector + uv2 + uuv;
     }
 
-    // ------------------------------------ //
-    // functions to be compatible with ozz functions //
-    // all zero values object //
-    DLLEXPORT inline static Float4 zero() noexcept
-    {
-        return Float4(0.f);
-    }
-
-    // all ones //
-    DLLEXPORT inline static Float4 one() noexcept
-    {
-        return Float4(1.f);
-    }
-
-    // unitary vectors //
-    // x axis
-    DLLEXPORT inline static Float4 x_axis() noexcept
-    {
-        return Float4(1.f, 0.f, 0.f, 0.f);
-    }
-
-    // y axis
-    DLLEXPORT inline static Float4 y_axis() noexcept
-    {
-        return Float4(0.f, 1.f, 0.f, 0.f);
-    }
-
-    // z axis
-    DLLEXPORT inline static Float4 z_axis() noexcept
-    {
-        return Float4(0.f, 0.f, 1.f, 0.f);
-    }
-
-    // w axis
-    DLLEXPORT inline static Float4 w_axis() noexcept
-    {
-        return Float4(0.f, 0.f, 0.f, 1.f);
-    }
-
     // ----------------- casts ------------------- //
     // Should this macro be replaced by a inline if in the cpp file?
 #ifdef LEVIATHAN_USING_OGRE
@@ -1921,8 +1746,14 @@ public:
 
         return Float4(
             // compute quaternion //
-            cosz * cosy * sinx - sinz * siny * cosx, cosz * siny * cosx + sinz * cosy * sinx,
-            sinz * cosy * cosx - cosz * siny * sinx, cosz * cosy * cosx * sinz * siny * sinx);
+            // X
+            cosz * cosy * sinx - sinz * siny * cosx,
+            // Y
+            cosz * siny * cosx + sinz * cosy * sinx,
+            // Z
+            sinz * cosy * cosx - cosz * siny * sinx,
+            // W
+            cosz * cosy * cosx * sinz * siny * sinx);
     }
 
     //! \note This quaternion has to be normalized

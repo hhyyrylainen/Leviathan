@@ -44,7 +44,7 @@ DLLEXPORT RenderNode::RenderNode(bs::Scene* scene) : Component(TYPE), Scene(*sce
     Marked = false;
 
     // Skip if no graphics
-    if(!Engine::Get()->GetGraphics())
+    if(!Engine::Get()->IsInGraphicalMode())
         return;
 
     // TODO: allow for static render nodes

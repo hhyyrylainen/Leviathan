@@ -179,6 +179,12 @@ public:
     {
         return Graph;
     }
+
+    inline bool IsInGraphicalMode() const
+    {
+        return !NoGui;
+    }
+
     inline EventHandler* GetEventHandler()
     {
         return MainEvents;

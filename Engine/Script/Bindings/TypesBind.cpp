@@ -361,8 +361,8 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Float3", "Float3& opDivAssign(const float &in value)",
-           asMETHODPR(Float3, operator/=,(const float&), Float3&), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Float3", "Float3& opDivAssign(float value)",
+           asMETHODPR(Float3, operator/=,(float), Float3&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

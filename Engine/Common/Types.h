@@ -6,7 +6,6 @@
 
 #include "Logger.h"
 
-#include <cmath>
 #include <stdexcept>
 
 // Uncomment for debugging and major slow downs
@@ -126,290 +125,481 @@ struct StartEndIndex {
 
 struct Int2 {
 public:
-    DLLEXPORT Int2()
-    {
-        X = 0;
-        Y = 0;
-    }
-    DLLEXPORT Int2(int x, int y)
-    {
-        X = x;
-        Y = y;
-    }
-    DLLEXPORT explicit Int2(int data)
-    {
-        X = data;
-        Y = data;
-    }
-    DLLEXPORT Int2(const Int2& other)
-    {
-        X = other.X;
-        Y = other.Y;
-    }
+    DLLEXPORT constexpr Int2() noexcept = default;
 
-    // ------------------------------------ //
-    DLLEXPORT Int2 operator+(const Int2& val)
-    {
-        return Int2(X + val.X, Y + val.Y);
-    }
+    DLLEXPORT constexpr Int2(int x, int y) noexcept : X(x), Y(y) {}
+    DLLEXPORT constexpr explicit Int2(int data) noexcept : X(data), Y(data) {}
 
-    DLLEXPORT int operator[](const int nIndex) const
+    // access operator //
+    DLLEXPORT inline int& operator[](int nindex)
     {
-        switch(nIndex) {
+        switch(nindex) {
         case 0: return X;
         case 1: return Y;
+        default: break;
         }
 
         LEVIATHAN_ASSERT(0, "invalid [] access");
-        return 0;
+        return X;
     }
 
     // ------------------- Operators ----------------- //
     // add elements //
-    DLLEXPORT inline Int2 operator+(const Int2& val) const
+    DLLEXPORT constexpr Int2 operator+(const Int2& other) const noexcept
     {
-        return Int2(X + val.X, Y + val.Y);
+        return Int2(X + other.X, Y + other.Y);
     }
 
-    DLLEXPORT inline Int2* operator+=(const Int2& val)
+    DLLEXPORT inline Int2& operator+=(const Int2& other) noexcept
     {
-        X += val.X;
-        Y += val.Y;
-        return this;
+        X += other.X;
+        Y += other.Y;
+        return *this;
     }
+
     // subtracts all elements //
-    DLLEXPORT inline Int2 operator-(const Int2& val) const
+    DLLEXPORT constexpr Int2 operator-(const Int2& other) const noexcept
     {
-        return Int2(X - val.X, Y - val.Y);
+        return Int2(X - other.X, Y - other.Y);
     }
+
+    DLLEXPORT inline Int2& operator-=(const Int2& other) noexcept
+    {
+        X -= other.X;
+        Y -= other.Y;
+        return *this;
+    }
+
     // negates all elements //
-    DLLEXPORT inline Int2 operator-() const
+    DLLEXPORT constexpr Int2 operator-() const noexcept
     {
         return Int2(-X, -Y);
     }
-    // multiplies elements together //
-    DLLEXPORT inline Int2 operator*(const Int2& val) const
+
+    // returns the vector //
+    DLLEXPORT constexpr Int2 operator+() const noexcept
     {
-        return Int2(X * val.X, Y * val.Y);
-    }
-    // multiply  by scalar f //
-    DLLEXPORT inline Int2 operator*(int f) const
-    {
-        return Int2(X * f, Y * f);
+        return Int2(*this);
     }
 
-    DLLEXPORT inline Int2* operator*=(int f)
+    // multiplies elements together //
+    DLLEXPORT constexpr Int2 operator*(const Int2& other) const noexcept
     {
-        X *= f;
-        Y *= f;
-        return this;
+        return Int2(X * other.X, Y * other.Y);
     }
+
+    DLLEXPORT inline Int2& operator*=(const Int2& other) noexcept
+    {
+        X *= other.X;
+        Y *= other.Y;
+        return *this;
+    }
+
+    // Divides all elements by int //
+    DLLEXPORT constexpr Int2 operator/(int val) const
+    {
+        return Int2(X / val, Y / val);
+    }
+
+    DLLEXPORT inline Int2& operator/=(int val)
+    {
+        X /= val;
+        Y /= val;
+        return *this;
+    }
+
+    // multiply  by scalar f //
+    DLLEXPORT constexpr Int2 operator*(int val) const noexcept
+    {
+        return Int2(X * val, Y * val);
+    }
+
+    DLLEXPORT inline Int2& operator*=(int val) noexcept
+    {
+        X *= val;
+        Y *= val;
+        return *this;
+    }
+
     // divides all elements //
-    DLLEXPORT inline Int2 operator/(const Int2& val) const
+    DLLEXPORT constexpr Int2 operator/(const Int2& other) const
     {
-        return Int2(X / val.X, Y / val.Y);
+        return Int2(X / other.X, Y / other.Y);
     }
-    // divides by int //
-    DLLEXPORT inline Int2 operator/(int f) const
+
+    DLLEXPORT inline Int2& operator/=(const Int2& other)
     {
-        return Int2(X / f, Y / f);
+        X /= other.X;
+        Y /= other.Y;
+        return *this;
     }
+
     // ---- comparison operators ---- //
     // element by element comparison with operators //
-    DLLEXPORT inline bool operator<(const Int2& other) const
+    DLLEXPORT constexpr bool operator<(const Int2& other) const noexcept
     {
-        return X < other.X && Y < other.Y;
-    };
-    DLLEXPORT inline bool operator<=(const Int2& other) const
+        return std::tie(X, Y) < std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT constexpr bool operator<=(const Int2& other) const noexcept
     {
-        return X <= other.X && Y <= other.Y;
-    };
-    DLLEXPORT inline bool operator>(const Int2& other) const
+        return std::tie(X, Y) <= std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT constexpr bool operator>(const Int2& other) const noexcept
     {
-        return X > other.X && Y > other.Y;
-    };
-    DLLEXPORT inline bool operator>=(const Int2& other) const
+        return std::tie(X, Y) > std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT constexpr bool operator>=(const Int2& other) const noexcept
     {
-        return X >= other.X && Y >= other.Y;
-    };
-    DLLEXPORT inline bool operator==(const Int2& other) const
+        return std::tie(X, Y) >= std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT constexpr bool operator==(const Int2& other) const noexcept
     {
         return X == other.X && Y == other.Y;
-    };
-    DLLEXPORT inline bool operator!=(const Int2& other) const
-    {
-        return X != other.X && Y != other.Y;
-    };
+    }
 
-    // ------------------------------------ //
+    DLLEXPORT constexpr bool operator!=(const Int2& other) const noexcept
+    {
+        return X != other.X || Y != other.Y;
+    }
 
-    DLLEXPORT void SetData(const int& data)
+    // ------------------ Functions ------------------ //
+    // getters //
+    DLLEXPORT constexpr int GetX() const noexcept
     {
-        X = data;
-        Y = data;
-    };
-    DLLEXPORT void SetData(const int& data1, const int& data2)
+        return X;
+    }
+
+    DLLEXPORT constexpr int GetY() const noexcept
     {
-        X = data1;
-        Y = data2;
-    };
+        return Y;
+    }
+
+    // setters //
+    DLLEXPORT inline void SetX(int val)
+    {
+        X = val;
+    }
+
+    DLLEXPORT inline void SetY(int val)
+    {
+        Y = val;
+    }
+
+    // add all elements together //
+    DLLEXPORT constexpr int HAdd() const noexcept
+    {
+        return X + Y;
+    }
+
+    // Add all elements together after abs() is called on each element //
+    DLLEXPORT inline unsigned int HAddAbs() const noexcept
+    {
+        return std::abs(X) + std::abs(Y);
+    }
+
+    // getting min and max of objects //
+    DLLEXPORT constexpr Int2 MinElements(const Int2& other) const noexcept
+    {
+        return Int2(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y);
+    }
+
+    DLLEXPORT constexpr Int2 MaxElements(const Int2& other) const noexcept
+    {
+        return Int2(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y);
+    }
+
+    // value clamping //
+    DLLEXPORT constexpr Int2 Clamp(const Int2& min, const Int2& max) const noexcept
+    {
+        const Int2 minval = this->MinElements(max);
+        return min.MaxElements(minval);
+    }
+
+    // ----------------- Vector math ------------------- //
+    // length of the vector //
+    DLLEXPORT inline float Length() const noexcept
+    {
+        return std::sqrt(static_cast<float>(LengthSquared()));
+    }
+
+    DLLEXPORT constexpr unsigned int LengthSquared() const noexcept
+    {
+        return X * X + Y * Y;
+    }
 
     VALUE_TYPE(Int2);
 
-    int X, Y;
+    // data //
+    int X = 0;
+    int Y = 0;
 };
 
 struct Int3 {
 public:
-    DLLEXPORT Int3()
-    {
-        X = 0;
-        Y = 0;
-        Z = 0;
-    }
-    DLLEXPORT Int3(int x, int y, int z)
-    {
-        X = x;
-        Y = y;
-        Z = z;
-    }
-    DLLEXPORT explicit Int3(int data)
-    {
-        // save a bit of space //
-        X = Y = Z = data;
-    }
+    DLLEXPORT constexpr Int3() noexcept = default;
 
-    // ------------------------------------ //
-    DLLEXPORT Int3 operator+(const Int3& val) const
-    {
-        return Int3(X + val.X, Y + val.Y, Z + val.Z);
-    }
+    DLLEXPORT constexpr Int3(int x, int y, int z) : X(x), Y(y), Z(z) {}
+    DLLEXPORT constexpr Int3(Int2 ints, int z) : X(ints.X), Y(ints.Y), Z(z) {}
+    DLLEXPORT constexpr explicit Int3(int data) : X(data), Y(data), Z(data) {}
 
-    DLLEXPORT Int3 operator*(int val) const
+    // access operator //
+    DLLEXPORT inline int& operator[](int nindex)
     {
-        return Int3(X * val, Y * val, Z * val);
-    }
-
-    DLLEXPORT int operator[](const int nIndex) const
-    {
-        switch(nIndex) {
+        switch(nindex) {
         case 0: return X;
         case 1: return Y;
         case 2: return Z;
+        default: break;
         }
-
-        LEVIATHAN_ASSERT(0, "invalid Int3[] access");
-        return 0;
+        LEVIATHAN_ASSERT(0, "invalid [] access");
+        return X;
     }
-    DLLEXPORT Int3 operator-(const Int3& other) const
+
+    // ------------------- Operators ----------------- //
+    // add elements //
+    DLLEXPORT constexpr Int3 operator+(const Int3& other) const noexcept
+    {
+        return Int3(X + other.X, Y + other.Y, Z + other.Z);
+    }
+
+    DLLEXPORT inline Int3& operator+=(const Int3& other) noexcept
+    {
+        X += other.X;
+        Y += other.Y;
+        Z += other.Z;
+        return *this;
+    }
+
+    // subtracts all elements //
+    DLLEXPORT constexpr Int3 operator-(const Int3& other) const noexcept
     {
         return Int3(X - other.X, Y - other.Y, Z - other.Z);
     }
 
-    DLLEXPORT inline Int3* operator*=(int f)
+    DLLEXPORT inline Int3& operator-=(const Int3& other) noexcept
     {
-        X *= f;
-        Y *= f;
-        Z *= f;
-        return this;
+        X -= other.X;
+        Y -= other.Y;
+        Z -= other.Z;
+        return *this;
     }
 
-    DLLEXPORT int AddAllTogether() const
+    // negates all elements //
+    DLLEXPORT constexpr Int3 operator-() const noexcept
+    {
+        return Int3(-X, -Y, -Z);
+    }
+
+    // returns the vector //
+    DLLEXPORT constexpr Int3 operator+() const noexcept
+    {
+        return Int3(*this);
+    }
+
+    // multiplies elements together //
+    DLLEXPORT constexpr Int3 operator*(const Int3& other) const noexcept
+    {
+        return Int3(X * other.X, Y * other.Y, Z * other.Z);
+    }
+
+    DLLEXPORT inline Int3& operator*=(const Int3& other) noexcept
+    {
+        X *= other.X;
+        Y *= other.Y;
+        Z *= other.Z;
+        return *this;
+    }
+
+    // Divides all elements by int //
+    DLLEXPORT constexpr Int3 operator/(int val) const
+    {
+        return Int3(X / val, Y / val, Z / val);
+    }
+
+    DLLEXPORT inline Int3& operator/=(int val)
+    {
+        X /= val;
+        Y /= val;
+        Z /= val;
+        return *this;
+    }
+
+    // multiply  by scalar f //
+    DLLEXPORT constexpr Int3 operator*(int val) const noexcept
+    {
+        return Int3(X * val, Y * val, Z * val);
+    }
+
+    DLLEXPORT inline Int3& operator*=(int val) noexcept
+    {
+        X *= val;
+        Y *= val;
+        Z *= val;
+        return *this;
+    }
+
+    // divides all elements //
+    DLLEXPORT constexpr Int3 operator/(const Int3& other) const
+    {
+        return Int3(X / other.X, Y / other.Y, Z / other.Z);
+    }
+
+    DLLEXPORT inline Int3& operator/=(const Int3& other)
+    {
+        X /= other.X;
+        Y /= other.Y;
+        Z /= other.Z;
+        return *this;
+    }
+
+    // ---- comparison operators ---- //
+    // element by element comparison with operators //
+    DLLEXPORT constexpr bool operator<(const Int3& other) const noexcept
+    {
+        return std::tie(X, Y, Z) < std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT constexpr bool operator<=(const Int3& other) const noexcept
+    {
+        return std::tie(X, Y, Z) <= std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT constexpr bool operator>(const Int3& other) const noexcept
+    {
+        return std::tie(X, Y, Z) > std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT constexpr bool operator>=(const Int3& other) const noexcept
+    {
+        return std::tie(X, Y, Z) >= std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT constexpr bool operator==(const Int3& other) const noexcept
+    {
+        return X == other.X && Y == other.Y && Z == other.Z;
+    }
+
+    DLLEXPORT constexpr bool operator!=(const Int3& other) const noexcept
+    {
+        return X != other.X || Y != other.Y || Z != other.Z;
+    }
+
+    // ------------------ Functions ------------------ //
+    // getters //
+    DLLEXPORT constexpr int GetX() const noexcept
+    {
+        return X;
+    }
+
+    DLLEXPORT constexpr int GetY() const noexcept
+    {
+        return Y;
+    }
+
+    DLLEXPORT constexpr int GetZ() const noexcept
+    {
+        return Z;
+    }
+
+    // setters //
+    DLLEXPORT inline void SetX(int val)
+    {
+        X = val;
+    }
+
+    DLLEXPORT inline void SetY(int val)
+    {
+        Y = val;
+    }
+
+    DLLEXPORT inline void SetZ(int val)
+    {
+        Z = val;
+    }
+
+    // add all elements together //
+    DLLEXPORT constexpr int HAdd() const noexcept
     {
         return X + Y + Z;
     }
 
+    // Add all elements together absoluted (abs()) //
+    DLLEXPORT inline unsigned int HAddAbs() const noexcept
+    {
+        return std::abs(X) + std::abs(Y) + std::abs(Z);
+    }
+
+    // getting min and max of objects //
+    DLLEXPORT constexpr Int3 MinElements(const Int3& other) const noexcept
+    {
+        return Int3(
+            X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z : other.Z);
+    }
+
+    DLLEXPORT constexpr Int3 MaxElements(const Int3& other) const noexcept
+    {
+        return Int3(
+            X > other.X ? X : other.X, Y > other.Y ? Y : other.Y, Z > other.Z ? Z : other.Z);
+    }
+
+    // value clamping //
+    DLLEXPORT constexpr Int3 Clamp(const Int3& min, const Int3& max) const noexcept
+    {
+        const Int3 minval = this->MinElements(max);
+        return min.MaxElements(minval);
+    }
+
+    // ----------------- Vector math ------------------- //
+    // length of the vector //
+    DLLEXPORT inline float Length() const noexcept
+    {
+        return std::sqrt(static_cast<float>(LengthSquared()));
+    }
+
+    DLLEXPORT constexpr unsigned int LengthSquared() const noexcept
+    {
+        return X * X + Y * Y + Z * Z;
+    }
+
+    // ------------------------------------ //
+
     VALUE_TYPE(Int3);
 
-    // ------------------------------------ //
-
-    int X, Y, Z;
+    int X = 0;
+    int Y = 0;
+    int Z = 0;
 };
-
-struct Int4 {
-public:
-    DLLEXPORT Int4()
-    {
-        X = Y = Z = W = 0;
-    }
-    DLLEXPORT Int4(int x, int y, int z, int w) : X(x), Y(y), Z(z), W(w) {}
-    DLLEXPORT explicit Int4(int data)
-    {
-        X = Y = Z = W = data;
-    }
-
-    // ------------------------------------ //
-    DLLEXPORT Int4& operator+(const Int4& val)
-    {
-        X += val.X;
-        Y += val.Y;
-        Z += val.Z;
-        W += val.W;
-        return *this;
-    }
-    DLLEXPORT int operator[](const int nIndex) const
-    {
-        switch(nIndex) {
-        case 0: return X;
-        case 1: return Y;
-        case 2: return Z;
-        case 3: return W;
-        }
-
-        LEVIATHAN_ASSERT(0, "invalid Int4[] access");
-        return 0;
-    }
-    DLLEXPORT Int4& operator-(const Int4& val)
-    {
-        X -= val.X;
-        Y -= val.Y;
-        Z -= val.Z;
-        W -= val.W;
-        return *this;
-    }
-    DLLEXPORT int AddAllTogether() const
-    {
-        return X + Y + Z + W;
-    }
-    // ------------------------------------ //
-
-    int X, Y, Z, W;
-};
-
-// ----------------- Float types ------------------- //
-// refactored to match declarations in ozz vec_float //
-
-// functions inlined just like in ozz, for speed, I guess //
-// mostly rewritten to match ozz implementation, just in case and not to break anything //
 
 struct Float2 {
 public:
-    DLLEXPORT inline Float2()
+    DLLEXPORT inline Float2() noexcept = default;
+
+    DLLEXPORT inline Float2(float x, float y) : X(x), Y(y)
     {
-        X = Y = 0;
-    };
-    DLLEXPORT inline Float2(float x, float y)
-    {
-        X = x;
-        Y = y;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT inline explicit Float2(float both)
-    {
-        X = Y = both;
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline bool HasInvalidValues() const
+    DLLEXPORT inline Float2(const Int2& values) noexcept :
+        X(static_cast<float>(values.X)), Y(static_cast<float>(values.Y))
     {
-        if(!std::isfinite(X) || !std::isfinite(Y)) {
-            return true;
-        }
-
-        return false;
+        DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline void CheckForNans()
+    DLLEXPORT inline explicit Float2(float data) : X(data), Y(data)
+    {
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline bool HasInvalidValues() const noexcept
+    {
+        return !std::isfinite(X) || !std::isfinite(Y);
+    }
+
+    DLLEXPORT inline void CheckForNans() const
     {
         if(HasInvalidValues()) {
             DEBUG_BREAK;
@@ -418,11 +608,12 @@ public:
     }
 
     // access operator //
-    DLLEXPORT inline float& operator[](const int& nindex)
+    DLLEXPORT inline float& operator[](int nindex)
     {
         switch(nindex) {
         case 0: return X;
         case 1: return Y;
+        default: break;
         }
 
         LEVIATHAN_ASSERT(0, "invalid [] access");
@@ -431,122 +622,181 @@ public:
 
     // ------------------- Operators ----------------- //
     // add elements //
-    DLLEXPORT inline Float2 operator+(const Float2& val) const
+    DLLEXPORT inline Float2 operator+(const Float2& other) const noexcept
     {
-        return Float2(X + val.X, Y + val.Y);
+        return Float2(X + other.X, Y + other.Y);
     }
 
-    DLLEXPORT inline Float2* operator+=(const Float2& val)
+    DLLEXPORT inline Float2& operator+=(const Float2& other) noexcept
     {
-        X += val.X;
-        Y += val.Y;
-        return this;
+        X += other.X;
+        Y += other.Y;
+        return *this;
     }
+
     // subtracts all elements //
-    DLLEXPORT inline Float2 operator-(const Float2& val) const
+    DLLEXPORT inline Float2 operator-(const Float2& other) const noexcept
     {
-        return Float2(X - val.X, Y - val.Y);
+        return Float2(X - other.X, Y - other.Y);
     }
+
+    DLLEXPORT inline Float2& operator-=(const Float2& other) noexcept
+    {
+        X -= other.X;
+        Y -= other.Y;
+        return *this;
+    }
+
     // negates all elements //
-    DLLEXPORT inline Float2 operator-() const
+    DLLEXPORT inline Float2 operator-() const noexcept
     {
         return Float2(-X, -Y);
     }
-    // multiplies elements together //
-    DLLEXPORT inline Float2 operator*(const Float2& val) const
+
+    // returns the vector //
+    DLLEXPORT inline Float2 operator+() const noexcept
     {
-        return Float2(X * val.X, Y * val.Y);
-    }
-    // multiply  by scalar f //
-    DLLEXPORT inline Float2 operator*(float f) const
-    {
-        return Float2(X * f, Y * f);
+        return Float2(*this);
     }
 
-    DLLEXPORT inline Float2& operator*=(float f)
+    // multiplies elements together //
+    DLLEXPORT inline Float2 operator*(const Float2& other) const noexcept
     {
-        X *= f;
-        Y *= f;
+        return Float2(X * other.X, Y * other.Y);
+    }
+
+    DLLEXPORT inline Float2& operator*=(const Float2& other) noexcept
+    {
+        X *= other.X;
+        Y *= other.Y;
         DO_NAN_CHECK;
         return *this;
     }
+
+    // Divides all elements by float //
+    DLLEXPORT inline Float2 operator/(float val) const
+    {
+        return Float2(X / val, Y / val);
+    }
+
+    DLLEXPORT inline Float2& operator/=(float val)
+    {
+        X /= val;
+        Y /= val;
+        DO_NAN_CHECK;
+        return *this;
+    }
+
+    // multiply  by scalar f //
+    DLLEXPORT inline Float2 operator*(float val) const noexcept
+    {
+        return Float2(X * val, Y * val);
+    }
+
+    DLLEXPORT inline Float2& operator*=(float val) noexcept
+    {
+        X *= val;
+        Y *= val;
+        DO_NAN_CHECK;
+        return *this;
+    }
+
     // divides all elements //
-    DLLEXPORT inline Float2 operator/(const Float2& val) const
+    DLLEXPORT inline Float2 operator/(const Float2& other) const
     {
-        return Float2(X / val.X, Y / val.Y);
+        return Float2(X / other.X, Y / other.Y);
     }
-    // divides by float //
-    DLLEXPORT inline Float2 operator/(float f) const
+
+    DLLEXPORT inline Float2& operator/=(const Float2& other)
     {
-        return Float2(X / f, Y / f);
+        X /= other.X;
+        Y /= other.Y;
+        DO_NAN_CHECK;
+        return *this;
     }
+
     // ---- comparison operators ---- //
     // element by element comparison with operators //
-    DLLEXPORT inline bool operator<(const Float2& other) const
+    DLLEXPORT inline bool operator<(const Float2& other) const noexcept
     {
-        return X < other.X && Y < other.Y;
-    };
-    DLLEXPORT inline bool operator<=(const Float2& other) const
+        return std::tie(X, Y) < std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT inline bool operator<=(const Float2& other) const noexcept
     {
-        return X <= other.X && Y <= other.Y;
-    };
-    DLLEXPORT inline bool operator>(const Float2& other) const
+        return std::tie(X, Y) <= std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT inline bool operator>(const Float2& other) const noexcept
     {
-        return X > other.X && Y > other.Y;
-    };
-    DLLEXPORT inline bool operator>=(const Float2& other) const
+        return std::tie(X, Y) > std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT inline bool operator>=(const Float2& other) const noexcept
     {
-        return X >= other.X && Y >= other.Y;
-    };
-    DLLEXPORT inline bool operator==(const Float2& other) const
+        return std::tie(X, Y) >= std::tie(other.X, other.Y);
+    }
+
+    DLLEXPORT inline bool operator==(const Float2& other) const noexcept
     {
         return X == other.X && Y == other.Y;
-    };
-    DLLEXPORT inline bool operator!=(const Float2& other) const
+    }
+
+    DLLEXPORT inline bool operator!=(const Float2& other) const noexcept
     {
-        return X != other.X && Y != other.Y;
-    };
+        return X != other.X || Y != other.Y;
+    }
+
     // ------------------ Functions ------------------ //
-    DLLEXPORT inline float GetX() const
+    // getters //
+    DLLEXPORT inline float GetX() const noexcept
     {
         return X;
     }
-    DLLEXPORT inline float GetY() const
+
+    DLLEXPORT inline float GetY() const noexcept
     {
         return Y;
     }
-    DLLEXPORT inline void SetX(const float& val)
+
+    // setters //
+    DLLEXPORT inline void SetX(float val)
     {
         X = val;
         DO_NAN_CHECK;
-    };
-    DLLEXPORT inline void SetY(const float& val)
+    }
+
+    DLLEXPORT inline void SetY(float val)
     {
         Y = val;
         DO_NAN_CHECK;
-    };
+    }
 
     // add all elements together //
-    DLLEXPORT inline float HAdd() const
+    DLLEXPORT inline float HAdd() const noexcept
     {
         return X + Y;
     }
+
     // Add all elements together after abs() is called on each element //
-    DLLEXPORT inline float HAddAbs() const
+    DLLEXPORT inline float HAddAbs() const noexcept
     {
         return std::fabs(X) + std::fabs(Y);
     }
+
     // getting min and max of objects //
-    DLLEXPORT inline Float2 MinElements(const Float2& other) const
+    DLLEXPORT inline Float2 MinElements(const Float2& other) const noexcept
     {
         return Float2(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y);
     }
-    DLLEXPORT inline Float2 MaxElements(const Float2& other) const
+
+    DLLEXPORT inline Float2 MaxElements(const Float2& other) const noexcept
     {
         return Float2(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y);
     }
+
     // value clamping //
-    DLLEXPORT inline Float2 Clamp(const Float2& min, const Float2& max)
+    DLLEXPORT inline Float2 Clamp(const Float2& min, const Float2& max) const noexcept
     {
         const Float2 minval = this->MinElements(max);
         return min.MaxElements(minval);
@@ -554,76 +804,63 @@ public:
 
     // ----------------- Vector math ------------------- //
     // dot product of the vectors //
-    DLLEXPORT inline float Dot(const Float2& val) const
+    DLLEXPORT inline float Dot(const Float2& val) const noexcept
     {
         return X * val.X + Y * val.Y;
     }
+
     // length of the vector //
-    DLLEXPORT inline float Length() const
+    DLLEXPORT inline float Length() const noexcept
     {
-        return sqrt(X * X + Y * Y);
+        return std::sqrt(LengthSquared());
     }
+
+    DLLEXPORT inline float LengthSquared() const noexcept
+    {
+        return X * X + Y * Y;
+    }
+
     // normalizes the vector //
     DLLEXPORT inline Float2 Normalize() const
     {
         const float length = Length();
         if(length == 0)
             return Float2(0, 0);
-        return Float2(X / length, Y / length);
+        return (*this) / length;
     }
+
     // safe version of normalization //
-    DLLEXPORT inline Float2 NormalizeSafe(const Float2& safer) const
+    DLLEXPORT inline Float2 NormalizeSafe(const Float2& safer) const noexcept
     {
         // security //
         LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
-        const float len = X * X + Y * Y;
-        if(len == 0) {
+        if(LengthSquared() == 0)
             return safer;
-        }
-        const float length = sqrt(len);
-        return Float2(X / length, Y / length);
+        const float length = Length();
+        return (*this) / length;
     }
+
     // checks is the vector normalized //
-    DLLEXPORT inline bool IsNormalized() const
+    DLLEXPORT inline bool IsNormalized() const noexcept
     {
         // is absolute -1.f under normalization tolerance //
         return fabs(X * X + Y * Y - 1.0f) < NORMALIZATION_TOLERANCE;
     }
+
     // does linear interpolation between vectors and coefficient f, not limited to range [0,1],
     // courtesy of ozz-animation //
-    DLLEXPORT inline Float2 Lerp(const Float2& other, float f) const
+    DLLEXPORT inline Float2 Lerp(const Float2& other, float f) const noexcept
     {
         return Float2((other.X - X) * f + X, (other.Y - Y) * f + Y);
     }
+
     // compares distance between vectors to tolerance, returns true if less //
-    DLLEXPORT inline bool Compare(const Float2& other, float tolerance) const
+    DLLEXPORT inline bool Compare(const Float2& other, float tolerance) const noexcept
     {
         const Float2 difference = (*this) - other;
         return difference.Dot(difference) < tolerance * tolerance;
     }
-    // ------------------------------------ //
-    // static returns //
-    // creates a Float2 with all zeros //
-    DLLEXPORT inline static Float2 zero()
-    {
-        return Float2(0.f, 0.f);
-    }
-    // creates a Float2 with all ones //
-    DLLEXPORT inline static Float2 one()
-    {
-        return Float2(1.f, 1.f);
-    }
 
-    // unitary vector x, to work with ozz declarations //
-    DLLEXPORT inline static Float2 x_asix()
-    {
-        return Float2(1.f, 0.f);
-    }
-    // unitary vector y //
-    DLLEXPORT inline static Float2 y_axis()
-    {
-        return Float2(0.f, 1.f);
-    }
     // ----------------- casts ------------------- //
     // waiting for Microsoft's compilers to add support for "explicit" here //
     // DLLEXPORT inline operator D3DXVECTOR2(){
@@ -633,62 +870,42 @@ public:
     VALUE_TYPE(Float2);
 
     // data //
-    float X, Y;
+    float X = 0;
+    float Y = 0;
 };
+
 struct Float3 {
 public:
-    // Needed for returning from scripts
-    DLLEXPORT Float3()
-    {
-        X = Y = Z = 0;
-    };
-    DLLEXPORT Float3(float x, float y, float z)
-    {
-        X = x;
-        Y = y;
-        Z = z;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT Float3(Float2 floats, float z)
-    {
-        X = floats.X;
-        Y = floats.Y;
-        Z = z;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT explicit Float3(float data)
-    {
-        X = Y = Z = data;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT Float3(const Int3& values)
-    {
-        X = static_cast<float>(values.X);
-        Y = static_cast<float>(values.Y);
-        Z = static_cast<float>(values.Z);
+    DLLEXPORT inline Float3() noexcept = default;
 
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT Float3(const Float3& other)
+    DLLEXPORT inline Float3(float x, float y, float z) : X(x), Y(y), Z(z)
     {
-        // copy values //
-        X = other.X;
-        Y = other.Y;
-        Z = other.Z;
-
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline bool HasInvalidValues() const
+    DLLEXPORT inline Float3(Float2 floats, float z) : X(floats.X), Y(floats.Y), Z(z)
     {
-        if(!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z)) {
-            return true;
-        }
-
-        return false;
+        DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline void CheckForNans()
+    DLLEXPORT inline explicit Float3(float data) : X(data), Y(data), Z(data)
+    {
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline Float3(const Int3& values) noexcept :
+        X(static_cast<float>(values.X)), Y(static_cast<float>(values.Y)),
+        Z(static_cast<float>(values.Z))
+    {
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline bool HasInvalidValues() const noexcept
+    {
+        return !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z);
+    }
+
+    DLLEXPORT inline void CheckForNans() const
     {
         if(HasInvalidValues()) {
             DEBUG_BREAK;
@@ -697,12 +914,13 @@ public:
     }
 
     // access operator //
-    DLLEXPORT inline float& operator[](const int& nindex)
+    DLLEXPORT inline float& operator[](int nindex)
     {
         switch(nindex) {
         case 0: return X;
         case 1: return Y;
         case 2: return Z;
+        default: break;
         }
         LEVIATHAN_ASSERT(0, "invalid [] access");
         return X;
@@ -710,46 +928,67 @@ public:
 
     // ------------------- Operators ----------------- //
     // add elements //
-    DLLEXPORT inline Float3 operator+(const Float3& val) const
+    DLLEXPORT inline Float3 operator+(const Float3& other) const noexcept
     {
-        return Float3(X + val.X, Y + val.Y, Z + val.Z);
+        return Float3(X + other.X, Y + other.Y, Z + other.Z);
     }
-    DLLEXPORT inline Float3& operator+=(const Float3& val)
+
+    DLLEXPORT inline Float3& operator+=(const Float3& other) noexcept
     {
-        X += val.X;
-        Y += val.Y;
-        Z += val.Z;
-        return *this;
-    }
-    DLLEXPORT inline Float3& operator-=(const Float3& val)
-    {
-        X -= val.X;
-        Y -= val.Y;
-        Z -= val.Z;
+        X += other.X;
+        Y += other.Y;
+        Z += other.Z;
         return *this;
     }
 
     // subtracts all elements //
-    DLLEXPORT inline Float3 operator-(const Float3& val) const
+    DLLEXPORT inline Float3 operator-(const Float3& other) const noexcept
     {
-        return Float3(X - val.X, Y - val.Y, Z - val.Z);
+        return Float3(X - other.X, Y - other.Y, Z - other.Z);
     }
+
+    DLLEXPORT inline Float3& operator-=(const Float3& other) noexcept
+    {
+        X -= other.X;
+        Y -= other.Y;
+        Z -= other.Z;
+        return *this;
+    }
+
     // negates all elements //
-    DLLEXPORT inline Float3 operator-() const
+    DLLEXPORT inline Float3 operator-() const noexcept
     {
         return Float3(-X, -Y, -Z);
     }
-    // multiplies elements together //
-    DLLEXPORT inline Float3 operator*(const Float3& val) const
+
+    // returns the vector //
+    DLLEXPORT inline Float3 operator+() const noexcept
     {
-        return Float3(X * val.X, Y * val.Y, Z * val.Z);
+        return Float3(*this);
     }
+
+    // multiplies elements together //
+    DLLEXPORT inline Float3 operator*(const Float3& other) const noexcept
+    {
+        return Float3(X * other.X, Y * other.Y, Z * other.Z);
+    }
+
+    DLLEXPORT inline Float3& operator*=(const Float3& other) noexcept
+    {
+        X *= other.X;
+        Y *= other.Y;
+        Z *= other.Z;
+        DO_NAN_CHECK;
+        return *this;
+    }
+
     // Divides all elements by float //
-    DLLEXPORT inline Float3 operator/(const float& val) const
+    DLLEXPORT inline Float3 operator/(float val) const
     {
         return Float3(X / val, Y / val, Z / val);
     }
-    DLLEXPORT inline Float3& operator/=(const float& val)
+
+    DLLEXPORT inline Float3& operator/=(float val)
     {
         X /= val;
         Y /= val;
@@ -757,220 +996,221 @@ public:
         DO_NAN_CHECK;
         return *this;
     }
+
     // multiply  by scalar f //
-    DLLEXPORT inline Float3 operator*(float f) const
+    DLLEXPORT inline Float3 operator*(float val) const noexcept
     {
-        return Float3(X * f, Y * f, Z * f);
+        return Float3(X * val, Y * val, Z * val);
     }
-    DLLEXPORT inline Float3& operator*=(float f)
+
+    DLLEXPORT inline Float3& operator*=(float val) noexcept
     {
-        X *= f;
-        Y *= f;
-        Z *= f;
+        X *= val;
+        Y *= val;
+        Z *= val;
         DO_NAN_CHECK;
         return *this;
     }
+
     // divides all elements //
-    DLLEXPORT inline Float3 operator/(const Float3& val) const
+    DLLEXPORT inline Float3 operator/(const Float3& other) const
     {
-        return Float3(X / val.X, Y / val.Y, Z / val.Z);
+        return Float3(X / other.X, Y / other.Y, Z / other.Z);
     }
-    // divides by float //
-    DLLEXPORT inline Float3 operator/(float f) const
+
+    DLLEXPORT inline Float3& operator/=(const Float3& other)
     {
-        return Float3(X / f, Y / f, Z / f);
+        X /= other.X;
+        Y /= other.Y;
+        Z /= other.Z;
+        DO_NAN_CHECK;
+        return *this;
     }
+
     // ---- comparison operators ---- //
     // element by element comparison with operators //
-    DLLEXPORT inline bool operator<(const Float3& other) const
+    DLLEXPORT inline bool operator<(const Float3& other) const noexcept
     {
-        return X < other.X && Y < other.Y && Z < other.Z;
-    };
-    DLLEXPORT inline bool operator<=(const Float3& other) const
+        return std::tie(X, Y, Z) < std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT inline bool operator<=(const Float3& other) const noexcept
     {
-        return X <= other.X && Y <= other.Y && Z <= other.Z;
-    };
-    DLLEXPORT inline bool operator>(const Float3& other) const
+        return std::tie(X, Y, Z) <= std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT inline bool operator>(const Float3& other) const noexcept
     {
-        return X > other.X && Y > other.Y && Z > other.Z;
-    };
-    DLLEXPORT inline bool operator>=(const Float3& other) const
+        return std::tie(X, Y, Z) > std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT inline bool operator>=(const Float3& other) const noexcept
     {
-        return X >= other.X && Y >= other.Y && Z > other.Z;
-    };
-    DLLEXPORT inline bool operator==(const Float3& other) const
+        return std::tie(X, Y, Z) >= std::tie(other.X, other.Y, other.Z);
+    }
+
+    DLLEXPORT inline bool operator==(const Float3& other) const noexcept
     {
         return X == other.X && Y == other.Y && Z == other.Z;
-    };
-    DLLEXPORT inline bool operator!=(const Float3& other) const
+    }
+
+    DLLEXPORT inline bool operator!=(const Float3& other) const noexcept
     {
-        return !(*this == other);
-    };
+        return X != other.X || Y != other.Y || Z != other.Z;
+    }
+
     // ------------------ Functions ------------------ //
-    DLLEXPORT inline float GetX() const
+    // getters //
+    DLLEXPORT inline float GetX() const noexcept
     {
         return X;
-    };
-    DLLEXPORT inline float GetY() const
+    }
+
+    DLLEXPORT inline float GetY() const noexcept
     {
         return Y;
-    };
-    DLLEXPORT inline float GetZ() const
+    }
+
+    DLLEXPORT inline float GetZ() const noexcept
     {
         return Z;
-    };
-    DLLEXPORT inline void SetX(const float& val)
+    }
+
+    // setters //
+    DLLEXPORT inline void SetX(float val)
     {
         X = val;
         DO_NAN_CHECK;
-    };
-    DLLEXPORT inline void SetY(const float& val)
+    }
+
+    DLLEXPORT inline void SetY(float val)
     {
         Y = val;
         DO_NAN_CHECK;
-    };
-    DLLEXPORT inline void SetZ(const float& val)
+    }
+
+    DLLEXPORT inline void SetZ(float val)
     {
         Z = val;
         DO_NAN_CHECK;
-    };
+    }
 
     // add all elements together //
-    DLLEXPORT inline float HAdd() const
+    DLLEXPORT inline float HAdd() const noexcept
     {
         return X + Y + Z;
     }
+
     // Add all elements together absoluted (abs()) //
-    DLLEXPORT inline float HAddAbs() const
+    DLLEXPORT inline float HAddAbs() const noexcept
     {
         return std::abs(X) + std::abs(Y) + std::abs(Z);
     }
+
     // getting min and max of objects //
-    DLLEXPORT inline Float3 MinElements(const Float3& other) const
+    DLLEXPORT inline Float3 MinElements(const Float3& other) const noexcept
     {
         return Float3(
             X < other.X ? X : other.X, Y < other.Y ? Y : other.Y, Z < other.Z ? Z : other.Z);
     }
-    DLLEXPORT inline Float3 MaxElements(const Float3& other) const
+
+    DLLEXPORT inline Float3 MaxElements(const Float3& other) const noexcept
     {
         return Float3(
             X > other.X ? X : other.X, Y > other.Y ? Y : other.Y, Z > other.Z ? Z : other.Z);
     }
+
     // value clamping //
-    DLLEXPORT inline Float3 Clamp(const Float3& min, const Float3& max)
+    DLLEXPORT inline Float3 Clamp(const Float3& min, const Float3& max) const noexcept
     {
         const Float3 minval = this->MinElements(max);
         return min.MaxElements(minval);
     }
 
-    DLLEXPORT inline Float3 DegreesToRadians()
+    DLLEXPORT inline Float3 DegreesToRadians() const noexcept
     {
-
         return Float3(X * DEGREES_TO_RADIANS, Y * DEGREES_TO_RADIANS, Z * DEGREES_TO_RADIANS);
     }
 
     // ----------------- Vector math ------------------- //
     // dot product of the vectors //
-    DLLEXPORT inline float Dot(const Float3& val) const
+    DLLEXPORT inline float Dot(const Float3& val) const noexcept
     {
         return X * val.X + Y * val.Y + Z * val.Z;
     }
+
+
     DLLEXPORT inline Float3 Cross(const Float3& val) const
     {
         return Float3(Y * val.Z - val.Y * Z, Z * val.X - val.Z * X, X * val.Y - val.X * Y);
     }
+
     // length of the vector //
-    DLLEXPORT inline float Length() const
+    DLLEXPORT inline float Length() const noexcept
     {
-        return sqrt(X * X + Y * Y + Z * Z);
+        return std::sqrt(LengthSquared());
     }
-    DLLEXPORT inline float LengthSquared() const
+
+    DLLEXPORT inline float LengthSquared() const noexcept
     {
         return X * X + Y * Y + Z * Z;
     }
+
     // normalizes the vector //
     DLLEXPORT inline Float3 Normalize() const
     {
         const float length = Length();
         if(length == 0)
             return Float3(0, 0, 0);
-        return Float3(X / length, Y / length, Z / length);
+        return (*this) / length;
     }
+
     // safe version of normalization //
-    DLLEXPORT inline Float3 NormalizeSafe(const Float3& safer = Float3(1, 0, 0)) const
+    DLLEXPORT inline Float3 NormalizeSafe(const Float3& safer = Float3(1, 0, 0)) const noexcept
     {
         // security //
-        // assert(safer.IsNormalized() && "safer not normalized");
-        const float len = X * X + Y * Y + Z * Z;
-        if(len == 0) {
+        LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
+        if(LengthSquared() == 0)
             return safer;
-        }
-        const float length = sqrt(len);
-        return Float3(X / length, Y / length, Z / length);
+        const float length = Length();
+        return (*this) / length;
     }
+
     // checks is the vector normalized //
-    DLLEXPORT inline bool IsNormalized() const
+    DLLEXPORT inline bool IsNormalized() const noexcept
     {
         // is absolute -1.f under normalization tolerance //
         return fabs(X * X + Y * Y + Z * Z - 1.0f) < NORMALIZATION_TOLERANCE;
     }
+
     // does linear interpolation between vectors and coefficient f, not limited to range
     // [0,1], courtesy of ozz-animation //
-    DLLEXPORT inline Float3 Lerp(const Float3& other, float f) const
+    DLLEXPORT inline Float3 Lerp(const Float3& other, float f) const noexcept
     {
         return Float3((other.X - X) * f + X, (other.Y - Y) * f + Y, (other.Z - Z) * f + Z);
     }
+
     // compares distance between vectors to tolerance, returns true if less //
-    DLLEXPORT inline bool Compare(const Float3& other, float tolerance) const
+    DLLEXPORT inline bool Compare(const Float3& other, float tolerance) const noexcept
     {
         const Float3 difference = (*this) - other;
         return difference.Dot(difference) < tolerance * tolerance;
     }
 
-    DLLEXPORT static inline Float3 CreateVectorFromAngles(const float& yaw, const float& pitch)
+    DLLEXPORT static inline Float3 CreateVectorFromAngles(
+        const float& yaw, const float& pitch) noexcept
     {
         return Float3(-sin(yaw * DEGREES_TO_RADIANS), sin(pitch * DEGREES_TO_RADIANS),
             -cos(yaw * DEGREES_TO_RADIANS))
             .NormalizeSafe(Zeroed);
     }
-    // ------------------------------------ //
-    // functions to be compatible with ozz functions //
-    // all zero values object //
-    DLLEXPORT inline static Float3 zero()
-    {
-        return Float3(0.f, 0.f, 0.f);
-    }
-    // all ones //
-    DLLEXPORT inline static Float3 one()
-    {
-        return Float3(1.f, 1.f, 1.f);
-    }
-    // unitary vectors //
-    // x axis
-    DLLEXPORT inline static Float3 x_axis()
-    {
-        return Float3(1.f, 0.f, 0.f);
-    }
 
-    // y axis
-    DLLEXPORT inline static Float3 y_axis()
-    {
-        return Float3(0.f, 1.f, 0.f);
-    }
-
-    // z axis
-    DLLEXPORT inline static Float3 z_axis()
-    {
-        return Float3(0.f, 0.f, 1.f);
-    }
     // ----------------- casts ------------------- //
 #ifdef LEVIATHAN_USING_OGRE
-    DLLEXPORT Float3(const bs::Vector3& vec)
-    {
+    DLLEXPORT inline Float3(const bs::Vector3& vec) :
         // copy values //
-        X = vec.x;
-        Y = vec.y;
-        Z = vec.z;
+        X(vec.x), Y(vec.y), Z(vec.z)
+    {
         DO_NAN_CHECK;
     }
 
@@ -979,12 +1219,10 @@ public:
         return bs::Vector3(X, Y, Z);
     }
 
-    DLLEXPORT Float3(const btVector3& vec)
-    {
+    DLLEXPORT inline Float3(const btVector3& vec) :
         // copy values //
-        X = vec.x();
-        Y = vec.y();
-        Z = vec.z();
+        X(vec.x()), Y(vec.y()), Z(vec.z())
+    {
         DO_NAN_CHECK;
     }
 
@@ -992,64 +1230,55 @@ public:
     {
         return btVector3(X, Y, Z);
     }
+
 #endif // LEVIATHAN_USING_OGRE
     // ------------------------------------ //
 
     VALUE_TYPE(Float3);
 
-    float X, Y, Z;
+    float X = 0;
+    float Y = 0;
+    float Z = 0;
 
     static const Float3 UnitVForward;
     static const Float3 UnitVUp;
     static const Float3 Zeroed;
 };
+
 struct Float4 {
 public:
-    // Needed for returning from scripts
-    DLLEXPORT Float4()
+    DLLEXPORT inline Float4() noexcept = default;
+
+    DLLEXPORT inline Float4(float f1, float f2, float f3, float f4) :
+        X(f1), Y(f2), Z(f3), W(f4)
     {
-        X = Y = Z = W = 0;
-    };
-    DLLEXPORT Float4(float f1, float f2, float f3, float f4)
-    {
-        X = f1;
-        Y = f2;
-        Z = f3;
-        W = f4;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT Float4(Float2 floats, float f3, float f4)
-    {
-        X = floats.X;
-        Y = floats.Y;
-        Z = f3;
-        W = f4;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT Float4(Float3 floats, float f4)
-    {
-        X = floats.X;
-        Y = floats.Y;
-        Z = floats.Z;
-        W = f4;
-        DO_NAN_CHECK;
-    }
-    DLLEXPORT explicit Float4(float val)
-    {
-        X = Y = Z = W = val;
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline bool HasInvalidValues() const
+    DLLEXPORT inline Float4(Float2 floats, float f3, float f4) :
+        X(floats.X), Y(floats.Y), Z(f3), W(f4)
     {
-        if(!std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z) || !std::isfinite(W)) {
-            return true;
-        }
-
-        return false;
+        DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline void CheckForNans()
+    DLLEXPORT inline Float4(Float3 floats, float f4) :
+        X(floats.X), Y(floats.Y), Z(floats.Z), W(f4)
+    {
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline explicit Float4(float data) : X(data), Y(data), Z(data), W(data)
+    {
+        DO_NAN_CHECK;
+    }
+
+    DLLEXPORT inline bool HasInvalidValues() const noexcept
+    {
+        return !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z) ||
+               !std::isfinite(W);
+    }
+
+    DLLEXPORT inline void CheckForNans() const
     {
         if(HasInvalidValues()) {
             DEBUG_BREAK;
@@ -1058,21 +1287,23 @@ public:
     }
 
     // access operator //
-    DLLEXPORT inline float& operator[](const int& nindex)
+    DLLEXPORT inline float& operator[](int nindex)
     {
         switch(nindex) {
         case 0: return X;
         case 1: return Y;
         case 2: return Z;
         case 3: return W;
+        default: break;
         }
 
         LEVIATHAN_ASSERT(0, "invalid [] access");
         return X;
     }
 
+    // Is this a good idea?
     //! return first value of {X, Y, Z, W} as a pointer
-    DLLEXPORT inline operator float*()
+    DLLEXPORT inline operator float*() noexcept
     {
         // this should be always confirmed to work //
         return &X;
@@ -1080,119 +1311,217 @@ public:
 
     // ------------------- Operators ----------------- //
     // add elements //
-    DLLEXPORT inline Float4 operator+(const Float4& val) const
+    DLLEXPORT inline Float4 operator+(const Float4& other) const noexcept
     {
-        return Float4(X + val.X, Y + val.Y, Z + val.Z, W + val.W);
+        return Float4(X + other.X, Y + other.Y, Z + other.Z, W + other.W);
     }
+
+    DLLEXPORT inline Float4& operator+=(const Float4& other) noexcept
+    {
+        X += other.X;
+        Y += other.Y;
+        Z += other.Z;
+        W += other.W;
+        return *this;
+    }
+
     // subtracts all elements //
-    DLLEXPORT inline Float4 operator-(const Float4& val) const
+    DLLEXPORT inline Float4 operator-(const Float4& other) const noexcept
     {
-        return Float4(X - val.X, Y - val.Y, Z - val.Z, W - val.W);
+        return Float4(X - other.X, Y - other.Y, Z - other.Z, W - other.W);
     }
+
+    DLLEXPORT inline Float4& operator-=(const Float4& other) noexcept
+    {
+        X -= other.X;
+        Y -= other.Y;
+        Z -= other.Z;
+        W -= other.W;
+        return *this;
+    }
+
     // negates all elements //
-    DLLEXPORT inline Float4 operator-() const
+    DLLEXPORT inline Float4 operator-() const noexcept
     {
         return Float4(-X, -Y, -Z, -W);
     }
+
+    // returns the vector //
+    DLLEXPORT inline Float4 operator+() const noexcept
+    {
+        return Float4(*this);
+    }
+
     // multiplies elements together //
-    DLLEXPORT inline Float4 operator*(const Float4& val) const
+    DLLEXPORT inline Float4 operator*(const Float4& other) const noexcept
     {
-        return Float4(X * val.X, Y * val.Y, Z * val.Z, W * val.W);
+        return Float4(X * other.X, Y * other.Y, Z * other.Z, W * other.W);
     }
+
+    DLLEXPORT inline Float4& operator*=(const Float4& other) noexcept
+    {
+        X *= other.X;
+        Y *= other.Y;
+        Z *= other.Z;
+        W *= other.W;
+        DO_NAN_CHECK;
+        return *this;
+    }
+
+    // Divides all elements by float //
+    DLLEXPORT inline Float4 operator/(float val) const
+    {
+        return Float4(X / val, Y / val, Z / val, W / val);
+    }
+
+    DLLEXPORT inline Float4& operator/=(float val)
+    {
+        X /= val;
+        Y /= val;
+        Z /= val;
+        W /= val;
+        DO_NAN_CHECK;
+        return *this;
+    }
+
     // multiply  by scalar f //
-    DLLEXPORT inline Float4 operator*(float f) const
+    DLLEXPORT inline Float4 operator*(float val) const noexcept
     {
-        return Float4(X * f, Y * f, Z * f, W * f);
+        return Float4(X * val, Y * val, Z * val, W * val);
     }
+
+    DLLEXPORT inline Float4& operator*=(float val) noexcept
+    {
+        X *= val;
+        Y *= val;
+        Z *= val;
+        W *= val;
+        DO_NAN_CHECK;
+        return *this;
+    }
+
     // divides all elements //
-    DLLEXPORT inline Float4 operator/(const Float4& val) const
+    DLLEXPORT inline Float4 operator/(const Float4& other) const
     {
-        return Float4(X / val.X, Y / val.Y, Z / val.Z, W / val.W);
+        return Float4(X / other.X, Y / other.Y, Z / other.Z, W / other.W);
     }
-    // divides by float //
-    DLLEXPORT inline Float4 operator/(float f) const
+
+    DLLEXPORT inline Float4& operator/=(const Float4& other)
     {
-        return Float4(X / f, Y / f, Z / f, W / f);
+        X /= other.X;
+        Y /= other.Y;
+        Z /= other.Z;
+        W /= other.W;
+        DO_NAN_CHECK;
+        return *this;
     }
+
     // ---- comparison operators ---- //
     // element by element comparison with operators //
-    DLLEXPORT inline bool operator<(const Float4& other) const
+    DLLEXPORT inline bool operator<(const Float4& other) const noexcept
     {
-        return !(*this == other);
-    };
-    DLLEXPORT inline bool operator>(const Float4& other) const
+        return std::tie(X, Y, Z, W) < std::tie(other.X, other.Y, other.Z, other.W);
+    }
+
+    DLLEXPORT inline bool operator<=(const Float4& other) const noexcept
     {
-        return !(*this == other);
-    };
-    DLLEXPORT inline bool operator==(const Float4& other) const
+        return std::tie(X, Y, Z, W) <= std::tie(other.X, other.Y, other.Z, other.W);
+    }
+
+    DLLEXPORT inline bool operator>(const Float4& other) const noexcept
+    {
+        return std::tie(X, Y, Z, W) > std::tie(other.X, other.Y, other.Z, other.W);
+    }
+
+    DLLEXPORT inline bool operator>=(const Float4& other) const noexcept
+    {
+        return std::tie(X, Y, Z, W) >= std::tie(other.X, other.Y, other.Z, other.W);
+    }
+
+    DLLEXPORT inline bool operator==(const Float4& other) const noexcept
     {
         return X == other.X && Y == other.Y && Z == other.Z && W == other.W;
-    };
-    DLLEXPORT inline bool operator!=(const Float4& other) const
+    }
+
+    DLLEXPORT inline bool operator!=(const Float4& other) const noexcept
     {
-        return X != other.X && Y != other.Y && Z != other.Z && W != other.W;
-    };
+        return X != other.X || Y != other.Y || Z != other.Z || W != other.W;
+    }
+
     // ------------------ Functions ------------------ //
-    DLLEXPORT inline float GetX() const
+    // getters //
+    DLLEXPORT inline float GetX() const noexcept
     {
         return X;
-    };
-    DLLEXPORT inline float GetY() const
+    }
+
+    DLLEXPORT inline float GetY() const noexcept
     {
         return Y;
-    };
-    DLLEXPORT inline float GetZ() const
+    }
+
+    DLLEXPORT inline float GetZ() const noexcept
     {
         return Z;
-    };
-    DLLEXPORT inline float GetW() const
+    }
+
+    DLLEXPORT inline float GetW() const noexcept
     {
         return W;
-    };
-    DLLEXPORT inline void SetX(const float& val)
+    }
+
+    // setters //
+    DLLEXPORT inline void SetX(float val)
     {
         X = val;
         DO_NAN_CHECK;
-    };
-    DLLEXPORT inline void SetY(const float& val)
+    }
+
+    DLLEXPORT inline void SetY(float val)
     {
         Y = val;
         DO_NAN_CHECK;
-    };
-    DLLEXPORT inline void SetZ(const float& val)
+    }
+
+    DLLEXPORT inline void SetZ(float val)
     {
         Z = val;
         DO_NAN_CHECK;
-    };
-    DLLEXPORT inline void SetW(const float& val)
+    }
+
+    DLLEXPORT inline void SetW(float val)
     {
         W = val;
         DO_NAN_CHECK;
-    };
+    }
 
     // add all elements together //
-    DLLEXPORT inline float HAdd() const
+    DLLEXPORT inline float HAdd() const noexcept
     {
         return X + Y + Z + W;
     }
-    // Add all elements together after abs() is called on each element //
-    DLLEXPORT inline float HAddAbs() const
+
+    // Add all elements together absoluted (abs()) //
+    DLLEXPORT inline float HAddAbs() const noexcept
     {
         return std::abs(X) + std::abs(Y) + std::abs(Z) + std::abs(W);
     }
+
     // getting min and max of objects //
-    DLLEXPORT inline Float4 MinElements(const Float4& other) const
+    DLLEXPORT inline Float4 MinElements(const Float4& other) const noexcept
     {
         return Float4(X < other.X ? X : other.X, Y < other.Y ? Y : other.Y,
             Z < other.Z ? Z : other.Z, W < other.W ? W : other.W);
     }
-    DLLEXPORT inline Float4 MaxElements(const Float4& other) const
+
+    DLLEXPORT inline Float4 MaxElements(const Float4& other) const noexcept
     {
         return Float4(X > other.X ? X : other.X, Y > other.Y ? Y : other.Y,
             Z > other.Z ? Z : other.Z, W > other.W ? W : other.W);
     }
+
     // value clamping //
-    DLLEXPORT inline Float4 Clamp(const Float4& min, const Float4& max)
+    DLLEXPORT inline Float4 Clamp(const Float4& min, const Float4& max) const noexcept
     {
         const Float4 minval = this->MinElements(max);
         return min.MaxElements(minval);
@@ -1200,15 +1529,20 @@ public:
 
     // ----------------- Vector math ------------------- //
     // dot product of the vectors //
-    DLLEXPORT inline float Dot(const Float4& val) const
+    DLLEXPORT inline float Dot(const Float4& val) const noexcept
     {
         return X * val.X + Y * val.Y + Z * val.Z + W * val.W;
     }
 
     // length of the vector //
-    DLLEXPORT inline float Length() const
+    DLLEXPORT inline float Length() const noexcept
     {
-        return sqrt(X * X + Y * Y + Z * Z + W * W);
+        return std::sqrt(LengthSquared());
+    }
+
+    DLLEXPORT inline float LengthSquared() const noexcept
+    {
+        return X * X + Y * Y + Z * Z + W * W;
     }
 
     // normalizes the vector //
@@ -1221,29 +1555,31 @@ public:
             return Float4(0, 0, 0, 1);
         }
 
-        return Float4(X / length, Y / length, Z / length, W / length);
+        return (*this) / length;
     }
+
     // safe version of normalization //
-    DLLEXPORT inline Float4 NormalizeSafe(const Float4& safer = Float4(0, 0, 0, 1)) const
+    DLLEXPORT inline Float4 NormalizeSafe(const Float4& safer = Float4(1, 0, 0, 0)) const
+        noexcept
     {
         // security //
-        const float len = X * X + Y * Y + Z * Z + W * W;
-        if(len == 0) {
+        LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");
+        if(LengthSquared() == 0)
             return safer;
-        }
-
-        const float length = sqrt(len);
-        return Float4(X / length, Y / length, Z / length, W / length);
+        const float length = Length();
+        return (*this) / length;
     }
+
     // checks is the vector normalized //
-    DLLEXPORT inline bool IsNormalized() const
+    DLLEXPORT inline bool IsNormalized() const noexcept
     {
         // is absolute -1.f under normalization tolerance //
         return fabs(X * X + Y * Y + Z * Z + W * W - 1.0f) < NORMALIZATION_TOLERANCE;
     }
-    // does linear interpolation between vectors and coefficient f,
-    // not limited to range [0,1], courtesy of ozz-animation //
-    DLLEXPORT inline Float4 Lerp(const Float4& other, float f) const
+
+    // does linear interpolation between vectors and coefficient f, not limited to range
+    // [0,1], courtesy of ozz-animation //
+    DLLEXPORT inline Float4 Lerp(const Float4& other, float f) const noexcept
     {
         return Float4((other.X - X) * f + X, (other.Y - Y) * f + Y, (other.Z - Z) * f + Z,
             (other.W - W) * f + W);
@@ -1259,7 +1595,6 @@ public:
         float dot = this->Dot(other);
 
         if(dot < 0) {
-
             dot = -dot;
             quaternion3 = -other;
         } else {
@@ -1267,8 +1602,7 @@ public:
         }
 
         if(dot < 0.95f) {
-
-            float angle = acosf(dot);
+            const float angle = acosf(dot);
             return ((*this) * sinf(angle * (1 - f)) + quaternion3 * sinf(angle * f)) /
                    sinf(angle);
 
@@ -1279,7 +1613,7 @@ public:
     }
 
     // compares distance between vectors to tolerance, returns true if less //
-    DLLEXPORT inline bool Compare(const Float4& other, float tolerance) const
+    DLLEXPORT inline bool Compare(const Float4& other, float tolerance) const noexcept
     {
         const Float4 difference = (*this) - other;
         return difference.Dot(difference) < tolerance * tolerance;
@@ -1289,7 +1623,6 @@ public:
     //! \note Must be normalized
     DLLEXPORT inline Float3 ToAxis() const
     {
-
         const auto s = std::sqrt(1 - std::pow(W, 2));
         // Avoid division by zero (this small axis it can be basically converted directly)
         if(s > 0) {
@@ -1301,24 +1634,21 @@ public:
 
     //! Converts a quaternion to angle (and skips outputting the Axis)
     //! \note Must be normalized
-    DLLEXPORT inline float ToAngle() const
+    DLLEXPORT inline float ToAngle() const noexcept
     {
-
         return 2 * std::acos(W);
     }
 
     //! Inverts a quaternion
-    DLLEXPORT inline Float4 Inverse() const
+    DLLEXPORT inline Float4 Inverse() const noexcept
     {
-
         const auto length = Length();
         if(length > 0.0f) {
-
             const auto inverted = 1.0f / length;
             return Float4(-X * inverted, -Y * inverted, -Z * inverted, W * inverted);
         } else {
             // Invalid inversing
-            return Float4(0);
+            return Float4(0.f);
         }
     }
 
@@ -1335,54 +1665,19 @@ public:
         //     + vector * (W*W - u.Dot(u))
         //     + u.Cross(vector) * 2.0f * W;
 
-        // Math taken from bs::Quaternion
-        Float3 uv;
-        Float3 uuv;
+        // Math taken from Ogre::Quaternion
         Float3 qvec(X, Y, Z);
-        uv = qvec.Cross(vector);
-        uuv = qvec.Cross(uv);
-        uv *= 2.0f * W;
-        uuv *= 2.0f;
+        const Float3 uv1 = qvec.Cross(vector);
+        const Float3 uuv = qvec.Cross(uv1) * 2.0f;
+        const Float3 uv2 = uv1 * 2.0f * W;
 
-        return vector + uv + uuv;
-    }
-
-    // ------------------------------------ //
-    // All zeros //
-    DLLEXPORT inline static Float4 zero()
-    {
-        return Float4(0.f, 0.f, 0.f, 0.f);
+        return vector + uv2 + uuv;
     }
 
-    // all ones //
-    DLLEXPORT inline static Float4 one()
-    {
-        return Float4(1.f, 1.f, 1.f, 1.f);
-    }
-    // unitary vectors for ozz support //
-    // x
-    DLLEXPORT inline static Float4 x_axis()
-    {
-        return Float4(1.f, 0.f, 0.f, 0.f);
-    }
-    // y
-    DLLEXPORT inline static Float4 y_axis()
-    {
-        return Float4(0.f, 1.f, 0.f, 0.f);
-    }
-    // z
-    DLLEXPORT inline static Float4 z_axis()
-    {
-        return Float4(0.f, 0.f, 1.f, 0.f);
-    }
-    // w
-    DLLEXPORT inline static Float4 w_axis()
-    {
-        return Float4(0.f, 0.f, 0.f, 1.f);
-    }
-
+    // ----------------- casts ------------------- //
+    // Should this macro be replaced by a inline if in the cpp file?
 #ifdef LEVIATHAN_USING_OGRE
-    DLLEXPORT Float4(const bs::Quaternion& quat)
+    DLLEXPORT inline Float4(const bs::Quaternion& quat)
     {
         // copy values //
         X = quat.x;
@@ -1392,7 +1687,7 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT Float4(const bs::Color& colour)
+    DLLEXPORT inline Float4(const bs::Color& colour)
     {
         // copy values //
         X = colour.r;
@@ -1418,7 +1713,7 @@ public:
         return bs::Vector4(X, Y, Z, W);
     }
 
-    DLLEXPORT Float4(const btQuaternion& colour)
+    DLLEXPORT inline Float4(const btQuaternion& colour)
     {
         // copy values //
         X = colour.x();
@@ -1432,38 +1727,39 @@ public:
     {
         return btQuaternion(X, Y, Z, W);
     }
+
 #endif // LEVIATHAN_USING_OGRE
 
     // ----------------- Quaternions ------------------- //
     DLLEXPORT static inline Float4 CreateQuaternionFromAngles(const Float3& angles)
     {
         // multiplied by 0.5 to get double the value //
-        float cosx = cosf(0.5f * angles.X);
-        float cosy = cosf(0.5f * angles.Y);
-        float cosz = cosf(0.5f * angles.Z);
+        const float cosx = cosf(0.5f * angles.X);
+        const float cosy = cosf(0.5f * angles.Y);
+        const float cosz = cosf(0.5f * angles.Z);
 
-        float sinx = sinf(0.5f * angles.X);
-        float siny = sinf(0.5f * angles.Y);
-        float sinz = sinf(0.5f * angles.Z);
+        const float sinx = sinf(0.5f * angles.X);
+        const float siny = sinf(0.5f * angles.Y);
+        const float sinz = sinf(0.5f * angles.Z);
 
-
-        Float4 quaternion((Float4)0);
-        // compute quaternion //
-        quaternion.X = cosz * cosy * sinx - sinz * siny * cosx;
-        quaternion.Y = cosz * siny * cosx + sinz * cosy * sinx;
-        quaternion.Z = sinz * cosy * cosx - cosz * siny * sinx;
-        quaternion.W = cosz * cosy * cosx * sinz * siny * sinx;
-
-        return quaternion;
+        return Float4(
+            // compute quaternion //
+            // X
+            cosz * cosy * sinx - sinz * siny * cosx,
+            // Y
+            cosz * siny * cosx + sinz * cosy * sinx,
+            // Z
+            sinz * cosy * cosx - cosz * siny * sinx,
+            // W
+            cosz * cosy * cosx * sinz * siny * sinx);
     }
 
     //! \note This quaternion has to be normalized
     //! \see
     //! http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
-    DLLEXPORT inline Float3 QuaternionToEuler() const
+    DLLEXPORT inline Float3 QuaternionToEuler() const noexcept
     {
-
-        float test = X * Y + Z * W;
+        const float test = X * Y + Z * W;
 
         if(test > 0.499) {
             // Singularity at north pole
@@ -1471,41 +1767,35 @@ public:
         }
 
         if(test < -0.499) {
-
             // Singularity at south pole
             return Float3(-2 * atan2(X, W), -PI / 2, 0);
         }
 
-        float sqx = X * X;
-        float sqy = Y * Y;
-        float sqz = Z * Z;
+        const float sqx = X * X;
+        const float sqy = Y * Y;
+        const float sqz = Z * Z;
 
         return Float3(atan2(2 * Y * W - 2 * X * Z, 1 - 2 * sqy - 2 * sqz), asin(2 * test),
             atan2(2 * X * W - 2 * Y * Z, 1 - 2 * sqx - 2 * sqz));
     }
 
-    DLLEXPORT inline Float4 QuaternionMultiply(const Float4& other) const
+    DLLEXPORT inline Float4 QuaternionMultiply(const Float4& other) const noexcept
     {
-
-        Float4 result;
-
-        result.X = X * other.X + X * other.W + Y * other.Z - Z * other.Y;
-        result.Y = W * other.Y - X * other.Z + Y * other.W + Z * other.X;
-        result.Z = W * other.Z + X * other.Y - Y * other.X + Z * other.W;
-        result.W = W * other.W - X * other.X - Y * other.Y - Z * other.Z;
-
-        return result;
+        return Float4(X * other.X + X * other.W + Y * other.Z - Z * other.Y,
+            W * other.Y - X * other.Z + Y * other.W + Z * other.X,
+            W * other.Z + X * other.Y - Y * other.X + Z * other.W,
+            W * other.W - X * other.X - Y * other.Y - Z * other.Z);
     }
 
-    DLLEXPORT inline Float4 QuaternionReverse() const
+    DLLEXPORT inline Float4 QuaternionReverse() const noexcept
     {
         // reverse vector //
         return Float4(-X, -Y, -Z, W);
     }
 
-    DLLEXPORT static inline Float4 IdentityQuaternion()
+    DLLEXPORT static inline Float4 IdentityQuaternion() noexcept
     {
-        return Float4(0, 0, 0, 1);
+        return Float4(0.f, 0.f, 0.f, 1.f);
     }
 
     // Math from here: https://stackoverflow.com/questions/12435671/quaternion-lookat-function
@@ -1517,9 +1807,9 @@ public:
 
         if(std::abs(dot - (-1.0f)) < 0.000001f) {
             // Assumes up is Float3(0, 1, 0)
-            return Float4(
-                Float3::UnitVUp.X, Float3::UnitVUp.Y, Float3::UnitVUp.Z, 3.1415926535897932f);
+            return Float4(Float3::UnitVUp, 3.1415926535897932f);
         }
+
         if(std::abs(dot - 1.0f) < 0.000001f) {
             return Float4::IdentityQuaternion();
         }
@@ -1534,32 +1824,26 @@ public:
     //! This resource is a life saver:
     //! http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
     DLLEXPORT static inline Float4 CreateQuaternionFromAxisAngle(
-        const Float3& axis, float angle)
+        const Float3& axis, float angle) noexcept
     {
-        const auto s = std::sin(angle / 2.0);
-        const auto x = axis.X * s;
-        const auto y = axis.Y * s;
-        const auto z = axis.Z * s;
-        const auto w = std::cos(angle / 2.0);
-        return Float4(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z),
-            static_cast<float>(w));
+        const float s = static_cast<float>(std::sin(angle / 2.0));
+        const float w = static_cast<float>(std::cos(angle / 2.0));
+        return Float4(axis * s, w);
     }
 
+    // TODO: Implement this (Float4::CreateAxisAngleFromEuler)
     DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3& angles)
     {
-
         throw std::exception();
         // return Float4();
     }
 
     VALUE_TYPE(Float4);
 
-    // ----------------- casts ------------------- //
-
-    // ------------------------------------ //
-
-    float X, Y, Z, W;
-
+    float X = 0;
+    float Y = 0;
+    float Z = 0;
+    float W = 0;
 
     // specific colours //
     static const Float4 ColourBlack;

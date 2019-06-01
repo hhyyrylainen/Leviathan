@@ -559,7 +559,7 @@ TEST_CASE("Script bound random (not tested elsewhere) functions work correctly",
     CHECK(returned.Value == true);
 }
 
-TEST_CASE("Ogre bound functions work correctly", "[script][ogre]")
+TEST_CASE("BSF bound functions work correctly", "[script][bsf]")
 {
     PartialEngine<false> engine;
 
@@ -568,7 +568,7 @@ TEST_CASE("Ogre bound functions work correctly", "[script][ogre]")
 
     // setup the script //
     auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
-    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/OgreFunctionsTest.as"));
+    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/BSFFunctionsTest.as"));
 
     auto module = mod->GetModule();
 

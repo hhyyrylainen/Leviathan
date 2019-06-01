@@ -304,7 +304,7 @@ public:
         REQUIRE(MainFileHandler->Init(&Log));
 
         // Register resources to Ogre //
-        MainFileHandler->RegisterOGREResourceGroups(true);
+        // MainFileHandler->RegisterOGREResourceGroups(true);
 
         Sound = sound;
     }

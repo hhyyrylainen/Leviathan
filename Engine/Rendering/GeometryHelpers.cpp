@@ -77,6 +77,80 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
 
 DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
 {
-    DEBUG_BREAK;
-    return nullptr;
+    const auto x = -width / 2;
+    const auto z = -height / 2;
+
+    bs::MESH_DESC meshDesc;
+    meshDesc.numVertices = 4;
+    meshDesc.numIndices = 6;
+    // Workaround for bug in BSF
+    // meshDesc.indexType = bs::IT_16BIT;
+    meshDesc.indexType = bs::IT_32BIT;
+    meshDesc.usage = bs::MU_STATIC;
+    meshDesc.subMeshes.push_back(bs::SubMesh(0, 6, bs::DOT_TRIANGLE_LIST));
+
+    bs::SPtr<bs::VertexDataDesc> vertexDesc = bs::VertexDataDesc::create();
+    vertexDesc->addVertElem(bs::VET_FLOAT3, bs::VES_POSITION);
+    vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_TEXCOORD);
+    const auto stride = 5;
+    meshDesc.vertexDesc = vertexDesc;
+
+    bs::SPtr<bs::MeshData> meshData =
+        bs::MeshData::create(4, 6, vertexDesc, /*bs::IT_16BIT*/ bs::IT_32BIT);
+
+    // Generate vertex data
+    float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
+    size_t index = 0;
+
+    {
+        // First vertex
+        index = 0;
+        vertices[index * stride + 0] = x;
+        vertices[index * stride + 1] = 0;
+        vertices[index * stride + 2] = z;
+        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 4] = 0;
+    }
+
+    {
+        // Second
+        index = 1;
+        vertices[index * stride + 0] = x + width;
+        vertices[index * stride + 1] = 0;
+        vertices[index * stride + 2] = z;
+        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 4] = 0;
+    }
+
+    {
+        // Third
+        index = 2;
+        vertices[index * stride + 0] = x + width;
+        vertices[index * stride + 1] = 1;
+        vertices[index * stride + 2] = z + height;
+        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 4] = 1;
+    }
+
+    {
+        // Fourth
+        index = 3;
+        vertices[index * stride + 0] = x;
+        vertices[index * stride + 1] = 0;
+        vertices[index * stride + 2] = z + height;
+        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 4] = 1;
+    }
+
+    // 1 to 1 index buffer mapping
+    constexpr /*uint16_t*/ uint32_t indicesData[] = {3, 0, 1, 1, 2, 3};
+
+    std::memcpy(/*meshData->getIndices16()*/ meshData->getIndices32(), indicesData,
+        sizeof(indicesData));
+
+    return bs::Mesh::create(meshData, meshDesc);
+
+    // // Set the bounds to get frustum culling and LOD to work correctly.
+    // // To infinite to always render
+    // mesh->_setBounds(Ogre::Aabb::BOX_INFINITE /*, false*/);
 }

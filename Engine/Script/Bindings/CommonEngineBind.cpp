@@ -384,8 +384,7 @@ bool BindDataBlock(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindEvents(asIScriptEngine* engine)
 {
-
-    // bind event type enum //
+    // Bind event type enum //
     if(engine->RegisterEnum("EVENT_TYPE") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

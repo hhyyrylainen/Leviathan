@@ -110,6 +110,13 @@ To* DoReferenceCastStaticNoRef(From* ptr)
             ANGELSCRIPT_REGISTERFAIL;                                              \
         }                                                                          \
     }
+
+#define ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(enum, valuename, x)             \
+    {                                                                             \
+        if(engine->RegisterEnumValue(enum, valuename, static_cast<int>(x)) < 0) { \
+            ANGELSCRIPT_REGISTERFAIL;                                             \
+        }                                                                         \
+    }
 } // namespace Leviathan
 
 #define ANGLESCRIPT_BASE_CLASS_CASTS(base, base_as, derived, derived_as)                 \

@@ -10,7 +10,7 @@
 #include "WorldNetworkSettings.h"
 
 // #include <type_traits>
-
+#include "bsfCore/BsCorePrerequisites.h"
 
 class CScriptArray;
 class asIScriptObject;
@@ -311,12 +311,16 @@ public:
     //! \see SetCamera
     DLLEXPORT bs::Ray CastRayFromCamera(float x, float y) const;
 
-    // Ogre get functions //
     inline bs::Scene* GetScene()
     {
         return &BSFLayerHack;
         // return WorldsScene;
     }
+
+    //! \brief Returns the scene object the camera is attached to
+    //!
+    //! Useful to attach backgrounds and other static items to the camera
+    DLLEXPORT bs::HSceneObject GetCameraSceneObject();
 
     // physics functions //
     // DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);

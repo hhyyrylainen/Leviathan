@@ -7,10 +7,15 @@
 // For Float type conversions
 #include "Common/Types.h"
 
+#include "Engine.h"
 #include "Exceptions.h"
+#include "Rendering/Graphics.h"
 
 #include "BsApplication.h"
+#include "bsfCore/Material/BsMaterial.h"
+#include "bsfCore/Material/BsShader.h"
 #include "bsfCore/Scene/BsSceneObject.h"
+#include "bsfEngine/Resources/BsBuiltinResources.h"
 #include "bsfUtility/Math/BsMatrix4.h"
 #include "bsfUtility/Math/BsRay.h"
 
@@ -147,17 +152,18 @@ void SceneObjectSetRotation(bs::HSceneObject& self, const bs::Quaternion& orient
     self->setRotation(orientation);
 }
 
+void MaterialSetTextureProxy(
+    bs::HMaterial& self, const std::string& name, const bs::HTexture& texture)
+{
+    if(!self || self->isDestroyed()) {
 
+        asGetActiveContext()->SetException("method called on invalid HMaterial instance");
+        return;
+    }
 
-// // This is needed because directly registering
-// // bs::Root::getSingletonPtr() with angelscript does weird stuff
-// bs::Root* ScriptGetbs()
-// {
-//     bs::Root* root = bs::Root::getSingletonPtr();
+    self->setTexture(name.c_str(), texture);
+}
 
-//     LEVIATHAN_ASSERT(root != nullptr, "Script called Getbs while bs isn't initialized");
-//     return root;
-// }
 
 template<class T>
 void DefaultHandleConstructor(void* memory)
@@ -201,6 +207,59 @@ void ResetHandle(T& self)
 {
     self = nullptr;
 }
+
+// ------------------------------------ //
+// Utility helpers
+void ShaderFromNameFactory(void* memory, const std::string& name)
+{
+    auto shader = Engine::Get()->GetGraphics()->LoadShaderByName(name);
+
+    if(!shader) {
+        asGetActiveContext()->SetException(
+            "no shader could be loaded with the specified name");
+        return;
+    }
+
+    new(memory) bs::HShader(std::move(shader));
+}
+
+void ShaderFromType(void* memory, bs::BuiltinShader type)
+{
+    auto resource = bs::gBuiltinResources().getBuiltinShader(type);
+
+    if(!resource) {
+        asGetActiveContext()->SetException("invalid inbuilt shader");
+        return;
+    }
+
+    new(memory) bs::HShader(std::move(resource));
+}
+
+void MaterialFromShaderFactory(void* memory, const bs::HShader& shader)
+{
+    auto material = bs::Material::create(shader);
+
+    if(!material) {
+        asGetActiveContext()->SetException("failed to create a material from the shader");
+        return;
+    }
+
+    new(memory) bs::HMaterial(std::move(material));
+}
+
+void TextureFromNameFactory(void* memory, const std::string& name)
+{
+    auto texture = Engine::Get()->GetGraphics()->LoadTextureByName(name);
+
+    if(!texture) {
+        asGetActiveContext()->SetException(
+            "no texture could be loaded with the specified name");
+        return;
+    }
+
+    new(memory) bs::HTexture(std::move(texture));
+}
+
 
 
 // ------------------------------------ //
@@ -844,10 +903,83 @@ bool BindScene(asIScriptEngine* engine)
     return true;
 }
 
+bool BindTextures(asIScriptEngine* engine)
+{
+    if(!RegisterBSFShandleType<bs::HTexture, bs::Texture>("HTexture", engine))
+        return false;
+
+    if(engine->RegisterObjectBehaviour("HTexture", asBEHAVE_CONSTRUCT,
+           "void f(const string &in name)", asFUNCTION(TextureFromNameFactory),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 bool BindMaterials(asIScriptEngine* engine)
 {
+    if(engine->RegisterEnum("BuiltinShader") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("bs::BuiltinShader") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(
+        "BuiltinShader", "Standard", bs::BuiltinShader::Standard);
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(
+        "BuiltinShader", "Transparent", bs::BuiltinShader::Transparent);
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(
+        "BuiltinShader", "ParticlesUnlit", bs::BuiltinShader::ParticlesUnlit);
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(
+        "BuiltinShader", "ParticlesLit", bs::BuiltinShader::ParticlesLit);
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(
+        "BuiltinShader", "ParticlesLitOpaque", bs::BuiltinShader::ParticlesLitOpaque);
+
+    ANGELSCRIPT_REGISTER_ENUM_VALUE_WITH_NAME(
+        "BuiltinShader", "Decal", bs::BuiltinShader::Decal);
+
+    if(engine->SetDefaultNamespace("bs") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(!RegisterBSFShandleType<bs::HShader, bs::Shader>("HShader", engine))
+        return false;
+
+    if(engine->RegisterObjectBehaviour("HShader", asBEHAVE_CONSTRUCT,
+           "void f(const string &in name)", asFUNCTION(ShaderFromNameFactory),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("HShader", asBEHAVE_CONSTRUCT,
+           "void f(BuiltinShader type)", asFUNCTION(ShaderFromType),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(!RegisterBSFShandleType<bs::HMaterial, bs::Material>("HMaterial", engine))
         return false;
+
+    if(engine->RegisterObjectBehaviour("HMaterial", asBEHAVE_CONSTRUCT,
+           "void f(const HShader &in shader)", asFUNCTION(MaterialFromShaderFactory),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("HMaterial",
+           "void setTexture(const string &in name, const HTexture &in texture)",
+           asFUNCTION(MaterialSetTextureProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
 
     return true;
 }
@@ -893,6 +1025,9 @@ bool Leviathan::BindBSF(asIScriptEngine* engine)
         return false;
 
     if(!BindRay(engine))
+        return false;
+
+    if(!BindTextures(engine))
         return false;
 
     if(!BindMaterials(engine))

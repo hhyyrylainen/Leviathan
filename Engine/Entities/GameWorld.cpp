@@ -391,6 +391,11 @@ DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(float x, float y) const
     // TODO: could jump to the actual latest position here if wanted
     return pimpl->WorldCamera->screenPointToRay(bs::Vector2I(x, y));
 }
+
+DLLEXPORT bs::HSceneObject GameWorld::GetCameraSceneObject()
+{
+    return pimpl->WorldCameraSO;
+}
 // ------------------------------------ //
 DLLEXPORT bool GameWorld::ShouldPlayerReceiveEntity(
     Position& atposition, Connection& connection)

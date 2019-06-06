@@ -774,6 +774,25 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
     });
 }
 // ------------------------------------ //
+// Resource loading helpers
+
+DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
+{
+    DEBUG_BREAK;
+
+    LOG_ERROR("Graphics: LoadShaderByName: could not find resource with name: " + name);
+    return nullptr;
+}
+
+DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
+{
+    DEBUG_BREAK;
+
+    LOG_ERROR("Graphics: LoadTextureByName: could not find resource with name: " + name);
+    return nullptr;
+}
+
+// ------------------------------------ //
 // X11 errors
 #ifdef __linux
 DLLEXPORT bool Graphics::HasX11ErrorOccured()

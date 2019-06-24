@@ -134,6 +134,12 @@ void SceneObjectSetParent(
     self->setParent(parent, keepWorldTransform);
 }
 
+void SceneObjectRemoveFromParent(bs::HSceneObject& self)
+{
+    CHECK_SELF;
+    self->setParent(bs::HSceneObject(), false);
+}
+
 void SceneObjectSetPosition(bs::HSceneObject& self, const bs::Vector3& position)
 {
     CHECK_SELF;

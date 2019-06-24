@@ -244,6 +244,7 @@ public:
     //! \note Changing this currently does nothing
     std::string MeshName;
 
+    //! \todo Check if this needs to be reapplied when the properties in it are changed
     bs::HMaterial Material;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;

@@ -6,13 +6,6 @@
 #include "Exceptions.h"
 #include "FileSystem.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
-#include "OgreBillboardChain.h"
-#include "OgreEntity.h"
-#include "OgreManualObject.h"
-#include "OgreMatrix4.h"
-#include "OgreRibbonTrail.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
 using namespace Leviathan;
 // ------------------------------------ //
 

@@ -551,6 +551,10 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
 
 void Graphics::ShutdownBSF()
 {
+    if(Pimpl) {
+        Pimpl->GUIRenderer = nullptr;
+    }
+
     // A bunch of code here is copy pasted from BsCoreApplication.cpp
     using namespace bs;
 
@@ -769,9 +773,14 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
     std::transform(overlays.begin(), overlays.end(), std::back_inserter(coreVersion),
         [](const bs::SPtr<bs::Texture>& item) { return item->getCore(); });
 
-    bs::gCoreThread().queueCommand([this, coreVersion = std::move(coreVersion)]() {
-        this->Pimpl->GUIRenderer->UpdateShownOverlays(coreVersion);
-    });
+    std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->GUIRenderer;
+
+    bs::gCoreThread().queueCommand(
+        [rendererExtension, coreVersion = std::move(coreVersion)]() {
+            const auto locked = rendererExtension.lock();
+            if(locked)
+                locked->UpdateShownOverlays(coreVersion);
+        });
 }
 // ------------------------------------ //
 // Resource loading helpers

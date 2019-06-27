@@ -215,6 +215,9 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
 
 void GameWorld::_DestroyRenderingResources()
 {
+    if(!pimpl)
+        return;
+
     RemoveSunlight();
 
     if(pimpl->WorldCameraSO) {

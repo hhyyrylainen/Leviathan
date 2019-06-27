@@ -867,6 +867,11 @@ bool BindScene(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("HSceneObject", "void removeFromParent()",
+           asFUNCTION(SceneObjectRemoveFromParent), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     if(engine->RegisterObjectMethod("HSceneObject", "void setPosition(const Vector3 &in pos)",
            asFUNCTION(SceneObjectSetPosition), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;

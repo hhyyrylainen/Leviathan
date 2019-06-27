@@ -65,13 +65,8 @@ DLLEXPORT bool VideoPlayer::Play(const std::string& videofile)
         return false;
     }
 
-    // If Ogre isn't initialized we are going to pretend that we worked for testing purposes
-    if(!Ogre::TextureManager::getSingletonPtr()) {
-
-        LOG_INFO("VideoPlayer: Ogre hasn't been initialized fully (no TextureManager), "
-                 "failing but pretending to have worked");
-        return true;
-    }
+    LOG_WRITE("TODO: redo VideoPlayer for bsf");
+    return true;
 
     if(!OnVideoDataLoaded()) {
 

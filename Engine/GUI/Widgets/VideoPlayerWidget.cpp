@@ -34,22 +34,10 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 
     // The Play method creates the texture we want to display
 
-    // Set the texture on our cloned material
-    auto* pass = Material->getTechnique(0)->getPass(0);
+    LOG_WRITE("TODO: redo material creation code in: VideoPlayerWidget::Play");
 
-    Ogre::TextureUnitState* textureState;
-
-    if(pass->getNumTextureUnitStates() < 1) {
-        textureState = Material->getTechnique(0)->getPass(0)->createTextureUnitState();
-    } else {
-        textureState = pass->getTextureUnitState(0);
-    }
-
-    textureState->setTexture(Player.GetTexture());
-    textureState->setHardwareGammaEnabled(true);
-    Material->compile();
-
-    DEBUG_BREAK;
+    // Set the texture on our material
+    Player.GetTexture();
     // QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
 
 
@@ -99,7 +87,7 @@ DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
 {
     ContainedIn = container;
 
-    DEBUG_BREAK;
+    LOG_WRITE("TODO: redo VideoPlayerWidget::OnAddedToContainer");
 
     // QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
     //     "videoplayer_widget_" + std::to_string(ID) + "_mesh", -1, -1, 2, 2);
@@ -130,7 +118,7 @@ DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
     if(!ContainedIn)
         return;
 
-    DEBUG_BREAK;
+    LOG_WRITE("TODO: redo VideoPlayerWidget::OnRemovedFromContainer");
 
     // Ogre::SceneManager* scene = ContainedIn->GetScene();
 

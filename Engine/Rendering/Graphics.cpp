@@ -795,10 +795,17 @@ DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
 
 DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
 {
-    DEBUG_BREAK;
+    auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE,
+        Leviathan::StringOperations::RemoveExtension(name, true),
+        Leviathan::StringOperations::GetExtension(name));
 
-    LOG_ERROR("Graphics: LoadTextureByName: could not find resource with name: " + name);
-    return nullptr;
+    if(file.empty()) {
+        LOG_ERROR("Graphics: LoadTextureByName: could not find resource with name: " + name);
+        return nullptr;
+    }
+
+    bs::HTexture texture = bs::gImporter().import<bs::Texture>(file.c_str());
+    return texture;
 }
 
 // ------------------------------------ //

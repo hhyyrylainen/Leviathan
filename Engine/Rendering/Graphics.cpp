@@ -127,62 +127,43 @@ public:
     }
 };
 
-class Graphics::Private {
+class LeviathanBSFApplication : public bs::CoreApplication {
 public:
-    void* loadPlugin(const bs::String& pluginName, bs::DynLib** library = nullptr,
-        void* passThrough = nullptr)
+    LeviathanBSFApplication(const bs::START_UP_DESC& desc) : bs::CoreApplication(desc) {}
+
+    bs::SPtr<bs::IShaderIncludeHandler> getShaderIncludeHandler() const override
     {
-        using namespace bs;
+        return bs::bs_shared_ptr_new<LeviathanBSFShaderIncludeHandler>();
+    }
 
-        DynLib* loadedLibrary = gDynLibManager().load(pluginName);
-        if(library != nullptr)
-            *library = loadedLibrary;
+    // Code from BsCoreApplication.cpp
+    // These are duplicated here due to a bunch of things being private
+    void WaitUntilLastFrame()
+    {
+        {
+            Lock lock(mFrameRenderingFinishedMutex);
 
-        void* retVal = nullptr;
-        if(loadedLibrary != nullptr) {
-            if(passThrough == nullptr) {
-                typedef void* (*LoadPluginFunc)();
-
-                LoadPluginFunc loadPluginFunc =
-                    (LoadPluginFunc)loadedLibrary->getSymbol("loadPlugin");
-
-                if(loadPluginFunc != nullptr)
-                    retVal = loadPluginFunc();
-            } else {
-                typedef void* (*LoadPluginFunc)(void*);
-
-                LoadPluginFunc loadPluginFunc =
-                    (LoadPluginFunc)loadedLibrary->getSymbol("loadPlugin");
-
-                if(loadPluginFunc != nullptr)
-                    retVal = loadPluginFunc(passThrough);
+            while(!mIsFrameRenderingFinished) {
+                bs::TaskScheduler::instance().addWorker();
+                mFrameRenderingFinishedCondition.wait(lock);
+                bs::TaskScheduler::instance().removeWorker();
             }
+        }
+    }
 
-            // UpdatePluginFunc loadPluginFunc =
-            //     (UpdatePluginFunc)loadedLibrary->getSymbol("updatePlugin");
+    void WaitBeforeStartNextFrame()
+    {
+        bs::Lock lock(mFrameRenderingFinishedMutex);
 
-            // if(loadPluginFunc != nullptr)
-            //     mPluginUpdateFunctions[loadedLibrary] = loadPluginFunc;
+        while(!mIsFrameRenderingFinished) {
+            bs::TaskScheduler::instance().addWorker();
+            mFrameRenderingFinishedCondition.wait(lock);
+            bs::TaskScheduler::instance().removeWorker();
         }
 
-        return retVal;
+        mIsFrameRenderingFinished = false;
     }
 
-    void unloadPlugin(bs::DynLib* library)
-    {
-        typedef void (*UnloadPluginFunc)();
-
-        UnloadPluginFunc unloadPluginFunc =
-            (UnloadPluginFunc)library->getSymbol("unloadPlugin");
-
-        if(unloadPluginFunc != nullptr)
-            unloadPluginFunc();
-
-        // mPluginUpdateFunctions.erase(library);
-        bs::gDynLibManager().unload(library);
-    }
-
-    /**	Called when the frame finishes rendering. */
     void frameRenderingFinishedCallback()
     {
         bs::Lock lock(mFrameRenderingFinishedMutex);
@@ -191,31 +172,41 @@ public:
         mFrameRenderingFinishedCondition.notify_one();
     }
 
-    /**	Called by the core thread to begin profiling. */
+    // These are private forcing to duplicate these here
     void beginCoreProfiling()
     {
+#if !BS_FORCE_SINGLETHREADED_RENDERING
         bs::gProfilerCPU().beginThread("Core");
+#endif
     }
 
-    /**	Called by the core thread to end profiling. */
     void endCoreProfiling()
     {
         bs::ProfilerGPU::instance()._update();
 
+#if !BS_FORCE_SINGLETHREADED_RENDERING
         bs::gProfilerCPU().endThread();
         bs::gProfiler()._updateCore();
+#endif
+    }
+
+    void startUpRenderer() override
+    {
+        // Do nothing, we activate the renderer at a later stage
     }
 
 
-public:
-    bs::START_UP_DESC BSFSettings;
-    bs::DynLib* RendererPlugin = nullptr;
-
-    bool mIsFrameRenderingFinished = true;
-    bs::Mutex mFrameRenderingFinishedMutex;
-    bs::Signal mFrameRenderingFinishedCondition;
 
     bs::SPtr<GUIOverlayRenderer> GUIRenderer;
+};
+
+
+struct Graphics::Private {
+
+    Private(const bs::START_UP_DESC& desc) : Description(desc) {}
+
+    bs::START_UP_DESC Description;
+    LeviathanBSFApplication* OurApp = nullptr;
 };
 
 #ifdef __linux
@@ -246,9 +237,7 @@ Graphics::~Graphics()
 // ------------------------------------------- //
 bool Graphics::Init(AppDef* appdef)
 {
-    Pimpl = std::make_unique<Private>();
-
-    // Startup SDL //
+    // StartUp SDL //
     if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) != 0) {
 
         LOG_ERROR("Graphics: Init: SDL init failed, error: " + std::string(SDL_GetError()));
@@ -340,7 +329,7 @@ DLLEXPORT void Graphics::Release()
 bool Graphics::InitializeBSF(AppDef* appdef)
 {
     // Create render API settings
-    auto& desc = Pimpl->BSFSettings;
+    bs::START_UP_DESC desc;
     desc.input = "bsfNullInput";
     desc.audio = "bsfNullAudio";
     desc.physics = "bsfNullPhysics";
@@ -386,39 +375,7 @@ bool Graphics::InitializeBSF(AppDef* appdef)
         return false;
     }
 
-    // A bunch of code here is copy pasted from BsCoreApplication.cpp
-    using namespace bs;
-
-    // Startup BSF
-    UINT32 numWorkerThreads =
-        BS_THREAD_HARDWARE_CONCURRENCY - 1; // Number of cores while excluding current thread.
-
-    Platform::_startUp();
-    MemStack::beginThread();
-
-    ShaderManager::startUp(bs_shared_ptr_new<LeviathanBSFShaderIncludeHandler>());
-    MessageHandler::startUp();
-    ProfilerCPU::startUp();
-    ProfilingManager::startUp();
-    ThreadPool::startUp<TThreadPool<ThreadDefaultPolicy>>((numWorkerThreads));
-    TaskScheduler::startUp();
-    TaskScheduler::instance().removeWorker();
-    RenderStats::startUp();
-    CoreThread::startUp();
-    StringTableManager::startUp();
-    DeferredCallManager::startUp();
-    bs::Time::startUp();
-    DynLibManager::startUp();
-    CoreObjectManager::startUp();
-    GameObjectManager::startUp();
-    Resources::startUp();
-    ResourceListenerManager::startUp();
-    GpuProgramManager::startUp();
-    RenderStateManager::startUp();
-    ct::GpuProgramManager::startUp();
-    RenderAPIManager::startUp();
-
-    // At this point startup needs to wait until we have our first window
+    Pimpl = std::make_unique<Private>(desc);
 
     return true;
 }
@@ -434,11 +391,10 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
     } else {
         // Finish initializing graphics
         FirstWindowCreated = true;
-        LOG_INFO(
-            "Graphics: finalizing bs::framework initialization after creating first window");
+        LOG_INFO("Graphics: doing bs::framework initialization after creating first window");
 
         // Setup first window properties
-        auto& windowDesc = Pimpl->BSFSettings.primaryWindowDesc;
+        auto& windowDesc = Pimpl->Description.primaryWindowDesc;
         windowDesc.depthBuffer = true;
         // Not sure what all settings need to be copied
         windowDesc.fullscreen = /* window.IsFullScreen() */ false;
@@ -462,41 +418,20 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         windowDesc.platformSpecific["externalDisplay"] =
             std::to_string(window.GetWindowXDisplay());
 
-        // A bunch of code here is copy pasted from BsCoreApplication.cpp
-        using namespace bs;
-        bs::SPtr<bs::RenderWindow> bsWindow = RenderAPIManager::instance().initialize(
-            Pimpl->BSFSettings.renderAPI, Pimpl->BSFSettings.primaryWindowDesc);
+
+        bs::CoreApplication::startUp<LeviathanBSFApplication>(Pimpl->Description);
+
+        Pimpl->OurApp =
+            static_cast<LeviathanBSFApplication*>(bs::CoreApplication::instancePtr());
+
+        bs::SPtr<bs::RenderWindow> bsWindow =
+            bs::CoreApplication::instance().getPrimaryWindow();
 
         LEVIATHAN_ASSERT(bsWindow, "window creation failed");
 
-        ct::ParamBlockManager::startUp();
-        // Input::startUp();
-        RendererManager::startUp();
-
-        Pimpl->loadPlugin(Pimpl->BSFSettings.renderer, &Pimpl->RendererPlugin);
-
-        // Must be initialized before the scene manager, as game scene creation triggers
-        // physics scene creation
-        PhysicsManager::startUp(Pimpl->BSFSettings.physics, Pimpl->BSFSettings.physicsCooking);
-        SceneManager::startUp();
-        RendererManager::instance().setActive(Pimpl->BSFSettings.renderer);
-        // RendererManager::instance().initialize();
-
-        ProfilerGPU::startUp();
-        MeshManager::startUp();
-        Importer::startUp();
-        // AudioManager::startUp(mStartUpDesc.audio);
-        AnimationManager::startUp();
-        ParticleManager::startUp();
-
-        for(auto& importerName : Pimpl->BSFSettings.importers)
-            Pimpl->loadPlugin(importerName);
-
-        // Built-in importers
-        FGAImporter* fgaImporter = bs_new<FGAImporter>();
-        Importer::instance()._registerAssetImporter(fgaImporter);
-
         // Code from BsApplication.cpp
+        using namespace bs;
+
         PlainTextImporter* importer = bs_new<PlainTextImporter>();
         Importer::instance()._registerAssetImporter(importer);
 
@@ -521,29 +456,15 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         // Notify engine to register threads to work with Ogre //
         // Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 
-        // FileSystem::RegisterOGREResourceGroups();
-
         auto shader =
             bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
 
         auto material = bs::Material::create(shader);
 
-        Pimpl->GUIRenderer =
+        Pimpl->OurApp->GUIRenderer =
             RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
                 GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2)->getCore(),
                 material->getCore()});
-
-        //
-        // Sample content
-        //
-        using namespace bs;
-
-
-        HSceneObject sceneCameraSO = SceneObject::create("SceneCamera");
-        HCamera sceneCamera = sceneCameraSO->addComponent<CCamera>();
-        sceneCamera->setMain(true);
-        sceneCameraSO->setPosition(Vector3(40.0f, 30.0f, 230.0f));
-        sceneCameraSO->lookAt(Vector3(0, 0, 0));
 
         return bsWindow;
     }
@@ -552,7 +473,8 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
 void Graphics::ShutdownBSF()
 {
     if(Pimpl) {
-        Pimpl->GUIRenderer = nullptr;
+        Pimpl->OurApp->GUIRenderer = nullptr;
+        Pimpl->OurApp->WaitUntilLastFrame();
     }
 
     // A bunch of code here is copy pasted from BsCoreApplication.cpp
@@ -585,71 +507,8 @@ void Graphics::ShutdownBSF()
     RendererMaterialManager::shutDown();
     // VirtualInput::shutDown();
 
-    // Wait until last core frame is finished before exiting
-    {
-        Lock lock(Pimpl->mFrameRenderingFinishedMutex);
-
-        while(!Pimpl->mIsFrameRenderingFinished) {
-            TaskScheduler::instance().addWorker();
-            Pimpl->mFrameRenderingFinishedCondition.wait(lock);
-            TaskScheduler::instance().removeWorker();
-        }
-    }
-
-    Importer::shutDown();
-    MeshManager::shutDown();
-    ProfilerGPU::shutDown();
-
-    SceneManager::shutDown();
-
-    // Input::shutDown();
-
-    ct::ParamBlockManager::shutDown();
-    StringTableManager::shutDown();
-    Resources::shutDown();
-    GameObjectManager::shutDown();
-
-    ResourceListenerManager::shutDown();
-    RenderStateManager::shutDown();
-    ParticleManager::shutDown();
-    AnimationManager::shutDown();
-
-    // This must be done after all resources are released since it will unload the physics
-    // plugin, and some resources might be instances of types from that plugin.
-    PhysicsManager::shutDown();
-
-    RendererManager::shutDown();
-
-    // All CoreObject related modules should be shut down now. They have likely queued
-    // CoreObjects for destruction, so we need to wait for those objects to get destroyed
-    // before continuing.
-    CoreObjectManager::instance().syncToCore();
-    gCoreThread().update();
-    gCoreThread().submitAll(true);
-
-    Pimpl->unloadPlugin(Pimpl->RendererPlugin);
-
-    RenderAPIManager::shutDown();
-    ct::GpuProgramManager::shutDown();
-    GpuProgramManager::shutDown();
-
-    CoreObjectManager::shutDown(); // Must shut down before DynLibManager to ensure all objects
-                                   // are destroyed before unloading their libraries
-    DynLibManager::shutDown();
-    bs::Time::shutDown();
-    DeferredCallManager::shutDown();
-
-    CoreThread::shutDown();
-    RenderStats::shutDown();
-    TaskScheduler::shutDown();
-    ThreadPool::shutDown();
-    ProfilingManager::shutDown();
-    ProfilerCPU::shutDown();
-    MessageHandler::shutDown();
-    ShaderManager::shutDown();
-
-    MemStack::endThread();
-    Platform::_shutDown();
+    bs::CoreApplication::shutDown();
+    Pimpl->OurApp = nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::Frame()
@@ -725,20 +584,11 @@ DLLEXPORT bool Graphics::Frame()
     // longer than sim thread, in which case sim thread needs to wait. Optimal solution would
     // be to get an average difference between sim/core thread and start the sim thread a bit
     // later so they finish at nearly the same time.
-    {
-        Lock lock(Pimpl->mFrameRenderingFinishedMutex);
-
-        while(!Pimpl->mIsFrameRenderingFinished) {
-            TaskScheduler::instance().addWorker();
-            Pimpl->mFrameRenderingFinishedCondition.wait(lock);
-            TaskScheduler::instance().removeWorker();
-        }
-
-        Pimpl->mIsFrameRenderingFinished = false;
-    }
+    Pimpl->OurApp->WaitBeforeStartNextFrame();
 
     gCoreThread().queueCommand(
-        std::bind(&Private::beginCoreProfiling, Pimpl.get()), CTQF_InternalQueue);
+        std::bind(&LeviathanBSFApplication::beginCoreProfiling, Pimpl->OurApp),
+        CTQF_InternalQueue);
     gCoreThread().queueCommand(&Platform::_coreUpdate, CTQF_InternalQueue);
     gCoreThread().queueCommand(
         std::bind(&ct::RenderWindowManager::_update, ct::RenderWindowManager::instancePtr()),
@@ -748,13 +598,15 @@ DLLEXPORT bool Graphics::Frame()
     gCoreThread().submitAll();
 
     gCoreThread().queueCommand(
-        std::bind(&Private::frameRenderingFinishedCallback, Pimpl.get()), CTQF_InternalQueue);
+        std::bind(&LeviathanBSFApplication::frameRenderingFinishedCallback, Pimpl->OurApp),
+        CTQF_InternalQueue);
 
     gCoreThread().queueCommand(
         std::bind(&ct::QueryManager::_update, ct::QueryManager::instancePtr()),
         CTQF_InternalQueue);
     gCoreThread().queueCommand(
-        std::bind(&Private::endCoreProfiling, Pimpl.get()), CTQF_InternalQueue);
+        std::bind(&LeviathanBSFApplication::endCoreProfiling, Pimpl->OurApp),
+        CTQF_InternalQueue);
 
     gProfilerCPU().endThread();
     gProfiler()._update();
@@ -773,7 +625,7 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
     std::transform(overlays.begin(), overlays.end(), std::back_inserter(coreVersion),
         [](const bs::SPtr<bs::Texture>& item) { return item->getCore(); });
 
-    std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->GUIRenderer;
+    std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->OurApp->GUIRenderer;
 
     bs::gCoreThread().queueCommand(
         [rendererExtension, coreVersion = std::move(coreVersion)]() {

@@ -12,7 +12,7 @@ namespace Leviathan {
 class Graphics {
     friend Window;
 
-    class Private;
+    struct Private;
 
 public:
     DLLEXPORT Graphics();

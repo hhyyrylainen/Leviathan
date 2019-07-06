@@ -241,7 +241,8 @@ DLLEXPORT void GameWorld::SetSunlight()
     // Default properties
     pimpl->Sunlight->setType(bs::LightType::Directional);
     pimpl->Sunlight->setColor(bs::Color(1, 1, 1));
-    pimpl->Sunlight->setIntensity(1.6e9);
+    // pimpl->Sunlight->setIntensity(1.6e9);
+    pimpl->Sunlight->setIntensity(10.f);
     pimpl->Sunlight->setSourceRadius(0.5f);
     pimpl->Sunlight->setCastsShadow(true);
 
@@ -1673,6 +1674,8 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Graphics* graphic
                               "one it was linked to");
     }
 
+    pimpl->WorldCamera->getViewport()->setTarget(nullptr);
+
     // ogre->getCompositorManager2()->removeWorkspace(WorldWorkspace);
     // WorldWorkspace = nullptr;
     LinkedToWindow = nullptr;
@@ -1705,6 +1708,7 @@ DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Graphics* graphics)
     // // clearing workspace
     // WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
     //     LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
+    pimpl->WorldCamera->getViewport()->setTarget(window->GetBSFWindow());
 
     if(!TickWhileInBackground) {
         _DoResumeSystems();

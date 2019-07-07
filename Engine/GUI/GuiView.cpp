@@ -466,7 +466,9 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         uint32_t* destptr = reinterpret_cast<uint32_t*>(DataBuffer->getData());
         const uint32_t* source = static_cast<const uint32_t*>(buffer);
 
-        const size_t rowElements = DataBuffer->getRowPitch();
+        // The row pitch is now in bytes. We need to divide here to get the element count (this
+        // only works with pixel formats with no padding)
+        const size_t rowElements = DataBuffer->getRowPitch() / CEF_BYTES_PER_PIXEL;
 
         for(const auto rect : dirtyRects) {
 

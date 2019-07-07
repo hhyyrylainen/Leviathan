@@ -4,7 +4,6 @@ require 'os'
 require_relative 'RubySetupSystem/Libraries/SetupBullet.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
 require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
-require_relative 'RubySetupSystem/Libraries/SetupOgre.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
@@ -103,15 +102,8 @@ $ffmpeg = FFMPEG.new(
   ].flatten
 )
 
-$ogre = Ogre.new(
-  version: "a6204308c4fa",
-  installPath: THIRD_PARTY_INSTALL,
-  buildTools: true,
-  noInstallSudo: true
-)
-
 $bsf = BSFramework.new(
-  version: "master",
+  version: "9bbac75ca4cc445cd26b435f74465ad91d3e528e",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   renderAPI: "Vulkan",
@@ -180,13 +172,13 @@ if true
   $leviathanLibList += [$breakpad]
 end
 
-# Ogre windows deps and other windows only deps
-# sdl is also used by Leviathan directly
 if OS.windows?
-  $leviathanLibList += [$zlib, $freeimage, $sdl, $freetype, $openalsoft]
+  $leviathanLibList += [$sdl, $openalsoft]
 end
 
-$leviathanLibList += [$caudio, $ogre, $bsf]
+# ogre deps $zlib, $freeimage, $freetype,
+
+$leviathanLibList += [$caudio, $bsf]
 
 
 

@@ -21,7 +21,7 @@ namespace Leviathan { namespace GUI {
 class LeviathanJavaScriptAsync;
 
 //! The default CEF scroll speed is ridiculously slow so we multiply it with this
-constexpr auto CEF_MOUSE_SCROLL_MULTIPLIER = 25.f;
+constexpr auto CEF_MOUSE_SCROLL_MULTIPLIER = 35.f;
 
 //! Controls what functions can be called from the page
 enum VIEW_SECURITYLEVEL {

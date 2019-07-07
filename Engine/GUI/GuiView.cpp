@@ -285,8 +285,9 @@ DLLEXPORT void View::OnMouseWheel(const SDL_Event& event)
         x *= -1;
     }
 
-    // LOG_INFO("Mouse scroll to CEF: " + std::to_string(y) + " " + std::to_string(x));
     CefMouseEvent cevent;
+    // Need to pass the current mouse position for the scroll to go to the right place
+    Wind->GetRelativeMouse(cevent.x, cevent.y);
     GetBrowserHost()->SendMouseWheelEvent(cevent, x, y);
 }
 

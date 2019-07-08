@@ -831,7 +831,6 @@ DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y) const
 
 DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y) const
 {
-
     int xInt, yInt;
     GetRelativeMouse(xInt, yInt);
 

@@ -30,6 +30,7 @@ using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
 constexpr auto CEF_BYTES_PER_PIXEL = 4;
+// When documentation of Ogre and CEF talk about RGBA it seems they actually talk about BGRA
 constexpr auto BS_PIXEL_FORMAT = bs::PF_BGRA8;
 
 DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,

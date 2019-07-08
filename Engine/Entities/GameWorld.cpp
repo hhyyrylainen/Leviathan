@@ -382,7 +382,7 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object)
     }
 }
 
-DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(float x, float y) const
+DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(int x, int y) const
 {
     // Fail if there is no active camera //
     if(CameraEntity == NULL_OBJECT)

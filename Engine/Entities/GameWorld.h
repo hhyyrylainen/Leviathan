@@ -305,11 +305,12 @@ public:
     DLLEXPORT void SetCamera(ObjectID object);
 
     //! \brief Casts a ray from the active camera
-    //! \param x Normalized x coordinate (range [0, 1])
-    //! \param y Normalized y coordinate (range [0, 1])
+    //! \param x Pixel x coordinate (range [0, window width])
+    //! \param y Pixel y coordinate (range [0, window height])
     //! \exception InvalidState if this world has no active camera
     //! \see SetCamera
-    DLLEXPORT bs::Ray CastRayFromCamera(float x, float y) const;
+    //! \version This now takes in pixel values
+    DLLEXPORT bs::Ray CastRayFromCamera(int x, int y) const;
 
     inline bs::Scene* GetScene()
     {

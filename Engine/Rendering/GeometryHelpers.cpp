@@ -83,9 +83,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
     bs::MESH_DESC meshDesc;
     meshDesc.numVertices = 4;
     meshDesc.numIndices = 6;
-    // Workaround for bug in BSF
-    // meshDesc.indexType = bs::IT_16BIT;
-    meshDesc.indexType = bs::IT_32BIT;
+    meshDesc.indexType = bs::IT_16BIT;
     meshDesc.usage = bs::MU_STATIC;
     meshDesc.subMeshes.push_back(bs::SubMesh(0, 6, bs::DOT_TRIANGLE_LIST));
 
@@ -95,8 +93,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
     const auto stride = 5;
     meshDesc.vertexDesc = vertexDesc;
 
-    bs::SPtr<bs::MeshData> meshData =
-        bs::MeshData::create(4, 6, vertexDesc, /*bs::IT_16BIT*/ bs::IT_32BIT);
+    bs::SPtr<bs::MeshData> meshData = bs::MeshData::create(4, 6, vertexDesc, bs::IT_16BIT);
 
     // Generate vertex data
     float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
@@ -143,10 +140,9 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
     }
 
     // 1 to 1 index buffer mapping
-    constexpr /*uint16_t*/ uint32_t indicesData[] = {3, 0, 1, 1, 2, 3};
+    constexpr uint16_t indicesData[] = {3, 0, 1, 1, 2, 3};
 
-    std::memcpy(/*meshData->getIndices16()*/ meshData->getIndices32(), indicesData,
-        sizeof(indicesData));
+    std::memcpy(meshData->getIndices16(), indicesData, sizeof(indicesData));
 
     return bs::Mesh::create(meshData, meshDesc);
 

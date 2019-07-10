@@ -639,10 +639,19 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
 
 DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
 {
-    DEBUG_BREAK;
+    // TODO: .asset detection
 
-    LOG_ERROR("Graphics: LoadShaderByName: could not find resource with name: " + name);
-    return nullptr;
+    auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_OTHER,
+        Leviathan::StringOperations::RemoveExtension(name, true),
+        Leviathan::StringOperations::GetExtension(name));
+
+    if(file.empty()) {
+        LOG_ERROR("Graphics: LoadShaderByName: could not find resource with name: " + name);
+        return nullptr;
+    }
+
+    bs::HShader shader = bs::gImporter().import<bs::Shader>(file.c_str());
+    return shader;
 }
 
 DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)

@@ -178,7 +178,7 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     pimpl->WorldCamera = pimpl->WorldCameraSO->addComponent<bs::CCamera>();
     pimpl->WorldCamera->setHorzFOV(bs::Degree(90));
 
-    pimpl->WorldCamera->setLayers(1 << BSFLayerHack);
+    pimpl->WorldCamera->setLayers(1 << *GetScene());
 
     // TODO: is this needed?
     // pimpl->WorldCamera->setAspectRatio(float ratio) setAutoAspectRatio?
@@ -206,6 +206,7 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     // settings->shadowSettings;
     // settings->tonemapping;
     // settings->whiteBalance;
+    settings->enableIndirectLighting = true;
 
     pimpl->WorldCamera->setRenderSettings(settings);
 
@@ -241,12 +242,14 @@ DLLEXPORT void GameWorld::SetSunlight()
     // Default properties
     pimpl->Sunlight->setType(bs::LightType::Directional);
     pimpl->Sunlight->setColor(bs::Color(1, 1, 1));
-    // pimpl->Sunlight->setIntensity(1.6e9);
-    pimpl->Sunlight->setIntensity(10.f);
+    pimpl->Sunlight->setIntensity(0.0001f);
     pimpl->Sunlight->setSourceRadius(0.5f);
     pimpl->Sunlight->setCastsShadow(true);
 
-    pimpl->SunlightSO->setPosition(bs::Vector3(5, 15, 5));
+    // pimpl->SunlightSO->setPosition(bs::Vector3(1, 20, 1));
+    // pimpl->SunlightSO->setPosition(bs::Vector3(20, 15, 20));
+    pimpl->SunlightSO->setPosition(bs::Vector3(-0.55f, 0.3f, -0.75f));
+
     pimpl->SunlightSO->lookAt(bs::Vector3(0, 0, 0));
     // pimpl->SunlightSO->setWorldRotation(const Quaternion &rotation)
 

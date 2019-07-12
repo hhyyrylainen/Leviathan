@@ -642,30 +642,36 @@ DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
     // TODO: .asset detection
 
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_OTHER,
-        Leviathan::StringOperations::RemoveExtension(name, true),
-        Leviathan::StringOperations::GetExtension(name));
+        // Leviathan::StringOperations::RemoveExtension(name, true),
+        Leviathan::StringOperations::RemovePath(name),
+        // Leviathan::StringOperations::GetExtension(name)
+        "asset");
 
     if(file.empty()) {
         LOG_ERROR("Graphics: LoadShaderByName: could not find resource with name: " + name);
         return nullptr;
     }
 
-    bs::HShader shader = bs::gImporter().import<bs::Shader>(file.c_str());
+    // bs::HShader shader = bs::gImporter().import<bs::Shader>(file.c_str());
+    bs::HShader shader = bs::gResources().load<bs::Shader>(file.c_str());
     return shader;
 }
 
 DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
 {
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE,
-        Leviathan::StringOperations::RemoveExtension(name, true),
-        Leviathan::StringOperations::GetExtension(name));
+        // Leviathan::StringOperations::RemoveExtension(name, true),
+        Leviathan::StringOperations::RemovePath(name),
+        // Leviathan::StringOperations::GetExtension(name)
+        "asset");
 
     if(file.empty()) {
         LOG_ERROR("Graphics: LoadTextureByName: could not find resource with name: " + name);
         return nullptr;
     }
 
-    bs::HTexture texture = bs::gImporter().import<bs::Texture>(file.c_str());
+    // bs::HTexture texture = bs::gImporter().import<bs::Texture>(file.c_str());
+    bs::HTexture texture = bs::gResources().load<bs::Texture>(file.c_str());
     return texture;
 }
 

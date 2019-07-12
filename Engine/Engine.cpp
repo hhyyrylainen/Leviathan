@@ -1362,7 +1362,11 @@ DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
         ("nogui", po::bool_switch(&nogui), "Disable graphics")
         ("nocin", po::bool_switch(&nocin), "Disable stdin reading")
         ("noleap", po::bool_switch(&noleap), "Disable Leap Motion")
-        ("noleap", po::bool_switch(&crash), "Crash for testing purposes");
+        ("noleap", po::bool_switch(&crash), "Crash for testing purposes")
+        // We see CEF arguments here, we need to allow them
+        ("no-sandbox", "CEF option")
+        ("single-process", "CEF option")
+        ;
     // clang-format on
 
     // TODO: allow the game to add extra options here

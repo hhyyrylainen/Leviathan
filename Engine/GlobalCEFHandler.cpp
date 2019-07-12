@@ -47,7 +47,21 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 #ifdef _WIN32
     CefMainArgs main_args(hInstance);
 #else
-    CefMainArgs main_args(argcount, args);
+    // Make a copy of the args to not have CEF mess with them
+    std::vector<char*> cefArgs;
+    std::vector<std::string> cefArgData;
+
+    cefArgs.resize(argcount);
+    cefArgData.reserve(argcount);
+
+    for(int i = 0; i < argcount; ++i) {
+
+        cefArgData.push_back(args[i]);
+        cefArgs[i] = cefArgData.back().data();
+    }
+
+    CefMainArgs main_args(cefArgs.size(), cefArgs.data());
+    // CefMainArgs main_args(argcount, args);
 #endif // _WIN32
 
     // Callback object //

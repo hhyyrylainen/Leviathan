@@ -158,11 +158,11 @@ ruby 2.4.1p111
   Additional tip: when running `b2` make sure you specify the toolset,
   bitness, type and the number of cores to use for compiling like
   this: `.\b2 --toolset=msvc link=shared,static address-model=64
-  --with-system --with-filesystem -j numberofcores`. Note: replace
-  numberofcores with how many cores you have for optimal compilation
-  time. Also if you plan on using boost with other projects as well
-  remove the `--with-` options to compile all of the components, which
-  takes a long time.
+  --with-system --with-filesystem --with-program_options -j
+  numberofcores`. Note: replace numberofcores with how many cores you
+  have for optimal compilation time. Also if you plan on using boost
+  with other projects as well remove the `--with-` options to compile
+  all of the components, which takes a long time.
 
   If msvc isn't detected correctly, open "Developer Command Prompt for
   Visual Studio 2017" and run again in that. Just make sure to use the

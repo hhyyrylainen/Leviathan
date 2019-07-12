@@ -9,6 +9,7 @@
 #include "Common/StringOperations.h"
 #include "Common/Types.h"
 #include "Editor/Editor.h"
+#include "Editor/Importer.h"
 #include "Entities/GameWorld.h"
 #include "Entities/GameWorldFactory.h"
 #include "Events/EventHandler.h"
@@ -44,6 +45,8 @@
 #ifdef LEVIATHAN_USING_SDL2
 #include <SDL.h>
 #endif
+
+#include "boost/program_options.hpp"
 
 #include <chrono>
 #include <future>
@@ -372,7 +375,7 @@ DLLEXPORT bool Engine::Init(
             return false;
         }
 
-        // create window //
+        // Create window //
         GraphicalEntity1 = new Window(Graph, definition);
     }
 
@@ -405,10 +408,17 @@ DLLEXPORT bool Engine::Init(
     }
 #endif
 
+    const auto timeNow = Time::GetTimeMs64();
+
+    LOG_INFO("Engine init took " + Convert::ToString(timeNow - InitStartTime) + " ms");
+
     PostLoad();
 
-    Logger::Get()->Info(
-        "Engine init took " + Convert::ToString(Time::GetTimeMs64() - InitStartTime) + " ms");
+    const auto timeAfterPostLoad = Time::GetTimeMs64();
+
+    if(timeAfterPostLoad - timeNow > 5)
+        LOG_INFO("PostLoad took " + Convert::ToString(timeAfterPostLoad - timeNow) + " ms");
+
 
     return true;
 }
@@ -441,6 +451,25 @@ void Engine::PostLoad()
 
     // Run startup command line //
     _RunQueuedConsoleCommands();
+
+    // Run queued imports
+    if(!QueuedImports.empty()) {
+        for(const auto& importer : QueuedImports) {
+            try {
+                if(!importer->Run()) {
+
+                    LOG_ERROR("An import operation failed");
+                }
+            } catch(const Exception& e) {
+                LOG_ERROR("An exception happened in importer:");
+                e.PrintToLog();
+            }
+        }
+
+        QueuedImports.clear();
+        LOG_INFO("Marking as closing after processing imports");
+        MarkQuit();
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::PreRelease()
@@ -605,8 +634,6 @@ void Engine::Release(bool forced)
 // ------------------------------------ //
 DLLEXPORT void Engine::MessagePump()
 {
-    Ogre::WindowEventUtilities::messagePump();
-
     // CEF events (Also on windows as multi_threaded_message_loop makes rendering harder)
     GlobalCEFHandler::DoCEFMessageLoopWork();
 
@@ -914,7 +941,6 @@ void Engine::Tick()
 
 DLLEXPORT void Engine::PreFirstTick()
 {
-
     GUARD_LOCK();
 
     if(_ThreadingManager)
@@ -1137,14 +1163,12 @@ DLLEXPORT void Engine::MarkQuit()
 // ------------------------------------ //
 DLLEXPORT void Engine::Invoke(const std::function<void()>& function)
 {
-
     RecursiveLock lock(InvokeLock);
     InvokeQueue.push_back(function);
 }
 
 DLLEXPORT void Engine::ProcessInvokes()
 {
-
     RecursiveLock lock(InvokeLock);
 
     while(!InvokeQueue.empty()) {
@@ -1308,147 +1332,147 @@ void Engine::_AdjustTickNumber(int tickamount, bool absolute)
 // ------------------------------------ //
 int TestCrash(int writenum)
 {
-
-    int* target = nullptr;
+    volatile int* target = nullptr;
     (*target) = writenum;
 
     Logger::Get()->Write("It didn't crash...");
     return 42;
 }
 
-bool Engine::ParseSingleCommand(
-    StringIterator& itr, int& argindex, const int argcount, char* args[])
+DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
 {
+    namespace po = boost::program_options;
 
-    // Split all flags and check for some flags that might be set //
-    unique_ptr<string> splitval;
+    std::vector<std::vector<std::string>> import;
+    std::vector<std::string> cmds;
+    // TODO: these could probably directly be read into the variables in this class
+    bool nogui = false;
+    bool noleap = false;
+    bool nocin = false;
 
-    while((splitval = itr.GetNextCharacterSequence<string>(
-               UNNORMALCHARACTER_TYPE_WHITESPACE |
-               UNNORMALCHARACTER_TYPE_CONTROLCHARACTERS)) != NULL) {
-        if(*splitval == "--nogui") {
-            NoGui = true;
-            Logger::Get()->Info("Engine starting in non-GUI mode");
-            continue;
+    bool crash = false;
+
+    po::options_description desc("Engine Options");
+    // clang-format off
+    desc.add_options()
+        ("import", po::value<std::vector<std::string>>()->multitoken(),
+            "Import assets from source to destination")
+        ("cmd", po::value<std::vector<std::string>>(&cmds)->multitoken(),
+            "Run console commands after startup")
+        ("nogui", po::bool_switch(&nogui), "Disable graphics")
+        ("nocin", po::bool_switch(&nocin), "Disable stdin reading")
+        ("noleap", po::bool_switch(&noleap), "Disable Leap Motion")
+        ("noleap", po::bool_switch(&crash), "Crash for testing purposes");
+    // clang-format on
+
+    // TODO: allow the game to add extra options here
+
+    po::positional_options_description positional;
+    positional.add("cmd", -1);
+
+    // This was before added to PassedCommands.push_back(std::move(splitval));
+    // but it would be better to make those actual flags
+
+    po::variables_map vm;
+
+    try {
+        // The parsing is done in two steps here to add custom handling for the import option
+        po::parsed_options parsed_options =
+            po::command_line_parser(argcount, args).options(desc).positional(positional).run();
+
+
+        // Read import option lists
+        for(const po::option& option : parsed_options.options) {
+            if(option.string_key == "import")
+                import.push_back(option.value);
         }
-        if(*splitval == "--noleap") {
-            NoLeap = true;
+
+        // Finish parsing
+        po::store(parsed_options, vm);
+        po::notify(vm);
+
+    } catch(const po::error& e) {
+        LOG_INFO("Engine: Command line: ");
+        for(int i = 0; i < argcount; ++i) {
+
+            LOG_WRITE("\t> " + (args[i] ? std::string(args[i]) : std::string()));
+        }
+
+        LOG_ERROR("Engine: parsing command line failed: " + std::string(e.what()));
+
+        std::stringstream sstream;
+        desc.print(sstream);
+
+        LOG_WRITE(sstream.str());
+
+        return false;
+    }
+
+    if(nogui) {
+        NoGui = true;
+        LOG_INFO("Engine starting in non-GUI mode");
+    }
+
+    if(nocin) {
+        NoSTDInput = true;
+        LOG_INFO("Engine not listening for terminal commands");
+    }
+
+    if(noleap) {
+        NoLeap = true;
 
 #ifdef LEVIATHAN_USES_LEAP
-            Logger::Get()->Info("Engine starting with LeapMotion disabled");
+        LOG_INFO("Engine starting with LeapMotion disabled");
 #endif
-            continue;
-        }
-        if(*splitval == "--nocin") {
+    }
 
-            NoSTDInput = true;
-            Logger::Get()->Info("Engine not listening for terminal commands");
-            continue;
-        }
-        if(*splitval == "--nonothing") {
-            // Shouldn't try to open the console on windows //
-            DEBUG_BREAK;
-        }
-        if(*splitval == "--crash") {
+    if(crash) {
+        LOG_INFO("Engine testing crash handling");
+        // TODO: write a file that disables crash handling
+        // Make the log say something useful //
+        Logger::Get()->Save();
 
-            Logger::Get()->Info("Engine testing crash handling");
-            // TODO: write a file that disables crash handling
-            // Make the log say something useful //
-            Logger::Get()->Save();
+        // Test crashing //
+        TestCrash(12);
+    }
 
-            // Test crashing //
-            TestCrash(12);
+    // // Coalesce commands
+    // if(vm.count("console-commands")) {
+    // }
 
-            continue;
-        }
-        if(*splitval == "--cmd" || *splitval == "cmd") {
+    for(const std::string& command : cmds) {
+        if(StringOperations::IsCharacterQuote(command.at(0))) {
 
-            if(itr.GetCharacter() == '=')
-                itr.MoveToNext();
+            StringIterator itr(command);
 
-            auto cmd = itr.GetNextCharacterSequence<string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+            auto withoutquotes = itr.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
 
+            if(withoutquotes) {
 
-
-            if(!cmd || cmd->empty()) {
-
-                if(argindex + 1 < argcount) {
-
-                    // Next argument is the command //
-                    ++argindex;
-                    cmd = std::make_unique<std::string>(args[argindex]);
-
-                } else {
-
-                    LOG_ERROR("Engine: command line parsing failed, no command "
-                              "after '--cmd'");
-                    continue;
-                }
-            }
-
-            if(StringOperations::IsCharacterQuote(cmd->at(0))) {
-
-                StringIterator itr2(cmd.get());
-
-                auto withoutquotes = itr2.GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
-
-                if(withoutquotes) {
-
-                    QueuedConsoleCommands.push_back(std::move(withoutquotes));
-
-                } else {
-
-                    LOG_WARNING("Engine: command line '--cmd' command in quotes is empty");
-                }
+                QueuedConsoleCommands.push_back(std::move(withoutquotes));
 
             } else {
 
-                // cmd is the final command
-                QueuedConsoleCommands.push_back(std::move(cmd));
+                LOG_WARNING("Engine: command in quotes is empty");
             }
 
-            continue;
-        }
+        } else {
 
-        // Add (if not processed already) //
-        PassedCommands.push_back(std::move(splitval));
+            QueuedConsoleCommands.push_back(std::make_unique<std::string>(command));
+        }
     }
 
-    return true;
-}
+    for(const auto& group : import) {
 
-DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
-{
-    if(argcount < 1)
-        return true;
+        if(group.size() != 2) {
 
-    LOG_INFO("Engine: Command line: " + (args[0] ? std::string(args[0]) : std::string()));
-
-    for(int i = 1; i < argcount; ++i) {
-
-        LOG_WRITE("\t> " + (args[i] ? std::string(args[i]) : std::string()));
-    }
-
-    int argindex = 0;
-
-    while(argindex < argcount) {
-
-        if(!args[argindex]) {
-            ++argindex;
-            continue;
+            LOG_ERROR("Import option needs two parameters, source and destination, parameter "
+                      "count: " +
+                      std::to_string(group.size()));
+            return false;
         }
 
-        StringIterator itr(args[argindex]);
-
-        while(!itr.IsOutOfBounds()) {
-
-            if(!ParseSingleCommand(itr, argindex, argcount, args)) {
-
-                return false;
-            }
-        }
-
-        ++argindex;
+        QueuedImports.push_back(std::make_unique<Editor::Importer>(group[0], group[1]));
     }
 
     return true;
@@ -1456,9 +1480,9 @@ DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
 
 DLLEXPORT void Engine::ExecuteCommandLine()
 {
-
     StringIterator itr;
 
+    // TODO: this does nothing
     // Iterate over the commands and process them //
     for(size_t i = 0; i < PassedCommands.size(); i++) {
 
@@ -1544,7 +1568,6 @@ DLLEXPORT void Engine::ExecuteCommandLine()
 // ------------------------------------ //
 void Engine::_RunQueuedConsoleCommands()
 {
-
     if(QueuedConsoleCommands.empty())
         return;
 
@@ -1569,7 +1592,6 @@ void Engine::_RunQueuedConsoleCommands()
 // ------------------------------------ //
 bool Engine::_ReceiveConsoleInput(const std::string& command)
 {
-
     Invoke([=]() {
         if(MainConsole) {
 

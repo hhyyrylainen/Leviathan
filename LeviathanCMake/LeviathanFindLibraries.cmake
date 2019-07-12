@@ -27,7 +27,7 @@ if(TRUE)
   set(Boost_ADDITIONAL_VERSIONS "1.66")
 
   # Other than these that are required are header-only libraries
-  set(LEVIATHAN_BOOST_COMPONENTS system filesystem)
+  set(LEVIATHAN_BOOST_COMPONENTS system filesystem program_options)
   
   # set(Boost_DEBUG ON)  
   find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})

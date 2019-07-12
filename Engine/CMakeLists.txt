@@ -289,6 +289,7 @@ file(GLOB GroupUtilityData "Utility/DataHandling/*.cpp" "Utility/DataHandling/*.
 if(LEVIATHAN_USING_DEPENDENCIES)
   set(GroupEditor
     "Editor/Editor.h" "Editor/Editor.cpp"
+    "Editor/Importer.h" "Editor/Importer.cpp"
     )
 endif()
 
@@ -436,6 +437,9 @@ if(NOT WIN32)
   # Link with X11 and threads
   target_link_libraries(Engine PRIVATE ${X11_LIBRARIES} ${X11_Xmu_LIB} ${X11_Xfixes_LIB}
     ${CMAKE_THREAD_LIBS_INIT})
+
+  # GCC 8 fix (can be removed once GCC 9 is prevalent)
+  target_link_libraries(Engine PRIVATE $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
   
 endif(NOT WIN32)
 

@@ -315,10 +315,6 @@ DLLEXPORT Model::Model(bs::Scene* scene, RenderNode& parent, const std::string& 
 
     bs::HMesh mesh = bs::gImporter().import<bs::Mesh>(finalPath.c_str());
 
-    // auto importOptions = bs::MeshImportOptions::create();
-    // importOptions->setImportAnimation(true);
-    // auto resources = bs::gImporter().importAll("humanAnimated.fbx", importOptions);
-    // HAnimationClip animationClip = static_resource_cast<AnimationClip>(resources[1].value);
 
     GraphicalObject = parent.Node->addComponent<bs::CRenderable>();
 

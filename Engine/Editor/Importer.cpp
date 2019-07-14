@@ -85,6 +85,10 @@ bool Importer::ImportFile(const std::string& file)
 
         success = ImportTypedFile(file, FileType::Shader);
         return true;
+    } else if(extension == "fbx") {
+
+        success = ImportTypedFile(file, FileType::Model);
+        return true;
     } else {
         // Ignore unknown extensions
         return true;
@@ -129,7 +133,15 @@ bool Importer::ImportTypedFile(const std::string& file, FileType type)
     switch(type) {
     case FileType::Shader: return ImportAndSaveFile<bs::Shader>(file, target, Compress);
     case FileType::Texture: return ImportAndSaveFile<bs::Texture>(file, target, Compress);
+    case FileType::Model: return ImportAndSaveFile<bs::Mesh>(file, target, Compress);
     }
+
+    // models need for animations:
+    // auto importOptions = bs::MeshImportOptions::create();
+    // importOptions->setImportAnimation(true);
+    // auto resources = bs::gImporter().importAll("humanAnimated.fbx", importOptions);
+    // HAnimationClip animationClip = static_resource_cast<AnimationClip>(resources[1].value);
+
 
     LEVIATHAN_ASSERT(false, "should not get here");
 }
@@ -148,21 +160,25 @@ std::string Importer::GetTargetPath(const std::string& file, FileType type) cons
     if(!strippedPath.empty() && strippedPath[0] == '/')
         strippedPath = strippedPath.substr(1);
 
-    constexpr auto shaders = "shaders"sv;
-    constexpr auto textures = "textures"sv;
-
     bool needsPrefix = false;
 
     // Detect common sub folder names that should be erased
     switch(type) {
     case FileType::Shader:
-        if(strippedPath.find("Shaders") == std::string_view::npos &&
-            strippedPath.find(shaders) == std::string_view::npos)
+        if(strippedPath.find("Shaders"sv) == std::string_view::npos &&
+            strippedPath.find("shaders"sv) == std::string_view::npos)
             needsPrefix = true;
+        break;
     case FileType::Texture:
-        if(strippedPath.find("textures") == std::string_view::npos &&
-            strippedPath.find(textures) == std::string_view::npos)
+        if(strippedPath.find("Textures"sv) == std::string_view::npos &&
+            strippedPath.find("textures"sv) == std::string_view::npos)
             needsPrefix = true;
+        break;
+    case FileType::Model:
+        if(strippedPath.find("Models"sv) == std::string_view::npos &&
+            strippedPath.find("models"sv) == std::string_view::npos)
+            needsPrefix = true;
+        break;
     }
 
     auto targetPath = std::filesystem::path(Destination);
@@ -191,6 +207,7 @@ const char* Importer::GetSubFolderForType(FileType type)
     switch(type) {
     case FileType::Shader: return "Shaders";
     case FileType::Texture: return "Textures";
+    case FileType::Model: return "Models";
     }
 
     LEVIATHAN_ASSERT(false, "should not get here");

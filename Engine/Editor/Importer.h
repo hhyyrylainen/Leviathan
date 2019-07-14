@@ -8,7 +8,7 @@ namespace Leviathan { namespace Editor {
 
 //! \brief Handles importing resources
 class Importer {
-    enum class FileType { Texture, Shader };
+    enum class FileType { Texture, Shader, Model };
 
 public:
     Importer(const std::string& source, const std::string& destination);

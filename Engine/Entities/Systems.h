@@ -87,7 +87,7 @@ public:
     }
 };
 
-//! \brief Handles properties of Ogre nodes that have a changed RenderNode
+//! \brief Handles properties of scene objects that have a changed RenderNode
 class RenderNodePropertiesSystem {
 public:
     void Run(GameWorld& world, std::unordered_map<ObjectID, RenderNode*>& index)
@@ -99,17 +99,20 @@ public:
             if(!node.Marked)
                 continue;
 
-            // TODO: would it be faster to first check have these
-            // changed or is it better to just set them as Ogre might
-            // also check have the value changed
-            if(node.Hidden)
-                LOG_WRITE("TODO: hiding RenderNodes");
-            // node.Node->setVisible(!node.Hidden);
-            node.Node->setScale(node.Scale);
+            // This check being here, may or may not be faster than just always setting it
+            if(node.Node->getActive() != !node.Hidden)
+                node.Node->setActive(!node.Hidden);
 
+            node.Node->setScale(node.Scale);
             node.Marked = false;
         }
     }
+};
+
+//! \brief Handles properties of Model
+class ModelPropertiesSystem {
+public:
+    DLLEXPORT void Run(GameWorld& world, std::unordered_map<ObjectID, Model*>& index);
 };
 
 

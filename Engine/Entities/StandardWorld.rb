@@ -22,6 +22,7 @@ STANDARD_WORLD = GameWorldClass.new(
     SYSTEM_SENDABLEMARK_POSITION,
     SYSTEM_SENDABLE,
     SYSTEM_POSITIONSTATE,
+    SYSTEM_MODELPROPERTIES,
   ],
   systemspreticksetup: (<<-END
   const auto timeAndTickTuple = GetTickAndTime();

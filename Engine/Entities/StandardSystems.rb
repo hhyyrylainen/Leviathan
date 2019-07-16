@@ -16,7 +16,7 @@ SYSTEM_ANIMATIONTIMEADDER = EntitySystem.new(
 
 SYSTEM_RECEIVED = EntitySystem.new(
   "ReceivedSystem", [],
-  runtick: {group: 60,
+  runtick: {group: 55,
             parameters: ["ComponentReceived.GetIndex()"]})
 
 # This needs to be ran before systems that unmark the Position
@@ -35,3 +35,10 @@ SYSTEM_POSITIONSTATE = EntitySystem.new(
     group: 50,
     parameters: ["ComponentPosition.GetIndex()", "PositionStates",
                  "tick"]})
+
+SYSTEM_MODELPROPERTIES = EntitySystem.new(
+  "ModelPropertiesSystem", [], runtick: {
+    group: 56,
+    parameters: ["ComponentModel.GetIndex()"]})
+
+

@@ -8,10 +8,30 @@
 #include "Networking/NetworkResponse.h"
 #include "Networking/SentNetworkThing.h"
 
-// #include "Animation/OgreSkeletonAnimation.h"
-// #include "Animation/OgreSkeletonInstance.h"
-// #include "OgreItem.h"
+#include "bsfCore/Components/BsCRenderable.h"
+
 using namespace Leviathan;
+// ------------------------------------ //
+// ModelPropertiesSystem
+void ModelPropertiesSystem::Run(GameWorld& world, std::unordered_map<ObjectID, Model*>& index)
+{
+    for(auto iter = index.begin(); iter != index.end(); ++iter) {
+
+        auto& node = *iter->second;
+
+        if(!node.Marked)
+            continue;
+
+        // TODO: this check could be for graphics outside this loop
+        if(node.GraphicalObject) {
+            node.GraphicalObject->setMaterial(node.Material);
+            node.ApplyMeshName();
+        }
+
+        node.Marked = false;
+    }
+}
+
 // ------------------------------------ //
 // SendableSystem
 //! \brief Helper for SendableSystem::HandleNode to not have as much code duplication for

@@ -219,8 +219,17 @@ void GameWorld::_DestroyRenderingResources()
     }
 }
 // ------------------------------------ //
+static bool SunCreated = false;
+
 DLLEXPORT void GameWorld::SetSunlight()
 {
+    if(SunCreated) {
+        LOG_WRITE("TODO: multi scene support in BSF needed for separate world lights");
+        return;
+    }
+
+    SunCreated = true;
+
     // Create/update things if they are nullptr //
     if(!pimpl->SunlightSO) {
 

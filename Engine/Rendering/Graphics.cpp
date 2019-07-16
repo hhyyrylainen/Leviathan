@@ -675,6 +675,24 @@ DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
     return texture;
 }
 
+DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
+{
+    auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_MODEL,
+        // Leviathan::StringOperations::RemoveExtension(name, true),
+        Leviathan::StringOperations::RemovePath(name),
+        // Leviathan::StringOperations::GetExtension(name)
+        "asset");
+
+    if(file.empty()) {
+        LOG_ERROR("Graphics: LoadMeshByName: could not find resource with name: " + name);
+        return nullptr;
+    }
+
+    // bs::HMesh mesh = bs::gImporter().import<bs::HMesh>(file.c_str());
+    bs::HMesh mesh = bs::gResources().load<bs::Mesh>(file.c_str());
+    return mesh;
+}
+
 // ------------------------------------ //
 // X11 errors
 #ifdef __linux

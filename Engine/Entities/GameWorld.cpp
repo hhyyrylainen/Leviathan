@@ -26,15 +26,6 @@
 
 #include "Exceptions.h"
 
-// #include "Compositor/OgreCompositorManager2.h"
-// #include "Compositor/OgreCompositorWorkspace.h"
-// #include "OgreCamera.h"
-// #include "OgreLight.h"
-// #include "OgreRenderWindow.h"
-// #include "OgreRoot.h"
-// #include "OgreSceneManager.h"
-// #include "OgreSceneNode.h"
-
 #include "bsfCore/Components/BsCCamera.h"
 #include "bsfCore/Components/BsCLight.h"
 #include "bsfCore/Scene/BsSceneObject.h"

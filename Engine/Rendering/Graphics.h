@@ -39,6 +39,9 @@ public:
     //! Works the same as LoadShaderByName
     DLLEXPORT bs::HTexture LoadTextureByName(const std::string& name);
 
+    //! Works the same as LoadShaderByName
+    DLLEXPORT bs::HMesh LoadMeshByName(const std::string& name);
+
 #ifdef __linux
     //! \brief Returns true if our X11 error handler has been called. Remember to check this
     //! after every X11 call

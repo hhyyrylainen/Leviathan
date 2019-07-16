@@ -236,6 +236,8 @@ public:
 
     DLLEXPORT void Release();
 
+    DLLEXPORT void ApplyMeshName();
+
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Model);
 
     //! The entity that has this model's mesh loaded
@@ -244,7 +246,7 @@ public:
     //! \note Changing this currently does nothing
     std::string MeshName;
 
-    //! \todo Check if this needs to be reapplied when the properties in it are changed
+    //! Material set on the object
     bs::HMaterial Material;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;

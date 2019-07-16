@@ -11,19 +11,11 @@
 #include "Utility/Convert.h"
 
 #include "Engine.h"
-
-// #include "OgreBillboardChain.h"
-// #include "OgreItem.h"
-// #include "OgreMesh2.h"
-// #include "OgreMeshManager.h"
-// #include "OgreMeshManager2.h"
-// #include "OgreRibbonTrail.h"
-// #include "OgreRoot.h"
-// #include "OgreSceneManager.h"
+#include "Rendering/Graphics.h"
 
 #include "bsfCore/Components/BsCAnimation.h"
 #include "bsfCore/Components/BsCRenderable.h"
-#include "bsfCore/Importer/BsImporter.h"
+// #include "bsfCore/Importer/BsImporter.h"
 #include "bsfCore/Renderer/BsRenderable.h"
 #include "bsfCore/Scene/BsSceneObject.h"
 
@@ -304,22 +296,17 @@ DLLEXPORT Model::Model(bs::Scene* scene, RenderNode& parent, const std::string& 
     Component(TYPE),
     MeshName(meshname), Material(material)
 {
+    Marked = false;
+
     // Skip if no graphics
     if(!parent.Node)
         return;
 
-    // Find the mesh
-    const auto finalPath = FileSystem::Get()->SearchForFile(FILEGROUP_MODEL, meshname, "fbx");
-
-    LEVIATHAN_ASSERT(!finalPath.empty(), "didn't find model:" + meshname);
-
-    bs::HMesh mesh = bs::gImporter().import<bs::Mesh>(finalPath.c_str());
-
-
     GraphicalObject = parent.Node->addComponent<bs::CRenderable>();
 
-    GraphicalObject->setLayer(parent.Scene);
-    GraphicalObject->setMesh(mesh);
+    // GraphicalObject->setLayer(1 << *parent.Scene);
+    GraphicalObject->setLayer(1 << *scene);
+
     GraphicalObject->setMaterial(Material);
 }
 
@@ -327,6 +314,14 @@ DLLEXPORT void Model::Release()
 {
     if(GraphicalObject)
         GraphicalObject->destroy();
+}
+
+DLLEXPORT void Model::ApplyMeshName()
+{
+    // Find the mesh
+    auto mesh = Engine::Get()->GetGraphics()->LoadMeshByName(MeshName);
+
+    GraphicalObject->setMesh(mesh);
 }
 
 // // ------------------ ManualObject ------------------ //

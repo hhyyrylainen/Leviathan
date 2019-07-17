@@ -170,6 +170,18 @@ void MaterialSetTextureProxy(
     self->setTexture(name.c_str(), texture);
 }
 
+void MaterialSetVec44Proxy(
+    bs::HMaterial& self, const std::string& name, const bs::Vector4& value)
+{
+    if(!self || self->isDestroyed()) {
+
+        asGetActiveContext()->SetException("method called on invalid HMaterial instance");
+        return;
+    }
+
+    self->setVec4(name.c_str(), value);
+}
+
 
 template<class T>
 void DefaultHandleConstructor(void* memory)
@@ -498,7 +510,7 @@ bool BindColour(asIScriptEngine* engine)
     }
 
     if(engine->RegisterGlobalFunction(
-           "void fromHSB(float hue, float saturation, float brightness)",
+           "bs::Color fromHSB(float hue, float saturation, float brightness)",
            asFUNCTION(bs::Color::fromHSB), asCALL_CDECL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -987,6 +999,12 @@ bool BindMaterials(asIScriptEngine* engine)
     if(engine->RegisterObjectMethod("HMaterial",
            "void setTexture(const string &in name, const HTexture &in texture)",
            asFUNCTION(MaterialSetTextureProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("HMaterial",
+           "void setVec4(const string &in name, const Vector4 &in value)",
+           asFUNCTION(MaterialSetVec44Proxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

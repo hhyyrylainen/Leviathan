@@ -24,8 +24,8 @@ void ModelPropertiesSystem::Run(GameWorld& world, std::unordered_map<ObjectID, M
 
         // TODO: this check could be for graphics outside this loop
         if(node.GraphicalObject) {
-            node.GraphicalObject->setMaterial(node.Material);
             node.ApplyMeshName();
+            node.GraphicalObject->setMaterial(node.Material);
         }
 
         node.Marked = false;

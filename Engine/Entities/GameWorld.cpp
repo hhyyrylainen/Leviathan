@@ -268,6 +268,7 @@ DLLEXPORT void GameWorld::RemoveSunlight()
         pimpl->SunlightSO->destroy();
         pimpl->SunlightSO = nullptr;
         pimpl->Sunlight = nullptr;
+        SunCreated = false;
     }
 }
 

@@ -307,6 +307,8 @@ DLLEXPORT Model::Model(bs::Scene* scene, RenderNode& parent, const std::string& 
     // GraphicalObject->setLayer(1 << *parent.Scene);
     GraphicalObject->setLayer(1 << *scene);
 
+    ApplyMeshName();
+
     GraphicalObject->setMaterial(Material);
 }
 
@@ -318,6 +320,11 @@ DLLEXPORT void Model::Release()
 
 DLLEXPORT void Model::ApplyMeshName()
 {
+    if(MeshName.empty()) {
+        GraphicalObject->setMesh(nullptr);
+        return;
+    }
+
     // Find the mesh
     auto mesh = Engine::Get()->GetGraphics()->LoadMeshByName(MeshName);
 

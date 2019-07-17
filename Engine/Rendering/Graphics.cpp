@@ -654,6 +654,11 @@ DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
 
     // bs::HShader shader = bs::gImporter().import<bs::Shader>(file.c_str());
     bs::HShader shader = bs::gResources().load<bs::Shader>(file.c_str());
+
+    if(!shader) {
+        LOG_ERROR("Graphics: loading asset failed: " + name);
+    }
+
     return shader;
 }
 
@@ -672,6 +677,11 @@ DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
 
     // bs::HTexture texture = bs::gImporter().import<bs::Texture>(file.c_str());
     bs::HTexture texture = bs::gResources().load<bs::Texture>(file.c_str());
+
+    if(!texture) {
+        LOG_ERROR("Graphics: loading asset failed: " + name);
+    }
+
     return texture;
 }
 
@@ -690,6 +700,11 @@ DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
 
     // bs::HMesh mesh = bs::gImporter().import<bs::HMesh>(file.c_str());
     bs::HMesh mesh = bs::gResources().load<bs::Mesh>(file.c_str());
+
+    if(!mesh) {
+        LOG_ERROR("Graphics: loading asset failed: " + name);
+    }
+
     return mesh;
 }
 

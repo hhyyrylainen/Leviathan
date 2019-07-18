@@ -103,13 +103,14 @@ $ffmpeg = FFMPEG.new(
 )
 
 $bsf = BSFramework.new(
-  version: "9bbac75ca4cc445cd26b435f74465ad91d3e528e",
+  version: "fefeb11227f39ceb31100c36d2ca6589e7d6eb6a",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   renderAPI: "Vulkan",
   buildAllRenderAPI: true,
   physicsModule: "Null",
-  audioModule: "Null"
+  audioModule: "Null",
+  extraLibSearch: "lib/",
 )
 
 $caudio = CAudio.new(

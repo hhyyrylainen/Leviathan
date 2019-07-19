@@ -15,14 +15,6 @@
 #include <atomic>
 #include <memory>
 
-namespace Ogre {
-
-class RenderWindow;
-class Camera;
-class CompositorWorkspace;
-} // namespace Ogre
-
-
 struct SDL_Window;
 struct SDL_Keysym;
 union SDL_Event;
@@ -168,10 +160,6 @@ public:
         return TertiaryReceiver.get();
     }
     DLLEXPORT inline bool GetVsync() const;
-    DLLEXPORT inline Ogre::RenderWindow* GetOgreWindow() const
-    {
-        return OWindow;
-    }
 
     DLLEXPORT inline const auto& GetBSFWindow() const
     {
@@ -280,12 +268,10 @@ private:
     int WantedX11Cursor = 0;
 #endif //__linux
 
-    Ogre::RenderWindow* OWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;
     std::unique_ptr<GUI::GuiManager> WindowsGui;
 
     //! Unique id of this window.
-    //! Makes sure that created Ogre resources are unique
     int ID;
 
     //! Used to do input setup each time some input is received

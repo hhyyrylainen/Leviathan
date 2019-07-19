@@ -36,8 +36,6 @@
 
 #include "utf8.h"
 
-#include "OgreWindowEventUtilities.h"
-
 #ifdef LEVIATHAN_USES_LEAP
 #include "Leap/LeapManager.h"
 #endif

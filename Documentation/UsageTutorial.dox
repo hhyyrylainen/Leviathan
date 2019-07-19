@@ -219,12 +219,6 @@ To compile Leviathan see \ref compiling_leviathan
 
 \subsection prerequisite_troubleshooting Troubleshooting
 
-\subsubsection prequisite_troubleshooting_linux_previous Linux previously installed libraries
-
-Old versions of Ogre (pre 2.0) are known to cause issues compiling or
-running Leviathan. So uninstall these old versions before starting if
-possible, or you (might) have a bad time.
-
 \subsubsection prequisite_troubleshooting_require Require file not found
 
 Make sure you have installed all of the ruby gems.
@@ -234,6 +228,15 @@ This is one of the potential errors (the 'os' here is the missing gem):
 ```
 C:/Ruby24-x64/lib/ruby/2.4.0/rubygems/core_ext/kernel_require.rb:55:in `require`: cannot load such file -- os (LoadError)
 ```
+
+\subsubsection prequisite_troubleshooting_boost Boost libraries not found
+
+On Windows you need to make sure that you have compiled the needed
+boost libraries on the exact same compiler version.
+
+For Visual Studio 2017 libraries with the suffix `-vc141-mt-gd-x64`
+needs to be in `boost/stage/lib` folder. Otherwise boost has not been
+correctly compiled.
 
 
 */

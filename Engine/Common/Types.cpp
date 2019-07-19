@@ -3,10 +3,6 @@
 // ------------------------------------ //
 #include "Exceptions.h"
 
-#ifdef LEVIATHAN_USING_OGRE
-#include "OgreMatrix4.h"
-#endif
-
 #include <iostream>
 #include <ostream>
 

@@ -1,9 +1,9 @@
 // ------------------------------------ //
 #include "SFMLPackets.h"
 
-#include <OgrePlane.h>
-
 #include "Common/DataStoring/NamedVars.h"
+
+#include "bsfUtility/Math/BsPlane.h"
 // ------------------------------------ //
 namespace Leviathan {
 
@@ -93,23 +93,23 @@ DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, sf::Packet& packetinner)
 }
 
 // ------------------------------------ //
-// Ogre types
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Ogre::Vector3& data)
+// BSF types
+DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Vector3& data)
 {
     return packet << data.x << data.y << data.z;
 }
 
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Ogre::Vector3& data)
+DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Vector3& data)
 {
     return packet >> data.x >> data.y >> data.z;
 }
 
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Ogre::Plane& data)
+DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Plane& data)
 {
     return packet << data.normal << data.d;
 }
 
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Ogre::Plane& data)
+DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Plane& data)
 {
     return packet >> data.normal >> data.d;
 }

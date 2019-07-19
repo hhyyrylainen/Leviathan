@@ -264,35 +264,17 @@ DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
     // Update GUI before each frame //
     WindowsGui->Render();
 
-    // update window //
-    Ogre::RenderWindow* tmpwindow = GetOgreWindow();
-
-    // finish rendering the window //
-
-    // We don't actually want to swap buffers here because the Engine
-    // method that called us will call Ogre::Root::renderOneFrame
-    // after Render has been called on all active windows, so if we
-    // have this call here we may do double swap depending on the
-    // drivers.
-    // tmpwindow->swapBuffers();
-
+    // BSF does it's own rendering handling
     return true;
 }
 
 DLLEXPORT void Window::OnResize(int width, int height)
 {
     // Notify bsf
-    // TODO: something better
+    // TODO: something better, this is very fiddly
     BSFWindow->resize(width, height);
 
-// Notify Ogre //
-// This causes issues on Windows
-#ifdef __linux__
-    // GetOgreWindow()->resize(width, height);
-#endif
-    // GetOgreWindow()->windowMovedOrResized();
-
-    // send to GUI //
+    // Send to GUI //
     WindowsGui->OnResize();
 }
 

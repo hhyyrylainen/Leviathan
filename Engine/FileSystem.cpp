@@ -1,9 +1,5 @@
 // ------------------------------------ //
 #include "FileSystem.h"
-
-#ifdef LEVIATHAN_USING_OGRE
-#include "OgreResourceGroupManager.h"
-#endif
 #include "Common/StringOperations.h"
 
 #ifndef ALTERNATIVE_EXCEPTIONS_FATAL

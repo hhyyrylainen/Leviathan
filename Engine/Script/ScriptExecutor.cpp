@@ -29,7 +29,6 @@
 #include "Bindings/TypesBind.h"
 
 // Exception support
-#include "OgreException.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -85,8 +84,9 @@ void ScriptTranslateExceptionCallback(asIScriptContext* context, void* userdata)
     } catch(const Leviathan::Exception& e) {
         context->SetException(
             (std::string("Caught Leviathan::Exception: ") + e.what()).c_str());
-    } catch(const Ogre::Exception& e) {
-        context->SetException((std::string("Caught Ogre::Exception: ") + e.what()).c_str());
+        // } catch(const Ogre::Exception& e) {
+        //     context->SetException((std::string("Caught Ogre::Exception: ") +
+        //     e.what()).c_str());
     } catch(const std::exception& e) {
         context->SetException(
             (std::string("Caught (unknown type) application exception: ") + e.what()).c_str());

@@ -29,7 +29,6 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   
   # The script files folder
   install(DIRECTORY "Scripts" DESTINATION bin/Data)
-  install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
   # we need to specifically install the directories
   install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
   install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)

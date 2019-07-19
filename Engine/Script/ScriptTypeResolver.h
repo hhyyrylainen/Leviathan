@@ -5,11 +5,10 @@
 // ------------------------------------ //
 
 // Forward declare things for type resolver specification
-namespace Ogre {
-class SceneNode;
+namespace bs {
 class Matrix4;
-class ColourValue;
-} // namespace Ogre
+class Color;
+} // namespace bs
 
 class NewtonCollision;
 
@@ -85,9 +84,8 @@ TYPE_RESOLVER_AS_PREDEFINED(char, "int8");
 TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
 
 // And other types
-TYPE_RESOLVER_AS_PREDEFINED(Ogre::ColourValue, "Ogre::ColourValue@");
-TYPE_RESOLVER_AS_PREDEFINED(Ogre::Matrix4, "Ogre::Matrix4@");
-TYPE_RESOLVER_AS_PREDEFINED(Ogre::SceneNode, "Ogre::SceneNode@");
+TYPE_RESOLVER_AS_PREDEFINED(bs::Color, "bs::Color@");
+TYPE_RESOLVER_AS_PREDEFINED(bs::Matrix4, "bs::Matrix4@");
 
 TYPE_RESOLVER_AS_PREDEFINED(NewtonCollision, "NewtonCollision@");
 

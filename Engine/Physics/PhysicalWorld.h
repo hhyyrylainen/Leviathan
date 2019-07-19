@@ -8,8 +8,6 @@
 #include "PhysicsBody.h"
 #include "PhysicsShape.h"
 
-#include "OgreMatrix4.h"
-
 #include <functional>
 
 // Bullet forward declarations

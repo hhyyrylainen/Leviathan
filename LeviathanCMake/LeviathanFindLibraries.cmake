@@ -81,11 +81,6 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
     # Needed for CEF
     "${LEVIATHAN_SRC}/build/ThirdParty/"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE"
-    # Ogre now needs these to also be include directories
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Common"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Pbs"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Unlit"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bullet"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfEngine"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfCore"
@@ -107,7 +102,6 @@ if(LEVIATHAN_USING_DEPENDENCIES)
 
   list(APPEND LEVIATHAN_ENGINE_LIBRARIES
     LinearMath BulletDynamics Bullet3Dynamics BulletCollision
-    OgreMain OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale

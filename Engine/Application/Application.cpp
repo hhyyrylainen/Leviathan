@@ -2,7 +2,6 @@
 #include "Application.h"
 
 #include "FileSystem.h"
-#include "OGRE/OgreWindowEventUtilities.h"
 
 #include <iostream>
 

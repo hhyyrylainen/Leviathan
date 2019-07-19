@@ -154,7 +154,7 @@ void Int3DestructorProxy(void* memory)
 }
 
 // ------------------------------------ //
-// Ogre conversions
+// BSF conversions
 void Vector3Float3Proxy(void* memory, const Float3& vector)
 {
     new(memory) bs::Vector3(vector);

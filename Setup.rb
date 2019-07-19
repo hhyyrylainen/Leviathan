@@ -4,10 +4,6 @@
 # Downloads the assets and dependencies and then builds and installs them
 # NOTE: sudo is required on linux (unless skipping package manager installs)
 
-# TODO: update the things
-# Ogre required libs: rapidjson-devel
-# compile flags: OGRE_CONFIG_THREADS=2 (background resources) OGRE_CONFIG_THREAD_PROVIDER=std
-
 # RubySetupSystem Bootstrap
 if not File.exists? "RubySetupSystem/RubySetupSystem.rb"
   puts "Initializing RubySetupSystem"
@@ -174,7 +170,6 @@ Dir.chdir(File.join(ProjectDir, "build")) do
   if !runCMakeConfigure [
        # This is done automatically
        # "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-       "-DOGRE_HOME=#{THIRD_PARTY_INSTALL}"
      ]
     onError "Failed to configure Leviathan"
   end

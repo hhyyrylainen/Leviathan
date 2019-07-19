@@ -99,8 +99,6 @@ void PrintASCallStack()
 
 bool IsInGraphicalMode()
 {
-    // The C++ code uses more this: if(Ogre::Root::getSingletonPtr()) but as this doesn't
-    // require scripts to include huge extra headers this is used here
     return !Engine::Get()->GetNoGui();
 }
 

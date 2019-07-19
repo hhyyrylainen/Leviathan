@@ -103,7 +103,7 @@ $ffmpeg = FFMPEG.new(
 )
 
 $bsf = BSFramework.new(
-  version: "fefeb11227f39ceb31100c36d2ca6589e7d6eb6a",
+  version: "184b607472d756f4899f2cfadd028a283fec0853",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   renderAPI: "Vulkan",

@@ -54,10 +54,10 @@ private:
 
     WidgetLayer* ContainedIn = nullptr;
 
-    Ogre::MaterialPtr Material;
-    Ogre::SceneNode* Node = nullptr;
-    Ogre::Item* QuadItem = nullptr;
-    Ogre::MeshPtr QuadMesh;
+    // Ogre::MaterialPtr Material;
+    // Ogre::SceneNode* Node = nullptr;
+    // Ogre::Item* QuadItem = nullptr;
+    // Ogre::MeshPtr QuadMesh;
 };
 
 }} // namespace Leviathan::GUI

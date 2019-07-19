@@ -4,13 +4,6 @@
 #include "GUI/GuiWidgetLayer.h"
 #include "Rendering/GeometryHelpers.h"
 
-#include "OgreItem.h"
-#include "OgreMaterialManager.h"
-#include "OgreMeshManager2.h"
-#include "OgreSceneManager.h"
-#include "OgreSubMesh2.h"
-#include "OgreTechnique.h"
-
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //

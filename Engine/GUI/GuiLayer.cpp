@@ -8,11 +8,10 @@ using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
 DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
-    ID(IDFactory::GetID()), Wind(window), Owner(owner)
+    ID(IDFactory::GetID()), Wind(window), Owner(owner), RenderOrder(renderorder)
 {
     LEVIATHAN_ASSERT(Owner, "Layer has no owner");
     LEVIATHAN_ASSERT(Wind, "Layer has no window");
-    LEVIATHAN_ASSERT(renderorder >= GUI_WORKSPACE_BEGIN_ORDER, "invalid render order passed");
 
     // Setup the scene
     // BSFLayerHack = 1 << (++LayerNumber);

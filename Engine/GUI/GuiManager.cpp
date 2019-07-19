@@ -17,6 +17,8 @@
 
 #include "Engine.h"
 
+#include "bsfCore/Image/BsTexture.h"
+
 #include <boost/filesystem.hpp>
 
 #include <thread>
@@ -34,7 +36,7 @@ struct GuiManager::CutscenePlayStatus {
     boost::intrusive_ptr<VideoPlayerWidget> Player;
 };
 // ------------------------------------ //
-GuiManager::GuiManager() : ID(IDFactory::GetID()), GuiViewCounter(GUI_WORKSPACE_BEGIN_ORDER) {}
+GuiManager::GuiManager() : ID(IDFactory::GetID()), GuiViewCounter(0) {}
 GuiManager::~GuiManager() {}
 // ------------------------------------ //
 bool GuiManager::Init(Graphics* graph, Window* window)
@@ -73,7 +75,10 @@ void GuiManager::Release()
         ManagedLayers[i]->Release();
     }
 
-    Logger::Get()->Info("GuiManager: Gui successfully closed on window");
+    TempRenderedLayers.clear();
+    _SendChangedLayers();
+
+    LOG_INFO("GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //
 void GuiManager::GuiTick(int mspassed)
@@ -349,4 +354,23 @@ void GuiManager::_FileChanged(const std::string& file, ResourceFolderListener& c
 
     // // Mark everything as non-updated //
     // caller.MarkAllAsNotUpdated();
+}
+// ------------------------------------ //
+DLLEXPORT void GuiManager::NotifyAboutLayer(int layernumber, const bs::HTexture& texture)
+{
+    TempRenderedLayers[layernumber] = texture;
+    _SendChangedLayers();
+}
+
+void GuiManager::_SendChangedLayers() const
+{
+    std::vector<bs::SPtr<bs::Texture>> overlays;
+
+    for(auto iter = TempRenderedLayers.begin(); iter != TempRenderedLayers.end(); ++iter) {
+        if(iter->second) {
+            overlays.push_back(iter->second.getInternalPtr());
+        }
+    }
+
+    Engine::Get()->GetGraphics()->UpdateShownOverlays(overlays);
 }

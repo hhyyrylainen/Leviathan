@@ -14,8 +14,6 @@
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
-#include "Rendering/Graphics.h"
-
 #include "include/cef_browser.h"
 #include "include/wrapper/cef_helpers.h"
 
@@ -79,7 +77,9 @@ DLLEXPORT void View::_DoReleaseResources()
     // Lock us //
     GUARD_LOCK();
 
-    Engine::Get()->GetGraphics()->UpdateShownOverlays({});
+    if(Owner) {
+        Owner->NotifyAboutLayer(RenderOrder, nullptr);
+    }
 
     // Kill the javascript async //
     OurAPIHandler->BeforeRelease();
@@ -492,7 +492,7 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
 
     if(!Texture) {
         Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
-        Engine::Get()->GetGraphics()->UpdateShownOverlays({Texture.getInternalPtr()});
+        Owner->NotifyAboutLayer(RenderOrder, Texture);
     } else {
         Texture->writeData(DataBuffer, 0, 0, fullOverwrite);
     }

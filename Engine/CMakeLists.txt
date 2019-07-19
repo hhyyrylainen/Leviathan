@@ -160,6 +160,7 @@ if(LEVIATHAN_USING_OGRE)
     "Rendering/GeometryHelpers.h" "Rendering/GeometryHelpers.cpp"
     "Rendering/Graphics.cpp" "Rendering/Graphics.h"
     "Rendering/GUIOverlayRenderer.cpp" "Rendering/GUIOverlayRenderer.h"
+    "Rendering/RotatingBufferHelper.h"
     )
 endif()
 

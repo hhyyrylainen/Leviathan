@@ -13,8 +13,6 @@ union SDL_Event;
 
 namespace Leviathan { namespace GUI {
 
-constexpr auto GUI_WORKSPACE_BEGIN_ORDER = 1000;
-
 //! \brief Base class for WidgetLayer and View (browser containers / CEF) to add to a
 //! GuiManager
 class Layer : public ReferenceCounted {
@@ -43,6 +41,11 @@ public:
     DLLEXPORT inline auto GetWindow() const
     {
         return Wind;
+    }
+
+    DLLEXPORT inline auto GetRenderOrder() const
+    {
+        return RenderOrder;
     }
 
     //! \brief Sets the input mode. This should be regularly called from game code to update
@@ -134,6 +137,8 @@ protected:
     //! Support for scrolling when the mouse is over a scrollable thing
     //! \todo This needs to be tracked per frame for CEF browsers
     std::atomic<bool> ScrollableElement = false;
+
+    int RenderOrder;
 
 
     // Rendering resources

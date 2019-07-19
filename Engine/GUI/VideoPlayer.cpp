@@ -5,21 +5,21 @@
 
 #include "Engine.h"
 
-#include "OgreHardwarePixelBuffer.h"
-#include "OgrePixelBox.h"
-#include "OgrePixelFormat.h"
-#include "OgreTextureManager.h"
+#include "bsfCore/Image/BsTexture.h"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
 
-// Ogre::PF_R8G8B8A8 results in incorrect images, for some reason
-// RGBA is an alias for: PF_BYTE_RGBA = PF_A8B8G8R8 so that probably explains.
-// Luckily it seems ffmpeg RGBA is also in the same order
-constexpr Ogre::PixelFormat OGRE_IMAGE_FORMAT = Ogre::PF_BYTE_RGBA;
+// // Ogre::PF_R8G8B8A8 results in incorrect images, for some reason
+// // RGBA is an alias for: PF_BYTE_RGBA = PF_A8B8G8R8 so that probably explains.
+// // Luckily it seems ffmpeg RGBA is also in the same order
+// constexpr Ogre::PixelFormat OGRE_IMAGE_FORMAT = Ogre::PF_BYTE_RGBA;
+
+constexpr auto BS_PIXEL_FORMAT = bs::PF_RGBA8;
+
 // This must match the above definition
 constexpr AVPixelFormat FFMPEG_DECODE_TARGET = AV_PIX_FMT_RGBA;
 
@@ -38,8 +38,6 @@ DLLEXPORT VideoPlayer::~VideoPlayer()
     // Ensure all FFMPEG resources are closed
     Stop();
 }
-
-std::atomic<int> VideoPlayer::TextureSequenceNumber = {0};
 // ------------------------------------ //
 DLLEXPORT bool VideoPlayer::Play(const std::string& videofile)
 {
@@ -49,7 +47,7 @@ DLLEXPORT bool VideoPlayer::Play(const std::string& videofile)
     // Make sure ffmpeg is loaded //
     LoadFFMPEG();
 
-    if(!boost::filesystem::exists(videofile)) {
+    if(!std::filesystem::exists(videofile)) {
 
         LOG_ERROR("VideoPlayer: Play: file doesn't exist: " + videofile);
         return false;
@@ -65,12 +63,8 @@ DLLEXPORT bool VideoPlayer::Play(const std::string& videofile)
         return false;
     }
 
-    LOG_WRITE("TODO: redo VideoPlayer for bsf");
-    return true;
-
     if(!OnVideoDataLoaded()) {
 
-        VideoOutputTexture.reset();
         LOG_ERROR("VideoPlayer: Play: output video texture creation failed");
         Stop();
         return false;
@@ -182,12 +176,9 @@ DLLEXPORT void VideoPlayer::Stop()
 
     // Let go of our textures and things //
     VideoFile = "";
-    TextureName = "";
 
-    if(VideoOutputTexture)
-        Ogre::TextureManager::getSingleton().remove(VideoOutputTexture);
-
-    VideoOutputTexture.reset();
+    VideoOutputTexture = nullptr;
+    ClearDataBuffers();
 
     IsPlaying = false;
 }
@@ -202,24 +193,11 @@ DLLEXPORT float VideoPlayer::GetDuration() const
 // ------------------------------------ //
 bool VideoPlayer::OnVideoDataLoaded()
 {
-    const int number = TextureSequenceNumber++;
-
-    TextureName = "Leviathan_VideoPlayer_" + std::to_string(number);
-
-    VideoOutputTexture = Ogre::TextureManager::getSingleton().createManual(TextureName,
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D, FrameWidth,
-        FrameHeight, 0, OGRE_IMAGE_FORMAT, Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE, 0,
-        // Gamma correction
-        true);
-
-    if(VideoOutputTexture.isNull()) {
-        LOG_ERROR("VideoPlayer: Failed to create video output texture");
+    auto buffer = GetNextDataBuffer();
+    if(!buffer)
         return false;
-    }
 
-    LOG_INFO("VideoPlayer: Created video texture: " + std::to_string(FrameWidth) + "x" +
-             std::to_string(FrameHeight));
-
+    VideoOutputTexture = bs::Texture::create(*buffer, bs::TU_DYNAMIC);
     return true;
 }
 // ------------------------------------ //
@@ -686,12 +664,19 @@ VideoPlayer::PacketReadResult VideoPlayer::ReadOnePacket(
 // ------------------------------------ //
 void VideoPlayer::UpdateTexture()
 {
-    Ogre::PixelBox pixelView(FrameWidth, FrameHeight, 1, OGRE_IMAGE_FORMAT,
-        // The data[0] buffer has some junk before the actual data so don't use that
-        /*&ConvertedFrame->data[0]*/ ConvertedFrameBuffer);
+    auto buffer = GetNextDataBuffer();
+    if(!buffer) {
+        LOG_WARNING("VideoPlayer: all texture data buffers are still locked, skipping update");
+        return;
+    }
 
-    Ogre::v1::HardwarePixelBufferSharedPtr buffer = VideoOutputTexture->getBuffer();
-    buffer->blitFromMemory(pixelView);
+    std::memcpy((*buffer)->getData(), ConvertedFrameBuffer, ConvertedBufferSize);
+    VideoOutputTexture->writeData(*buffer, 0, 0, true);
+}
+
+bs::SPtr<bs::PixelData> VideoPlayer::_OnNewBufferNeeded()
+{
+    return bs::PixelData::create(FrameWidth, FrameHeight, 1, BS_PIXEL_FORMAT);
 }
 // ------------------------------------ //
 size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)

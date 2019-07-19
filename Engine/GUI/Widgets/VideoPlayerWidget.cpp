@@ -4,6 +4,8 @@
 #include "GUI/GuiWidgetLayer.h"
 #include "Rendering/GeometryHelpers.h"
 
+#include "GUI/GuiManager.h"
+
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
@@ -26,13 +28,12 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
     CanCallCallback = true;
 
     // The Play method creates the texture we want to display
-
-    LOG_WRITE("TODO: redo material creation code in: VideoPlayerWidget::Play");
+    ContainedIn->GetGuiManager()->NotifyAboutLayer(
+        ContainedIn->GetRenderOrder(), Player.GetTexture());
 
     // Set the texture on our material
-    Player.GetTexture();
-    // QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
 
+    // QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
 
     // // Recreate item
     // Ogre::SceneManager* scene = ContainedIn->GetScene();
@@ -67,6 +68,8 @@ DLLEXPORT void VideoPlayerWidget::SetEndCallback(std::function<void()> callback)
 
 void VideoPlayerWidget::_DoCallback()
 {
+    ContainedIn->GetGuiManager()->NotifyAboutLayer(ContainedIn->GetRenderOrder(), nullptr);
+
     if(!CanCallCallback)
         return;
 
@@ -80,7 +83,7 @@ DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
 {
     ContainedIn = container;
 
-    LOG_WRITE("TODO: redo VideoPlayerWidget::OnAddedToContainer");
+    // LOG_WRITE("TODO: redo VideoPlayerWidget::OnAddedToContainer");
 
     // QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(
     //     "videoplayer_widget_" + std::to_string(ID) + "_mesh", -1, -1, 2, 2);
@@ -111,7 +114,9 @@ DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
     if(!ContainedIn)
         return;
 
-    LOG_WRITE("TODO: redo VideoPlayerWidget::OnRemovedFromContainer");
+    ContainedIn->GetGuiManager()->NotifyAboutLayer(ContainedIn->GetRenderOrder(), nullptr);
+
+    // LOG_WRITE("TODO: redo VideoPlayerWidget::OnRemovedFromContainer");
 
     // Ogre::SceneManager* scene = ContainedIn->GetScene();
 

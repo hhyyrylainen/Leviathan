@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 
 //! \file This file contains common components for entities
@@ -13,13 +13,9 @@
 #include "Component.h"
 #include "ComponentState.h"
 
-#include <OgrePlane.h>
+#include "bsfCore/BsCorePrerequisites.h"
 
 #include <functional>
-
-// This is not optimal to be here but SimpleAnimation would have to
-// rehash a string each frame
-#include "OgreIdString.h"
 
 namespace Leviathan {
 
@@ -77,28 +73,35 @@ public:
     using StateT = PositionState;
 };
 
-//! \brief Entity has an Ogre scene node
+//! \brief Entity has a scene node
 //! \note By default this is not marked. If you change Hidden set as marked to
 //! update Node state
 class RenderNode : public Component {
 public:
-    DLLEXPORT RenderNode(Ogre::SceneManager* scene);
+    DLLEXPORT RenderNode(bs::Scene* scene);
 
     //! Test version that doesn't need a valid scene manager
     DLLEXPORT RenderNode(const Test::TestComponentCreation& test);
 
     //! \brief Gracefully releases while world is still valid
-    DLLEXPORT void Release(Ogre::SceneManager* worldsscene);
+    DLLEXPORT void Release(bs::Scene* worldsscene);
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(RenderNode);
 
-    Ogre::SceneNode* Node = nullptr;
+    bs::HSceneObject Node;
 
     //! Sets objects attached to the node to be hidden or visible
     bool Hidden = false;
 
     //! Sets the scale of the node
     Float3 Scale = Float3(1, 1, 1);
+
+    // TODO: implement
+    //! Attaches this node to this parent (if null entity then attached to the scene root)
+    // ObjectID ParentEntity = NULL_OBJECT;
+
+    //! Don't touch
+    bs::Scene Scene;
 
     static constexpr auto TYPE = COMPONENT_TYPE::RenderNode;
 };
@@ -219,8 +222,8 @@ public:
     //! Rendering surface material name
     std::string Material;
 
-    //! Entity created from a box mesh
-    Ogre::Item* GraphicalObject = nullptr;
+    // //! Entity created from a box mesh
+    // Ogre::Item* GraphicalObject = nullptr;
 
     static constexpr auto TYPE = COMPONENT_TYPE::BoxGeometry;
 };
@@ -228,24 +231,28 @@ public:
 //! \brief Entity has a model
 class Model : public Component {
 public:
-    DLLEXPORT Model(
-        Ogre::SceneManager* scene, Ogre::SceneNode* parent, const std::string& meshname);
+    DLLEXPORT Model(bs::Scene* scene, RenderNode& parent, const std::string& meshname,
+        const bs::HMaterial& material);
 
-    //! \brief Destroys GraphicalObject
-    DLLEXPORT void Release(Ogre::SceneManager* scene);
+    DLLEXPORT void Release();
+
+    DLLEXPORT void ApplyMeshName();
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Model);
 
     //! The entity that has this model's mesh loaded
-    Ogre::Item* GraphicalObject = nullptr;
+    bs::HRenderable GraphicalObject;
 
     //! \note Changing this currently does nothing
     std::string MeshName;
 
+    //! Material set on the object
+    bs::HMaterial Material;
+
     static constexpr auto TYPE = COMPONENT_TYPE::Model;
 };
 
-//! \brief Contains an nimation for Animated component
+//! \brief Contains an animation for Animated component
 struct SimpleAnimation {
 
     DLLEXPORT inline SimpleAnimation(const std::string& name) : Name(name), ReadableName(name)
@@ -267,7 +274,7 @@ struct SimpleAnimation {
         Paused = other.Paused;
     }
 
-    const Ogre::IdString Name;
+    const std::string Name;
 
     //! Readable version of Name as it is hashed
     const std::string ReadableName;
@@ -283,12 +290,14 @@ struct SimpleAnimation {
 //! \brief Entity plays animations on an Ogre::Item
 class Animated : public Component {
 public:
-    DLLEXPORT Animated(Ogre::Item* item) : Component(TYPE), GraphicalObject(item) {}
+    DLLEXPORT Animated(RenderNode& node);
 
-    REFERENCE_HANDLE_UNCOUNTED_TYPE(Model);
+    DLLEXPORT void Release();
 
-    //! The entity that is played animations on
-    Ogre::Item* GraphicalObject = nullptr;
+    REFERENCE_HANDLE_UNCOUNTED_TYPE(Animated);
+
+    //! Created animation component for this entity
+    bs::HAnimation Animation;
 
     //! Playing animations
     //! \note When adding or removing (or changing
@@ -298,33 +307,33 @@ public:
     static constexpr auto TYPE = COMPONENT_TYPE::Animated;
 };
 
-//! \brief Plane component
-//!
-//! Creates a static mesh for this
-class Plane : public Component {
-public:
-    DLLEXPORT Plane(Ogre::SceneManager* scene, Ogre::SceneNode* parent,
-        const std::string& material, const Ogre::Plane& plane, const Float2& size,
-        const Ogre::Vector3& uvupvector = Ogre::Vector3::UNIT_Y);
+// //! \brief Plane component
+// //!
+// //! Creates a static mesh for this
+// class Plane : public Component {
+// public:
+//     DLLEXPORT Plane(bs::Scene* scene, Ogre::SceneNode* parent,
+//         const std::string& material, const Ogre::Plane& plane, const Float2& size,
+//         const Ogre::Vector3& uvupvector = Ogre::Vector3::UNIT_Y);
 
-    //! \brief Destroys GraphicalObject
-    DLLEXPORT void Release(Ogre::SceneManager* scene);
+//     //! \brief Destroys GraphicalObject
+//     DLLEXPORT void Release(bs::Scene* scene);
 
-    REFERENCE_HANDLE_UNCOUNTED_TYPE(Plane);
+//     REFERENCE_HANDLE_UNCOUNTED_TYPE(Plane);
 
-    //! The plane that this component creates
-    Ogre::Item* GraphicalObject = nullptr;
+//     //! The plane that this component creates
+//     Ogre::Item* GraphicalObject = nullptr;
 
-    const std::string GeneratedMeshName;
+//     const std::string GeneratedMeshName;
 
-    // Changing any of these does nothing
-    std::string Material;
-    Ogre::Plane PlaneDefinition;
-    Float2 Size;
-    Float3 UpVector;
+//     // Changing any of these does nothing
+//     std::string Material;
+//     Ogre::Plane PlaneDefinition;
+//     Float2 Size;
+//     Float3 UpVector;
 
-    static constexpr auto TYPE = COMPONENT_TYPE::Plane;
-};
+//     static constexpr auto TYPE = COMPONENT_TYPE::Plane;
+// };
 
 
 //! \brief Entity has a physical component
@@ -391,6 +400,7 @@ public:
         ObjectID id;
         //! \todo Remove if this is still unneeded
         GameWorld* world;
+        //! \todo Replace this with automatically retrieved Position component from this entity
         Position& updatepos;
     };
 
@@ -482,24 +492,24 @@ public:
     static constexpr auto TYPE = COMPONENT_TYPE::Physics;
 };
 
-class ManualObject : public Component {
-public:
-    DLLEXPORT ManualObject(Ogre::SceneManager* scene);
+// class ManualObject : public Component {
+// public:
+//     DLLEXPORT ManualObject(bs::Scene* scene);
 
-    DLLEXPORT void Release(Ogre::SceneManager* scene);
+//     DLLEXPORT void Release(bs::Scene* scene);
 
-    REFERENCE_HANDLE_UNCOUNTED_TYPE(ManualObject);
+//     REFERENCE_HANDLE_UNCOUNTED_TYPE(ManualObject);
 
-    Ogre::ManualObject* Object = nullptr;
+//     Ogre::ManualObject* Object = nullptr;
 
-    //! When not empty the ManualObject has been created into an actual mesh
-    //! that needs to be destroyed on release
-    //! \note The Object can be directly added to a scene so this may be empty even
-    //! if the Object is created
-    std::string CreatedMesh;
+//     //! When not empty the ManualObject has been created into an actual mesh
+//     //! that needs to be destroyed on release
+//     //! \note The Object can be directly added to a scene so this may be empty even
+//     //! if the Object is created
+//     std::string CreatedMesh;
 
-    static constexpr auto TYPE = COMPONENT_TYPE::ManualObject;
-};
+//     static constexpr auto TYPE = COMPONENT_TYPE::ManualObject;
+// };
 
 
 // class Parent : public Component{
@@ -646,7 +656,7 @@ public:
 // 	DLLEXPORT bool SetTrailProperties(const Properties &variables, bool force = false);
 
 //     //! \brief Destroys the TrailEntity
-//     DLLEXPORT void Release(Ogre::SceneManager* scene);
+//     DLLEXPORT void Release(bs::Scene* scene);
 
 //     //! The trail entity which is attached at the root scene node and follows our RenderNode
 //     //! component around
@@ -699,18 +709,16 @@ public:
 class Camera : public Component {
 public:
     //! \brief Creates at specific position
-    inline Camera(uint8_t fovy = 60, bool soundperceiver = true) :
-        Component(TYPE), FOVY(fovy), SoundPerceiver(soundperceiver)
+    //! \version This now takes the horizontal instead of vertical FOV
+    inline Camera(uint8_t fov = 90, bool soundperceiver = true) :
+        Component(TYPE), FOV(fov), SoundPerceiver(soundperceiver)
     {}
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Camera);
 
-    //! Y-axis based field of view.
-    //! \warning This is different than the usual x-axis based field of view!
-    //! See the Ogre manual for details: Ogre::Frustum::setFOVy (const Radian & fovy )
-    //!
-    //! Normal range is 45 to 60
-    uint8_t FOVY;
+    //! Horizontal (ie. "normal") field of view
+    uint16_t FOV;
+
     bool SoundPerceiver;
     // TODO: orthographic
     // bool Orthographic;

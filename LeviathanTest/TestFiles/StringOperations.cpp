@@ -674,9 +674,10 @@ TEST_CASE("StringOperations URL cut to path removes options", "[string][url]")
 
     CHECK(StringOperations::URLPath("http://google.fi/index.html?") == "index.html");
 
-    SECTION("It can be disabled"){
+    SECTION("It can be disabled")
+    {
         CHECK(StringOperations::URLPath("http://google.fi/index.html?lang=something", false) ==
-            "index.html?lang=something");
+              "index.html?lang=something");
     }
 }
 
@@ -710,5 +711,27 @@ TEST_CASE("StringOperations RemoveEnding", "[string]")
 
         CHECK(StringOperations::RemoveEnding<std::string>(
                   "my string that ends with this", "i") == "my string that ends with this");
+    }
+}
+
+TEST_CASE("StringOperations RemovePrefix", "[string]")
+{
+    SECTION("Single character")
+    {
+        CHECK(StringOperations::RemovePrefix<std::string>("my string", "m") == "y string");
+    }
+
+    SECTION("Short string")
+    {
+        CHECK(StringOperations::RemovePrefix<std::string>(
+                  "my string that ends with this", "my ") == "string that ends with this");
+    }
+
+    SECTION("Not removing anything")
+    {
+        CHECK(StringOperations::RemovePrefix<std::string>("my string", "y") == "my string");
+
+        CHECK(StringOperations::RemovePrefix<std::string>("my string that ends with this",
+                  "y string") == "my string that ends with this");
     }
 }

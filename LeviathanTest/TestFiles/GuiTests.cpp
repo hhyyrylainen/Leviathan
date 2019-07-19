@@ -12,29 +12,30 @@ using namespace Leviathan::Test;
 using namespace Leviathan::GUI;
 
 
-TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired][ogre]"){
-    
-    // TODO: add leviathan intro video that can be attempted to be opened
+// TEST_CASE("Leviathan VideoPlayer loads correctly", "[gui][video][xrequired][ogre]")
+// {
 
-    // Requires audio
-    SoundDevice sound;
-    
-    PartialEngineWithOgre engine(nullptr, &sound);
-    engine.Log.IgnoreWarnings = true;
+//     // TODO: add leviathan intro video that can be attempted to be opened
 
-    REQUIRE(sound.Init(false, true));
-    
-    VideoPlayer player;
+//     // Requires audio
+//     SoundDevice sound;
 
-    REQUIRE(player.Play("Data/Videos/SampleVideo.mkv"));
+//     PartialEngineWithBSF engine(nullptr, &sound);
+//     engine.Log.IgnoreWarnings = true;
 
-    CHECK(player.GetDuration() == 10.336f);
+//     REQUIRE(sound.Init(false, true));
 
-    CHECK(player.GetVideoWidth() == 1920);
-    CHECK(player.GetVideoHeight() == 1080);
-    CHECK(player.IsStreamValid());
+//     VideoPlayer player;
 
-    player.Stop();
+//     REQUIRE(player.Play("Data/Videos/SampleVideo.mkv"));
 
-    sound.Release();
-}
+//     CHECK(player.GetDuration() == 10.336f);
+
+//     CHECK(player.GetVideoWidth() == 1920);
+//     CHECK(player.GetVideoHeight() == 1080);
+//     CHECK(player.IsStreamValid());
+
+//     player.Stop();
+
+//     sound.Release();
+// }

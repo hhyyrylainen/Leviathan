@@ -707,6 +707,16 @@ public:
     }
 
     template<class StringTypeN>
+    static StringTypeN RemovePrefix(const StringTypeN& data, const StringTypeN& prefix)
+    {
+        if(data.find(prefix) == 0) {
+            return data.substr(prefix.size());
+        } else {
+            return data;
+        }
+    }
+
+    template<class StringTypeN>
     static StringTypeN StitchTogether(
         const std::vector<StringTypeN*>& data, const StringTypeN& separator)
     {

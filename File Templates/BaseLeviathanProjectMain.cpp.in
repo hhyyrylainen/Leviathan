@@ -122,12 +122,6 @@ int main(int argcount, char* args[]){
     }
     // This is the main process, continue normally //
     
-#ifndef _WIN32
-    // We need to skip the program name
-    args += 1;
-    --argcount;
-#endif // _WIN32
-    
 #ifdef _WIN32
     HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 

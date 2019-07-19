@@ -55,7 +55,7 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     // }
 
     if(engine->RegisterObjectMethod(classname,
-           "Ogre::Ray CastRayFromCamera(float x, float y) const",
+           "bs::Ray CastRayFromCamera(float x, float y) const",
            asMETHOD(WorldType, CastRayFromCamera), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -106,7 +106,7 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     // ------------------------------------ //
-    if(engine->RegisterObjectMethod(classname, "Ogre::SceneManager@ GetScene()",
+    if(engine->RegisterObjectMethod(classname, "bs::Scene GetScene()",
            asMETHOD(WorldType, GetScene), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -123,14 +123,14 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod(classname,
-           "void SetLightProperties(const Ogre::ColourValue &in diffuse, const "
-           "Ogre::ColourValue &in specular, const Ogre::Vector3 &in direction, float power, "
-           "const Ogre::ColourValue &in upperhemisphere, const Ogre::ColourValue &in "
-           "lowerhemisphere, const Ogre::Vector3 &in hemispheredir, float envmapscale = 1.0f)",
-           asMETHOD(WorldType, SetLightProperties), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectMethod(classname,
+    //        "void SetLightProperties(const Ogre::ColourValue &in diffuse, const "
+    //        "Ogre::ColourValue &in specular, const Ogre::Vector3 &in direction, float power,
+    //        " "const Ogre::ColourValue &in upperhemisphere, const Ogre::ColourValue &in "
+    //        "lowerhemisphere, const Ogre::Vector3 &in hemispheredir, float envmapscale
+    //        = 1.0f)", asMETHOD(WorldType, SetLightProperties), asCALL_THISCALL) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     // ------------------------------------ //
     // These are inefficient versions of the get methods, prefer the ones in derived classes

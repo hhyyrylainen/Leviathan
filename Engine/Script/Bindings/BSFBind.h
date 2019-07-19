@@ -1,10 +1,10 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 #include "BindHelpers.h"
 
 namespace Leviathan {
 
-bool BindOgre(asIScriptEngine* engine);
+bool BindBSF(asIScriptEngine* engine);
 }

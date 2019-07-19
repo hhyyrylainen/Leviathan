@@ -1,9 +1,9 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "OgreMesh2.h"
+#include "bsfCore/Mesh/BsMesh.h"
 
 namespace Leviathan {
 
@@ -16,8 +16,8 @@ public:
     //! so a full screen quad would be CreateScreenSpaceQuad(-1, -1, 2, 2)
     //! \param meshname The name of the created mesh, must be unique
     //! \todo Parameter to specify if shadow geometry is needed
-    DLLEXPORT static Ogre::MeshPtr CreateScreenSpaceQuad(
-        const std::string& meshname, float x, float y, float width, float height);
+    DLLEXPORT static bs::HMesh CreateScreenSpaceQuad(
+        float x, float y, float width, float height);
 
     //! \brief Creates a plane with specific size and UV coordinates with 0, 0 on top left
     //!
@@ -25,9 +25,8 @@ public:
     //! to make it easier to calculate
     //! \todo Merge the shared code with CreateScreenSpaceQuad
     //! \todo This needs to be verified that this generates good geometry (currently crashes
-    //! when recorded with RenderDoc)
-    DLLEXPORT static Ogre::MeshPtr CreateXZPlane(
-        const std::string& meshname, float width, float height);
+    //! when recorded with RenderDoc). This might be outdated note after bsf
+    DLLEXPORT static bs::HMesh CreateXZPlane(float width, float height);
 
     GeometryHelpers() = delete;
 };

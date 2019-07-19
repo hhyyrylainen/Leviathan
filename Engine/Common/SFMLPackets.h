@@ -15,10 +15,10 @@
 //! \todo Make this work
 #define SFML_HAS_64_BIT_VALUES_PACKET
 
-namespace Ogre {
-class Plane;
+namespace bs {
 class Vector3;
-} // namespace Ogre
+class Plane;
+} // namespace bs
 
 namespace Leviathan {
 
@@ -45,11 +45,11 @@ DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const sf::Packet& packetinn
 DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, sf::Packet& packetinner);
 
 // ------------------------------------ //
-// Ogre types
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Ogre::Vector3& data);
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Ogre::Vector3& data);
+// BSF types
+DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Vector3& data);
+DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Vector3& data);
 
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Ogre::Plane& data);
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Ogre::Plane& data);
+DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Plane& data);
+DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Plane& data);
 
 } // namespace Leviathan

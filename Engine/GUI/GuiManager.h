@@ -6,6 +6,8 @@
 #include "Application/AppDefine.h"
 #include "Common/ThreadSafe.h"
 
+#include "bsfCore/BsCorePrerequisites.h"
+
 #include <boost/intrusive_ptr.hpp>
 
 namespace Leviathan { namespace GUI {
@@ -83,9 +85,14 @@ public:
     //! activation buttons)
     DLLEXPORT void SetDisableMouseCapture(bool newvalue);
 
+    //! This is a temporary thing to just render a few image layers with BSF
+    DLLEXPORT void NotifyAboutLayer(int layernumber, const bs::HTexture& texture);
+
 protected:
     //! Is called by folder listeners to notify of Gui file changes
     void _FileChanged(const std::string& file, ResourceFolderListener& caller);
+
+    void _SendChangedLayers() const;
 
 private:
     //! Set when containing window of the GUI shouldn't be allowed to capture mouse
@@ -118,6 +125,9 @@ private:
     bool DisableGuiMouseCapture = false;
 
     std::unique_ptr<CutscenePlayStatus> CurrentlyPlayingCutscene;
+
+    //! Temporary layers for sending to BSF overlay renderer
+    std::map<int, bs::HTexture> TempRenderedLayers;
 };
 
 }} // namespace Leviathan::GUI

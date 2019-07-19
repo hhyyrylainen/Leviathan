@@ -10,16 +10,10 @@
 #include "WindowsInclude.h"
 #endif
 
+#include "bsfCore/RenderAPI/BsRenderWindow.h"
+
 #include <atomic>
 #include <memory>
-
-namespace Ogre {
-
-class RenderWindow;
-class Camera;
-class CompositorWorkspace;
-} // namespace Ogre
-
 
 struct SDL_Window;
 struct SDL_Keysym;
@@ -38,6 +32,8 @@ enum class INPUT_EVENT_TYPE : int;
 //! \todo Implement global lock for input handling
 //! \todo This should be handled through shared_ptr
 class Window {
+    struct BSFResources;
+
 public:
     //! \exception InvalidArgument if creation fails
     DLLEXPORT Window(Graphics* windowcreater, AppDef* windowproperties);
@@ -129,8 +125,12 @@ public:
 #ifdef _WIN32
     DLLEXPORT HWND GetNativeHandle() const;
 #else
-    DLLEXPORT uint32_t GetNativeHandle() const;
+    DLLEXPORT unsigned long GetNativeHandle() const;
 #endif //_WIN32
+
+#if defined(__linux)
+    DLLEXPORT unsigned long GetWindowXDisplay() const;
+#endif
 
     //! \brief Returns whether this window is focused
     //! \return True when the window has focus
@@ -162,9 +162,10 @@ public:
         return TertiaryReceiver.get();
     }
     DLLEXPORT inline bool GetVsync() const;
-    DLLEXPORT inline Ogre::RenderWindow* GetOgreWindow() const
+
+    DLLEXPORT inline const auto& GetBSFWindow() const
     {
-        return OWindow;
+        return BSFWindow;
     }
 
     //! Returns this windows creation number
@@ -225,6 +226,8 @@ private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
 
+    bs::SPtr<bs::RenderWindow> BSFWindow;
+
     //! This is retrieved from GuiManager at the start of a sequence of inputs based
     //! on the mouse position. The property of GUI_INPUT_MODE will determine how the input
     //! is passed
@@ -267,12 +270,10 @@ private:
     int WantedX11Cursor = 0;
 #endif //__linux
 
-    Ogre::RenderWindow* OWindow = nullptr;
     std::shared_ptr<InputController> TertiaryReceiver;
     std::unique_ptr<GUI::GuiManager> WindowsGui;
 
     //! Unique id of this window.
-    //! Makes sure that created Ogre resources are unique
     int ID;
 
     //! Used to do input setup each time some input is received
@@ -288,6 +289,10 @@ private:
     int WindowNumber;
 
     bool MouseCaptureState = false;
+
+    //! Per-window BSF resources
+    std::unique_ptr<BSFResources> _BSFResources;
+
     //! \todo This should probably be atomic
     static Window* InputCapturer;
 };

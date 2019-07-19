@@ -63,6 +63,12 @@ constexpr float RADIANS_TO_DEGREES = 180.f / PI;
 constexpr float EPSILON = 0.00000001f;
 } // namespace Leviathan
 
+// This is here until bsf implements separate scenes
+namespace bs {
+using Scene = int32_t;
+}
+
+
 // AngelScript type registration (that isn't ReferenceCounted)
 #ifdef LEVIATHAN_USING_ANGELSCRIPT
 #define REFERENCE_HANDLE_UNCOUNTED_TYPE(x) static constexpr auto ANGELSCRIPT_TYPE = #x "@";

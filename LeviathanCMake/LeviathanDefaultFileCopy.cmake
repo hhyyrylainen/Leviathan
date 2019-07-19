@@ -26,9 +26,9 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   file(GLOB DataMoveFiles "${LEVIATHAN_SRC}/bin/Data/*")
   file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
 
+  
   # The script files folder
   install(DIRECTORY "Scripts" DESTINATION bin/Data)
-  install(DIRECTORY "CoreOgreScripts" DESTINATION bin)
   # we need to specifically install the directories
   install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
   install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
@@ -46,11 +46,11 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
 endif()
 
 if(NOT ONLY_DOCUMENTATION)
-  # Copy the crucial Ogre scripts
-  file(GLOB CoreOgreScriptsMoveFiles "${LEVIATHAN_SRC}/bin/CoreOgreScripts/*")
-  file(COPY ${CoreOgreScriptsMoveFiles} DESTINATION
-    "${PROJECT_BINARY_DIR}/bin/CoreOgreScripts")
-  install(DIRECTORY "${LEVIATHAN_SRC}/bin/CoreOgreScripts" DESTINATION "bin")
+
+  # Copy core BSF files
+  file(GLOB BSF_DATA_FILES "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/*")
+  file(COPY ${BSF_DATA_FILES} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
+  # TODO: install for bsf files
 
   # And core shaders and materials
   file(COPY "${LEVIATHAN_SRC}/bin/Data/Shaders/CoreShaders" DESTINATION

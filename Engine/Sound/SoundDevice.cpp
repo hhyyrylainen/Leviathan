@@ -130,12 +130,13 @@ DLLEXPORT void SoundDevice::SetSoundListenerPosition(
 
     ListeningPosition->move(cAudio::cVector3(pos.X, pos.Y, pos.Z));
 
-    Ogre::Quaternion quaternion(orientation);
+    bs::Quaternion quaternion(orientation);
 
-    Ogre::Radian angle;
-    Ogre::Vector3 direction;
+    bs::Radian angle;
+    bs::Vector3 direction;
 
-    quaternion.ToAngleAxis(angle, direction);
+    // TODO: does this do the right thing?
+    quaternion.toAxisAngle(direction, angle); // toAngleAxis(angle, direction);
 
     ListeningPosition->setDirection(cAudio::cVector3(direction.x, direction.y, direction.z));
 }

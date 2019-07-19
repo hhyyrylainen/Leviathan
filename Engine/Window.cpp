@@ -24,12 +24,8 @@
 #include "XLibInclude.h"
 #endif
 
-
-#include "OgreCommon.h"
-#include "OgreRenderWindow.h"
-#include "OgreRoot.h"
-#include "OgreStringConverter.h"
-#include "OgreVector4.h"
+#include "Components/BsCCamera.h"
+#include "Scene/BsSceneObject.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -39,6 +35,14 @@
 // ------------------------------------ //
 
 namespace Leviathan {
+
+struct Window::BSFResources {
+public:
+    // A window always needs to have some camera rendering to it to make the GUI renderer work
+    bs::HSceneObject WindowSceneObject;
+    bs::HCamera WindowCamera;
+};
+
 
 Window* Window::InputCapturer = nullptr;
 
@@ -54,31 +58,34 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 
     const WindowDataDetails& WData = windowproperties->GetWindowDetails();
 
-    // set some rendering specific parameters //
-    Ogre::NameValuePairList WParams;
+    // TODO: FSAA (if MSAA is disabled)
 
-    // variables //
-    Ogre::String fsaastr = Convert::ToString(WData.FSAA);
+    // // set some rendering specific parameters //
+    // Ogre::NameValuePairList WParams;
 
-    // Context needs to be reused for multiple windows
-    if(OpenWindowCount > 0) {
+    // // variables //
+    // Ogre::String fsaastr = Convert::ToString(WData.FSAA);
 
-        LOG_INFO("Window: using existing GLX context for creating");
+    // // Context needs to be reused for multiple windows
+    // if(OpenWindowCount > 0) {
 
-        WParams["currentGLContext"] = "true";
+    //     LOG_INFO("Window: using existing GLX context for creating");
 
-        // Needs to be forced off to not cause issues like vsyncing each window separately and
-        // dropping to "monitor refresh rate / window count" fps
-        WParams["vsync"] = "false";
+    //     WParams["currentGLContext"] = "true";
 
-    } else {
-        WParams["vsync"] = WData.VSync ? "true" : "false";
-    }
+    //     // Needs to be forced off to not cause issues like vsyncing each window separately
+    //     and
+    //     // dropping to "monitor refresh rate / window count" fps
+    //     WParams["vsync"] = "false";
 
-    WParams["FSAA"] = fsaastr;
-    WParams["gamma"] = WData.UseGamma ? "true" : "false";
+    // } else {
+    //     WParams["vsync"] = WData.VSync ? "true" : "false";
+    // }
 
-    Ogre::String wcaption = WData.Title;
+    // WParams["FSAA"] = fsaastr;
+    // WParams["gamma"] = WData.UseGamma ? "true" : "false";
+
+    // Ogre::String wcaption = WData.Title;
 
     int extraFlags = 0;
 
@@ -97,7 +104,7 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // High DPI OpenGL
     // canvas. https://wiki.libsdl.org/SDL_CreateWindow
 
-    SDL_Window* sdlWindow = SDL_CreateWindow(WData.Title.c_str(),
+    SDLWindow = SDL_CreateWindow(WData.Title.c_str(),
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber),
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber), WData.Width, WData.Height,
         // This seems to cause issues on Windows
@@ -111,64 +118,31 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // SDL_WINDOWPOS_UNDEFINED_DISPLAY(x)
     // SDL_WINDOWPOS_CENTERED_DISPLAY(x)
 
-    if(!sdlWindow) {
+    if(!SDLWindow) {
 
         LOG_FATAL("SDL Window creation failed, error: " + std::string(SDL_GetError()));
     }
 
-    // SDL_GLContext glContext = SDL_GL_CreateContext(sdlWindow);
+    // SDL_GLContext glContext = SDL_GL_CreateContext(SDLWindow);
 
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
-    if(!SDL_GetWindowWMInfo(sdlWindow, &wmInfo)) {
+    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
 
         LOG_FATAL("Window: created sdl window failed to retrieve info");
     }
 
-#ifdef _WIN32
-    auto winHandle = reinterpret_cast<size_t>(wmInfo.info.win.window);
-    // WParams["parentWindowHandle"] = Ogre::StringConverter::toString(winHandle);
-    // This seems to be the right name on windows
-    WParams["externalWindowHandle"] = Ogre::StringConverter::toString(winHandle);
-    // externalWindowHandle
-#else
-    WParams["parentWindowHandle"] =
-        Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.display) + ":" +
-        Ogre::StringConverter::toString(
-            (unsigned int)XDefaultScreen(wmInfo.info.x11.display)) +
-        ":" + Ogre::StringConverter::toString((unsigned long)wmInfo.info.x11.window);
+    BSFWindow = windowcreater->RegisterCreatedWindow(*this);
 
-#endif
-
-    Ogre::RenderWindow* tmpwindow;
-
-    try {
-        tmpwindow = windowcreater->GetOgreRoot()->createRenderWindow(
-            wcaption, WData.Width, WData.Height, false, &WParams);
-    } catch(const Ogre::RenderingAPIException& e) {
-
-        LOG_ERROR("Failed to create Ogre window, exception: " + std::string(e.what()));
-        throw;
+    if(!BSFWindow) {
+        throw Exception("Failed to create bsf window");
     }
 
-    int windowsafter = ++OpenWindowCount;
-
-    // Do some first window initialization //
-    if(windowsafter == 1) {
-
-        // Notify engine to register threads to work with Ogre //
-        Engine::GetEngine()->_NotifyThreadsRegisterOgre();
-
-        // Hlms is needed to parse scripts etc.
-        windowcreater->_LoadOgreHLMS();
-
-        FileSystem::RegisterOGREResourceGroups();
-    }
+    ++OpenWindowCount;
 
     // Store this window's number
     WindowNumber = ++TotalCreatedWindows;
 
-    OWindow = tmpwindow;
 
 #ifdef _WIN32
     // Fetch the windows handle from SDL //
@@ -185,11 +159,25 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 #else
     // \todo linux icon
 #endif
-    tmpwindow->setDeactivateOnFocusChange(false);
+    // tmpwindow->setDeactivateOnFocusChange(false);
 
     // set the new window to be active //
-    tmpwindow->setActive(true);
+    // tmpwindow->setActive(true);
     Focused = true;
+
+    _BSFResources = std::make_unique<BSFResources>();
+
+    // Create and attach our camera to the window
+    {
+        _BSFResources->WindowSceneObject = bs::SceneObject::create("window no world camera");
+        _BSFResources->WindowCamera =
+            _BSFResources->WindowSceneObject->addComponent<bs::CCamera>();
+        _BSFResources->WindowCamera->getViewport()->setClearColorValue(Float4(0, 0, 0, 1));
+        _BSFResources->WindowSceneObject->setPosition(Float3(40.0f, 30.0f, 230.0f));
+        _BSFResources->WindowSceneObject->lookAt(Float3(0, 0, 0));
+
+        _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
+    }
 
     // create GUI //
     WindowsGui = std::make_unique<GUI::GuiManager>();
@@ -208,8 +196,6 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // create receiver interface //
     TertiaryReceiver = std::shared_ptr<InputController>(new InputController());
 
-    SDLWindow = sdlWindow;
-
     // TODO: this needs to be only used when a text box etc. is used
     // But that is quite hard to detect
     SDL_StartTextInput();
@@ -220,6 +206,8 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 
 DLLEXPORT Window::~Window()
 {
+    _BSFResources.reset();
+
     // GUI is very picky about delete order
     if(WindowsGui) {
         WindowsGui->Release();
@@ -243,11 +231,14 @@ DLLEXPORT Window::~Window()
         "Window: closing window(" + Convert::ToString(GetWindowNumber()) + ")");
 
     // Close the window //
-    OWindow->destroy();
+    // OWindow->destroy();
 
     TertiaryReceiver.reset();
 
     int windowsafter = --OpenWindowCount;
+
+    BSFWindow->destroy();
+    BSFWindow.reset();
 
     if(windowsafter == 0) {
 
@@ -255,10 +246,10 @@ DLLEXPORT Window::~Window()
                             "should quit soon");
     }
 
-    LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
-              "GLX plugin uninstall");
-    // SDL_DestroyWindow(SDLWindow);
-    SDL_HideWindow(SDLWindow);
+    // LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
+    //           "GLX plugin uninstall");
+    SDL_DestroyWindow(SDLWindow);
+    // SDL_HideWindow(SDLWindow);
     SDLWindow = nullptr;
 }
 // ------------------------------------ //
@@ -269,14 +260,19 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
 
     if(LinkedWorld) {
 
-        LinkedWorld->OnUnLinkedFromWindow(this, Graphics::Get()->GetOgreRoot());
+        LinkedWorld->OnUnLinkedFromWindow(this, Engine::Get()->GetGraphics());
+    } else {
+        _BSFResources->WindowCamera->getViewport()->setTarget(nullptr);
     }
 
     LinkedWorld = world;
 
     if(LinkedWorld) {
 
-        LinkedWorld->OnLinkToWindow(this, Graphics::Get()->GetOgreRoot());
+        LinkedWorld->OnLinkToWindow(this, Engine::Get()->GetGraphics());
+    } else {
+
+        _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
     }
 }
 
@@ -299,31 +295,17 @@ DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
     // Update GUI before each frame //
     WindowsGui->Render();
 
-    // update window //
-    Ogre::RenderWindow* tmpwindow = GetOgreWindow();
-
-    // finish rendering the window //
-
-    // We don't actually want to swap buffers here because the Engine
-    // method that called us will call Ogre::Root::renderOneFrame
-    // after Render has been called on all active windows, so if we
-    // have this call here we may do double swap depending on the
-    // drivers.
-    // tmpwindow->swapBuffers();
-
+    // BSF does it's own rendering handling
     return true;
 }
 
 DLLEXPORT void Window::OnResize(int width, int height)
 {
-// Notify Ogre //
-// This causes issues on Windows
-#ifdef __linux__
-    GetOgreWindow()->resize(width, height);
-#endif
-    GetOgreWindow()->windowMovedOrResized();
+    // Notify bsf
+    // TODO: something better, this is very fiddly
+    BSFWindow->resize(width, height);
 
-    // send to GUI //
+    // Send to GUI //
     WindowsGui->OnResize();
 }
 
@@ -862,7 +844,6 @@ DLLEXPORT void Window::GetUnclampedRelativeMouse(int& x, int& y) const
 
 DLLEXPORT void Window::GetNormalizedRelativeMouse(float& x, float& y) const
 {
-
     int xInt, yInt;
     GetRelativeMouse(xInt, yInt);
 
@@ -917,7 +898,7 @@ DLLEXPORT uint32_t Window::GetSDLID() const
 #ifdef _WIN32
 DLLEXPORT HWND Window::GetNativeHandle() const
 #else
-DLLEXPORT uint32_t Window::GetNativeHandle() const
+DLLEXPORT unsigned long Window::GetNativeHandle() const
 #endif //_WIN32
 {
     SDL_SysWMinfo wmInfo;
@@ -941,16 +922,34 @@ DLLEXPORT uint32_t Window::GetNativeHandle() const
 #endif
 #endif
 }
+
+#if defined(__linux)
+DLLEXPORT unsigned long Window::GetWindowXDisplay() const
+{
+    SDL_SysWMinfo wmInfo;
+    SDL_VERSION(&wmInfo.version);
+    if(!SDL_GetWindowWMInfo(SDLWindow, &wmInfo)) {
+
+        LOG_FATAL("Window: GetWindowXDisplay: failed to retrieve wm info");
+        return -1;
+    }
+
+    return (unsigned long)wmInfo.info.x11.display;
+}
+#endif
 // ------------------------------------ //
 DLLEXPORT void Window::SaveScreenShot(const std::string& filename)
 {
     // uses render target's capability to save it's contents //
-    GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
+    DEBUG_BREAK;
+    // GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
 }
 
 DLLEXPORT bool Window::GetVsync() const
 {
-    return OWindow->isVSyncEnabled();
+    DEBUG_BREAK;
+    return false;
+    // return OWindow->isVSyncEnabled();
 }
 
 DLLEXPORT void Window::SetCustomInputController(std::shared_ptr<InputController> controller)

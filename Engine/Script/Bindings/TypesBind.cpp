@@ -154,14 +154,13 @@ void Int3DestructorProxy(void* memory)
 }
 
 // ------------------------------------ //
-// Ogre conversions
+// BSF conversions
 void Vector3Float3Proxy(void* memory, const Float3& vector)
 {
-
-    new(memory) Ogre::Vector3(vector);
+    new(memory) bs::Vector3(vector);
 }
 
-void Float3Vector3Proxy(void* memory, const Ogre::Vector3& vector)
+void Float3Vector3Proxy(void* memory, const bs::Vector3& vector)
 {
 
     new(memory) Float3(vector);
@@ -169,33 +168,30 @@ void Float3Vector3Proxy(void* memory, const Ogre::Vector3& vector)
 
 void QuaternionFloat4Proxy(void* memory, const Float4& vector)
 {
-
-    new(memory) Ogre::Quaternion(vector);
+    new(memory) bs::Quaternion(vector);
 }
 
-void Float4QuaternionProxy(void* memory, const Ogre::Quaternion& quat)
+void Float4QuaternionProxy(void* memory, const bs::Quaternion& quat)
 {
-
     new(memory) Float4(quat);
 }
 
-Float4 ConvertQuaternionToFloat4(Ogre::Quaternion* self)
+Float4 ConvertQuaternionToFloat4(bs::Quaternion* self)
 {
-
     return Float4(*self);
 }
 
 void Vector4Float4Proxy(void* memory, const Float4& values)
 {
-    new(memory) Ogre::Vector4(values);
+    new(memory) bs::Vector4(values);
 }
 
-void ColourValueFloat4Proxy(void* memory, const Float4& values)
+void ColorFloat4Proxy(void* memory, const Float4& values)
 {
-    new(memory) Ogre::ColourValue(values);
+    new(memory) bs::Color(values);
 }
 
-void Float4ColourValueProxy(void* memory, const Ogre::ColourValue& values)
+void Float4ColorProxy(void* memory, const bs::Color& values)
 {
     new(memory) Float4(values);
 }
@@ -365,8 +361,7 @@ bool BindFloat3(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    // Return value isn't actually void here
-    if(engine->RegisterObjectMethod("Float3", "void opDivAssign(float value)",
+    if(engine->RegisterObjectMethod("Float3", "Float3& opDivAssign(float value)",
            asMETHODPR(Float3, operator/=,(float), Float3&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -734,56 +729,56 @@ bool BindInt3(asIScriptEngine* engine)
     return true;
 }
 // ------------------------------------ //
-bool BindOgreConversions(asIScriptEngine* engine)
+bool BindBSFConversions(asIScriptEngine* engine)
 {
-    if(engine->RegisterObjectBehaviour("Ogre::Vector3", asBEHAVE_CONSTRUCT,
+    if(engine->RegisterObjectBehaviour("bs::Vector3", asBEHAVE_CONSTRUCT,
            "void f(const Float3 &in vector)", asFUNCTION(Vector3Float3Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Ogre::Vector4", asBEHAVE_CONSTRUCT,
+    if(engine->RegisterObjectBehaviour("bs::Vector4", asBEHAVE_CONSTRUCT,
            "void f(const Float4 &in values)", asFUNCTION(Vector4Float4Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Ogre::ColourValue", asBEHAVE_CONSTRUCT,
-           "void f(const Float4 &in values)", asFUNCTION(ColourValueFloat4Proxy),
+    if(engine->RegisterObjectBehaviour("bs::Color", asBEHAVE_CONSTRUCT,
+           "void f(const Float4 &in values)", asFUNCTION(ColorFloat4Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
-           "void f(const Ogre::Vector3 &in vector)", asFUNCTION(Float3Vector3Proxy),
+           "void f(const bs::Vector3 &in vector)", asFUNCTION(Float3Vector3Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Float3", "Ogre::Vector3 opImplConv() const",
-           asMETHOD(Float3, operator Ogre::Vector3), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Float3", "bs::Vector3 opImplConv() const",
+           asMETHOD(Float3, operator bs::Vector3), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Ogre::Quaternion", asBEHAVE_CONSTRUCT,
+    if(engine->RegisterObjectBehaviour("bs::Quaternion", asBEHAVE_CONSTRUCT,
            "void f(const Float4 &in vector)", asFUNCTION(QuaternionFloat4Proxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
-           "void f(const Ogre::Quaternion &in quat)", asFUNCTION(Float4QuaternionProxy),
+           "void f(const bs::Quaternion &in quat)", asFUNCTION(Float4QuaternionProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
     if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
-           "void f(const Ogre::ColourValue &in colour)", asFUNCTION(Float4ColourValueProxy),
+           "void f(const bs::Color &in colour)", asFUNCTION(Float4ColorProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Ogre::Quaternion", "Float4 opImplConv() const",
+    if(engine->RegisterObjectMethod("bs::Quaternion", "Float4 opImplConv() const",
            asFUNCTION(ConvertQuaternionToFloat4), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -793,7 +788,6 @@ bool BindOgreConversions(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindTypeDefs(asIScriptEngine* engine)
 {
-
     if(engine->RegisterTypedef("ObjectID", "int32") < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
@@ -829,7 +823,7 @@ bool Leviathan::BindTypes(asIScriptEngine* engine)
         return false;
 
 
-    if(!BindOgreConversions(engine))
+    if(!BindBSFConversions(engine))
         return false;
 
     if(!BindTypeDefs(engine))

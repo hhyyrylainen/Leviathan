@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,6 +7,8 @@
 #include "Events/CallableObject.h"
 #include "GuiLayer.h"
 #include "JSProxyable.h"
+
+#include "bsfCore/BsCorePrerequisites.h"
 
 #include "include/cef_client.h"
 #include "include/cef_context_menu_handler.h"
@@ -19,7 +21,7 @@ namespace Leviathan { namespace GUI {
 class LeviathanJavaScriptAsync;
 
 //! The default CEF scroll speed is ridiculously slow so we multiply it with this
-constexpr auto CEF_MOUSE_SCROLL_MULTIPLIER = 25.f;
+constexpr auto CEF_MOUSE_SCROLL_MULTIPLIER = 35.f;
 
 //! Controls what functions can be called from the page
 enum VIEW_SECURITYLEVEL {
@@ -67,8 +69,8 @@ public:
         VIEW_SECURITYLEVEL security = VIEW_SECURITYLEVEL_ACCESS_ALL);
     DLLEXPORT ~View();
 
-    //! \brief Must be called before using, initializes required Ogre resources
-    //! \return True when succeeds
+    //! \brief Must be called before using, initializes teh required rendering resources
+    //! \return True on success
     DLLEXPORT bool Init(const std::string& filetoload, const NamedVars& headervars);
 
     DLLEXPORT inline INPUT_MODE GetInputMode() const override
@@ -307,18 +309,8 @@ protected:
     std::map<int, JSProxyable::pointer> ProxyedObjects;
 
     // Rendering resources
-    //! Name of the Ogre texture
-    const std::string TextureName;
-
-    //! Name of the Ogre material
-    const std::string MaterialName;
-
-    Ogre::SceneNode* Node = nullptr;
-    Ogre::Item* QuadItem;
-    Ogre::MeshPtr QuadMesh;
-
-    //! The direct texture pointer
-    Ogre::TexturePtr Texture;
+    bs::HTexture Texture;
+    bs::SPtr<bs::PixelData> DataBuffer;
 };
 
 }} // namespace Leviathan::GUI

@@ -27,7 +27,7 @@ if(TRUE)
   set(Boost_ADDITIONAL_VERSIONS "1.66")
 
   # Other than these that are required are header-only libraries
-  set(LEVIATHAN_BOOST_COMPONENTS system filesystem)
+  set(LEVIATHAN_BOOST_COMPONENTS system filesystem program_options)
   
   # set(Boost_DEBUG ON)  
   find_package(Boost COMPONENTS ${LEVIATHAN_BOOST_COMPONENTS})
@@ -81,12 +81,10 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
     # Needed for CEF
     "${LEVIATHAN_SRC}/build/ThirdParty/"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE"
-    # Ogre now needs these to also be include directories
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Common"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Pbs"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/OGRE/Hlms/Unlit"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bullet"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfEngine"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfCore"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfUtility"
     )
 
   # Find SDL2
@@ -104,12 +102,12 @@ if(LEVIATHAN_USING_DEPENDENCIES)
 
   list(APPEND LEVIATHAN_ENGINE_LIBRARIES
     LinearMath BulletDynamics Bullet3Dynamics BulletCollision
-    OgreMain OgreHlmsUnlit OgreHlmsPbs
     sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
     cAudio
     ${SDL2_LIBRARY} AngelScriptAddons
+    bsf
     )
 
 
@@ -145,8 +143,7 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
   # endif()  
   
-  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES OgreMain
-    OgreHlmsUnlit OgreHlmsPbs
+  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES bsf
     sfml-system sfml-network AngelScriptAddons)
   
 endif()

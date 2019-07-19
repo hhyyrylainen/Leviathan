@@ -1,37 +1,20 @@
 // ------------------------------------ //
 #include "ThreadingManager.h"
 
-#ifdef LEVIATHAN_USING_OGRE
-#include "OgreRoot.h"
-#endif // LEVIATHAN_USING_OGRE
-#include "../Statistics/TimingMonitor.h"
-#include "../Utility/Convert.h"
 #include "QueuedTask.h"
+#include "Statistics/TimingMonitor.h"
+#include "Utility/Convert.h"
+
 #include <thread>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //
 
 // ------------------ Utility functions for threads to run ------------------ //
-#ifdef LEVIATHAN_USING_OGRE
-void Leviathan::RegisterOgreOnThread()
-{
+// TODO: BSF may need some handling
+void Leviathan::RegisterOgreOnThread() {}
 
-    Ogre::Root::getSingleton().getRenderSystem()->registerThread();
-    Logger::Get()->Info("Thread registered to work with Ogre");
-}
-
-DLLEXPORT void Leviathan::UnregisterOgreOnThread()
-{
-
-    // Release Ogre (if Ogre is still active) //
-    Ogre::Root* tmproot = Ogre::Root::getSingletonPtr();
-    LEVIATHAN_ASSERT(tmproot, "Calling UnregisterOgreOnThread after Ogre has been released");
-
-    tmproot->getRenderSystem()->unregisterThread();
-}
-
-#endif // LEVIATHAN_USING_OGRE
+DLLEXPORT void Leviathan::UnregisterOgreOnThread() {}
 
 // ------------------ ThreadingManager ------------------ //
 DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore
@@ -357,44 +340,14 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre()
 
     // All threads are now available //
 
-    // Call pre register function //
-#ifdef LEVIATHAN_USING_OGRE
-    Ogre::Root::getSingleton().getRenderSystem()->preExtraThreadsStarted();
-#endif // LEVIATHAN_USING_OGRE
-
-    // Set the threads to run the register methods //
-    {
-        GUARD_LOCK_NAME(lockit);
-
-#ifdef LEVIATHAN_USING_OGRE
-        for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter) {
-
-        //(*iter)->SetTaskAndNotify(
-        //   std::make_shared<QueuedTask>(std::bind(RegisterOgreOnThread)));
-        // Wait for it to end //
-#ifdef __GNUC__
-            while((*iter)->HasRunningTask()) {
-                try {
-                    TaskQueueNotify.wait_for(lockit, std::chrono::milliseconds(50));
-                } catch(...) {
-                    LOG_WARNING("ThreadingManager: MakeThreadsWorkWithOgre: "
-                                "linux fix wait interrupted");
-                }
-            }
-#endif
-        }
-#endif // LEVIATHAN_USING_OGRE
-    }
+    // TODO: if BSF thread setup is needed it should be here
 
     // Wait for threads to finish //
     FlushActiveThreads();
 
     // End registering functions //
-#ifdef LEVIATHAN_USING_OGRE
-    Ogre::Root::getSingleton().getRenderSystem()->postExtraThreadsStarted();
-#endif // LEVIATHAN_USING_OGRE
 
-    // Allow new threads //
+    // Allow new tasks to run //
     {
         GUARD_LOCK();
         AllowStartTasksFromQueue = true;
@@ -403,14 +356,11 @@ DLLEXPORT void Leviathan::ThreadingManager::MakeThreadsWorkWithOgre()
 
 DLLEXPORT void Leviathan::ThreadingManager::UnregisterGraphics()
 {
-
     // Wait for threads to finish //
     FlushActiveThreads();
 
     {
         GUARD_LOCK_NAME(lockit);
-
-#ifdef LEVIATHAN_USING_OGRE
 
         for(auto iter = UsableThreads.begin(); iter != UsableThreads.end(); ++iter) {
 
@@ -429,12 +379,11 @@ DLLEXPORT void Leviathan::ThreadingManager::UnregisterGraphics()
             // 	}
             // #endif
         }
-#endif // LEVIATHAN_USING_OGRE
     }
 
     FlushActiveThreads();
 
-    // Allow new threads //
+    // Allow new tasks to run //
     {
         GUARD_LOCK();
         AllowStartTasksFromQueue = true;

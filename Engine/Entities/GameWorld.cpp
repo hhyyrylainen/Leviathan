@@ -26,14 +26,9 @@
 
 #include "Exceptions.h"
 
-#include "Compositor/OgreCompositorManager2.h"
-#include "Compositor/OgreCompositorWorkspace.h"
-#include "OgreCamera.h"
-#include "OgreLight.h"
-#include "OgreRenderWindow.h"
-#include "OgreRoot.h"
-#include "OgreSceneManager.h"
-#include "OgreSceneNode.h"
+#include "bsfCore/Components/BsCCamera.h"
+#include "bsfCore/Components/BsCLight.h"
+#include "bsfCore/Scene/BsSceneObject.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -67,7 +62,19 @@ public:
     //! Queued entity updates. Contains the time it was received in order to throw out old ones
     std::vector<std::tuple<WantedClockType::time_point, ResponseEntityUpdate>>
         QueuedEntityUpdates;
+
+    // BSF rendering resources
+    bs::HSceneObject WorldCameraSO;
+    bs::HCamera WorldCamera;
+
+    bs::HSceneObject SunlightSO;
+    bs::HLight Sunlight;
+
+    //! A temporary solution around no multiple scenes in BSF
+    static int LayerNumber;
 };
+
+int GameWorld::Implementation::LayerNumber = 0;
 
 // ------------------------------------ //
 DLLEXPORT GameWorld::GameWorld(int32_t worldtype,
@@ -79,7 +86,7 @@ DLLEXPORT GameWorld::GameWorld(int32_t worldtype,
 
 DLLEXPORT GameWorld::~GameWorld()
 {
-    (*WorldDestroyed) = true;
+    // (*WorldDestroyed) = true;
 
     // Assert if all objects haven't been released already.
     // We can't call virtual methods here anymore
@@ -88,16 +95,16 @@ DLLEXPORT GameWorld::~GameWorld()
         Entities.empty(), "GameWorld: Entities not empty in destructor. Was Release called?");
 }
 // ------------------------------------ //
-DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Ogre::Root* ogre)
+DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Graphics* graphics)
 {
     NetworkSettings = network;
 
     // Detecting non-GUI mode //
-    if(ogre) {
+    if(graphics) {
 
         GraphicalMode = true;
         // these are always required for worlds //
-        _CreateOgreResources(ogre);
+        _CreateRenderingResources(graphics);
     } else {
 
         GraphicalMode = false;
@@ -119,7 +126,7 @@ DLLEXPORT void GameWorld::Release()
 {
     _DoSystemsRelease();
 
-    (*WorldDestroyed) = true;
+    // (*WorldDestroyed) = true;
 
     ReceivingPlayers.clear();
 
@@ -131,24 +138,10 @@ DLLEXPORT void GameWorld::Release()
     ClearEntities();
 
     if(GraphicalMode) {
-        // TODO: notify our window that it no longer has a world workspace
+        // TODO: notify our window that it no longer has anything rendering on it
         LinkedToWindow = nullptr;
 
-        // release Ogre resources //
-
-        // Destroy the compositor //
-        Ogre::Root& ogre = Ogre::Root::getSingleton();
-
-        // Allow releasing twice
-        if(WorldWorkspace) {
-            ogre.getCompositorManager2()->removeWorkspace(WorldWorkspace);
-            WorldWorkspace = nullptr;
-        }
-
-        if(WorldsScene) {
-            ogre.destroySceneManager(WorldsScene);
-            WorldsScene = nullptr;
-        }
+        _DestroyRenderingResources();
     }
 
     // This should be relatively cheap if the newton threads don't deadlock while waiting
@@ -159,128 +152,155 @@ DLLEXPORT void GameWorld::Release()
     pimpl.reset();
 }
 // ------------------------------------ //
-void GameWorld::_CreateOgreResources(Ogre::Root* ogre)
+void GameWorld::_CreateRenderingResources(Graphics* graphics)
 {
-    // create scene manager //
-    // Let's do what the Ogre samples do and use a bunch of threads for culling
-    const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
+    // // create scene manager //
+    // // Let's do what the Ogre samples do and use a bunch of threads for culling
+    // const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
 
-    // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
+    // // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
 
-    // The ID is not used here to work with client received worlds
-    WorldsScene =
-        ogre->createSceneManager(Ogre::ST_GENERIC, threads, Ogre::INSTANCING_CULLING_THREADED,
-            "MainSceneManager_" + std::to_string(IDFactory::GetID()));
+    // Scene setup (TODO: redo once bsf has multiple scenes)
+    BSFLayerHack = Implementation::LayerNumber++;
 
-    // These are a bit higher than the Ogre "sane" values of 500.0f
-    WorldsScene->setShadowDirectionalLightExtrusionDistance(1000.f);
-    WorldsScene->setShadowFarDistance(1000.f);
+    // Camera
+    pimpl->WorldCameraSO =
+        bs::SceneObject::create(("Camera_World_" + std::to_string(ID)).c_str());
+    pimpl->WorldCamera = pimpl->WorldCameraSO->addComponent<bs::CCamera>();
+    pimpl->WorldCamera->setHorzFOV(bs::Degree(90));
 
-    // Setup v2 rendering for the default group
-    WorldsScene->getRenderQueue()->setRenderQueueMode(
-        DEFAULT_RENDER_QUEUE, Ogre::RenderQueue::FAST);
+    pimpl->WorldCamera->setLayers(1 << *GetScene());
 
-    // create camera //
-    WorldSceneCamera = WorldsScene->createCamera("Camera01");
+    // TODO: is this needed?
+    // pimpl->WorldCamera->setAspectRatio(float ratio) setAutoAspectRatio?
 
-    // WorldSceneCamera->lookAt( Ogre::Vector3( 0, 0, 0 ) );
 
-    // near and far clipping planes //
-    WorldSceneCamera->setFOVy(Ogre::Degree(60));
-    WorldSceneCamera->setNearClipDistance(0.1f);
-    WorldSceneCamera->setFarClipDistance(50000.f);
-    WorldSceneCamera->setAutoAspectRatio(true);
+    // TODO: allow changing and setting infinite
+    pimpl->WorldCamera->setFarClipDistance(5000);
+    // // enable infinite far clip distance if supported //
+    // if(ogre->getRenderSystem()->getCapabilities()->hasCapability(
+    //         Ogre::RSC_INFINITE_FAR_PLANE)) {
 
-    // enable infinite far clip distance if supported //
-    if(ogre->getRenderSystem()->getCapabilities()->hasCapability(
-           Ogre::RSC_INFINITE_FAR_PLANE)) {
+    //     WorldSceneCamera->setFarClipDistance(0); Maybe for bsf this needs to be float::max
+    // }
 
-        WorldSceneCamera->setFarClipDistance(0);
-    }
+    // TODO: allow configuring these
+    pimpl->WorldCamera->setMSAACount(2);
 
-    // // Orthographic test
-    // WorldSceneCamera->setProjectionType(Ogre::PT_ORTHOGRAPHIC);
-    // WorldSceneCamera->setOrthoWindow(85, 85);
+    const auto& settings = pimpl->WorldCamera->getRenderSettings();
+    // settings->enableFXAA = false;
+    // settings->ambientOcclusion;
+    // settings->autoExposure;
+    // settings->bloom;
+    // settings->colorGrading;
+    // settings->depthOfField;
+    // settings->shadowSettings;
+    // settings->tonemapping;
+    // settings->whiteBalance;
+    settings->enableIndirectLighting = true;
+    // settings->enableAutoExposure = false;
 
-    // default sun //
+    pimpl->WorldCamera->setRenderSettings(settings);
+
+    // Default sun
     SetSunlight();
 }
-// ------------------------------------ //
-DLLEXPORT void GameWorld::SetFog()
+
+void GameWorld::_DestroyRenderingResources()
 {
-    WorldsScene->setFog(Ogre::FOG_LINEAR, Ogre::ColourValue(0.7f, 0.7f, 0.8f), 0, 4000, 10000);
-    WorldsScene->setFog(Ogre::FOG_NONE);
+    if(!pimpl)
+        return;
+
+    RemoveSunlight();
+
+    if(pimpl->WorldCameraSO) {
+        pimpl->WorldCameraSO->destroy();
+        pimpl->WorldCameraSO = nullptr;
+        pimpl->WorldCamera = nullptr;
+    }
 }
+// ------------------------------------ //
+static bool SunCreated = false;
 
 DLLEXPORT void GameWorld::SetSunlight()
 {
-    // create/update things if they are nullptr //
-    if(!Sunlight) {
-        Sunlight = WorldsScene->createLight();
-        Sunlight->setName("sunlight");
+    if(SunCreated) {
+        LOG_WRITE("TODO: multi scene support in BSF needed for separate world lights");
+        return;
     }
 
-    if(!SunLightNode) {
+    SunCreated = true;
 
-        SunLightNode = WorldsScene->getRootSceneNode()->createChildSceneNode();
-        SunLightNode->setName("sunlight node");
+    // Create/update things if they are nullptr //
+    if(!pimpl->SunlightSO) {
 
-        SunLightNode->attachObject(Sunlight);
+        pimpl->SunlightSO = bs::SceneObject::create("Sunlight");
+        pimpl->Sunlight = pimpl->SunlightSO->addComponent<bs::CLight>();
+        // Oh no! this method does not exist
+        // pimpl->Sunlight->setLayer
     }
 
-    Sunlight->setType(Ogre::Light::LT_DIRECTIONAL);
-    // Sunlight->setDiffuseColour(0.98f, 1.f, 0.95f);
-    Sunlight->setDiffuseColour(1.f, 1.f, 1.f);
-    Sunlight->setSpecularColour(1.f, 1.f, 1.f);
-    // Sunlight->setDirection(Float3(-1, -1, -1).Normalize());
-    Sunlight->setDirection(Float3(0.55f, -0.3f, 0.75f).Normalize());
-    Sunlight->setPowerScale(7.0f);
+    // Default properties
+    pimpl->Sunlight->setType(bs::LightType::Directional);
+    pimpl->Sunlight->setColor(bs::Color(1, 1, 1));
+    pimpl->Sunlight->setIntensity(0.0001f);
+    pimpl->Sunlight->setSourceRadius(0.5f);
+    pimpl->Sunlight->setCastsShadow(true);
+
+    // pimpl->SunlightSO->setPosition(bs::Vector3(1, 20, 1));
+    // pimpl->SunlightSO->setPosition(bs::Vector3(20, 15, 20));
+    pimpl->SunlightSO->setPosition(bs::Vector3(-0.55f, 0.3f, -0.75f));
+
+    pimpl->SunlightSO->lookAt(bs::Vector3(0, 0, 0));
+    // pimpl->SunlightSO->setWorldRotation(const Quaternion &rotation)
+
+    // TODO: scene ambient colour
 
     // Set scene ambient colour //
     // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
     // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
     //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
     //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
-    WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.3f, 0.3f),
-        Ogre::ColourValue(0.2f, 0.2f, 0.2f), /*Ogre::Vector3(0.1f, 1.f, 0.085f),*/
-        -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
 }
 
 DLLEXPORT void GameWorld::RemoveSunlight()
 {
-    if(SunLightNode) {
-        SunLightNode->detachAllObjects();
-        // might be safe to delete
-        OGRE_DELETE SunLightNode;
-        SunLightNode = nullptr;
+    if(pimpl->SunlightSO) {
+        pimpl->SunlightSO->destroy();
+        pimpl->SunlightSO = nullptr;
+        pimpl->Sunlight = nullptr;
+        SunCreated = false;
     }
 }
 
-DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
-    const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
-    const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
-    const Ogre::Vector3& hemispheredir, float envmapscale /*= 1.0f*/)
-{
-    if(!Sunlight || !SunLightNode) {
+// DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
+//     const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
+//     const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
+//     const Ogre::Vector3& hemispheredir, float envmapscale /*= 1.0f*/)
+// {
+//     if(!pimpl->SunlightSO) {
 
-        LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
-        return;
-    }
+//         LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
+//         return;
+//     }
 
-    Sunlight->setDiffuseColour(diffuse);
-    Sunlight->setSpecularColour(specular);
-    Sunlight->setDirection(direction);
-    Sunlight->setPowerScale(power);
+//     LOG_WRITE("TODO: reimplement SetLightProperties");
 
-    WorldsScene->setAmbientLight(upperhemisphere, lowerhemisphere, hemispheredir, envmapscale);
-}
+//     // Sunlight->setDiffuseColour(diffuse);
+//     // Sunlight->setSpecularColour(specular);
+//     // Sunlight->setDirection(direction);
+//     // Sunlight->setPowerScale(power);
+
+//     // WorldsScene->setAmbientLight(upperhemisphere, lowerhemisphere, hemispheredir,
+//     // envmapscale);
+// }
 
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
 {
     if(InBackground) {
 
-        LOG_ERROR("GameWorld: Render: called while world is in the background (not attached "
+        LOG_ERROR("GameWorld: Render: called while world is in the background (not attached"
                   "to a window)");
         return;
     }
@@ -307,14 +327,14 @@ DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
         if(!std::get<0>(interpolated)) {
 
             // No interpolated pos //
-            WorldSceneCamera->setPosition(position.Members._Position);
-            WorldSceneCamera->setOrientation(position.Members._Orientation);
+            pimpl->WorldCameraSO->setPosition(position.Members._Position);
+            pimpl->WorldCameraSO->setRotation(position.Members._Orientation);
 
         } else {
 
             const auto& interpolatedPos = std::get<1>(interpolated);
-            WorldSceneCamera->setPosition(interpolatedPos._Position);
-            WorldSceneCamera->setOrientation(interpolatedPos._Orientation);
+            pimpl->WorldCameraSO->setPosition(interpolatedPos._Position);
+            pimpl->WorldCameraSO->setRotation(interpolatedPos._Orientation);
         }
 
         if(properties.SoundPerceiver) {
@@ -327,7 +347,7 @@ DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
 
             AppliedCameraPropertiesPtr = &properties;
 
-            WorldSceneCamera->setFOVy(Ogre::Degree(properties.FOVY));
+            pimpl->WorldCamera->setHorzFOV(bs::Degree(properties.FOV));
 
             properties.Marked = false;
         }
@@ -367,18 +387,23 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object)
     }
 }
 
-DLLEXPORT Ogre::Ray GameWorld::CastRayFromCamera(float x, float y) const
+DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(int x, int y) const
 {
     // Fail if there is no active camera //
     if(CameraEntity == NULL_OBJECT)
         throw InvalidState("This world has no active CameraEntity");
 
-    if(!WorldSceneCamera)
-        throw InvalidState("This world has initialized Ogre resources");
+    if(!pimpl->WorldCamera)
+        throw InvalidState("This world has no initialized camera resources");
 
     // Read the latest set data from the camera
     // TODO: could jump to the actual latest position here if wanted
-    return WorldSceneCamera->getCameraToViewportRay(x, y);
+    return pimpl->WorldCamera->screenPointToRay(bs::Vector2I(x, y));
+}
+
+DLLEXPORT bs::HSceneObject GameWorld::GetCameraSceneObject()
+{
+    return pimpl->WorldCameraSO;
 }
 // ------------------------------------ //
 DLLEXPORT bool GameWorld::ShouldPlayerReceiveEntity(
@@ -1640,7 +1665,7 @@ DLLEXPORT asIScriptObject* GameWorld::GetScriptSystem(const std::string& name)
     return iter->second->GetASImplementationObject();
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre)
+DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Graphics* graphics)
 {
     if(!LinkedToWindow) {
         LOG_WARNING(
@@ -1654,8 +1679,10 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre)
                               "one it was linked to");
     }
 
-    ogre->getCompositorManager2()->removeWorkspace(WorldWorkspace);
-    WorldWorkspace = nullptr;
+    pimpl->WorldCamera->getViewport()->setTarget(nullptr);
+
+    // ogre->getCompositorManager2()->removeWorkspace(WorldWorkspace);
+    // WorldWorkspace = nullptr;
     LinkedToWindow = nullptr;
 
     if(!TickWhileInBackground) {
@@ -1665,14 +1692,15 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Ogre::Root* ogre)
     InBackground = true;
 }
 
-DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Ogre::Root* ogre)
+DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Graphics* graphics)
 {
-    LEVIATHAN_ASSERT(WorldsScene, "World is not initialized");
+    // LEVIATHAN_ASSERT(WorldsScene, "World is not initialized");
 
     if(!window)
         throw InvalidArgument("GameWorld attempted to be linked to a nullptr window");
 
-    if(LinkedToWindow || WorldWorkspace) {
+    if(LinkedToWindow // || WorldWorkspace
+    ) {
 
         throw InvalidArgument(
             "GameWorld attempted to be linked to a window while it is already linked");
@@ -1680,11 +1708,12 @@ DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Ogre::Root* ogre)
 
     LinkedToWindow = window;
 
-    // Create the workspace for this scene //
-    // Which will be rendered before the overlay workspace but after potential
-    // clearing workspace
-    WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
-        LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
+    // // Create the workspace for this scene //
+    // // Which will be rendered before the overlay workspace but after potential
+    // // clearing workspace
+    // WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
+    //     LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
+    pimpl->WorldCamera->getViewport()->setTarget(window->GetBSFWindow());
 
     if(!TickWhileInBackground) {
         _DoResumeSystems();

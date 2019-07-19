@@ -20,16 +20,15 @@
 #include <add_on/weakref/weakref.h>
 
 // Bindings
+#include "Bindings/BSFBind.h"
 #include "Bindings/BindStandardFunctions.h"
 #include "Bindings/CommonEngineBind.h"
 #include "Bindings/EntityBind.h"
 #include "Bindings/GuiScriptBind.h"
-#include "Bindings/OgreBind.h"
 #include "Bindings/PhysicsBind.h"
 #include "Bindings/TypesBind.h"
 
 // Exception support
-#include "OgreException.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -85,8 +84,9 @@ void ScriptTranslateExceptionCallback(asIScriptContext* context, void* userdata)
     } catch(const Leviathan::Exception& e) {
         context->SetException(
             (std::string("Caught Leviathan::Exception: ") + e.what()).c_str());
-    } catch(const Ogre::Exception& e) {
-        context->SetException((std::string("Caught Ogre::Exception: ") + e.what()).c_str());
+        // } catch(const Ogre::Exception& e) {
+        //     context->SetException((std::string("Caught Ogre::Exception: ") +
+        //     e.what()).c_str());
     } catch(const std::exception& e) {
         context->SetException(
             (std::string("Caught (unknown type) application exception: ") + e.what()).c_str());
@@ -179,8 +179,8 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     // All normal engine stuff is in the DefaultEngine access mask //
     engine->SetDefaultAccessMask(static_cast<AccessFlags>(ScriptAccess::DefaultEngine));
 
-    if(!BindOgre(engine))
-        throw Exception("BindOgre failed");
+    if(!BindBSF(engine))
+        throw Exception("BindBSF failed");
 
     if(!BindTypes(engine))
         throw Exception("BindTypes failed");

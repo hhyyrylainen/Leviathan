@@ -1,16 +1,18 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/AppDefine.h"
 
-#include "OgreFrameListener.h"
+#include "bsfCore/RenderAPI/BsRenderWindow.h"
 
 namespace Leviathan {
 
-class Graphics : Ogre::FrameListener {
+class Graphics {
     friend Window;
+
+    struct Private;
 
 public:
     DLLEXPORT Graphics();
@@ -21,16 +23,24 @@ public:
 
     DLLEXPORT bool Frame();
 
-    virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
+    DLLEXPORT void UpdateShownOverlays(const std::vector<bs::SPtr<bs::Texture>>& overlays);
 
-    DLLEXPORT inline AppDef* GetDefinitionObject()
-    {
-        return AppDefinition;
-    }
-    DLLEXPORT inline Ogre::Root* GetOgreRoot()
-    {
-        return ORoot.get();
-    }
+
+    // ------------------------------------ //
+    // Resource loading helpers
+
+    //! \brief Finds and loads a shader with the name
+    //!
+    //! If a full path or a valid relative path is specified a full search is not done. Unless
+    //! a variant of the name with ".asset" is found, which is preferred to skip expensive
+    //! importing.
+    DLLEXPORT bs::HShader LoadShaderByName(const std::string& name);
+
+    //! Works the same as LoadShaderByName
+    DLLEXPORT bs::HTexture LoadTextureByName(const std::string& name);
+
+    //! Works the same as LoadShaderByName
+    DLLEXPORT bs::HMesh LoadMeshByName(const std::string& name);
 
 #ifdef __linux
     //! \brief Returns true if our X11 error handler has been called. Remember to check this
@@ -42,27 +52,19 @@ public:
     DLLEXPORT static bool HasX11ErrorOccured();
 #endif
 
-    DLLEXPORT static Graphics* Get();
+protected:
+    //! \brief Called when Window objects are created to register them with bsf and with the
+    //! case of the first window this initializes the rest of bsf
+    bs::SPtr<bs::RenderWindow> RegisterCreatedWindow(Window& window);
 
 private:
-    bool InitializeOgre(AppDef* appdef);
-
-    //! \brief Load all the new required hlms stuff
-    //! \warning This must be called after an Ogre window has been created
-    //!
-    //! This is called by the first created GraphicalInputEntity
-    void _LoadOgreHLMS();
+    bool InitializeBSF(AppDef* appdef);
+    void ShutdownBSF();
 
 private:
     bool Initialized = false;
+    bool FirstWindowCreated = false;
 
-    AppDef* AppDefinition = nullptr;
-
-    // OGRE //
-    std::unique_ptr<Ogre::Root> ORoot;
-    Ogre::Log* OLog = nullptr;
-
-    // static //
-    static Graphics* Staticaccess;
+    std::unique_ptr<Private> Pimpl;
 };
 } // namespace Leviathan

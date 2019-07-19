@@ -7,21 +7,11 @@
 #include "Exceptions.h"
 #include "GuiInputSettings.h"
 
-#include "OgreMaterial.h"
-#include "OgreTexture.h"
-
-
 #include <atomic>
 
 union SDL_Event;
 
-namespace Ogre {
-class Root;
-}
-
 namespace Leviathan { namespace GUI {
-
-constexpr auto GUI_WORKSPACE_BEGIN_ORDER = 1000;
 
 //! \brief Base class for WidgetLayer and View (browser containers / CEF) to add to a
 //! GuiManager
@@ -30,7 +20,7 @@ public:
     DLLEXPORT Layer(GuiManager* owner, Window* window, int renderorder);
     DLLEXPORT virtual ~Layer();
 
-    //! \brief Must be called before destroying to release allocated Ogre and other resources
+    //! \brief Must be called before destroying to release allocated resources
     DLLEXPORT void ReleaseResources();
 
     //! \brief Notifies all the widgets and layout that the size has changed
@@ -51,6 +41,11 @@ public:
     DLLEXPORT inline auto GetWindow() const
     {
         return Wind;
+    }
+
+    DLLEXPORT inline auto GetRenderOrder() const
+    {
+        return RenderOrder;
     }
 
     //! \brief Sets the input mode. This should be regularly called from game code to update
@@ -79,11 +74,14 @@ public:
 
     //! \brief Returns the main scene of this layer that contains all renderables
     //! \exception InvalidState if this view has been released already
-    DLLEXPORT inline Ogre::SceneManager* GetScene()
+    // DLLEXPORT inline Ogre::SceneManager* GetScene()
+    DLLEXPORT inline int GetScene()
     {
-        if(!Scene)
-            throw InvalidState("This layer has been released already");
-        return Scene;
+        // if(!BSFLayerHack)
+        //     throw InvalidState("This layer has been released already");
+        // return BSFLayerHack;
+        DEBUG_BREAK;
+        return -1;
     }
 
     // Input passing from Window
@@ -140,11 +138,15 @@ protected:
     //! \todo This needs to be tracked per frame for CEF browsers
     std::atomic<bool> ScrollableElement = false;
 
+    int RenderOrder;
+
 
     // Rendering resources
-    Ogre::CompositorWorkspace* Workspace;
-    Ogre::SceneManager* Scene;
-    Ogre::Camera* Camera;
+    // Ogre::CompositorWorkspace* Workspace;
+    // Ogre::SceneManager* Scene;
+    // Ogre::Camera* Camera;
+    // bs::HSceneObject CameraSO;
+    // bs::HCamera Camera;
 };
 
 }} // namespace Leviathan::GUI

@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 //! \file Contains all common systems that GameWorld will run on its components
 //! at specified times
@@ -14,7 +14,7 @@
 
 #include "Generated/ComponentStates.h"
 
-#include "OgreSceneNode.h"
+#include "bsfCore/Scene/BsSceneObject.h"
 
 namespace Leviathan {
 
@@ -44,13 +44,13 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
         if(!std::get<0>(interpolated)) {
             // No states to interpolate //
             rendernode.Node->setPosition(pos.Members._Position);
-            rendernode.Node->setOrientation(pos.Members._Orientation);
+            rendernode.Node->setRotation(pos.Members._Orientation);
             return;
         }
 
         const auto& state = std::get<1>(interpolated);
         rendernode.Node->setPosition(state._Position);
-        rendernode.Node->setOrientation(state._Orientation);
+        rendernode.Node->setRotation(state._Orientation);
     }
 
 public:
@@ -87,7 +87,7 @@ public:
     }
 };
 
-//! \brief Handles properties of Ogre nodes that have a changed RenderNode
+//! \brief Handles properties of scene objects that have a changed RenderNode
 class RenderNodePropertiesSystem {
 public:
     void Run(GameWorld& world, std::unordered_map<ObjectID, RenderNode*>& index)
@@ -99,19 +99,25 @@ public:
             if(!node.Marked)
                 continue;
 
-            // TODO: would it be faster to first check have these
-            // changed or is it better to just set them as Ogre might
-            // also check have the value changed
-            node.Node->setVisible(!node.Hidden);
-            node.Node->setScale(node.Scale);
+            // This check being here, may or may not be faster than just always setting it
+            if(node.Node->getActive() != !node.Hidden)
+                node.Node->setActive(!node.Hidden);
 
+            node.Node->setScale(node.Scale);
             node.Marked = false;
         }
     }
 };
 
+//! \brief Handles properties of Model
+class ModelPropertiesSystem {
+public:
+    DLLEXPORT void Run(GameWorld& world, std::unordered_map<ObjectID, Model*>& index);
+};
+
 
 //! \brief Handles updating time of Ogre animations
+//! \todo This needs to be replaced with an animation system
 class AnimationTimeAdder {
 public:
     DLLEXPORT void Run(GameWorld& world, std::unordered_map<ObjectID, Animated*>& index,

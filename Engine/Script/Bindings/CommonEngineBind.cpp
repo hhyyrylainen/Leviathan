@@ -11,6 +11,7 @@
 #include "Events/EventHandler.h"
 #include "FileSystem.h"
 #include "Networking/NetworkCache.h"
+#include "Rendering/Graphics.h"
 #include "Script/Interface/ScriptDelegateSlot.h"
 #include "Script/Interface/ScriptEventListener.h"
 #include "Script/Interface/ScriptLock.h"
@@ -98,8 +99,6 @@ void PrintASCallStack()
 
 bool IsInGraphicalMode()
 {
-    // The C++ code uses more this: if(Ogre::Root::getSingletonPtr()) but as this doesn't
-    // require scripts to include huge extra headers this is used here
     return !Engine::Get()->GetNoGui();
 }
 
@@ -384,8 +383,7 @@ bool BindDataBlock(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindEvents(asIScriptEngine* engine)
 {
-
-    // bind event type enum //
+    // Bind event type enum //
     if(engine->RegisterEnum("EVENT_TYPE") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -591,6 +589,22 @@ bool BindWindow(asIScriptEngine* engine)
 
     return true;
 }
+
+bool BindGraphics(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Graphics", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Use the shader constructor taking a string instead
+    // if(engine->RegisterObjectMethod("Graphics",
+    //        "bs::HShader LoadShaderByName(const string &in name)",
+    //        asMETHOD(Graphics, LoadShaderByName), asCALL_THISCALL) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
+
+    return true;
+}
 // ------------------------------------ //
 bool BindEngine(asIScriptEngine* engine)
 {
@@ -635,6 +649,11 @@ bool BindEngine(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Engine", "Window& GetWindowEntity()",
            asMETHOD(Engine, GetWindowEntity), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Engine", "Graphics& GetGraphics()",
+           asMETHOD(Engine, GetGraphics), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -1156,6 +1175,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         return false;
 
     if(!BindFileSystem(engine))
+        return false;
+
+    if(!BindGraphics(engine))
         return false;
 
     if(!BindThreadingManager(engine))

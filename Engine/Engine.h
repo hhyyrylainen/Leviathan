@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -20,7 +20,8 @@ namespace Leviathan {
 
 namespace Editor {
 class Editor;
-}
+class Importer;
+} // namespace Editor
 
 class GameModuleLoader;
 
@@ -179,6 +180,12 @@ public:
     {
         return Graph;
     }
+
+    inline bool IsInGraphicalMode() const
+    {
+        return !NoGui;
+    }
+
     inline EventHandler* GetEventHandler()
     {
         return MainEvents;
@@ -294,10 +301,6 @@ protected:
     //! Runs all commands in QueuedConsoleCommands
     void _RunQueuedConsoleCommands();
 
-    //! Helper for PassCommandLine
-    bool ParseSingleCommand(
-        StringIterator& itr, int& argindex, const int argcount, char* args[]);
-
     // ------------------------------------ //
     AppDef* Define = nullptr;
 
@@ -376,10 +379,14 @@ protected:
     std::list<std::function<void()>> InvokeQueue;
 
     // Stores the command line before running it //
+    //! \todo Remove this doesn't work now and needs redoing
     std::vector<std::unique_ptr<std::string>> PassedCommands;
 
     //! Stores console commands that came from the command line
     std::vector<std::unique_ptr<std::string>> QueuedConsoleCommands;
+
+    //! Queued importers from command line parsing
+    std::vector<std::unique_ptr<Editor::Importer>> QueuedImports;
 
     DLLEXPORT static Engine* instance;
 };

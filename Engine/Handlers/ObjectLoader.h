@@ -32,22 +32,22 @@ public:
         return newEntity;
     }
 
-    //! \brief Creates a plane that has a material applied to it
-    template<class TWorldClass>
-    static ObjectID LoadPlane(TWorldClass& world, const Float3& initialposition,
-        const Float4& initialrotation, const std::string& materialname,
-        const Ogre::Plane& plane, const Float2& planesize)
-    {
-        ObjectID newEntity = world.CreateEntity();
+    // //! \brief Creates a plane that has a material applied to it
+    // template<class TWorldClass>
+    // static ObjectID LoadPlane(TWorldClass& world, const Float3& initialposition,
+    //     const Float4& initialrotation, const std::string& materialname,
+    //     const Ogre::Plane& plane, const Float2& planesize)
+    // {
+    //     ObjectID newEntity = world.CreateEntity();
 
-        world.Create_Position(newEntity, initialposition, initialrotation);
+    //     world.Create_Position(newEntity, initialposition, initialrotation);
 
-        RenderNode& node = world.Create_RenderNode(newEntity);
+    //     RenderNode& node = world.Create_RenderNode(newEntity);
 
-        world.Create_Plane(newEntity, node.Node, materialname, plane, planesize);
+    //     world.Create_Plane(newEntity, node.Node, materialname, plane, planesize);
 
-        return newEntity;
-    }
+    //     return newEntity;
+    // }
 };
 
 } // namespace Leviathan

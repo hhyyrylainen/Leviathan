@@ -5,12 +5,6 @@
 #include <cstdint>
 
 
-namespace Ogre {
-
-class SceneManager;
-class SceneNode;
-} // namespace Ogre
-
 namespace Leviathan {
 
 // Core systems //

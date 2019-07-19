@@ -1,125 +1,152 @@
 // ------------------------------------ //
 #include "GeometryHelpers.h"
 
-#include <OgreManualObject.h>
-#include <OgreMesh2.h>
-#include <OgreMeshManager2.h>
-#include <OgreRoot.h>
-#include <OgreSubMesh2.h>
+#include "bsfCore/RenderAPI/BsVertexDataDesc.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateScreenSpaceQuad(
-    const std::string& meshname, float x, float y, float width, float height)
+DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
+    float x, float y, float width, float height)
 {
-    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(
-        meshname, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    bs::MESH_DESC meshDesc;
+    meshDesc.numVertices = 4;
+    meshDesc.numIndices = 6;
+    meshDesc.indexType = bs::IT_16BIT;
+    meshDesc.usage = bs::MU_STATIC;
+    meshDesc.subMeshes.push_back(bs::SubMesh(0, 6, bs::DOT_TRIANGLE_LIST));
 
-    Ogre::SubMesh* subMesh = mesh->createSubMesh();
+    bs::SPtr<bs::VertexDataDesc> vertexDesc = bs::VertexDataDesc::create();
+    vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_POSITION);
+    vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_TEXCOORD);
+    const auto stride = 4;
+    meshDesc.vertexDesc = vertexDesc;
 
-    Ogre::RenderSystem* renderSystem = Ogre::Root::getSingleton().getRenderSystem();
-    Ogre::VaoManager* vaoManager = renderSystem->getVaoManager();
+    bs::SPtr<bs::MeshData> meshData = bs::MeshData::create(4, 6, vertexDesc, bs::IT_16BIT);
 
-    Ogre::VertexElement2Vec vertexElements;
-    vertexElements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_POSITION));
-    vertexElements.push_back(
-        Ogre::VertexElement2(Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES));
+    // Generate vertex data
+    float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
+    size_t index = 0;
 
-    // This is a fullscreen quad in screenspace (so no transform matrix is used)
-    float vertexData[] = {// First vertex
-        x, y, 0, 0, 1,
+    {
+        // First vertex
+        index = 0;
+        vertices[index * stride + 0] = x;
+        vertices[index * stride + 1] = y;
+        vertices[index * stride + 2] = 0;
+        vertices[index * stride + 3] = 0;
+    }
+
+    {
         // Second
-        x + width, y, 0, 1, 1,
+        index = 1;
+        vertices[index * stride + 0] = x + width;
+        vertices[index * stride + 1] = y;
+        vertices[index * stride + 2] = 1;
+        vertices[index * stride + 3] = 0;
+    }
+
+    {
         // Third
-        x + width, y + width, 0, 1, 0,
+        index = 2;
+        vertices[index * stride + 0] = x + width;
+        vertices[index * stride + 1] = y + height;
+        vertices[index * stride + 2] = 1;
+        vertices[index * stride + 3] = 1;
+    }
+
+    {
         // Fourth
-        x, y + width, 0, 0, 0};
-
-    Ogre::VertexBufferPacked* vertexBuffer = vaoManager->createVertexBuffer(
-        vertexElements, 4, Ogre::BT_IMMUTABLE, &vertexData, false);
-
-    Ogre::VertexBufferPackedVec vertexBuffers;
-    vertexBuffers.push_back(vertexBuffer);
+        index = 3;
+        vertices[index * stride + 0] = x;
+        vertices[index * stride + 1] = y + height;
+        vertices[index * stride + 2] = 0;
+        vertices[index * stride + 3] = 1;
+    }
 
     // 1 to 1 index buffer mapping
-    Ogre::uint16 indices[] = {3, 0, 1, 1, 2, 3};
+    constexpr uint16_t indicesData[] = {3, 0, 1, 1, 2, 3};
 
-    // TODO: check if this is needed (when a 1 to 1 vertex and index mapping is
-    // used)
-    Ogre::IndexBufferPacked* indexBuffer = vaoManager->createIndexBuffer(
-        Ogre::IndexBufferPacked::IT_16BIT, 6, Ogre::BT_IMMUTABLE, &indices, false);
+    std::memcpy(meshData->getIndices16(), indicesData, sizeof(indicesData));
 
-    Ogre::VertexArrayObject* vao = vaoManager->createVertexArrayObject(
-        vertexBuffers, indexBuffer, Ogre::OT_TRIANGLE_LIST);
+    return bs::Mesh::create(meshData, meshDesc);
 
-    subMesh->mVao[Ogre::VpNormal].push_back(vao);
-
-    // This might be needed because we use a v2 mesh
-    // Use the same geometry for shadow casting.
-    // Because the material disables shadows this isn't needed
-    // m_impl->m_microbeBackgroundSubMesh->mVao[Ogre::VpShadow].push_back( vao
-    // );
-
-    // Set the bounds to get frustum culling and LOD to work correctly.
-    // To infinite to always render
-    mesh->_setBounds(Ogre::Aabb::BOX_INFINITE /*, false*/);
-
-    return mesh;
+    // // Set the bounds to get frustum culling and LOD to work correctly.
+    // // To infinite to always render
+    // mesh->_setBounds(Ogre::Aabb::BOX_INFINITE /*, false*/);
 }
 
-DLLEXPORT Ogre::MeshPtr GeometryHelpers::CreateXZPlane(
-    const std::string& meshname, float width, float height)
+DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
 {
-    Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(
-        meshname, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+    const auto x = -width / 2;
+    const auto z = -height / 2;
 
-    Ogre::SubMesh* subMesh = mesh->createSubMesh();
+    bs::MESH_DESC meshDesc;
+    meshDesc.numVertices = 4;
+    meshDesc.numIndices = 6;
+    meshDesc.indexType = bs::IT_16BIT;
+    meshDesc.usage = bs::MU_STATIC;
+    meshDesc.subMeshes.push_back(bs::SubMesh(0, 6, bs::DOT_TRIANGLE_LIST));
 
-    Ogre::RenderSystem* renderSystem = Ogre::Root::getSingleton().getRenderSystem();
-    Ogre::VaoManager* vaoManager = renderSystem->getVaoManager();
+    bs::SPtr<bs::VertexDataDesc> vertexDesc = bs::VertexDataDesc::create();
+    vertexDesc->addVertElem(bs::VET_FLOAT3, bs::VES_POSITION);
+    vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_TEXCOORD);
+    const auto stride = 5;
+    meshDesc.vertexDesc = vertexDesc;
 
-    Ogre::VertexElement2Vec vertexElements;
-    vertexElements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_POSITION));
-    vertexElements.push_back(
-        Ogre::VertexElement2(Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES));
+    bs::SPtr<bs::MeshData> meshData = bs::MeshData::create(4, 6, vertexDesc, bs::IT_16BIT);
 
-    // This is a fullscreen quad in screenspace (so no transform matrix is used)
-    float vertexData[] = {// First vertex
-        -width, 0, -height, 0, 0,
+    // Generate vertex data
+    float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
+    size_t index = 0;
+
+    {
+        // First vertex
+        index = 0;
+        vertices[index * stride + 0] = x;
+        vertices[index * stride + 1] = 0;
+        vertices[index * stride + 2] = z;
+        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 4] = 0;
+    }
+
+    {
         // Second
-        width, 0, -height, 1, 0,
+        index = 1;
+        vertices[index * stride + 0] = x + width;
+        vertices[index * stride + 1] = 0;
+        vertices[index * stride + 2] = z;
+        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 4] = 0;
+    }
+
+    {
         // Third
-        width, 0, height, 1, 1,
+        index = 2;
+        vertices[index * stride + 0] = x + width;
+        vertices[index * stride + 1] = 1;
+        vertices[index * stride + 2] = z + height;
+        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 4] = 1;
+    }
+
+    {
         // Fourth
-        -width, 0, height, 0, 1};
-
-    Ogre::VertexBufferPacked* vertexBuffer = vaoManager->createVertexBuffer(
-        vertexElements, 4, Ogre::BT_IMMUTABLE, &vertexData, false);
-
-    Ogre::VertexBufferPackedVec vertexBuffers;
-    vertexBuffers.push_back(vertexBuffer);
+        index = 3;
+        vertices[index * stride + 0] = x;
+        vertices[index * stride + 1] = 0;
+        vertices[index * stride + 2] = z + height;
+        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 4] = 1;
+    }
 
     // 1 to 1 index buffer mapping
-    Ogre::uint16 indices[] = {3, 0, 1, 1, 2, 3};
+    constexpr uint16_t indicesData[] = {3, 0, 1, 1, 2, 3};
 
-    // TODO: check if this is needed (when a 1 to 1 vertex and index mapping is
-    // used)
-    Ogre::IndexBufferPacked* indexBuffer = vaoManager->createIndexBuffer(
-        Ogre::IndexBufferPacked::IT_16BIT, 6, Ogre::BT_IMMUTABLE, &indices, false);
+    std::memcpy(meshData->getIndices16(), indicesData, sizeof(indicesData));
 
-    Ogre::VertexArrayObject* vao = vaoManager->createVertexArrayObject(
-        vertexBuffers, indexBuffer, Ogre::OT_TRIANGLE_LIST);
+    return bs::Mesh::create(meshData, meshDesc);
 
-    subMesh->mVao[Ogre::VpNormal].push_back(vao);
-
-    // This might be needed because we use a v2 mesh
-    // Use the same geometry for shadow casting.
-    // Because the material disables shadows this isn't needed
-    // m_impl->m_microbeBackgroundSubMesh->mVao[Ogre::VpShadow].push_back( vao
-    // );
-
-    // Set the bounds to get frustum culling and LOD to work correctly.
-    mesh->_setBounds(
-        Ogre::Aabb(Ogre::Vector3(0, 0, 0), Ogre::Vector3(width, 0.1f, height)) /*, false*/);
-    return mesh;
+    // // Set the bounds to get frustum culling and LOD to work correctly.
+    // // To infinite to always render
+    // mesh->_setBounds(Ogre::Aabb::BOX_INFINITE /*, false*/);
 }

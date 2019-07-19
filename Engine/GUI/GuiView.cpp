@@ -14,34 +14,27 @@
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
-#include "OgreHardwarePixelBuffer.h"
-#include "OgreItem.h"
-#include "OgreMaterialManager.h"
-#include "OgreMeshManager2.h"
-#include "OgreSceneManager.h"
-#include "OgreSubMesh2.h"
-#include "OgreTechnique.h"
-#include "OgreTextureManager.h"
-
 #include "include/cef_browser.h"
 #include "include/wrapper/cef_helpers.h"
 
 #include "utf8.h"
 
+#include "bsfCore/Image/BsTexture.h"
+
 #include <SDL.h>
 
-#include <cstring>
+// #include <cstring>
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
 constexpr auto CEF_BYTES_PER_PIXEL = 4;
+// When documentation of Ogre and CEF talk about RGBA it seems they actually talk about BGRA
+constexpr auto BS_PIXEL_FORMAT = bs::PF_BGRA8;
 
 DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
     Layer(owner, window, renderorder),
-    ViewSecurity(security), OurAPIHandler(new LeviathanJavaScriptAsync(this)),
-    TextureName("_ChromeOverlay_for_gui_" + Convert::ToString(ID)),
-    MaterialName(TextureName + "_material")
+    ViewSecurity(security), OurAPIHandler(new LeviathanJavaScriptAsync(this))
 {}
 
 DLLEXPORT View::~View() {}
@@ -51,72 +44,9 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // Lock us //
     GUARD_LOCK();
 
-    // Create the Ogre texture and material first //
-
-    int32_t width;
-    int32_t height;
-    Wind->GetSize(width, height);
-
-    // Create a material and a texture that we can update //
-    Texture = Ogre::TextureManager::getSingleton().createManual(TextureName,
-        Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TEX_TYPE_2D, width,
-        height, 0, Ogre::PF_B8G8R8A8, Ogre::TU_DYNAMIC, nullptr, true);
-
-    LEVIATHAN_ASSERT(
-        Ogre::PixelUtil::getNumElemBytes(Ogre::PF_B8G8R8A8) == CEF_BYTES_PER_PIXEL,
-        "Ogre texture size has changed");
-
-    // Fill in some test data //
-    Ogre::v1::HardwarePixelBufferSharedPtr pixelBuffer = Texture->getBuffer();
-
-    // Lock buffer and get a target box for writing //
-    pixelBuffer->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD);
-    const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
-
-    // Create a pointer to the destination //
-    uint8_t* destptr = static_cast<uint8_t*>(pixelBox.data);
-
-    // Clear it
-    std::memset(destptr, 0, pixelBuffer->getSizeInBytes());
-
-    // Unlock the buffer //
-    pixelBuffer->unlock();
-
-    Node = Scene->createSceneNode(Ogre::SCENE_STATIC);
-
-    // This needs to be manually destroyed later
-    QuadMesh = GeometryHelpers::CreateScreenSpaceQuad(TextureName + "mesh", -1, -1, 2, 2);
-
-    // Duplicate the material and set the texture on it
-    Ogre::MaterialPtr baseMaterial =
-        Ogre::MaterialManager::getSingleton().getByName("GUIOverlay");
-
-    if(!baseMaterial)
-        LOG_FATAL("GuiView: GUIOverlay material doesn't exists! are the core Leviathan "
-                  "materials and shaders copied?");
-
-    Ogre::MaterialPtr customizedMaterial = baseMaterial->clone(MaterialName);
-
-    Ogre::TextureUnitState* textureState =
-        customizedMaterial->getTechnique(0)->getPass(0)->createTextureUnitState();
-    textureState->setTexture(Texture);
-    textureState->setHardwareGammaEnabled(true);
-    customizedMaterial->compile();
-
-    QuadMesh->getSubMesh(0)->setMaterialName(MaterialName);
-
-    // Setup render queue for it
-    // TODO: different queues for different GUIs
-    Scene->getRenderQueue()->setRenderQueueMode(1, Ogre::RenderQueue::FAST);
-
-    QuadItem = Scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
-    QuadItem->setCastShadows(false);
-
-    // Need to edit the render queue and add it to an early one
-    QuadItem->setRenderQueueGroup(1);
-
-    // Add it
-    Node->attachObject(QuadItem);
+    // We now only create the texture once we get some data to display
+    LEVIATHAN_ASSERT(bs::PixelUtil::getNumElemBytes(BS_PIXEL_FORMAT) == CEF_BYTES_PER_PIXEL,
+        "texture format size has changed");
 
     // Now we can create the browser //
     CefWindowInfo info;
@@ -147,6 +77,10 @@ DLLEXPORT void View::_DoReleaseResources()
     // Lock us //
     GUARD_LOCK();
 
+    if(Owner) {
+        Owner->NotifyAboutLayer(RenderOrder, nullptr);
+    }
+
     // Kill the javascript async //
     OurAPIHandler->BeforeRelease();
 
@@ -164,24 +98,15 @@ DLLEXPORT void View::_DoReleaseResources()
     // Destroy all remaining proxy targets
     ProxyedObjects.clear();
 
-    if(Node) {
-        Scene->destroySceneNode(Node);
-        Node = nullptr;
-    }
+    // if(Node) {
+    //     Node->destroy();
+    // }
 
-    if(QuadItem) {
-        Scene->destroyItem(QuadItem);
-        QuadItem = nullptr;
-    }
+    // Material = nullptr;
+    // Renderable = nullptr;
 
-    if(QuadMesh) {
-        Ogre::MeshManager::getSingleton().remove(QuadMesh);
-        QuadMesh.reset();
-    }
-
-    Ogre::MaterialManager::getSingleton().remove(MaterialName);
-    Ogre::TextureManager::getSingleton().remove(Texture);
-    Texture.setNull();
+    Texture = nullptr;
+    DataBuffer.reset();
 }
 // ------------------------------------ //
 DLLEXPORT void View::_OnWindowResized()
@@ -361,8 +286,9 @@ DLLEXPORT void View::OnMouseWheel(const SDL_Event& event)
         x *= -1;
     }
 
-    // LOG_INFO("Mouse scroll to CEF: " + std::to_string(y) + " " + std::to_string(x));
     CefMouseEvent cevent;
+    // Need to pass the current mouse position for the scroll to go to the right place
+    Wind->GetRelativeMouse(cevent.x, cevent.y);
     GetBrowserHost()->SendMouseWheelEvent(cevent, x, y);
 }
 
@@ -482,10 +408,15 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     // As we are always on the main thread
     GUARD_LOCK();
 
+    // if(!Node) {
+    if(Texture && Texture->isDestroyed()) {
+        // Released already
+        LOG_WARNING("View: OnPaint called after release");
+        return;
+    }
+
     // Calculate the size of the buffer //
     size_t buffSize = width * height * CEF_BYTES_PER_PIXEL;
-
-    Ogre::TexturePtr targettexture;
 
     switch(type) {
     case PET_POPUP: {
@@ -493,36 +424,35 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         return;
     }
     case PET_VIEW: {
-        targettexture = Texture;
+        // Target is Texture
         break;
     }
     default: LOG_FATAL("Unknown paint type in View: OnPaint"); return;
     }
 
-    if(!targettexture) {
-        LOG_WARNING(
-            "View: OnPaint: Ogre texture is null (perhaps released already?), skipping");
+    // Make sure our texture is large enough //
+    if(Texture && (Texture->getProperties().getWidth() != static_cast<size_t>(width) ||
+                      Texture->getProperties().getHeight() != static_cast<size_t>(height))) {
+
+        Texture->destroy();
+        Texture = nullptr;
+        LOG_INFO("GuiView: texture size has changed");
+    }
+
+    if(!Texture) {
+
+        LOG_INFO("GuiView: creating texture for CEF");
+        DataBuffer = bs::PixelData::create(width, height, 1, BS_PIXEL_FORMAT);
+    }
+
+    LEVIATHAN_ASSERT(DataBuffer->getSize() == buffSize, "CEF and BSF buffer size mismatch");
+
+    if(DataBuffer->isLocked()) {
+        // Just skip for now. in the future we'll want a few rotating buffers
         return;
     }
 
-    // Make sure our texture is large enough //
-    if(targettexture->getWidth() != static_cast<size_t>(width) ||
-        targettexture->getHeight() != static_cast<size_t>(height)) {
-
-        // Free resources and then change the size //
-        targettexture->freeInternalResources();
-        targettexture->setWidth(width);
-        targettexture->setHeight(height);
-        targettexture->createInternalResources();
-
-        LOG_INFO("GuiView: recreated texture for CEF browser");
-    }
-
-    // Copy it to our texture //
-    Ogre::v1::HardwarePixelBufferSharedPtr pixelBuffer = targettexture->getBuffer();
-
-    LEVIATHAN_ASSERT(
-        pixelBuffer->getSizeInBytes() == buffSize, "CEF and Ogre buffer size mismatch");
+    bool fullOverwrite = false;
 
     // Copy the data over //
     const auto firstRect = dirtyRects.front();
@@ -530,24 +460,17 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         firstRect.width == width && firstRect.height == height) {
 
         // Can directly copy the whole thing
-        pixelBuffer->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD);
-        const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
-
-        uint8_t* destptr = static_cast<uint8_t*>(pixelBox.data);
-        std::memcpy(destptr, buffer, buffSize);
-
-        pixelBuffer->unlock();
+        std::memcpy(DataBuffer->getData(), buffer, buffSize);
+        fullOverwrite = true;
 
     } else {
 
-        // Lock buffer and get a target box for writing //
-        pixelBuffer->lock(Ogre::v1::HardwareBuffer::HBL_NORMAL);
-        const Ogre::PixelBox& pixelBox = pixelBuffer->getCurrentLock();
-
-        uint32_t* destptr = static_cast<uint32_t*>(pixelBox.data);
+        uint32_t* destptr = reinterpret_cast<uint32_t*>(DataBuffer->getData());
         const uint32_t* source = static_cast<const uint32_t*>(buffer);
 
-        const size_t rowElements = pixelBox.rowPitch;
+        // The row pitch is now in bytes. We need to divide here to get the element count (this
+        // only works with pixel formats with no padding)
+        const size_t rowElements = DataBuffer->getRowPitch() / CEF_BYTES_PER_PIXEL;
 
         for(const auto rect : dirtyRects) {
 
@@ -565,17 +488,14 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
                 }
             }
         }
-
-        // std::memset(destptr, 255, pixelBuffer->getSizeInBytes());
-        // Unlock the buffer //
-        pixelBuffer->unlock();
     }
 
-    // // Save render result
-    // Ogre::Image img;
-    // Texture->convertToImage(img);
-    // static std::atomic<int> spamnumber = 0;
-    // img.save("Test" + std::to_string(++spamnumber) + ".png");
+    if(!Texture) {
+        Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
+        Owner->NotifyAboutLayer(RenderOrder, Texture);
+    } else {
+        Texture->writeData(DataBuffer, 0, 0, fullOverwrite);
+    }
 }
 // ------------------------------------ //
 void View::OnProtocolExecution(

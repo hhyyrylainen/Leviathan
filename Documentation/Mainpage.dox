@@ -2,9 +2,9 @@
     
     \section intro_sec Introduction
 
-    Leviathan is a 3D game engine based on open source libraries Ogre, CEF, Bullet and others.
+    Leviathan is a 3D game engine based on open source libraries bs::Framework, CEF, Bullet and others.
 
-    [Main repository](https://bitbucket.org/hhyyrylainen/leviathan)
+    [Main repository](https://github.com/hhyyrylainen/Leviathan)
     [Website](https://leviathanengine.com/)
 
     See next: \ref tutorials and \ref angelscript_main
@@ -28,7 +28,5 @@
     See these pages for common tasks:
     
     \ref eventinscripts Adding a new event type to AngelScript
-
-    \ref usingvideoplayer
     
 */

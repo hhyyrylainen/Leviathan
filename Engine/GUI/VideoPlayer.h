@@ -6,9 +6,10 @@
 #include "Common/ThreadSafe.h"
 #include "Events/CallableObject.h"
 #include "Events/DelegateSlot.h"
+#include "Rendering/RotatingBufferHelper.h"
 #include "Sound/SoundDevice.h"
 
-#include "OgreTexture.h"
+#include "bsfCore/BsCorePrerequisites.h"
 
 #include <chrono>
 #include <vector>
@@ -33,7 +34,7 @@ namespace Leviathan { namespace GUI {
 //! \todo Implement pausing and seeking
 //! \todo When Stop is called the OnPlaybackEnded should still be fired. If something was
 //! playing
-class VideoPlayer : public CallableObject {
+class VideoPlayer : public CallableObject, RotatingBufferHelper<bs::SPtr<bs::PixelData>, 4> {
 protected:
     using ClockType = std::chrono::steady_clock;
 
@@ -146,11 +147,6 @@ public:
         return StreamValid && VideoCodec && ConvertedFrameBuffer;
     }
 
-    DLLEXPORT auto GetTextureName() const
-    {
-        return TextureName;
-    }
-
     DLLEXPORT auto GetTexture() const
     {
         return VideoOutputTexture;
@@ -194,6 +190,8 @@ protected:
     //! \brief Updates the texture
     void UpdateTexture();
 
+    bs::SPtr<bs::PixelData> _OnNewBufferNeeded() override;
+
     //! \brief Reads already decoded audio data. The audio data vector must be locked
     //! before calling this
     size_t ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, size_t amount);
@@ -218,9 +216,8 @@ public:
 protected:
     std::string VideoFile;
 
-    // The target texture
-    std::string TextureName;
-    Ogre::TexturePtr VideoOutputTexture;
+    //! The target texture
+    bs::HTexture VideoOutputTexture;
 
     //! True when playing back something and frame start events do something
     bool IsPlaying = false;
@@ -298,10 +295,6 @@ public:
     //! Called when current video stops player
     //! \todo Should be renamed to OnPlaybackEnded
     Delegate OnPlayBackEnded;
-
-protected:
-    //! Sequence number for video textures
-    static std::atomic<int> TextureSequenceNumber;
 };
 
 }} // namespace Leviathan::GUI

@@ -130,3 +130,25 @@ function(InstallContentsOfFolder folder target)
   install(DIRECTORY ${FOUND_DIRS} DESTINATION "${target}")
 
 endfunction()
+
+# Helpers for ruby setup system running
+function(AddRubyGeneratedFile)
+
+  cmake_parse_arguments(
+    PARSED_ARGS
+    ""
+    ""
+    "OUTPUT;DEPENDS;PARAMS"
+    ${ARGN}
+    )
+
+  file(GLOB FILE_GEN_PARTS "${LEVIATHAN_SRC}/Helpers/*.rb")
+
+  list(GET PARSED_ARGS_PARAMS 0 PRIMARY_SCRIPT)
+  
+  add_custom_command(OUTPUT ${PARSED_ARGS_OUTPUT}
+    COMMAND "ruby" ${PARSED_ARGS_PARAMS}
+    DEPENDS ${FILE_GEN_PARTS} ${PRIMARY_SCRIPT} ${PARSED_ARGS_DEPENDS}
+    )
+endfunction()
+

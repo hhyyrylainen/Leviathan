@@ -1,8 +1,8 @@
+// Leviathan Game Engine
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
-// ------------------------------------ //
 #include "Define.h"
 // ------------------------------------ //
-// ---- includes ---- //
 #include "Common/DataStoring/NamedVars.h"
 #include "Common/ThreadSafe.h"
 
@@ -112,12 +112,6 @@ public:
     DLLEXPORT static std::string GetTextureFolder();
     DLLEXPORT static std::string GetFontFolder();
     DLLEXPORT static std::string GetSoundFolder();
-
-#ifdef LEVIATHAN_USING_OGRE
-    //! \param testload If true skips parsing scripts. Use only when unittesting
-    DLLEXPORT static void RegisterOGREResourceGroups(bool testload = false);
-    DLLEXPORT static void RegisterOGREResourceLocation(const std::string& location);
-#endif // LEVIATHAN_USING_OGRE
 
     DLLEXPORT static bool DoesExtensionMatch(
         FileDefinitionType* file, const std::vector<int>& Ids);

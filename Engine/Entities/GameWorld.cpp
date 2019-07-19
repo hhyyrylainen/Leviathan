@@ -198,6 +198,7 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     // settings->tonemapping;
     // settings->whiteBalance;
     settings->enableIndirectLighting = true;
+    // settings->enableAutoExposure = false;
 
     pimpl->WorldCamera->setRenderSettings(settings);
 

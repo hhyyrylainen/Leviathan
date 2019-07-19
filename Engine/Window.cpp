@@ -24,6 +24,8 @@
 #include "XLibInclude.h"
 #endif
 
+#include "Components/BsCCamera.h"
+#include "Scene/BsSceneObject.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -33,6 +35,14 @@
 // ------------------------------------ //
 
 namespace Leviathan {
+
+struct Window::BSFResources {
+public:
+    // A window always needs to have some camera rendering to it to make the GUI renderer work
+    bs::HSceneObject WindowSceneObject;
+    bs::HCamera WindowCamera;
+};
+
 
 Window* Window::InputCapturer = nullptr;
 
@@ -155,6 +165,20 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // tmpwindow->setActive(true);
     Focused = true;
 
+    _BSFResources = std::make_unique<BSFResources>();
+
+    // Create and attach our camera to the window
+    {
+        _BSFResources->WindowSceneObject = bs::SceneObject::create("window no world camera");
+        _BSFResources->WindowCamera =
+            _BSFResources->WindowSceneObject->addComponent<bs::CCamera>();
+        _BSFResources->WindowCamera->getViewport()->setClearColorValue(Float4(0, 0, 0, 1));
+        _BSFResources->WindowSceneObject->setPosition(Float3(40.0f, 30.0f, 230.0f));
+        _BSFResources->WindowSceneObject->lookAt(Float3(0, 0, 0));
+
+        _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
+    }
+
     // create GUI //
     WindowsGui = std::make_unique<GUI::GuiManager>();
     if(!WindowsGui) {
@@ -182,6 +206,8 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 
 DLLEXPORT Window::~Window()
 {
+    _BSFResources.reset();
+
     // GUI is very picky about delete order
     if(WindowsGui) {
         WindowsGui->Release();
@@ -235,6 +261,8 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
     if(LinkedWorld) {
 
         LinkedWorld->OnUnLinkedFromWindow(this, Engine::Get()->GetGraphics());
+    } else {
+        _BSFResources->WindowCamera->getViewport()->setTarget(nullptr);
     }
 
     LinkedWorld = world;
@@ -242,6 +270,9 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
     if(LinkedWorld) {
 
         LinkedWorld->OnLinkToWindow(this, Engine::Get()->GetGraphics());
+    } else {
+
+        _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
     }
 }
 

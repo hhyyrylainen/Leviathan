@@ -32,6 +32,8 @@ enum class INPUT_EVENT_TYPE : int;
 //! \todo Implement global lock for input handling
 //! \todo This should be handled through shared_ptr
 class Window {
+    struct BSFResources;
+
 public:
     //! \exception InvalidArgument if creation fails
     DLLEXPORT Window(Graphics* windowcreater, AppDef* windowproperties);
@@ -287,6 +289,10 @@ private:
     int WindowNumber;
 
     bool MouseCaptureState = false;
+
+    //! Per-window BSF resources
+    std::unique_ptr<BSFResources> _BSFResources;
+
     //! \todo This should probably be atomic
     static Window* InputCapturer;
 };

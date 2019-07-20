@@ -4,6 +4,8 @@
 #include "Common/MimeTypes.h"
 #include "Common/StringOperations.h"
 
+#include "include/wrapper/cef_helpers.h"
+
 #include <fstream>
 
 using namespace Leviathan;
@@ -20,15 +22,15 @@ public:
 
     void Cancel() override {}
 
-    bool CanGetCookie(const CefCookie& cookie) override
-    {
-        return false;
-    }
+    // bool CanGetCookie(const CefCookie& cookie) override
+    // {
+    //     return false;
+    // }
 
-    bool CanSetCookie(const CefCookie& cookie) override
-    {
-        return false;
-    }
+    // bool CanSetCookie(const CefCookie& cookie) override
+    // {
+    //     return false;
+    // }
 
     void GetResponseHeaders(CefRefPtr<CefResponse> response, int64& response_length,
         CefString& redirectUrl) override
@@ -104,5 +106,6 @@ CefRefPtr<CefResourceHandler> CefLocalResourceRequestHandlerFactory::Create(
     CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, const CefString& scheme_name,
     CefRefPtr<CefRequest> request)
 {
+    CEF_REQUIRE_IO_THREAD();
     return new CefFileResourceHandler(request);
 }

@@ -119,7 +119,8 @@ void CefApplication::OnBeforeCommandLineProcessing(
 
 void CefApplication::OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) {}
 
-void CefApplication::OnBrowserCreated(CefRefPtr<CefBrowser> browser)
+void CefApplication::OnBrowserCreated(
+    CefRefPtr<CefBrowser> browser, CefRefPtr<CefDictionaryValue> extra_info)
 {
     // Browser created in this render process...
     OurBrowser = browser;
@@ -256,19 +257,19 @@ void CefApplication::OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info)
 void CefApplication::OnScheduleMessagePumpWork(int64 delay) {}
 // ------------------------------------ //
 bool CefApplication::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-    CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
+    CefRefPtr<CefFrame> frame, CefProcessId source_process,
+    CefRefPtr<CefProcessMessage> message)
 {
     // Handle IPC messages from the browser process...
     // This is in the renderer process
-    if(RendererRouter->OnProcessMessageReceived(browser, source_process, message))
+    if(RendererRouter->OnProcessMessageReceived(browser, frame, source_process, message))
         return true;
 
     if(_PMCheckIsEvent(message))
         return true;
 
-    if(NativeCoreLeviathanAPI->HandleProcessMessage(browser, source_process, message))
+    if(NativeCoreLeviathanAPI->HandleProcessMessage(browser, frame, source_process, message))
         return true;
-
 
     // TODO: custom extension messages in the render process
 
@@ -285,12 +286,12 @@ DLLEXPORT void CefApplication::RegisterCustomExtension(
 DLLEXPORT void CefApplication::SendCustomExtensionMessage(CefRefPtr<CefProcessMessage> message)
 {
     // TODO: add debug verification here for message name being "Custom"
-    OurBrowser->SendProcessMessage(PID_BROWSER, message);
+    OurBrowser->GetMainFrame()->SendProcessMessage(PID_BROWSER, message);
 }
 
 void CefApplication::SendProcessMessage(CefRefPtr<CefProcessMessage> message)
 {
-    OurBrowser->SendProcessMessage(PID_BROWSER, message);
+    OurBrowser->GetMainFrame()->SendProcessMessage(PID_BROWSER, message);
 }
 // ------------------------------------ //
 void CefApplication::StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsinfo)
@@ -310,7 +311,7 @@ void CefApplication::StartListeningForEvent(JSNativeCoreAPI::JSListener* eventsi
     }
 
     // Send it //
-    OurBrowser->SendProcessMessage(PID_BROWSER, message);
+    OurBrowser->GetMainFrame()->SendProcessMessage(PID_BROWSER, message);
 }
 
 void CefApplication::StopListeningForEvents()
@@ -322,7 +323,7 @@ void CefApplication::StopListeningForEvents()
     // Indicate that we want to stop receiving all messages //
     args->SetBool(0, true);
 
-    OurBrowser->SendProcessMessage(PID_BROWSER, message);
+    OurBrowser->GetMainFrame()->SendProcessMessage(PID_BROWSER, message);
 }
 
 bool CefApplication::_PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message)

@@ -124,7 +124,7 @@ $caudio = CAudio.new(
 $cef = CEF.new(
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  version: "3.3497.1837.g00188c7"
+  version: "75.1.4+g4210896+chromium-75.0.3770.100"
 )
 
 $breakpad = Breakpad.new(

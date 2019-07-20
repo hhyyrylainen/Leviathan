@@ -73,7 +73,8 @@ public:
     //! in the render process? To reduce copying and converting between utf8 and utf16
     virtual void OnRenderThreadCreated(CefRefPtr<CefListValue> extra_info) override;
     virtual void OnWebKitInitialized() override;
-    virtual void OnBrowserCreated(CefRefPtr<CefBrowser> browser) override;
+    virtual void OnBrowserCreated(
+        CefRefPtr<CefBrowser> browser, CefRefPtr<CefDictionaryValue> extra_info) override;
     virtual void OnBrowserDestroyed(CefRefPtr<CefBrowser> browser) override;
     // I guess this now needs to be done by: OnBeforeBrowse
 
@@ -89,7 +90,8 @@ public:
     //     CefRefPtr<CefV8StackTrace> stackTrace) override;
 
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-        CefProcessId source_process, CefRefPtr<CefProcessMessage> message) override;
+        CefRefPtr<CefFrame> frame, CefProcessId source_process,
+        CefRefPtr<CefProcessMessage> message) override;
 
 
     virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override

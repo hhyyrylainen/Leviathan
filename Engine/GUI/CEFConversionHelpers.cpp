@@ -133,7 +133,10 @@ DLLEXPORT void CEFDictionaryToNamedVars(
     const CefRefPtr<CefDictionaryValue>& source, NamedVars& destination)
 {
     std::vector<CefString> keys;
-    source->GetKeys(keys);
+    if(!source->GetKeys(keys)) {
+        LOG_ERROR("CEFDictionaryToNamedVars: GetKeys failed");
+        return;
+    }
 
     for(const auto& key : keys) {
 

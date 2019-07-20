@@ -258,7 +258,8 @@ void JSNativeCoreAPI::SendProcessMessage(CefRefPtr<CefProcessMessage> message)
 }
 // ------------------------------------ //
 bool JSNativeCoreAPI::HandleProcessMessage(CefRefPtr<CefBrowser> browser,
-    CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
+    CefRefPtr<CefFrame> frame, CefProcessId source_process,
+    CefRefPtr<CefProcessMessage> message)
 {
     if(message->GetName() == "AudioSource") {
 

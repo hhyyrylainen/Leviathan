@@ -106,7 +106,7 @@ public:
 
     virtual bool GetRootScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override;
 
-    virtual bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override;
+    virtual void GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override;
 
     virtual bool GetScreenPoint(CefRefPtr<CefBrowser> browser, int viewX, int viewY,
         int& screenX, int& screenY) override;
@@ -146,13 +146,6 @@ public:
         CefRefPtr<CefDownloadItemCallback> callback) override;
 
     // CefLifeSpanHandler methods
-    virtual bool OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        const CefString& target_url, const CefString& target_frame_name,
-        CefLifeSpanHandler::WindowOpenDisposition target_disposition, bool user_gesture,
-        const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo,
-        CefRefPtr<CefClient>& client, CefBrowserSettings& settings,
-        bool* no_javascript_access) override;
-
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override;
     virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override;
 
@@ -168,27 +161,9 @@ public:
     virtual void OnLoadError(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
         ErrorCode errorCode, const CefString& errorText, const CefString& failedUrl) override;
 
-    virtual void OnProtocolExecution(CefRefPtr<CefBrowser> browser, const CefString& url,
-        bool& allow_os_execution) override;
-
     // Request handler methods //
     virtual bool OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
         CefRefPtr<CefRequest> request, bool user_gesture, bool is_redirect) override;
-
-    virtual CefRequestHandler::ReturnValue OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
-        CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request,
-        CefRefPtr<CefRequestCallback> callback) override;
-
-    virtual CefRefPtr<CefResourceHandler> GetResourceHandler(CefRefPtr<CefBrowser> browser,
-        CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request) override;
-
-    virtual void OnResourceRedirect(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        CefRefPtr<CefRequest> request, CefRefPtr<CefResponse> response,
-        CefString& new_url) override;
-
-    virtual bool GetAuthCredentials(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-        bool isProxy, const CefString& host, int port, const CefString& realm,
-        const CefString& scheme, CefRefPtr<CefAuthCallback> callback) override;
 
     virtual bool OnQuotaRequest(CefRefPtr<CefBrowser> browser, const CefString& origin_url,
         int64 new_size, CefRefPtr<CefRequestCallback> callback) override;
@@ -196,12 +171,6 @@ public:
     virtual bool OnCertificateError(CefRefPtr<CefBrowser> browser, cef_errorcode_t cert_error,
         const CefString& request_url, CefRefPtr<CefSSLInfo> ssl_info,
         CefRefPtr<CefRequestCallback> callback) override;
-
-    // TODO: fix this
-    // virtual bool OnBeforePluginLoad(const CefString& mime_type, const CefString& plugin_url,
-    //     bool is_main_frame, const CefString& top_origin_url,
-    //     CefRefPtr<CefWebPluginInfo> plugin_info,
-    //     CefRequestContextHandler::PluginPolicy* plugin_policy) override;
 
     virtual void OnPluginCrashed(
         CefRefPtr<CefBrowser> browser, const CefString& plugin_path) override;
@@ -212,7 +181,8 @@ public:
 
     //! \todo check access level properly
     virtual bool OnProcessMessageReceived(CefRefPtr<CefBrowser> browser,
-        CefProcessId source_process, CefRefPtr<CefProcessMessage> message) override;
+        CefRefPtr<CefFrame> frame, CefProcessId source_process,
+        CefRefPtr<CefProcessMessage> message) override;
 
     virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override
     {
@@ -265,6 +235,11 @@ public:
     bool HasOneRef() const OVERRIDE
     {
         return GetRefCount() == 1;
+    }
+
+    bool HasAtLeastOneRef() const OVERRIDE
+    {
+        return GetRefCount() >= 1;
     }
 
 protected:

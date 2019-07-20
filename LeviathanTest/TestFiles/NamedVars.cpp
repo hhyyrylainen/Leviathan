@@ -458,6 +458,18 @@ TEST_CASE("NamedVariableList::ProcessDataDump data flow all p-uses 2", "[variabl
 
 TEST_CASE("CEF dictionary to NamedVars conversion", "[variable]")
 {
+    SECTION("CEF dictionary works")
+    {
+        CefRefPtr<CefDictionaryValue> dictionary = CefDictionaryValue::Create();
+        dictionary->SetBool("primary", true);
+        CHECK(dictionary->GetBool("primary") == true);
+        std::vector<CefString> keys;
+        REQUIRE(dictionary->GetKeys(keys));
+
+        REQUIRE(keys.size() == 1);
+        CHECK(keys[0] == "primary");
+    }
+
     SECTION("Empty dictionary")
     {
         CefRefPtr<CefDictionaryValue> dictionary = CefDictionaryValue::Create();

@@ -341,9 +341,17 @@ bool Graphics::InitializeBSF(AppDef* appdef)
     desc.importers.push_back("bsfFontImporter");
     desc.importers.push_back("bsfSL");
 
+#ifdef _WIN32
+    const auto defaultRenderer = "DirectX";
+#elif defined(__linux__)
+    const auto defaultRenderer = "OpenGL";
+#else
+    const auto defaultRenderer = "Vulkan";
+#endif
+
     std::string renderAPI;
     ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
-        appdef->GetValues(), "RenderAPI", renderAPI, "Vulkan");
+        appdef->GetValues(), "RenderAPI", renderAPI, defaultRenderer);
 
     LOG_INFO("Graphics: preferred rendering API: '" + renderAPI + "'");
 

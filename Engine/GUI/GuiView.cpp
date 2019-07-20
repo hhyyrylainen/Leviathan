@@ -64,7 +64,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // Created asynchronously, the pointer will be linked in the OnAfterCreated function //
     // TODO: determine which is better
     // CefBrowserHost::CreateBrowserSync(info, this, filetoload, settings, nullptr);
-    CefBrowserHost::CreateBrowser(info, this, filetoload, settings, nullptr);
+    CefBrowserHost::CreateBrowser(info, this, filetoload, settings, nullptr, nullptr);
 
     return true;
 }
@@ -328,7 +328,7 @@ bool View::GetRootScreenRect(CefRefPtr<CefBrowser> browser, CefRect& rect)
     return true;
 }
 
-bool View::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect)
+void View::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect)
 {
     // This should always work //
     rect.x = rect.y = 0;
@@ -340,8 +340,6 @@ bool View::GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect)
     // Width and height can be retrieved from the window //
     rect.width = width;
     rect.height = height;
-
-    return true;
 }
 
 bool View::GetScreenPoint(
@@ -498,12 +496,6 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     }
 }
 // ------------------------------------ //
-void View::OnProtocolExecution(
-    CefRefPtr<CefBrowser> browser, const CefString& url, bool& allow_os_execution)
-{
-    // Handle execution of external protocols...
-}
-
 void View::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status)
 {
     // A render process has crashed...
@@ -567,16 +559,6 @@ void View::OnAfterCreated(CefRefPtr<CefBrowser> browser)
     OurBrowserSide = CefMessageRouterBrowserSide::Create(config);
 
     OurBrowserSide->AddHandler(OurAPIHandler, true);
-}
-
-bool View::OnBeforePopup(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-    const CefString& target_url, const CefString& target_frame_name,
-    CefLifeSpanHandler::WindowOpenDisposition target_disposition, bool user_gesture,
-    const CefPopupFeatures& popupFeatures, CefWindowInfo& windowInfo,
-    CefRefPtr<CefClient>& client, CefBrowserSettings& settings, bool* no_javascript_access)
-{
-    // Allow or block popup windows, customize popup window creation...
-    return false;
 }
 
 void View::OnDownloadUpdated(CefRefPtr<CefBrowser> browser,
@@ -648,30 +630,6 @@ bool View::OnBeforeBrowse(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> fra
     return false;
 }
 
-CefRequestHandler::ReturnValue View::OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
-    CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request,
-    CefRefPtr<CefRequestCallback> callback)
-{
-    return RV_CONTINUE;
-}
-
-CefRefPtr<CefResourceHandler> View::GetResourceHandler(
-    CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame, CefRefPtr<CefRequest> request)
-{
-    return NULL;
-}
-
-void View::OnResourceRedirect(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-    CefRefPtr<CefRequest> request, CefRefPtr<CefResponse> response, CefString& new_url)
-{}
-
-bool View::GetAuthCredentials(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
-    bool isProxy, const CefString& host, int port, const CefString& realm,
-    const CefString& scheme, CefRefPtr<CefAuthCallback> callback)
-{
-    return false;
-}
-
 bool View::OnQuotaRequest(CefRefPtr<CefBrowser> browser, const CefString& origin_url,
     int64 new_size, CefRefPtr<CefRequestCallback> callback)
 {
@@ -693,11 +651,11 @@ bool View::OnCertificateError(CefRefPtr<CefBrowser> browser, cef_errorcode_t cer
 
 void View::OnPluginCrashed(CefRefPtr<CefBrowser> browser, const CefString& plugin_path) {}
 // ------------------------------------ //
-bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
-    CefRefPtr<CefProcessMessage> message)
+bool View::OnProcessMessageReceived(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+    CefProcessId source_process, CefRefPtr<CefProcessMessage> message)
 {
     // Handle IPC messages from the render process...
-    if(OurBrowserSide->OnProcessMessageReceived(browser, source_process, message))
+    if(OurBrowserSide->OnProcessMessageReceived(browser, frame, source_process, message))
         return true;
 
     const auto& name = message->GetName();
@@ -866,7 +824,7 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
         responseArgs->SetInt(1, requestNumber);
         responseArgs->SetInt(2, source ? source->GetID() : -1);
 
-        OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
+        OurBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, responseMessage);
         return;
 
     } else if(operation == "destroy") {
@@ -963,7 +921,7 @@ void View::_HandlePlayCutsceneMessage(const CefRefPtr<CefProcessMessage>& messag
                 responseArgs->SetString(0, "Finished");
                 responseArgs->SetInt(1, requestNumber);
 
-                OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
+                OurBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, responseMessage);
             },
             [=](const std::string& error) {
                 // Failure
@@ -975,7 +933,7 @@ void View::_HandlePlayCutsceneMessage(const CefRefPtr<CefProcessMessage>& messag
                 responseArgs->SetInt(1, requestNumber);
                 responseArgs->SetString(2, error);
 
-                OurBrowser->SendProcessMessage(PID_RENDERER, responseMessage);
+                OurBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, responseMessage);
             });
         return;
 
@@ -1017,7 +975,7 @@ DLLEXPORT int View::OnEvent(Event* event)
     // Set the packet as binary data //
     args->SetBinary(0, CefBinaryValue::Create(tmppacket.getData(), tmppacket.getDataSize()));
 
-    OurBrowser->SendProcessMessage(PID_RENDERER, message);
+    OurBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
 
     return 3;
 }
@@ -1038,7 +996,7 @@ DLLEXPORT int View::OnGenericEvent(GenericEvent* event)
     // Set the packet as binary data //
     args->SetBinary(0, CefBinaryValue::Create(tmppacket.getData(), tmppacket.getDataSize()));
 
-    OurBrowser->SendProcessMessage(PID_RENDERER, message);
+    OurBrowser->GetMainFrame()->SendProcessMessage(PID_RENDERER, message);
 
     return 3;
 }

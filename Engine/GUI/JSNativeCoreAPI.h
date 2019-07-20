@@ -152,8 +152,8 @@ public:
         CefString& exception) override;
 
     //! \brief Handles returned messages from the browser process
-    bool HandleProcessMessage(CefRefPtr<CefBrowser> browser, CefProcessId source_process,
-        CefRefPtr<CefProcessMessage> message);
+    bool HandleProcessMessage(CefRefPtr<CefBrowser> browser, CefRefPtr<CefFrame> frame,
+        CefProcessId source_process, CefRefPtr<CefProcessMessage> message);
 
     //! \brief Called when context is released, causes everything to be cleared
     void ClearContextValues();

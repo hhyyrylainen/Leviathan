@@ -420,12 +420,16 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         window.GetSize(width, height);
         windowDesc.videoMode = bs::VideoMode(width, height, dm.refresh_rate, 0);
 
+#ifdef _WIN32
+        windowDesc.platformSpecific["externalWindowHandle"] =
+            std::to_string((uint64_t)window.GetNativeHandle());
+#else
         windowDesc.platformSpecific["externalWindowHandle"] =
             std::to_string(window.GetNativeHandle());
 
         windowDesc.platformSpecific["externalDisplay"] =
             std::to_string(window.GetWindowXDisplay());
-
+#endif
 
         bs::CoreApplication::startUp<LeviathanBSFApplication>(Pimpl->Description);
 

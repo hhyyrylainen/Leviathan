@@ -43,13 +43,15 @@ if(TRUE)
 
   # Needed for file copy
   set(LEVIATHAN_BOOST_FILECOPY ${Boost_SYSTEM_LIBRARY_RELEASE}
-        ${Boost_FILESYSTEM_LIBRARY_RELEASE})
+    ${Boost_FILESYSTEM_LIBRARY_RELEASE}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE})
 
   # Set up referencing of Boost
   include_directories(${Boost_INCLUDE_DIR})
 
   # All libs are linked by cmake
   add_definitions(-DBOOST_ALL_NO_LIB)
+  add_definitions(-DBOOST_PROGRAM_OPTIONS_DYN_LINK=1)
   
 endif(TRUE)
 

@@ -96,7 +96,10 @@ These programs are needed for all platforms:
   the package manager to install this. For **Windows** see \ref
   prerequisite_software_windows)
 
-- 7zip (required in latest versions)
+- 7zip
+
+- Vulkan SDK (On **linux** the setup script will automatically use the
+  package manager to install this)
 
 You can check whether a program is in PATH by opening a command 
 prompt/terminal and running the program by typing its name. 
@@ -111,6 +114,7 @@ ruby 2.4.1p111
   to the default path in `C:/Program Files (x86)/Microsoft Visual Studio/2017/Community`
   otherwise the setup won't find it.
 - Visual c++ 2010 runtime (This is required for yasm according to ffmpeg setup guide)
+- Visual c++ 2015 runtime (CEF uses this, users also need this)
 - [Cygwin64](https://cygwin.com/install.html). When Cygwin asks for
   which packages to install make sure the at least the following are
   selected (and to save space don't install the debug variants):
@@ -173,6 +177,10 @@ ruby 2.4.1p111
   <a
   href="http://www.boost.org/doc/libs/1_66_0/more/getting_started/windows.html#prepare-to-use-a-boost-library-binary">official
   boost guide</a>
+
+- Vulkan SDK (use the [installer](https://vulkan.lunarg.com/sdk/home))
+  After installing you need to setup an environment variable called
+  `VULKAN_SDK` pointing to the install path (for example: `C:\VulkanSDK\1.1.108.0`)
 
 - 7zip. Download the <a
   href="http://www.7-zip.org/download.html">official</a> installer

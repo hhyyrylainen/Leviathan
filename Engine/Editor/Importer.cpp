@@ -4,7 +4,7 @@
 #include "Common/StringOperations.h"
 #include "Exceptions.h"
 
-//#include "boost/filesystem.hpp"
+// #include "boost/filesystem.hpp"
 
 #include "Importer/BsImporter.h"
 #include "Resources/BsResources.h"
@@ -30,7 +30,7 @@ bool Importer::Run()
         return false;
     }
 
-    Source = std::filesystem::absolute(Source).c_str();
+    Source = std::filesystem::absolute(Source).string();
 
     // If target has an extension treat it as a single file
     if(!StringOperations::GetExtension(StringOperations::RemovePath(Destination)).empty()) {
@@ -55,7 +55,7 @@ bool Importer::Run()
             if(dir->status().type() == std::filesystem::file_type::regular ||
                 dir->status().type() == std::filesystem::file_type::symlink) {
 
-                if(!ImportFile(std::filesystem::absolute(dir->path()).c_str())) {
+                if(!ImportFile(std::filesystem::absolute(dir->path()).string())) {
                     result = false;
                 }
             }
@@ -195,11 +195,11 @@ std::string Importer::GetTargetPath(const std::string& file, FileType type) cons
     } catch(const std::filesystem::filesystem_error& e) {
 
         LOG_ERROR("Failed to make target folder: " +
-                  std::string(result.parent_path().c_str()) + ", error: " + e.what());
+                  std::string(result.parent_path().string()) + ", error: " + e.what());
         throw InvalidArgument("cannot make target folder");
     }
 
-    return result.c_str();
+    return result.string();
 }
 // ------------------------------------ //
 const char* Importer::GetSubFolderForType(FileType type)

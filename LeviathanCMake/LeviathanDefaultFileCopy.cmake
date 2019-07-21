@@ -73,33 +73,35 @@ if(NOT ONLY_DOCUMENTATION)
   install(DIRECTORY "${LEVIATHAN_SRC}/EditorResources" DESTINATION
     "bin/Data/")  
 
+  # CEF resource target depends on where the cef lib is copied
+  if(WIN32)
+    set(CEF_RESOURCE_TARGET_FOLDER "bin")
+  else()
+    set(CEF_RESOURCE_TARGET_FOLDER "bin/lib")
+  endif()
+
   # Copy additional CEF stuff
   file(GLOB CEF_BLOBS "${LEVIATHAN_SRC}/build/ThirdParty/cefextrablobs/*.bin")
-  file(COPY ${CEF_BLOBS} DESTINATION "${PROJECT_BINARY_DIR}/bin/")
-  install(FILES ${CEF_BLOBS} DESTINATION "bin")
+  file(COPY ${CEF_BLOBS} DESTINATION "${PROJECT_BINARY_DIR}/${CEF_RESOURCE_TARGET_FOLDER}")
+  install(FILES ${CEF_BLOBS} DESTINATION "${CEF_RESOURCE_TARGET_FOLDER}")
+  
   
   file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
-    DESTINATION "${PROJECT_BINARY_DIR}/bin")
+    DESTINATION "${PROJECT_BINARY_DIR}/${CEF_RESOURCE_TARGET_FOLDER}")
   install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/swiftshader"
-    DESTINATION "bin")
-  
-  if(UNIX)
-    file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/bin/chrome-sandbox"
-      DESTINATION "${PROJECT_BINARY_DIR}/bin")
-    install(FILES "${LEVIATHAN_SRC}/build/ThirdParty/bin/chrome-sandbox"
-      DESTINATION "bin")    
-  endif()
+    DESTINATION "${CEF_RESOURCE_TARGET_FOLDER}")
   
   file(GLOB CEF_RESOURCE_FILES "${LEVIATHAN_SRC}/build/ThirdParty/Resources/*.*")
-  file(COPY ${CEF_RESOURCE_FILES}
-    DESTINATION "${PROJECT_BINARY_DIR}/bin")
-  file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/Resources/locales"
-    DESTINATION "${PROJECT_BINARY_DIR}/bin")  
   
+  file(COPY ${CEF_RESOURCE_FILES}
+    DESTINATION "${PROJECT_BINARY_DIR}/${CEF_RESOURCE_TARGET_FOLDER}")
   install(FILES ${CEF_RESOURCE_FILES}
-    DESTINATION "bin")  
+    DESTINATION "${CEF_RESOURCE_TARGET_FOLDER}")  
+  
+  file(COPY "${LEVIATHAN_SRC}/build/ThirdParty/Resources/locales"
+    DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")  
   install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/Resources/locales"
-    DESTINATION "bin")
+    DESTINATION "bin/Data")
 
 endif()
 

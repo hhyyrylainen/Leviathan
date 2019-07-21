@@ -86,11 +86,11 @@ DLLEXPORT bool Leviathan::GlobalCEFHandler::CEFFirstCheckChildProcess(
 
     try {
         CefString(&settings.locales_dir_path) =
-            boost::filesystem::canonical("locales").wstring();
+            boost::filesystem::canonical("Data/locales").wstring();
 
         const auto currentCanonical = boost::filesystem::canonical("./").wstring();
 
-        CefString(&settings.resources_dir_path) = currentCanonical;
+        // CefString(&settings.resources_dir_path) = currentCanonical;
 
         CefString(&settings.log_file) =
             currentCanonical + Convert::Utf8ToUtf16("/" + logname + "LogCEF.txt");

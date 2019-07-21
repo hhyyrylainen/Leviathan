@@ -17,7 +17,7 @@ public:
     //! \param meshname The name of the created mesh, must be unique
     //! \todo Parameter to specify if shadow geometry is needed
     DLLEXPORT static bs::HMesh CreateScreenSpaceQuad(
-        float x, float y, float width, float height);
+        float x, float y, float width, float height, bool autoflipUV = true);
 
     //! \brief Creates a plane with specific size and UV coordinates with 0, 0 on top left
     //!

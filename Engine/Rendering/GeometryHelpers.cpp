@@ -1,13 +1,18 @@
 // ------------------------------------ //
 #include "GeometryHelpers.h"
 
+#include "Rendering/Graphics.h"
+#include "Engine.h"
+
 #include "bsfCore/RenderAPI/BsVertexDataDesc.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
-    float x, float y, float width, float height)
+    float x, float y, float width, float height, bool autoflipUV /*= true*/)
 {
+    static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
+
     bs::MESH_DESC meshDesc;
     meshDesc.numVertices = 4;
     meshDesc.numIndices = 6;
@@ -27,13 +32,21 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
     float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
     size_t index = 0;
 
+	float uvBottom = 0;
+	float uvTop = 1.f;
+
+	if(flippedY && autoflipUV) {
+        float uvBottom = 0;
+        float uvTop = 1.f;
+    }
+
     {
         // First vertex
         index = 0;
         vertices[index * stride + 0] = x;
         vertices[index * stride + 1] = y;
         vertices[index * stride + 2] = 0;
-        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 3] = uvTop;
     }
 
     {
@@ -42,7 +55,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x + width;
         vertices[index * stride + 1] = y;
         vertices[index * stride + 2] = 1;
-        vertices[index * stride + 3] = 0;
+        vertices[index * stride + 3] = uvTop;
     }
 
     {
@@ -51,7 +64,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x + width;
         vertices[index * stride + 1] = y + height;
         vertices[index * stride + 2] = 1;
-        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 3] = uvBottom;
     }
 
     {
@@ -60,7 +73,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
         vertices[index * stride + 0] = x;
         vertices[index * stride + 1] = y + height;
         vertices[index * stride + 2] = 0;
-        vertices[index * stride + 3] = 1;
+        vertices[index * stride + 3] = uvBottom;
     }
 
     // 1 to 1 index buffer mapping
@@ -77,6 +90,8 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
 
 DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
 {
+    static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
+
     const auto x = -width / 2;
     const auto z = -height / 2;
 

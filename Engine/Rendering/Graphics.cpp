@@ -645,6 +645,12 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
                 locked->UpdateShownOverlays(coreVersion);
         });
 }
+
+DLLEXPORT bool Graphics::IsVerticalUVFlipped() const
+{
+    return bs::ct::RenderAPI::instance().getCapabilities(0).conventions.uvYAxis ==
+           bs::Conventions::Axis::Up;
+}
 // ------------------------------------ //
 // Resource loading helpers
 

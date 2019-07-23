@@ -25,7 +25,7 @@ public:
 
     DLLEXPORT void UpdateShownOverlays(const std::vector<bs::SPtr<bs::Texture>>& overlays);
 
-	DLLEXPORT bool IsVerticalUVFlipped() const;
+    DLLEXPORT bool IsVerticalUVFlipped() const;
 
     // ------------------------------------ //
     // Resource loading helpers

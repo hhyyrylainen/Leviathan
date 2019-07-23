@@ -305,6 +305,8 @@ DLLEXPORT void Window::OnResize(int width, int height)
     // TODO: something better, this is very fiddly
     BSFWindow->resize(width, height);
 
+    // BSFWindow->onResized();
+
     // Send to GUI //
     WindowsGui->OnResize();
 }

@@ -1,8 +1,8 @@
 // ------------------------------------ //
 #include "GeometryHelpers.h"
 
-#include "Rendering/Graphics.h"
 #include "Engine.h"
+#include "Rendering/Graphics.h"
 
 #include "bsfCore/RenderAPI/BsVertexDataDesc.h"
 
@@ -32,10 +32,10 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
     float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
     size_t index = 0;
 
-	float uvBottom = 0;
-	float uvTop = 1.f;
+    float uvBottom = 0;
+    float uvTop = 1.f;
 
-	if(flippedY && autoflipUV) {
+    if(flippedY && autoflipUV) {
         float uvBottom = 0;
         float uvTop = 1.f;
     }

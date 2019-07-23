@@ -102,14 +102,14 @@
 using namespace Leviathan;
 // ------------------------------------ //
 
-class LeviathanBSFShaderIncludeHandler : public bs::DefaultShaderIncludeHandler {
+class LeviathanBSFShaderIncludeHandler : public bs::EngineShaderIncludeHandler {
 public:
     virtual bs::HShaderInclude findInclude(const bs::String& name) const override
     {
         // If the file path is valid just pass it as is
         const std::string converted(name.c_str(), name.size());
         if(FileSystem::FileExists(converted))
-            return bs::DefaultShaderIncludeHandler::findInclude(name);
+            return bs::EngineShaderIncludeHandler::findInclude(name);
 
         // We resolve the path and then give it to bsf
         std::string searched = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT,
@@ -117,12 +117,16 @@ public:
             StringOperations::GetExtension<std::string>(converted), true);
 
         if(searched.empty()) {
-            LOG_WARNING("LeviathanBSFShaderIncludeHandler: could not locate file anywhere: " +
-                        converted);
-            return nullptr;
+            if(name.find("$ENGINE$") == bs::String::npos) {
+                LOG_WARNING(
+                    "LeviathanBSFShaderIncludeHandler: could not locate file anywhere: " +
+                    converted);
+            }
+
+            return bs::EngineShaderIncludeHandler::findInclude(name);
         }
 
-        return bs::DefaultShaderIncludeHandler::findInclude(
+        return bs::EngineShaderIncludeHandler::findInclude(
             bs::String(searched.c_str(), searched.size()));
     }
 };

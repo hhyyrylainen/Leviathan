@@ -492,7 +492,7 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
         Owner->NotifyAboutLayer(RenderOrder, Texture);
     } else {
-        Texture->writeData(DataBuffer, 0, 0, fullOverwrite);
+        Texture->writeData(DataBuffer, 0, 0, true);
     }
 }
 // ------------------------------------ //

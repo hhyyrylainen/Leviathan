@@ -106,7 +106,7 @@ $bsf = BSFramework.new(
   version: "184b607472d756f4899f2cfadd028a283fec0853",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  renderAPI: "Vulkan",
+  renderAPI: if OS.windows? then "DirectX 11" else "OpenGL" end,
   buildAllRenderAPI: true,
   physicsModule: "Null",
   audioModule: "Null",

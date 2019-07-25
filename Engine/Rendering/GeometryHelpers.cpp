@@ -32,12 +32,12 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
     float* vertices = reinterpret_cast<float*>(meshData->getStreamData(0));
     size_t index = 0;
 
-    float uvBottom = 0;
-    float uvTop = 1.f;
+    float uvBottom = 1.f;
+    float uvTop = 0.f;
 
     if(flippedY && autoflipUV) {
-        float uvBottom = 0;
-        float uvTop = 1.f;
+        uvBottom = 0.f;
+        uvTop = 1.f;
     }
 
     {

@@ -20,7 +20,7 @@ DLLEXPORT std::string_view Leviathan::GetMimeTypeFromPath(const std::string_view
     if(extension == "gif")
         return "image/gif";
     if(extension == "svg")
-        return "image/svg";
+        return "image/svg+xml";
     if(extension == "ogg" || extension == "opus")
         return "audio/ogg";
     if(extension == "css")

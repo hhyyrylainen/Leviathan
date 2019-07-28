@@ -131,9 +131,9 @@ bool Importer::ImportTypedFile(const std::string& file, FileType type)
     LOG_INFO("Importing '" + file + "' to '" + target + "'");
 
     switch(type) {
-    case FileType::Shader: return ImportAndSaveFile<bs::Shader>(file, target, Compress);
-    case FileType::Texture: return ImportAndSaveFile<bs::Texture>(file, target, Compress);
-    case FileType::Model: return ImportAndSaveFile<bs::Mesh>(file, target, Compress);
+    case FileType::Shader: return ImportAndSaveFile<bs::Shader>(file, target);
+    case FileType::Texture: return ImportAndSaveFile<bs::Texture>(file, target);
+    case FileType::Model: return ImportAndSaveFile<bs::Mesh>(file, target);
     case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
     }
 
@@ -166,7 +166,6 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
 
     const auto extension = StringOperations::GetExtension(baseFile);
 
-
     const auto type = GetTypeFromExtension(extension);
 
     if(type == FileType::Invalid) {
@@ -182,15 +181,19 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
         target = GetTargetPath(baseFile, type);
     }
 
+    // Skip if the target is up to date
+    if(!NeedsImporting(baseFile, optionsfile, target)) {
+        return true;
+    }
+
     LOG_INFO("Importing with options from '" + optionsfile + "' to '" + target + "'");
 
     switch(type) {
     case FileType::Shader:
-        return ImportAndSaveWithOptions<bs::Shader>(baseFile, target, Compress, value);
+        return ImportAndSaveWithOptions<bs::Shader>(baseFile, target, value);
     case FileType::Texture:
-        return ImportAndSaveWithOptions<bs::Texture>(baseFile, target, Compress, value);
-    case FileType::Model:
-        return ImportAndSaveWithOptions<bs::Mesh>(baseFile, target, Compress, value);
+        return ImportAndSaveWithOptions<bs::Texture>(baseFile, target, value);
+    case FileType::Model: return ImportAndSaveWithOptions<bs::Mesh>(baseFile, target, value);
     case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
     }
 

@@ -83,7 +83,7 @@ protected:
 
 private:
     template<class T>
-    bool ImportAndSaveFile(const std::string& file, const std::string& target, bool compress,
+    bool ImportAndSaveFile(const std::string& file, const std::string& target,
         bs::SPtr<typename OptionsCreator<T>::OptionsType> options =
             OptionsCreator<T>::Create())
     {
@@ -91,7 +91,7 @@ private:
 
         if(resource) {
 
-            bs::gResources().save(resource, target.c_str(), true, compress);
+            bs::gResources().save(resource, target.c_str(), true, Compress);
             return true;
         }
 
@@ -100,7 +100,7 @@ private:
 
     template<class T>
     bool MultiResourceSaveSingle(const bs::Vector<bs::SubResource>& resources,
-        size_t& resourceCounter, const std::vector<std::string>& targets, bool compress)
+        size_t& resourceCounter, const std::vector<std::string>& targets)
     {
         if(resourceCounter >= resources.size()) {
             LOG_ERROR("Importer: ran out of resources in multi resource import");
@@ -116,7 +116,7 @@ private:
 
         if(resource) {
 
-            bs::gResources().save(resource, targets[resourceCounter].c_str(), true, compress);
+            bs::gResources().save(resource, targets[resourceCounter].c_str(), true, Compress);
 
         } else {
             LOG_ERROR("Importer: converting multi import resource failed, index: " +
@@ -131,29 +131,29 @@ private:
 
     template<class T>
     bool MultiResourceSaveHelper(const bs::Vector<bs::SubResource>& resources,
-        size_t& resourceCounter, const std::vector<std::string>& targets, bool compress)
+        size_t& resourceCounter, const std::vector<std::string>& targets)
     {
         if(resourceCounter + 1 < targets.size()) {
             LOG_WARNING("Importer: excess targets provided for multi resource import");
         }
 
-        return MultiResourceSaveSingle<T>(resources, resourceCounter, targets, compress);
+        return MultiResourceSaveSingle<T>(resources, resourceCounter, targets);
     }
 
     template<class T, class SecondT, class... ExtraT>
     bool MultiResourceSaveHelper(const bs::Vector<bs::SubResource>& resources,
-        size_t& resourceCounter, const std::vector<std::string>& targets, bool compress)
+        size_t& resourceCounter, const std::vector<std::string>& targets)
     {
-        if(!MultiResourceSaveSingle<T>(resources, resourceCounter, targets, compress))
+        if(!MultiResourceSaveSingle<T>(resources, resourceCounter, targets))
             return false;
 
         return MultiResourceSaveHelper<SecondT, ExtraT...>(
-            resources, resourceCounter, targets, compress);
+            resources, resourceCounter, targets);
     }
 
     template<class T, class... AdditionalTypes>
     bool ImportMultiResource(const std::string& file, const std::vector<std::string>& targets,
-        bool compress, bs::SPtr<typename OptionsCreator<T>::OptionsType> options)
+        bs::SPtr<typename OptionsCreator<T>::OptionsType> options)
     {
         auto resources = bs::gImporter().importAll(file.c_str(), options);
 
@@ -163,12 +163,12 @@ private:
         size_t resourceCounter = 0;
 
         return MultiResourceSaveHelper<T, AdditionalTypes...>(
-            resources->entries, resourceCounter, targets, compress);
+            resources->entries, resourceCounter, targets);
     }
 
     template<class T>
-    bool ImportAndSaveWithOptions(const std::string& file, const std::string& target,
-        bool compress, const Json::Value& options)
+    bool ImportAndSaveWithOptions(
+        const std::string& file, const std::string& target, const Json::Value& options)
     {
         auto importOptions = OptionsCreator<T>::Create();
 
@@ -211,13 +211,12 @@ private:
                     return false;
                 }
 
-                return ImportMultiResource<T, bs::AnimationClip>(
-                    file, targets, compress, importOptions);
+                return ImportMultiResource<T, bs::AnimationClip>(file, targets, importOptions);
             }
         }
 
         // Non-multi import
-        return ImportAndSaveFile<T>(file, target, compress, importOptions);
+        return ImportAndSaveFile<T>(file, target, importOptions);
     }
 
 protected:

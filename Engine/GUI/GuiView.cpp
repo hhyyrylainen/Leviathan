@@ -106,7 +106,9 @@ DLLEXPORT void View::_DoReleaseResources()
     // Renderable = nullptr;
 
     Texture = nullptr;
-    DataBuffer.reset();
+    ClearDataBuffers();
+    IntermediateTextureBuffer.clear();
+    IntermediateTextureBuffer.shrink_to_fit();
 }
 // ------------------------------------ //
 DLLEXPORT void View::_OnWindowResized()
@@ -416,6 +418,9 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     // Calculate the size of the buffer //
     size_t buffSize = width * height * CEF_BYTES_PER_PIXEL;
 
+    if(IntermediateTextureBuffer.size() != buffSize)
+        IntermediateTextureBuffer.resize(buffSize);
+
     switch(type) {
     case PET_POPUP: {
         LOG_ERROR("CEF PET_POPUP not handled");
@@ -434,41 +439,31 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
 
         Texture->destroy();
         Texture = nullptr;
+        ClearDataBuffers();
         LOG_INFO("GuiView: texture size has changed");
     }
 
     if(!Texture) {
 
         LOG_INFO("GuiView: creating texture for CEF");
-        DataBuffer = bs::PixelData::create(width, height, 1, BS_PIXEL_FORMAT);
+        NeededTextureWidth = width;
+        NeededTextureHeight = height;
     }
 
-    LEVIATHAN_ASSERT(DataBuffer->getSize() == buffSize, "CEF and BSF buffer size mismatch");
-
-    if(DataBuffer->isLocked()) {
-        // Just skip for now. in the future we'll want a few rotating buffers
-        return;
-    }
-
-    bool fullOverwrite = false;
-
-    // Copy the data over //
+    // Copy the data to intermediate buffer //
     const auto firstRect = dirtyRects.front();
     if(dirtyRects.size() == 1 && firstRect.x == 0 && firstRect.y == 0 &&
         firstRect.width == width && firstRect.height == height) {
 
         // Can directly copy the whole thing
-        std::memcpy(DataBuffer->getData(), buffer, buffSize);
-        fullOverwrite = true;
+        std::memcpy(IntermediateTextureBuffer.data(), buffer, buffSize);
 
     } else {
 
-        uint32_t* destptr = reinterpret_cast<uint32_t*>(DataBuffer->getData());
+        uint32_t* destptr = reinterpret_cast<uint32_t*>(IntermediateTextureBuffer.data());
         const uint32_t* source = static_cast<const uint32_t*>(buffer);
 
-        // The row pitch is now in bytes. We need to divide here to get the element count (this
-        // only works with pixel formats with no padding)
-        const size_t rowElements = DataBuffer->getRowPitch() / CEF_BYTES_PER_PIXEL;
+        const size_t rowElements = width;
 
         for(const auto rect : dirtyRects) {
 
@@ -488,12 +483,30 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         }
     }
 
+    auto* bsfBuffer = GetNextDataBuffer();
+
+    if(!bsfBuffer) {
+        LOG_WARNING("GUI: View: out of texture data buffers");
+        return;
+    }
+
+    // This only works with pixel formats with no padding
+    LEVIATHAN_ASSERT((*bsfBuffer)->getSize() == buffSize, "CEF and BSF buffer size mismatch");
+
+    // Copy intermediate buffer
+    std::memcpy((*bsfBuffer)->getData(), IntermediateTextureBuffer.data(), buffSize);
+
     if(!Texture) {
-        Texture = bs::Texture::create(DataBuffer, bs::TU_DYNAMIC);
+        Texture = bs::Texture::create(*bsfBuffer, bs::TU_DYNAMIC);
         Owner->NotifyAboutLayer(RenderOrder, Texture);
     } else {
-        Texture->writeData(DataBuffer, 0, 0, true);
+        Texture->writeData(*bsfBuffer, 0, 0, true);
     }
+}
+
+bs::SPtr<bs::PixelData> View::_OnNewBufferNeeded()
+{
+    return bs::PixelData::create(NeededTextureWidth, NeededTextureHeight, 1, BS_PIXEL_FORMAT);
 }
 // ------------------------------------ //
 void View::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status)

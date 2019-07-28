@@ -7,6 +7,7 @@
 #include "Events/CallableObject.h"
 #include "GuiLayer.h"
 #include "JSProxyable.h"
+#include "Rendering/RotatingBufferHelper.h"
 
 #include "bsfCore/BsCorePrerequisites.h"
 
@@ -61,7 +62,8 @@ class View : public Layer,
              public CefRequestHandler,
              public CefRenderHandler,
              public ThreadSafe,
-             public CallableObject {
+             public CallableObject,
+             RotatingBufferHelper<bs::SPtr<bs::PixelData>, 4> {
     friend class LeviathanJavaScriptAsync;
 
 public:
@@ -246,6 +248,7 @@ protected:
     DLLEXPORT void _DoReleaseResources() override;
     DLLEXPORT void _OnWindowResized() override;
     DLLEXPORT void _OnFocusChanged() override;
+    bs::SPtr<bs::PixelData> _OnNewBufferNeeded() override;
 
     bool _PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message);
 
@@ -285,7 +288,12 @@ protected:
 
     // Rendering resources
     bs::HTexture Texture;
-    bs::SPtr<bs::PixelData> DataBuffer;
+
+    // Store for needed texture size
+    int NeededTextureWidth = -1;
+    int NeededTextureHeight = -1;
+
+    std::vector<uint8_t> IntermediateTextureBuffer;
 };
 
 }} // namespace Leviathan::GUI

@@ -4,17 +4,14 @@
 #include "Common/StringOperations.h"
 #include "Exceptions.h"
 
-// #include "boost/filesystem.hpp"
-
-#include "Importer/BsImporter.h"
-#include "Resources/BsResources.h"
-
 #include <filesystem>
 #include <string_view>
 
 using namespace Leviathan;
 using namespace Leviathan::Editor;
 // ------------------------------------ //
+constexpr auto OPTIONS_FILE_NAME = ".options.json";
+
 Importer::Importer(const std::string& source, const std::string& destination) :
     Source(source), Destination(destination)
 {}
@@ -43,6 +40,7 @@ bool Importer::Run()
     if(!std::filesystem::is_directory(Source)) {
 
         LOG_INFO("Importing single file");
+        SourceIsFile = true;
         if(!ImportFile(Source)) {
             result = false;
         }
@@ -77,24 +75,40 @@ bool Importer::ImportFile(const std::string& file)
     const auto extension = StringOperations::GetExtension(file);
     bool success = false;
 
-    if(extension == "png" || extension == "jpg") {
+    // Options files
+    if(extension == "json" &&
+        StringOperations::StringEndsWith<std::string>(file, OPTIONS_FILE_NAME)) {
 
-        success = ImportTypedFile(file, FileType::Texture);
+        success = ImportWithOptions(file);
 
-    } else if(extension == "bsl") {
-
-        success = ImportTypedFile(file, FileType::Shader);
-        return true;
-    } else if(extension == "fbx") {
-
-        success = ImportTypedFile(file, FileType::Model);
-        return true;
     } else {
-        // Ignore unknown extensions
-        return true;
-    }
 
-    // TODO: bslinc files should be copied
+        const auto optionsCoutnerpart = file + OPTIONS_FILE_NAME;
+
+        // Check does this have a corresponding options file
+        if(std::filesystem::exists(optionsCoutnerpart)) {
+
+            // Skip this file if we aren't running on a single file
+            if(SourceIsFile) {
+
+                LOG_INFO("Importer: running on single file with an options file, changing "
+                         "target to the options file");
+                success = ImportWithOptions(optionsCoutnerpart);
+
+            } else {
+                return true;
+            }
+        }
+
+        const auto type = GetTypeFromExtension(extension);
+
+        if(type == FileType::Invalid) {
+            // Ignore unknown extensions
+            return true;
+        }
+
+        success = ImportTypedFile(file, type);
+    }
 
     if(!success) {
         LOG_ERROR("Importer: importing file '" + file + "' failed");
@@ -103,20 +117,6 @@ bool Importer::ImportFile(const std::string& file)
     }
 
     return success;
-}
-
-template<class T>
-bool ImportAndSaveFile(const std::string& file, const std::string& target, bool compress)
-{
-    auto resource = bs::gImporter().import<T>(file.c_str());
-
-    if(resource) {
-
-        bs::gResources().save(resource, target.c_str(), true, compress);
-        return true;
-    }
-
-    return false;
 }
 
 bool Importer::ImportTypedFile(const std::string& file, FileType type)
@@ -134,23 +134,80 @@ bool Importer::ImportTypedFile(const std::string& file, FileType type)
     case FileType::Shader: return ImportAndSaveFile<bs::Shader>(file, target, Compress);
     case FileType::Texture: return ImportAndSaveFile<bs::Texture>(file, target, Compress);
     case FileType::Model: return ImportAndSaveFile<bs::Mesh>(file, target, Compress);
+    case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
     }
 
-    // models need for animations:
-    // auto importOptions = bs::MeshImportOptions::create();
-    // importOptions->setImportAnimation(true);
-    // auto resources = bs::gImporter().importAll("humanAnimated.fbx", importOptions);
-    // HAnimationClip animationClip = static_resource_cast<AnimationClip>(resources[1].value);
+    LEVIATHAN_ASSERT(false, "should not get here");
+}
 
+bool Importer::ImportWithOptions(const std::string& optionsfile)
+{
+    std::ifstream fileReader(optionsfile);
+
+    Json::CharReaderBuilder builder;
+    Json::Value value;
+    JSONCPP_STRING errs;
+
+    if(!parseFromStream(builder, fileReader, &value, &errs))
+        throw InvalidArgument("invalid json:" + errs);
+
+    std::string baseFile;
+
+    if(value["baseFile"]) {
+        baseFile = value["baseFile"].asString();
+    } else {
+        baseFile = optionsfile.substr(0, optionsfile.size() - std::strlen(OPTIONS_FILE_NAME));
+    }
+
+    if(!std::filesystem::exists(baseFile)) {
+        LOG_ERROR("Importer: base file for options doesn't exist: " + baseFile);
+        return false;
+    }
+
+    const auto extension = StringOperations::GetExtension(baseFile);
+
+
+    const auto type = GetTypeFromExtension(extension);
+
+    if(type == FileType::Invalid) {
+        LOG_ERROR("Importer: options base file has unknown type");
+        return true;
+    }
+
+    std::string target;
+
+    if(value["target"]) {
+        target = GetTargetPath(value["target"].asString(), type);
+    } else {
+        target = GetTargetPath(baseFile, type);
+    }
+
+    LOG_INFO("Importing with options from '" + optionsfile + "' to '" + target + "'");
+
+    switch(type) {
+    case FileType::Shader:
+        return ImportAndSaveWithOptions<bs::Shader>(baseFile, target, Compress, value);
+    case FileType::Texture:
+        return ImportAndSaveWithOptions<bs::Texture>(baseFile, target, Compress, value);
+    case FileType::Model:
+        return ImportAndSaveWithOptions<bs::Mesh>(baseFile, target, Compress, value);
+    case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
+    }
 
     LEVIATHAN_ASSERT(false, "should not get here");
+
+    return true;
 }
 // ------------------------------------ //
 std::string Importer::GetTargetPath(const std::string& file, FileType type) const
 {
     if(TargetIsFile)
         return Destination;
+    return GetTargetWithoutSingleCheck(file, type);
+}
 
+std::string Importer::GetTargetWithoutSingleCheck(const std::string& file, FileType type) const
+{
     using namespace std::string_view_literals;
 
     const auto prefixRemoved = StringOperations::RemovePrefix(file, Source);
@@ -179,6 +236,7 @@ std::string Importer::GetTargetPath(const std::string& file, FileType type) cons
             strippedPath.find("models"sv) == std::string_view::npos)
             needsPrefix = true;
         break;
+    case FileType::Invalid: break;
     }
 
     auto targetPath = std::filesystem::path(Destination);
@@ -208,10 +266,28 @@ const char* Importer::GetSubFolderForType(FileType type)
     case FileType::Shader: return "Shaders";
     case FileType::Texture: return "Textures";
     case FileType::Model: return "Models";
+    case FileType::Invalid:
+        throw InvalidArgument("cannot get sub folder for invalid file type");
     }
 
     LEVIATHAN_ASSERT(false, "should not get here");
     return nullptr;
+}
+
+Importer::FileType Importer::GetTypeFromExtension(const std::string& extension)
+{
+    if(extension == "png" || extension == "jpg")
+        return FileType::Texture;
+
+    if(extension == "bsl" || extension == "bslinc")
+        return FileType::Shader;
+
+
+    if(extension == "fbx")
+        return FileType::Model;
+
+    // throw InvalidArgument("Extension (" + extension + ") is not a valid type");
+    return FileType::Invalid;
 }
 // ------------------------------------ //
 bool Importer::NeedsImporting(const std::string& file, const std::string& target)
@@ -220,4 +296,14 @@ bool Importer::NeedsImporting(const std::string& file, const std::string& target
         return true;
 
     return std::filesystem::last_write_time(file) > std::filesystem::last_write_time(target);
+}
+
+bool Importer::NeedsImporting(
+    const std::string& file, const std::string& optionsfile, const std::string& target)
+{
+    if(NeedsImporting(file, target))
+        return true;
+
+    return std::filesystem::last_write_time(optionsfile) >
+           std::filesystem::last_write_time(target);
 }

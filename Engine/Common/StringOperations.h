@@ -904,6 +904,28 @@ public:
     }
 
     template<class StringTypeN>
+    static bool StringEndsWith(const StringTypeN& data, const StringTypeN& tomatch)
+    {
+        if(data.size() < tomatch.size())
+            return false;
+
+        if(data.empty())
+            return true;
+
+        for(size_t i = data.size() - 1, checkIndex = 0; checkIndex < tomatch.size();
+            --i, ++checkIndex) {
+
+            if(data[i] != tomatch[tomatch.size() - 1 - checkIndex])
+                return false;
+
+            if(i == 0)
+                return true;
+        }
+
+        return true;
+    }
+
+    template<class StringTypeN>
     static bool IsStringNumeric(const StringTypeN& data)
     {
         for(size_t i = 0; i < data.size(); i++) {

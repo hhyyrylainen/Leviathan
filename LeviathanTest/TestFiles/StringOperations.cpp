@@ -735,3 +735,14 @@ TEST_CASE("StringOperations RemovePrefix", "[string]")
                   "y string") == "my string that ends with this");
     }
 }
+
+TEST_CASE("StringOperations EndsWith", "[string]")
+{
+    CHECK(StringOperations::StringEndsWith<std::string>("stuff", "f"));
+    CHECK(StringOperations::StringEndsWith<std::string>("stuff", "stuff"));
+    CHECK(StringOperations::StringEndsWith<std::string>("", ""));
+    CHECK(StringOperations::StringEndsWith<std::string>("aaa", ""));
+
+    CHECK(!StringOperations::StringEndsWith<std::string>("stuff", "u"));
+    CHECK(!StringOperations::StringEndsWith<std::string>("", "a"));
+}

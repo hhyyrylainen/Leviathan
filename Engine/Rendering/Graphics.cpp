@@ -16,8 +16,8 @@
 #include "Components/BsCCamera.h"
 #include "Scene/BsSceneObject.h"
 
+#include "bsfCore/Animation/BsAnimationClip.h"
 #include "bsfCore/Material/BsShaderManager.h"
-
 
 // Temporary BSF includes before the application has a light-weigth alternative init
 #include "Animation/BsAnimationManager.h"
@@ -727,6 +727,30 @@ DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
     }
 
     return mesh;
+}
+
+DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string& name)
+{
+    auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_MODEL,
+        // Leviathan::StringOperations::RemoveExtension(name, true),
+        Leviathan::StringOperations::RemovePath(name),
+        // Leviathan::StringOperations::GetExtension(name)
+        "asset");
+
+    if(file.empty()) {
+        LOG_ERROR(
+            "Graphics: LoadAnimationClipByName: could not find resource with name: " + name);
+        return nullptr;
+    }
+
+    // bs::HMesh mesh = bs::gImporter().import<bs::HMesh>(file.c_str());
+    bs::HAnimationClip animationClip = bs::gResources().load<bs::AnimationClip>(file.c_str());
+
+    if(!animationClip) {
+        LOG_ERROR("Graphics: loading asset failed: " + name);
+    }
+
+    return animationClip;
 }
 
 // ------------------------------------ //

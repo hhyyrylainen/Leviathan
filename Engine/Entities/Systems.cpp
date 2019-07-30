@@ -8,6 +8,10 @@
 #include "Networking/NetworkResponse.h"
 #include "Networking/SentNetworkThing.h"
 
+#include "Engine.h"
+#include "Rendering/Graphics.h"
+
+#include "bsfCore/Components/BsCAnimation.h"
 #include "bsfCore/Components/BsCRenderable.h"
 
 using namespace Leviathan;
@@ -235,15 +239,11 @@ DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld&
 //     }
 // }
 // ------------------------------------ //
-// AnimationTimeAdder
-DLLEXPORT void AnimationTimeAdder::Run(
+// AnimationSystem
+DLLEXPORT void AnimationSystem::Run(
     GameWorld& world, std::unordered_map<ObjectID, Animated*>& index, int tick, int timeintick)
 {
-    float timeNow = (tick * TICKSPEED + timeintick) / 1000.f;
-
-    const float passed = timeNow - LastSeconds;
-
-    LastSeconds = timeNow;
+    Graphics* graphics = Engine::Get()->GetGraphics();
 
     for(auto iter = index.begin(); iter != index.end(); ++iter) {
 
@@ -252,79 +252,64 @@ DLLEXPORT void AnimationTimeAdder::Run(
         if(!animated.Animation)
             continue;
 
-        // auto skeleton = animated.GraphicalObject->getSkeletonInstance();
-
-        // if(!skeleton) {
-
-        //     LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
-        //                 ") has an Item that has no skeleton instance");
-        //     continue;
-        // }
-
         if(animated.Marked) {
             animated.Marked = false;
 
-            LOG_WRITE("TODO: animation activation");
+            // Apply all properties and start playback
+            for(size_t animationIndex = 0; animationIndex < animated.Animations.size();
+                ++animationIndex) {
 
-            // // Apply all properties and stop not playing animations
-            // for(const auto& animation : animated.Animations) {
+                auto& animation = animated.Animations[animationIndex];
 
-            //     try {
+                // Load clip
+                if(!animation._LoadedAnimation || animation.NameMarked) {
+                    animation._LoadedAnimation =
+                        graphics->LoadAnimationClipByName(animation.Name);
+                    animation.NameMarked = false;
 
-            //         // Documentation says that this throws if not found
-            //         Ogre::SkeletonAnimation* ogreAnim =
-            //         skeleton->getAnimation(animation.Name);
+                    if(!animation._LoadedAnimation) {
+                        LOG_ERROR("AnimationSystem: failed to load animation named: " +
+                                  animation.Name);
+                        continue;
+                    }
+                }
 
-            //         ogreAnim->setEnabled(true);
-            //         ogreAnim->setLoop(animation.Loop);
+                bs::AnimationClipState state;
+                if(!animated.Animation->getState(animation._LoadedAnimation, state)) {
 
-            //     } catch(const Ogre::Exception& e) {
+                    // Not playing currently. setState will begin playback, fill the extra info
+                    // Is this needed?
+                    state = bs::AnimationClipState();
+                    // state.layer = 1 << *world.GetScene();
+                    state.layer = static_cast<uint32_t>(animationIndex);
+                    state.time = 0.f;
+                }
 
-            //         LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
-            //                     ") has no animation named: " + animation.ReadableName +
-            //                     ", exception: " + e.what());
-            //     }
-            // }
+                state.speed = animation.SpeedFactor;
+                state.stopped = animation.Paused;
+                state.wrapMode =
+                    animation.Loop ? bs::AnimWrapMode::Loop : bs::AnimWrapMode::Clamp;
 
-            // // Then disable
-            // for(const auto& ogreAnimation : skeleton->getAnimations()) {
+                animated.Animation->setState(animation._LoadedAnimation, state);
+            }
 
-            //     bool found = false;
+            // Then disable other animations
+            for(uint32_t i = 0; i < animated.Animation->getNumClips(); ++i) {
 
-            //     for(const auto& animation : animated.Animations) {
+                bool found = false;
+                auto clip = animated.Animation->getClip(i);
 
-            //         if(animation.Name == ogreAnimation.getName()) {
-            //             found = true;
-            //             break;
-            //         }
-            //     }
+                for(const auto& animation : animated.Animations) {
+                    if(animation._LoadedAnimation == clip) {
+                        found = true;
+                        break;
+                    }
+                }
 
-            //     if(!found) {
-
-            //         skeleton->getAnimation(ogreAnimation.getName())->setEnabled(false);
-            //     }
-            // }
+                if(!found) {
+                    LOG_WRITE("TODO: animation stopping for AnimationSystem");
+                }
+            }
         }
-
-        // // Update animation time
-        // for(const auto& animation : animated.Animations) {
-
-        //     if(animation.Paused)
-        //         return;
-
-        //     try {
-
-        //         // Documentation says that this throws if not found
-        //         Ogre::SkeletonAnimation* ogreAnim = skeleton->getAnimation(animation.Name);
-        //         ogreAnim->addTime(passed * animation.SpeedFactor);
-
-        //     } catch(const Ogre::Exception& e) {
-
-        //         LOG_WARNING("Animated (entity id: " + std::to_string(iter->first) +
-        //                     ") has no animation named (in update): " +
-        //                     animation.ReadableName +
-        //                     ", exception: " + e.what());
-        //     }
-        // }
     }
 }

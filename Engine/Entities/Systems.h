@@ -118,13 +118,10 @@ public:
 
 //! \brief Handles updating time of Ogre animations
 //! \todo This needs to be replaced with an animation system
-class AnimationTimeAdder {
+class AnimationSystem {
 public:
     DLLEXPORT void Run(GameWorld& world, std::unordered_map<ObjectID, Animated*>& index,
         int tick, int timeintick);
-
-private:
-    float LastSeconds = 0;
 };
 
 

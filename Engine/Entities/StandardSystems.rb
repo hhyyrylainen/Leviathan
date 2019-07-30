@@ -9,8 +9,8 @@ SYSTEM_RENDERNODEPROPERTIES = EntitySystem.new(
   "RenderNodePropertiesSystem", [],
   runrender: {group: 11, parameters: ["ComponentRenderNode.GetIndex()"]})
 
-SYSTEM_ANIMATIONTIMEADDER = EntitySystem.new(
-  "AnimationTimeAdder", [],
+SYSTEM_ANIMATION = EntitySystem.new(
+  "AnimationSystem", [],
   runrender: {group: 60, parameters: ["ComponentAnimated.GetIndex()",
                                       "calculatedTick", "progressInTick"]})
 

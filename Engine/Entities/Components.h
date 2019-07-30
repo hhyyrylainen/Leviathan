@@ -254,12 +254,14 @@ public:
 
 //! \brief Contains an animation for Animated component
 struct SimpleAnimation {
+    friend class AnimationSystem;
 
-    DLLEXPORT inline SimpleAnimation(const std::string& name) : Name(name), ReadableName(name)
-    {}
+public:
+    DLLEXPORT inline SimpleAnimation(const std::string& name) : Name(name) {}
 
     DLLEXPORT inline SimpleAnimation(SimpleAnimation&& other) :
-        Name(std::move(other.Name)), ReadableName(std::move(other.ReadableName))
+        Name(std::move(other.Name)), Loop(other.Loop), SpeedFactor(other.SpeedFactor),
+        Paused(other.Paused), _LoadedAnimation(std::move(other._LoadedAnimation))
     {
         Loop = other.Loop;
         SpeedFactor = other.SpeedFactor;
@@ -267,24 +269,26 @@ struct SimpleAnimation {
     }
 
     DLLEXPORT inline SimpleAnimation(const SimpleAnimation& other) :
-        Name(other.Name), ReadableName(other.ReadableName)
-    {
-        Loop = other.Loop;
-        SpeedFactor = other.SpeedFactor;
-        Paused = other.Paused;
-    }
+        Name(other.Name), Loop(other.Loop), SpeedFactor(other.SpeedFactor),
+        Paused(other.Paused), _LoadedAnimation(other._LoadedAnimation)
+    {}
 
-    const std::string Name;
-
-    //! Readable version of Name as it is hashed
-    const std::string ReadableName;
+    //! \note Updating this only takes effect if NameMarked is set to true
+    std::string Name;
+    bool NameMarked = true;
 
     //! If true the animation will automatically loop
     bool Loop = false;
+
     //! Controls how fast the animation plays
     float SpeedFactor = 1;
-    //! If true then the animation isn't updated
+
+    //! If true then the animation will be paused
     bool Paused = false;
+
+protected:
+    //! Loaded animation
+    bs::HAnimationClip _LoadedAnimation;
 };
 
 //! \brief Entity plays animations on an Ogre::Item

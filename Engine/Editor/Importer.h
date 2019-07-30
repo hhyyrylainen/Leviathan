@@ -37,9 +37,7 @@ struct OptionsCreator<bs::Shader> {
 
     static auto Create()
     {
-        return bs::SPtr<OptionsType>(new OptionsType);
-        // This doesn't exist for some reason
-        // return bs::ShaderImportOptions::create();
+        return OptionsType::create();
     }
 };
 

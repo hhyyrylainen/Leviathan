@@ -3,6 +3,8 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/StringOperations.h"
+
 #include "json/json.h"
 
 #include "Importer/BsImporter.h"
@@ -10,6 +12,8 @@
 #include "bsfCore/Importer/BsMeshImportOptions.h"
 #include "bsfCore/Importer/BsShaderImportOptions.h"
 #include "bsfCore/Importer/BsTextureImportOptions.h"
+#include "bsfCore/Mesh/BsMesh.h"
+#include "bsfUtility/Reflection/BsRTTIType.h"
 
 
 namespace Leviathan { namespace Editor {
@@ -112,11 +116,30 @@ private:
             return false;
         }
 
+        if(!bs::rtti_is_of_type<T>(resources[resourceCounter].value.get())) {
+            LOG_ERROR("Importer: multi import resource failed at index: " +
+                      std::to_string(resourceCounter) +
+                      ", is the wrong type, name: " + resources[resourceCounter].name.c_str());
+            return false;
+        }
+
         auto resource = bs::static_resource_cast<T>(resources[resourceCounter].value);
 
         if(resource) {
 
-            bs::gResources().save(resource, targets[resourceCounter].c_str(), true, Compress);
+            // Name replace
+            if(targets[resourceCounter].find("$NAME") != std::string::npos) {
+
+                bs::gResources().save(resource,
+                    StringOperations::Replace<std::string>(targets[resourceCounter], "$NAME",
+                        resources[resourceCounter].name.c_str())
+                        .c_str(),
+                    true, Compress);
+            } else {
+
+                bs::gResources().save(
+                    resource, targets[resourceCounter].c_str(), true, Compress);
+            }
 
         } else {
             LOG_ERROR("Importer: converting multi import resource failed, index: " +
@@ -133,11 +156,17 @@ private:
     bool MultiResourceSaveHelper(const bs::Vector<bs::SubResource>& resources,
         size_t& resourceCounter, const std::vector<std::string>& targets)
     {
-        if(resourceCounter + 1 < targets.size()) {
-            LOG_WARNING("Importer: excess targets provided for multi resource import");
+        bool ran = false;
+
+        // The last resource type consumes all the rest of the targets
+        while(resourceCounter < targets.size()) {
+            ran = true;
+
+            if(!MultiResourceSaveSingle<T>(resources, resourceCounter, targets))
+                return false;
         }
 
-        return MultiResourceSaveSingle<T>(resources, resourceCounter, targets);
+        return ran;
     }
 
     template<class T, class SecondT, class... ExtraT>
@@ -180,6 +209,7 @@ private:
             if(options["animation"]) {
 
                 importOptions->importAnimation = true;
+                importOptions->reduceKeyFrames = true;
                 bool valid = false;
 
                 for(const auto& animation : options["animation"]) {

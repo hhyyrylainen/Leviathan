@@ -241,6 +241,38 @@ private:
 
                 return ImportMultiResource<T, bs::AnimationClip>(file, targets, importOptions);
             }
+        } else if constexpr(std::is_same_v<T, bs::Texture>) {
+            // TODO: texture type and mipmaps
+
+            if(options["cubemap"]) {
+
+                importOptions->cubemap = true;
+
+                if(options["cubemap"]["type"]) {
+                    const auto type = options["cubemap"]["type"].asString();
+
+                    if(type == "single") {
+
+                        importOptions->cubemapSourceType = bs::CubemapSourceType::Single;
+
+                    } else if(type == "cylindrical") {
+
+                        importOptions->cubemapSourceType = bs::CubemapSourceType::Cylindrical;
+
+                    } else if(type == "faces") {
+
+                        importOptions->cubemapSourceType = bs::CubemapSourceType::Faces;
+
+                    } else if(type == "spherical") {
+
+                        importOptions->cubemapSourceType = bs::CubemapSourceType::Spherical;
+
+                    } else {
+                        LOG_ERROR("Importer: unknown cubemap type: " + type);
+                        return false;
+                    }
+                }
+            }
         }
 
         // Non-multi import

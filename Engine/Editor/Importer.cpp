@@ -83,17 +83,17 @@ bool Importer::ImportFile(const std::string& file)
 
     } else {
 
-        const auto optionsCoutnerpart = file + OPTIONS_FILE_NAME;
+        const auto optionsCounterpart = file + OPTIONS_FILE_NAME;
 
         // Check does this have a corresponding options file
-        if(std::filesystem::exists(optionsCoutnerpart)) {
+        if(std::filesystem::exists(optionsCounterpart)) {
 
             // Skip this file if we aren't running on a single file
             if(SourceIsFile) {
 
                 LOG_INFO("Importer: running on single file with an options file, changing "
                          "target to the options file");
-                success = ImportWithOptions(optionsCoutnerpart);
+                success = ImportWithOptions(optionsCounterpart);
 
             } else {
                 return true;
@@ -159,6 +159,16 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
         baseFile = optionsfile.substr(0, optionsfile.size() - std::strlen(OPTIONS_FILE_NAME));
     }
 
+    try {
+        if(!std::filesystem::exists(baseFile)) {
+            // Try relative
+            baseFile = (std::filesystem::path(optionsfile).parent_path() / baseFile).string();
+        }
+    } catch(const std::filesystem::filesystem_error& e) {
+        LOG_WARNING(
+            "Importer: error when building relative basefile path: " + std::string(e.what()));
+    }
+
     if(!std::filesystem::exists(baseFile)) {
         LOG_ERROR("Importer: base file for options doesn't exist: " + baseFile);
         return false;
@@ -199,7 +209,7 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
 
     LEVIATHAN_ASSERT(false, "should not get here");
 
-    return true;
+    return false;
 }
 // ------------------------------------ //
 std::string Importer::GetTargetPath(const std::string& file, FileType type) const

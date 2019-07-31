@@ -12,6 +12,7 @@
 #include "Networking/NetworkServerInterface.h"
 #include "Physics/PhysicalWorld.h"
 #include "Physics/PhysicsMaterialManager.h"
+#include "Rendering/Graphics.h"
 #include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
 #include "ScriptComponentHolder.h"
@@ -28,6 +29,7 @@
 
 #include "bsfCore/Components/BsCCamera.h"
 #include "bsfCore/Components/BsCLight.h"
+#include "bsfCore/Components/BsCSkybox.h"
 #include "bsfCore/Scene/BsSceneObject.h"
 
 using namespace Leviathan;
@@ -69,6 +71,8 @@ public:
 
     bs::HSceneObject SunlightSO;
     bs::HLight Sunlight;
+    bs::HSceneObject SkyboxSO;
+    bs::HSkybox Skybox;
 
     //! A temporary solution around no multiple scenes in BSF
     static int LayerNumber;
@@ -270,6 +274,39 @@ DLLEXPORT void GameWorld::RemoveSunlight()
         pimpl->SunlightSO = nullptr;
         pimpl->Sunlight = nullptr;
         SunCreated = false;
+    }
+}
+
+DLLEXPORT void GameWorld::SetSkybox(const std::string& skyboxname, float brightness /*= 1.f*/)
+{
+    if(!pimpl->SkyboxSO) {
+        if(skyboxname.empty())
+            return;
+
+        pimpl->SkyboxSO = bs::SceneObject::create("Skybox");
+        pimpl->Skybox = pimpl->SkyboxSO->addComponent<bs::CSkybox>();
+        // Oh no! this method does not exist
+        // pimpl->Skybox->setLayer
+    }
+
+    if(!skyboxname.empty()) {
+
+        auto texture = Engine::Get()->GetGraphics()->LoadTextureByName(skyboxname);
+
+        if(!texture) {
+
+            LOG_ERROR("GameWorld: SetSkybox: could not load skybox texture with the name: " +
+                      skyboxname);
+            return;
+        }
+
+        pimpl->Skybox->setTexture(texture);
+        pimpl->Skybox->setBrightness(brightness);
+
+    } else {
+
+        pimpl->Skybox->setTexture(nullptr);
+        pimpl->Skybox->setBrightness(0);
     }
 }
 

@@ -448,6 +448,9 @@ public:
     //     const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
     //     const Ogre::Vector3& hemispheredir, float envmapscale = 1.0f);
 
+    //! \param skyboxname Name of the skybox to set. Or empty to clear the skybox
+    DLLEXPORT void SetSkybox(const std::string& skyboxname, float brightness = 1.f);
+
     // ------------------------------------ //
     // Script proxies for script system implementation (don't use from c++ systems)
 

@@ -280,10 +280,15 @@ DLLEXPORT void AnimationSystem::Run(
                     // Not playing currently. setState will begin playback, fill the extra info
                     // Is this needed?
                     state = bs::AnimationClipState();
-                    // state.layer = 1 << *world.GetScene();
-                    state.layer = static_cast<uint32_t>(animationIndex);
+                    // state.layer = static_cast<uint32_t>(animationIndex);
                     state.time = 0.f;
                 }
+
+                // TODO: if animations are removed the indexes need fixing up. Probably needs
+                // to switch to a dynamic numbering scheme
+
+                // getState doesn't return the correct layer so this is always applied
+                state.layer = static_cast<uint32_t>(animationIndex);
 
                 state.speed = animation.SpeedFactor;
                 state.stopped = animation.Paused;

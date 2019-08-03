@@ -301,11 +301,23 @@ DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
 
 DLLEXPORT void Window::OnResize(int width, int height)
 {
-    // Notify bsf
-    // TODO: something better, this is very fiddly
-    BSFWindow->resize(width, height);
+    if(DoingResize)
+        return;
 
-    // BSFWindow->onResized();
+// Notify bsf
+// TODO: something better, this is very fiddly
+#ifdef _WIN32
+    LOG_ERROR("Resizing doesn't work at all on Windows, see: "
+              "https://github.com/GameFoundry/bsf/issues/382");
+#else
+    BSFWindow->resize(width, height);
+    LOG_WARNING("Resizing is fiddly, see: "
+                "https://github.com/GameFoundry/bsf/issues/382");
+#endif
+
+    // These don't work
+    // BSFWindow->_notifyWindowEvent(bs::WindowEventType::Resized);
+    // BSFWindow->_windowMovedOrResized();
 
     // Send to GUI //
     WindowsGui->OnResize();

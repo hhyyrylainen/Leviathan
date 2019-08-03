@@ -293,6 +293,10 @@ private:
     //! Per-window BSF resources
     std::unique_ptr<BSFResources> _BSFResources;
 
+    //! Workaround for missing BSF resize notify
+    //! https://github.com/GameFoundry/bsf/issues/382
+    bool DoingResize = false;
+
     //! \todo This should probably be atomic
     static Window* InputCapturer;
 };

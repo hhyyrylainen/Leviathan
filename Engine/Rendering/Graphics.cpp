@@ -652,8 +652,9 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
 
 DLLEXPORT bool Graphics::IsVerticalUVFlipped() const
 {
-    return bs::ct::RenderAPI::instance().getCapabilities(0).conventions.uvYAxis ==
-           bs::Conventions::Axis::Up;
+    const auto capabilities = bs::ct::RenderAPI::instance().getCapabilities(0);
+
+    return capabilities.conventions.ndcYAxis != bs::Conventions::Axis::Down;
 }
 // ------------------------------------ //
 // Resource loading helpers

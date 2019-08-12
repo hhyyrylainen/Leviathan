@@ -103,7 +103,7 @@ $ffmpeg = FFMPEG.new(
 )
 
 $bsf = BSFramework.new(
-  version: "26aa072676b2f1664db4017c5337b1680181b99d",
+  version: "21c18317bcfe6ac22b101ffb53dc17a60f435add",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   renderAPI: if OS.windows? then "DirectX 11" else "OpenGL" end,

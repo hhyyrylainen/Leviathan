@@ -77,7 +77,7 @@ namespace Leviathan{
 
 
         template<class T>
-        DLLEXPORT bool GetValueAndConvertTo(const std::string &name, T &receiver) const{
+        bool GetValueAndConvertTo(const std::string &name, T &receiver) const{
             // use try block to catch all exceptions (not found and conversion fail //
             try{
                 if(!Values.GetValue(name)->ConvertAndAssingToVariable<T>(receiver)){

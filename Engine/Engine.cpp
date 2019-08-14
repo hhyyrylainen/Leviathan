@@ -916,6 +916,8 @@ void Engine::Tick()
         // update values
         Mainstore->SetTickCount(TickCount);
         Mainstore->SetTickTime(TickTime);
+        Mainstore->SetTicksBehind((TimePassed - TICKSPEED) / TICKSPEED);
+        // TODO: having the max tick time of the past second, would also be nice
 
         if(!NoGui) {
             // send updated rendering statistics //

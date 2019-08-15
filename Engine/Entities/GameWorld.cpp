@@ -175,9 +175,6 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
 
     pimpl->WorldCamera->setLayers(1 << *GetScene());
 
-    // TODO: is this needed?
-    // pimpl->WorldCamera->setAspectRatio(float ratio) setAutoAspectRatio?
-
 
     // TODO: allow changing and setting infinite
     pimpl->WorldCamera->setFarClipDistance(5000);
@@ -1751,6 +1748,12 @@ DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Graphics* graphics)
     // WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
     //     LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
     pimpl->WorldCamera->getViewport()->setTarget(window->GetBSFWindow());
+
+    // TODO: this needs to be reapplied every time the window is resized
+    // TODO: ask for BSF auto aspect ratio (setAutoAspectRatio?)
+    int32_t width, height;
+    window->GetSize(width, height);
+    pimpl->WorldCamera->setAspectRatio(width / static_cast<float>(height));
 
     if(!TickWhileInBackground) {
         _DoResumeSystems();

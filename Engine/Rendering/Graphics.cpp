@@ -407,6 +407,15 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         // Setup first window properties
         auto& windowDesc = Pimpl->Description.primaryWindowDesc;
         windowDesc.depthBuffer = true;
+
+        int multiSample;
+
+        ObjectFileProcessor::LoadValueFromNamedVars<int>(
+            Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount", multiSample,
+            1);
+
+        windowDesc.multisampleCount = multiSample;
+        // windowDesc.multisampleHint = "";
         // Not sure what all settings need to be copied
         windowDesc.fullscreen = /* window.IsFullScreen() */ false;
         windowDesc.vsync = false;

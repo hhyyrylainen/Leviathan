@@ -10,6 +10,7 @@
 #include "Networking/NetworkRequest.h"
 #include "Networking/NetworkResponse.h"
 #include "Networking/NetworkServerInterface.h"
+#include "ObjectFiles/ObjectFileProcessor.h"
 #include "Physics/PhysicalWorld.h"
 #include "Physics/PhysicsMaterialManager.h"
 #include "Rendering/Graphics.h"
@@ -185,21 +186,65 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     //     WorldSceneCamera->setFarClipDistance(0); Maybe for bsf this needs to be float::max
     // }
 
-    // TODO: allow configuring these
-    pimpl->WorldCamera->setMSAACount(2);
+    auto values = Engine::Get()->GetDefinition()->GetValues();
+
+
+    // TODO: move to a better settings class and realtime updates for settings
+    bool disableIndirectLighting, disableAmbientOcclusion, disableFXAA, disableShadows,
+        disableLighting;
+
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        values, "DisableIndirectLighting", disableIndirectLighting, false);
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        values, "DisableAmbientOcclusion", disableAmbientOcclusion, false);
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        values, "DisableFXAA", disableFXAA, false);
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        values, "DisableShadows", disableShadows, false);
+    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
+        values, "DisableLighting", disableLighting, false);
+
+    int MSAACount;
+
+    ObjectFileProcessor::LoadValueFromNamedVars<int>(values, "MSAACount", MSAACount, 1);
+
+
+    pimpl->WorldCamera->setMSAACount(1);
 
     const auto& settings = pimpl->WorldCamera->getRenderSettings();
-    // settings->enableFXAA = false;
-    // settings->ambientOcclusion;
+
+    // Needed. non default option
+    if(!disableIndirectLighting) {
+        settings->enableIndirectLighting = true;
+    } else {
+        settings->enableIndirectLighting = false;
+    }
+
+    if(disableAmbientOcclusion)
+        settings->ambientOcclusion.enabled = false;
+
     // settings->autoExposure;
     // settings->bloom;
+    // settings->bloom.enabled = false;
     // settings->colorGrading;
-    // settings->depthOfField;
+    // settings->depthOfField.enabled = false;
+    // settings->screenSpaceLensFlare;
+    // settings->screenSpaceReflections;
     // settings->shadowSettings;
     // settings->tonemapping;
     // settings->whiteBalance;
-    settings->enableIndirectLighting = true;
     // settings->enableAutoExposure = false;
+    if(disableFXAA)
+        settings->enableFXAA = false;
+    // settings->enableHDR = false;
+    if(disableLighting)
+        settings->enableLighting = false;
+
+    if(disableShadows)
+        settings->enableShadows = false;
+    // settings->enableSkybox = false;
+    // settings->enableTonemapping = false;
+
 
     pimpl->WorldCamera->setRenderSettings(settings);
 

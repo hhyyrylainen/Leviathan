@@ -202,21 +202,6 @@ DLLEXPORT bool AppDef::FillDefaultEngineConf(NamedVars& variables)
         variables.Add(std::make_shared<NamedVariableList>("Vsync", false));
     }
 
-    if(variables.ShouldAddValueIfNotFoundOrWrongType<bool>("UseGamma")) {
-        changed = true;
-        variables.Add(std::make_shared<NamedVariableList>("UseGamma", true));
-    }
-
-    if(variables.ShouldAddValueIfNotFoundOrWrongType<bool>("OgreBoreMe")) {
-        changed = true;
-        variables.Add(std::make_shared<NamedVariableList>("OgreBoreMe", false));
-    }
-
-    if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("FSAA")) {
-        changed = true;
-        variables.Add(std::make_shared<NamedVariableList>("FSAA", 4));
-    }
-
     if(variables.ShouldAddValueIfNotFoundOrWrongType<std::string>("FullScreen")) {
         changed = true;
         variables.Add(
@@ -240,7 +225,7 @@ DLLEXPORT bool AppDef::FillDefaultEngineConf(NamedVars& variables)
 
     if(variables.ShouldAddValueIfNotFoundOrWrongType<int>("MaxFPS")) {
         changed = true;
-        variables.Add(std::make_shared<NamedVariableList>("MaxFPS", 120));
+        variables.Add(std::make_shared<NamedVariableList>("MaxFPS", 144));
     }
 
     if(variables.ShouldAddValueIfNotFoundOrWrongType<std::string>("AudioDevice")) {

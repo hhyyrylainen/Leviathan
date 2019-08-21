@@ -1070,8 +1070,6 @@ DLLEXPORT Window* Engine::OpenNewWindow()
         // Multiple vsyncs cause issues (or they can cause issues, sometimes it is fine)
         /* Define->GetWindowDetails().VSync */ false,
         // Opens on same display as the other window
-        // yes, gamma
-        true,
         // TODO: open on next display
         Define->GetWindowDetails().DisplayNumber, Define->GetWindowDetails().FSAA, true,
 #ifdef _WIN32

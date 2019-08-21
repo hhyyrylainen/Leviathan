@@ -147,7 +147,6 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(
     int FSAA;
     int displayNumber;
     bool vsync;
-    bool gamma;
 
     ObjectFileProcessor::LoadValueFromNamedVars(
         ConfigurationValues.get(), "Width", width, 1280, Logger::Get(), "Create window: ");
@@ -156,19 +155,17 @@ DLLEXPORT void Leviathan::AppDef::StoreWindowDetails(
     ObjectFileProcessor::LoadValueFromNamedVars<std::string>(ConfigurationValues.get(),
         "FullScreen", fullscreen, "no", Logger::Get(), "Create window: ");
     ObjectFileProcessor::LoadValueFromNamedVars<int>(
-        ConfigurationValues.get(), "FSAA", FSAA, 4, Logger::Get(), "Create window: ");
+        ConfigurationValues.get(), "WindowMultiSampleCount", FSAA, 1);
     ObjectFileProcessor::LoadValueFromNamedVars<int>(ConfigurationValues.get(),
         "DisplayNumber", displayNumber, 0, Logger::Get(), "Create window: ");
     ObjectFileProcessor::LoadValueFromNamedVars<bool>(
         *ConfigurationValues, "Vsync", vsync, false, Logger::Get(), "Create window: ");
-    ObjectFileProcessor::LoadValueFromNamedVars<bool>(
-        *ConfigurationValues, "UseGamma", gamma, false, Logger::Get(), "Create window: ");
 
 #ifdef _WIN32
-    this->SetWindowDetails(WindowDataDetails(title, width, height, fullscreen, vsync, gamma,
+    this->SetWindowDetails(WindowDataDetails(title, width, height, fullscreen, vsync,
         displayNumber, FSAA, windowborder, icon, appvirtualptr));
 #else
-    this->SetWindowDetails(WindowDataDetails(title, width, height, fullscreen, vsync, gamma,
+    this->SetWindowDetails(WindowDataDetails(title, width, height, fullscreen, vsync,
         displayNumber, FSAA, windowborder, appvirtualptr));
 #endif
 }
@@ -241,20 +238,18 @@ DLLEXPORT bool AppDef::FillDefaultEngineConf(NamedVars& variables)
 // ------------------ WindowDataDetails ------------------ //
 #ifdef _WIN32
 Leviathan::WindowDataDetails::WindowDataDetails(const std::string& title, const int& width,
-    const int& height, const std::string& fullscreen, bool vsync, bool gamma,
-    int displaynumber, int fsaa, const bool& windowborder, HICON icon,
-    LeviathanApplication* appvirtualptr) :
+    const int& height, const std::string& fullscreen, bool vsync, int displaynumber, int fsaa,
+    const bool& windowborder, HICON icon, LeviathanApplication* appvirtualptr) :
     Title(title),
-    Width(width), Height(height), FullScreen(fullscreen), VSync(vsync), UseGamma(gamma),
+    Width(width), Height(height), FullScreen(fullscreen), VSync(vsync),
     DisplayNumber(displaynumber), FSAA(fsaa), Icon(icon)
 {}
 #else
 Leviathan::WindowDataDetails::WindowDataDetails(const std::string& title, const int& width,
-    const int& height, const std::string& fullscreen, bool vsync, bool gamma,
-    int displaynumber, int fsaa, const bool& windowborder,
-    LeviathanApplication* appvirtualptr) :
+    const int& height, const std::string& fullscreen, bool vsync, int displaynumber, int fsaa,
+    const bool& windowborder, LeviathanApplication* appvirtualptr) :
     Title(title),
-    Height(height), Width(width), FullScreen(fullscreen), VSync(vsync), UseGamma(gamma),
+    Height(height), Width(width), FullScreen(fullscreen), VSync(vsync),
     DisplayNumber(displaynumber), FSAA(fsaa)
 {}
 #endif

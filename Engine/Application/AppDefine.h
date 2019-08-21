@@ -21,7 +21,7 @@ struct WindowDataDetails {
     WindowDataDetails();
 #ifdef _WIN32
     WindowDataDetails(const std::string& title, const int& width, const int& height,
-        const std::string& fullscreen, bool vsync, bool gamma, int displaynumber, int FSAA,
+        const std::string& fullscreen, bool vsync, int displaynumber, int FSAA,
         const bool& windowborder, HICON icon, LeviathanApplication* appvirtualptr);
 
     void ApplyIconToHandle(HWND hwnd) const;
@@ -30,7 +30,7 @@ struct WindowDataDetails {
     HICON Icon;
 #else
     WindowDataDetails(const std::string& title, const int& width, const int& height,
-        const std::string& fullscreen, bool vsync, bool gamma, int displaynumber, int fsaa,
+        const std::string& fullscreen, bool vsync, int displaynumber, int fsaa,
         const bool& windowborder, LeviathanApplication* appvirtualptr);
 
 #endif
@@ -39,8 +39,8 @@ struct WindowDataDetails {
     int Width;
     std::string FullScreen;
     bool VSync;
-    bool UseGamma;
     int DisplayNumber;
+    // TODO: move the WindowMultiSampleCount here
     int FSAA;
 };
 

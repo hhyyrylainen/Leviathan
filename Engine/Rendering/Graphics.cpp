@@ -494,6 +494,21 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
     }
 }
 
+bool Graphics::UnRegisterWindow(Window& window)
+{
+    if(Pimpl) {
+        Pimpl->OurApp->waitUntilFrameFinished();
+    }
+
+    if(window.GetBSFWindow() == bs::CoreApplication::instance().getPrimaryWindow()) {
+        LOG_INFO("Graphics: primary window is closing, hiding it instead until shutdown");
+        return true;
+    }
+
+    // TODO: additional window unregister
+    return false;
+}
+
 void Graphics::ShutdownBSF()
 {
     if(Pimpl) {

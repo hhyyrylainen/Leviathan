@@ -237,7 +237,12 @@ DLLEXPORT Window::~Window()
 
     int windowsafter = --OpenWindowCount;
 
-    BSFWindow->destroy();
+    // Report close to graphics
+    const bool isPrimary = Engine::Get()->GetGraphics()->UnRegisterWindow(*this);
+    if(!isPrimary) {
+        BSFWindow->destroy();
+    }
+
     BSFWindow.reset();
 
     if(windowsafter == 0) {
@@ -246,10 +251,14 @@ DLLEXPORT Window::~Window()
                             "should quit soon");
     }
 
-    // LOG_WRITE("TODO: check why calling SDL_DestroyWindow crashes in Ogre "
-    //           "GLX plugin uninstall");
-    SDL_DestroyWindow(SDLWindow);
-    // SDL_HideWindow(SDLWindow);
+    if(isPrimary) {
+        // It was the primary window, don't destroy it yet
+        SDL_HideWindow(SDLWindow);
+    } else {
+
+        SDL_DestroyWindow(SDLWindow);
+    }
+
     SDLWindow = nullptr;
 }
 // ------------------------------------ //

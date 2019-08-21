@@ -61,6 +61,10 @@ protected:
     //! case of the first window this initializes the rest of bsf
     bs::SPtr<bs::RenderWindow> RegisterCreatedWindow(Window& window);
 
+    //! \brief Called just before a window is destroyed. This needs to stop rendering to it
+    //! \returns True if the window was primary and should only be hidden instead of destroyed
+    bool UnRegisterWindow(Window& window);
+
 private:
     bool InitializeBSF(AppDef* appdef);
     void ShutdownBSF();

@@ -139,6 +139,9 @@ private:
 
     //! Custom extension storage
     std::vector<std::shared_ptr<CustomExtension>> CustomExtensions;
+
+    //! Storage for _PMCheckIsEvent
+    std::vector<uint8_t> TmpStorageForCheckIsEvent;
 };
 
 }} // namespace Leviathan::GUI

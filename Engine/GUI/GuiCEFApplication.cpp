@@ -328,6 +328,8 @@ void CefApplication::StopListeningForEvents()
 
 bool CefApplication::_PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message)
 {
+    // TODO: redo the packet handling here once proper storage is added
+
     // Check is it an event message //
     if(message->GetName() == "OnEvent") {
         // Get the packet //
@@ -337,11 +339,11 @@ bool CefApplication::_PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message)
 
         CefRefPtr<CefBinaryValue> bval = args->GetBinary(0);
 
-        void* tmpdatablock = new char[bval->GetSize()];
+        TmpStorageForCheckIsEvent.resize(bval->GetSize());
 
-        bval->GetData(tmpdatablock, bval->GetSize(), 0);
+        bval->GetData(TmpStorageForCheckIsEvent.data(), bval->GetSize(), 0);
 
-        tmppacket.append(tmpdatablock, bval->GetSize());
+        tmppacket.append(TmpStorageForCheckIsEvent.data(), bval->GetSize());
 
         // Read the data from the packet //
         Event received(tmppacket);
@@ -359,11 +361,11 @@ bool CefApplication::_PMCheckIsEvent(CefRefPtr<CefProcessMessage>& message)
 
         CefRefPtr<CefBinaryValue> bval = args->GetBinary(0);
 
-        void* tmpdatablock = new char[bval->GetSize()];
+        TmpStorageForCheckIsEvent.resize(bval->GetSize());
 
-        bval->GetData(tmpdatablock, bval->GetSize(), 0);
+        bval->GetData(TmpStorageForCheckIsEvent.data(), bval->GetSize(), 0);
 
-        tmppacket.append(tmpdatablock, bval->GetSize());
+        tmppacket.append(TmpStorageForCheckIsEvent.data(), bval->GetSize());
 
         // Read the data from the packet //
         GenericEvent received(tmppacket);

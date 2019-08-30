@@ -537,7 +537,7 @@ DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
         return nullptr;
     }
 
-    return Pimpl->LoadResource<bs::Shader>(std::filesystem::absolute(file).c_str());
+    return Pimpl->LoadResource<bs::Shader>(std::filesystem::absolute(file).string().c_str());
 }
 
 DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
@@ -553,7 +553,7 @@ DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
         return nullptr;
     }
 
-    return Pimpl->LoadResource<bs::Texture>(std::filesystem::absolute(file).c_str());
+    return Pimpl->LoadResource<bs::Texture>(std::filesystem::absolute(file).string().c_str());
 }
 
 DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
@@ -569,7 +569,7 @@ DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
         return nullptr;
     }
 
-    return Pimpl->LoadResource<bs::Mesh>(std::filesystem::absolute(file).c_str());
+    return Pimpl->LoadResource<bs::Mesh>(std::filesystem::absolute(file).string().c_str());
 }
 
 DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string& name)
@@ -586,7 +586,8 @@ DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string
         return nullptr;
     }
 
-    return Pimpl->LoadResource<bs::AnimationClip>(std::filesystem::absolute(file).c_str());
+    return Pimpl->LoadResource<bs::AnimationClip>(
+        std::filesystem::absolute(file).string().c_str());
 }
 
 // ------------------------------------ //

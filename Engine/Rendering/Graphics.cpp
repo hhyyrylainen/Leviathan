@@ -2,6 +2,7 @@
 #include "Graphics.h"
 
 #include "Application/AppDefine.h"
+#include "Application/CrashHandler.h"
 #include "Application/GameConfiguration.h"
 #include "Common/StringOperations.h"
 #include "Engine.h"
@@ -14,79 +15,16 @@
 
 #include "BsApplication.h"
 #include "Components/BsCCamera.h"
-#include "Scene/BsSceneObject.h"
-
-#include "bsfCore/Animation/BsAnimationClip.h"
-#include "bsfCore/Material/BsShaderManager.h"
-
-// Temporary BSF includes before the application has a light-weigth alternative init
-#include "Animation/BsAnimationManager.h"
-#include "Audio/BsAudio.h"
-#include "Audio/BsAudioManager.h"
-#include "CoreThread/BsCoreObjectManager.h"
 #include "CoreThread/BsCoreThread.h"
 #include "Importer/BsImporter.h"
-#include "Localization/BsStringTableManager.h"
-#include "Managers/BsGpuProgramManager.h"
-#include "Managers/BsMeshManager.h"
-#include "Managers/BsQueryManager.h"
-#include "Managers/BsRenderStateManager.h"
-#include "Managers/BsRenderWindowManager.h"
-#include "Managers/BsResourceListenerManager.h"
-#include "Material/BsShaderManager.h"
-#include "Math/BsVector2.h"
-#include "Particles/BsParticleManager.h"
-#include "Particles/BsVectorField.h"
-#include "Physics/BsPhysics.h"
-#include "Physics/BsPhysicsManager.h"
-#include "Platform/BsPlatform.h"
-#include "Profiling/BsProfilerCPU.h"
-#include "Profiling/BsProfilerGPU.h"
-#include "Profiling/BsProfilingManager.h"
-#include "Profiling/BsRenderStats.h"
-#include "RenderAPI/BsRenderWindow.h"
-#include "Renderer/BsParamBlocks.h"
-#include "Renderer/BsRenderer.h"
-#include "Renderer/BsRendererManager.h"
-#include "Resources/BsResources.h"
-#include "Scene/BsGameObjectManager.h"
-#include "Scene/BsSceneManager.h"
-#include "Scene/BsSceneObject.h"
-#include "Threading/BsTaskScheduler.h"
-#include "Threading/BsThreadPool.h"
-#include "Utility/BsDeferredCallManager.h"
-#include "Utility/BsDynLib.h"
-#include "Utility/BsDynLibManager.h"
-#include "Utility/BsMessageHandler.h"
-#include "Utility/BsTime.h"
-#include "bsfCore/Managers/BsRenderAPIManager.h"
-
-// BsApplication
-#include "2D/BsSpriteManager.h"
-#include "BsEngineConfig.h"
-#include "CoreThread/BsCoreObjectManager.h"
-#include "CoreThread/BsCoreThread.h"
-#include "Debug/BsDebugDraw.h"
-#include "FileSystem/BsFileSystem.h"
-#include "GUI/BsGUIManager.h"
-#include "GUI/BsProfilerOverlay.h"
-#include "GUI/BsShortcutManager.h"
-#include "Importer/BsImporter.h"
-#include "Input/BsVirtualInput.h"
-#include "Platform/BsCursor.h"
-#include "Platform/BsPlatform.h"
-#include "Profiling/BsProfilingManager.h"
-#include "Renderer/BsRendererManager.h"
-#include "Renderer/BsRendererMaterialManager.h"
-#include "Resources/BsBuiltinResources.h"
 #include "Resources/BsEngineShaderIncludeHandler.h"
-#include "Resources/BsPlainTextImporter.h"
 #include "Resources/BsResources.h"
-#include "Scene/BsSceneManager.h"
 #include "Scene/BsSceneObject.h"
-#include "Script/BsScriptManager.h"
-
-
+#include "bsfCore/Animation/BsAnimationClip.h"
+#include "bsfCore/Material/BsMaterial.h"
+#include "bsfCore/Material/BsShaderManager.h"
+#include "bsfCore/RenderAPI/BsRenderAPI.h"
+#include "bsfCore/Resources/BsResourceManifest.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -98,9 +36,29 @@
 #include "XLibInclude.h"
 #endif
 
+#include <filesystem>
 
 using namespace Leviathan;
 // ------------------------------------ //
+bool BSFLogForwarder(
+    const bs::String& message, bs::LogVerbosity verbosity, bs::UINT32 category)
+{
+    // Forward to global logger if one exists
+    auto log = Logger::Get();
+
+    if(log) {
+        bs::String categoryName;
+        bs::Log::getCategoryName(category, categoryName);
+        log->Write(("[BSF][" + categoryName + "][" + bs::toString(verbosity) + "] " + message)
+                       .c_str());
+
+        // Prevent BSF logging this as well
+        return true;
+    }
+
+    // Allow default action
+    return false;
+}
 
 class LeviathanBSFShaderIncludeHandler : public bs::EngineShaderIncludeHandler {
 public:
@@ -131,75 +89,14 @@ public:
     }
 };
 
-class LeviathanBSFApplication : public bs::CoreApplication {
+class LeviathanBSFApplication : public bs::Application {
 public:
-    LeviathanBSFApplication(const bs::START_UP_DESC& desc) : bs::CoreApplication(desc) {}
+    LeviathanBSFApplication(const bs::START_UP_DESC& desc) : bs::Application(desc) {}
 
     bs::SPtr<bs::IShaderIncludeHandler> getShaderIncludeHandler() const override
     {
         return bs::bs_shared_ptr_new<LeviathanBSFShaderIncludeHandler>();
     }
-
-    // Code from BsCoreApplication.cpp
-    // These are duplicated here due to a bunch of things being private
-    void WaitUntilLastFrame()
-    {
-        {
-            Lock lock(mFrameRenderingFinishedMutex);
-
-            while(!mIsFrameRenderingFinished) {
-                bs::TaskScheduler::instance().addWorker();
-                mFrameRenderingFinishedCondition.wait(lock);
-                bs::TaskScheduler::instance().removeWorker();
-            }
-        }
-    }
-
-    void WaitBeforeStartNextFrame()
-    {
-        bs::Lock lock(mFrameRenderingFinishedMutex);
-
-        while(!mIsFrameRenderingFinished) {
-            bs::TaskScheduler::instance().addWorker();
-            mFrameRenderingFinishedCondition.wait(lock);
-            bs::TaskScheduler::instance().removeWorker();
-        }
-
-        mIsFrameRenderingFinished = false;
-    }
-
-    void frameRenderingFinishedCallback()
-    {
-        bs::Lock lock(mFrameRenderingFinishedMutex);
-
-        mIsFrameRenderingFinished = true;
-        mFrameRenderingFinishedCondition.notify_one();
-    }
-
-    // These are private forcing to duplicate these here
-    void beginCoreProfiling()
-    {
-#if !BS_FORCE_SINGLETHREADED_RENDERING
-        bs::gProfilerCPU().beginThread("Core");
-#endif
-    }
-
-    void endCoreProfiling()
-    {
-        bs::ProfilerGPU::instance()._update();
-
-#if !BS_FORCE_SINGLETHREADED_RENDERING
-        bs::gProfilerCPU().endThread();
-        bs::gProfiler()._updateCore();
-#endif
-    }
-
-    void startUpRenderer() override
-    {
-        // Do nothing, we activate the renderer at a later stage
-    }
-
-
 
     bs::SPtr<GUIOverlayRenderer> GUIRenderer;
 };
@@ -208,6 +105,33 @@ public:
 struct Graphics::Private {
 
     Private(const bs::START_UP_DESC& desc) : Description(desc) {}
+
+
+    template<class T>
+    auto LoadResource(const bs::String& path)
+    {
+        auto asset = bs::gResources().load<T>(path);
+
+        if(!asset) {
+            LOG_ERROR(std::string("Graphics: loading asset failed: ") + path.c_str());
+            return decltype(asset)(nullptr);
+        }
+
+        if(RegisteredAssets.find(path) != RegisteredAssets.end()) {
+            // Already registered, fine to just return
+            return asset;
+        }
+
+        // Was not registered.
+
+        bs::gResources().getResourceManifest("Default")->registerResource(
+            asset.getUUID(), path);
+
+        RegisteredAssets.insert(path);
+        return asset;
+    }
+
+    std::unordered_set<bs::String> RegisteredAssets;
 
     bs::START_UP_DESC Description;
     LeviathanBSFApplication* OurApp = nullptr;
@@ -386,6 +310,30 @@ bool Graphics::InitializeBSF(AppDef* appdef)
         return false;
     }
 
+    // Custom callbacks
+    desc.logCallback = &BSFLogForwarder;
+
+    desc.crashHandling.disableCrashSignalHandler = CrashHandler::IsBreakpadRegistered();
+    desc.crashHandling.onBeforeReportCrash =
+        [](const bs::String& type, const bs::String& description, const bs::String& function,
+            const bs::String& file, bs::UINT32 line) {
+            CrashHandler::DoBreakpadCrashDumpIfRegistered();
+            return false;
+        };
+
+    desc.crashHandling.onCrashPrintedToLog = []() {
+        if(auto logger = Logger::Get(); logger)
+            logger->Save();
+        return CrashHandler::IsBreakpadRegistered();
+    };
+
+#ifdef _WIN32
+    desc.crashHandling.onBeforeWindowsSEHReportCrash = [](void* data) {
+        CrashHandler::DoBreakpadSEHCrashDumpIfRegistered(data);
+        return false;
+    };
+#endif //_WIN32
+
     Pimpl = std::make_unique<Private>(desc);
 
     return true;
@@ -443,7 +391,7 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
             std::to_string(window.GetWindowXDisplay());
 #endif
 
-        bs::CoreApplication::startUp<LeviathanBSFApplication>(Pimpl->Description);
+        bs::Application::startUp<LeviathanBSFApplication>(Pimpl->Description);
 
         Pimpl->OurApp =
             static_cast<LeviathanBSFApplication*>(bs::CoreApplication::instancePtr());
@@ -452,30 +400,6 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
             bs::CoreApplication::instance().getPrimaryWindow();
 
         LEVIATHAN_ASSERT(bsWindow, "window creation failed");
-
-        // Code from BsApplication.cpp
-        using namespace bs;
-
-        PlainTextImporter* importer = bs_new<PlainTextImporter>();
-        Importer::instance()._registerAssetImporter(importer);
-
-        // VirtualInput::startUp();
-        BuiltinResources::startUp();
-        RendererMaterialManager::startUp();
-        RendererManager::instance().initialize();
-        SpriteManager::startUp();
-        // GUIManager::startUp();
-        // ShortcutManager::startUp();
-
-        // bs::Cursor::startUp();
-        // bs::Cursor::instance().setCursor(CursorType::Arrow);
-        // Platform::setIcon(BuiltinResources::instance().getFrameworkIcon());
-
-        SceneManager::instance().setMainRenderTarget(bsWindow);
-        DebugDraw::startUp();
-
-        // startUpScriptManager();
-
 
         // Notify engine to register threads to work with Ogre //
         // Engine::GetEngine()->_NotifyThreadsRegisterOgre();
@@ -486,10 +410,11 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         auto material = bs::Material::create(shader);
 
         Pimpl->OurApp->GUIRenderer =
-            RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
+            bs::RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
                 GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2)->getCore(),
                 material->getCore()});
 
+        Pimpl->OurApp->beginMainLoop();
         return bsWindow;
     }
 }
@@ -511,147 +436,26 @@ bool Graphics::UnRegisterWindow(Window& window)
 
 void Graphics::ShutdownBSF()
 {
-    if(Pimpl) {
-        Pimpl->OurApp->GUIRenderer = nullptr;
-        Pimpl->OurApp->WaitUntilLastFrame();
-    }
+    LEVIATHAN_ASSERT(Pimpl, "ShutdownBSF called when it isn't valid to do so");
 
-    // A bunch of code here is copy pasted from BsCoreApplication.cpp
-    using namespace bs;
+    // One more frame needs to be rendered here to not crash if the outer main loop has
+    // done stuff since the last frame.
+    Pimpl->OurApp->runMainLoopFrame();
+    Pimpl->OurApp->endMainLoop();
+    Pimpl->OurApp->GUIRenderer = nullptr;
 
-    // This part is from BsApplication.cpp
-    // Need to clear all objects before I unload any plugins, as they
-    // could have allocated parts or all of those objects.
-    SceneManager::instance().clearScene(true);
-
-    // Resources too (Prefabs especially, since they hold the same data as a scene)
-    Resources::instance().unloadAll();
-
-    // Shut down before script manager as scripts could have registered shortcut callbacks
-    // ShortcutManager::shutDown();
-
-    // ScriptManager::shutDown();
-    DebugDraw::shutDown();
-
-    // Cleanup any new objects queued for destruction by unloaded scripts
-    CoreObjectManager::instance().syncToCore();
-    gCoreThread().update();
-    gCoreThread().submitAll(true);
-
-    // bs::Cursor::shutDown();
-
-    // GUIManager::shutDown();
-    SpriteManager::shutDown();
-    BuiltinResources::shutDown();
-    RendererMaterialManager::shutDown();
-    // VirtualInput::shutDown();
-
-    bs::CoreApplication::shutDown();
+    bs::Application::shutDown();
     Pimpl->OurApp = nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::Frame()
 {
     // Logic for this frame is already ready, just tell bsf to render once
+    Pimpl->OurApp->runMainLoopFrame();
 
-    // A bunch of code here is copy pasted from BsCoreApplication.cpp
-    using namespace bs;
-
-    gProfilerCPU().beginThread("Sim");
-
-    // This does unwanted things with X11
-    // Platform::_update();
-
-    gTime()._update();
-    // gInput()._update();
-    // RenderWindowManager::update needs to happen after Input::update and before
-    // Input::_triggerCallbacks, so that all input is properly captured in case there is a
-    // focus change, and so that focus change is registered before input events are sent out
-    // (mouse press can result in code checking if a window is in focus, so it has to be up to
-    // date)
-    RenderWindowManager::instance()._update();
-    // gInput()._triggerCallbacks();
-    gDebug()._triggerCallbacks();
-
-    // preUpdate();
-
-    // Trigger fixed updates if required
-    {
-        UINT64 step;
-        const UINT32 numIterations = gTime()._getFixedUpdateStep(step);
-
-        const float stepSeconds = step / 1000000.0f;
-        for(UINT32 i = 0; i < numIterations; i++) {
-            // fixedUpdate();
-            PROFILE_CALL(gSceneManager()._fixedUpdate(), "Scene fixed update");
-            // PROFILE_CALL(gPhysics().fixedUpdate(stepSeconds), "Physics simulation");
-
-            gTime()._advanceFixedUpdate(step);
-        }
-    }
-
-    PROFILE_CALL(gSceneManager()._update(), "Scene update");
-    // gAudio()._update();
-    // gPhysics().update();
-
-    // Update plugins
-    // for(auto& pluginUpdateFunc : mPluginUpdateFunctions)
-    //     pluginUpdateFunc.second();
-
-    // postUpdate();
-
-    PerFrameData perFrameData;
-
-    // Evaluate animation after scene and plugin updates because the renderer will just now be
-    // displaying the animation we sent on the previous frame, and we want the scene
-    // information to match to what is displayed.
-    perFrameData.animation = AnimationManager::instance().update();
-    perFrameData.particles = ParticleManager::instance().update(*perFrameData.animation);
-
-    // Send out resource events in case any were loaded/destroyed/modified
-    ResourceListenerManager::instance().update();
-
-    // Trigger any renderer task callbacks (should be done before scene object update, or core
-    // sync, so objects have a chance to respond to the callback).
-    RendererManager::instance().getActive()->update();
-
-    gSceneManager()._updateCoreObjectTransforms();
-    PROFILE_CALL(RendererManager::instance().getActive()->renderAll(perFrameData), "Render");
-
-    // Core and sim thread run in lockstep. This will result in a larger input latency than if
-    // I was running just a single thread. Latency becomes worse if the core thread takes
-    // longer than sim thread, in which case sim thread needs to wait. Optimal solution would
-    // be to get an average difference between sim/core thread and start the sim thread a bit
-    // later so they finish at nearly the same time.
-    Pimpl->OurApp->WaitBeforeStartNextFrame();
-
-    gCoreThread().queueCommand(
-        std::bind(&LeviathanBSFApplication::beginCoreProfiling, Pimpl->OurApp),
-        CTQF_InternalQueue);
-    gCoreThread().queueCommand(&Platform::_coreUpdate, CTQF_InternalQueue);
-    gCoreThread().queueCommand(
-        std::bind(&ct::RenderWindowManager::_update, ct::RenderWindowManager::instancePtr()),
-        CTQF_InternalQueue);
-
-    gCoreThread().update();
-    gCoreThread().submitAll();
-
-    gCoreThread().queueCommand(
-        std::bind(&LeviathanBSFApplication::frameRenderingFinishedCallback, Pimpl->OurApp),
-        CTQF_InternalQueue);
-
-    gCoreThread().queueCommand(
-        std::bind(&ct::QueryManager::_update, ct::QueryManager::instancePtr()),
-        CTQF_InternalQueue);
-    gCoreThread().queueCommand(
-        std::bind(&LeviathanBSFApplication::endCoreProfiling, Pimpl->OurApp),
-        CTQF_InternalQueue);
-
-    gProfilerCPU().endThread();
-    gProfiler()._update();
-
-    // At this point I think it is possible that a rendering operation is going on in the
-    // background, but hopefully it is safe to execute game logic
+    // At this point the frame render operation is happening on the BSF core thread, but it is
+    // safe to use non-core thread objects normally, only in special cases do we need to wait
+    // for a frame to end
     return true;
 }
 // ------------------------------------ //
@@ -682,7 +486,6 @@ DLLEXPORT bool Graphics::IsVerticalUVFlipped() const
 }
 // ------------------------------------ //
 // Resource loading helpers
-
 DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
 {
     // TODO: .asset detection
@@ -698,14 +501,7 @@ DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
         return nullptr;
     }
 
-    // bs::HShader shader = bs::gImporter().import<bs::Shader>(file.c_str());
-    bs::HShader shader = bs::gResources().load<bs::Shader>(file.c_str());
-
-    if(!shader) {
-        LOG_ERROR("Graphics: loading asset failed: " + name);
-    }
-
-    return shader;
+    return Pimpl->LoadResource<bs::Shader>(std::filesystem::absolute(file).c_str());
 }
 
 DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
@@ -721,14 +517,7 @@ DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
         return nullptr;
     }
 
-    // bs::HTexture texture = bs::gImporter().import<bs::Texture>(file.c_str());
-    bs::HTexture texture = bs::gResources().load<bs::Texture>(file.c_str());
-
-    if(!texture) {
-        LOG_ERROR("Graphics: loading asset failed: " + name);
-    }
-
-    return texture;
+    return Pimpl->LoadResource<bs::Texture>(std::filesystem::absolute(file).c_str());
 }
 
 DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
@@ -744,14 +533,7 @@ DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
         return nullptr;
     }
 
-    // bs::HMesh mesh = bs::gImporter().import<bs::HMesh>(file.c_str());
-    bs::HMesh mesh = bs::gResources().load<bs::Mesh>(file.c_str());
-
-    if(!mesh) {
-        LOG_ERROR("Graphics: loading asset failed: " + name);
-    }
-
-    return mesh;
+    return Pimpl->LoadResource<bs::Mesh>(std::filesystem::absolute(file).c_str());
 }
 
 DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string& name)
@@ -768,14 +550,7 @@ DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string
         return nullptr;
     }
 
-    // bs::HMesh mesh = bs::gImporter().import<bs::HMesh>(file.c_str());
-    bs::HAnimationClip animationClip = bs::gResources().load<bs::AnimationClip>(file.c_str());
-
-    if(!animationClip) {
-        LOG_ERROR("Graphics: loading asset failed: " + name);
-    }
-
-    return animationClip;
+    return Pimpl->LoadResource<bs::AnimationClip>(std::filesystem::absolute(file).c_str());
 }
 
 // ------------------------------------ //

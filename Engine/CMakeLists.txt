@@ -114,6 +114,7 @@ if(NOT LEVIATHAN_AS_LIBRARY)
     "Application/ServerApplication.cpp" "Application/ServerApplication.h"
     "Application/ClientApplication.cpp" "Application/ClientApplication.h"
     "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
+    "Application/CrashHandler.cpp" "Application/CrashHandler.h"
     )
 endif()
 

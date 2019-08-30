@@ -2,6 +2,8 @@
 #include "@ProgramAppHeader@"
 #include "@WorldFactoryInclude@"
 
+#include "Application/CrashHandler.h"
+
 #include "resource.h"
 
 #include "Define.h"
@@ -58,21 +60,40 @@ bool DumpCallback(const wchar_t* dump_path,
     MDRawAssertionInfo* assertion, bool succeeded)
 {
     // This is probably better to use than the conversion function
-    std::wcout << dump_path << "\n";
+    std::wcout << L"Created stack dump: " << dump_path << L"\n";
     
     // const std::string path = Convert::WstringToString(dump_path);
     // printf("Created stack dump: %s\n", path.c_str());
-    
+
+    Leviathan::CrashHandler::DoBSFCallStackAfterBreakpad();
     return succeeded;
 }
+
+void BreakpadTriggerHelper(google_breakpad::ExceptionHandler& handler)
+{
+    handler.WriteMinidump();
+}
+
+void BreakpadTriggerHelperSEH(google_breakpad::ExceptionHandler& handler, void* data)
+{
+    handler.WriteMinidumpForException((EXCEPTION_POINTERS*)data);
+}
+
 #endif //_DEBUG
 #else
 bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* context,
     bool succeeded)
 {
     printf("Created stack dump: %s\n", descriptor.path());
+    Leviathan::CrashHandler::DoBSFCallStackAfterBreakpad();
     return succeeded;
 }
+
+void BreakpadTriggerHelper(google_breakpad::ExceptionHandler& handler)
+{
+    handler.SimulateSignalDelivery(SIGABRT);
+}
+
 #endif
 #endif //MAKE_RELEASE
 
@@ -130,7 +151,7 @@ int main(int argcount, char* args[]){
 
 #endif
 
-    #if MAKE_RELEASE
+#if MAKE_RELEASE
     // Crash handler //
 #ifdef _WIN32
 #ifndef _DEBUG
@@ -138,7 +159,10 @@ int main(int argcount, char* args[]){
         google_breakpad::ExceptionHandler::HANDLER_ALL,
         (MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
         (const wchar_t*)nullptr, NULL);
-        
+
+    Leviathan::CrashHandler::RegisterBreakpadWindowsSEHHandler(std::bind(&BreakpadTriggerHelperSEH,
+        std::ref(ExceptionHandler), std::placeholders::_1));
+
 #endif //_DEBUG
 #else
     google_breakpad::MinidumpDescriptor descriptor("./");
@@ -146,6 +170,8 @@ int main(int argcount, char* args[]){
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL,
         true, -1);
 #endif
+    // Generic handler registration
+    Leviathan::CrashHandler::RegisterBreakpadGenericHandler(std::bind(&BreakpadTriggerHelper, std::ref(ExceptionHandler)));
 #endif //MAKE_RELEASE
 
     // Logger. This is here to make logging shutdown errors etc. possible //

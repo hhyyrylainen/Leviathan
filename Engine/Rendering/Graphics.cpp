@@ -256,6 +256,42 @@ DLLEXPORT void Graphics::Release()
 // ------------------------------------------- //
 bool Graphics::InitializeBSF(AppDef* appdef)
 {
+    // Now with Ogre gone we print the CPU (and GPU) info here. However this seems to have some
+    // problems at least on my Linux computer printing the GPU info
+    std::stringstream sstream;
+
+    sstream << "Start of graphics systeminformation:\n"
+            << "// ------------------------------------ //\n";
+
+    // This code is adapted from bs::Debug::saveTextLog
+
+    sstream << "BSF version: " << BS_VERSION_MAJOR << "." << BS_VERSION_MINOR << "."
+            << BS_VERSION_PATCH << "\n";
+
+    bs::SystemInfo systemInfo = bs::PlatformUtility::getSystemInfo();
+    sstream << "OS version: " << systemInfo.osName << " "
+            << (systemInfo.osIs64Bit ? "64-bit" : "32-bit") << "\n";
+    sstream << "CPU information:\n";
+    sstream << "CPU vendor: " << systemInfo.cpuManufacturer << "\n";
+    sstream << "CPU name: " << systemInfo.cpuModel << "\n";
+    sstream << "CPU clock speed: " << systemInfo.cpuClockSpeedMhz << "Mhz\n";
+    sstream << "CPU core count: " << systemInfo.cpuNumCores << "\n";
+
+    sstream << "\n";
+    sstream << "GPU List:\n";
+
+    // NOTE: this doesn't work on my Linux computer (returns an empty list)
+    if(systemInfo.gpuInfo.numGPUs == 1)
+        sstream << "GPU: " << systemInfo.gpuInfo.names[0] << "\n";
+    else {
+        for(bs::UINT32 i = 0; i < systemInfo.gpuInfo.numGPUs; i++)
+            sstream << "GPU #" << i << ": " << systemInfo.gpuInfo.names[i] << "\n";
+    }
+
+    sstream << "// ------------------------------------ //";
+
+    LOG_INFO(sstream.str());
+
     // Create render API settings
     bs::START_UP_DESC desc;
     desc.input = "bsfNullInput";

@@ -107,11 +107,10 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
-    cAudio
+    libalure2_s
     ${SDL2_LIBRARY} AngelScriptAddons
     bsf
     )
-
 
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)

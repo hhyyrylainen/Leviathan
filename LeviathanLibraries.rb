@@ -5,7 +5,11 @@ require_relative 'RubySetupSystem/Libraries/SetupBullet.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
 require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
 require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
-require_relative 'RubySetupSystem/Libraries/SetupcAudio.rb'
+require_relative 'RubySetupSystem/Libraries/SetupAlure.rb'
+require_relative 'RubySetupSystem/Libraries/SetupOgg.rb'
+require_relative 'RubySetupSystem/Libraries/SetupOpus.rb'
+require_relative 'RubySetupSystem/Libraries/SetupOpusfile.rb'
+require_relative 'RubySetupSystem/Libraries/SetupVorbis.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBSFramework.rb'
@@ -113,12 +117,41 @@ $bsf = BSFramework.new(
   extraLibSearch: "lib/",
 )
 
-$caudio = CAudio.new(
-  version: "master",
-  epoch: 2,
+$opus = Opus.new(
+  version: "v1.3.1",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  noTutorials: true
+  pic: true,
+)
+
+$ogg = Ogg.new(
+  version: "release-1.3.4",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  pic: true,
+)
+
+# opusfile is disabled until cmake support can be added
+# $opusfile = Opusfile.new(
+#   version: "master",
+#   installPath: THIRD_PARTY_INSTALL,
+#   noInstallSudo: true,
+# )
+
+$vorbis = Vorbis.new(
+  version: "v1.3.6",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  pic: true,
+)
+
+$alure = Alure.new(
+  version: "master",
+  installPath: THIRD_PARTY_INSTALL,
+  noInstallSudo: true,
+  noExamples: true,
+  shared: false,
+  static: true,
 )
 
 $cef = CEF.new(
@@ -175,12 +208,9 @@ end
 
 if OS.windows?
   $leviathanLibList += [$sdl, $openalsoft]
+  # ogre deps $zlib, $freeimage, $freetype,
 end
 
-# ogre deps $zlib, $freeimage, $freetype,
+# $opusfile
 
-$leviathanLibList += [$caudio, $bsf]
-
-
-
-
+$leviathanLibList += [$ogg, $vorbis, $opus, $alure, $bsf]

@@ -177,16 +177,11 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
 
     } else if(name == "Play2DSound") {
 
-        if(arguments.size() < 4 || !arguments[0]->IsString() || !arguments[1]->IsBool() ||
-            !arguments[2]->IsBool() || !arguments[3]->IsFunction()) {
+        if(arguments.size() < 3 || !arguments[0]->IsString() || !arguments[1]->IsBool() ||
+            // !arguments[2]->IsBool() ||
+            !arguments[2]->IsFunction()) {
             // Invalid arguments //
-            exception = "Invalid arguments passed, expected: string, bool, bool, function";
-            return true;
-        }
-
-        if(arguments[1]->GetBoolValue() == false && arguments[2]->GetBoolValue() == false) {
-            // Invalid arguments //
-            exception = "Invalid arguments passed, both boolean parameters are false";
+            exception = "Invalid arguments passed, expected: string, bool, function";
             return true;
         }
 
@@ -194,7 +189,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         const auto requestNumber = ++RequestSequenceNumber;
 
         PendingRequestCallbacks.push_back(std::make_tuple(
-            requestNumber, arguments[3], nullptr, CefV8Context::GetCurrentContext()));
+            requestNumber, arguments[2], nullptr, CefV8Context::GetCurrentContext()));
 
         // Pack data to a message and send to the browser process
         CefRefPtr<CefProcessMessage> msg = CefProcessMessage::Create("AudioSource");
@@ -206,7 +201,7 @@ bool JSNativeCoreAPI::Execute(const CefString& name, CefRefPtr<CefV8Value> objec
         args->SetInt(1, requestNumber);
         args->SetString(2, arguments[0]->GetStringValue());
         args->SetBool(3, arguments[1]->GetBoolValue());
-        args->SetBool(4, arguments[2]->GetBoolValue());
+        // args->SetBool(4, arguments[2]->GetBoolValue());
         SendProcessMessage(msg);
         return true;
     } else if(name == "PlayCutscene") {
@@ -697,13 +692,13 @@ bool JSAudioSourceInterceptor::Get(const CefString& name, const CefRefPtr<CefV8V
                     return false;
                 }));
         return true;
-    } else if(name == "Play2D") {
-        retval = CefV8Value::CreateFunction("Play2D",
+    } else if(name == "Resume") {
+        retval = CefV8Value::CreateFunction("Resume",
             new JSLambdaFunction(
                 [](const CefString& name, CefRefPtr<CefV8Value> object,
                     const CefV8ValueList& arguments, CefRefPtr<CefV8Value>& retval,
                     CefString& exception) -> bool {
-                    if(name == "Play2D") {
+                    if(name == "Resume") {
 
                         // The JSAudioSourceInterceptor is the user data
                         if(!object) {
@@ -726,7 +721,7 @@ bool JSAudioSourceInterceptor::Get(const CefString& name, const CefRefPtr<CefV8V
                             return true;
                         }
 
-                        casted->Play2D();
+                        casted->Resume();
                         return true;
                     }
 
@@ -770,13 +765,13 @@ DLLEXPORT void JSAudioSourceInterceptor::Pause()
     MessageBridge.SendProcessMessage(message);
 }
 
-DLLEXPORT void JSAudioSourceInterceptor::Play2D()
+DLLEXPORT void JSAudioSourceInterceptor::Resume()
 {
     CefRefPtr<CefProcessMessage> message = CefProcessMessage::Create("AudioSource");
 
     CefRefPtr<CefListValue> args = message->GetArgumentList();
 
-    args->SetString(0, "Play2D");
+    args->SetString(0, "Resume");
     // No callback
     args->SetInt(1, -1);
     args->SetInt(2, ID);

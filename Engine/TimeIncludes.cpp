@@ -82,7 +82,6 @@ int64_t Time::GetTimeMicro64()
 // ------------------------------------ //
 DLLEXPORT WantedClockType::time_point Time::GetThreadSafeSteadyTimePoint()
 {
-
     return WantedClockType::now();
 }
 // ------------------------------------ //

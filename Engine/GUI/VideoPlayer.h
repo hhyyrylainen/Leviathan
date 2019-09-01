@@ -160,8 +160,8 @@ public:
 
 public:
     //! \brief Reads audio data to the buffer
-    //! \returns The number of bytes read
-    //! \param amount The maximum number of bytes to read
+    //! \returns The number of sample frames read
+    //! \param amount The maximum number of sample frames to read
     //! \protected
     size_t ReadAudioData(uint8_t* output, size_t amount);
 
@@ -270,7 +270,8 @@ protected:
 
     //! Audio output
     AudioSource::pointer AudioStream;
-    ProceduralSoundData::pointer AudioStreamData;
+    Sound::ProceduralSoundData::pointer AudioStreamData;
+    Sound::ProceduralSoundData::SoundProperties AudioStreamDataProperties;
 
     // Timing control
     float PassedTimeSeconds = 0.f;

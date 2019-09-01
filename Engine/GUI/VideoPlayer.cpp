@@ -371,21 +371,37 @@ bool VideoPlayer::FFMPEGLoadFile()
         }
 
         // Create sound object //
-        ProceduralSoundData::SoundProperties properties;
-        properties.SampleRate = SampleRate;
-        properties.SourceName = "VideoPlayer";
-        properties.Format =
-            ChannelCount > 1 ? cAudio::EAF_16BIT_STEREO : cAudio::EAF_16BIT_MONO;
+        AudioStreamDataProperties.SampleRate = SampleRate;
 
-        AudioStreamData = ProceduralSoundData::MakeShared<ProceduralSoundData>(
-            [=](void* output, int amount) -> int {
-                return static_cast<int>(
-                    this->ReadAudioData(static_cast<uint8_t*>(output), amount));
-            },
-            std::move(properties));
+        bool valid = false;
 
-        AudioStream = Engine::Get()->GetSoundDevice()->CreateProceduralSound(
-            AudioStreamData, VideoFile.c_str());
+        if(ChannelCount == 1) {
+            AudioStreamDataProperties.Channels = alure::ChannelConfig::Mono;
+            valid = true;
+        } else if(ChannelCount == 2) {
+            AudioStreamDataProperties.Channels = alure::ChannelConfig::Stereo;
+            valid = true;
+        } else if(ChannelCount == 4) {
+            AudioStreamDataProperties.Channels = alure::ChannelConfig::Quad;
+            valid = true;
+        } else if(ChannelCount == 6) {
+            AudioStreamDataProperties.Channels = alure::ChannelConfig::X51;
+            valid = true;
+        } else if(ChannelCount == 7) {
+            AudioStreamDataProperties.Channels = alure::ChannelConfig::X61;
+            valid = true;
+        } else if(ChannelCount == 8) {
+            AudioStreamDataProperties.Channels = alure::ChannelConfig::X71;
+            valid = true;
+        }
+
+        AudioStreamDataProperties.SampleType = alure::SampleType::Int16;
+
+        if(!valid) {
+            LOG_ERROR("VideoPlayer: invalid channel configuration for audio: " +
+                      std::to_string(ChannelCount));
+            return false;
+        }
     }
 
     DumpInfo();
@@ -688,6 +704,11 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
         return 0;
     }
 
+    // This is verified in open when setting up converting
+    // av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) could also be used here
+    const auto bytesPerSample = 2;
+    amount *= bytesPerSample * ChannelCount;
+
     size_t readAmount = 0;
 
     // Read audio data until the stream ends or we have reached amount
@@ -721,7 +742,7 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
             if(this->ReadOnePacket(lock2, DecodePriority::Audio) == PacketReadResult::Ended) {
 
                 // Stream ended //
-                return readAmount;
+                return readAmount / bytesPerSample / ChannelCount;
             }
 
             // We have now read more data, try decoding again
@@ -737,10 +758,6 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
         }
 
         // Received audio data //
-
-        // This is verified in open when setting up converting
-        // av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) could also be used here
-        const auto bytesPerSample = 2;
 
         const auto totalSize = bytesPerSample * (DecodedAudio->nb_samples * ChannelCount);
 
@@ -810,7 +827,7 @@ size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
         continue;
     }
 
-    return readAmount;
+    return readAmount / bytesPerSample / ChannelCount;
 }
 
 size_t VideoPlayer::ReadDataFromAudioQueue(Lock& audiolocked, uint8_t* output, size_t amount)
@@ -932,11 +949,18 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
         // Start playing audio. Hopefully at the same time as the first frame of the
         // video is decoded
-        if(!IsPlayingAudio && AudioStream && AudioCodec) {
+        if(!IsPlayingAudio && AudioCodec) {
 
             LOG_INFO("VideoPlayer: Starting audio playback from the video...");
 
-            AudioStream->Play2D();
+            AudioStreamData = alure::MakeShared<Sound::ProceduralSoundData>(
+                [=](void* output, unsigned amount) -> unsigned {
+                    return this->ReadAudioData(static_cast<uint8_t*>(output), amount);
+                },
+                AudioStreamDataProperties);
+
+            AudioStream =
+                Engine::Get()->GetSoundDevice()->CreateProceduralSound(AudioStreamData);
             IsPlayingAudio = true;
         }
 

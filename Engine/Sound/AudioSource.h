@@ -1,85 +1,88 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "AudioBuffer.h"
+#include "ProceduralSound.h"
+
 #include "GUI/JSProxyable.h"
 
-#include "cAudio/IAudioSource.h"
-
-namespace cAudio {
-
-class IAudioSource;
-}
+#include "alure2.h"
 
 namespace Leviathan {
 
-class SoundDevice;
-
-//! \brief Small ReferenceCounted wrapper around a sound stream
+//! \brief Small ReferenceCounted wrapper around an audio source
 class AudioSource : public GUI::JSProxyable {
 protected:
     // These are protected for only constructing properly reference
     // counted instances through MakeShared
     friend ReferenceCounted;
 
-    DLLEXPORT AudioSource(cAudio::IAudioSource* sourcetowrap, SoundDevice* owner);
+    DLLEXPORT AudioSource(alure::Source sourcetowrap);
 
 public:
     DLLEXPORT ~AudioSource();
 
-    DLLEXPORT inline cAudio::IAudioSource* Get()
-    {
-        return Source;
-    }
+    // DLLEXPORT inline cAudio::IAudioSource* Get()
+    // {
+    //     return Source;
+    // }
 
     DLLEXPORT inline bool HasInternalSource() const
     {
-        return Source != nullptr;
+        // Returns true if the source has the impl pointer set
+        return Source.operator bool();
     }
 
     // ------------------------------------ //
-    // Proxies for some of the common audio functions
-    DLLEXPORT inline bool Play2D()
+    DLLEXPORT void Play2D(const Sound::AudioBuffer::pointer& buffer);
+    DLLEXPORT void PlayWithDecoder(const Sound::ProceduralSoundData::pointer& data,
+        size_t chunksize = 12000, size_t chunkstoqueue = 4);
+
+    DLLEXPORT inline void Resume()
     {
-        if(Source)
-            return Source->play2d();
-        return false;
+        Source.resume();
     }
 
     DLLEXPORT inline void Stop()
     {
-        if(Source)
-            Source->stop();
+        Source.stop();
     }
 
     DLLEXPORT inline void Pause()
     {
-        if(Source)
-            Source->pause();
+        Source.pause();
     }
 
+    //! Also returns true if the source will start playing once a buffer is loaded
     DLLEXPORT inline bool IsPlaying() const
     {
-        if(Source)
-            return Source->isPlaying();
-        return false;
+        return Source.isPlayingOrPending();
     }
 
     //! \param volume 0-1.f is normal range
     DLLEXPORT inline void SetVolume(float volume)
     {
-        if(Source)
-            Source->setVolume(volume);
+        Source.setGain(volume);
+    }
+
+    DLLEXPORT inline void SetGain(float gain)
+    {
+        Source.setGain(gain);
+    }
+
+    DLLEXPORT inline void SetLooping(bool looping)
+    {
+        Source.setLooping(looping);
     }
 
     REFERENCE_COUNTED_PTR_TYPE(AudioSource);
 
 private:
-    cAudio::IAudioSource* Source;
+    alure::Source Source;
 
-    //! Used to release the source properly
-    SoundDevice* Owner;
+    Sound::AudioBuffer::pointer PlayedBuffer;
 };
 
 } // namespace Leviathan

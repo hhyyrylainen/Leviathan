@@ -1,25 +1,42 @@
 // ------------------------------------ //
 #include "AudioSource.h"
 
-#include "SoundDevice.h"
-
-#include "cAudio/cAudio.h"
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT AudioSource::AudioSource(cAudio::IAudioSource* sourcetowrap, SoundDevice* owner) :
-    Source(sourcetowrap), Owner(owner)
-{
-
-    LEVIATHAN_ASSERT(Owner, "AudioSource must be associated with a SoundDevice");
-}
+DLLEXPORT AudioSource::AudioSource(alure::Source sourcetowrap) : Source(sourcetowrap) {}
 
 DLLEXPORT AudioSource::~AudioSource()
 {
-    // TODO: should this invoke if not called on the main thread
+    // TODO: should this invoke if not called on the main thread?
     if(Source) {
+        Source.destroy();
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void AudioSource::Play2D(const Sound::AudioBuffer::pointer& buffer)
+{
+    PlayedBuffer = buffer;
 
-        auto manager = Owner->GetAudioManager();
-        if(manager)
-            manager->release(Source);
+    if(PlayedBuffer && PlayedBuffer->GetBuffer()) {
+
+        Source.set3DSpatialize(alure::Spatialize::Off);
+        Source.play(PlayedBuffer->GetBuffer());
+
+    } else {
+        Source.stop();
+    }
+}
+
+DLLEXPORT void AudioSource::PlayWithDecoder(
+    const Sound::ProceduralSoundData::pointer& data, size_t chunksize, size_t chunkstoqueue)
+{
+    PlayedBuffer.reset();
+
+    if(data) {
+
+        Source.play(data, chunksize, chunkstoqueue);
+
+    } else {
+        Source.stop();
     }
 }

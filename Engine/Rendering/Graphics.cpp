@@ -260,7 +260,7 @@ bool Graphics::InitializeBSF(AppDef* appdef)
     // problems at least on my Linux computer printing the GPU info
     std::stringstream sstream;
 
-    sstream << "Start of graphics systeminformation:\n"
+    sstream << "Start of graphics system information:\n"
             << "// ------------------------------------ //\n";
 
     // This code is adapted from bs::Debug::saveTextLog

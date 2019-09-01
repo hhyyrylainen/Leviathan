@@ -123,7 +123,7 @@ var Leviathan = {};
     //! true. use Play2DSoundEffect instead if both are false)
     //! oncreated a callback to be called when the object is created. Passes the object
     //! as the first parameter to the callback
-    native function Play2DSound(filename, looping, startpaused, oncreated);
+    native function Play2DSound(filename, looping, oncreated);
     Leviathan.Play2DSound = Play2DSound;
 
     //! Creates a new GUI layer and plays a video in it. Calls the callback when done.

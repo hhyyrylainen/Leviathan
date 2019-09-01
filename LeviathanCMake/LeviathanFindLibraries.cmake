@@ -72,6 +72,8 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     message(SEND_ERROR "Leviathan build script hasn't installed headers")
   endif()
 
+  find_package(OpenAL REQUIRED)
+
   # TODO: make this use LEVIATHAN_USING_SDL2
   
   # Set the setup script result directories
@@ -87,6 +89,8 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfEngine"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfCore"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfUtility"
+    "${LEVIATHAN_SRC}/build/ThirdParty/include/AL"
+    "${OPENAL_INCLUDE_DIR}"
     )
 
   # Find SDL2
@@ -107,11 +111,11 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     sfml-system sfml-network
     # ffmpeg
     avcodec avformat avutil swresample swscale
-    libalure2_s
+    alure2 ${OPENAL_LIBRARY}
     ${SDL2_LIBRARY} AngelScriptAddons
     bsf
     )
-
+  
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   # Now it is named the same as we are using the cmake build for angelscript

@@ -816,11 +816,11 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
         const auto requestNumber = args->GetInt(1);
         const auto& file = args->GetString(2);
         bool looping = args->GetBool(3);
-        bool startPaused = args->GetBool(4);
+        // bool startPaused = args->GetBool(4);
 
         // Create object
-        AudioSource::pointer source = Engine::Get()->GetSoundDevice()->Play2DSound(
-            file.ToString(), looping, startPaused);
+        AudioSource::pointer source =
+            Engine::Get()->GetSoundDevice()->Play2DSound(file.ToString(), looping);
 
         if(source) {
             ProxyedObjects.insert(std::make_pair(source->GetID(), source));
@@ -875,13 +875,13 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
 
         casted->Pause();
         return;
-    } else if(operation == "Play2D") {
+    } else if(operation == "Resume") {
 
         // Function call
         const auto requestNumber = args->GetInt(1);
 
         if(requestNumber != -1)
-            LOG_WARNING("GuiView: request responses for Play2D aren't done, request number: " +
+            LOG_WARNING("GuiView: request responses for Resume aren't done, request number: " +
                         std::to_string(requestNumber));
 
         const auto id = args->GetInt(2);
@@ -891,19 +891,19 @@ void View::_HandleAudioSourceMessage(const CefRefPtr<CefProcessMessage>& message
         if(iter == ProxyedObjects.end()) {
 
             LOG_ERROR(
-                "GuiView: didn't find proxyed object (for Play2D): " + std::to_string(id));
+                "GuiView: didn't find proxyed object (for Resume): " + std::to_string(id));
             return;
         }
 
         auto* casted = dynamic_cast<AudioSource*>(iter->second.get());
 
         if(!casted) {
-            LOG_ERROR("GuiView: proxyed object is of wrong type (for Play2D), id: " +
+            LOG_ERROR("GuiView: proxyed object is of wrong type (for Resume), id: " +
                       std::to_string(id));
             return;
         }
 
-        casted->Play2D();
+        casted->Resume();
         return;
     }
 

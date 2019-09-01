@@ -87,7 +87,7 @@ public:
 
     // JS exposed functions
     DLLEXPORT void Pause();
-    DLLEXPORT void Play2D();
+    DLLEXPORT void Resume();
 
     IMPLEMENT_REFCOUNTING(JSAudioSourceInterceptor);
 

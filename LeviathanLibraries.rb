@@ -150,8 +150,8 @@ $alure = Alure.new(
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   noExamples: true,
-  shared: false,
-  static: true,
+  shared: true,
+  static: false,
 )
 
 $cef = CEF.new(

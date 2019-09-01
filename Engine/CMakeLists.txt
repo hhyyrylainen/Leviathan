@@ -260,8 +260,8 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   set(GroupSound
     "Sound/SoundDevice.cpp" "Sound/SoundDevice.h"
     "Sound/AudioSource.h" "Sound/AudioSource.cpp"
+    "Sound/AudioBuffer.h" "Sound/AudioBuffer.cpp"
     "Sound/ProceduralSound.h" "Sound/ProceduralSound.cpp"
-    "Sound/SoundInternalTypes.h" "Sound/SoundInternalTypes.cpp"
     )
 endif()
 

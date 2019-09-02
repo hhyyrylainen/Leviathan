@@ -65,7 +65,7 @@ bool Importer::Run()
 
     } else if(!TargetIsFile) {
 
-        InformationCacheFile = std::filesystem::path(Destination) / CACHE_FILE_NAME;
+        InformationCacheFile = (std::filesystem::path(Destination) / CACHE_FILE_NAME).string();
 
         LOG_INFO("Import cache file is: " + InformationCacheFile);
 

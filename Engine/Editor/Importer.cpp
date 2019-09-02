@@ -413,38 +413,47 @@ bool Importer::NeedsImporting(const std::string& file, const std::string& target
         throw InvalidState("importer cache is corrupted: " + std::string(e.what()));
     }
 
+    std::string oldOptions;
+    std::string oldFile;
+
+    try {
+        const auto data = CacheData["files"][key];
+
+        oldOptions = data["optionsHash"].asString();
+        oldFile = data["fileHash"].asString();
+
+    } catch(const Json::Exception& e) {
+        LOG_ERROR(
+            "Importer: cache entry for (" + file + ") is invalid, json error: " + e.what());
+        return true;
+    }
+
     // Exist check
     if(!std::filesystem::exists(target))
         return NeedImportHashHelper(file, hash);
+
+    // Options hash overrides the timestamp
+    const auto optionsHash = GetHashOfOptions(options);
+
+    if(optionsHash != oldOptions)
+        return true;
 
     // Timestamp check
     if(!NeedImportTimestampHelper(file, target))
         return false;
 
-    // Hash checks should be done
-
+    // File hash check
     NeedImportHashHelper(file, hash);
 
-    const auto optionsHash = GetHashOfOptions(options);
+    if(hash == oldFile) {
+        LOG_INFO("File (" + file +
+                 ") is newer than imported file, but hash and options are the same, "
+                 "touching the "
+                 "file to skip it in the future");
 
-    const auto data = CacheData["files"][key];
+        std::filesystem::last_write_time(target, std::filesystem::last_write_time(file));
 
-    try {
-        if(data["optionsHash"].asString() == optionsHash &&
-            data["fileHash"].asString() == hash) {
-
-            LOG_INFO("File (" + file +
-                     ") is newer than imported file, but hash and options are the same, "
-                     "touching the "
-                     "file to skip it in the future");
-
-            std::filesystem::last_write_time(target, std::filesystem::last_write_time(file));
-
-            return false;
-        }
-    } catch(const Json::Exception& e) {
-        LOG_ERROR(
-            "Importer cache entry for (" + file + ") is invalid, json error: " + e.what());
+        return false;
     }
 
     return true;

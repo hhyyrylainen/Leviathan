@@ -3,6 +3,8 @@
 
 #include "Common/StringOperations.h"
 #include "Exceptions.h"
+#include "FileSystem.h"
+#include "Utility/MD5Generator.h"
 
 #include <filesystem>
 #include <string_view>
@@ -11,10 +13,22 @@ using namespace Leviathan;
 using namespace Leviathan::Editor;
 // ------------------------------------ //
 constexpr auto OPTIONS_FILE_NAME = ".options.json";
+constexpr auto FOLDER_OPTIONS_FILE_NAME = "FolderOptions.json";
+constexpr auto CACHE_FILE_NAME = "LeviathanImporterCache.json";
 
 Importer::Importer(const std::string& source, const std::string& destination) :
-    Source(source), Destination(destination)
-{}
+    Source(std::filesystem::absolute(source).string()),
+    Destination(std::filesystem::absolute(destination).string())
+{
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "";
+    JsonWriter = decltype(JsonWriter)(builder.newStreamWriter());
+
+    builder["commentStyle"] = "All";
+    builder["indentation"] = "4";
+    PrettyWriter = decltype(PrettyWriter)(builder.newStreamWriter());
+}
 
 Importer::~Importer() {}
 // ------------------------------------ //
@@ -36,8 +50,12 @@ bool Importer::Run()
 
     bool result = true;
 
+    CacheData = GetCacheStructure();
+
     // If the source is a file handle it as such
     if(!std::filesystem::is_directory(Source)) {
+
+        InformationCacheFile = "";
 
         LOG_INFO("Importing single file");
         SourceIsFile = true;
@@ -46,6 +64,12 @@ bool Importer::Run()
         }
 
     } else if(!TargetIsFile) {
+
+        InformationCacheFile = std::filesystem::path(Destination) / CACHE_FILE_NAME;
+
+        LOG_INFO("Import cache file is: " + InformationCacheFile);
+
+        CheckAndLoadCache();
 
         std::filesystem::recursive_directory_iterator dir(Source), end;
         while(dir != end) {
@@ -60,6 +84,9 @@ bool Importer::Run()
 
             ++dir;
         }
+
+        SaveCache();
+
     } else {
         LOG_ERROR("Importer: cannot import multiple files into a single target file");
         result = false;
@@ -67,6 +94,38 @@ bool Importer::Run()
 
     LOG_INFO("Finished import. Success: " + std::to_string(result));
     return result;
+}
+// ------------------------------------ //
+std::string Importer::GetHashOfOptions(const Json::Value& options) const
+{
+    std::stringstream sstream;
+    JsonWriter->write(options, &sstream);
+
+    return MD5(sstream.str()).hexdigest();
+}
+
+Json::Value Importer::GetCacheStructure() const
+{
+    Json::Value obj;
+    obj["files"] = Json::Value(Json::ValueType::objectValue);
+    return obj;
+}
+
+std::string Importer::GetCacheKeyForFile(const std::string& file) const
+{
+    std::size_t start = 0;
+
+    for(; start < file.size() && start < Source.size(); ++start) {
+
+        if(file[start] != Source[start]) {
+            break;
+        }
+    }
+
+    if(file[start] == '/' || file[start] == '\\')
+        ++start;
+
+    return file.substr(start);
 }
 // ------------------------------------ //
 bool Importer::ImportFile(const std::string& file)
@@ -107,7 +166,7 @@ bool Importer::ImportFile(const std::string& file)
             return true;
         }
 
-        success = ImportTypedFile(file, type);
+        success = ImportTypedFile(file, type, {}, GetFolderOptionsForFile(file), {});
     }
 
     if(!success) {
@@ -119,25 +178,56 @@ bool Importer::ImportFile(const std::string& file)
     return success;
 }
 
-bool Importer::ImportTypedFile(const std::string& file, FileType type)
+bool Importer::ImportTypedFile(const std::string& file, FileType type,
+    std::optional<std::string> target, std::optional<Json::Value> options,
+    std::optional<std::string> originalfile)
 {
-    const auto target = GetTargetPath(file, type);
+    if(!options)
+        options = Json::Value(Json::objectValue);
+
+    if(!target)
+        target = GetTargetPath(file, type);
+
+    if(!originalfile)
+        originalfile = file;
+
+    std::string hash;
+
+    // TODO: with the options files (when originalfile was specified when entering this) also
+    // the hash of the base file should be used
 
     // Skip if the target is up to date
-    if(!NeedsImporting(file, target)) {
+    if(!NeedsImporting(*originalfile, *target, *options, hash)) {
         return true;
     }
 
-    LOG_INFO("Importing '" + file + "' to '" + target + "'");
+    LOG_INFO("Importing '" + file + "' to '" + *target + "'");
+
+    bool result = false;
 
     switch(type) {
-    case FileType::Shader: return ImportAndSaveFile<bs::Shader>(file, target);
-    case FileType::Texture: return ImportAndSaveFile<bs::Texture>(file, target);
-    case FileType::Model: return ImportAndSaveFile<bs::Mesh>(file, target);
+    case FileType::Shader:
+        result = ImportAndSaveWithOptions<bs::Shader>(file, *target, *options);
+        break;
+    case FileType::Texture:
+        result = ImportAndSaveWithOptions<bs::Texture>(file, *target, *options);
+        break;
+    case FileType::Model:
+        result = ImportAndSaveWithOptions<bs::Mesh>(file, *target, *options);
+        break;
     case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
     }
 
-    LEVIATHAN_ASSERT(false, "should not get here");
+    // Write to cache
+    if(result) {
+        Json::Value obj;
+        obj["optionsHash"] = GetHashOfOptions(*options);
+        obj["fileHash"] = hash;
+
+        CacheData["files"][GetCacheKeyForFile(*originalfile)] = obj;
+    }
+
+    return result;
 }
 
 bool Importer::ImportWithOptions(const std::string& optionsfile)
@@ -152,9 +242,13 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
         throw InvalidArgument("invalid json:" + errs);
 
     std::string baseFile;
+    std::optional<std::string> originalFile;
 
     if(value["baseFile"]) {
         baseFile = value["baseFile"].asString();
+        originalFile = optionsfile;
+        // TODO: detect incorrectly specifying the base file if it is the same as the automatic
+        // one
     } else {
         baseFile = optionsfile.substr(0, optionsfile.size() - std::strlen(OPTIONS_FILE_NAME));
     }
@@ -180,7 +274,7 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
 
     if(type == FileType::Invalid) {
         LOG_ERROR("Importer: options base file has unknown type");
-        return true;
+        return false;
     }
 
     std::string target;
@@ -191,25 +285,42 @@ bool Importer::ImportWithOptions(const std::string& optionsfile)
         target = GetTargetPath(baseFile, type);
     }
 
-    // Skip if the target is up to date
-    if(!NeedsImporting(baseFile, optionsfile, target)) {
-        return true;
+    // Merge folder and file options
+    auto finalOptions = GetFolderOptionsForFile(baseFile);
+
+    if(finalOptions) {
+        for(const auto& key : value.getMemberNames()) {
+            // TODO: recursive merge
+            finalOptions.value()[key] = value[key];
+        }
+
+
+    } else {
+        finalOptions = value;
     }
 
-    LOG_INFO("Importing with options from '" + optionsfile + "' to '" + target + "'");
+    return ImportTypedFile(baseFile, type, target, finalOptions, originalFile);
+}
+// ------------------------------------ //
+std::optional<Json::Value> Importer::GetFolderOptionsForFile(const std::string& file) const
+{
+    const auto optionsFile =
+        std::filesystem::path(file).parent_path() / FOLDER_OPTIONS_FILE_NAME;
 
-    switch(type) {
-    case FileType::Shader:
-        return ImportAndSaveWithOptions<bs::Shader>(baseFile, target, value);
-    case FileType::Texture:
-        return ImportAndSaveWithOptions<bs::Texture>(baseFile, target, value);
-    case FileType::Model: return ImportAndSaveWithOptions<bs::Mesh>(baseFile, target, value);
-    case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
+    if(!std::filesystem::exists(optionsFile)) {
+        return {};
     }
 
-    LEVIATHAN_ASSERT(false, "should not get here");
+    std::ifstream reader(optionsFile.string());
 
-    return false;
+    Json::CharReaderBuilder builder;
+    Json::Value value;
+    JSONCPP_STRING errs;
+
+    if(!parseFromStream(builder, reader, &value, &errs))
+        throw InvalidState("invalid folder options json:" + errs);
+
+    return value;
 }
 // ------------------------------------ //
 std::string Importer::GetTargetPath(const std::string& file, FileType type) const
@@ -273,6 +384,111 @@ std::string Importer::GetTargetWithoutSingleCheck(const std::string& file, FileT
     return result.string();
 }
 // ------------------------------------ //
+bool NeedImportTimestampHelper(const std::string& file, const std::string& target)
+{
+    return std::filesystem::last_write_time(file) > std::filesystem::last_write_time(target);
+}
+
+bool NeedImportHashHelper(const std::string& file, std::string& hash)
+{
+    std::string fileContents;
+    if(!FileSystem::ReadFileEntirely(file, fileContents))
+        throw InvalidArgument("Cannot read file: " + file + " for hash calculation");
+
+    hash = MD5(fileContents).hexdigest();
+    return true;
+}
+
+
+bool Importer::NeedsImporting(const std::string& file, const std::string& target,
+    const Json::Value& options, std::string& hash)
+{
+    // If missing from cache, always import
+    const auto key = GetCacheKeyForFile(file);
+
+    try {
+        if(!CacheData["files"].isMember(key))
+            return NeedImportHashHelper(file, hash);
+    } catch(const Json::Exception& e) {
+        throw InvalidState("importer cache is corrupted: " + std::string(e.what()));
+    }
+
+    // Exist check
+    if(!std::filesystem::exists(target))
+        return NeedImportHashHelper(file, hash);
+
+    // Timestamp check
+    if(!NeedImportTimestampHelper(file, target))
+        return false;
+
+    // Hash checks should be done
+
+    NeedImportHashHelper(file, hash);
+
+    const auto optionsHash = GetHashOfOptions(options);
+
+    const auto data = CacheData["files"][key];
+
+    try {
+        if(data["optionsHash"].asString() == optionsHash &&
+            data["fileHash"].asString() == hash) {
+
+            LOG_INFO("File (" + file +
+                     ") is newer than imported file, but hash and options are the same, "
+                     "touching the "
+                     "file to skip it in the future");
+
+            std::filesystem::last_write_time(target, std::filesystem::last_write_time(file));
+
+            return false;
+        }
+    } catch(const Json::Exception& e) {
+        LOG_ERROR(
+            "Importer cache entry for (" + file + ") is invalid, json error: " + e.what());
+    }
+
+    return true;
+}
+// ------------------------------------ //
+void Importer::CheckAndLoadCache()
+{
+    if(!std::filesystem::exists(InformationCacheFile)) {
+        LOG_INFO("Importer cache file does not exist: " + InformationCacheFile);
+        return;
+    }
+
+    std::ifstream file(InformationCacheFile);
+
+    try {
+        if(!file.good())
+            throw InvalidAccess("can't read the cache file");
+
+        Json::CharReaderBuilder builder;
+        Json::Value value;
+        JSONCPP_STRING errs;
+
+        if(!parseFromStream(builder, file, &value, &errs))
+            throw InvalidState("invalid json:" + errs);
+
+        // Full paths are naturally different on different computers...
+        // if(value["source"].asString() != Source ||
+        //     value["destination"].asString() != Destination)
+        //     throw Exception("cache has different source or destination, cannot use it");
+
+        CacheData = value;
+
+    } catch(const std::exception& e) {
+        LOG_ERROR("Importer failed to load cache (" + InformationCacheFile +
+                  ") due to exception: " + e.what());
+    }
+}
+
+void Importer::SaveCache()
+{
+    std::ofstream file(InformationCacheFile);
+    JsonWriter->write(CacheData, &file);
+}
+// ------------------------------------ //
 const char* Importer::GetSubFolderForType(FileType type)
 {
     switch(type) {
@@ -295,28 +511,9 @@ Importer::FileType Importer::GetTypeFromExtension(const std::string& extension)
     if(extension == "bsl" || extension == "bslinc")
         return FileType::Shader;
 
-
     if(extension == "fbx")
         return FileType::Model;
 
     // throw InvalidArgument("Extension (" + extension + ") is not a valid type");
     return FileType::Invalid;
-}
-// ------------------------------------ //
-bool Importer::NeedsImporting(const std::string& file, const std::string& target)
-{
-    if(!std::filesystem::exists(target))
-        return true;
-
-    return std::filesystem::last_write_time(file) > std::filesystem::last_write_time(target);
-}
-
-bool Importer::NeedsImporting(
-    const std::string& file, const std::string& optionsfile, const std::string& target)
-{
-    if(NeedsImporting(file, target))
-        return true;
-
-    return std::filesystem::last_write_time(optionsfile) >
-           std::filesystem::last_write_time(target);
 }

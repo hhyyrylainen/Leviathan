@@ -15,6 +15,7 @@
 #include "bsfCore/Mesh/BsMesh.h"
 #include "bsfUtility/Reflection/BsRTTIType.h"
 
+#include <optional>
 
 namespace Leviathan { namespace Editor {
 
@@ -64,26 +65,52 @@ public:
     //! \returns False on failure
     bool Run();
 
+    //! \returns Folder level settings if exists
+    std::optional<Json::Value> GetFolderOptionsForFile(const std::string& file) const;
+
+    //! \returns A cache key for a input file
+    //!
+    //! This basically strips the source path from the file. This is so that on different
+    //! computers the cache works
+    std::string GetCacheKeyForFile(const std::string& file) const;
+
     std::string GetTargetPath(const std::string& file, FileType type) const;
     std::string GetTargetWithoutSingleCheck(const std::string& file, FileType type) const;
+
+    //! \returns A hash of options
+    std::string GetHashOfOptions(const Json::Value& options) const;
+
+    Json::Value GetCacheStructure() const;
 
     static const char* GetSubFolderForType(FileType type);
     static FileType GetTypeFromExtension(const std::string& extension);
 
 protected:
+    //! Helper for passing the file to the proper function for handling
     bool ImportFile(const std::string& file);
 
-    bool ImportTypedFile(const std::string& file, FileType type);
+    //! Handles calling the right template method for type
+    //! \param originalfile is used for the cache. Specify if there is an options file with an
+    //! overridden base file
+    bool ImportTypedFile(const std::string& file, FileType type,
+        std::optional<std::string> target, std::optional<Json::Value> options,
+        std::optional<std::string> originalfile);
+
+    //! Called for files that have a matching options file
     bool ImportWithOptions(const std::string& optionsfile);
 
-    //! \brief Compares file timestamps to check if file needs to be imported
-    bool NeedsImporting(const std::string& file, const std::string& target);
+    //! \brief Compares file timestamps and cache data to check if file needs to be imported
+    //! \param hash If the timestamps were compared, this contains the hash of file
+    bool NeedsImporting(const std::string& file, const std::string& target,
+        const Json::Value& options, std::string& hash);
 
-    //! \brief Compares file timestamps to check if file needs to be imported
-    bool NeedsImporting(
-        const std::string& file, const std::string& optionsfile, const std::string& target);
+    void CheckAndLoadCache();
+    void SaveCache();
+
+
 
 private:
+    //! Prefer calling ImportAndSaveWithOptions
     template<class T>
     bool ImportAndSaveFile(const std::string& file, const std::string& target,
         bs::SPtr<typename OptionsCreator<T>::OptionsType> options =
@@ -242,7 +269,7 @@ private:
                 return ImportMultiResource<T, bs::AnimationClip>(file, targets, importOptions);
             }
         } else if constexpr(std::is_same_v<T, bs::Texture>) {
-            // TODO: texture type and mipmaps
+            // TODO: texture mipmaps
 
             if(options["cubemap"]) {
 
@@ -273,6 +300,42 @@ private:
                     }
                 }
             }
+
+            if(options["pixelFormat"]) {
+
+                const auto selectedFormat = options["pixelFormat"].asString();
+
+                // TODO: rest of the pixel formats, this should also probably be moved to some
+                // other file
+                if(selectedFormat == "RGBA8") {
+                    // Default format
+                    importOptions->format = bs::PixelFormat::PF_RGBA8;
+                } else if(selectedFormat == "RGB8") {
+
+                    importOptions->format = bs::PixelFormat::PF_RGB8;
+                } else if(selectedFormat == "BC1") {
+
+                    importOptions->format = bs::PixelFormat::PF_BC1;
+                } else if(selectedFormat == "BC2") {
+
+                    importOptions->format = bs::PixelFormat::PF_BC2;
+                } else if(selectedFormat == "BC3") {
+
+                    // Better version of BC2.
+                    importOptions->format = bs::PixelFormat::PF_BC3;
+                } else if(selectedFormat == "BC7") {
+
+                    // Higher decompress overhead
+                    importOptions->format = bs::PixelFormat::PF_BC7;
+                } else if(selectedFormat == "RG11B10F") {
+
+                    // For skyboxes
+                    importOptions->format = bs::PixelFormat::PF_RG11B10F;
+                } else {
+                    LOG_ERROR("Importer: unknown pixel format: " + selectedFormat);
+                    return false;
+                }
+            }
         }
 
         // Non-multi import
@@ -282,6 +345,13 @@ private:
 protected:
     std::string Source;
     std::string Destination;
+
+    //! Stores things like file hashes and options used to skip unneeded imports
+    std::string InformationCacheFile;
+    Json::Value CacheData;
+
+    std::unique_ptr<Json::StreamWriter> JsonWriter;
+    std::unique_ptr<Json::StreamWriter> PrettyWriter;
 
     int ImportedFiles = 0;
 

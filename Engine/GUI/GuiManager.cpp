@@ -372,5 +372,5 @@ void GuiManager::_SendChangedLayers() const
         }
     }
 
-    Engine::Get()->GetGraphics()->UpdateShownOverlays(overlays);
+    Engine::Get()->GetGraphics()->UpdateShownOverlays(*ThisWindow->GetBSFWindow(), overlays);
 }

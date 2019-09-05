@@ -18,8 +18,7 @@ public:
 
     bool check(const bs::ct::Camera& camera) override
     {
-        // TODO: check are some GUI resources used by this camera
-        return true;
+        return GetOverlaysOnCamera(camera) != nullptr;
     }
 
     void render(const bs::ct::Camera& camera) override;
@@ -27,18 +26,25 @@ public:
     void initialize(const bs::Any& data) override;
     void destroy() override;
 
-    void UpdateShownOverlays(const std::vector<bs::SPtr<bs::ct::Texture>>& overlays)
+    //! \param target is the identifier for the bs::RenderTarget, currently the pointer to the
+    //! core version
+    void UpdateShownOverlays(
+        uint64_t target, const std::vector<bs::SPtr<bs::ct::Texture>>& overlays)
     {
-        LOG_INFO("shown overlay count: " + std::to_string(overlays.size()));
-        FullScreenOverlays = overlays;
+        LOG_INFO("shown overlay count (on: " + std::to_string(target) +
+                 "): " + std::to_string(overlays.size()));
+        FullScreenOverlays[target] = overlays;
     }
+
+private:
+    std::vector<bs::SPtr<bs::ct::Texture>>* GetOverlaysOnCamera(const bs::ct::Camera& camera);
 
 private:
     bs::SPtr<bs::ct::Mesh> ScreenQuad;
     bs::SPtr<bs::ct::Material> QuadMaterial;
     bs::SPtr<bs::ct::GpuParamsSet> QuadParamsSet;
 
-    std::vector<bs::SPtr<bs::ct::Texture>> FullScreenOverlays;
+    std::unordered_map<uint64_t, std::vector<bs::SPtr<bs::ct::Texture>>> FullScreenOverlays;
 };
 
 } // namespace Leviathan

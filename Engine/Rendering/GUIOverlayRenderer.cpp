@@ -1,9 +1,12 @@
 // ------------------------------------ //
 #include "GUIOverlayRenderer.h"
 
+#include "Utility/Convert.h"
+
 #include "bsfCore/Material/BsGpuParamsSet.h"
 #include "bsfCore/Mesh/BsMesh.h"
 #include "bsfCore/RenderAPI/BsRenderAPI.h"
+#include "bsfCore/Renderer/BsCamera.h"
 #include "bsfEngine/Renderer/BsRendererUtility.h"
 using namespace Leviathan;
 // ------------------------------------ //
@@ -37,17 +40,36 @@ void GUIOverlayRenderer::destroy()
 // ------------------------------------ //
 void GUIOverlayRenderer::render(const bs::ct::Camera& camera)
 {
+    const auto* overlays = GetOverlaysOnCamera(camera);
+
+    if(!overlays)
+        return;
+
     auto& rapi = bs::ct::RenderAPI::instance();
 
     bs::ct::gRendererUtility().setPass(QuadMaterial);
 
     bs::ct::gRendererUtility().setPassParams(QuadParamsSet);
 
-    for(const auto& texture : FullScreenOverlays) {
+    for(const auto& texture : *overlays) {
 
         QuadMaterial->setTexture("image", texture);
         QuadParamsSet->update(QuadMaterial->_getInternalParams());
 
         bs::ct::gRendererUtility().draw(ScreenQuad);
     }
+}
+// ------------------------------------ //
+std::vector<bs::SPtr<bs::ct::Texture>>* GUIOverlayRenderer::GetOverlaysOnCamera(
+    const bs::ct::Camera& camera)
+{
+    const auto currentRenderTarget =
+        reinterpret_cast<uint64_t>(camera.getViewport()->getTarget().get());
+
+    const auto found = FullScreenOverlays.find(currentRenderTarget);
+
+    if(found != FullScreenOverlays.end())
+        return &found->second;
+
+    return nullptr;
 }

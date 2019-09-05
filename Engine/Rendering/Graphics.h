@@ -23,7 +23,8 @@ public:
 
     DLLEXPORT bool Frame();
 
-    DLLEXPORT void UpdateShownOverlays(const std::vector<bs::SPtr<bs::Texture>>& overlays);
+    DLLEXPORT void UpdateShownOverlays(
+        bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays);
 
     DLLEXPORT bool IsVerticalUVFlipped() const;
 

@@ -496,8 +496,10 @@ DLLEXPORT bool Graphics::Frame()
 }
 // ------------------------------------ //
 DLLEXPORT void Graphics::UpdateShownOverlays(
-    const std::vector<bs::SPtr<bs::Texture>>& overlays)
+    bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays)
 {
+    const auto targetRenderTarget = reinterpret_cast<uint64_t>(target.getCore().get());
+
     std::vector<bs::SPtr<bs::ct::Texture>> coreVersion;
     coreVersion.reserve(overlays.size());
 
@@ -507,10 +509,10 @@ DLLEXPORT void Graphics::UpdateShownOverlays(
     std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->OurApp->GUIRenderer;
 
     bs::gCoreThread().queueCommand(
-        [rendererExtension, coreVersion = std::move(coreVersion)]() {
+        [rendererExtension, targetRenderTarget, coreVersion = std::move(coreVersion)]() {
             const auto locked = rendererExtension.lock();
             if(locked)
-                locked->UpdateShownOverlays(coreVersion);
+                locked->UpdateShownOverlays(targetRenderTarget, coreVersion);
         });
 }
 

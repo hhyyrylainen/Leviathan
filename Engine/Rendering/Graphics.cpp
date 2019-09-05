@@ -379,9 +379,45 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
 {
     if(FirstWindowCreated) {
         // Register secondary window
-        // TODO: second window setup
-        DEBUG_BREAK;
-        return nullptr;
+
+        bs::RENDER_WINDOW_DESC windowDesc;
+
+        windowDesc.depthBuffer = true;
+
+        int multiSample;
+
+        ObjectFileProcessor::LoadValueFromNamedVars<int>(
+            Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount", multiSample,
+            1);
+
+        windowDesc.multisampleCount = multiSample;
+        // windowDesc.multisampleHint = "";
+        // Not sure what all settings need to be copied
+        windowDesc.fullscreen = /* window.IsFullScreen() */ false;
+        windowDesc.vsync = false;
+
+        int32_t width, height;
+        window.GetSize(width, height);
+        windowDesc.videoMode = bs::VideoMode(
+            width, height, Pimpl->Description.primaryWindowDesc.videoMode.refreshRate, 0);
+
+#ifdef _WIN32
+        windowDesc.platformSpecific["externalWindowHandle"] =
+            std::to_string((uint64_t)window.GetNativeHandle());
+#else
+        windowDesc.platformSpecific["externalWindowHandle"] =
+            std::to_string(window.GetNativeHandle());
+
+        windowDesc.platformSpecific["externalDisplay"] =
+            std::to_string(window.GetWindowXDisplay());
+#endif
+
+        auto window = bs::RenderWindow::create(windowDesc);
+
+        if(!window)
+            LOG_FATAL("Failed to create additional BSF window");
+
+        return window;
 
     } else {
         // Finish initializing graphics

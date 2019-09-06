@@ -121,6 +121,16 @@ bool BindMathOperations(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    // ------------------------------------ //
+    // clamp
+    if(engine->RegisterGlobalFunction("const float & clamp(const float &in value, const float "
+                                      "&in lower, const float &in upper)",
+           asFUNCTIONPR(
+               std::clamp<float>, (const float&, const float&, const float&), const float&),
+           asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     // ------------------------------------ //
     // Extra string helpers

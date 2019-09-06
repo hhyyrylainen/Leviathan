@@ -313,20 +313,8 @@ DLLEXPORT void Window::OnResize(int width, int height)
     if(DoingResize)
         return;
 
-// Notify bsf
-// TODO: something better, this is very fiddly
-#ifdef _WIN32
-    LOG_ERROR("Resizing doesn't work at all on Windows, see: "
-              "https://github.com/GameFoundry/bsf/issues/382");
-#else
-    BSFWindow->resize(width, height);
-    LOG_WARNING("Resizing is fiddly, see: "
-                "https://github.com/GameFoundry/bsf/issues/382");
-#endif
-
-    // These don't work
-    // BSFWindow->_notifyWindowEvent(bs::WindowEventType::Resized);
-    // BSFWindow->_windowMovedOrResized();
+    // Notify bsf
+    BSFWindow->_onExternalResize(width, height);
 
     // Send to GUI //
     WindowsGui->OnResize();

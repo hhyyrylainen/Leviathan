@@ -24,8 +24,9 @@
 #include "XLibInclude.h"
 #endif
 
-#include "Components/BsCCamera.h"
-#include "Scene/BsSceneObject.h"
+#include "bsfCore/Components/BsCCamera.h"
+#include "bsfCore/CoreThread/BsCoreThread.h"
+#include "bsfCore/Scene/BsSceneObject.h"
 
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -314,6 +315,10 @@ DLLEXPORT void Window::OnResize(int width, int height)
         return;
 
     // Notify bsf
+    bs::gCoreThread().queueCommand([coreWindow = BSFWindow->getCore()]() {
+        coreWindow->_notifyWindowEvent(bs::WindowEventType::Resized);
+    });
+
     BSFWindow->_onExternalResize(width, height);
 
     // Send to GUI //

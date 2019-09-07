@@ -110,8 +110,10 @@ int main(int argcount, char* args[]){
 #endif
     
 #ifdef _WIN32
-    int argcount = 1;
-    char* args[] = { lpCmdLine };
+    std::vector<char*> argPtrs;
+    const auto parsedArgs = Leviathan::LeviathanApplication::CommandLineStringSplitter(lpCmdLine, argPtrs);
+    int argcount = parsedArgs.size();
+    char** args = argPtrs.data();
 #endif
     
     int Return = 0;

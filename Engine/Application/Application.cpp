@@ -2,6 +2,7 @@
 #include "Application.h"
 
 #include "FileSystem.h"
+#include "Iterators/StringIterator.h"
 
 #include <iostream>
 
@@ -253,4 +254,39 @@ DLLEXPORT void LeviathanApplication::StartServerProcess(
 
 
 #endif // _WIN32
+}
+// ------------------------------------ //
+DLLEXPORT std::vector<std::string> LeviathanApplication::CommandLineStringSplitter(
+    const char* str, std::vector<char*>& argcharstrings, bool addprogramname /*= true*/)
+{
+    StringIterator itr(std::make_unique<UTF8PointerDataIterator>(str, str + std::strlen(str)));
+
+    std::vector<std::string> args;
+
+    if(addprogramname) {
+        // TODO: actually detect this somehow
+        args.push_back("LeviathanApplication");
+    }
+
+    while(!itr.IsOutOfBounds()) {
+        auto current =
+            itr.GetNextCharacterSequence<std::string>(UNNORMALCHARACTER_TYPE_WHITESPACE);
+
+        if(current && current->size() > 0) {
+            if(current->at(0) == '\'' || current->at(0) == '\"') {
+                current = StringIterator(current.get())
+                              .GetStringInQuotes<std::string>(QUOTETYPE_BOTH);
+            }
+
+            args.push_back(*current);
+        }
+    }
+
+    argcharstrings.resize(args.size());
+    for(size_t i = 0; i < args.size(); ++i) {
+        argcharstrings[i] = const_cast<char*>(args[i].c_str());
+    }
+    argcharstrings.push_back(nullptr);
+
+    return args;
 }

@@ -79,6 +79,7 @@ public:
     //! This is called when the world holder couldn't find a world with the id
     DLLEXPORT virtual std::shared_ptr<GameWorld> GetGameWorld(int id);
 
+    DLLEXPORT virtual NETWORKED_TYPE GetProgramNetType() const = 0;
 
     // static access method for getting instance of this class //
     DLLEXPORT static LeviathanApplication* Get();
@@ -87,12 +88,13 @@ public:
     DLLEXPORT static void DummyGameConfigurationVariables(GameConfiguration* configobj);
     DLLEXPORT static void DummyGameKeyConfigVariables(KeyConfiguration* keyconfigobj);
 
-
     // Utility functions //
     DLLEXPORT static void StartServerProcess(
         const std::string& processname, const std::string& commandline);
 
-    DLLEXPORT virtual NETWORKED_TYPE GetProgramNetType() const = 0;
+    //! \brief Splits a single string command line into arguments
+    DLLEXPORT static std::vector<std::string> CommandLineStringSplitter(
+        const char* str, std::vector<char*>& argcharstrings, bool addprogramname = true);
 
 protected:
     //! \brief Performs the final steps in the release process

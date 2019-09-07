@@ -47,8 +47,16 @@ public:
     template<typename CharType>
     static bool IsCharacterQuote(CharType character)
     {
-
         if(character == '"' || character == '\'')
+            return true;
+
+        return false;
+    }
+
+    template<typename CharType>
+    static inline bool IsCharacterPathSeparator(CharType character)
+    {
+        if(character == UNIVERSAL_PATHSEPARATOR || character == WINDOWS_PATHSEPARATOR)
             return true;
 
         return false;

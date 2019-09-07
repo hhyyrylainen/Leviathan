@@ -338,7 +338,7 @@ std::string Importer::GetTargetWithoutSingleCheck(const std::string& file, FileT
 
     std::string_view strippedPath = prefixRemoved;
 
-    if(!strippedPath.empty() && strippedPath[0] == '/')
+    if(!strippedPath.empty() && StringOperations::IsCharacterPathSeparator(strippedPath[0]))
         strippedPath = strippedPath.substr(1);
 
     bool needsPrefix = false;

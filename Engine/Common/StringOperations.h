@@ -626,30 +626,23 @@ public:
 
     template<class StringTypeN>
     static StringTypeN ReplaceSingleCharacter(
-        const StringTypeN& data, const StringTypeN& toreplace, int replacer = ' ')
+        const StringTypeN& data, int toreplace, int replacer = ' ')
     {
         // Copy the string and then modify it //
         StringTypeN out(data);
-
-        for(auto iter = out.begin(); iter != out.end(); ++iter) {
-
-            // Check does it contain //
-            bool replace = false;
-
-            for(auto iter2 = toreplace.begin(); iter2 != toreplace.end(); ++iter2) {
-
-                if((*iter2) == (*iter)) {
-
-                    replace = true;
-                    break;
-                }
-            }
-
-            if(replace)
-                (*iter) = replacer;
-        }
+        ReplaceSingleCharacterInPlace(out, toreplace, replacer);
 
         return out;
+    }
+
+    template<class StringTypeN>
+    static void ReplaceSingleCharacterInPlace(
+        StringTypeN& data, int toreplace, int replacer = ' ')
+    {
+        for(auto iter = data.begin(); iter != data.end(); ++iter) {
+            if((*iter) == toreplace)
+                (*iter) = replacer;
+        }
     }
 
     template<class StringTypeN>

@@ -122,10 +122,13 @@ std::string Importer::GetCacheKeyForFile(const std::string& file) const
         }
     }
 
-    if(file[start] == '/' || file[start] == '\\')
+    if(StringOperations::IsCharacterPathSeparator(file[start]))
         ++start;
 
-    return file.substr(start);
+    auto result = file.substr(start);
+
+    StringOperations::ReplaceSingleCharacterInPlace(result, '\\', '/');
+    return result;
 }
 // ------------------------------------ //
 bool Importer::ImportFile(const std::string& file)

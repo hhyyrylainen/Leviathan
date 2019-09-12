@@ -3,7 +3,7 @@ class GameWorldClass < OutputClass
   attr_accessor :WorldType
 
   def initialize(name, componentTypes: [], systems: [], systemspreticksetup: nil,
-                 framesystemrun: "", networking: true)
+                 framesystemrun: "", networking: true, perworlddata: [])
 
     super name
 
@@ -19,6 +19,8 @@ class GameWorldClass < OutputClass
     @Systems = systems
     # Used for a few specific things that need to be generated in this case
     @HasSendable = false
+
+    @PerWorldData = perworlddata
 
     @ComponentTypes.each{|c|
       @Members.push(Variable.new("Component" + c.type, "Leviathan::ComponentHolder<" + c.type +
@@ -42,6 +44,12 @@ class GameWorldClass < OutputClass
       @Members.push(Variable.new("_" + s.Name, s.Type))
     }
 
+    @Members.concat @PerWorldData
+
+    if @Members.empty?
+      # Needed to call genMemberConstructor which is always needed
+      @Members.push Variable.new("dummy", "int")
+    end
   end
 
   # Default includes
@@ -57,6 +65,7 @@ class GameWorldClass < OutputClass
     
     if opts.include?(:impl)
       f.puts " : #{@BaseClass}(#{@WorldType},\n physicsMaterials, worldid) "
+      genPerWorldConstructors f, opts
       f.puts "{}"
     else
       f.puts ";"
@@ -69,11 +78,18 @@ class GameWorldClass < OutputClass
     
     if opts.include?(:impl)
       f.puts " : #{@BaseClass}(typeoverride, physicsMaterials, worldid) "
+      genPerWorldConstructors f, opts
       f.puts "{}"
     else
       f.puts ";"
     end    
 
+  end
+
+  def genPerWorldConstructors(f, opts)
+    @PerWorldData.each{|s|
+      f.puts ", " + s.Name + "(*this)"
+    }
   end
 
   def genMembers(f, opts)
@@ -91,6 +107,10 @@ class GameWorldClass < OutputClass
       f.puts "{"
 
       f.puts @BaseClass + "::_ResetOrReleaseComponents();"
+
+      @PerWorldData.each{|s|
+        f.puts s.Name + ".OnClear();"
+      }
       
       f.puts "// Reset all component holders //"
       @ComponentTypes.each{|c|
@@ -427,6 +447,17 @@ class GameWorldClass < OutputClass
       @Systems.each{|s|
 
         f.puts "#{export}#{s.Type}& Get#{s.Name}(){ return _#{s.Name}; }"
+      }
+
+      f.puts ""
+    end
+
+    # Gets for per world data objects
+    if opts.include?(:header)
+      f.puts "// Per world data object gets"
+      @PerWorldData.each{|s|
+
+        f.puts "#{export}#{s.Type}& Get#{s.Type}(){ return #{s.Name}; }"
       }
 
       f.puts ""
@@ -1126,6 +1157,22 @@ END
                %{asMETHOD(WorldType, Get#{s.Name}), asCALL_THISCALL) < 0)\n} +
                "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
       end
+    }
+
+    @PerWorldData.each{|s|
+      if s.AngelScriptUseInstead && s.AngelScriptUseInstead == ""
+        next
+      end
+
+      useType = s.Type + "@"
+
+      if s.AngelScriptUseInstead
+        useType = s.AngelScriptUseInstead
+      end
+
+      str += %{if(engine->RegisterObjectMethod(classname, "#{useType} Get#{s.Type}()",\n} +
+               %{asMETHOD(WorldType, Get#{s.Type}), asCALL_THISCALL) < 0)\n} +
+               "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
     }
     
     str

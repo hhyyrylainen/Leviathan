@@ -94,6 +94,7 @@ if(LEVIATHAN_USING_OGRE)
     "Entities/StateInterpolator.h"
     "Entities/EntityCommon.h"
     "Entities/WorldNetworkSettings.h"
+    "Entities/PerWorldData.h" "Entities/PerWorldData.cpp"
     "Entities/GameWorld.cpp" "Entities/GameWorld.h"
     "Entities/ScriptComponentHolder.cpp" "Entities/ScriptComponentHolder.h"
     "Entities/ScriptSystemWrapper.cpp" "Entities/ScriptSystemWrapper.h"

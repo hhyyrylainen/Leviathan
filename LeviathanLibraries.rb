@@ -161,6 +161,7 @@ $cef = CEF.new(
 )
 
 $breakpad = Breakpad.new(
+  # version: "abfe08e78927a5cd8c749061561da3c3c516f979",
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true
 )
@@ -194,7 +195,7 @@ if OS.windows?
   $openalsoft = OpenALSoft.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
-    version: "master"
+    version: "master" # b71eb4dafd9e525020a5f2cd869d671fb3e8e5bd
   )
 end
 

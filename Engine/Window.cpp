@@ -956,8 +956,10 @@ DLLEXPORT unsigned long Window::GetWindowXDisplay() const
 // ------------------------------------ //
 DLLEXPORT void Window::SaveScreenShot(const std::string& filename)
 {
+    LOG_INFO("bsf doesn't support screenshots: "
+             "https://discourse.bsframework.io/t/taking-a-screenshot/487");
     // uses render target's capability to save it's contents //
-    DEBUG_BREAK;
+    // DEBUG_BREAK;
     // GetOgreWindow()->writeContentsToTimestampedFile(filename, "_window1.png");
 }
 

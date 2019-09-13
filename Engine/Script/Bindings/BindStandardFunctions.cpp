@@ -123,15 +123,14 @@ bool BindMathOperations(asIScriptEngine* engine)
 
     // ------------------------------------ //
     // clamp
-    // if(engine->RegisterGlobalFunction("const float & clamp(const float &in value, const
-    // float "
-    //                                   "&in lower, const float &in upper)",
-    //        asFUNCTIONPR(
-    //            std::clamp<float>, (const float&, const float&, const float&), const float&),
-    //        asCALL_CDECL) < 0) {
+    if(engine->RegisterGlobalFunction("const float & clamp(const float &in value, const float "
+                                      "&in lower, const float &in upper)",
+           asFUNCTIONPR(
+               std::clamp<float>, (const float&, const float&, const float&), const float&),
+           asCALL_CDECL) < 0) {
 
-    //     ANGELSCRIPT_REGISTERFAIL;
-    // }
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     // ------------------------------------ //
     // Extra string helpers

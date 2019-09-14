@@ -9,17 +9,17 @@
 // specific colours //
 namespace Leviathan {
 
-const Float4 Float4::ColourBlack = Float4(0, 0, 0, 1);
+DLLEXPORT const Float4 Float4::ColourBlack = Float4(0, 0, 0, 1);
 
-const Float4 Float4::ColourWhite = Float4(1, 1, 1, 1);
+DLLEXPORT const Float4 Float4::ColourWhite = Float4(1, 1, 1, 1);
 
-const Float4 Float4::ColourTransparent = Float4(0, 0, 0, 0);
+DLLEXPORT const Float4 Float4::ColourTransparent = Float4(0, 0, 0, 0);
 
-const Float3 Float3::UnitVForward = Float3(0.f, 0.f, -1.f);
+DLLEXPORT const Float3 Float3::UnitVForward = Float3(0.f, 0.f, -1.f);
 
-const Float3 Float3::UnitVUp = Float3(0.f, 1.f, 0.f);
+DLLEXPORT const Float3 Float3::UnitVUp = Float3(0.f, 1.f, 0.f);
 
-const Float3 Float3::Zeroed = Float3();
+DLLEXPORT const Float3 Float3::Zeroed = Float3();
 
 
 

@@ -1240,9 +1240,9 @@ public:
     float Y = 0;
     float Z = 0;
 
-    static const Float3 UnitVForward;
-    static const Float3 UnitVUp;
-    static const Float3 Zeroed;
+    DLLEXPORT static const Float3 UnitVForward;
+    DLLEXPORT static const Float3 UnitVUp;
+    DLLEXPORT static const Float3 Zeroed;
 };
 
 struct Float4 {
@@ -1846,9 +1846,9 @@ public:
     float W = 0;
 
     // specific colours //
-    static const Float4 ColourBlack;
-    static const Float4 ColourWhite;
-    static const Float4 ColourTransparent;
+    DLLEXPORT static const Float4 ColourBlack;
+    DLLEXPORT static const Float4 ColourWhite;
+    DLLEXPORT static const Float4 ColourTransparent;
 
     // Use these from other libraries/executables to avoid linker errors //
     DLLEXPORT static const Float4& GetColourBlack();

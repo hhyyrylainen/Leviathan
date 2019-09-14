@@ -27,7 +27,7 @@ DLLEXPORT ScriptExecutor* GetCurrentGlobalScriptExecutor();
 
 //! Needed as ScriptExecutor depends on AngelScriptTypeIDResolver
 //! and that depends on it
-DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver);
+DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver, bool constversion);
 
 //! Converts type to AngelScript type string
 template<class T>
@@ -50,7 +50,8 @@ struct AngelScriptTypeIDResolver {
 public:
     static int Get(ScriptExecutor* resolver)
     {
-        static int cached = ResolveProxy(TypeToAngelScriptTypeString<T>::Type(), resolver);
+        static int cached = ResolveProxy(TypeToAngelScriptTypeString<T>::Type(), resolver,
+            std::is_const_v<std::remove_pointer_t<T>>);
         return cached;
     }
 };

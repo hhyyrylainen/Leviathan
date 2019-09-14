@@ -263,7 +263,8 @@ public:
     //! \brief Converts a string to angelscript type id. Returns -1 on error
     //!
     //! Replaces GetAngelScriptTypeID
-    DLLEXPORT int ResolveStringToASID(const char* str) const;
+    //! \param constversion If true prepends 'const' to the type str
+    DLLEXPORT int ResolveStringToASID(const char* str, bool constversion = false) const;
 
     //! \brief Returns an asITypeInfo object for type id or null
     DLLEXPORT asITypeInfo* GetTypeInfo(int type) const;
@@ -289,7 +290,6 @@ public:
     DLLEXPORT static ScriptExecutor* Get();
 
 private:
-
     //! Helper for _PassParametersToScript
     //! \todo When passing signed types do we need to reinterpret_cast them to unsigned types
     template<class CurrentT, class... Args>
@@ -322,7 +322,22 @@ private:
 
 
         const auto parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
-        if(wantedTypeID != parameterType) {
+
+        bool matched = false;
+
+        matched = wantedTypeID == parameterType;
+
+        // Allow taking a non-const object into the script as a const object
+        if(!matched) {
+            if(wantedTypeID & asTYPEID_HANDLETOCONST) {
+
+                if((parameterType & asTYPEID_HANDLETOCONST) == wantedTypeID) {
+                    matched = true;
+                }
+            }
+        }
+
+        if(!matched) {
 
             // Compatibility checks //
             // This is not the most optimal as this results in a duplicate call to
@@ -413,17 +428,25 @@ private:
         } else {
             // Non-primitive type //
 
+            // TODO: adding a test to verify this would be nice
+            // Checks for const being used correctly are already done,
+            // so this always does const away cast
+
             // Checks for pointers and references to things with type id verification //
             if constexpr(std::is_pointer_v<CurrentT>) {
 
                 IncrementRefCountIfRefCountedType(current);
 
-                r = scriptcontext->SetArgAddress(i, current);
+                r = scriptcontext->SetArgAddress(
+                    i, const_cast<std::add_pointer_t<
+                           std::remove_const_t<std::remove_pointer_t<CurrentT>>>>(current));
             } else if constexpr(std::is_lvalue_reference_v<CurrentT>) {
 
                 IncrementRefCountIfRefCountedType(&current);
 
-                r = scriptcontext->SetArgAddress(i, &current);
+                r = scriptcontext->SetArgAddress(
+                    i, &const_cast<std::remove_const_t<std::remove_reference_t<CurrentT>>>(
+                           current));
             } else if constexpr(std::is_class_v<CurrentT>) {
 
                 // Has to be a class that isn't a handle type

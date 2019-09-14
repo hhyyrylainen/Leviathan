@@ -674,15 +674,19 @@ DLLEXPORT void ScriptExecutor::PrintCallstack(asIScriptContext* ctx, LErrorRepor
     }
 }
 // ------------------------------------ //
-DLLEXPORT int ScriptExecutor::ResolveStringToASID(const char* str) const
+DLLEXPORT int ScriptExecutor::ResolveStringToASID(
+    const char* str, bool constversion /*= false*/) const
 {
-
-    return engine->GetTypeIdByDecl(str);
+    if(!constversion) {
+        return engine->GetTypeIdByDecl(str);
+    } else {
+        // TODO: it would be nice to not have to allocate memory here
+        return engine->GetTypeIdByDecl((std::string("const ") + str).c_str());
+    }
 }
 
 DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const
 {
-
     if(type < 0)
         return nullptr;
 
@@ -697,7 +701,6 @@ DLLEXPORT void ScriptExecutor::CollectGarbage()
 // CustomScriptRun
 DLLEXPORT CustomScriptRun::~CustomScriptRun()
 {
-
     if(Context) {
 
         Exec->_DoneWithContext(Context);

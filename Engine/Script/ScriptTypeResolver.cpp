@@ -4,9 +4,9 @@
 #include "ScriptExecutor.h"
 // ------------------------------------ //
 namespace Leviathan {
-DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver)
+DLLEXPORT int ResolveProxy(const char* type, ScriptExecutor* resolver, bool constversion)
 {
-    return resolver->ResolveStringToASID(type);
+    return resolver->ResolveStringToASID(type, constversion);
 }
 
 DLLEXPORT ScriptExecutor* GetCurrentGlobalScriptExecutor()

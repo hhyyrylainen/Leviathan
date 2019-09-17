@@ -51,13 +51,13 @@ public:
     ReferenceCounted(const ReferenceCounted& other) = delete;
     ReferenceCounted& operator=(const ReferenceCounted& other) = delete;
 
-    FORCE_INLINE void AddRef()
+    FORCE_INLINE void AddRef() const
     {
         intrusive_ptr_add_ref(this);
     }
 
     //! removes a reference and deletes the object if reference count reaches zero
-    FORCE_INLINE void Release()
+    FORCE_INLINE void Release() const
     {
         intrusive_ptr_release(this);
     }

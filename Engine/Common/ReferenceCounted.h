@@ -62,6 +62,16 @@ public:
         intrusive_ptr_release(this);
     }
 
+    FORCE_INLINE void AddRef()
+    {
+        intrusive_ptr_add_ref(this);
+    }
+
+    FORCE_INLINE void Release()
+    {
+        intrusive_ptr_release(this);
+    }
+
 #ifdef LEVIATHAN_USING_BOOST
     //! \brief Creates an intrusive_ptr from raw pointer
     //!

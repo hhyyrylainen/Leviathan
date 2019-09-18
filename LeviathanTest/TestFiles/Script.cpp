@@ -792,3 +792,34 @@ TEST_CASE("Script anonymous delegates don't leak GC objects", "[script]")
 
     CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
 }
+
+TEST_CASE("Script passing uint16_t works", "[script]")
+{
+    PartialEngine<false> engine;
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "int32 TestFunction(uint16 param){\n"
+        "    return int32(param);\n"
+        "}");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    ScriptRunningSetup ssetup("TestFunction");
+
+    const uint16_t value = 55;
+
+    auto returned = exec.RunScript<int32_t>(mod, ssetup, value);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value == value);
+}

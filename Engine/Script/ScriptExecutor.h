@@ -368,6 +368,18 @@ private:
                     return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
                         func, static_cast<int64_t>(current), std::forward<Args>(args)...);
                 }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<int16_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, int16_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<int16_t>(current), std::forward<Args>(args)...);
+                }
+            } else if(wantedTypeID == AngelScriptTypeIDResolver<uint16_t>::Get(this)) {
+
+                if constexpr(std::is_convertible_v<CurrentT, uint16_t>) {
+                    return _DoPassEachParameter(parameterc, i, scriptcontext, setup, module,
+                        func, static_cast<uint16_t>(current), std::forward<Args>(args)...);
+                }
             } else if(wantedTypeID == AngelScriptTypeIDResolver<int8_t>::Get(this)) {
 
                 if constexpr(std::is_convertible_v<CurrentT, int8_t>) {
@@ -407,6 +419,10 @@ private:
                             std::is_same_v<CurrentT, uint64_t>) {
 
             r = scriptcontext->SetArgQWord(i, current);
+        } else if constexpr(std::is_same_v<CurrentT, int16_t> ||
+                            std::is_same_v<CurrentT, uint16_t>) {
+
+            r = scriptcontext->SetArgWord(i, current);
         } else if constexpr(std::is_same_v<CurrentT, float>) {
 
             r = scriptcontext->SetArgFloat(i, current);

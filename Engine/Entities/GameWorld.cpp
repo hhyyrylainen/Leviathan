@@ -288,25 +288,8 @@ DLLEXPORT void GameWorld::SetSunlight()
 
     // Default properties
     pimpl->Sunlight->setType(bs::LightType::Directional);
-    pimpl->Sunlight->setColor(bs::Color(1, 1, 1));
-    pimpl->Sunlight->setIntensity(0.0001f);
-    pimpl->Sunlight->setSourceRadius(0.5f);
-    pimpl->Sunlight->setCastsShadow(true);
 
-    // pimpl->SunlightSO->setPosition(bs::Vector3(1, 20, 1));
-    // pimpl->SunlightSO->setPosition(bs::Vector3(20, 15, 20));
-    pimpl->SunlightSO->setPosition(bs::Vector3(-0.55f, 0.3f, -0.75f));
-
-    pimpl->SunlightSO->lookAt(bs::Vector3(0, 0, 0));
-    // pimpl->SunlightSO->setWorldRotation(const Quaternion &rotation)
-
-    // TODO: scene ambient colour
-
-    // Set scene ambient colour //
-    // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
-    // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
-    //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
-    //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
+    SetLightProperties(Float3(1, 1, 1));
 }
 
 DLLEXPORT void GameWorld::RemoveSunlight()
@@ -352,27 +335,35 @@ DLLEXPORT void GameWorld::SetSkybox(const std::string& skyboxname, float brightn
     }
 }
 
-// DLLEXPORT void GameWorld::SetLightProperties(const Ogre::ColourValue& diffuse,
-//     const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
-//     const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
-//     const Ogre::Vector3& hemispheredir, float envmapscale /*= 1.0f*/)
-// {
-//     if(!pimpl->SunlightSO) {
+DLLEXPORT void GameWorld::SetLightProperties(const Float3& colour, float intensity,
+    const Float3& direction, float sourceradius, bool castsshadows)
+{
+    if(!pimpl->SunlightSO) {
 
-//         LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
-//         return;
-//     }
+        LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
+        return;
+    }
 
-//     LOG_WRITE("TODO: reimplement SetLightProperties");
+    pimpl->Sunlight->setColor(bs::Color(colour.X, colour.Y, colour.Z));
+    pimpl->Sunlight->setIntensity(intensity);
+    pimpl->Sunlight->setSourceRadius(sourceradius);
+    pimpl->Sunlight->setCastsShadow(castsshadows);
 
-//     // Sunlight->setDiffuseColour(diffuse);
-//     // Sunlight->setSpecularColour(specular);
-//     // Sunlight->setDirection(direction);
-//     // Sunlight->setPowerScale(power);
+    // pimpl->SunlightSO->setPosition(bs::Vector3(1, 20, 1));
+    // pimpl->SunlightSO->setPosition(bs::Vector3(20, 15, 20));
+    pimpl->SunlightSO->setPosition(-direction);
 
-//     // WorldsScene->setAmbientLight(upperhemisphere, lowerhemisphere, hemispheredir,
-//     // envmapscale);
-// }
+    pimpl->SunlightSO->lookAt(bs::Vector3(0, 0, 0));
+    // pimpl->SunlightSO->setWorldRotation(const Quaternion &rotation)
+
+    // TODO: scene ambient colour
+
+    // Set scene ambient colour //
+    // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
+    // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
+    //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
+    //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
+}
 
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)

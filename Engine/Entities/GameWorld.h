@@ -443,10 +443,9 @@ public:
     DLLEXPORT void RemoveSunlight();
     //! \brief Sets the sunlight properties
     //! \pre SetSunlight has been called
-    // DLLEXPORT void SetLightProperties(const Ogre::ColourValue& diffuse,
-    //     const Ogre::ColourValue& specular, const Ogre::Vector3& direction, float power,
-    //     const Ogre::ColourValue& upperhemisphere, const Ogre::ColourValue& lowerhemisphere,
-    //     const Ogre::Vector3& hemispheredir, float envmapscale = 1.0f);
+    DLLEXPORT void SetLightProperties(const Float3& colour, float intensity = 0.0001f,
+        const Float3& direction = Float3(0.55f, -0.3f, 0.75f), float sourceradius = 0.5f,
+        bool castsshadows = true);
 
     //! \param skyboxname Name of the skybox to set. Or empty to clear the skybox
     DLLEXPORT void SetSkybox(const std::string& skyboxname, float brightness = 1.f);

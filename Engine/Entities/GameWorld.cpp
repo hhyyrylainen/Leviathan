@@ -364,6 +364,27 @@ DLLEXPORT void GameWorld::SetLightProperties(const Float3& colour, float intensi
     //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
     //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
 }
+// ------------------------------------ //
+DLLEXPORT void GameWorld::SetAutoExposure(float mineyeadaptation, float maxeyeadaptation,
+    float eyeadaptationspeeddown, float eyeadaptationspeedup, float histogramlog2max,
+    float histogramlog2min, float histogrampcthigh, float histogrampctlow)
+{
+    const auto& settings = pimpl->WorldCamera->getRenderSettings();
+
+    settings->autoExposure.eyeAdaptationSpeedDown = eyeadaptationspeeddown;
+    settings->autoExposure.eyeAdaptationSpeedUp = eyeadaptationspeedup;
+    settings->autoExposure.maxEyeAdaptation = maxeyeadaptation;
+    settings->autoExposure.minEyeAdaptation = mineyeadaptation;
+
+    settings->autoExposure.histogramLog2Max = histogramlog2max;
+    settings->autoExposure.histogramLog2Min = histogramlog2min;
+    settings->autoExposure.histogramPctHigh = histogrampcthigh;
+    settings->autoExposure.histogramPctLow = histogrampctlow;
+
+    settings->enableAutoExposure = false;
+
+    pimpl->WorldCamera->setRenderSettings(settings);
+}
 
 // ------------------------------------ //
 DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)

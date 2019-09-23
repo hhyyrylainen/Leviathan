@@ -450,6 +450,13 @@ public:
     //! \param skyboxname Name of the skybox to set. Or empty to clear the skybox
     DLLEXPORT void SetSkybox(const std::string& skyboxname, float brightness = 1.f);
 
+    //! \brief Sets the world camera eye adaptation settings
+    DLLEXPORT void SetAutoExposure(float mineyeadaptation = 0.003f,
+        float maxeyeadaptation = 2.0f, float eyeadaptationspeeddown = 3.0f,
+        float eyeadaptationspeedup = 3.0f, float histogramlog2max = 4.0f,
+        float histogramlog2min = -8.0f, float histogrampcthigh = 0.985f,
+        float histogrampctlow = 0.8f);
+
     // ------------------------------------ //
     // Script proxies for script system implementation (don't use from c++ systems)
 

@@ -701,7 +701,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
     TickInProgress = true;
 
     // Simulate physics //
-    if(!WorldFrozen) {
+    if(!WorldFrozen && !Paused) {
 
         // TODO: a game type that is a client and server at  the same time
         // if(IsOnServer) {
@@ -716,7 +716,8 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         // }
     }
 
-    _RunTickSystems();
+    if(!Paused)
+        _RunTickSystems();
 
     TickInProgress = false;
 
@@ -1218,6 +1219,14 @@ DLLEXPORT void GameWorld::SetWorldPhysicsFrozenState(bool frozen)
     // Should be safe to create the packet now and send it to all the connections //
     SendToAllPlayers(std::make_shared<ResponseWorldFrozen>(0, ID, WorldFrozen, TickNumber),
         RECEIVE_GUARANTEE::Critical);
+}
+
+DLLEXPORT void GameWorld::SetPaused(bool paused)
+{
+    if(Paused == paused)
+        return;
+
+	Paused = paused;
 }
 
 // DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHit(const Float3& from, const Float3&

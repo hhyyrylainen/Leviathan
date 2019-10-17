@@ -1221,14 +1221,6 @@ DLLEXPORT void GameWorld::SetWorldPhysicsFrozenState(bool frozen)
         RECEIVE_GUARANTEE::Critical);
 }
 
-DLLEXPORT void GameWorld::SetPaused(bool paused)
-{
-    if(Paused == paused)
-        return;
-
-	Paused = paused;
-}
-
 // DLLEXPORT RayCastHitEntity* GameWorld::CastRayGetFirstHit(const Float3& from, const Float3&
 // to)
 // {

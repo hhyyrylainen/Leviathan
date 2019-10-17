@@ -351,8 +351,11 @@ public:
     //! \todo Synchronize this over the network
     DLLEXPORT void SetWorldPhysicsFrozenState(bool frozen);
 
-	//! Pause or unpause all systems and physics
-	DLLEXPORT void SetPaused(bool paused);
+    //! \brief Pause or unpause all systems and physics
+    DLLEXPORT inline void SetPaused(bool paused)
+    {
+        Paused = paused;
+    }
 
     // Script proxies //
 
@@ -652,8 +655,8 @@ private:
     //! The world can be frozen to stop physics
     bool WorldFrozen = false;
 
-	//! The world can be paused to stop all systems and physicss
-	bool Paused = false;
+    //! The world can be paused to stop all systems and physicss
+    bool Paused = false;
 
     //! Marks all entities to be released
     bool ClearAllEntities = false;

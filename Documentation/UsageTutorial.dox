@@ -85,6 +85,8 @@ These programs are needed for all platforms:
 
 - git
 
+- git lfs
+
 - svn
 
 - mercurial
@@ -190,6 +192,11 @@ ruby 2.4.1p111
   powershell, it should print 7zip version info and command line
   usage.
 
+- https://github.com/git-lfs/git-lfs/wiki/Installation Note: this is
+  untested whether this works when git is installed with
+  Cygwin. Please report if this works or doesn't for you. After
+  installing remember to run `git lfs install`
+
 \subsection prerequisite_software_linux Linux
 
 - lsb_release
@@ -197,6 +204,10 @@ ruby 2.4.1p111
 - GCC 7+ or clang 5+ (clang is untested, but probably works...)
 
 - 7zip. Use your package manager to install, it is probably named `p7zip`.
+
+- Git lfs is likely available as a package named (git-lfs). If it is
+  not install it manually. After installing remember to run `git lfs
+  install`
 
 \subsection prerequisite_software_gems Ruby Gems
 

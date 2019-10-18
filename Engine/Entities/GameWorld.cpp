@@ -701,7 +701,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
     TickInProgress = true;
 
     // Simulate physics //
-    if(!WorldFrozen) {
+    if(!WorldFrozen && !Paused) {
 
         // TODO: a game type that is a client and server at  the same time
         // if(IsOnServer) {
@@ -716,7 +716,8 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         // }
     }
 
-    _RunTickSystems();
+    if(!Paused)
+        _RunTickSystems();
 
     TickInProgress = false;
 

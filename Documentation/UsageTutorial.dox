@@ -161,11 +161,17 @@ ruby 2.4.1p111
   PATH environment variable. And compile shared versions and use 64
   bit build.
 
+  If you have multiple visual studio versions installed, you need to
+  [specify the correct
+  one](https://www.boost.org/doc/libs/1_71_0/more/getting_started/windows.html#identify-your-toolset)
+  (`--toolset=msvc-VERSION`). Visual studio 2017 has the version
+  number 14.1
+
   Additional tip: when running `b2` make sure you specify the toolset,
   bitness, type and the number of cores to use for compiling like
   this:
 
-  `.\b2 --toolset=msvc link=shared,static address-model=64 --with-system --with-filesystem --with-program_options -j numberofcores`.
+  `.\b2 --toolset=msvc-14.1 link=shared,static address-model=64 --with-system --with-filesystem --with-program_options -j numberofcores`.
   Note: replace numberofcores with how many cores you
   have for optimal compilation time. Also if you plan on using boost
   with other projects as well remove the `--with-` options to compile

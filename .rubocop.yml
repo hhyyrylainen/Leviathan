@@ -1,5 +1,6 @@
 Metrics/LineLength:
   Max: 95
 
-Style/BlockDelimiters:
+Style/GlobalVars:
   Enabled: false
+

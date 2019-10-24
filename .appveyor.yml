@@ -4,6 +4,7 @@ environment:
   BOOST_ROOT: C:/Libraries/boost_1_69_0
   PATH: C:\Ruby25-x64\bin;$(PATH);C:\cygwin64\bin
   VULKAN_SDK: C:/VulkanSDK/1.1.114.0
+  GIT_LFS_SKIP_SMUDGE: 1
 
 image:
   - Visual Studio 2017
@@ -12,8 +13,8 @@ platform: x64
 
 cache:
   - ThirdParty
-  - bin
   - VulkanSDK.exe
+  - .git/lfs/objects
 
 install:
   - gem install os colorize rubyzip json sha3
@@ -21,6 +22,7 @@ install:
   - VulkanSDK.exe /S
 
 build_script:
+  - git lfs pull
   - ruby Setup.rb --precompiled
 
 test_script:

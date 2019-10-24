@@ -3,6 +3,7 @@
 # Setup script for Leviathan
 # Downloads the assets and dependencies and then builds and installs them
 # NOTE: sudo is required on linux (unless skipping package manager installs)
+require 'English'
 
 # RubySetupSystem Bootstrap
 if !File.exist? 'RubySetupSystem/RubySetupSystem.rb'

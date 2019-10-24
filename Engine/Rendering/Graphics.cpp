@@ -476,6 +476,19 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
         // Notify engine to register threads to work with Ogre //
         // Engine::GetEngine()->_NotifyThreadsRegisterOgre();
 
+        // TODO: loading this causes a failure in bs::Material::createParamsSet
+        // constexpr auto GUI_SHADER_PATH =
+        // "Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl.asset";
+
+        // LEVIATHAN_ASSERT(
+        //     std::filesystem::exists(GUI_SHADER_PATH), "Core GUI shader asset is missing");
+
+        // auto shader = Pimpl->LoadResource<bs::Shader>(
+        //     std::filesystem::absolute(GUI_SHADER_PATH).string().c_str());
+
+        // if(!shader)
+        //     LEVIATHAN_ASSERT(false, "Loading Core GUI shader asset failed");
+
         auto shader =
             bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
 

@@ -6,6 +6,7 @@ file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Test")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data")
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data/Shaders")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data/Shaders/CoreShaders")
 
 
 # copy data from bin directory
@@ -29,15 +30,14 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   
   # The script files folder
   install(DIRECTORY "Scripts" DESTINATION bin/Data)
-  # we need to specifically install the directories
-  install(DIRECTORY "bin/Data/Fonts" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Models" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Sound" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Textures" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Materials" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Screenshots" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Cache" DESTINATION bin/Data)
-  install(DIRECTORY "bin/Data/Videos" DESTINATION bin/Videos)
+  install(DIRECTORY "Assets/Fonts" DESTINATION bin/Data)
+  install(DIRECTORY "Assets/Videos" DESTINATION bin/Videos)
+  # install(DIRECTORY "Assets/Models" DESTINATION bin/Data)
+  # install(DIRECTORY "Assets/Sound" DESTINATION bin/Data)
+  # install(DIRECTORY "Assets/Textures" DESTINATION bin/Data)
+  # install(DIRECTORY "Assets/Materials" DESTINATION bin/Data)
+  # install(DIRECTORY "Assets/Screenshots" DESTINATION bin/Data)
+  # install(DIRECTORY "Assets/Cache" DESTINATION bin/Data)
 
   # Copy data from the scripts folder to the bin folder
   file(GLOB ScriptsMoveFiles "${LEVIATHAN_SRC}/Scripts/*")
@@ -67,20 +67,25 @@ if(NOT ONLY_DOCUMENTATION)
   install(FILES ${BSF_TOP_LEVEL_ASSETS} DESTINATION "bin/Data/")
 
   # And core shaders and materials
-  file(COPY "${LEVIATHAN_SRC}/bin/Data/Shaders/CoreShaders" DESTINATION
-    "${PROJECT_BINARY_DIR}/bin/Data/Shaders/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/Shaders/CoreShaders" DESTINATION
-    "bin/Data/Shaders/")
-
-  file(COPY "${LEVIATHAN_SRC}/bin/Data/Materials/CoreMaterials" DESTINATION
-    "${PROJECT_BINARY_DIR}/bin/Data/Materials/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/Materials/CoreMaterials" DESTINATION
-    "bin/Data/Materials/")
+  # TODO: this is copying the bsl files currently because BSF fails when trying to
+  # use asset shaders in low level rendering
+  file(GLOB CORE_SHADER_ASSETS "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders/*.bsl")
+  file(COPY ${CORE_SHADER_ASSETS} DESTINATION
+    "${PROJECT_BINARY_DIR}/bin/Data/Shaders/CoreShaders/")
+  install(DIRECTORY "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders"
+    DESTINATION "bin/Data/Shaders/"
+    PATTERN "*.bsl")
+  # file(GLOB CORE_SHADER_ASSETS "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders/*.asset")
+  # file(COPY ${CORE_SHADER_ASSETS} DESTINATION
+  #   "${PROJECT_BINARY_DIR}/bin/Data/Shaders/CoreShaders/")
+  # install(DIRECTORY "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders"
+  #   DESTINATION "bin/Data/Shaders/"
+  #   PATTERN "*.asset")
 
   # GUI resources needed by the editor
-  file(COPY "${LEVIATHAN_SRC}/bin/Data/JSVendor" DESTINATION
+  file(COPY "${LEVIATHAN_SRC}/Assets/JSVendor" DESTINATION
     "${PROJECT_BINARY_DIR}/bin/Data/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/bin/Data/JSVendor" DESTINATION
+  install(DIRECTORY "${LEVIATHAN_SRC}/Assets/JSVendor" DESTINATION
     "bin/Data/")
   file(COPY "${LEVIATHAN_SRC}/EditorResources" DESTINATION
     "${PROJECT_BINARY_DIR}/bin/Data/")

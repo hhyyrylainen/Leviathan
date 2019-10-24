@@ -3,9 +3,9 @@ jobs:
    build:
      working_directory: ~/leviathan
      docker:
-       - image: hhyyrylainen/leviathan-deps:v6
-       - environment:
-           GIT_LFS_SKIP_SMUDGE: 1
+       image: hhyyrylainen/leviathan-deps:v6
+       environment:
+         GIT_LFS_SKIP_SMUDGE: 1
      steps:
        - checkout
        - restore_cache:

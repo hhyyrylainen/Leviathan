@@ -126,19 +126,18 @@ ruby 2.4.1p111
   - bash
   - tar (with gzip support)
  
-  You can also optionally install git with cygwin. But cmake has to be
-  the Windows version, otherwise it won't properly generate visual
-  studio project files. Also subversion and mercurial has to be the
-  Windows versions. I used SlickSVN and TortoiseHG. TortoiseSVN should
-  also work if you select the option to add svn to PATH while
-  installing it.
+  Though cmake and git are available through cygwin, those versions
+  don't work, you need the official Windows versions. Subversion and
+  mercurial also have to be the Windows versions. I used SlickSVN and
+  TortoiseHG. TortoiseSVN should also work if you select the option to
+  add svn to PATH while installing it.
   
-  Then add `C:\cygwin64\bin` to the system
+  After installing cygwin add `C:\cygwin64\bin` to the system
   path to make everything visible to the script
 
   If you have issues with not getting everything installed you can
   reference these images (that have additional packages installed, but
-  also all the required ones):
+  also all the required ones, these screenshots are a bit outdated now):
   <a href="https://leviathanengine.com/images/setup_list_1.png">cygwin list 1</a>,
   <a href="https://leviathanengine.com/images/setup_list_2.png">cygwin list 2</a>,
   <a href="https://leviathanengine.com/images/setup_list_3.png">cygwin list 3</a>,
@@ -153,6 +152,7 @@ ruby 2.4.1p111
   cygwin be the first thing in your path to let it override other
   programs if they have the same name.
 
+- Install Git with the official installer from: https://git-scm.com/download/win
 
 - After compiling Boost make sure to set an environment variable
   `BOOST_ROOT` to the folder where you compiled boost (for example
@@ -198,10 +198,15 @@ ruby 2.4.1p111
   powershell, it should print 7zip version info and command line
   usage.
 
-- https://github.com/git-lfs/git-lfs/wiki/Installation Note: this is
-  untested whether this works when git is installed with
-  Cygwin. Please report if this works or doesn't for you. After
-  installing remember to run `git lfs install`
+- Install Git LFS with the Windows installer from here:
+  https://github.com/git-lfs/git-lfs/releases After installing
+  remember to run `git lfs install`
+
+  If you previously had Git installed through cygwin, you must
+  uninstall that and install the official Windows version of Git. You
+  may also have to deleted all your cloned folders to avoid errors,
+  and reboot your computer to have everything detect that Git is now
+  in a different place.
 
 \subsection prerequisite_software_linux Linux
 

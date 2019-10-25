@@ -107,7 +107,7 @@ protected:
     void CheckAndLoadCache();
     void SaveCache();
 
-
+    void AddDefaultOptionsIfMissing(Json::Value& cache) const;
 
 private:
     //! Prefer calling ImportAndSaveWithOptions

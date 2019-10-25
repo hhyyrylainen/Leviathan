@@ -26,7 +26,7 @@ Importer::Importer(const std::string& source, const std::string& destination) :
     JsonWriter = decltype(JsonWriter)(builder.newStreamWriter());
 
     builder["commentStyle"] = "All";
-    builder["indentation"] = "4";
+    builder["indentation"] = "  ";
     PrettyWriter = decltype(PrettyWriter)(builder.newStreamWriter());
 }
 
@@ -107,7 +107,7 @@ std::string Importer::GetHashOfOptions(const Json::Value& options) const
 Json::Value Importer::GetCacheStructure() const
 {
     Json::Value obj;
-    obj["files"] = Json::Value(Json::ValueType::objectValue);
+    AddDefaultOptionsIfMissing(obj);
     return obj;
 }
 
@@ -489,6 +489,8 @@ void Importer::CheckAndLoadCache()
 
         CacheData = value;
 
+        AddDefaultOptionsIfMissing(CacheData);
+
     } catch(const std::exception& e) {
         LOG_ERROR("Importer failed to load cache (" + InformationCacheFile +
                   ") due to exception: " + e.what());
@@ -498,7 +500,24 @@ void Importer::CheckAndLoadCache()
 void Importer::SaveCache()
 {
     std::ofstream file(InformationCacheFile);
-    JsonWriter->write(CacheData, &file);
+
+    if(CacheData["pretty"].asBool()) {
+        LOG_INFO("Using pretty cache writer");
+        PrettyWriter->write(CacheData, &file);
+    } else {
+        JsonWriter->write(CacheData, &file);
+    }
+}
+// ------------------------------------ //
+void Importer::AddDefaultOptionsIfMissing(Json::Value& cache) const
+{
+    if(cache["pretty"].type() != Json::ValueType::booleanValue) {
+        cache["pretty"] = false;
+    }
+
+    if(cache["files"].type() != Json::ValueType::objectValue) {
+        cache["files"] = Json::Value(Json::ValueType::objectValue);
+    }
 }
 // ------------------------------------ //
 const char* Importer::GetSubFolderForType(FileType type)

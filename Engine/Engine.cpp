@@ -62,15 +62,15 @@ static std::atomic<int> WindowNameCounter = {1};
 DLLEXPORT Engine::Engine(LeviathanApplication* owner) : Owner(owner)
 {
     // This makes sure that uninitialized engine will have at least some last frame time //
-    LastTickTime = Time::GetTimeMs64();
+    LastTickTime = Time::GetCurrentTimePoint();
 
     instance = this;
 }
 
 DLLEXPORT Engine::~Engine()
 {
-    // Reset the instance ptr //
-    instance = nullptr;
+    if(instance == this)
+        instance = nullptr;
 
     _ConsoleInput.reset();
 }
@@ -266,10 +266,12 @@ DLLEXPORT bool Engine::Init(
             return false;
         }
 
+        FrameLimit = DEFAULT_HEADLESS_MAX_UPDATES_PER_SECOND;
+
     } else {
 
         ObjectFileProcessor::LoadValueFromNamedVars<int>(
-            Define->GetValues(), "MaxFPS", FrameLimit, 120, Logger::Get(), "Graphics: Init:");
+            Define->GetValues(), "MaxFPS", FrameLimit, 144, Logger::Get(), "Graphics: Init:");
 
         Graph = new Graphics();
     }
@@ -438,12 +440,8 @@ void Engine::PostLoad()
         Mainstore->SetPersistance("StartCount", true);
     }
 
-    // Check if we are attached to a terminal //
-
+    // Makes sure commands don't fail if they use some time stuff
     ClearTimers();
-
-    // get time //
-    LastTickTime = Time::GetTimeMs64();
 
     ExecuteCommandLine();
 
@@ -468,6 +466,9 @@ void Engine::PostLoad()
         LOG_INFO("Marking as closing after processing imports");
         MarkQuit();
     }
+
+    // Makes the time next tick happens good
+    ClearTimers();
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::PreRelease()
@@ -833,7 +834,7 @@ DLLEXPORT Window* Engine::GetWindowFromSDLID(uint32_t sdlid)
     return nullptr;
 }
 // ------------------------------------ //
-void Engine::Tick()
+float Engine::Update()
 {
     // Always try to update networking //
     {
@@ -846,8 +847,67 @@ void Engine::Tick()
     // And handle invokes //
     ProcessInvokes();
 
+    const auto now = Time::GetCurrentTimePoint();
+
     GUARD_LOCK();
 
+    SecondDuration elapsed = now - LastTickTime;
+
+    if(elapsed.count() <= 0.f) {
+        // Time passed is too short, everything will break if our step is 0, so try again
+        // very shortly
+        LOG_INFO("Trying to run Update before any (detectable) time has passed, skipping");
+        return 0.f;
+    }
+
+    if(elapsed > SecondDuration(1)) {
+        LOG_ERROR("Game is lagging! Time since last update: " +
+                  std::to_string(elapsed.count()) + "s. Capping it at one second.");
+        elapsed = SecondDuration(1);
+    }
+
+    bool frameLimited = FrameLimit >= 0 && FrameLimit < 1000;
+
+    PreciseSecondDuration frameInterval;
+
+    // Update limiter
+    // This is now a much simpler limiter based on needing to have some time elapsed since last
+    // tick
+    if(frameLimited) {
+
+        frameInterval = PreciseSecondDuration(1.0 / FrameLimit);
+
+        if(elapsed < frameInterval) {
+            return SecondDuration(frameInterval - elapsed).count();
+        }
+    }
+
+    // Update should happen
+
+    LastTickTime = now;
+
+    // Tick first
+    Tick(elapsed.count());
+
+    const auto tickDuration = Time::GetCurrentTimePoint() - LastTickTime;
+
+    TickTime = std::chrono::duration_cast<MillisecondDuration>(tickDuration).count();
+
+    // And then render (this skips rendering in headless mode)
+    RenderFrame(elapsed.count());
+
+    if(frameLimited) {
+        return std::max(
+            SecondDuration(LastTickTime - Time::GetCurrentTimePoint() - frameInterval).count(),
+            0.f);
+    } else {
+        // No update rate limit. No sleep should happen before the next update
+        return 0.f;
+    }
+}
+
+void Engine::Tick(float elapsed)
+{
     if(PreReleaseWaiting) {
 
         PreReleaseWaiting = false;
@@ -855,25 +915,11 @@ void Engine::Tick()
 
         Logger::Get()->Info("Engine: performing final release tick");
 
-
-
         // Call last tick event //
 
         return;
     }
 
-    // Get the passed time since the last update //
-    auto CurTime = Time::GetTimeMs64();
-    TimePassed = (int)(CurTime - LastTickTime);
-
-
-    if((TimePassed < TICKSPEED)) {
-        // It's not tick time yet //
-        return;
-    }
-
-
-    LastTickTime += TICKSPEED;
     TickCount++;
 
     // Update input //
@@ -882,18 +928,18 @@ void Engine::Tick()
         LeapData->OnTick(TimePassed);
 #endif
 
-    if(!NoGui) {
-        // sound tick //
-        if(Sound)
-            Sound->Tick(TimePassed);
+    // sound tick //
+    if(Sound)
+        Sound->Tick(elapsed);
 
+    if(!NoGui) {
         // update windows //
         if(GraphicalEntity1)
-            GraphicalEntity1->Tick(TimePassed);
+            GraphicalEntity1->Tick(elapsed);
 
         for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-            AdditionalGraphicalEntities[i]->Tick(TimePassed);
+            AdditionalGraphicalEntities[i]->Tick(elapsed);
         }
     }
 
@@ -906,17 +952,16 @@ void Engine::Tick()
         auto end = GameWorlds.end();
         for(auto iter = GameWorlds.begin(); iter != end; ++iter) {
 
-            (*iter)->Tick(TickCount);
+            (*iter)->Tick(elapsed);
         }
     }
-
 
     // Some dark magic here //
     if(TickCount % 25 == 0) {
         // update values
         Mainstore->SetTickCount(TickCount);
         Mainstore->SetTickTime(TickTime);
-        Mainstore->SetTicksBehind((TimePassed - TICKSPEED) / TICKSPEED);
+        Mainstore->SetTicksBehind(0);
         // TODO: having the max tick time of the past second, would also be nice
 
         if(!NoGui) {
@@ -931,12 +976,10 @@ void Engine::Tick()
 
     // Send the tick event //
     if(MainEvents)
-        MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new IntegerEventData(TickCount)));
+        MainEvents->CallEvent(new Event(EVENT_TYPE_TICK, new FloatEventData(elapsed)));
 
     // Call the default app tick //
-    Owner->Tick(TimePassed);
-
-    TickTime = (int)(Time::GetTimeMs64() - CurTime);
+    Owner->Tick(elapsed);
 }
 
 DLLEXPORT void Engine::PreFirstTick()
@@ -951,63 +994,36 @@ DLLEXPORT void Engine::PreFirstTick()
     Logger::Get()->Info("Engine: PreFirstTick: everything fine to start running");
 }
 // ------------------------------------ //
-void Engine::RenderFrame()
+void Engine::RenderFrame(float elapsed)
 {
-    // We want to totally ignore this if we are in text mode //
+    // We want to totally ignore this if we are in headless mode
     if(NoGui)
         return;
 
-    int SinceLastFrame = -1;
-    GUARD_LOCK();
-
-    // limit check //
-    if(!RenderTimer->CanRenderNow(FrameLimit, SinceLastFrame)) {
-
-        // fps would go too high //
-        return;
-    }
-
-    // since last frame is in microseconds 10^-6 convert to milliseconds //
-    // SinceLastTickTime is always more than 1000 (always 1 ms or more) //
-    SinceLastFrame /= 1000;
     FrameCount++;
 
     // advanced statistic start monitoring //
     RenderTimer->RenderingStart();
 
-    MainEvents->CallEvent(
-        new Event(EVENT_TYPE_FRAME_BEGIN, new IntegerEventData(SinceLastFrame)));
-
-    // Calculate parameters for GameWorld frame rendering systems //
-    int64_t timeintick = Time::GetTimeMs64() - LastTickTime;
-    int moreticks = 0;
-
-    while(timeintick > TICKSPEED) {
-
-        timeintick -= TICKSPEED;
-        moreticks++;
-    }
+    MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_BEGIN, new FloatEventData(elapsed)));
 
     bool shouldrender = false;
 
     // Render //
-    if(GraphicalEntity1 && GraphicalEntity1->Render(SinceLastFrame, TickCount + moreticks,
-                               static_cast<int>(timeintick)))
+    if(GraphicalEntity1 && GraphicalEntity1->Render(elapsed))
         shouldrender = true;
 
     for(size_t i = 0; i < AdditionalGraphicalEntities.size(); i++) {
 
-        if(AdditionalGraphicalEntities[i]->Render(
-               SinceLastFrame, TickCount + moreticks, static_cast<int>(timeintick)))
+        if(AdditionalGraphicalEntities[i]->Render(elapsed))
             shouldrender = true;
     }
 
-    guard.unlock();
+    // guard.unlock();
     if(shouldrender)
         Graph->Frame();
 
-    guard.lock();
-    MainEvents->CallEvent(new Event(EVENT_TYPE_FRAME_END, new IntegerEventData(FrameCount)));
+    // guard.lock();
 
     // advanced statistics frame has ended //
     RenderTimer->RenderingEnd();
@@ -1248,6 +1264,8 @@ DLLEXPORT void Engine::DestroyWorld(const shared_ptr<GameWorld>& world)
 // ------------------------------------ //
 DLLEXPORT void Engine::ClearTimers()
 {
+    LastTickTime = Time::GetCurrentTimePoint();
+
     Lock lock(GameWorldsLock);
 
     for(auto iter = GameWorlds.begin(); iter != GameWorlds.end(); ++iter) {
@@ -1263,70 +1281,15 @@ void Engine::_NotifyThreadsRegisterOgre()
     _ThreadingManager->MakeThreadsWorkWithOgre();
 }
 // ------------------------------------ //
-DLLEXPORT int64_t Leviathan::Engine::GetTimeSinceLastTick() const
+DLLEXPORT SecondDuration Engine::GetTimeSinceLastTick() const
 {
-
-    return Time::GetTimeMs64() - LastTickTime;
+    return Time::GetCurrentTimePoint() - LastTickTime;
 }
 
-DLLEXPORT int Engine::GetCurrentTick() const
-{
-
-    return TickCount;
-}
-// ------------------------------------ //
-void Engine::_AdjustTickClock(int amount, bool absolute /*= true*/)
-{
-
-    GUARD_LOCK();
-
-    if(!absolute) {
-
-        Logger::Get()->Info("Engine: adjusted tick timer by " + Convert::ToString(amount));
-
-        LastTickTime += amount;
-        return;
-    }
-
-    // Calculate the time in the current last tick //
-    int64_t templasttick = LastTickTime;
-
-    int64_t curtime = Time::GetTimeMs64();
-
-    while(curtime - templasttick >= TICKSPEED) {
-
-        templasttick += TICKSPEED;
-    }
-
-    // Check how far off we are from the target //
-    int64_t intolasttick = curtime - templasttick;
-
-    int changeamount = amount - static_cast<int>(intolasttick);
-
-    Logger::Get()->Info("Engine: changing tick counter by " + Convert::ToString(changeamount));
-
-    LastTickTime += changeamount;
-}
-
-void Engine::_AdjustTickNumber(int tickamount, bool absolute)
-{
-
-    GUARD_LOCK();
-
-    if(!absolute) {
-
-        TickCount += tickamount;
-
-        Logger::Get()->Info("Engine: adjusted tick by " + Convert::ToString(tickamount) +
-                            ", tick is now " + Convert::ToString(TickCount));
-
-        return;
-    }
-
-    TickCount = tickamount;
-
-    Logger::Get()->Info("Engine: tick set to " + Convert::ToString(TickCount));
-}
+// DLLEXPORT int Engine::GetCurrentTick() const
+// {
+//     return TickCount;
+// }
 // ------------------------------------ //
 int TestCrash(int writenum)
 {

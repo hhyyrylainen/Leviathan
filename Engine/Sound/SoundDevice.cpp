@@ -49,7 +49,9 @@ struct SoundDevice::Implementation {
     std::vector<AudioSource::pointer> HandledAudioSources;
 
     //! Cache of buffers for short sounds
-    std::unordered_map<std::string, std::tuple<AudioBuffer::pointer, int64_t>> BufferCache;
+    std::unordered_map<std::string, std::tuple<AudioBuffer::pointer, TimePoint>> BufferCache;
+
+    SecondDuration CacheSoundSeconds{30.f};
 };
 
 
@@ -221,13 +223,13 @@ void SoundDevice::Release()
     Pimpl->Device = nullptr;
 }
 // ------------------------------------ //
-void SoundDevice::Tick(int PassedMs)
+void SoundDevice::Tick(float elapsed)
 {
-    ElapsedSinceLastClean += PassedMs;
+    ElapsedSinceLastClean += elapsed;
 
     Pimpl->Context.update();
 
-    if(ElapsedSinceLastClean > 200) {
+    if(ElapsedSinceLastClean > 0.2f) {
         ElapsedSinceLastClean = 0;
 
         for(auto iter = Pimpl->HandledAudioSources.begin();
@@ -241,12 +243,12 @@ void SoundDevice::Tick(int PassedMs)
             }
         }
 
-        const auto now = Time::GetTimeMs64();
+        const auto now = Time::GetCurrentTimePoint();
 
         // Clear cache entries
         for(auto iter = Pimpl->BufferCache.begin(); iter != Pimpl->BufferCache.end();) {
 
-            if(std::get<1>(iter->second) - now > CacheSoundEffectMilliseconds) {
+            if(now - std::get<1>(iter->second) > Pimpl->CacheSoundSeconds) {
                 // Remove from cache
 
                 iter = Pimpl->BufferCache.erase(iter);
@@ -350,7 +352,7 @@ DLLEXPORT AudioSource::pointer SoundDevice::CreateProceduralSound(
 DLLEXPORT Sound::AudioBuffer::pointer SoundDevice::GetBufferFromFile(
     const std::string& filename, bool cache /*= true*/)
 {
-    const auto now = Time::GetTimeMs64();
+    const auto now = Time::GetCurrentTimePoint();
 
     AudioBuffer::pointer buffer;
 

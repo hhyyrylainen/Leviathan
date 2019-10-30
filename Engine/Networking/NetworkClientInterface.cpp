@@ -571,7 +571,7 @@ void NetworkClientInterface::_OnStartHeartbeats()
         return;
 
     // Reset heartbeat variables //
-    LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
+    LastReceivedHeartbeat = Time::GetCurrentTimePoint();
     LastSentHeartbeat = LastReceivedHeartbeat;
 
     SecondsWithoutConnection = 0.f;
@@ -583,7 +583,7 @@ void NetworkClientInterface::_OnStartHeartbeats()
 void NetworkClientInterface::_OnHeartbeat()
 {
     // Reset the times //
-    LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
+    LastReceivedHeartbeat = Time::GetCurrentTimePoint();
     SecondsWithoutConnection = 0.f;
 }
 
@@ -597,7 +597,7 @@ void NetworkClientInterface::_UpdateHeartbeats()
         return;
 
     // Check do we need to send one //
-    auto timenow = Time::GetThreadSafeSteadyTimePoint();
+    auto timenow = Time::GetCurrentTimePoint();
 
     if(timenow >= LastSentHeartbeat + MillisecondDuration(HEARTBEATS_MILLISECOND)) {
 

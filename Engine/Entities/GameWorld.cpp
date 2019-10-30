@@ -35,14 +35,6 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-
-// // Ray callbacks //
-// static dFloat RayCallbackDataCallbackClosest(const NewtonBody* const body,
-//     const NewtonCollision* const shapeHit, const dFloat* const hitContact,
-//     const dFloat* const hitNormal, dLong collisionID, void* const userData,
-//     dFloat intersectParam);
-
-// ------------------------------------ //
 class GameWorld::Implementation {
 public:
     ~Implementation()
@@ -387,7 +379,7 @@ DLLEXPORT void GameWorld::SetAutoExposure(float mineyeadaptation, float maxeyead
 }
 
 // ------------------------------------ //
-DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
+DLLEXPORT void GameWorld::Render(float elapsed)
 {
     if(InBackground) {
 
@@ -396,7 +388,7 @@ DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
         return;
     }
 
-    RunFrameRenderSystems(tick, timeintick);
+    RunFrameRenderSystems(elapsed);
 
     // Read camera entity and update position //
 
@@ -412,8 +404,11 @@ DLLEXPORT void GameWorld::Render(int mspassed, int tick, int timeintick)
         auto& states = GetStatesFor<Position>();
 
         // set camera position //
+        // TODO: this interpolation here is likely unneeded as the client side world should set
+        // the Position data from the states. This would only work on a hybrid client server
+        // that is running on fixed ticks not related to rendering (but that feels laggy)
         const auto interpolated =
-            StateInterpolator::Interpolate(states, CameraEntity, &position, tick, timeintick);
+            StateInterpolator::Interpolate(states, CameraEntity, &position, elapsed);
 
         if(!std::get<0>(interpolated)) {
 
@@ -665,12 +660,10 @@ DLLEXPORT void GameWorld::_ApplyLocalControlUpdateMessage(
               "before calling base GameWorld implementation");
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::Tick(int currenttick)
+DLLEXPORT void GameWorld::Tick(float elapsed)
 {
     if(InBackground && !TickWhileInBackground && GraphicalMode)
         return;
-
-    TickNumber = currenttick;
 
     // Apply queued packets //
     ApplyQueuedPackets();
@@ -697,18 +690,25 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         }
     }
 
+    // TODO: even while paused sendable objects may need to retransmit stuff
+
+    if(Paused)
+        return;
+
+    TotalElapsed += elapsed;
+
     // Set this to disallow deleting while running physics as well
     TickInProgress = true;
 
     // Simulate physics //
-    if(!WorldFrozen && !Paused) {
+    if(!WorldFrozen) {
 
         // TODO: a game type that is a client and server at  the same time
         // if(IsOnServer) {
 
         // _ApplyEntityUpdatePackets();
         if(_PhysicalWorld)
-            _PhysicalWorld->SimulateWorld(TICKSPEED / 1000.f);
+            _PhysicalWorld->SimulateWorld(elapsed);
 
         // } else {
 
@@ -716,8 +716,7 @@ DLLEXPORT void GameWorld::Tick(int currenttick)
         // }
     }
 
-    if(!Paused)
-        _RunTickSystems();
+    _RunTickSystems();
 
     TickInProgress = false;
 
@@ -790,7 +789,7 @@ DLLEXPORT void GameWorld::_ResetOrReleaseComponents()
     }
 }
 // ------------------------------------ //
-DLLEXPORT void GameWorld::RunFrameRenderSystems(int tick, int timeintick)
+DLLEXPORT void GameWorld::RunFrameRenderSystems(float elapsed)
 {
     // Don't have any systems, but these updates may be important for interpolation //
     // _ApplyEntityUpdatePackets();
@@ -809,31 +808,7 @@ DLLEXPORT void GameWorld::_RunTickSystems()
     }
 }
 // ------------------------------------ //
-DLLEXPORT float GameWorld::GetTickProgress() const
-{
-    float progress = Engine::Get()->GetTimeSinceLastTick() / (float)TICKSPEED;
-
-    if(progress < 0.f)
-        return 0.f;
-
-    return progress < 1.f ? progress : 1.f;
-}
-
-DLLEXPORT std::tuple<int, int> GameWorld::GetTickAndTime() const
-{
-    int tick = TickNumber;
-    int timeSince = static_cast<int>(Engine::Get()->GetTimeSinceLastTick());
-
-    while(timeSince >= TICKSPEED) {
-
-        ++tick;
-        timeSince -= TICKSPEED;
-    }
-
-    return std::make_tuple(tick, timeSince);
-}
-
-// ------------------ Object managing ------------------ //
+// Object managing
 DLLEXPORT ObjectID GameWorld::CreateEntity()
 {
     if(!GetNetworkSettings().IsAuthoritative) {
@@ -1217,7 +1192,8 @@ DLLEXPORT void GameWorld::SetWorldPhysicsFrozenState(bool frozen)
         return;
 
     // Should be safe to create the packet now and send it to all the connections //
-    SendToAllPlayers(std::make_shared<ResponseWorldFrozen>(0, ID, WorldFrozen, TickNumber),
+    // TODO: remake this to work better
+    SendToAllPlayers(std::make_shared<ResponseWorldFrozen>(0, ID, WorldFrozen, -1),
         RECEIVE_GUARANTEE::Critical);
 }
 

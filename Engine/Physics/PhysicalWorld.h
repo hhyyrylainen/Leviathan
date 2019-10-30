@@ -59,7 +59,8 @@ public:
     DLLEXPORT ~PhysicalWorld();
 
     //! \brief Advances the simulation the specified amount of time
-    DLLEXPORT void SimulateWorld(float secondspassed, int maxsubsteps = 4);
+    //! \todo Verify that this works correctly with the new variable rate ticks
+    DLLEXPORT void SimulateWorld(float secondspassed, int maxsubsteps = 8);
 
     // ------------------------------------ //
     // Physics collision creation

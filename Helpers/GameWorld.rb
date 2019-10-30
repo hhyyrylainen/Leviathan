@@ -1,15 +1,14 @@
 class GameWorldClass < OutputClass
-
   attr_accessor :WorldType
 
   def initialize(name, componentTypes: [], systems: [], systemspreticksetup: nil,
-                 framesystemrun: "", networking: true, perworlddata: [])
+                 framesystemrun: '', networking: true, perworlddata: [])
 
     super name
 
     @NetworkingEnabled = networking
-    
-    @BaseClass = "GameWorld"
+
+    @BaseClass = 'GameWorld'
     @WorldType = "-1 /* unset, won't work over the network */"
 
     @FrameSystemRun = framesystemrun
@@ -22,128 +21,116 @@ class GameWorldClass < OutputClass
 
     @PerWorldData = perworlddata
 
-    @ComponentTypes.each{|c|
-      @Members.push(Variable.new("Component" + c.type, "Leviathan::ComponentHolder<" + c.type +
-                                                       ">"))
+    @ComponentTypes.each do |c|
+      @Members.push(Variable.new('Component' + c.type, 'Leviathan::ComponentHolder<' + c.type +
+                                                       '>'))
 
       if c.StateType
-        @Members.push(Variable.new(c.type + "States", "Leviathan::StateHolder<" + c.type +
-                                                      "State>"))
+        @Members.push(Variable.new(c.type + 'States', 'Leviathan::StateHolder<' + c.type +
+                                                      'State>'))
       end
 
-      if c.type == "Sendable"
-        @HasSendable = true
-      end
+      @HasSendable = true if c.type == 'Sendable'
 
-      if c.type == "Received"
-        @HasReceived = true
-      end
-    }
+      @HasReceived = true if c.type == 'Received'
+    end
 
-    @Systems.each{|s|
-      @Members.push(Variable.new("_" + s.Name, s.Type))
-    }
+    @Systems.each do |s|
+      @Members.push(Variable.new('_' + s.Name, s.Type))
+    end
 
     @Members.concat @PerWorldData
 
     if @Members.empty?
       # Needed to call genMemberConstructor which is always needed
-      @Members.push Variable.new("dummy", "int")
+      @Members.push Variable.new('dummy', 'int')
     end
   end
 
   # Default includes
   def getExtraIncludes
-    return ["Script/ScriptConversionHelpers.h", "boost/range/adaptor/map.hpp"]
+    ['Script/ScriptConversionHelpers.h', 'boost/range/adaptor/map.hpp']
   end
 
   def genMemberConstructor(f, opts)
-
-    f.write "#{export}#{qualifier opts}#{@Name}(const " +
-            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials, " +
+    f.write "#{export}#{qualifier opts}#{@Name}(const " \
+            'std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials, ' \
             "int worldid#{default opts, '-1'})"
-    
+
     if opts.include?(:impl)
       f.puts " : #{@BaseClass}(#{@WorldType},\n physicsMaterials, worldid) "
       genPerWorldConstructors f, opts
-      f.puts "{}"
+      f.puts '{}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     # Child class type overwrite constructor
-    f.write "#{export}#{qualifier opts}#{@Name}(int32_t typeoverride, const " +
-            "std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials, " +
+    f.write "#{export}#{qualifier opts}#{@Name}(int32_t typeoverride, const " \
+            'std::shared_ptr<Leviathan::PhysicsMaterialManager>& physicsMaterials, ' \
             "int worldid#{default opts, '-1'})"
-    
+
     if opts.include?(:impl)
       f.puts " : #{@BaseClass}(typeoverride, physicsMaterials, worldid) "
       genPerWorldConstructors f, opts
-      f.puts "{}"
+      f.puts '{}'
     else
-      f.puts ";"
-    end    
-
+      f.puts ';'
+    end
   end
 
-  def genPerWorldConstructors(f, opts)
-    @PerWorldData.each{|s|
-      f.puts ", " + s.Name + "(*this)"
-    }
+  def genPerWorldConstructors(f, _opts)
+    @PerWorldData.each do |s|
+      f.puts ', ' + s.Name + '(*this)'
+    end
   end
 
   def genMembers(f, opts)
-
-    f.puts "protected:"
+    f.puts 'protected:'
     super f, opts
-    
   end
 
-  def genMethods(f, opts)    
-
+  def genMethods(f, opts)
     f.write "#{export}void #{qualifier opts}_ResetOrReleaseComponents()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
+      f.puts '{'
 
-      f.puts @BaseClass + "::_ResetOrReleaseComponents();"
+      f.puts @BaseClass + '::_ResetOrReleaseComponents();'
 
-      @PerWorldData.each{|s|
-        f.puts s.Name + ".OnClear();"
-      }
-      
-      f.puts "// Reset all component holders //"
-      @ComponentTypes.each{|c|
+      @PerWorldData.each  do |s|
+        f.puts s.Name + '.OnClear();'
+      end
+
+      f.puts '// Reset all component holders //'
+      @ComponentTypes.each do |c|
         if c.Release
           f.puts "Component#{c.type}.ReleaseAllAndClear(" +
-                 if c.Release.length > 0
-                   c.Release.join(", ") else
-                   ""
-                 end +");"
+                 if !c.Release.empty?
+                   c.Release.join(', ') else
+                                          ''
+                 end + ');'
         else
           f.puts "Component#{c.type}.Clear();"
         end
-      }
-      f.puts "}"
+      end
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     f.write "#{export}void #{qualifier opts}_ResetSystems()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::_ResetSystems();"
-      f.puts "// Reset all system nodes //"
-      @Systems.each{|s|
-
-        if !s.NodeComponents.empty? and !s.NoState
-          f.puts "_#{s.Name}.Clear();"
-        end
-      }
-      f.puts "}"
+      f.puts '{'
+      f.puts @BaseClass + '::_ResetSystems();'
+      f.puts '// Reset all system nodes //'
+      @Systems.each do |s|
+        f.puts "_#{s.Name}.Clear();" if !s.NodeComponents.empty? && !s.NoState
+      end
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     firstLoop = true
@@ -151,318 +138,311 @@ class GameWorldClass < OutputClass
 
     f.puts "// Component types (#{@ComponentTypes.length}) //"
 
-    @ComponentTypes.each{|c|
-
-      if firstLoop and opts.include?(:header)
-        f.puts "//! \\brief Returns a reference to a component of wanted type"
+    @ComponentTypes.each do |c|
+      if firstLoop && opts.include?(:header)
+        f.puts '//! \\brief Returns a reference to a component of wanted type'
         f.puts "//! \\exception NotFound when the specified entity doesn't have a component of"
-        f.puts "//! the wanted type"
+        f.puts '//! the wanted type'
         f.puts "//! \\note This is the recommended way to get components. \n"
-        f.puts "//! AngelScript uses the Ptr variant but with this name to not throw " +
-               "exceptions to the scripts"
+        f.puts '//! AngelScript uses the Ptr variant but with this name to not throw ' \
+               'exceptions to the scripts'
       end
-      
+
       f.write "#{export}#{c.type}& #{qualifier opts}GetComponent_#{c.type}(ObjectID id)"
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
         f.puts "auto component = Component#{c.type}.Find(id);"
-        f.puts "if(!component)"
-        f.puts "    throw Leviathan::NotFound(\"Component for entity with id was not found\");"
-        f.puts ""
-        f.puts "return *component;"
-        
-        f.puts "}"
+        f.puts 'if(!component)'
+        f.puts '    throw Leviathan::NotFound("Component for entity with id was not found");'
+        f.puts ''
+        f.puts 'return *component;'
+
+        f.puts '}'
       else
-        f.puts ";"
+        f.puts ';'
       end
 
-      if firstLoop and opts.include?(:header)
-        f.puts "//! \\brief Destroys a component belonging to an entity"
+      if firstLoop && opts.include?(:header)
+        f.puts '//! \\brief Destroys a component belonging to an entity'
         f.puts "//! \\return True when destroyed, false if the entity didn't have a component "
-        f.puts "//! of this type"
+        f.puts '//! of this type'
       end
-      
+
       f.write "#{export}bool #{qualifier opts}RemoveComponent_#{c.type}(ObjectID id)"
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
 
         if c.Release
           f.puts "    const bool destroyed = Component#{c.type}.ReleaseIfExists(id, true" +
-                 if c.Release.length > 0
-                   ", " + c.Release.join(", ") else
-                   ""
-                 end +");"
+                 if !c.Release.empty?
+                   ', ' + c.Release.join(', ') else
+                                                 ''
+                 end + ');'
         else
           f.puts "    const bool destroyed = Component#{c.type}.DestroyIfExists(id, true);"
         end
         f.puts "    //_OnComponentDestroyed(id, #{c.type}::TYPE());"
-        f.puts "    return destroyed;"
-        
-        f.puts "}"
+        f.puts '    return destroyed;'
+
+        f.puts '}'
       else
-        f.puts ";"
+        f.puts ';'
       end
 
-      if firstLoop and opts.include?(:header)
-        f.puts "//! \\brief Creates a new component for entity"
-        f.puts "//! \\exception Exception if the component failed to init or it already exists"
+      if firstLoop && opts.include?(:header)
+        f.puts '//! \\brief Creates a new component for entity'
+        f.puts '//! \\exception Exception if the component failed to init or it already exists'
       end
 
-      c.constructors.each{|a|
-
+      c.constructors.each do |a|
         f.write "#{export}#{c.type}& #{qualifier opts}Create_#{c.type}(ObjectID id" +
-                a.formatParameters(opts) + ")"
+                a.formatParameters(opts) + ')'
 
         if opts.include?(:impl)
           f.write "\n"
-          f.puts "{"
+          f.puts '{'
 
           f.puts "return *Component#{c.type}.ConstructNew(id" +
-                 a.formatNames(c.type) + ");"
-          
-          f.puts "}"
+                 a.formatNames(c.type) + ');'
+
+          f.puts '}'
         else
-          f.puts ";"
+          f.puts ';'
         end
-      }
+      end
 
       if opts.include?(:header)
         if c.StateType
-          
-          if !stateHolderCommentPrinted and opts.include?(:header)
-            f.puts "//! \\brief Returns state holder for component type"
+
+          if !stateHolderCommentPrinted && opts.include?(:header)
+            f.puts '//! \\brief Returns state holder for component type'
             stateHolderCommentPrinted = true
           end
 
           f.puts "#{export}StateHolder<#{c.type}State>& GetStatesFor_#{c.type}(){"
-          
+
           f.puts "    return #{c.type}States;"
-          f.puts "}"
+          f.puts '}'
         end
       end
 
-      if firstLoop and opts.include?(:header)
+      if firstLoop && opts.include?(:header)
         f.puts "//! \\brief Returns a pointer to entity's component if it has one of this type"
-        f.puts "//! \\returns nullptr if not found"
-        f.puts "//! \\note This is not the recommended way. Use GetComponent_ instead"
+        f.puts '//! \\returns nullptr if not found'
+        f.puts '//! \\note This is not the recommended way. Use GetComponent_ instead'
       end
-      
+
       f.write "#{export}#{c.type}* #{qualifier opts}GetComponentPtr_#{c.type}(ObjectID id)"
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
         f.puts "return Component#{c.type}.Find(id);"
-        f.puts "}"
+        f.puts '}'
       else
-        f.puts ";"
+        f.puts ';'
       end
 
       if opts.include?(:header)
         f.write "#{export}inline const auto& #{qualifier opts}GetComponentIndex_#{c.type}()"
 
-        f.puts "{"
+        f.puts '{'
         f.puts "    return Component#{c.type}.GetIndex();"
-        f.puts "}"
+        f.puts '}'
       end
 
       if opts.include?(:header)
-        f.write "#{export}inline uint64_t #{qualifier opts}GetComponentCount_#{c.type}() " +
-                "const"
+        f.write "#{export}inline uint64_t #{qualifier opts}GetComponentCount_#{c.type}() " \
+                'const'
 
-        f.puts "{"
+        f.puts '{'
         f.puts "    return Component#{c.type}.GetIndexSize();"
-        f.puts "}"
+        f.puts '}'
       end
 
       if opts.include?(:header)
-        f.write "#{export}inline #{c.type}* #{qualifier opts}GetComponentPtrByIndex_" +
+        f.write "#{export}inline #{c.type}* #{qualifier opts}GetComponentPtrByIndex_" \
                 "#{c.type}(uint64_t index)"
 
-        f.puts "{"
+        f.puts '{'
         f.puts "    return Component#{c.type}.GetAtIndex(index);"
-        f.puts "}"
+        f.puts '}'
       end
 
       if opts.include?(:header)
-        f.puts "//! \\note This creates a new array object on each call"
+        f.puts '//! \\note This creates a new array object on each call'
       end
       f.write "#{export}CScriptArray* #{qualifier opts}GetComponentIndexWrapper_#{c.type}()"
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
         f.puts "    const auto& index = Component#{c.type}.GetIndex();"
-        f.puts "    asIScriptContext* ctx = asGetActiveContext();"
+        f.puts '    asIScriptContext* ctx = asGetActiveContext();'
 
-        f.puts "    asIScriptEngine* engine = ctx ? ctx->GetEngine() : " +
-               "Leviathan::ScriptExecutor::Get()->GetASEngine();"
+        f.puts '    asIScriptEngine* engine = ctx ? ctx->GetEngine() : ' \
+               'Leviathan::ScriptExecutor::Get()->GetASEngine();'
 
-        f.puts "    return ConvertIteratorToASArray((index | " +
-               "boost::adaptors::map_keys).begin(),"
-        f.puts "          (index | boost::adaptors::map_keys).end(), " +
+        f.puts '    return ConvertIteratorToASArray((index | ' \
+               'boost::adaptors::map_keys).begin(),'
+        f.puts '          (index | boost::adaptors::map_keys).end(), ' +
                %{engine, "array<ObjectID>");}
-        f.puts "}"
+        f.puts '}'
       else
-        f.puts ";"
-      end            
-      
-      f.puts ""
+        f.puts ';'
+      end
+
+      f.puts ''
       firstLoop = false
-    }
-    
+    end
 
     f.write "#{export}void #{qualifier opts}DestroyAllIn(ObjectID id)#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::DestroyAllIn(id);"
-      @ComponentTypes.each{|c|
+      f.puts '{'
+      f.puts @BaseClass + '::DestroyAllIn(id);'
+      @ComponentTypes.each do |c|
         if c.Release
           f.puts "Component#{c.type}.ReleaseIfExists(id, true" +
-                 if c.Release.length > 0
-                   ", " + c.Release.join(", ") else
-                   ""
-                 end +");"
+                 if !c.Release.empty?
+                   ', ' + c.Release.join(', ') else
+                                                 ''
+                 end + ');'
         else
           f.puts "Component#{c.type}.DestroyIfExists(id, true);"
         end
-      }
-      f.puts "}"
+      end
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
-    f.write "#{export}std::tuple<void*, bool> #{qualifier opts}GetComponent(" +
+    f.write "#{export}std::tuple<void*, bool> #{qualifier opts}GetComponent(" \
             "ObjectID id, Leviathan::COMPONENT_TYPE type)#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts "switch(static_cast<uint16_t>(type)){"
-      
-      @ComponentTypes.each{|c|
+      f.puts '{'
+      f.puts 'switch(static_cast<uint16_t>(type)){'
+
+      @ComponentTypes.each do |c|
         f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
-        f.puts "{"
+        f.puts '{'
         f.puts "return std::make_tuple(Component#{c.type}.Find(id), true);"
-        f.puts "}"
-      }
+        f.puts '}'
+      end
 
-      f.puts "default:"
-      
-      f.puts "return " + @BaseClass + "::GetComponent(id, type);"
-      f.puts "}"
-      f.puts "}"
+      f.puts 'default:'
+
+      f.puts 'return ' + @BaseClass + '::GetComponent(id, type);'
+      f.puts '}'
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
-    f.write "#{export}std::tuple<void*, Leviathan::ComponentTypeInfo, bool> " +
-            "#{qualifier opts}GetComponentWithType(" +
+    f.write "#{export}std::tuple<void*, Leviathan::ComponentTypeInfo, bool> " \
+            "#{qualifier opts}GetComponentWithType(" \
             "ObjectID id, Leviathan::COMPONENT_TYPE type)#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts "switch(static_cast<uint16_t>(type)){"
-      
-      @ComponentTypes.each{|c|
-        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
-        f.puts "{"
-        f.puts "auto* ptr = Component#{c.type}.Find(id);"
-        f.puts "if(!ptr)"
-        f.puts "    return std::make_tuple(nullptr, " +
-               "Leviathan::ComponentTypeInfo(-1, -1), true);"
-        f.puts "return std::make_tuple(ptr, "
-        f.puts "    Leviathan::ComponentTypeInfo(static_cast<uint16_t>(#{c.type}::TYPE), " 
-        f.puts "        Leviathan::AngelScriptTypeIDResolver<#{c.type}>::Get("
-        f.puts "        Leviathan::GetCurrentGlobalScriptExecutor())), true);"
-        f.puts "}"
-      }
+      f.puts '{'
+      f.puts 'switch(static_cast<uint16_t>(type)){'
 
-      f.puts "default:"
-      
-      f.puts "return " + @BaseClass + "::GetComponentWithType(id, type);"
-      f.puts "}"
-      f.puts "}"
+      @ComponentTypes.each do |c|
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
+        f.puts '{'
+        f.puts "auto* ptr = Component#{c.type}.Find(id);"
+        f.puts 'if(!ptr)'
+        f.puts '    return std::make_tuple(nullptr, ' \
+               'Leviathan::ComponentTypeInfo(-1, -1), true);'
+        f.puts 'return std::make_tuple(ptr, '
+        f.puts "    Leviathan::ComponentTypeInfo(static_cast<uint16_t>(#{c.type}::TYPE), "
+        f.puts "        Leviathan::AngelScriptTypeIDResolver<#{c.type}>::Get("
+        f.puts '        Leviathan::GetCurrentGlobalScriptExecutor())), true);'
+        f.puts '}'
+      end
+
+      f.puts 'default:'
+
+      f.puts 'return ' + @BaseClass + '::GetComponentWithType(id, type);'
+      f.puts '}'
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
-
-    f.write "#{export}bool #{qualifier opts}GetRemovedFor(" +
-            "Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& " +
+    f.write "#{export}bool #{qualifier opts}GetRemovedFor(" \
+            'Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID>>& ' \
             "result)#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts "switch(static_cast<uint16_t>(type)){"
-      
-      @ComponentTypes.each{|c|
-        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
-        f.puts "{"
-        f.puts "auto& vec = Component#{c.type}.GetRemoved();"
-        f.puts "result.insert(std::end(result), std::begin(vec), std::end(vec));"
-        f.puts "return true;"
-        f.puts "}"
-      }
+      f.puts '{'
+      f.puts 'switch(static_cast<uint16_t>(type)){'
 
-      f.puts "default:"
+      @ComponentTypes.each do |c|
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
+        f.puts '{'
+        f.puts "auto& vec = Component#{c.type}.GetRemoved();"
+        f.puts 'result.insert(std::end(result), std::begin(vec), std::end(vec));'
+        f.puts 'return true;'
+        f.puts '}'
+      end
+
+      f.puts 'default:'
       f.puts "return #{@BaseClass}::GetRemovedFor(type, result);"
-      f.puts "}"
-      f.puts "}"
+      f.puts '}'
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
-    f.write "#{export}bool #{qualifier opts}GetAddedFor(" +
-            "Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID," +
+    f.write "#{export}bool #{qualifier opts}GetAddedFor(" \
+            'Leviathan::COMPONENT_TYPE type, std::vector<std::tuple<void*, ObjectID,' \
             "Leviathan::ComponentTypeInfo>>& result)#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts "switch(static_cast<uint16_t>(type)){"
-      
-      @ComponentTypes.each{|c|
-        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
-        f.puts "{"
-        f.puts "auto& vec = Component#{c.type}.GetAdded();"
-        f.puts "result.reserve(result.size() + vec.size());"
-        f.puts "for(const auto& res : vec){"
-        f.puts "    result.push_back(std::make_tuple(std::get<0>(res), std::get<1>(res), "
-        f.puts "        Leviathan::ComponentTypeInfo(static_cast<uint16_t>(#{c.type}::TYPE), " 
-        f.puts "        Leviathan::AngelScriptTypeIDResolver<#{c.type}>::Get("
-        f.puts "        Leviathan::GetCurrentGlobalScriptExecutor()))));"
-        f.puts "}"
-        f.puts "return true;"
-        f.puts "}"
-      }
+      f.puts '{'
+      f.puts 'switch(static_cast<uint16_t>(type)){'
 
-      f.puts "default:"
+      @ComponentTypes.each do |c|
+        f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
+        f.puts '{'
+        f.puts "auto& vec = Component#{c.type}.GetAdded();"
+        f.puts 'result.reserve(result.size() + vec.size());'
+        f.puts 'for(const auto& res : vec){'
+        f.puts '    result.push_back(std::make_tuple(std::get<0>(res), std::get<1>(res), '
+        f.puts "        Leviathan::ComponentTypeInfo(static_cast<uint16_t>(#{c.type}::TYPE), "
+        f.puts "        Leviathan::AngelScriptTypeIDResolver<#{c.type}>::Get("
+        f.puts '        Leviathan::GetCurrentGlobalScriptExecutor()))));'
+        f.puts '}'
+        f.puts 'return true;'
+        f.puts '}'
+      end
+
+      f.puts 'default:'
       f.puts "return #{@BaseClass}::GetAddedFor(type, result);"
-      f.puts "}"
-      f.puts "}"
+      f.puts '}'
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
-    
 
     # Gets for systems
     if opts.include?(:header)
-      f.puts "// System gets"
-      @Systems.each{|s|
-
+      f.puts '// System gets'
+      @Systems.each do |s|
         f.puts "#{export}#{s.Type}& Get#{s.Name}(){ return _#{s.Name}; }"
-      }
+      end
 
-      f.puts ""
+      f.puts ''
     end
 
     # Gets for per world data objects
     if opts.include?(:header)
-      f.puts "// Per world data object gets"
-      @PerWorldData.each{|s|
-
+      f.puts '// Per world data object gets'
+      @PerWorldData.each do |s|
         f.puts "#{export}#{s.Type}& Get#{s.Type}(){ return #{s.Name}; }"
-      }
+      end
 
-      f.puts ""
+      f.puts ''
     end
-    
+
     if opts.include?(:header)
       f.puts <<-END
 //! Helper for getting component of type. This is much slower than
@@ -483,7 +463,7 @@ TComponent& GetComponent(ObjectID id){
 
     if(!ptr)
         throw Leviathan::NotFound("Component for entity with id was not found");
-    
+
     return *static_cast<TComponent*>(ptr);
 }
 
@@ -497,416 +477,377 @@ Leviathan::StateHolder<typename TComponent::StateT>& GetStatesFor(){
             "state holder");
 
     void* ptr = std::get<0>(stateHolder);
-    
+
     return *static_cast<Leviathan::StateHolder<typename TComponent::StateT>*>(ptr);
 }
-END
+      END
     end
 
-    f.write "#{export}std::tuple<void*, bool> #{qualifier opts}GetStatesFor(" +
+    f.write "#{export}std::tuple<void*, bool> #{qualifier opts}GetStatesFor(" \
             "Leviathan::COMPONENT_TYPE type)#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts "switch(static_cast<uint16_t>(type)){"
-      
-      @ComponentTypes.each{|c|
+      f.puts '{'
+      f.puts 'switch(static_cast<uint16_t>(type)){'
 
-        if !c.StateType
-          next
-        end
-        
+      @ComponentTypes.each do |c|
+        next unless c.StateType
+
         f.puts "case static_cast<uint16_t>(#{c.type}::TYPE):"
-        f.puts "{"
+        f.puts '{'
         f.puts "return std::make_tuple(&#{c.type}States, true);"
-        f.puts "}"
-      }
+        f.puts '}'
+      end
 
-      f.puts "default:"      
-      f.puts "return " + @BaseClass + "::GetStatesFor(type);"
-      f.puts "}"
-      f.puts "}"
+      f.puts 'default:'
+      f.puts 'return ' + @BaseClass + '::GetStatesFor(type);'
+      f.puts '}'
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     if @NetworkingEnabled
-      
-      f.write "#{export}#{virtual opts} void #{qualifier opts}CaptureEntityState(" +
-              "ObjectID id, Leviathan::EntityState& curstate) " +
+
+      f.write "#{export}#{virtual opts} void #{qualifier opts}CaptureEntityState(" \
+              'ObjectID id, Leviathan::EntityState& curstate) ' \
               "const #{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
 
-        @ComponentTypes.each{|c|
+        @ComponentTypes.each do |c|
+          next unless c.StateType
 
-          if !c.StateType
-            next
-          end
-
-          f.puts ""
+          f.puts ''
           f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
           f.puts "if(#{c.type.downcase})"
-          f.puts "    curstate.Append(std::make_unique<#{c.type}State>(#{c.type}States." +
-                 "CreateStateForSending("
-          f.puts "        *#{c.type.downcase}, GetTickNumber())));"
-        }
+          f.puts "    curstate.Append(std::make_unique<#{c.type}State>(#{c.type}States." \
+                 'CreateStateForSending('
+          f.puts "        *#{c.type.downcase}, GetCurrentWorldTime())));"
+        end
 
-        f.puts ""
+        f.puts ''
         f.puts "#{@BaseClass}::CaptureEntityState(id, curstate);"
-        f.puts "}"
+        f.puts '}'
       else
-        f.puts ";"
+        f.puts ';'
       end
-      
-      f.write "#{export}#{virtual opts} uint32_t #{qualifier opts}CaptureEntityStaticState(" +
-              "ObjectID id, sf::Packet& receiver) " +
+
+      f.write "#{export}#{virtual opts} uint32_t #{qualifier opts}CaptureEntityStaticState(" \
+              'ObjectID id, sf::Packet& receiver) ' \
               "const #{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
 
-        f.puts "uint32_t addedComponentCount = 0;"
-        
-        @ComponentTypes.each{|c|
+        f.puts 'uint32_t addedComponentCount = 0;'
 
+        @ComponentTypes.each do |c|
           # Skip types like Sendable and Received
-          if c.NoSynchronize
-            next
-          end
+          next if c.NoSynchronize
 
-          f.puts ""
+          f.puts ''
           f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
           f.puts "if(#{c.type.downcase}){"
-          f.puts "    ++addedComponentCount;"
+          f.puts '    ++addedComponentCount;'
           f.puts "    receiver << static_cast<uint16_t>(#{c.type}::TYPE);"
 
-          c.constructors[0].Parameters.each{|p|
+          c.constructors[0].Parameters.each do |p|
+            next if p.NonMethodParam || p.NonSerializeParam
 
-            if p.NonMethodParam or p.NonSerializeParam
-              next
-            end
+            f.puts '    receiver << ' + p.formatMemberSerializer(c.type.downcase + '->') + ';'
+          end
 
-            f.puts "    receiver << " + p.formatMemberSerializer(c.type.downcase + "->") + ";"
-          }
-          
-          f.puts "}"
-        }
+          f.puts '}'
+        end
 
-        f.puts ""
-        f.puts "return addedComponentCount + " +
+        f.puts ''
+        f.puts 'return addedComponentCount + ' \
                "#{@BaseClass}::CaptureEntityStaticState(id, receiver);"
-        f.puts "}"
+        f.puts '}'
       else
-        f.puts ";"
+        f.puts ';'
       end
 
-      f.puts ""
+      f.puts ''
 
     end
 
-    f.write "#{export}void #{qualifier opts}RunFrameRenderSystems(int tick, " +
-            "int timeintick)#{override opts}"
+    f.write "#{export}void #{qualifier opts}RunFrameRenderSystems(float elapsed)" \
+            "#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::RunFrameRenderSystems(tick, timeintick);"
-      f.puts ""
+      f.puts '{'
+      f.puts @BaseClass + '::RunFrameRenderSystems(elapsed);'
+      f.puts ''
       f.puts @FrameSystemRun
-      f.puts ""
-      
-      renderSystems = @Systems.select{|s| !s.RunRender.nil?}.sort_by {|x| x.RunRender[:group]}
+      f.puts ''
+
+      renderSystems = @Systems.reject { |s| s.RunRender.nil? }.sort_by { |x| x.RunRender[:group] }
 
       outGroup = nil
-      
-      renderSystems.each{|s|
 
+      renderSystems.each do |s|
         if outGroup != s.RunRender[:group]
           outGroup = s.RunRender[:group]
           f.puts "// Begin of group #{s.RunRender[:group]} //"
         end
-        
+
         f.puts "_#{s.Name}.Run(*this" +
-               formatEntitySystemParameters(s.RunRender) + ");"
-      }
-      
-      f.puts "}"
+               formatEntitySystemParameters(s.RunRender) + ');'
+      end
+
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     if opts.include?(:header)
       f.puts "REFERENCE_HANDLE_UNCOUNTED_TYPE(#{@Name});"
-      f.puts ""
+      f.puts ''
     end
 
-    if opts.include?(:header)
-      f.puts "protected:"
-    end
+    f.puts 'protected:' if opts.include?(:header)
 
     f.write "#{export}void #{qualifier opts}_RunTickSystems()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::_RunTickSystems();"
+      f.puts '{'
+      f.puts @BaseClass + '::_RunTickSystems();'
 
       if @SystemsPreTickSetup
         f.puts @SystemsPreTickSetup
-        f.puts ""
+        f.puts ''
       end
 
-      tickSystems = @Systems.select{|s| !s.RunTick.nil?}.sort_by {|x| x.RunTick[:group]}
+      tickSystems = @Systems.reject { |s| s.RunTick.nil? }.sort_by { |x| x.RunTick[:group] }
 
       outGroup = nil
-      
-      tickSystems.each{|s|
 
+      tickSystems.each do |s|
         if outGroup != s.RunTick[:group]
           outGroup = s.RunTick[:group]
           f.puts "// Begin of group #{s.RunTick[:group]} //"
         end
-        
+
         f.puts "_#{s.Name}.Run(*this" +
-               formatEntitySystemParameters(s.RunTick) + ");"
-      }
-      f.puts "}"
+               formatEntitySystemParameters(s.RunTick) + ');'
+      end
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     f.write "#{export}void #{qualifier opts}HandleAddedAndDeleted()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::HandleAddedAndDeleted();"
-      f.puts ""
-      
-      @ComponentTypes.each{|c|
+      f.puts '{'
+      f.puts @BaseClass + '::HandleAddedAndDeleted();'
+      f.puts ''
+
+      @ComponentTypes.each  do |c|
         f.puts "const auto& added#{c.type} = Component#{c.type}.GetAdded();"
-      }
+      end
 
       addedComment = false
 
       # Added types from parent world types
       alreadySet = {}
-      
-      @Systems.each{|s|
-        
-        if s.NodeComponents.empty?
-          next
-        end
 
-        s.NodeComponents.each{|c|
+      @Systems.each do |s|
+        next if s.NodeComponents.empty?
+
+        s.NodeComponents.each do |c|
           found = false
 
-          @ComponentTypes.each{|doesMatch|
+          @ComponentTypes.each do |doesMatch|
             if doesMatch.type == c
               found = true
               break
             end
-          }
-
-          if !found
-            found = alreadySet.include? c
           end
 
-          if !found
-            alreadySet[c] = true
-            
-            if !addedComment
-              addedComment = true
-              f.puts ""
-              f.puts "// Component types of parent type"
-            end
+          found ||= alreadySet.include? c
 
-            f.puts "const auto& added#{c} = Component#{c}.GetAdded();"
-            f.puts "const auto& removed#{c} = Component#{c}.GetRemoved();"
+          next if found
+
+          alreadySet[c] = true
+
+          unless addedComment
+            addedComment = true
+            f.puts ''
+            f.puts '// Component types of parent type'
           end
-        }
-      }
 
-      f.puts ""
-      f.puts ""
-      f.puts "// Added"
-      
-      @Systems.each{|s|
-        
-        if !s.NodeComponents.empty?
-
-          f.write "if(" + s.NodeComponents.map{|c| "!added" + c + ".empty()" }.join(" || ")
-          f.puts "){"
-          
-          f.puts "    _#{s.Name}.CreateNodes("
-          f.puts "        " + (s.NodeComponents.map{|c| "added" + c }.join(", ")) + ","
-          f.puts "        " + (s.NodeComponents.map{|c| "Component" + c }.join(", ")) + ");"
-          f.puts "}"
+          f.puts "const auto& added#{c} = Component#{c}.GetAdded();"
+          f.puts "const auto& removed#{c} = Component#{c}.GetRemoved();"
         end
-      }
+      end
 
-      f.puts "// Removed"
-      @ComponentTypes.each{|c|
+      f.puts ''
+      f.puts ''
+      f.puts '// Added'
+
+      @Systems.each  do |s|
+        next if s.NodeComponents.empty?
+
+        f.write 'if(' + s.NodeComponents.map { |c| '!added' + c + '.empty()' }.join(' || ')
+        f.puts '){'
+
+        f.puts "    _#{s.Name}.CreateNodes("
+        f.puts '        ' + s.NodeComponents.map { |c| 'added' + c }.join(', ') + ','
+        f.puts '        ' + s.NodeComponents.map { |c| 'Component' + c }.join(', ') + ');'
+        f.puts '}'
+      end
+
+      f.puts '// Removed'
+      @ComponentTypes.each  do |c|
         f.puts "const auto& removed#{c.type} = Component#{c.type}.GetRemoved();"
-      }
+      end
 
-      @Systems.each{|s|
-        
-        if !s.NodeComponents.empty?
+      @Systems.each do |s|
+        next if s.NodeComponents.empty?
 
-          f.write "if(" + s.NodeComponents.map{|c| "!removed" + c + ".empty()" }.join(" || ")
-          f.puts "){"
-          
-          f.puts "    _#{s.Name}.DestroyNodes("
-          f.puts "        " + (s.NodeComponents.map{|c| "removed" + c }.join(", ")) + ");"
-          f.puts "}"
-        end
-      }      
+        f.write 'if(' + s.NodeComponents.map { |c| '!removed' + c + '.empty()' }.join(' || ')
+        f.puts '){'
 
-      f.puts "}"
+        f.puts "    _#{s.Name}.DestroyNodes("
+        f.puts '        ' + s.NodeComponents.map { |c| 'removed' + c }.join(', ') + ');'
+        f.puts '}'
+      end
+
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     f.write "#{export}void #{qualifier opts}ClearAddedAndRemoved()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::ClearAddedAndRemoved();"
-      f.puts ""
+      f.puts '{'
+      f.puts @BaseClass + '::ClearAddedAndRemoved();'
+      f.puts ''
 
-      @ComponentTypes.each{|c|
+      @ComponentTypes.each do |c|
         f.puts "Component#{c.type}.ClearAdded();"
         f.puts "Component#{c.type}.ClearRemoved();"
-      }
+      end
 
-      f.puts "}"
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     f.write "#{export}void #{qualifier opts}_DoSystemsInit()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::_DoSystemsInit();"
-      f.puts "// Call Init on all systems that need it //"
-      @Systems.each{|s|
-
-        if s.Init
-          f.puts "_#{s.Name}.Init(#{s.Init.map(&:formatForArgumentList).join(', ')});"
-        end
-      }
-      f.puts "}"
+      f.puts '{'
+      f.puts @BaseClass + '::_DoSystemsInit();'
+      f.puts '// Call Init on all systems that need it //'
+      @Systems.each do |s|
+        f.puts "_#{s.Name}.Init(#{s.Init.map(&:formatForArgumentList).join(', ')});" if s.Init
+      end
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     f.write "#{export}void #{qualifier opts}_DoSystemsRelease()#{override opts}"
 
     if opts.include?(:impl)
-      f.puts "{"
-      f.puts @BaseClass + "::_DoSystemsRelease();"
-      f.puts "// Call Release on all systems that need it //"
-      @Systems.each{|s|
-
+      f.puts '{'
+      f.puts @BaseClass + '::_DoSystemsRelease();'
+      f.puts '// Call Release on all systems that need it //'
+      @Systems.each do |s|
         if s.Release
           f.puts "_#{s.Name}.Release(#{s.Release.map(&:formatForArgumentList).join(', ')});"
         end
-      }
-      f.puts "}"
+      end
+      f.puts '}'
     else
-      f.puts ";"
+      f.puts ';'
     end
 
     if @HasSendable
-      f.write "#{export}void #{qualifier opts}_CreateSendableComponentForEntity(" +
+      f.write "#{export}void #{qualifier opts}_CreateSendableComponentForEntity(" \
               "ObjectID id)#{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
-        f.puts "Create_Sendable(id);"
-        f.puts "}"
+        f.puts '{'
+        f.puts 'Create_Sendable(id);'
+        f.puts '}'
       else
-        f.puts ";"
-      end      
+        f.puts ';'
+      end
     end
 
     if @HasReceived
-      f.write "#{export}void #{qualifier opts}_CreateReceivedComponentForEntity(" +
+      f.write "#{export}void #{qualifier opts}_CreateReceivedComponentForEntity(" \
               "ObjectID id)#{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
-        f.puts "Create_Received(id);"
-        f.puts "}"
+        f.puts '{'
+        f.puts 'Create_Received(id);'
+        f.puts '}'
       else
-        f.puts ";"
-      end      
+        f.puts ';'
+      end
     end
 
-
     if @NetworkingEnabled
-      f.write "#{export}void #{qualifier opts}_CreateComponentsFromCreationMessage(" +
-              "ObjectID id, sf::Packet& data, int entriesleft, int decodedtype)" +
+      f.write "#{export}void #{qualifier opts}_CreateComponentsFromCreationMessage(" \
+              'ObjectID id, sf::Packet& data, int entriesleft, int decodedtype)' \
               "#{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
 
-        f.puts "while(entriesleft > 0){"
+        f.puts 'while(entriesleft > 0){'
 
-        f.puts "if(decodedtype == -1){"
-        f.puts "    // Type not decoded yet"
-        f.puts "    uint16_t tmpType;"
-        f.puts "    data >> tmpType;"
-        f.puts "    decodedtype = tmpType;"
-        f.puts "}"
-        f.puts "if(!data){"
+        f.puts 'if(decodedtype == -1){'
+        f.puts '    // Type not decoded yet'
+        f.puts '    uint16_t tmpType;'
+        f.puts '    data >> tmpType;'
+        f.puts '    decodedtype = tmpType;'
+        f.puts '}'
+        f.puts 'if(!data){'
         f.puts %{    LOG_ERROR("GameWorld: entity decode: packet data ended too soon");}
-        f.puts "    return;"
-        f.puts "}"
-        
-        f.puts ""
+        f.puts '    return;'
+        f.puts '}'
 
-        f.puts "switch(decodedtype){"
+        f.puts ''
+
+        f.puts 'switch(decodedtype){'
 
         counter = 0
 
-        @ComponentTypes.each{|c|
-
+        @ComponentTypes.each do |c|
           # Skip types like Sendable and Received
-          if c.NoSynchronize
-            next
-          end
+          next if c.NoSynchronize
 
           f.puts "case static_cast<int>(#{c.type}::TYPE):"
-          f.puts "{"
+          f.puts '{'
 
           # parameter decoding
-          c.constructors[0].Parameters.each{|p|
-
-            if p.NonMethodParam or p.NonSerializeParam
-              next
-            end
+          c.constructors[0].Parameters.each do |p|
+            next if p.NonMethodParam || p.NonSerializeParam
 
             f.puts "#{p.Type} #{p.Name.downcase};"
-            f.puts p.formatDeserializer("data", target: p.Name.downcase)
-          }
+            f.puts p.formatDeserializer('data', target: p.Name.downcase)
+          end
 
-          f.puts "if(!data){"
+          f.puts 'if(!data){'
           f.puts %{    LOG_ERROR("GameWorld: entity decode: packet data ended } +
                  %{too soon (no component parameters)");}
-          f.puts "    return;"
-          f.puts "}"
+          f.puts '    return;'
+          f.puts '}'
 
           # Figuring out where to grab this data is hard...
           # should make the ECS used by Leviathan to be more pure to have this data
           # available easier
-          c.constructors[0].Parameters.each{|p|
-
-            if p.NonMethodParam or !p.NonSerializeParam
-              next
-            end
+          c.constructors[0].Parameters.each do |p|
+            next if p.NonMethodParam || !p.NonSerializeParam
 
             helper = "helper#{counter += 1}"
 
@@ -916,190 +857,183 @@ LOG_ERROR("GameWorld: entity decode: magic deserialize on type '#{p.Type}' faile
 "canceling entity creation");
 throw InvalidArgument("can't find related required deserialize resources");
 }
-END
+            END
 
             case p.Type
-            when "Ogre::SceneNode*"
+            when 'Ogre::SceneNode*'
               f.puts "auto #{helper} = GetComponentPtr_RenderNode(id);"
               f.puts errorhelper
-              helperProperty = helper + "->Node";
-            when "Ogre::Item*"
+              helperProperty = helper + '->Node'
+            when 'Ogre::Item*'
               # This won't be good enough once there can be multiple different types of these
               f.puts "auto #{helper} = GetComponentPtr_Model(id);"
               f.puts errorhelper
-              helperProperty = helper + "->GraphicalObject";
-            when "Position"
+              helperProperty = helper + '->GraphicalObject'
+            when 'Position'
               f.puts "auto #{helper} = GetComponentPtr_Position(id);"
               f.puts errorhelper
-              helperProperty = "*" + helper;
+              helperProperty = '*' + helper
             else
               abort("Can't do magic deserialize on Variable: #{p.Type}")
             end
 
-            f.puts "#{p.Type}& #{p.formatForArgumentList} = #{helperProperty};"  
-          }        
-          
-          f.puts "Create_#{c.type}(id" + c.constructors[0].formatNamesForForward + ");"
-          f.puts "--entriesleft;"
-          f.puts "decodedtype = -1;"
-          f.puts "continue;"
+            f.puts "#{p.Type}& #{p.formatForArgumentList} = #{helperProperty};"
+          end
 
-          f.puts "}"
-        }
+          f.puts "Create_#{c.type}(id" + c.constructors[0].formatNamesForForward + ');'
+          f.puts '--entriesleft;'
+          f.puts 'decodedtype = -1;'
+          f.puts 'continue;'
 
-        f.puts "default:"
-        f.puts "return #{@BaseClass}::_CreateComponentsFromCreationMessage(id, data, " +
-               "entriesleft, decodedtype);"      
-        
-        f.puts "}"
-        
-        f.puts "}"
-        f.puts "}"
+          f.puts '}'
+        end
+
+        f.puts 'default:'
+        f.puts "return #{@BaseClass}::_CreateComponentsFromCreationMessage(id, data, " \
+               'entriesleft, decodedtype);'
+
+        f.puts '}'
+
+        f.puts '}'
+        f.puts '}'
 
       else
-        f.puts ";"
+        f.puts ';'
       end
 
-      f.puts ""
+      f.puts ''
 
-      f.write "#{export}void #{qualifier opts}_CreateStatesFromUpdateMessage(" +
-              "ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, " +
-              "int decodedtype)" +
+      f.write "#{export}void #{qualifier opts}_CreateStatesFromUpdateMessage(" \
+              'ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, ' \
+              'int decodedtype)' \
               "#{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
 
-        f.puts "while(true){"
+        f.puts 'while(true){'
 
-        f.puts "if(decodedtype == -1){"
-        f.puts "    // Type not decoded yet"
-        f.puts "    uint16_t tmpType;"
-        f.puts "    data >> tmpType;"
-        f.puts "    decodedtype = tmpType;"
-        f.puts "}"
-        f.puts "if(!data){"
-        f.puts %{    // Ended, there is no entry count in the message}
-        f.puts "    return;"
-        f.puts "}"
-        
-        f.puts ""
+        f.puts 'if(decodedtype == -1){'
+        f.puts '    // Type not decoded yet'
+        f.puts '    uint16_t tmpType;'
+        f.puts '    data >> tmpType;'
+        f.puts '    decodedtype = tmpType;'
+        f.puts '}'
+        f.puts 'if(!data){'
+        f.puts %(    // Ended, there is no entry count in the message)
+        f.puts '    return;'
+        f.puts '}'
 
-        f.puts "switch(decodedtype){"
+        f.puts ''
 
-        @ComponentTypes.each{|c|
+        f.puts 'switch(decodedtype){'
 
-          if !c.StateType
-            next
-          end
+        @ComponentTypes.each do |c|
+          next unless c.StateType
 
           f.puts "case static_cast<int>(#{c.type}::TYPE):"
-          f.puts "{"
+          f.puts '{'
           f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
           f.puts "if(#{c.type.downcase}){"
           # This is needed for the interpolation system to be able to
           # know that it should interpolate stuff
           f.puts "     #{c.type.downcase}->StateMarked = true;"
-          f.puts "} else {"
+          f.puts '} else {'
           f.puts %{    LOG_ERROR("GameWorld: received states for not created Component, "}
-          f.puts %{        "can't mark states as active. And the states may now be } +
+          f.puts %(        "can't mark states as active. And the states may now be ) +
                  %{kept forever");}
-          f.puts "}"
-          f.puts ""
+          f.puts '}'
+          f.puts ''
           f.puts "#{c.type}States.DeserializeState(id, ticknumber, data, referencetick);"
-          f.puts "decodedtype = -1;"
-          f.puts "continue;"
-          f.puts "}"
-        }
+          f.puts 'decodedtype = -1;'
+          f.puts 'continue;'
+          f.puts '}'
+        end
 
-        f.puts "default:"
-        f.puts "return #{@BaseClass}::_CreateStatesFromUpdateMessage(id, ticknumber, data, " +
-               "referencetick, decodedtype);"      
-        
-        f.puts "}"
-        
-        f.puts "}"
-        f.puts "}"
+        f.puts 'default:'
+        f.puts "return #{@BaseClass}::_CreateStatesFromUpdateMessage(id, ticknumber, data, " \
+               'referencetick, decodedtype);'
+
+        f.puts '}'
+
+        f.puts '}'
+        f.puts '}'
 
       else
-        f.puts ";"
+        f.puts ';'
       end
 
-      f.puts ""
+      f.puts ''
 
-      f.write "#{export}void #{qualifier opts}_ApplyLocalControlUpdateMessage(" +
-              "ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, " +
-              "int decodedtype)" +
+      f.write "#{export}void #{qualifier opts}_ApplyLocalControlUpdateMessage(" \
+              'ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick, ' \
+              'int decodedtype)' \
               "#{override opts}"
 
       if opts.include?(:impl)
-        f.puts "{"
+        f.puts '{'
 
-        f.puts "while(true){"
+        f.puts 'while(true){'
 
-        f.puts "if(decodedtype == -1){"
-        f.puts "    // Type not decoded yet"
-        f.puts "    uint16_t tmpType;"
-        f.puts "    data >> tmpType;"
-        f.puts "    decodedtype = tmpType;"
-        f.puts "}"
-        f.puts "if(!data){"
-        f.puts %{    // Ended, there is no entry count in the message}
-        f.puts "    return;"
-        f.puts "}"
-        
-        f.puts ""
+        f.puts 'if(decodedtype == -1){'
+        f.puts '    // Type not decoded yet'
+        f.puts '    uint16_t tmpType;'
+        f.puts '    data >> tmpType;'
+        f.puts '    decodedtype = tmpType;'
+        f.puts '}'
+        f.puts 'if(!data){'
+        f.puts %(    // Ended, there is no entry count in the message)
+        f.puts '    return;'
+        f.puts '}'
 
-        f.puts "switch(decodedtype){"
+        f.puts ''
 
-        @ComponentTypes.each{|c|
+        f.puts 'switch(decodedtype){'
 
-          if !c.StateType
-            next
-          end
+        @ComponentTypes.each do |c|
+          next unless c.StateType
 
           f.puts "case static_cast<int>(#{c.type}::TYPE):"
-          f.puts "{"
+          f.puts '{'
           f.puts "const auto& #{c.type.downcase} = Component#{c.type}.Find(id);"
           f.puts "if(#{c.type.downcase}){"
           # This is will mark the component if this is a newer state
           # update than the latest. In the future it would be nice to
           # just be able to echo the update message to other clients
-          f.puts "    #{c.type}States.DeserializeAndApplyState(id, *#{c.type.downcase}, " +
-                 "ticknumber, data, referencetick);"
-          f.puts "} else {"
+          f.puts "    #{c.type}States.DeserializeAndApplyState(id, *#{c.type.downcase}, " \
+                 'ticknumber, data, referencetick);'
+          f.puts '} else {'
           f.puts %{    LOG_ERROR("GameWorld: received local control states for not created , "}
           f.puts %{        "Component, this is the client's fault");}
-          f.puts "}"
-          f.puts ""
+          f.puts '}'
+          f.puts ''
 
-          f.puts "decodedtype = -1;"
-          f.puts "continue;"
-          f.puts "}"
-        }
+          f.puts 'decodedtype = -1;'
+          f.puts 'continue;'
+          f.puts '}'
+        end
 
-        f.puts "default:"
-        f.puts "return #{@BaseClass}::_ApplyLocalControlUpdateMessage(id, ticknumber, data, " +
-               "referencetick, decodedtype);"      
-        
-        f.puts "}"
-        
-        f.puts "}"
-        f.puts "}"
+        f.puts 'default:'
+        f.puts "return #{@BaseClass}::_ApplyLocalControlUpdateMessage(id, ticknumber, data, " \
+               'referencetick, decodedtype);'
+
+        f.puts '}'
+
+        f.puts '}'
+        f.puts '}'
 
       else
-        f.puts ";"
+        f.puts ';'
       end
     end
-    
+
     # f.puts "public:"
-    
   end
 
   def genComponentBinding(c)
-    str = ""
+    str = ''
 
-    opts = {header: true}
+    opts = { header: true }
 
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ GetComponent_#{c.type}} +
            %{(ObjectID id)", \n} +
@@ -1110,7 +1044,7 @@ END
            %{asMETHOD(WorldType, GetComponentIndexWrapper_#{c.type}), asCALL_THISCALL) } +
            %{< 0)\n} +
            "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
-    
+
     str += %{if(engine->RegisterObjectMethod(classname, "uint64 GetComponentCount_#{c.type}} +
            %{()", \n} +
            %{asMETHOD(WorldType, GetComponentCount_#{c.type}), asCALL_THISCALL) < 0)\n} +
@@ -1122,72 +1056,61 @@ END
     str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ } +
            %{RemoveComponent_#{c.type}(ObjectID id)", \n} +
            %{asMETHOD(WorldType, GetComponent_#{c.type}), asCALL_THISCALL) < 0)\n} +
-           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"    
+           "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"
 
-    c.constructors.each{|a|
+    c.constructors.each do |a|
+      next if a.NoAngelScript
 
-      if a.NoAngelScript
-        next
-      end
-      
       str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ Create_#{c.type}} +
-             %{(ObjectID id#{a.formatParametersAngelScript()})", \n} +
+             %{(ObjectID id#{a.formatParametersAngelScript})", \n} +
              %{asMETHODPR(WorldType, Create_#{c.type}, \n} +
-             %{    (ObjectID id#{a.formatParameterTypes()}), #{c.type}&), \n} +
+             %{    (ObjectID id#{a.formatParameterTypes}), #{c.type}&), \n} +
              %{asCALL_THISCALL) < 0)\n} +
              "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"
-    }
+    end
 
     str
   end
-  
-  def genAngelScriptBindings
 
+  def genAngelScriptBindings
     str = "\n"
 
-    @ComponentTypes.each{|c|
+    @ComponentTypes.each do |c|
       str += genComponentBinding c
-    }
+    end
 
     str += "\n"
 
-    @Systems.each{|s|
-      if s.VisibleToScripts
-        str += %{if(engine->RegisterObjectMethod(classname, "#{s.Type}@ Get#{s.Name}()",\n} +
-               %{asMETHOD(WorldType, Get#{s.Name}), asCALL_THISCALL) < 0)\n} +
-               "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
-      end
-    }
+    @Systems.each do |s|
+      next unless s.VisibleToScripts
 
-    @PerWorldData.each{|s|
-      if s.AngelScriptUseInstead && s.AngelScriptUseInstead == ""
-        next
-      end
+      str += %{if(engine->RegisterObjectMethod(classname, "#{s.Type}@ Get#{s.Name}()",\n} +
+             %{asMETHOD(WorldType, Get#{s.Name}), asCALL_THISCALL) < 0)\n} +
+             "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+    end
 
-      useType = s.Type + "@"
+    @PerWorldData.each do |s|
+      next if s.AngelScriptUseInstead && s.AngelScriptUseInstead == ''
 
-      if s.AngelScriptUseInstead
-        useType = s.AngelScriptUseInstead
-      end
+      useType = s.Type + '@'
+
+      useType = s.AngelScriptUseInstead if s.AngelScriptUseInstead
 
       str += %{if(engine->RegisterObjectMethod(classname, "#{useType} Get#{s.Type}()",\n} +
-               %{asMETHOD(WorldType, Get#{s.Type}), asCALL_THISCALL) < 0)\n} +
-               "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
-    }
-    
+             %{asMETHOD(WorldType, Get#{s.Type}), asCALL_THISCALL) < 0)\n} +
+             "{\nANGELSCRIPT_REGISTERFAIL;\n}\n"
+    end
+
     str
   end
 end
 
-
-
 # Components for adding to gameworld
 class EntityComponent
-  
   attr_reader :type, :constructors, :StateType, :Release, :CustomStaticSerializer,
               :CustomStaticLoader, :NoSynchronize
-  
-  def initialize(type, constructors=[ConstructorInfo.new], statetype: nil, releaseparams: nil,
+
+  def initialize(type, constructors = [ConstructorInfo.new], statetype: nil, releaseparams: nil,
                  customstaticserializer: nil, customstaticloader: nil, nosynchronize: false)
     @type = type
     @constructors = constructors
@@ -1197,7 +1120,6 @@ class EntityComponent
     @CustomStaticLoader = customstaticloader
     @NoSynchronize = nosynchronize
   end
-
 end
 
 class EntitySystem
@@ -1205,7 +1127,7 @@ class EntitySystem
               :VisibleToScripts, :Name
 
   # Leave nodeComponens empty if not using combined nodes
-  def initialize(type, nodeComponents=[], runtick: nil, runrender: nil, init: nil, 
+  def initialize(type, nodeComponents = [], runtick: nil, runrender: nil, init: nil,
                  release: nil, nostate: nil, visibletoscripts: false)
     @Type = type
     @Name = sanitizeName(type)
@@ -1219,16 +1141,16 @@ class EntitySystem
     @VisibleToScripts = visibletoscripts
 
     if @Init
-      raise "wrong type" unless @Init.is_a? Array
+      raise 'wrong type' unless @Init.is_a? Array
     end
     if @Release
-      raise "wrong type" unless @Release.is_a? Array
+      raise 'wrong type' unless @Release.is_a? Array
     end
   end
 end
 
 def formatEntitySystemParameters(params)
-  if params.include?(:parameters) and !params[:parameters].empty? then
-    ", " + params[:parameters].join(", ")
-  else "" end 
+  if params.include?(:parameters) && !params[:parameters].empty?
+    ', ' + params[:parameters].join(', ')
+  else '' end
 end

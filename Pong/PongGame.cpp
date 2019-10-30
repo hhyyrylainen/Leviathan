@@ -358,7 +358,7 @@ void Pong::PongGame::CustomEnginePreShutdown()
     GameInputHandler.reset();
 }
 // ------------------------------------ //
-void Pong::PongGame::Tick(int mspassed) {}
+void Pong::PongGame::Tick(float elapsed) {}
 // ------------------------------------ //
 void Pong::PongGame::AllowPauseMenu()
 {
@@ -488,7 +488,8 @@ void Pong::PongGame::DoSpecialPostLoad()
     window1->SetCustomInputController(GameInputHandler);
 
     // This is how to do something every frame //
-    Leviathan::Engine::Get()->GetEventHandler()->RegisterForEvent(this, EVENT_TYPE_FRAME_END);
+    Leviathan::Engine::Get()->GetEventHandler()->RegisterForEvent(
+        this, EVENT_TYPE_FRAME_BEGIN);
 
     ClearTimers();
 }

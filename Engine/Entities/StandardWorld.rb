@@ -3,7 +3,8 @@ require_relative 'StandardComponents'
 require_relative 'StandardSystems'
 
 STANDARD_WORLD = GameWorldClass.new(
-  "StandardWorld", componentTypes: [
+  'StandardWorld',
+  componentTypes: [
     COMPONENT_POSITION,
     COMPONENT_RENDERNODE,
     COMPONENT_SENDABLE,
@@ -12,7 +13,7 @@ STANDARD_WORLD = GameWorldClass.new(
     COMPONENT_PHYSICS,
     COMPONENT_BOXGEOMETRY,
     COMPONENT_CAMERA,
-    COMPONENT_ANIMATED,
+    COMPONENT_ANIMATED
   ],
   systems: [
     SYSTEM_RENDERINGPOSITION,
@@ -22,16 +23,9 @@ STANDARD_WORLD = GameWorldClass.new(
     SYSTEM_SENDABLEMARK_POSITION,
     SYSTEM_SENDABLE,
     SYSTEM_POSITIONSTATE,
-    SYSTEM_MODELPROPERTIES,
+    SYSTEM_MODELPROPERTIES
   ],
-  systemspreticksetup: (<<-END
-  const auto timeAndTickTuple = GetTickAndTime();
-  const auto calculatedTick = std::get<0>(timeAndTickTuple);
-  const auto progressInTick = std::get<1>(timeAndTickTuple);
-  const auto tick = GetTickNumber();
-END
-                       ),
-  framesystemrun: (<<-END
+  framesystemrun: <<-END
     // Client interpolation //
     if(GetNetworkSettings().DoInterpolation){
 
@@ -43,12 +37,8 @@ END
     // Skip in non-gui mode //
     if(!GraphicalMode)
         return;
+  END
 
-    const auto timeAndTickTuple = GetTickAndTime();
-    const auto calculatedTick = std::get<0>(timeAndTickTuple);
-    const auto progressInTick = std::get<1>(timeAndTickTuple);
-END
-                  )
 )
 
-STANDARD_WORLD.WorldType = "static_cast<int32_t>(Leviathan::INBUILT_WORLD_TYPE::Standard)"
+STANDARD_WORLD.WorldType = 'static_cast<int32_t>(Leviathan::INBUILT_WORLD_TYPE::Standard)'

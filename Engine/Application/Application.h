@@ -35,15 +35,17 @@ public:
 
     //! \brief Thread safely marks the game to close sometime
     //!
-    //! The closing should happen in around 2 ticks (100ms)
+    //! The closing should happen in around 2 updates
     DLLEXPORT void MarkAsClosing();
 
     // perform actions //
     DLLEXPORT virtual int RunMessageLoop();
-    DLLEXPORT virtual void Render();
+    //! \brief Runs a single engine update cycle (tick + render)
+    //! \returns The number of seconds to sleep before next update
+    DLLEXPORT virtual float RunSingleUpdate();
     DLLEXPORT virtual bool PassCommandLine(int argcount, char* args[]);
 
-    DLLEXPORT virtual void Tick(int mspassed);
+    DLLEXPORT virtual void Tick(float elapsed);
     DLLEXPORT virtual void PreFirstTick();
 
     // getting data from the class //
@@ -127,6 +129,10 @@ protected:
     bool ExternalEngineInstance = false;
     Engine* _Engine;
     AppDef* ApplicationConfiguration = nullptr;
+
+    //! If true always sleep the specified amount of time between loops, instead of busy
+    //! waiting. This reduces the loop accuracy but can save power
+    bool PreferSleepOverLoopAccuracy = false;
 
     // static part //
     static LeviathanApplication* Curapp;

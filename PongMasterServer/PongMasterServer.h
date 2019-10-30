@@ -12,7 +12,7 @@ public:
     PongMasterServer();
     ~PongMasterServer();
 
-    void Tick(int mspassed) override;
+    void Tick(float elapsed) override;
 
     void CustomizeEnginePostLoad() override;
     void EnginePreShutdown() override;

@@ -89,7 +89,7 @@ TEST_CASE_METHOD(WorldSynchronizationTestFixture,
     // Only RenderNodes are interpolated... so we can't test that here
     // TODO: do something about that
     // Interpolate to half way
-    ClientInterface.GetWorld()->RunFrameRenderSystems(0, TICKSPEED / 2);
+    ClientInterface.GetWorld()->RunFrameRenderSystems(0.5f);
 
     // CHECK(pos2.Members._Position == Float3(0.5f, 0, 5.f));
 

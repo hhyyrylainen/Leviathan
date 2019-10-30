@@ -18,11 +18,15 @@
 
 namespace Leviathan {
 
-//! Number of milliseconds between engine and world ticks
-constexpr auto TICKSPEED = 50;
+//! Max "FPS" in headless mode
+constexpr auto DEFAULT_HEADLESS_MAX_UPDATES_PER_SECOND = 20;
 
-//! \todo Allow this to not be a multiple of TICKSPEED or smaller than it
-constexpr auto INTERPOLATION_TIME = 100;
+//! Number of milliseconds between engine ticks in headless mode (no gui)
+constexpr auto DEFAULT_HEADLESS_TICK_INTERVAL =
+    1000.f / DEFAULT_HEADLESS_MAX_UPDATES_PER_SECOND;
+
+//! Time in seconds to interpolate entities between states
+constexpr auto INTERPOLATION_TIME = 0.1f;
 
 //! Defines the interval between heartbeats
 //! Should be the same as CLIENT_HEARTBEATS_MILLISECOND

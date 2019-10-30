@@ -30,13 +30,10 @@ enum EVENT_TYPE {
     EVENT_TYPE_ONCLICK,
     EVENT_TYPE_LISTENERVALUEUPDATED,
     EVENT_TYPE_FRAME_BEGIN,
-    EVENT_TYPE_FRAME_END,
+    // EVENT_TYPE_FRAME_END,
     EVENT_TYPE_INIT,
     EVENT_TYPE_RELEASE,
     EVENT_TYPE_TEST,
-    //! Only called on the client when a frame is about to be renderd and interpolation status
-    //! needs to be determined
-    EVENT_TYPE_CLIENT_INTERPOLATION,
 
     EVENT_TYPE_ALL
 };
@@ -89,49 +86,20 @@ public:
     virtual ~BaseEventData();
 };
 
-//! \brief Data for EVENT_TYPE_CLIENT_INTERPOLATION
-class ClientInterpolationEventData : public BaseEventData {
-public:
-    DLLEXPORT ClientInterpolationEventData(int tick, int mspassed);
-
-#ifdef LEVIATHAN_USING_SFML
-    DLLEXPORT ClientInterpolationEventData(sf::Packet& packet);
-
-    DLLEXPORT void AddDataToPacket(sf::Packet& packet) override;
-#endif
-
-private:
-    void CalculatePercentage();
-
-public:
-    //! The current tick to use for interpolation
-    int TickNumber;
-
-    //! Time passed since start of tick
-    //! In milliseconds
-    int TimeInTick;
-
-    //! The calculated percentage the tick has advanced
-    //!
-    //! In case of extreme lag this is forced to be between 0.f-1.f to not break
-    //! even more badly
-    float Percentage;
-};
-
 //! \brief Data for EVENT_TYPE_ENGINE_TICK and all others that have only int data
-class IntegerEventData : public BaseEventData {
+class FloatEventData : public BaseEventData {
 public:
     //! \brief Loads from a packet
-    DLLEXPORT IntegerEventData(int ticknumber);
+    DLLEXPORT FloatEventData(float elapsed);
 
 #ifdef LEVIATHAN_USING_SFML
-    DLLEXPORT IntegerEventData(sf::Packet& packet);
+    DLLEXPORT FloatEventData(sf::Packet& packet);
 
     virtual void AddDataToPacket(sf::Packet& packet);
 #endif
 
     //! Current engine tick count
-    int IntegerDataValue;
+    float FloatDataValue;
 };
 
 //! \brief Class that represents a statically defined event
@@ -155,9 +123,8 @@ public:
 #endif
 
     // Data getting functions //
-    DLLEXPORT ClientInterpolationEventData* GetDataForClientInterpolationEvent() const;
     //! \brief Gets the data if this is an event that has only one integer data member
-    DLLEXPORT IntegerEventData* GetIntegerDataForEvent() const;
+    DLLEXPORT FloatEventData* GetFloatDataForEvent() const;
 
     REFERENCE_COUNTED_PTR_TYPE(Event);
 

@@ -41,10 +41,10 @@ public:
 
 
     //! Called by Engine
-    DLLEXPORT void Tick(int mspassed);
+    DLLEXPORT void Tick(float elapsed);
 
     //! This function uses the LinkObjects function objects
-    DLLEXPORT bool Render(int mspassed, int tick, int timeintick);
+    DLLEXPORT bool Render(float elapsed);
 
     //! This function also updates the camera aspect ratio
     DLLEXPORT void LinkObjects(std::shared_ptr<GameWorld> world);

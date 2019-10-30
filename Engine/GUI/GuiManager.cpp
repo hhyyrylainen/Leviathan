@@ -81,7 +81,7 @@ void GuiManager::Release()
     LOG_INFO("GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //
-void GuiManager::GuiTick(int mspassed)
+void GuiManager::GuiTick(float elapsed)
 {
     if(ReloadQueued) {
 
@@ -146,7 +146,7 @@ DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
 }
 
 // ------------------------------------ //
-void GuiManager::Render()
+void GuiManager::Render(float elapsed)
 {
     // Browser textures are now updated in the event loop (on the main thread between
     // rendering)

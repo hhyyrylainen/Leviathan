@@ -27,8 +27,8 @@ public:
     DLLEXPORT bool Init(Graphics* graph, Window* window);
     DLLEXPORT void Release();
 
-    DLLEXPORT void GuiTick(int mspassed);
-    DLLEXPORT void Render();
+    DLLEXPORT void GuiTick(float elapsed);
+    DLLEXPORT void Render(float elapsed);
 
     //! \brief Notifies internal browsers
     DLLEXPORT void OnResize();

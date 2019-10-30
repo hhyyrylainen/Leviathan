@@ -24,7 +24,7 @@ public:
     DLLEXPORT bool Init(bool simulatesound = false);
     DLLEXPORT void Release();
 
-    DLLEXPORT void Tick(int PassedMs);
+    DLLEXPORT void Tick(float elapsed);
 
     //! \brief Loads the file and plays the sound
     //!
@@ -74,8 +74,7 @@ public:
 private:
     std::unique_ptr<Implementation> Pimpl;
 
-    int CacheSoundEffectMilliseconds = 30000;
-    int ElapsedSinceLastClean = 0;
+    float ElapsedSinceLastClean = 0;
 };
 
 } // namespace Leviathan

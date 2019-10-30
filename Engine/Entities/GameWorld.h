@@ -130,29 +130,17 @@ public:
 
     //! \brief Used to keep track of passed ticks and trigger timed triggers
     //! \note This will be called (or should be) every time the engine ticks
-    //! \note This cannot be used for accurate time keeping for that use timers, but for
-    //! events that need to happen at certain game world times this is ideal
-    DLLEXPORT void Tick(int currenttick);
+    DLLEXPORT void Tick(float elapsed);
 
     //! \brief Runs systems required for a rendering run. Also updates camera positions
     //! \todo Allow script systems to specify their type
-    DLLEXPORT void Render(int mspassed, int tick, int timeintick);
+    DLLEXPORT void Render(float elapsed);
 
-    //! \brief Returns the current tick
-    DLLEXPORT inline int GetTickNumber() const
+    //! \brief Returns the total amount of time the world has been running
+    DLLEXPORT inline auto GetCurrentWorldTime() const
     {
-        return TickNumber;
+        return TotalElapsed;
     }
-
-    //! \brief Returns float between 0.f and 1.f based on how far current tick has progressed
-    DLLEXPORT float GetTickProgress() const;
-
-    //! \brief Returns a tuple of the current tick number and how long
-    //! it has passed since last tick
-    //!
-    //! The tick number is always adjusted so that the time since last tick is < TICKSPEED
-    DLLEXPORT std::tuple<int, int> GetTickAndTime() const;
-
 
     //! \brief Fetches the physical material ID from the material manager
     //! \returns -1 if not found. The id otherwise
@@ -519,12 +507,11 @@ protected:
     DLLEXPORT void ApplyQueuedPackets();
 
 public:
-    //! \brief Called by Render which is called from a
-    //! Window if this is linked to one
+    //! \brief Called by Render which is called from a Window if this is linked to one
     //! \protected
     //! \note This is public to allow tests to test interpolation. It might be worth it to make
     //! a separate function that is similar to Render but can be called even in non-gui mode
-    DLLEXPORT virtual void RunFrameRenderSystems(int tick, int timeintick);
+    DLLEXPORT virtual void RunFrameRenderSystems(float elapsed);
 
 protected:
     //! \brief Called by Tick
@@ -697,9 +684,8 @@ private:
     //! they connect
     const int32_t WorldType;
 
-    //! The current tick number
-    //! This should be the same on all clients as closely as possible
-    int TickNumber = 0;
+    //! Total time elapsed for this world
+    double TotalElapsed = 0.0;
 
     //! A funky name for this world, if any
     std::string DecoratedName;

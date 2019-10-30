@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -21,42 +21,32 @@ public:
 
     // Data for currently interpolating state
     // Some child classes might not use this if interpolating is not done
-    // maybe some of these could be moved to a new class
-    float InterpolatingStartTime = 0.f;
-    int InterpolatingRemoteStartTick;
     StateT* InterpolatingStartState = nullptr;
     StateT* InterpolatingEndState = nullptr;
-
-    // Current time can be calculated from the game world tick and engine clock
-    // once the time - InterpolatingStartTime is >= TICKSPEED
-    // InterpolatingStartTick is incremented and if there are no state
-    // with that tick number StateMarked will be set false and
-    // interpolation stops until a new state is a added when we are
-    // marked by the state creation and the interpolation continues
-    // from the newest tick (number > InterpolatingStartTick)
+    float TimeSinceStartState = 0.f;
 };
 
 //! \brief Base for all component state classes
 class BaseComponentState {
 public:
-    inline BaseComponentState(int32_t tick, COMPONENT_TYPE componenttype) :
-        TickNumber(tick), ComponentType(componenttype)
+    inline BaseComponentState(float time, COMPONENT_TYPE componenttype) :
+        StateTime(time), ComponentType(componenttype)
     {}
     virtual ~BaseComponentState() {}
 
     inline BaseComponentState(const BaseComponentState& other) noexcept :
-        TickNumber(other.TickNumber), ComponentType(other.ComponentType),
+        StateTime(other.StateTime), ComponentType(other.ComponentType),
         UpdatedFields(other.UpdatedFields)
     {}
 
     inline BaseComponentState(BaseComponentState&& other) noexcept :
-        TickNumber(other.TickNumber), ComponentType(other.ComponentType),
+        StateTime(other.StateTime), ComponentType(other.ComponentType),
         UpdatedFields(other.UpdatedFields)
     {}
 
     inline BaseComponentState& operator=(const BaseComponentState& other) noexcept
     {
-        TickNumber = other.TickNumber;
+        StateTime = other.StateTime;
         ComponentType = other.ComponentType;
         UpdatedFields = other.UpdatedFields;
         return *this;
@@ -64,7 +54,7 @@ public:
 
     inline BaseComponentState& operator=(BaseComponentState&& other) noexcept
     {
-        TickNumber = other.TickNumber;
+        StateTime = other.StateTime;
         ComponentType = other.ComponentType;
         UpdatedFields = other.UpdatedFields;
         return *this;
@@ -104,9 +94,10 @@ public:
     }
 
 public:
-    //! The tick this state was captured on
-    //! This is used for rebuilding delta states
-    int32_t TickNumber;
+    //! The time this state was captured at
+    //! This is used for rebuilding delta states.
+    //! And on the client for interpolating between states
+    float StateTime;
 
     //! The component type. This is needed to handle the actual subclasses that have data
     //! without having to do virtual method calls to find matching types

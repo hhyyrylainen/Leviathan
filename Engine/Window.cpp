@@ -291,21 +291,21 @@ DLLEXPORT void Window::UnlinkAll()
     LinkObjects(nullptr);
 }
 // ------------------------------------ //
-DLLEXPORT void Window::Tick(int mspassed)
+DLLEXPORT void Window::Tick(float elapsed)
 {
     // pass to GUI //
-    WindowsGui->GuiTick(mspassed);
+    WindowsGui->GuiTick(elapsed);
 }
 
-DLLEXPORT bool Window::Render(int mspassed, int tick, int timeintick)
+DLLEXPORT bool Window::Render(float elapsed)
 {
     if(LinkedWorld)
-        LinkedWorld->Render(mspassed, tick, timeintick);
+        LinkedWorld->Render(elapsed);
 
     // Update GUI before each frame //
-    WindowsGui->Render();
+    WindowsGui->Render(elapsed);
 
-    // BSF does it's own rendering handling
+    // BSF does it's own rendering handling (so we can't swap this render chain)
     return true;
 }
 

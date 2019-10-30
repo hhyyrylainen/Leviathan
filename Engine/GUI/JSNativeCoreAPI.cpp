@@ -498,12 +498,12 @@ bool JSNativeCoreAPI::JSListener::ExecutePredefined(const Event& eventdata)
     // Set the type as int //
     args.push_back(CefV8Value::CreateInt(EventsType));
 
-    // We can see if we can pass an int to it //
-    auto dataptr = eventdata.GetIntegerDataForEvent();
+    // We can see if we can pass a float to it //
+    auto dataptr = eventdata.GetFloatDataForEvent();
 
     if(dataptr) {
-        // Add the integer value //
-        args.push_back(CefV8Value::CreateInt(dataptr->IntegerDataValue));
+        // Add the value //
+        args.push_back(CefV8Value::CreateDouble(dataptr->FloatDataValue));
 
     } else {
         // We should add an accessor object, but for now null will do //

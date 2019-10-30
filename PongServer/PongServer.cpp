@@ -59,9 +59,8 @@ void PongServer::_ShutdownApplicationPacketHandler()
     ServerInterface.reset();
 }
 // ------------------------------------ //
-void Pong::PongServer::Tick(int mspassed)
+void Pong::PongServer::Tick(float elapsed)
 {
-
     using namespace Leviathan;
 
     // We will want to skip doing things if we are shutting down soon //
@@ -93,7 +92,7 @@ void Pong::PongServer::Tick(int mspassed)
                         default: setup.SetEntrypoint("SimpleAI"); break;
                         }
 
-                        GameAI->ExecuteOnModule<void>(setup, true, slotptr, mspassed);
+                        GameAI->ExecuteOnModule<void>(setup, true, slotptr, elapsed);
                     }
                 }
 

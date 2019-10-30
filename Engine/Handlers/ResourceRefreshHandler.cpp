@@ -1,12 +1,12 @@
 // ------------------------------------ //
 #include "ResourceRefreshHandler.h"
 
-#include "Common/StringOperations.h"
 #include "../TimeIncludes.h"
+#include "Common/StringOperations.h"
 #include "IDFactory.h"
 #ifdef __linux__
-#include <sys/types.h>
 #include <sys/inotify.h>
+#include <sys/types.h>
 #endif
 using namespace Leviathan;
 using namespace std;
@@ -14,547 +14,561 @@ using namespace std;
 #ifdef __linux__
 
 #define IN_EVENT_SIZE (sizeof(inotify_event))
-#define IN_READ_BUFFER_SIZE (124*(IN_EVENT_SIZE + 16))
+#define IN_READ_BUFFER_SIZE (124 * (IN_EVENT_SIZE + 16))
 
 
 #endif
 
-DLLEXPORT Leviathan::ResourceRefreshHandler::ResourceRefreshHandler(){
+DLLEXPORT Leviathan::ResourceRefreshHandler::ResourceRefreshHandler() {}
 
-}
-
-DLLEXPORT Leviathan::ResourceRefreshHandler::~ResourceRefreshHandler(){
-	LEVIATHAN_ASSERT(Staticaccess != this,
+DLLEXPORT Leviathan::ResourceRefreshHandler::~ResourceRefreshHandler()
+{
+    LEVIATHAN_ASSERT(Staticaccess != this,
         "ResourceRefreshHandler should have been released before destructor");
 }
 
-DLLEXPORT ResourceRefreshHandler* Leviathan::ResourceRefreshHandler::Get(){
-	return Staticaccess;
+DLLEXPORT ResourceRefreshHandler* Leviathan::ResourceRefreshHandler::Get()
+{
+    return Staticaccess;
 }
 
 ResourceRefreshHandler* Leviathan::ResourceRefreshHandler::Staticaccess = NULL;
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ResourceRefreshHandler::Init(){
-	// Set the next update time //
-	NextUpdateTime = Time::GetThreadSafeSteadyTimePoint()+MillisecondDuration(1000);
+DLLEXPORT bool Leviathan::ResourceRefreshHandler::Init()
+{
+    // Set the next update time //
+    NextUpdateTime = Time::GetCurrentTimePoint() + MillisecondDuration(1000);
 
-	Staticaccess = this;
-	return true;
+    Staticaccess = this;
+    return true;
 }
 
-DLLEXPORT void Leviathan::ResourceRefreshHandler::Release(){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::ResourceRefreshHandler::Release()
+{
+    GUARD_LOCK();
 
-	Staticaccess = NULL;
+    Staticaccess = NULL;
 
-	// Release all listeners //
-	auto end = ActiveFileListeners.end();
-	for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter){
+    // Release all listeners //
+    auto end = ActiveFileListeners.end();
+    for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter) {
 
-		(*iter)->StopThread();
-	}
+        (*iter)->StopThread();
+    }
 
-    
-	ActiveFileListeners.clear();
+
+    ActiveFileListeners.clear();
 }
 // ------------------------------------ //
 DLLEXPORT bool Leviathan::ResourceRefreshHandler::ListenForFileChanges(
-    const std::vector<const std::string*> &filestowatch, 
-	std::function<void (const std::string &, ResourceFolderListener&)> notifyfunction,
-    int &createdid)
+    const std::vector<const std::string*>& filestowatch,
+    std::function<void(const std::string&, ResourceFolderListener&)> notifyfunction,
+    int& createdid)
 {
 
-	unique_ptr<ResourceFolderListener> tmpcreated(new ResourceFolderListener(filestowatch,
-            notifyfunction));
+    unique_ptr<ResourceFolderListener> tmpcreated(
+        new ResourceFolderListener(filestowatch, notifyfunction));
 
-	createdid = tmpcreated->GetID();
+    createdid = tmpcreated->GetID();
 
-	if(!tmpcreated->StartListening())
-		return false;
+    if(!tmpcreated->StartListening())
+        return false;
 
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// Add it //
-	ActiveFileListeners.push_back(move(tmpcreated));
+    // Add it //
+    ActiveFileListeners.push_back(move(tmpcreated));
 
-	return true;
+    return true;
 }
 
-DLLEXPORT void Leviathan::ResourceRefreshHandler::StopListeningForFileChanges(
-    int idoflistener)
+DLLEXPORT void Leviathan::ResourceRefreshHandler::StopListeningForFileChanges(int idoflistener)
 {
 
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// Find the specific listener //
-	auto end = ActiveFileListeners.end();
-	for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter){
+    // Find the specific listener //
+    auto end = ActiveFileListeners.end();
+    for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter) {
 
-		if((*iter)->GetID() == idoflistener){
+        if((*iter)->GetID() == idoflistener) {
 
-			(*iter)->StopThread();
-			ActiveFileListeners.erase(iter);
-			return;
-		}
-	}
+            (*iter)->StopThread();
+            ActiveFileListeners.erase(iter);
+            return;
+        }
+    }
 }
 
-DLLEXPORT void Leviathan::ResourceRefreshHandler::CheckFileStatus(){
-	GUARD_LOCK();
+DLLEXPORT void Leviathan::ResourceRefreshHandler::CheckFileStatus()
+{
+    GUARD_LOCK();
 
-	if(Time::GetThreadSafeSteadyTimePoint() > NextUpdateTime){
-		// Update all the file listeners //
-		for(size_t i = 0; i < ActiveFileListeners.size(); i++){
+    if(Time::GetCurrentTimePoint() > NextUpdateTime) {
+        // Update all the file listeners //
+        for(size_t i = 0; i < ActiveFileListeners.size(); i++) {
 
-			ActiveFileListeners[i]->CheckUpdatesEnded();
-		}
+            ActiveFileListeners[i]->CheckUpdatesEnded();
+        }
 
-		// Set new update time //
-		NextUpdateTime = Time::GetThreadSafeSteadyTimePoint()+MillisecondDuration(1000);
-	}
+        // Set new update time //
+        NextUpdateTime = Time::GetCurrentTimePoint() + MillisecondDuration(1000);
+    }
 }
 // ------------------------------------ //
 DLLEXPORT void Leviathan::ResourceRefreshHandler::MarkListenersAsNotUpdated(
-    const std::vector<int> &ids)
+    const std::vector<int>& ids)
 {
 
-	GUARD_LOCK();
+    GUARD_LOCK();
 
-	// Find any listeners matching any of the ids //
-	auto end = ActiveFileListeners.end();
-	for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter){
+    // Find any listeners matching any of the ids //
+    auto end = ActiveFileListeners.end();
+    for(auto iter = ActiveFileListeners.begin(); iter != end; ++iter) {
 
-		const int& curid = (*iter)->GetID();
+        const int& curid = (*iter)->GetID();
 
-		// Check against all the ids //
-		auto end2 = ids.end();
-		for(auto iter2 = ids.begin(); iter2 != end2; ++iter2){ 
-			if(curid == *iter2){
+        // Check against all the ids //
+        auto end2 = ids.end();
+        for(auto iter2 = ids.begin(); iter2 != end2; ++iter2) {
+            if(curid == *iter2) {
 
-				(*iter)->MarkAllAsNotUpdated();
-				break;
-			}
-		}
-	}
+                (*iter)->MarkAllAsNotUpdated();
+                break;
+            }
+        }
+    }
 }
 // ------------------ ResourceFolderListener ------------------ //
 Leviathan::ResourceFolderListener::ResourceFolderListener(
-    const std::vector<const std::string*> &filestowatch, 
-	std::function<void (const std::string &, ResourceFolderListener&)> notifyfunction) :
-    ListenedFiles(filestowatch.size()), 
-	UpdatedFiles(filestowatch.size(), false),
-    ID(IDFactory::GetID()), CallbackFunction(notifyfunction)
+    const std::vector<const std::string*>& filestowatch,
+    std::function<void(const std::string&, ResourceFolderListener&)> notifyfunction) :
+    ListenedFiles(filestowatch.size()),
+    UpdatedFiles(filestowatch.size(), false), ID(IDFactory::GetID()),
+    CallbackFunction(notifyfunction)
 {
 #ifdef _WIN32
-	// Avoid having to re-allocate the vector later //
-	SignalingHandles.reserve(1+1);
-	
+    // Avoid having to re-allocate the vector later //
+    SignalingHandles.reserve(1 + 1);
+
 #else
-	
-	InotifyID = inotify_init();
-	
-	if(InotifyID < -1){
-		
-		Logger::Get()->Error("ResourceRefreshHandler: ResourceFolderListener: "
-            "failed to create inotify instance");
-		return;
-	}
-	
+
+    InotifyID = inotify_init();
+
+    if(InotifyID < -1) {
+
+        Logger::Get()->Error("ResourceRefreshHandler: ResourceFolderListener: "
+                             "failed to create inotify instance");
+        return;
+    }
+
 #endif //_WIN32
 
-	// Copy the target files //
-	for(size_t i = 0; i < ListenedFiles.size(); i++){
+    // Copy the target files //
+    for(size_t i = 0; i < ListenedFiles.size(); i++) {
 
-		// Get the folder on the first loop //
-		if(i == 0){
+        // Get the folder on the first loop //
+        if(i == 0) {
 
-			
-			TargetFolder = StringOperations::GetPath<std::string>(*filestowatch[i]);
-		}
 
-		ListenedFiles[i] = make_unique<std::string>(
+            TargetFolder = StringOperations::GetPath<std::string>(*filestowatch[i]);
+        }
+
+        ListenedFiles[i] = make_unique<std::string>(
             StringOperations::RemovePath<std::string>(*filestowatch[i]));
-	}
-
+    }
 }
 
-Leviathan::ResourceFolderListener::~ResourceFolderListener(){
-	LEVIATHAN_ASSERT(ShouldQuit,
-        "ResourceFolderListener should have been stopped before destructor");
+Leviathan::ResourceFolderListener::~ResourceFolderListener()
+{
+    LEVIATHAN_ASSERT(
+        ShouldQuit, "ResourceFolderListener should have been stopped before destructor");
 }
 // ------------------------------------ //
-int Leviathan::ResourceFolderListener::GetID() const{
-	return ID;
+int Leviathan::ResourceFolderListener::GetID() const
+{
+    return ID;
 }
 // ------------------------------------ //
-bool Leviathan::ResourceFolderListener::StartListening(){
+bool Leviathan::ResourceFolderListener::StartListening()
+{
 
 #ifdef _WIN32
-	// First create the stop signaler //
-	HANDLE ourstopper = CreateEvent(NULL, FALSE, FALSE, NULL);
+    // First create the stop signaler //
+    HANDLE ourstopper = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-	if(!ourstopper){
-		
-		Logger::Get()->Error("ResourceFolderListener: StartListening: failed to create stop "
-            "notify handle, CreateEvent failed");
-		return false;
-	}
+    if(!ourstopper) {
 
-
-	SignalingHandles.push_back(ourstopper);
-
-	// Now the folder listener //
-	TargetFolderHandle = CreateFileA(TargetFolder.c_str(), FILE_READ_DATA | FILE_TRAVERSE |
-        FILE_READ_EA, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
-
-	if(TargetFolderHandle == INVALID_HANDLE_VALUE || !TargetFolderHandle){
-
-		Logger::Get()->Error("ResourceFolderListener: StartListening: failed to open folder for "
-            "reading, error: "+Convert::ToHexadecimalString(GetLastError()));
-		return false;
-	}
+        Logger::Get()->Error("ResourceFolderListener: StartListening: failed to create stop "
+                             "notify handle, CreateEvent failed");
+        return false;
+    }
 
 
-	// Create the OVERLAPPED struct next //
-	OverlappedInfo = new OVERLAPPED;
+    SignalingHandles.push_back(ourstopper);
 
-	ZeroMemory(OverlappedInfo, sizeof(OVERLAPPED));
-	
-	// Create an event for notification //
-	HANDLE readcompleteevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    // Now the folder listener //
+    TargetFolderHandle =
+        CreateFileA(TargetFolder.c_str(), FILE_READ_DATA | FILE_TRAVERSE | FILE_READ_EA,
+            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
 
-	if(!readcompleteevent){
+    if(TargetFolderHandle == INVALID_HANDLE_VALUE || !TargetFolderHandle) {
 
-		Logger::Get()->Error("ResourceFolderListener: StartListening: "
+        Logger::Get()->Error(
+            "ResourceFolderListener: StartListening: failed to open folder for "
+            "reading, error: " +
+            Convert::ToHexadecimalString(GetLastError()));
+        return false;
+    }
+
+
+    // Create the OVERLAPPED struct next //
+    OverlappedInfo = new OVERLAPPED;
+
+    ZeroMemory(OverlappedInfo, sizeof(OVERLAPPED));
+
+    // Create an event for notification //
+    HANDLE readcompleteevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+    if(!readcompleteevent) {
+
+        Logger::Get()->Error(
+            "ResourceFolderListener: StartListening: "
             "failed to create read notify handle, CreateEvent failed, error: " +
             Convert::ToHexadecimalString(GetLastError()));
-		return false;
-	} 
+        return false;
+    }
 
-	// Add it to the overlapped //
-	OverlappedInfo->hEvent = readcompleteevent;
-
-
-	
-	OurReadBuffer = new FILE_NOTIFY_INFORMATION[100];
+    // Add it to the overlapped //
+    OverlappedInfo->hEvent = readcompleteevent;
 
 
-	// Create the update notification read thing //
-	BOOL createresult = ReadDirectoryChangesW(TargetFolderHandle, OurReadBuffer,
-        sizeof(FILE_NOTIFY_INFORMATION)*100, 
-		// Only the top level directory is watched
-		FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, NULL, OverlappedInfo, NULL);
 
-	if(!createresult){
+    OurReadBuffer = new FILE_NOTIFY_INFORMATION[100];
 
-		CloseHandle(TargetFolderHandle);
-		Logger::Get()->Error("ResourceFolderListener: StartListening: failed to start reading "
-            "directory changes, error: "+Convert::ToHexadecimalString(GetLastError()));
-		return false;
-	}
 
-	SignalingHandles.push_back(readcompleteevent);
-	
+    // Create the update notification read thing //
+    BOOL createresult = ReadDirectoryChangesW(TargetFolderHandle, OurReadBuffer,
+        sizeof(FILE_NOTIFY_INFORMATION) * 100,
+        // Only the top level directory is watched
+        FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, NULL, OverlappedInfo, NULL);
+
+    if(!createresult) {
+
+        CloseHandle(TargetFolderHandle);
+        Logger::Get()->Error("ResourceFolderListener: StartListening: failed to start reading "
+                             "directory changes, error: " +
+                             Convert::ToHexadecimalString(GetLastError()));
+        return false;
+    }
+
+    SignalingHandles.push_back(readcompleteevent);
+
 #else
-	
-	// Create watches for all of them //
-	
-	InotifyWatches = inotify_add_watch(InotifyID, TargetFolder.c_str(), IN_MODIFY);
-	
-	
-	if(InotifyWatches < 0){
-		
-		
-		Logger::Get()->Error("ResourceRefreshHandler: ResourceFolderListener: failed to add "
-            "watch for folder: "+TargetFolder);
-		return false;
-	}
-	
-		
-	// Allocate the read buffer //
-	ReadBuffer = new char[IN_READ_BUFFER_SIZE];
-	
+
+    // Create watches for all of them //
+
+    InotifyWatches = inotify_add_watch(InotifyID, TargetFolder.c_str(), IN_MODIFY);
+
+
+    if(InotifyWatches < 0) {
+
+
+        Logger::Get()->Error("ResourceRefreshHandler: ResourceFolderListener: failed to add "
+                             "watch for folder: " +
+                             TargetFolder);
+        return false;
+    }
+
+
+    // Allocate the read buffer //
+    ReadBuffer = new char[IN_READ_BUFFER_SIZE];
+
 #endif //_WIN32
-	
 
-	ShouldQuit = false;
 
-	// Finally start the thread //
-	ListenerThread = std::thread(std::bind(&ResourceFolderListener::_RunListeningThread,
-            this));
+    ShouldQuit = false;
 
-	return true;
+    // Finally start the thread //
+    ListenerThread =
+        std::thread(std::bind(&ResourceFolderListener::_RunListeningThread, this));
+
+    return true;
 }
 
-void Leviathan::ResourceFolderListener::StopThread(){
+void Leviathan::ResourceFolderListener::StopThread()
+{
 #ifdef _WIN32
-	// Don't do anything if already done //
-	if(ShouldQuit && SignalingHandles.empty())
-		return;
+    // Don't do anything if already done //
+    if(ShouldQuit && SignalingHandles.empty())
+        return;
 
-	ShouldQuit = true;
+    ShouldQuit = true;
 
-	// Signal the close handle //
-	SetEvent(SignalingHandles[0]);
+    // Signal the close handle //
+    SetEvent(SignalingHandles[0]);
 
-	// Join the thread to wait for it to quit //
-	ListenerThread.join();
+    // Join the thread to wait for it to quit //
+    ListenerThread.join();
 
-	// Close the handles //
-	CloseHandle(SignalingHandles[0]);
-	CloseHandle(SignalingHandles[1]);
-	CloseHandle(TargetFolderHandle);
+    // Close the handles //
+    CloseHandle(SignalingHandles[0]);
+    CloseHandle(SignalingHandles[1]);
+    CloseHandle(TargetFolderHandle);
 
-	SignalingHandles.clear();
+    SignalingHandles.clear();
 
-	if(OurReadBuffer){
-		delete[] OurReadBuffer;
-		OurReadBuffer = NULL;
-	}
+    if(OurReadBuffer) {
+        delete[] OurReadBuffer;
+        OurReadBuffer = NULL;
+    }
 
-	SAFE_DELETE(OverlappedInfo);
+    SAFE_DELETE(OverlappedInfo);
 #else
-	
-	if(ShouldQuit && InotifyID == -1)
-		return;
-	
-	ShouldQuit = true;
-	
-	inotify_rm_watch(InotifyID, InotifyWatches);
-	close(InotifyID);
-	
-	ListenerThread.join();
 
-	if(ReadBuffer){
-		delete[] ReadBuffer;
-		ReadBuffer = NULL;
-	}
-	
-	InotifyID = -1;
-	InotifyWatches = -1;
-	
+    if(ShouldQuit && InotifyID == -1)
+        return;
+
+    ShouldQuit = true;
+
+    inotify_rm_watch(InotifyID, InotifyWatches);
+    close(InotifyID);
+
+    ListenerThread.join();
+
+    if(ReadBuffer) {
+        delete[] ReadBuffer;
+        ReadBuffer = NULL;
+    }
+
+    InotifyID = -1;
+    InotifyWatches = -1;
+
 #endif //_WIN32
 }
 // ------------------------------------ //
-void Leviathan::ResourceFolderListener::_RunListeningThread(){
-	// Run until quit is requested //
-	while(!ShouldQuit){
+void Leviathan::ResourceFolderListener::_RunListeningThread()
+{
+    // Run until quit is requested //
+    while(!ShouldQuit) {
 
 #ifdef _WIN32
-		
-		// Wait for the handles //
-		DWORD waitstatus = WaitForMultipleObjects(static_cast<DWORD>(SignalingHandles.size()), &SignalingHandles[0],
-            FALSE, INFINITE);
 
-		// Check what happened //
-		switch(waitstatus){ 
-		case WAIT_OBJECT_0:
-			
-			// Quit has been called //
-			return;
+        // Wait for the handles //
+        DWORD waitstatus = WaitForMultipleObjects(static_cast<DWORD>(SignalingHandles.size()),
+            &SignalingHandles[0], FALSE, INFINITE);
 
-		case WAIT_OBJECT_0 + 1:
-			{
-				// A modification has been detected //
+        // Check what happened //
+        switch(waitstatus) {
+        case WAIT_OBJECT_0:
 
-				// Check what is detected //
-				FILE_NOTIFY_INFORMATION* dataptr = OurReadBuffer;
+            // Quit has been called //
+            return;
 
-				DWORD numread;
+        case WAIT_OBJECT_0 + 1: {
+            // A modification has been detected //
 
-				GetOverlappedResult(TargetFolderHandle, OverlappedInfo, &numread, FALSE);
+            // Check what is detected //
+            FILE_NOTIFY_INFORMATION* dataptr = OurReadBuffer;
 
-				if(numread < 1){
-					// Nothing read/failed //
-					Logger::Get()->Error("ResourceFolderListener: _RunListeningThread: result "
-                        "has 0 bytes: ");
-					continue;
-				}
+            DWORD numread;
 
-				bool working = true;
+            GetOverlappedResult(TargetFolderHandle, OverlappedInfo, &numread, FALSE);
 
-				while(working){
-					// Check what the notification is //
-					if(dataptr->Action == FILE_ACTION_REMOVED ||
-                        dataptr->Action == FILE_ACTION_RENAMED_OLD_NAME){
+            if(numread < 1) {
+                // Nothing read/failed //
+                Logger::Get()->Error("ResourceFolderListener: _RunListeningThread: result "
+                                     "has 0 bytes: ");
+                continue;
+            }
 
-						goto movetonextdatalabel;
-					}
+            bool working = true;
 
-					{
-						// Get the filename //
-						std::wstring entrydata;
+            while(working) {
+                // Check what the notification is //
+                if(dataptr->Action == FILE_ACTION_REMOVED ||
+                    dataptr->Action == FILE_ACTION_RENAMED_OLD_NAME) {
 
-						size_t filenameinwchars = dataptr->FileNameLength/sizeof(wchar_t);
+                    goto movetonextdatalabel;
+                }
 
-						entrydata.resize(filenameinwchars);
+                {
+                    // Get the filename //
+                    std::wstring entrydata;
 
-						// Copy the data //
-						memcpy_s(&entrydata[0], entrydata.size()*sizeof(wchar_t),
-                            dataptr->FileName, dataptr->FileNameLength);
+                    size_t filenameinwchars = dataptr->FileNameLength / sizeof(wchar_t);
 
-                        std::string utf8file = Convert::Utf16ToUtf8(entrydata);
-                        
-						// Skip if nothing //
-						if(utf8file.empty()){
+                    entrydata.resize(filenameinwchars);
 
-							goto movetonextdatalabel;
-						}
+                    // Copy the data //
+                    memcpy_s(&entrydata[0], entrydata.size() * sizeof(wchar_t),
+                        dataptr->FileName, dataptr->FileNameLength);
+
+                    std::string utf8file = Convert::Utf16ToUtf8(entrydata);
+
+                    // Skip if nothing //
+                    if(utf8file.empty()) {
+
+                        goto movetonextdatalabel;
+                    }
 
 
-						// Check which file matches and set it as updated //
-						for(size_t i = 0; i < ListenedFiles.size(); i++){
+                    // Check which file matches and set it as updated //
+                    for(size_t i = 0; i < ListenedFiles.size(); i++) {
 
-							if(*ListenedFiles[i] == utf8file){
+                        if(*ListenedFiles[i] == utf8file) {
 
-								// Updated //
-								UpdatedFiles[i] = true;
-								break;
-							}
-						}
-					}
-movetonextdatalabel:
+                            // Updated //
+                            UpdatedFiles[i] = true;
+                            break;
+                        }
+                    }
+                }
+            movetonextdatalabel:
 
-					if(!dataptr->NextEntryOffset){
+                if(!dataptr->NextEntryOffset) {
 
-						// No more entries
-						working = false;
-						break;
-					} else {
-						// Move to next entry //
+                    // No more entries
+                    working = false;
+                    break;
+                } else {
+                    // Move to next entry //
 
-						char* tmpptr = reinterpret_cast<char*>(dataptr);
-						tmpptr += dataptr->NextEntryOffset;
+                    char* tmpptr = reinterpret_cast<char*>(dataptr);
+                    tmpptr += dataptr->NextEntryOffset;
 
-						dataptr = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(tmpptr);
-					}
-				}
+                    dataptr = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(tmpptr);
+                }
+            }
 
-				// Start listening again //
-				BOOL createresult = ReadDirectoryChangesW(TargetFolderHandle, OurReadBuffer,
-                    sizeof(FILE_NOTIFY_INFORMATION)*100, 
-					// Only the top level directory is watched
-					FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, NULL, OverlappedInfo, NULL);
+            // Start listening again //
+            BOOL createresult = ReadDirectoryChangesW(TargetFolderHandle, OurReadBuffer,
+                sizeof(FILE_NOTIFY_INFORMATION) * 100,
+                // Only the top level directory is watched
+                FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE, NULL, OverlappedInfo, NULL);
 
-				if(!createresult){
+            if(!createresult) {
 
-					Logger::Get()->Error("ResourceFolderListener: _RunListeningThread: "
-                        "re-queuing file change read failed: "+
-                        Convert::ToHexadecimalString(GetLastError()));
-					return;
-				}
+                Logger::Get()->Error("ResourceFolderListener: _RunListeningThread: "
+                                     "re-queuing file change read failed: " +
+                                     Convert::ToHexadecimalString(GetLastError()));
+                return;
+            }
 
-			}
-			break; 
+        } break;
 
-		case WAIT_TIMEOUT:
-			// NO such thing, continue!
-			continue;
+        case WAIT_TIMEOUT:
+            // NO such thing, continue!
+            continue;
 
-		default:
-			Logger::Get()->Error("ResourceFolderListener: _RunListeningThread: invalid wait "
-                "result: "+Convert::ToString(waitstatus));
-			break;
-		}
-			
+        default:
+            Logger::Get()->Error("ResourceFolderListener: _RunListeningThread: invalid wait "
+                                 "result: " +
+                                 Convert::ToString(waitstatus));
+            break;
+        }
+
 #else
-		
-		// Read the changes until the end of time //
-		int readcount = read(InotifyID, ReadBuffer, IN_READ_BUFFER_SIZE);
-		
-		if(readcount < 0){
-			
-			// Failed reading, quit //
-			Logger::Get()->Warning("ResourceFolderListener: read failed, quitting thread");
-			return;
-		}
-		
-		// Handle all the data //
-		for(int i = 0; i < readcount; ){
 
-			// Break if invalid buffer //
-			if(!ReadBuffer)
-				return;
-			
-			inotify_event* event = reinterpret_cast<inotify_event*>(&ReadBuffer[i]);
-			
-			if(event->len){
-				
-				if(event->mask & IN_MODIFY){
-					if(!(event->mask & IN_ISDIR)){
-						
-						// Some file was modified, check was it one of ours //
-						const string modifiedfile(event->name, event->len);
-						
-						if(!modifiedfile.empty()){
-							
-							// Check which file matches and set it as updated //
-							for(size_t i = 0; i < ListenedFiles.size(); i++){
+        // Read the changes until the end of time //
+        int readcount = read(InotifyID, ReadBuffer, IN_READ_BUFFER_SIZE);
 
-								if(*ListenedFiles[i] == modifiedfile){
+        if(readcount < 0) {
 
-									// Updated //
-									UpdatedFiles[i] = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-			
-			i += IN_EVENT_SIZE+event->len;
-		}
-		
-		
-		
+            // Failed reading, quit //
+            Logger::Get()->Warning("ResourceFolderListener: read failed, quitting thread");
+            return;
+        }
+
+        // Handle all the data //
+        for(int i = 0; i < readcount;) {
+
+            // Break if invalid buffer //
+            if(!ReadBuffer)
+                return;
+
+            inotify_event* event = reinterpret_cast<inotify_event*>(&ReadBuffer[i]);
+
+            if(event->len) {
+
+                if(event->mask & IN_MODIFY) {
+                    if(!(event->mask & IN_ISDIR)) {
+
+                        // Some file was modified, check was it one of ours //
+                        const string modifiedfile(event->name, event->len);
+
+                        if(!modifiedfile.empty()) {
+
+                            // Check which file matches and set it as updated //
+                            for(size_t i = 0; i < ListenedFiles.size(); i++) {
+
+                                if(*ListenedFiles[i] == modifiedfile) {
+
+                                    // Updated //
+                                    UpdatedFiles[i] = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            i += IN_EVENT_SIZE + event->len;
+        }
+
+
+
 #endif //_Win32
-	}
+    }
 }
 // ------------------------------------ //
-void Leviathan::ResourceFolderListener::CheckUpdatesEnded(){
-	// Check are some updated files readable //
-	for(size_t i = 0; i < UpdatedFiles.size(); i++){
+void Leviathan::ResourceFolderListener::CheckUpdatesEnded()
+{
+    // Check are some updated files readable //
+    for(size_t i = 0; i < UpdatedFiles.size(); i++) {
 
-		if(UpdatedFiles[i]){
+        if(UpdatedFiles[i]) {
 
-			// Check is it readable //
-			const std::string checkread = TargetFolder+*ListenedFiles[i];
+            // Check is it readable //
+            const std::string checkread = TargetFolder + *ListenedFiles[i];
 
-			ifstream reader(checkread);
+            ifstream reader(checkread);
 
-			if(reader.is_open()){
+            if(reader.is_open()) {
 
-				reader.close();
+                reader.close();
 
-				// Notify that the file is now available //
-				CallbackFunction(*ListenedFiles[i], *this);
-				UpdatedFiles[i] = false;
-			}
-		}
-	}
+                // Notify that the file is now available //
+                CallbackFunction(*ListenedFiles[i], *this);
+                UpdatedFiles[i] = false;
+            }
+        }
+    }
 }
 // ------------------------------------ //
-void Leviathan::ResourceFolderListener::MarkAllAsNotUpdated(){
-	auto end = UpdatedFiles.end();
-	for(auto iter = UpdatedFiles.begin(); iter != end; ++iter){
+void Leviathan::ResourceFolderListener::MarkAllAsNotUpdated()
+{
+    auto end = UpdatedFiles.end();
+    for(auto iter = UpdatedFiles.begin(); iter != end; ++iter) {
 
-		(*iter) = false;
-	}
+        (*iter) = false;
+    }
 }
 // ------------------------------------ //
-DLLEXPORT bool Leviathan::ResourceFolderListener::IsAFileStillUpdated() const{
-	// Try to find a set bool //
-	auto end = UpdatedFiles.end();
-	for(auto iter = UpdatedFiles.begin(); iter != end; ++iter){
+DLLEXPORT bool Leviathan::ResourceFolderListener::IsAFileStillUpdated() const
+{
+    // Try to find a set bool //
+    auto end = UpdatedFiles.end();
+    for(auto iter = UpdatedFiles.begin(); iter != end; ++iter) {
 
-		if((*iter)){
+        if((*iter)) {
 
-			return true;
-		}
-	}
+            return true;
+        }
+    }
 
-	// No file is marked as updated //
-	return false;
+    // No file is marked as updated //
+    return false;
 }

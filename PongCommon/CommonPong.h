@@ -394,9 +394,8 @@ public:
     }
 
     //! Override this
-    virtual void Tick(int mspassed) override
+    virtual void Tick(float elapsed) override
     {
-
         DEBUG_BREAK;
     }
 

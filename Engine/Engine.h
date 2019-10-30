@@ -7,6 +7,9 @@
 #include "Entities/WorldNetworkSettings.h"
 #include "Networking/CommonNetwork.h"
 
+// Maybe this header could be hidden with a Pimpl
+#include "TimeIncludes.h"
+
 #include <functional>
 #include <inttypes.h>
 #include <list>
@@ -61,17 +64,20 @@ public:
 
     //! \brief Calculates how long has elapsed since the last tick
     //! \return The time in milliseconds
-    DLLEXPORT int64_t GetTimeSinceLastTick() const;
+    DLLEXPORT SecondDuration GetTimeSinceLastTick() const;
 
-    //! \brief Returns the number of tick that was last simulated
-    DLLEXPORT int GetCurrentTick() const;
+    // //! \brief Returns the number of tick that was last simulated
+    // DLLEXPORT int GetCurrentTick() const;
 
-    //! \brief Processes queued messages from Ogre, SDL and input
+    //! \brief Processes queued messages from SDL and CEF
     DLLEXPORT void MessagePump();
 
+    //! \brief Runs an update cycle (tick and rendering if needed)
+    //! \returns The time in seconds until next update time (this value is used to sleep in
+    //! Application)
+    DLLEXPORT float Update();
 
-    DLLEXPORT void Tick();
-    DLLEXPORT void RenderFrame();
+    //! \brief Called by Application before the first Update call
     DLLEXPORT void PreFirstTick();
 
     DLLEXPORT int GetWindowOpenCount();
@@ -260,7 +266,6 @@ public:
     // Command line settings can only be set before initializing //
     inline void SetNoGUI()
     {
-
         NoGui = true;
     }
 
@@ -269,6 +274,12 @@ public:
     DLLEXPORT static Engine* Get();
 
 protected:
+    DLLEXPORT void Tick(float elapsed);
+    DLLEXPORT void RenderFrame(float elapsed);
+
+    //! \brief Handles InvokeQueue
+    DLLEXPORT void ProcessInvokes();
+
     // after load function //
     void PostLoad();
 
@@ -278,22 +289,8 @@ protected:
 
     //! Function called by first instance of Window class after creating a window to not error
     //! when registering threads to work with Ogre
+    //! \todo Rename this
     void _NotifyThreadsRegisterOgre();
-
-    //! \brief Sets the tick clock to a certain value
-    //! \note Should only be used to match the server's clock
-    //! \param amount The amount of time in milliseconds to set or change
-    //! \param absolute When true sets the time until a tick to amount otherwise
-    //! changes the remaining
-    //! time by amount
-    void _AdjustTickClock(int amount, bool absolute = true);
-
-    //! \brief Sets the tick number to a specified value
-    //! \note Should only be called on the client as this may break some simulations
-    void _AdjustTickNumber(int tickamount, bool absolute);
-
-    //! \brief Handles InvokeQueue
-    DLLEXPORT void ProcessInvokes();
 
     //! Console input comes through this
     bool _ReceiveConsoleInput(const std::string& command);
@@ -301,7 +298,7 @@ protected:
     //! Runs all commands in QueuedConsoleCommands
     void _RunQueuedConsoleCommands();
 
-    // ------------------------------------ //
+protected:
     AppDef* Define = nullptr;
 
     RenderingStatistics* RenderTimer = nullptr;
@@ -344,14 +341,14 @@ protected:
     //! Mutex that is locked while NetworkHandler is used
     std::mutex NetworkHandlerLock;
 
-    // data //
-    int64_t LastTickTime;
+    //! Time when last ticked, used to track elapsed time
+    TimePoint LastTickTime;
 
-    int TimePassed = 0;
-    int FrameLimit = 0;
+    //! Max FPS
+    int FrameLimit = -1;
+    int FrameCount = 0;
     int TickCount = 0;
     int TickTime = 0;
-    int FrameCount = 0;
 
     //! Set when PreRelease is called and Tick has happened
     bool PreReleaseDone = false;
@@ -361,6 +358,7 @@ protected:
     bool PreReleaseWaiting = false;
 
     // Engine settings //
+    //! \todo Rename to headless
     bool NoGui = false;
     bool NoLeap = false;
     bool NoSTDInput = false;
@@ -374,12 +372,11 @@ protected:
     bool PreReleaseCompleted = false;
 
 
-    // Invoke store //
     RecursiveMutex InvokeLock;
     std::list<std::function<void()>> InvokeQueue;
 
     // Stores the command line before running it //
-    //! \todo Remove this doesn't work now and needs redoing
+    //! \todo Remove this, doesn't work now and needs redoing
     std::vector<std::unique_ptr<std::string>> PassedCommands;
 
     //! Stores console commands that came from the command line

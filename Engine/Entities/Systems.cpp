@@ -44,7 +44,7 @@ void SendableHandleHelper(ObjectID id, Sendable& obj, GameWorld& world,
     const std::shared_ptr<Connection>& connection,
     const std::shared_ptr<EntityState>& curstate, bool server)
 {
-    const auto ticknumber = world.GetTickNumber();
+    const auto time = world.GetCurrentWorldTime();
 
     // Determine if this is initial data or an update
     bool initial = true;
@@ -63,7 +63,7 @@ void SendableHandleHelper(ObjectID id, Sendable& obj, GameWorld& world,
             int referencetick = -1;
 
             if(iter->LastConfirmedData &&
-                (ticknumber <
+                (time <
                     iter->LastConfirmedTickNumber + BASESENDABLE_STORED_RECEIVED_STATES - 1)) {
                 referencetick = iter->LastConfirmedTickNumber;
 
@@ -82,9 +82,9 @@ void SendableHandleHelper(ObjectID id, Sendable& obj, GameWorld& world,
             // Send the update packet
             auto sentThing = connection->SendPacketToConnectionWithTrackingWithoutGuarantee(
                 ResponseEntityUpdate(
-                    0, world.GetID(), ticknumber, referencetick, id, std::move(updateData)));
+                    0, world.GetID(), time, referencetick, id, std::move(updateData)));
 
-            iter->AddSentPacket(ticknumber, curstate, sentThing);
+            iter->AddSentPacket(time, curstate, sentThing);
 
             break;
         }
@@ -115,11 +115,11 @@ void SendableHandleHelper(ObjectID id, Sendable& obj, GameWorld& world,
         curstate->AddDataToPacket(updateData);
 
         auto sentThing = connection->SendPacketToConnectionWithTrackingWithoutGuarantee(
-            ResponseEntityUpdate(0, world.GetID(), ticknumber, -1, id, std::move(updateData)));
+            ResponseEntityUpdate(0, world.GetID(), time, -1, id, std::move(updateData)));
 
         // And add the connection to the receivers
         obj.UpdateReceivers.emplace_back(connection);
-        obj.UpdateReceivers.back().AddSentPacket(ticknumber, curstate, sentThing);
+        obj.UpdateReceivers.back().AddSentPacket(time, curstate, sentThing);
     }
 }
 
@@ -241,7 +241,7 @@ DLLEXPORT void SendableSystem::HandleNode(ObjectID id, Sendable& obj, GameWorld&
 // ------------------------------------ //
 // AnimationSystem
 DLLEXPORT void AnimationSystem::Run(
-    GameWorld& world, std::unordered_map<ObjectID, Animated*>& index, int tick, int timeintick)
+    GameWorld& world, std::unordered_map<ObjectID, Animated*>& index, float elapsed)
 {
     Graphics* graphics = Engine::Get()->GetGraphics();
 

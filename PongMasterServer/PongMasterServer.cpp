@@ -31,7 +31,7 @@ void PongMasterServer::_ShutdownApplicationPacketHandler()
     MasterInterface.reset();
 }
 // ------------------------------------ //
-void Pong::PongMasterServer::Tick(int mspassed) {}
+void Pong::PongMasterServer::Tick(float elapsed) {}
 // ------------------------------------ //
 void Pong::PongMasterServer::CustomizeEnginePostLoad() {}
 

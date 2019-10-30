@@ -3,8 +3,8 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "EditorNetHandler.h"
 #include "EditorConfiguredHeader.h"
+#include "EditorNetHandler.h"
 
 #include "Application/Application.h"
 #include "Generated/StandardWorld.h"
@@ -22,7 +22,7 @@ public:
         return Leviathan::NETWORKED_TYPE::Client;
     }
 
-    void Tick(int mspassed) override;
+    void Tick(float elapsed) override;
 
     void CustomizeEnginePostLoad() override;
     void EnginePreShutdown() override;

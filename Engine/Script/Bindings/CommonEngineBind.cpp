@@ -243,7 +243,7 @@ static float PIProxy = PI;
 
 static float EPSILONProxy = EPSILON;
 
-static int TICKSPEEDProxy = TICKSPEED;
+// static int TICKSPEEDProxy = TICKSPEED;
 
 static float DEGREES_TO_RADIANSProxy = DEGREES_TO_RADIANS;
 static float RADIANS_TO_DEGREESProxy = RADIANS_TO_DEGREES;
@@ -662,10 +662,11 @@ bool BindEngine(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Engine", "int GetCurrentTick()",
-           asMETHOD(Engine, GetCurrentTick), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // TODO: restore once confirmed nothing is misusing this
+    // if(engine->RegisterObjectMethod("Engine", "int GetCurrentTick()",
+    //        asMETHOD(Engine, GetCurrentTick), asCALL_THISCALL) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     if(engine->RegisterObjectMethod("Engine", "int GetWindowOpenCount()",
            asMETHOD(Engine, GetWindowOpenCount), asCALL_THISCALL) < 0) {
@@ -1007,10 +1008,10 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalProperty("const int TICKSPEED", &TICKSPEEDProxy) < 0) {
+    // if(engine->RegisterGlobalProperty("const int TICKSPEED", &TICKSPEEDProxy) < 0) {
 
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     return true;
 }

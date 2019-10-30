@@ -47,7 +47,7 @@ std::string DemosApplication::GenerateWindowTitle()
     return std::string("Demos version " GAME_VERSIONS " Leviathan " LEVIATHAN_VERSION_ANSIS);
 }
 // ------------------------------------ //
-void DemosApplication::Tick(int mspassed) {}
+void DemosApplication::Tick(float elapsed) {}
 // ------------------------------------ //
 void DemosApplication::CustomizeEnginePostLoad()
 {

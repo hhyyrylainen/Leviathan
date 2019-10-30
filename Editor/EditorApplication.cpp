@@ -45,7 +45,7 @@ std::string EditorApplication::GenerateWindowTitle()
     return std::string("Standalone Editor for Leviathan " LEVIATHAN_VERSION_ANSIS);
 }
 // ------------------------------------ //
-void EditorApplication::Tick(int mspassed) {}
+void EditorApplication::Tick(float elapsed) {}
 // ------------------------------------ //
 void EditorApplication::CustomizeEnginePostLoad()
 {

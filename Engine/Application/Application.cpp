@@ -3,8 +3,7 @@
 
 #include "FileSystem.h"
 #include "Iterators/StringIterator.h"
-
-#include <iostream>
+#include "TimeIncludes.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -99,7 +98,7 @@ DLLEXPORT void LeviathanApplication::ForceRelease()
     if(_Engine) {
         // The prelease does some which requires a tick //
         _Engine->PreRelease();
-        _Engine->Tick();
+        _Engine->Update();
         _Engine->Release(true);
     }
 
@@ -111,24 +110,23 @@ DLLEXPORT bool LeviathanApplication::PassCommandLine(int argcount, char* args[])
     return _Engine->PassCommandLine(argcount, args);
 }
 
-DLLEXPORT void LeviathanApplication::_InternalInit() {}
-// ------------------------------------ //
-DLLEXPORT void LeviathanApplication::Render()
-{
-    _Engine->RenderFrame();
-}
 
-DLLEXPORT void LeviathanApplication::PreFirstTick() {}
+// ------------------------------------ //
+DLLEXPORT float LeviathanApplication::RunSingleUpdate()
+{
+    return _Engine->Update();
+}
 // ------------------------------------ //
 DLLEXPORT int LeviathanApplication::RunMessageLoop()
 {
-    // This is almost at tick so call this outside the loop for performance //
     _Engine->PreFirstTick();
     PreFirstTick();
 
     // For reporting wait failures //
     int FailCount = 0;
 
+    // Run until engine prerelease is done.
+    // We need to have done a proper run after calling StartRelease
     while(!_Engine->HasPreReleaseBeenDone()) {
         // Store this //
         bool canprocess = _Engine->GetWindowOpenCount() != 0;
@@ -141,29 +139,39 @@ DLLEXPORT int LeviathanApplication::RunMessageLoop()
             StartRelease();
         }
 
-        // engine tick //
-        _Engine->Tick();
+        // Engine tick and render
+        const float waitTime = RunSingleUpdate();
 
         if(ShouldQuit || Quit) {
-            // We need to have done a proper run after calling StartRelease //
             continue;
         }
 
-        Render();
+        if(waitTime > 0) {
 
-        // We could potentially wait here //
-        //! TODO: make this wait happen only if tick wasn't actually and no frame was
-        //! rendered
-        try {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        } catch(...) {
-            FailCount++;
+            if(waitTime >= 0.002f || PreferSleepOverLoopAccuracy) {
+                try {
+                    std::this_thread::sleep_for(SecondDuration(waitTime));
+                } catch(...) {
+                    FailCount++;
+                }
+            } else {
+                // Busy wait the duration
+                const auto start = Time::GetCurrentTimePoint();
+
+                while(std::chrono::duration_cast<SecondDuration>(
+                          Time::GetCurrentTimePoint() - start)
+                          .count() < waitTime) {
+                }
+            }
         }
     }
 
     // Report problems //
-    if(FailCount)
-        std::cout << "Application main loop sleep fails: " << FailCount << std::endl;
+    if(FailCount) {
+        if(Logger::Get())
+            Logger::Get()->Error(
+                "Application main loop sleep fails: " + std::to_string(FailCount));
+    }
 
     // always release before quitting to avoid tons of memory leaks //
     Release();
@@ -173,17 +181,19 @@ DLLEXPORT int LeviathanApplication::RunMessageLoop()
 // ------------------------------------ //
 DLLEXPORT void LeviathanApplication::ClearTimers()
 {
-
     _Engine->ClearTimers();
 }
 // ------------------ Default callbacks that do nothing ------------------ //
 DLLEXPORT bool LeviathanApplication::InitLoadCustomScriptTypes(asIScriptEngine* engine)
 {
-
     return true;
 }
 
-DLLEXPORT void LeviathanApplication::Tick(int mspassed) {}
+DLLEXPORT void LeviathanApplication::Tick(float elapsed) {}
+
+DLLEXPORT void LeviathanApplication::PreFirstTick() {}
+
+DLLEXPORT void LeviathanApplication::_InternalInit() {}
 
 DLLEXPORT void LeviathanApplication::CustomizeEnginePostLoad() {}
 
@@ -191,7 +201,6 @@ DLLEXPORT void LeviathanApplication::EnginePreShutdown() {}
 
 DLLEXPORT std::shared_ptr<GameWorld> LeviathanApplication::GetGameWorld(int id)
 {
-
     return nullptr;
 }
 
@@ -203,7 +212,7 @@ DLLEXPORT void LeviathanApplication::DummyGameConfigurationVariables(
 DLLEXPORT void LeviathanApplication::DummyGameKeyConfigVariables(
     KeyConfiguration* keyconfigobj)
 {}
-
+// ------------------------------------ //
 DLLEXPORT void LeviathanApplication::MarkAsClosing()
 {
     QuitSometime = true;

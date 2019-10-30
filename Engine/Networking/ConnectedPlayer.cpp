@@ -49,7 +49,7 @@ DLLEXPORT void ConnectedPlayer::StartHeartbeats()
     // Reset our variables //
     UsingHeartbeats = true;
 
-    LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
+    LastReceivedHeartbeat = Time::GetCurrentTimePoint();
     LastSentHeartbeat = LastReceivedHeartbeat;
     SecondsWithoutConnection = 0.f;
 }
@@ -58,7 +58,7 @@ DLLEXPORT void ConnectedPlayer::HeartbeatReceived()
 {
     // Reset all timers //
 
-    LastReceivedHeartbeat = Time::GetThreadSafeSteadyTimePoint();
+    LastReceivedHeartbeat = Time::GetCurrentTimePoint();
 
     // Re-acquire controls, if lost in the first place //
     if(IsControlLost) {
@@ -75,7 +75,7 @@ DLLEXPORT void ConnectedPlayer::UpdateHeartbeats()
         return;
 
     // Check do we need to send one //
-    auto timenow = Time::GetThreadSafeSteadyTimePoint();
+    auto timenow = Time::GetCurrentTimePoint();
 
     if(timenow >= LastSentHeartbeat + MillisecondDuration(HEARTBEATS_MILLISECOND)) {
 

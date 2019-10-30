@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -12,7 +12,9 @@
 
 namespace Leviathan {
 
-//! Number of states that are kept. Corresponds to time span of TICKSPEED * KEPT_STATES_COUNT
+//! Number of states that are kept.
+//! Needs to be high enough that no currently interpolating states are dumped (unless we are in
+//! some special condition where our client side clock is messed up or we are lagging)
 constexpr auto KEPT_STATES_COUNT = 5;
 
 template<class StateT>
@@ -22,64 +24,58 @@ class StateHolder;
 template<class StateT>
 class ObjectsComponentStates {
 public:
-    //! \brief Returns the state with the highest tick number
+    //! \brief Returns the state with the time
     StateT* GetNewest() const
     {
         StateT* newest = nullptr;
-        int newestTick = 0;
+        float highest = 0;
 
         for(StateT* state : StoredStates) {
 
-            if(state && state->TickNumber >= newestTick) {
+            if(state && state->StateTime >= highest) {
 
                 newest = state;
-                newestTick = state->TickNumber;
+                highest = state->StateTime;
             }
         }
 
         return newest;
     }
 
-    //! \brief Returns the state with the lowest tick number
+    //! \brief Returns the state with the lowest time
     StateT* GetOldest() const
     {
         StateT* oldest = nullptr;
-        int oldestTick = std::numeric_limits<int>::max();
+        float lowest = std::numeric_limits<float>::max();
 
         for(StateT* state : StoredStates) {
 
-            if(state && state->TickNumber <= oldestTick) {
+            if(state && state->StateTime <= lowest) {
 
                 oldest = state;
-                oldestTick = state->TickNumber;
+                lowest = state->StateTime;
             }
         }
 
         return oldest;
     }
 
-    //! \brief Returns the state matching the tick number or the
-    //! closest tick that is higher than the tick number
+    //! \brief Returns the state with closest time that is higher
     //! \todo How can the caller of this method detect when a state
     //! has been missed and should instead (maybe) wait a bit? Or
     //! should we just skip missed states and start interpolating from
     //! the later state
-    StateT* GetMatchingOrNewer(int ticknumber) const
+    StateT* GetNewer(float time) const
     {
         StateT* closest = nullptr;
-        int closestBy = std::numeric_limits<int>::max();
+        float closestBy = std::numeric_limits<float>::max();
 
         for(StateT* state : StoredStates) {
 
-            if(!state || state->TickNumber < ticknumber)
+            if(!state || state->StateTime <= time)
                 continue;
 
-            if(state->TickNumber == ticknumber) {
-
-                return state;
-            }
-
-            const auto difference = state->TickNumber - ticknumber;
+            const auto difference = state->StateTime - time;
             if(difference <= closestBy) {
 
                 closestBy = difference;
@@ -90,12 +86,12 @@ public:
         return closest;
     }
 
-    //! \brief Returns state matching tick number
-    StateT* GetState(int ticknumber) const
+    //! \brief Returns state matching the time
+    StateT* GetState(float time) const
     {
         for(StateT* state : StoredStates) {
 
-            if(state && state->TickNumber == ticknumber)
+            if(state && state->StateTime == time)
                 return state;
         }
 
@@ -179,7 +175,7 @@ public:
     //! \brief Creates a new state for entity's component if it has changed
     //! \returns True if a new state was created
     template<class ComponentT>
-    bool CreateStateIfChanged(ObjectID id, const ComponentT& component, int ticknumber)
+    bool CreateStateIfChanged(ObjectID id, const ComponentT& component, float time)
     {
         auto entityStates = GetStateFor(id);
 
@@ -189,7 +185,7 @@ public:
         // If empty always create //
         if(!latestState) {
 
-            StateT* newState = _CreateNewState(ticknumber, component);
+            StateT* newState = _CreateNewState(time, component);
             entityStates->Append(newState, *this);
             return true;
         }
@@ -199,31 +195,30 @@ public:
             return false;
 
         // Create a new state //
-        StateT* newState = _CreateNewState(ticknumber, component);
+        StateT* newState = _CreateNewState(time, component);
         entityStates->Append(newState, *this);
         return true;
     }
 
     //! \brief Deserializes a state for entity's component from an archive
-    void DeserializeState(
-        ObjectID id, int32_t ticknumber, sf::Packet& data, int32_t referencetick)
+    void DeserializeState(ObjectID id, float time, sf::Packet& data, float referencestatestime)
     {
         auto entityStates = GetStateFor(id);
 
-        this->_DeserializeState(entityStates, id, ticknumber, data, referencetick);
+        this->_DeserializeState(entityStates, id, time, data, referencestatestime);
     }
 
     //! \brief Deserializes a state for entity's component from an archive and applies it if it
     //! is the newest
     template<class ComponentT>
-    void DeserializeAndApplyState(ObjectID id, ComponentT& component, int32_t ticknumber,
-        sf::Packet& data, int32_t referencetick)
+    void DeserializeAndApplyState(ObjectID id, ComponentT& component, float time,
+        sf::Packet& data, float referencestatestime)
     {
         auto entityStates = GetStateFor(id);
 
         // Deserialize
         auto* deserialized =
-            this->_DeserializeState(entityStates, id, ticknumber, data, referencetick);
+            this->_DeserializeState(entityStates, id, time, data, referencestatestime);
 
         if(!deserialized) {
             LOG_ERROR("StateHolder: failed to deserialize state");
@@ -237,20 +232,20 @@ public:
 
             component.ApplyState(*newest);
         } else {
-            int newestNumber = newest ? newest->TickNumber : -1;
+            float newestNumber = newest ? newest->StateTime : -1;
 
             LOG_WARNING("StateHolder: DeserializeAndApplyState: received not the newest "
                         "packet, received: " +
-                        std::to_string(deserialized->TickNumber) +
+                        std::to_string(deserialized->StateTime) +
                         ", newest: " + std::to_string(newestNumber));
         }
     }
 
     //! \brief Creates a state object for sending
     template<class ComponentT>
-    StateT CreateStateForSending(const ComponentT& component, int ticknumber) const
+    StateT CreateStateForSending(const ComponentT& component, float time) const
     {
-        return StateT(ticknumber, component);
+        return StateT(time, component);
     }
 
 
@@ -268,17 +263,17 @@ public:
 
 protected:
     inline StateT* _DeserializeState(ObjectsComponentStates<StateT>* entityStates, ObjectID id,
-        int32_t ticknumber, sf::Packet& data, int32_t referencetick)
+        float time, sf::Packet& data, float referencestatestime)
     {
         StateT* reference = nullptr;
 
-        if(referencetick != -1) {
-            reference = entityStates->GetState(referencetick);
+        if(referencestatestime >= 0.f) {
+            reference = entityStates->GetState(referencestatestime);
 
             if(!reference) {
 
                 LOG_WARNING("StateHolder: DeserializeState: can't find reference tick: " +
-                            std::to_string(referencetick) +
+                            std::to_string(referencestatestime) +
                             " for entity: " + std::to_string(id));
 
                 reference = entityStates->GetNewest();
@@ -289,10 +284,9 @@ protected:
         StateT* newState = _CreateNewState(reference, data);
 
         // This can't be deserialized from data so we forward it
-        newState->TickNumber = ticknumber;
+        newState->StateTime = time;
 
-        // TODO: do we need to check whether the states already contain a state for this
-        // tick?
+        // TODO: do we need to check whether the states already contain a state for this time
         entityStates->Append(newState, *this);
         return newState;
     }

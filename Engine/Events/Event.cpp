@@ -4,7 +4,6 @@
 #include "Exceptions.h"
 #include <boost/assign/list_of.hpp>
 using namespace Leviathan;
-using namespace std;
 // ------------------------------------ //
 DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) :
     Type(type), Data(data)
@@ -12,8 +11,7 @@ DLLEXPORT Leviathan::Event::Event(EVENT_TYPE type, BaseEventData* data) :
     // Check that types that require values have values //
     if(!Data) {
         // Check that the event has data //
-        if(Type == EVENT_TYPE_FRAME_BEGIN || Type == EVENT_TYPE_FRAME_END ||
-            Type == EVENT_TYPE_TICK) {
+        if(Type == EVENT_TYPE_FRAME_BEGIN || Type == EVENT_TYPE_TICK) {
 
             throw InvalidArgument("Event that requires data, didn't get it");
         }
@@ -58,13 +56,8 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet& packet)
     // Load based on type //
     switch(Type) {
     case EVENT_TYPE_FRAME_BEGIN:
-    case EVENT_TYPE_FRAME_END:
     case EVENT_TYPE_TICK: {
-        Data = new IntegerEventData(packet);
-        break;
-    }
-    case EVENT_TYPE_CLIENT_INTERPOLATION: {
-        Data = new ClientInterpolationEventData(packet);
+        Data = new FloatEventData(packet);
         break;
     }
     default:
@@ -74,18 +67,10 @@ DLLEXPORT Leviathan::Event::Event(sf::Packet& packet)
 }
 #endif // LEVIATHAN_USING_SFML
 // ------------------------------------ //
-DLLEXPORT ClientInterpolationEventData* Event::GetDataForClientInterpolationEvent() const
+DLLEXPORT FloatEventData* Leviathan::Event::GetFloatDataForEvent() const
 {
-    if(Type == EVENT_TYPE_CLIENT_INTERPOLATION)
-        return static_cast<ClientInterpolationEventData*>(Data);
-    return NULL;
-}
-
-DLLEXPORT IntegerEventData* Leviathan::Event::GetIntegerDataForEvent() const
-{
-    if(Type == EVENT_TYPE_TICK || Type == EVENT_TYPE_FRAME_BEGIN ||
-        Type == EVENT_TYPE_FRAME_END)
-        return static_cast<IntegerEventData*>(Data);
+    if(Type == EVENT_TYPE_TICK || Type == EVENT_TYPE_FRAME_BEGIN)
+        return static_cast<FloatEventData*>(Data);
     return NULL;
 }
 // ------------------ GenericEvent ------------------ //
@@ -116,14 +101,14 @@ DLLEXPORT Leviathan::GenericEvent::~GenericEvent()
 DLLEXPORT Leviathan::GenericEvent::GenericEvent(sf::Packet& packet)
 {
     // Load data from the packet //
-    unique_ptr<std::string> tmpstr(new std::string());
+    std::unique_ptr<std::string> tmpstr(new std::string());
     if(!(packet >> *tmpstr)) {
 
         throw InvalidArgument("packet has invalid format");
     }
 
     // Try to get the named variables //
-    unique_ptr<NamedVars> tmpvars(new NamedVars(packet));
+    std::unique_ptr<NamedVars> tmpvars(new NamedVars(packet));
 
     // Take the string away from the smart pointer //
     TypeStr = tmpstr.release();
@@ -166,66 +151,23 @@ DLLEXPORT NamedVars* Leviathan::GenericEvent::GetNamedVarsRefCounted()
     Variables->AddRef();
     return Variables;
 }
-// ------------------ ClientInterpolationEventData ------------------ //
-void ClientInterpolationEventData::CalculatePercentage()
-{
-
-    Percentage = TimeInTick / (float)TICKSPEED;
-
-    // Clamp the value to avoid breaking animations //
-    if(Percentage < 0) {
-
-        Percentage = 0;
-
-    } else if(Percentage > 1.f) {
-
-        Percentage = 1.f;
-    }
-}
-
-DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(int tick, int mspassed) :
-    TickNumber(tick), TimeInTick(mspassed)
-{
-    CalculatePercentage();
-}
-
+// ------------------ FloatEventData ------------------ //
 #ifdef LEVIATHAN_USING_SFML
-DLLEXPORT ClientInterpolationEventData::ClientInterpolationEventData(sf::Packet& packet)
+DLLEXPORT Leviathan::FloatEventData::FloatEventData(sf::Packet& packet)
 {
 
-    packet >> TickNumber >> TimeInTick;
-
-    if(!packet)
-        throw InvalidArgument("packet for ClientInterpolationEventData is invalid");
-
-    CalculatePercentage();
-}
-
-DLLEXPORT void ClientInterpolationEventData::AddDataToPacket(sf::Packet& packet)
-{
-
-    packet << TickNumber << TimeInTick;
-}
-#endif // LEVIATHAN_USING_SFML
-// ------------------ IntegerEventData ------------------ //
-#ifdef LEVIATHAN_USING_SFML
-DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(sf::Packet& packet)
-{
-
-    packet >> IntegerDataValue;
+    packet >> FloatDataValue;
 
     if(!packet)
         throw InvalidArgument("packet has invalid format");
 }
 
-void Leviathan::IntegerEventData::AddDataToPacket(sf::Packet& packet)
+void Leviathan::FloatEventData::AddDataToPacket(sf::Packet& packet)
 {
-    packet << IntegerDataValue;
+    packet << FloatDataValue;
 }
 #endif // LEVIATHAN_USING_SFML
 
-DLLEXPORT Leviathan::IntegerEventData::IntegerEventData(int ticknumber) :
-    IntegerDataValue(ticknumber)
-{}
+DLLEXPORT Leviathan::FloatEventData::FloatEventData(float elapsed) : FloatDataValue(elapsed) {}
 // ------------------ BaseEventData ------------------ //
 BaseEventData::~BaseEventData() {}

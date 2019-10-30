@@ -28,16 +28,16 @@ class PositionStateSystem : public StateCreationSystem<Position, PositionState> 
 //! \brief Moves nodes of entities that have their positions changed
 class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>> {
 
+    //! \todo This needs to be made into a new system for use on client side
     void ProcessNode(std::tuple<RenderNode&, Position&>& node, ObjectID id,
-        const StateHolder<PositionState>& heldstates, int tick, int timeintick)
+        const StateHolder<PositionState>& heldstates, float elapsed)
     {
         auto& pos = std::get<1>(node);
 
         if(!pos.StateMarked)
             return;
 
-        auto interpolated =
-            StateInterpolator::Interpolate(heldstates, id, &pos, tick, timeintick);
+        auto interpolated = StateInterpolator::Interpolate(heldstates, id, &pos, elapsed);
 
         auto& rendernode = std::get<0>(node);
 
@@ -55,13 +55,24 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
 
 public:
     template<class GameWorldT>
-    void Run(GameWorldT& world, const StateHolder<PositionState>& heldstates, int tick,
-        int timeintick)
+    void Run(GameWorldT& world, const StateHolder<PositionState>& heldstates)
     {
         auto& index = CachedComponents.GetIndex();
         for(auto iter = index.begin(); iter != index.end(); ++iter) {
 
-            this->ProcessNode(*iter->second, iter->first, heldstates, tick, timeintick);
+            // this->ProcessNode(*iter->second, iter->first, heldstates, tick, timeintick);
+            auto& rendernode = std::get<0>(*iter->second);
+            auto& pos = std::get<1>(*iter->second);
+
+            if(!pos.Marked)
+                return;
+
+            rendernode.Node->setPosition(pos.Members._Position);
+            rendernode.Node->setRotation(pos.Members._Orientation);
+
+            // TODO: some other system might also want to detect if Position is marked. Design
+            // some architecture to allow that
+            pos.Marked = false;
         }
     }
 
@@ -120,8 +131,8 @@ public:
 //! \todo This needs to be replaced with an animation system
 class AnimationSystem {
 public:
-    DLLEXPORT void Run(GameWorld& world, std::unordered_map<ObjectID, Animated*>& index,
-        int tick, int timeintick);
+    DLLEXPORT void Run(
+        GameWorld& world, std::unordered_map<ObjectID, Animated*>& index, float elapsed);
 };
 
 

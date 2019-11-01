@@ -204,7 +204,6 @@ namespace Leviathan {
 
 bool BindFloat2(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Float2", sizeof(Float2),
            asOBJ_VALUE | asGetTypeTraits<Float2>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -343,6 +342,11 @@ bool BindFloat3(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Float3", "Float3& opSubAssign(const Float3 &in other)",
            asMETHODPR(Float3, operator-=,(const Float3&), Float3&), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Float3", "Float3& opMulAssign(float value)",
+           asMETHODPR(Float3, operator*=,(float), Float3&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

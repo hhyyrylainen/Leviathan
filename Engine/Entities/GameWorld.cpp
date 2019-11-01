@@ -716,7 +716,7 @@ DLLEXPORT void GameWorld::Tick(float elapsed)
         // }
     }
 
-    _RunTickSystems();
+    _RunTickSystems(elapsed);
 
     TickInProgress = false;
 
@@ -798,13 +798,13 @@ DLLEXPORT void GameWorld::RunFrameRenderSystems(float elapsed)
     // where TickInProgress is set to true
 }
 
-DLLEXPORT void GameWorld::_RunTickSystems()
+DLLEXPORT void GameWorld::_RunTickSystems(float elapsed)
 {
     // We are responsible for script systems //
     for(auto iter = pimpl->RegisteredScriptSystems.begin();
         iter != pimpl->RegisteredScriptSystems.end(); ++iter) {
 
-        iter->second->Run();
+        iter->second->Run(elapsed);
     }
 }
 // ------------------------------------ //

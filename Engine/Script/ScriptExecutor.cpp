@@ -36,7 +36,6 @@ namespace Leviathan {
 
 void ScriptMessageCallback(const asSMessageInfo* msg, void* param)
 {
-
     if(msg->type == asMSGTYPE_WARNING) {
 
         Logger::Get()->Write(std::string("[SCRIPT] [WARNING] ") + msg->section + " (" +
@@ -84,6 +83,9 @@ void ScriptTranslateExceptionCallback(asIScriptContext* context, void* userdata)
     } catch(const Leviathan::Exception& e) {
         context->SetException(
             (std::string("Caught Leviathan::Exception: ") + e.what()).c_str());
+
+
+
         // } catch(const Ogre::Exception& e) {
         //     context->SetException((std::string("Caught Ogre::Exception: ") +
         //     e.what()).c_str());

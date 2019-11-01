@@ -61,7 +61,7 @@ public:
     //! \note This also clears ImplementationObject ptr.
     DLLEXPORT void Release();
 
-    DLLEXPORT void Run();
+    DLLEXPORT void Run(float elapsed);
 
     DLLEXPORT void CreateAndDestroyNodes();
 

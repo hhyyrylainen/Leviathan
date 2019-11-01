@@ -610,11 +610,11 @@ Leviathan::StateHolder<typename TComponent::StateT>& GetStatesFor(){
 
     f.puts 'protected:' if opts.include?(:header)
 
-    f.write "#{export}void #{qualifier opts}_RunTickSystems()#{override opts}"
+    f.write "#{export}void #{qualifier opts}_RunTickSystems(float elapsed)#{override opts}"
 
     if opts.include?(:impl)
       f.puts '{'
-      f.puts @BaseClass + '::_RunTickSystems();'
+      f.puts @BaseClass + '::_RunTickSystems(elapsed);'
 
       if @SystemsPreTickSetup
         f.puts @SystemsPreTickSetup

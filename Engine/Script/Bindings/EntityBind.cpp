@@ -465,7 +465,7 @@ bool BindScriptComponentTypeSupport(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterInterfaceMethod("ScriptSystem", "void Run()") < 0) {
+    if(engine->RegisterInterfaceMethod("ScriptSystem", "void Run(float elapsed)") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

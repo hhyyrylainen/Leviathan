@@ -84,7 +84,7 @@ DLLEXPORT void ScriptSystemWrapper::Release()
     ImplementationObject = nullptr;
 }
 // ------------------------------------ //
-DLLEXPORT void ScriptSystemWrapper::Run()
+DLLEXPORT void ScriptSystemWrapper::Run(float elapsed)
 {
     // For performance reasons this might be good to store
     if(!RunMethod) {
@@ -102,7 +102,7 @@ DLLEXPORT void ScriptSystemWrapper::Run()
     ScriptRunningSetup setup;
     auto result =
         static_cast<ScriptExecutor*>(ImplementationObject->GetEngine()->GetUserData())
-            ->RunScriptMethod<void>(setup, RunMethod, ImplementationObject);
+            ->RunScriptMethod<void>(setup, RunMethod, ImplementationObject, elapsed);
 
     if(result.Result != SCRIPT_RUN_RESULT::Success) {
 
@@ -260,12 +260,10 @@ struct ComponentFindStatusForCache {
 
     ComponentFindStatusForCache(asIScriptObject* as) :
         ScriptComponent(as), CType(-1, -1), IsScript(true)
-    {
-    }
+    {}
     ComponentFindStatusForCache(void* cpp, const ComponentTypeInfo& info) :
         CppComponent(cpp), CType(info), IsScript(false)
-    {
-    }
+    {}
 
     union {
         void* CppComponent;

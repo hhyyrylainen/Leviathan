@@ -519,7 +519,7 @@ protected:
     //! Derived worls should run their systems that need to be ran before the basic systems
     //! and then call this and finally run systems that need to be ran after the base
     //! class' systems (if any)
-    DLLEXPORT virtual void _RunTickSystems();
+    DLLEXPORT virtual void _RunTickSystems(float elapsed);
 
     //! \brief Handles added entities and components
     //!

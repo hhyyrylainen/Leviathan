@@ -1002,6 +1002,11 @@ void Engine::RenderFrame(float elapsed)
 
     FrameCount++;
 
+    // This is needed for the statistics to work correctly but this is no longer used to track
+    // if we can render or not
+    int unused;
+    RenderTimer->CanRenderNow(FrameLimit, unused);
+
     // advanced statistic start monitoring //
     RenderTimer->RenderingStart();
 

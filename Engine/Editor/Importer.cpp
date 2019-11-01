@@ -6,6 +6,8 @@
 #include "FileSystem.h"
 #include "Utility/MD5Generator.h"
 
+#include "bsfCore/Material/BsShader.h"
+
 #include <filesystem>
 #include <string_view>
 
@@ -547,4 +549,19 @@ Importer::FileType Importer::GetTypeFromExtension(const std::string& extension)
 
     // throw InvalidArgument("Extension (" + extension + ") is not a valid type");
     return FileType::Invalid;
+}
+// ------------------------------------ //
+bool Importer::VerifySharedIsCompiled(const bs::HShader& shader)
+{
+    if(shader->getNumTechniques() < 1) {
+        LOG_ERROR("Importer: shader has no techniques");
+        return false;
+    } else {
+        if(shader->getTechniques().front()->getNumPasses() < 1) {
+            LOG_ERROR("Importer: shader has no passes in technique");
+            return false;
+        }
+    }
+
+    return true;
 }

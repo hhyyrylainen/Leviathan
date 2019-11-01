@@ -84,6 +84,7 @@ public:
 
     static const char* GetSubFolderForType(FileType type);
     static FileType GetTypeFromExtension(const std::string& extension);
+    static bool VerifySharedIsCompiled(const bs::HShader& shader);
 
 protected:
     //! Helper for passing the file to the proper function for handling
@@ -119,6 +120,15 @@ private:
         auto resource = bs::gImporter().import<T>(file.c_str(), options);
 
         if(resource) {
+
+            if constexpr(std::is_same_v<T, bs::Shader>) {
+
+                if(!VerifySharedIsCompiled(resource)) {
+                    LOG_ERROR("Importer: imported shader file has failed compilation. Not "
+                              "saving it");
+                    return false;
+                }
+            }
 
             bs::gResources().save(resource, target.c_str(), true, Compress);
             return true;

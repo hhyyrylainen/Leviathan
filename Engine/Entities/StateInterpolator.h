@@ -16,6 +16,8 @@ public:
     //! should also check ComponentWithStates::StateMarked before
     //! calling us
     //! \returns Tuple of state valid and state. If the bool is false StateT will be garbage
+    //! \todo Would it make more sense to have the current world time as a parameter to? As
+    //! interpolating to previous time might be needed at some point? Or as a separate method?
     template<class StateT, class ComponentT>
     static std::tuple<bool, StateT> Interpolate(const StateHolder<StateT>& stateholder,
         ObjectID entity, ComponentT* entitycomponent, float elapsed)

@@ -192,7 +192,7 @@ template<class UsedComponent, class ComponentState>
 class StateCreationSystem {
 public:
     void Run(GameWorld& world, std::unordered_map<ObjectID, UsedComponent*>& index,
-        StateHolder<ComponentState>& heldstates, int worldtick)
+        StateHolder<ComponentState>& heldstates, float worldtime)
     {
         // TODO: find a better way (see the comment a few lines down why this is here)
         if(!world.GetNetworkSettings().DoInterpolation)
@@ -214,7 +214,7 @@ public:
             // issues Actually this whole system is disabled when interpolating isn't needed
 
             // Needs a new state //
-            if(heldstates.CreateStateIfChanged(iter->first, component, worldtick)) {
+            if(heldstates.CreateStateIfChanged(iter->first, component, worldtime)) {
 
                 component.StateMarked = true;
             }

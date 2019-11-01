@@ -12,6 +12,10 @@
 using namespace Leviathan;
 using namespace Leviathan::Test;
 
+constexpr auto CREATED_TEST_STATE_INTERVAL = 0.018f;
+static_assert(
+    CREATED_TEST_STATE_INTERVAL <= INTERPOLATION_TIME, "test state interval is misconfigured");
+
 TEST_CASE("Manual component add and remove", "[entity]")
 {
     PartialEngine<false> engine;
@@ -125,7 +129,6 @@ TEST_CASE("PositionStateSystem creates state objects", "[entity]")
 
     SECTION("Generated states have correct data")
     {
-
         auto* entityStates = PositionStates.GetEntityStates(id);
         REQUIRE(entityStates);
 
@@ -165,7 +168,7 @@ TEST_CASE("PositionStateSystem single state is interpolated", "[entity]")
 
     // State marked by default to always apply the initial position even if there are no states
     // CHECK(!pos->StateMarked);
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 0.f);
     CHECK(pos->StateMarked);
 
     REQUIRE(PositionStates.GetEntityStates(id));
@@ -220,12 +223,13 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]")
     auto pos = ComponentPosition.ConstructNew(
         id, Position::Data{Float3(1, 6, 0), Float4::IdentityQuaternion()});
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 0);
 
     pos->Marked = true;
     pos->Members._Position = Float3(3, 12, 1);
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 2);
+    _PositionStateSystem.Run(
+        dummyWorld, ComponentPosition.GetIndex(), PositionStates, CREATED_TEST_STATE_INTERVAL);
 
     REQUIRE(PositionStates.GetEntityStates(id));
     CHECK(PositionStates.GetEntityStates(id)->GetNumberOfStates() == 2);
@@ -233,11 +237,11 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]")
     auto* entityStates = PositionStates.GetEntityStates(id);
     REQUIRE(entityStates);
 
-    PositionState* firstState = entityStates->GetState(1);
+    PositionState* firstState = entityStates->GetState(0);
     REQUIRE(firstState);
     CHECK(firstState->_Position == Float3(1, 6, 0));
 
-    PositionState* secondState = entityStates->GetState(2);
+    PositionState* secondState = entityStates->GetState(CREATED_TEST_STATE_INTERVAL);
     REQUIRE(secondState);
     CHECK(secondState->_Position == Float3(3, 12, 1));
 
@@ -251,15 +255,16 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]")
     CHECK(firstState->_Position == std::get<1>(shouldBeFirstState)._Position);
 
     // Then we jump half a tick forward to be between the 2 states
-    const auto interpolationResult =
-        StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+    const auto interpolationResult = StateInterpolator::Interpolate(
+        PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
 
     REQUIRE(std::get<0>(interpolationResult));
     CHECK(interpolated.Members._Position == std::get<1>(interpolationResult)._Position);
     CHECK(interpolated.Members._Orientation == std::get<1>(interpolationResult)._Orientation);
 
     // And should be the later state //
-    const auto shouldBeLast = StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+    const auto shouldBeLast = StateInterpolator::Interpolate(
+        PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
 
     REQUIRE(std::get<0>(shouldBeLast));
     CHECK(secondState->_Position == std::get<1>(shouldBeLast)._Position);
@@ -284,77 +289,87 @@ TEST_CASE("PositionStateSystem multiple states with gaps can be interpolated", "
     auto pos = ComponentPosition.ConstructNew(
         id, Position::Data{Float3(0, 0, 0), Float4::IdentityQuaternion()});
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 1);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 0);
 
 
     pos->Members._Position = Float3(1, 0, 0);
     pos->Marked = true;
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 2);
+    _PositionStateSystem.Run(
+        dummyWorld, ComponentPosition.GetIndex(), PositionStates, CREATED_TEST_STATE_INTERVAL);
 
 
     pos->Members._Position = Float3(2, 0, 0);
     pos->Marked = true;
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 3);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates,
+        CREATED_TEST_STATE_INTERVAL * 2);
 
 
     pos->Members._Position = Float3(3, 0, 0);
     pos->Marked = true;
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 5);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates,
+        CREATED_TEST_STATE_INTERVAL * 4);
 
 
     pos->Members._Position = Float3(4, 0, 0);
     pos->Marked = true;
 
-    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 6);
+    _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates,
+        CREATED_TEST_STATE_INTERVAL * 5);
 
     // Initial time set
     StateInterpolator::Interpolate(PositionStates, id, pos, 0);
 
-    SECTION("Tick 1 to 2")
+    // "State 1 to 2
     {
-        const auto interpolated =
-            StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        const auto interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(0.5f, 0, 0) == std::get<1>(interpolated)._Position);
     }
 
-    SECTION("Tick 2 to 3")
+    // "State 2 to 3
     {
-        const auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos, 1.f);
+        const auto interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(1.5f, 0, 0) == std::get<1>(interpolated)._Position);
     }
 
-    SECTION("Tick 3 to 5 (4 missing)")
+    // "State 3 to 5 (4 missing)
     {
-        auto interpolated = StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        auto interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(2.f, 0, 0) == std::get<1>(interpolated)._Position);
 
-        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(2.25f, 0, 0) == std::get<1>(interpolated)._Position);
 
-        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(2.5f, 0, 0) == std::get<1>(interpolated)._Position);
 
-        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(2.75f, 0, 0) == std::get<1>(interpolated)._Position);
 
-        interpolated = StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(3, 0, 0) == std::get<1>(interpolated)._Position);
     }
 
-    SECTION("Tick 5 to 6")
+    // "State 5 to 6
     {
-        const auto interpolated =
-            StateInterpolator::Interpolate(PositionStates, id, pos, 0.5f);
+        const auto interpolated = StateInterpolator::Interpolate(
+            PositionStates, id, pos, CREATED_TEST_STATE_INTERVAL / 2.f);
         REQUIRE(std::get<0>(interpolated));
         CHECK(Float3(3.5f, 0, 0) == std::get<1>(interpolated)._Position);
     }

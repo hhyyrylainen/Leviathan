@@ -15,3 +15,9 @@ Develop: [![Build status](https://ci.appveyor.com/api/projects/status/7yimg283lf
 
 [Project Website](https://leviathanengine.com)
 
+
+## Branches
+
+Active development happens on the `develop` branch. Master tries to be
+a bit more stable. So any pull requests that aren't strictly bugfixes
+should be done against the `develop` branch.

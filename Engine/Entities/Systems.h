@@ -61,12 +61,12 @@ public:
         for(auto iter = index.begin(); iter != index.end(); ++iter) {
 
             // this->ProcessNode(*iter->second, iter->first, heldstates, tick, timeintick);
-            auto& rendernode = std::get<0>(*iter->second);
             auto& pos = std::get<1>(*iter->second);
 
             if(!pos.Marked)
-                return;
+                continue;
 
+            auto& rendernode = std::get<0>(*iter->second);
             rendernode.Node->setPosition(pos.Members._Position);
             rendernode.Node->setRotation(pos.Members._Orientation);
 

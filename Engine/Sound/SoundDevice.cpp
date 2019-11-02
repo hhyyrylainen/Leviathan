@@ -51,6 +51,11 @@ struct SoundDevice::Implementation {
     //! Cache of buffers for short sounds
     std::unordered_map<std::string, std::tuple<AudioBuffer::pointer, TimePoint>> BufferCache;
 
+    //! Because alure doesn't support having multiple buffers for the same file (closing one
+    //! closes them all) we need to keep all file buffers around until their reference count is
+    //! 1
+    std::unordered_map<std::string, AudioBuffer::pointer> FilenameOpenBuffers;
+
     SecondDuration CacheSoundSeconds{30.f};
 };
 
@@ -214,6 +219,7 @@ void SoundDevice::Release()
 
     Pimpl->HandledAudioSources.clear();
     Pimpl->BufferCache.clear();
+    Pimpl->FilenameOpenBuffers.clear();
 
     alure::Context::MakeCurrent(nullptr);
     Pimpl->Listener = nullptr;
@@ -243,11 +249,20 @@ void SoundDevice::Tick(float elapsed)
             }
         }
 
+        for(auto iter = Pimpl->FilenameOpenBuffers.begin();
+            iter != Pimpl->FilenameOpenBuffers.end();) {
+
+            if(iter->second->GetRefCount() == 1) {
+                iter = Pimpl->FilenameOpenBuffers.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+
         const auto now = Time::GetCurrentTimePoint();
 
         // Clear cache entries
         for(auto iter = Pimpl->BufferCache.begin(); iter != Pimpl->BufferCache.end();) {
-
             if(now - std::get<1>(iter->second) > Pimpl->CacheSoundSeconds) {
                 // Remove from cache
 
@@ -370,11 +385,11 @@ DLLEXPORT Sound::AudioBuffer::pointer SoundDevice::GetBufferFromFile(
 
     if(!buffer) {
         // Not cached
-        auto alureBuffer = Pimpl->Context.getBuffer(filename);
 
-        if(!alureBuffer) {
-            LOG_ERROR("SoundDevice: failed to create buffer from file: " + filename);
-            return nullptr;
+        const auto found = Pimpl->FilenameOpenBuffers.find(filename);
+
+        if(found != Pimpl->FilenameOpenBuffers.end()) {
+            return found->second;
         }
 
         try {
@@ -395,6 +410,7 @@ DLLEXPORT Sound::AudioBuffer::pointer SoundDevice::GetBufferFromFile(
 
         if(cache)
             Pimpl->BufferCache[filename] = {buffer, now};
+        Pimpl->FilenameOpenBuffers[filename] = buffer;
     }
 
     return buffer;

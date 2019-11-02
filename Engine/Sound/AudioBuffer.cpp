@@ -3,6 +3,8 @@
 
 #include "SoundDevice.h"
 
+#include "Engine.h"
+
 using namespace Leviathan;
 using namespace Leviathan::Sound;
 // ------------------------------------ //
@@ -14,9 +16,18 @@ DLLEXPORT AudioBuffer::AudioBuffer(alure::Buffer buffertowrap, SoundDevice* owne
 
 DLLEXPORT AudioBuffer::~AudioBuffer()
 {
-    // TODO: should this invoke if not called on the main thread?
-    if(Buffer) {
+    if(!Buffer)
+        return;
 
-        Owner->ReportDestroyedBuffer(*this);
+    if(Engine::Get()->IsOnMainThread()) {
+
+        Owner->ReportDestroyedBuffer(Buffer);
+
+    } else {
+        Engine::Get()->Invoke([bufferCopy = Buffer, device = Owner]() mutable {
+            device->ReportDestroyedBuffer(bufferCopy);
+        });
     }
+
+    Buffer = nullptr;
 }

@@ -1,20 +1,34 @@
 // ------------------------------------ //
 #include "AudioSource.h"
 
+#include "Engine.h"
+
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT AudioSource::AudioSource(alure::Source sourcetowrap) : Source(sourcetowrap) {}
 
 DLLEXPORT AudioSource::~AudioSource()
 {
-    // TODO: should this invoke if not called on the main thread?
     if(Source) {
-        Source.destroy();
+
+        if(Engine::Get()->IsOnMainThread()) {
+
+            Source.destroy();
+
+        } else {
+            Engine::Get()->Invoke([source = Source]() mutable { source.destroy(); });
+        }
+
+        Source = nullptr;
     }
+
+    PlayedBuffer.reset();
 }
 // ------------------------------------ //
 DLLEXPORT void AudioSource::Play2D(const Sound::AudioBuffer::pointer& buffer)
 {
+    Engine::Get()->AssertIfNotMainThread();
+
     PlayedBuffer = buffer;
 
     if(PlayedBuffer && PlayedBuffer->GetBuffer()) {
@@ -30,6 +44,8 @@ DLLEXPORT void AudioSource::Play2D(const Sound::AudioBuffer::pointer& buffer)
 DLLEXPORT void AudioSource::PlayWithDecoder(
     const Sound::ProceduralSoundData::pointer& data, size_t chunksize, size_t chunkstoqueue)
 {
+    Engine::Get()->AssertIfNotMainThread();
+
     PlayedBuffer.reset();
 
     if(data) {

@@ -248,6 +248,17 @@ DLLEXPORT bool Engine::Init(
             engine->_GameModuleLoader = std::make_unique<GameModuleLoader>();
             engine->_GameModuleLoader->Init();
 
+            if(!engine->NoGui) {
+                // measuring //
+                engine->RenderTimer = new RenderingStatistics();
+                if(!engine->RenderTimer) {
+                    Logger::Get()->Error("Engine: Init: failed to create RenderingStatistics");
+
+                    returnvalue.set_value(false);
+                    return;
+                }
+            }
+
             returnvalue.set_value(true);
         },
         std::ref(ScriptInterfaceResult), this)));
@@ -327,40 +338,20 @@ DLLEXPORT bool Engine::Init(
 
 
     // sound device //
-    std::promise<bool> SoundDeviceResult;
-    // Ref is OK to use since this task finishes before this function //
-    _ThreadingManager->QueueTask(std::make_shared<QueuedTask>(std::bind<void>(
-        [](std::promise<bool>& returnvalue, Engine* engine) -> void {
-            if(!engine->NoGui) {
-                engine->Sound = new SoundDevice();
+    if(!NoGui) {
+        Sound = new SoundDevice();
 
-                if(!engine->Sound) {
-                    Logger::Get()->Error("Engine: Init: failed to create Sound");
-                    returnvalue.set_value(false);
-                    return;
-                }
+        if(!Sound) {
+            Logger::Get()->Error("Engine: Init: failed to create Sound");
+            return false;
+        }
 
-                if(!engine->Sound->Init()) {
+        if(!Sound->Init()) {
 
-                    Logger::Get()->Error(
-                        "Engine: Init: failed to init SoundDevice. Continuing anyway");
-                }
-            }
-
-            if(!engine->NoGui) {
-                // measuring //
-                engine->RenderTimer = new RenderingStatistics();
-                if(!engine->RenderTimer) {
-                    Logger::Get()->Error("Engine: Init: failed to create RenderingStatistics");
-
-                    returnvalue.set_value(false);
-                    return;
-                }
-            }
-
-            returnvalue.set_value(true);
-        },
-        std::ref(SoundDeviceResult), this)));
+            Logger::Get()->Error(
+                "Engine: Init: failed to init SoundDevice. Continuing anyway");
+        }
+    }
 
     if(!NoGui) {
         if(!Graph) {
@@ -377,12 +368,6 @@ DLLEXPORT bool Engine::Init(
 
         // Create window //
         GraphicalEntity1 = new Window(Graph, definition);
-    }
-
-    if(!SoundDeviceResult.get_future().get()) {
-
-        Logger::Get()->Error("Engine: Init: sound device queued tasks failed");
-        return false;
     }
 
 #ifdef LEVIATHAN_USES_LEAP

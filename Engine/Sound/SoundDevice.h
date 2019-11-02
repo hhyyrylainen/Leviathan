@@ -69,7 +69,7 @@ public:
     DLLEXPORT void BabysitAudio(AudioSource::pointer audio);
 
     // ------------------------------------ //
-    DLLEXPORT void ReportDestroyedBuffer(Sound::AudioBuffer& buffer);
+    DLLEXPORT void ReportDestroyedBuffer(const alure::Buffer& buffer);
 
 private:
     std::unique_ptr<Implementation> Pimpl;

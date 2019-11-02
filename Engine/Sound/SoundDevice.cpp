@@ -352,6 +352,8 @@ DLLEXPORT AudioSource::pointer SoundDevice::CreateProceduralSound(
 DLLEXPORT Sound::AudioBuffer::pointer SoundDevice::GetBufferFromFile(
     const std::string& filename, bool cache /*= true*/)
 {
+    Engine::Get()->AssertIfNotMainThread();
+
     const auto now = Time::GetCurrentTimePoint();
 
     AudioBuffer::pointer buffer;
@@ -375,7 +377,21 @@ DLLEXPORT Sound::AudioBuffer::pointer SoundDevice::GetBufferFromFile(
             return nullptr;
         }
 
-        buffer = AudioBuffer::MakeShared<AudioBuffer>(std::move(alureBuffer), this);
+        try {
+            auto alureBuffer = Pimpl->Context.getBuffer(filename);
+
+            if(!alureBuffer || alureBuffer.getFrequency() < 1) {
+                LOG_ERROR("SoundDevice: failed to create buffer from file: " + filename);
+                return nullptr;
+            }
+
+            buffer = AudioBuffer::MakeShared<AudioBuffer>(std::move(alureBuffer), this);
+
+        } catch(const std::runtime_error& e) {
+            LOG_ERROR("SoundDevice: failed to create buffer from file: " + filename +
+                      ", exception: " + e.what());
+            return nullptr;
+        }
 
         if(cache)
             Pimpl->BufferCache[filename] = {buffer, now};
@@ -386,6 +402,8 @@ DLLEXPORT Sound::AudioBuffer::pointer SoundDevice::GetBufferFromFile(
 
 DLLEXPORT AudioSource::pointer SoundDevice::GetAudioSource()
 {
+    Engine::Get()->AssertIfNotMainThread();
+
     auto alureSource = Pimpl->Context.createSource();
 
     if(!alureSource) {
@@ -403,7 +421,14 @@ DLLEXPORT void SoundDevice::BabysitAudio(AudioSource::pointer audio)
     Pimpl->HandledAudioSources.push_back(audio);
 }
 // ------------------------------------ //
-DLLEXPORT void SoundDevice::ReportDestroyedBuffer(Sound::AudioBuffer& buffer)
+DLLEXPORT void SoundDevice::ReportDestroyedBuffer(const alure::Buffer& buffer)
 {
-    Pimpl->Context.removeBuffer(buffer.GetBuffer());
+    if(!buffer)
+        return;
+
+    Engine::Get()->AssertIfNotMainThread();
+
+    LEVIATHAN_ASSERT(buffer.getName() != "test stuff", "test compare failed");
+
+    Pimpl->Context.removeBuffer(buffer);
 }

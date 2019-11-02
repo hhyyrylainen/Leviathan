@@ -219,7 +219,9 @@ public:
                 component.StateMarked = true;
             }
 
-            component.Marked = false;
+            // TODO: find a way to make sure components with states are unmarked after current
+            // tick
+            // component.Marked = false;
         }
     }
 };

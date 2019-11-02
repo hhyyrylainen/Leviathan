@@ -55,7 +55,7 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
 
 public:
     template<class GameWorldT>
-    void Run(GameWorldT& world, const StateHolder<PositionState>& heldstates)
+    void Run(GameWorldT& world)
     {
         auto& index = CachedComponents.GetIndex();
         for(auto iter = index.begin(); iter != index.end(); ++iter) {

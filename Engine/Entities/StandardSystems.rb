@@ -1,9 +1,7 @@
 # Standard system definitions for world generators
 SYSTEM_RENDERINGPOSITION = EntitySystem.new(
   'RenderingPositionSystem', %w[RenderNode Position],
-  runrender: { group: 10, parameters: %w[
-    PositionStates
-  ] }
+  runrender: { group: 10, parameters: [] }
 )
 
 SYSTEM_RENDERNODEPROPERTIES = EntitySystem.new(

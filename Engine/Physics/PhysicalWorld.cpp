@@ -281,6 +281,12 @@ DLLEXPORT PhysicsShape::pointer PhysicalWorld::CreateBox(
     return PhysicsShape::MakeShared<PhysicsShape>(
         std::make_unique<btBoxShape>(btVector3(xdimension, ydimension, zdimension)));
 }
+
+DLLEXPORT PhysicsShape::pointer PhysicalWorld::CreateCone(float radius, float height)
+{
+    return PhysicsShape::MakeShared<PhysicsShape>(
+        std::make_unique<btConeShape>(radius, height));
+}
 // ------------------------------------ //
 DLLEXPORT PhysicsConstraint::pointer PhysicalWorld::CreateFixedConstraint(
     const PhysicsBody::pointer& a, const PhysicsBody::pointer& b, const Float3& aoffset,

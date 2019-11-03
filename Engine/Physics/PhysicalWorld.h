@@ -75,6 +75,7 @@ public:
     DLLEXPORT PhysicsShape::pointer CreateBox(
         float xdimension, float ydimension, float zdimension);
 
+    DLLEXPORT PhysicsShape::pointer CreateCone(float radius, float height);
 
     // ------------------------------------ //
     // Physics constraint creation
@@ -123,22 +124,34 @@ public:
     //
     inline PhysicsShape* CreateSphereWrapper(float radius)
     {
-        auto obj = CreateSphere(radius);
+        return CreateSphere(radius).detach();
+    }
 
-        if(obj)
-            obj->AddRef();
-
-        return obj.get();
+    inline PhysicsShape* CreateConeWrapper(float radius, float height)
+    {
+        return CreateCone(radius, height).detach();
     }
 
     inline PhysicsShape* CreateCompoundWrapper()
     {
-        auto obj = CreateCompound();
+        return CreateCompound().detach();
+    }
 
-        if(obj)
-            obj->AddRef();
+    inline PhysicsConstraint* CreateFixedConstraintWrapper(PhysicsBody* a, PhysicsBody* b,
+        const Float3& aoffset, const Float4& aorientation, const Float3& boffset,
+        const Float4& borientation)
+    {
+        return CreateFixedConstraint(PhysicsBody::WrapPtr(a), PhysicsBody::WrapPtr(b), aoffset,
+            aorientation, boffset, borientation)
+            .detach();
+    }
 
-        return obj.get();
+    inline bool DestroyConstraintWrapper(PhysicsConstraint* constraint)
+    {
+        const auto result = DestroyConstraint(constraint);
+        if(constraint)
+            constraint->Release();
+        return result;
     }
 
 protected:

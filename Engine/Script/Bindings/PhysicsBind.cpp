@@ -37,6 +37,18 @@ bool BindShape(asIScriptEngine* engine)
     return true;
 }
 
+bool BindConstraint(asIScriptEngine* engine)
+{
+    ANGELSCRIPT_REGISTER_REF_TYPE("PhysicsConstraint", PhysicsConstraint);
+
+    if(engine->RegisterObjectMethod("PhysicsConstraint", "bool Valid() const",
+           asMETHOD(PhysicsConstraint, Valid), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
 bool BindBody(asIScriptEngine* engine)
 {
     ANGELSCRIPT_REGISTER_REF_TYPE("PhysicsBody", PhysicsBody);
@@ -149,6 +161,9 @@ bool Leviathan::BindPhysics(asIScriptEngine* engine)
     if(!BindShape(engine))
         return false;
 
+    if(!BindConstraint(engine))
+        return false;
+
     if(!BindBody(engine))
         return false;
 
@@ -165,6 +180,26 @@ bool Leviathan::BindPhysics(asIScriptEngine* engine)
     if(engine->RegisterObjectMethod("PhysicalWorld",
            "PhysicsShape@ CreateSphere(float radius)",
            asMETHOD(PhysicalWorld, CreateSphereWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+           "PhysicsShape@ CreateCone(float radius, float height)",
+           asMETHOD(PhysicalWorld, CreateConeWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+           "PhysicsConstraint@ CreateFixedConstraint(PhysicsBody@ a, PhysicsBody@ b, const "
+           "Float3 &in aoffset, const Float4 &in aorientation, const Float3 &in boffset, "
+           "const Float4 &in borientation)",
+           asMETHOD(PhysicalWorld, CreateFixedConstraintWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicalWorld",
+           "bool DestroyConstraint(PhysicsConstraint@ constraint)",
+           asMETHOD(PhysicalWorld, DestroyConstraintWrapper), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

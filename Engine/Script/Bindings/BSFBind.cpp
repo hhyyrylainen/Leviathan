@@ -134,12 +134,6 @@ void SceneObjectSetParent(
     self->setParent(parent, keepWorldTransform);
 }
 
-void SceneObjectRemoveFromParent(bs::HSceneObject& self)
-{
-    CHECK_SELF;
-    self->setParent(bs::HSceneObject(), false);
-}
-
 void SceneObjectSetPosition(bs::HSceneObject& self, const bs::Vector3& position)
 {
     CHECK_SELF;
@@ -876,11 +870,6 @@ bool BindScene(asIScriptEngine* engine)
     if(engine->RegisterObjectMethod("HSceneObject",
            "void setParent(const HSceneObject &in parent, bool keepWorldTransform)",
            asFUNCTION(SceneObjectSetParent), asCALL_CDECL_OBJFIRST) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("HSceneObject", "void removeFromParent()",
-           asFUNCTION(SceneObjectRemoveFromParent), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

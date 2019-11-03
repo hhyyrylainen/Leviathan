@@ -67,6 +67,8 @@ public:
     bs::HSceneObject SkyboxSO;
     bs::HSkybox Skybox;
 
+    bs::HSceneObject FakeRootSO;
+
     //! A temporary solution around no multiple scenes in BSF
     static int LayerNumber;
 };
@@ -159,6 +161,9 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
 
     // Scene setup (TODO: redo once bsf has multiple scenes)
     BSFLayerHack = Implementation::LayerNumber++;
+
+    // Always at origin SceneObject for parenting things to it
+    pimpl->FakeRootSO = bs::SceneObject::create("fake_root");
 
     // Camera
     pimpl->WorldCameraSO =
@@ -490,6 +495,11 @@ DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(int x, int y) const
 DLLEXPORT bs::HSceneObject GameWorld::GetCameraSceneObject()
 {
     return pimpl->WorldCameraSO;
+}
+
+bs::HSceneObject GameWorld::GetRootSceneObject()
+{
+    return pimpl->FakeRootSO;
 }
 // ------------------------------------ //
 DLLEXPORT bool GameWorld::ShouldPlayerReceiveEntity(

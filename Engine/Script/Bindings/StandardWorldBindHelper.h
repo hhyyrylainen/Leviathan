@@ -111,6 +111,11 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod(classname, "bs::HSceneObject GetRootSceneObject()",
+           asMETHOD(WorldType, GetRootSceneObject), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // ------------------------------------ //
     // Somewhat questionable Ogre shortcuts that should probably be component types
     if(engine->RegisterObjectMethod(classname, "void SetSunlight()",

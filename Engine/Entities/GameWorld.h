@@ -311,6 +311,9 @@ public:
     //! Useful to attach backgrounds and other static items to the camera
     DLLEXPORT bs::HSceneObject GetCameraSceneObject();
 
+    //! \brief Returns the root scene object for resetting parenting
+    DLLEXPORT bs::HSceneObject GetRootSceneObject();
+
     // physics functions //
     // DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
 

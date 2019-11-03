@@ -237,6 +237,7 @@ if(LEVIATHAN_USING_BULLET)
     "Physics/PhysicsShape.cpp" "Physics/PhysicsShape.h"
     "Physics/PhysicsBody.cpp" "Physics/PhysicsBody.h"
     "Physics/PhysicsConstraint.cpp" "Physics/PhysicsConstraint.h"
+    "Physics/PhysicsDebugDrawer.cpp" "Physics/PhysicsDebugDrawer.h"
     )
 endif()
 

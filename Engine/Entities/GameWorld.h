@@ -317,6 +317,9 @@ public:
     // physics functions //
     // DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
 
+    DLLEXPORT void EnablePhysicsDebugDraw();
+    DLLEXPORT void DisablePhysicsDebugDraw();
+
     inline PhysicalWorld* GetPhysicalWorld()
     {
         return _PhysicalWorld.get();

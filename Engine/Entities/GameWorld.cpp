@@ -12,6 +12,7 @@
 #include "Networking/NetworkServerInterface.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Physics/PhysicalWorld.h"
+#include "Physics/PhysicsDebugDrawer.h"
 #include "Physics/PhysicsMaterialManager.h"
 #include "Rendering/Graphics.h"
 #include "Script/ScriptConversionHelpers.h"
@@ -68,6 +69,8 @@ public:
     bs::HSkybox Skybox;
 
     bs::HSceneObject FakeRootSO;
+
+    std::shared_ptr<PhysicsDebugDrawer> DebugDraw;
 
     //! A temporary solution around no multiple scenes in BSF
     static int LayerNumber;
@@ -500,6 +503,22 @@ DLLEXPORT bs::HSceneObject GameWorld::GetCameraSceneObject()
 bs::HSceneObject GameWorld::GetRootSceneObject()
 {
     return pimpl->FakeRootSO;
+}
+// ------------------------------------ //
+DLLEXPORT void GameWorld::EnablePhysicsDebugDraw()
+{
+    if(_PhysicalWorld && LinkedToWindow) {
+        pimpl->DebugDraw = std::make_shared<PhysicsDebugDrawer>(*LinkedToWindow, *this);
+
+        _PhysicalWorld->SetDebugDrawer(pimpl->DebugDraw);
+    }
+}
+
+DLLEXPORT void GameWorld::DisablePhysicsDebugDraw()
+{
+    if(_PhysicalWorld) {
+        _PhysicalWorld->SetDebugDrawer(nullptr);
+    }
 }
 // ------------------------------------ //
 DLLEXPORT bool GameWorld::ShouldPlayerReceiveEntity(
@@ -1759,6 +1778,14 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Graphics* graphic
 
     pimpl->WorldCamera->getViewport()->setTarget(nullptr);
 
+    if(pimpl->DebugDraw) {
+        LOG_INFO("GameWorld: stopping debug draw because this was detached from a world");
+        // Clear the contents
+        pimpl->DebugDraw->OnBeginDraw();
+        _PhysicalWorld->SetDebugDrawer(nullptr);
+        pimpl->DebugDraw = nullptr;
+    }
+
     // ogre->getCompositorManager2()->removeWorkspace(WorldWorkspace);
     // WorldWorkspace = nullptr;
     LinkedToWindow = nullptr;
@@ -1779,7 +1806,6 @@ DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Graphics* graphics)
 
     if(LinkedToWindow // || WorldWorkspace
     ) {
-
         throw InvalidArgument(
             "GameWorld attempted to be linked to a window while it is already linked");
     }

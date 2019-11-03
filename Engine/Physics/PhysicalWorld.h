@@ -33,6 +33,7 @@ using btScalar = float;
 
 namespace Leviathan {
 
+class PhysicsDebugDrawer;
 class LeviathanPhysicsOverlapFilter;
 struct PhysMaterialDataPair;
 
@@ -114,6 +115,9 @@ public:
     //! \brief Finds the information for contact between objects with two materials
     const PhysMaterialDataPair* GetMaterialPair(int id1, int id2) const;
 
+    //! \brief Sets or clears the debug drawer used by this world
+    DLLEXPORT void SetDebugDrawer(const std::shared_ptr<PhysicsDebugDrawer>& drawer);
+
     DLLEXPORT inline GameWorld* GetGameWorld()
     {
         return OwningWorld;
@@ -191,6 +195,8 @@ protected:
 
     //! We need to keep constraints alive until they are destroyed
     std::vector<PhysicsConstraint::pointer> PhysicsConstraints;
+
+    std::shared_ptr<PhysicsDebugDrawer> DebugDrawer;
 
     // //! Used for resimulation
     // //! \todo Potentially allow this to be a vector

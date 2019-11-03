@@ -1,9 +1,11 @@
 // ------------------------------------ //
 #include "PhysicalWorld.h"
 
-#include "Engine.h"
 #include "Events/EventHandler.h"
+#include "PhysicsDebugDrawer.h"
 #include "PhysicsMaterialManager.h"
+
+#include "Engine.h"
 #include "TimeIncludes.h"
 
 #include "BulletDynamics/ConstraintSolver/btFixedConstraint.h"
@@ -132,6 +134,11 @@ DLLEXPORT void PhysicalWorld::SimulateWorld(float secondspassed, int maxsubsteps
     DynamicsWorld->stepSimulation(secondspassed, maxsubsteps);
 
     PhysicsUpdateInProgress = false;
+
+    if(DebugDrawer) {
+        DebugDrawer->OnBeginDraw();
+        DynamicsWorld->debugDrawWorld();
+    }
 }
 
 void PhysicalWorld::OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep)
@@ -492,80 +499,14 @@ DLLEXPORT bool PhysicalWorld::DestroyBody(PhysicsBody* body)
     LOG_ERROR("PhysicalWorld: DestroyBody: called with body that wasn't in this world");
     return false;
 }
-
 // ------------------------------------ //
-// DLLEXPORT void BaseCustomJoint::JointDestructorCallback(const NewtonJoint* joint)
-// {
-//     void* user = NewtonJointGetUserData(joint);
+DLLEXPORT void PhysicalWorld::SetDebugDrawer(const std::shared_ptr<PhysicsDebugDrawer>& drawer)
+{
+    DebugDrawer = drawer;
 
-//     if(user)
-//         delete static_cast<BaseCustomJoint*>(user);
-// }
-
-// class Joint2D : public BaseCustomJoint {
-// public:
-//     Joint2D(
-//         const Ogre::Vector3& planenormal, const Ogre::Vector3& planeorigin, NewtonBody*
-//         body) : Normal(planenormal), Origin(planeorigin), Body(body)
-//     {}
-
-//     //! \note This is continually called by newton to get what the object needs to do
-//     static void SubmitConstraints(
-//         const NewtonJoint* const joint, dFloat timestep, int threadIndex)
-//     {
-//         void* rawData = NewtonJointGetUserData(joint);
-//         Joint2D* self = static_cast<Joint2D*>(static_cast<BaseCustomJoint*>(rawData));
-
-//         dFloat matrix[16];
-//         NewtonBodyGetMatrix(self->Body, &matrix[0]);
-//         auto matrixPos = ExtractNewtonMatrixTranslation(matrix);
-
-//         // this line clamps the origin to the plane
-//         NewtonUserJointAddLinearRow(joint, &matrixPos.X, &self->Origin.x, &self->Normal.x);
-
-//         // we can prevent rotation that takes any points out of the plane by clamping a
-//         point
-//         // on the object that is on the line through the origin of the object with the same
-//         // vector as the plane normal.  The clamp is to another plane that is parallel to
-//         the
-//         // first, offset by the plane normal vector.  Rotations around either of the axes
-//         // orthogonal to the plane normal will be prevented because they take the object
-//         point
-//         // off that parallel plane.
-
-//         // TODO: find a faster way than transposing here
-//         auto bodyMatrix = NewtonMatrixToOgre(matrix);
-
-//         Ogre::Vector3 object_point = bodyMatrix * self->Normal;
-//         auto world_point = self->Origin + self->Normal;
-//         NewtonUserJointAddLinearRow(joint, &object_point.x, &world_point.x,
-//         &self->Normal.x);
-//     }
-
-//     const Ogre::Vector3 Normal;
-//     const Ogre::Vector3 Origin;
-//     const NewtonBody* Body;
-// };
-
-// // ------------------------------------ //
-// DLLEXPORT NewtonJoint* PhysicalWorld::Create2DJoint(
-//     NewtonBody* body, const Float3& planenormal)
-// {
-//     // Method from
-//     http://newtondynamics.com/wiki/index.php5?title=CJ_2D_Joint_planar_rotation dFloat
-//     matrix[16]; NewtonBodyGetMatrix(body, &matrix[0]); const auto planeOrigin =
-//     ExtractNewtonMatrixTranslation(matrix);
-
-//     NewtonJoint* joint =
-//         NewtonConstraintCreateUserJoint(World, 6, Joint2D::SubmitConstraints, body,
-//         nullptr);
-
-//     Joint2D* jointData = new Joint2D(planenormal, planeOrigin, body);
-
-//     NewtonJointSetUserData(joint, static_cast<BaseCustomJoint*>(jointData));
-
-//     NewtonJointSetDestructor(joint, BaseCustomJoint::JointDestructorCallback);
-//     return joint;
-// }
-
-// ------------------------------------ //
+    if(DebugDrawer) {
+        DynamicsWorld->setDebugDrawer(DebugDrawer.get());
+    } else {
+        DynamicsWorld->setDebugDrawer(nullptr);
+    }
+}

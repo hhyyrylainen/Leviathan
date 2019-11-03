@@ -1,12 +1,13 @@
 // ------------------------------------ //
 #include "PhysicalWorld.h"
 
-#include "../TimeIncludes.h"
 #include "Engine.h"
 #include "Events/EventHandler.h"
 #include "PhysicsMaterialManager.h"
+#include "TimeIncludes.h"
 
-#include <bullet/btBulletDynamicsCommon.h>
+#include "BulletDynamics/ConstraintSolver/btFixedConstraint.h"
+#include "btBulletDynamicsCommon.h"
 using namespace Leviathan;
 // ------------------------------------ //
 namespace Leviathan {
@@ -281,6 +282,59 @@ DLLEXPORT PhysicsShape::pointer PhysicalWorld::CreateBox(
         std::make_unique<btBoxShape>(btVector3(xdimension, ydimension, zdimension)));
 }
 // ------------------------------------ //
+DLLEXPORT PhysicsConstraint::pointer PhysicalWorld::CreateFixedConstraint(
+    const PhysicsBody::pointer& a, const PhysicsBody::pointer& b, const Float3& aoffset,
+    const Float4& aorientation, const Float3& boffset, const Float4& borientation)
+{
+    if(!a || !a->GetBody() || !b || !b->GetBody())
+        return nullptr;
+
+    btTransform aTransform;
+    aTransform.setIdentity();
+
+    aTransform.setRotation(aorientation);
+    aTransform.setOrigin(aoffset);
+
+    btTransform bTransform;
+    bTransform.setIdentity();
+
+    bTransform.setRotation(borientation);
+    bTransform.setOrigin(boffset);
+
+    auto newConstraint = PhysicsConstraint::MakeShared<PhysicsConstraint>(
+        new btFixedConstraint(*a->GetBody(), *b->GetBody(), aTransform, bTransform), a.get(),
+        b.get());
+
+    DynamicsWorld->addConstraint(newConstraint->GetConstraint());
+    PhysicsConstraints.push_back(newConstraint);
+
+    return newConstraint;
+}
+// ------------------------------------ //
+DLLEXPORT bool PhysicalWorld::DestroyConstraint(PhysicsConstraint* constraint)
+{
+    if(PhysicsUpdateInProgress) {
+        LOG_FATAL(
+            "PhysicalWorld: DestroyConstraint: called while physics update is in progress");
+        return false;
+    }
+
+    // Remove from existing constraints and the world
+    for(auto iter = PhysicsConstraints.begin(); iter != PhysicsConstraints.end(); ++iter) {
+        if(iter->get() == constraint) {
+
+            DynamicsWorld->removeConstraint(constraint->GetConstraint());
+
+            constraint->DetachResources();
+            PhysicsConstraints.erase(iter);
+            return true;
+        }
+    }
+
+    // This is not serious as destroying bodies can trigger destroying constraints
+    return false;
+}
+// ------------------------------------ //
 DLLEXPORT PhysicsBody::pointer PhysicalWorld::CreateBodyFromCollision(
     const PhysicsShape::pointer& shape, float mass,
     PhysicsPositionProvider* positionsynchronization, int physicsmaterialid /*= -1*/)
@@ -400,7 +454,6 @@ DLLEXPORT bool PhysicalWorld::ChangeBodyShape(
 DLLEXPORT bool PhysicalWorld::DestroyBody(PhysicsBody* body)
 {
     if(PhysicsUpdateInProgress) {
-        DEBUG_BREAK;
         LOG_FATAL("PhysicalWorld: DestroyBody: called while physics update is in progress");
         return false;
     }
@@ -409,6 +462,11 @@ DLLEXPORT bool PhysicalWorld::DestroyBody(PhysicsBody* body)
     for(auto iter = PhysicsBodies.begin(); iter != PhysicsBodies.end(); ++iter) {
 
         if(iter->get() == body) {
+
+            // Destroy all constraints we can see
+            while(!body->GetConstraints().empty()) {
+                DestroyConstraint(body->GetConstraints().front().get());
+            }
 
             if(body->GetBody()->getNumConstraintRefs() > 0) {
 

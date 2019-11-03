@@ -271,3 +271,65 @@ TEST_CASE(
 
     world.DestroyBody(body.get());
 }
+
+TEST_CASE("Constraint is destroyed if body is destroyed", "[physics]")
+{
+    PhysicsMaterialManager materials;
+    PhysicalWorld world(nullptr, &materials);
+
+    auto body1 = world.CreateBodyFromCollision(world.CreateSphere(1), 10, nullptr);
+    REQUIRE(body1);
+
+    auto body2 = world.CreateBodyFromCollision(world.CreateSphere(1), 0, nullptr);
+    REQUIRE(body2);
+
+    auto constraint = world.CreateFixedConstraint(body1, body2, Float3(-1, 0, 0),
+        Float4::IdentityQuaternion(), Float3(1, 0, 0), Float4::IdentityQuaternion());
+    REQUIRE(constraint);
+
+    CHECK(world.DestroyBody(body1.get()));
+    CHECK(!constraint->Valid());
+    CHECK(constraint->GetConstraint() == nullptr);
+    CHECK(world.DestroyBody(body2.get()));
+}
+
+TEST_CASE("Fixed constrainted sphere to immovable sphere doesn't fall", "[physics][entity]")
+{
+    PhysicsMaterialManager materials;
+    PhysicalWorld world(nullptr, &materials);
+
+    auto body1 = world.CreateBodyFromCollision(world.CreateSphere(1), 10, nullptr);
+    REQUIRE(body1);
+
+    auto body2 = world.CreateBodyFromCollision(world.CreateSphere(1), 0, nullptr);
+    REQUIRE(body2);
+
+    body1->SetPosition(Float3(0, 10, 0), Float4::IdentityQuaternion());
+    body2->SetPosition(Float3(1, 10, 0), Float4::IdentityQuaternion());
+
+    auto constraint = world.CreateFixedConstraint(body1, body2, Float3(-1, 0, 0),
+        Float4::IdentityQuaternion(), Float3(1, 0, 0), Float4::IdentityQuaternion());
+
+    REQUIRE(constraint);
+
+    // Let it run a bit
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+
+    // And check that it hasn't fallen a bit
+    CHECK(body1->GetPosition().Y == 10);
+
+    // Falls after constraint is destroyed
+    world.DestroyConstraint(constraint.get());
+
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+    world.SimulateWorld(0.1f);
+
+    // And check that it has fallen a bit
+    CHECK(body1->GetPosition().Y < 10);
+
+    world.DestroyBody(body1.get());
+    world.DestroyBody(body2.get());
+}

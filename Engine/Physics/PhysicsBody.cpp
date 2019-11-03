@@ -30,6 +30,9 @@ DLLEXPORT PhysicsBody::~PhysicsBody()
         LOG_ERROR("PhysicsBody: destroyed before being removed from a world");
         DetachResources();
     }
+
+    if(!PartOfConstraints.empty())
+        LOG_ERROR("PhysicsBody: destroyed while having active constraints");
 }
 
 DLLEXPORT void PhysicsBody::DetachResources()
@@ -62,6 +65,22 @@ DLLEXPORT void PhysicsBody::ApplyShapeChange(const PhysicsShape::pointer& shape)
 
     // TODO: is Body->updateInertiaTensor() needed here? or is the removing and adding this
     // back to the world good enough?
+}
+// ------------------------------------ //
+DLLEXPORT void PhysicsBody::NotifyAttachedConstraint(PhysicsConstraint* constraint)
+{
+    if(constraint)
+        PartOfConstraints.push_back(constraint);
+}
+
+DLLEXPORT void PhysicsBody::NotifyDetachedConstraint(PhysicsConstraint* constraint)
+{
+    for(auto iter = PartOfConstraints.begin(); iter != PartOfConstraints.end(); ++iter) {
+        if(iter->get() == constraint) {
+            PartOfConstraints.erase(iter);
+            return;
+        }
+    }
 }
 // ------------------------------------ //
 DLLEXPORT bool PhysicsBody::SetPosition(const Float3& pos, const Float4& orientation)

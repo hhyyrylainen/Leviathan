@@ -1,11 +1,13 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "PhysicsConstraint.h"
+#include "PhysicsShape.h"
+
 #include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
-#include "PhysicsShape.h"
 
 #include "LinearMath/btMotionState.h"
 
@@ -73,6 +75,7 @@ private:
 //! \brief This is an instance of a collision body
 class PhysicsBody : public ReferenceCounted {
     friend class PhysicalWorld;
+    friend PhysicsConstraint;
 
 protected:
     friend ReferenceCounted;
@@ -186,6 +189,11 @@ public:
         ThisEntity = entity;
     }
 
+    DLLEXPORT inline const auto& GetConstraints() const
+    {
+        return PartOfConstraints;
+    }
+
     //
     // Script wrappers
     //
@@ -207,6 +215,13 @@ protected:
     //! \brief Applies shape change
     DLLEXPORT void ApplyShapeChange(const PhysicsShape::pointer& shape);
 
+    //! \brief Called by PhysicsConstraint constructor
+    //! \note This doesn't protect against duplicates
+    DLLEXPORT void NotifyAttachedConstraint(PhysicsConstraint* constraint);
+
+    //! \brief Called by PhysicsConstraint when detaching resources
+    DLLEXPORT void NotifyDetachedConstraint(PhysicsConstraint* constraint);
+
 private:
     std::unique_ptr<btRigidBody> Body;
 
@@ -221,6 +236,10 @@ private:
 
     //! Hold our side of the bridge open
     std::unique_ptr<PhysicsDataBridge> PositionUpdate;
+
+    //! Holds constraints this body is part of in order to destroy the constraints if this body
+    //! is destroyed
+    std::vector<PhysicsConstraint::pointer> PartOfConstraints;
 
 
     int PhysicalMaterialID;

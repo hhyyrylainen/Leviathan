@@ -1,11 +1,12 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Common/ThreadSafe.h"
 #include "Common/Types.h"
 #include "PhysicsBody.h"
+#include "PhysicsConstraint.h"
 #include "PhysicsShape.h"
 
 #include <functional>
@@ -77,6 +78,15 @@ public:
 
     // ------------------------------------ //
     // Physics constraint creation
+    DLLEXPORT PhysicsConstraint::pointer CreateFixedConstraint(const PhysicsBody::pointer& a,
+        const PhysicsBody::pointer& b, const Float3& aoffset, const Float4& aorientation,
+        const Float3& boffset, const Float4& borientation);
+
+    //! \brief Destroys a physics constraint
+    //!
+    //! May not be called while a physics update is in progress
+    DLLEXPORT bool DestroyConstraint(PhysicsConstraint* constraint);
+
     //! \brief Constraints body to a 2d plane of movement specified by its normal
     // DLLEXPORT NewtonJoint* Create2DJoint(NewtonBody* body, const Float3& planenormal);
 
@@ -165,6 +175,9 @@ protected:
 
     //! We need to keep the physic bodies alive (guaranteed) until they are destroyed
     std::vector<PhysicsBody::pointer> PhysicsBodies;
+
+    //! We need to keep constraints alive until they are destroyed
+    std::vector<PhysicsConstraint::pointer> PhysicsConstraints;
 
     // //! Used for resimulation
     // //! \todo Potentially allow this to be a vector

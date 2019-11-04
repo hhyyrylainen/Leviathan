@@ -40,6 +40,23 @@ bool BindShape(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("PhysicsShape", "int GetCustomTag() const",
+           asMETHOD(PhysicsShape, GetCustomTag), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("PhysicsShape", "void SetCustomTag(int value)",
+           asMETHOD(PhysicsShape, SetCustomTag), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGELSCRIPT_ASSUMED_SIZE_T;
+    if(engine->RegisterObjectMethod("PhysicsShape",
+           "int GetChildCustomTag(uint64 index) const",
+           asMETHOD(PhysicsShape, GetChildCustomTag), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 

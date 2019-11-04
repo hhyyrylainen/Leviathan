@@ -39,6 +39,13 @@ DLLEXPORT bool PhysicsShape::AddChildShape(const PhysicsShape::pointer& child,
     return true;
 }
 
+DLLEXPORT PhysicsShape::pointer PhysicsShape::GetChildByIndex(size_t index)
+{
+    if(!Compound || ChildShapes.size() <= index)
+        return nullptr;
+    return ChildShapes[index];
+}
+
 DLLEXPORT bool PhysicsShape::RemoveChildShape(PhysicsShape* child)
 {
     if(!Compound)
@@ -78,4 +85,11 @@ DLLEXPORT int PhysicsShape::FindChildShapeIndex(PhysicsShape* child)
     }
 
     return -1;
+}
+// ------------------------------------ //
+DLLEXPORT int PhysicsShape::GetChildCustomTag(size_t index) const
+{
+    if(!Compound || ChildShapes.size() <= index)
+        return -1;
+    return ChildShapes[index]->GetCustomTag();
 }

@@ -35,12 +35,32 @@ public:
         const Float4& orientation = Float4::IdentityQuaternion());
     DLLEXPORT bool RemoveChildShape(PhysicsShape* child);
 
+    //! \note This assumes that AddChildShape and RemoveChildShape properly update ChildShapes
+    //! indexes to match what bullet stores internally
+    DLLEXPORT PhysicsShape::pointer GetChildByIndex(size_t index);
+
+    //! \brief Calls GetCustomTag on the child at index. If invalid index returns -1
+    //! \see GetChildByIndex
+    DLLEXPORT int GetChildCustomTag(size_t index) const;
+
     //! \brief Finds the index that the child shape occupies
     //!
     //! This is useful for compound shape contact callbacks to determine which child shape
     //! collided
     //! \returns -1 if not found
     DLLEXPORT int FindChildShapeIndex(PhysicsShape* child);
+
+
+    //! \brief Custom tags allow storing one int of application specific info in this class
+    DLLEXPORT inline int GetCustomTag() const
+    {
+        return CustomData;
+    }
+
+    DLLEXPORT inline void SetCustomTag(int value)
+    {
+        CustomData = value;
+    }
 
     //
     // Script wrappers
@@ -68,6 +88,9 @@ private:
     //! \todo Maybe it would be cleaner to have a child class
     bool Compound = false;
     std::vector<PhysicsShape::pointer> ChildShapes;
+
+    //! Data for application to use. The engine doesn't use this
+    int CustomData = -1;
 };
 
 } // namespace Leviathan

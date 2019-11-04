@@ -341,7 +341,7 @@ private:
             // Allow taking a non-const object into the script as a const object
             if(wantedTypeID & asTYPEID_HANDLETOCONST) {
 
-                if((parameterType & asTYPEID_HANDLETOCONST) == wantedTypeID) {
+                if((parameterType | asTYPEID_HANDLETOCONST) == wantedTypeID) {
                     matched = true;
                 }
             }

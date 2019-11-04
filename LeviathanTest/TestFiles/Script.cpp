@@ -719,17 +719,78 @@ TEST_CASE("Pass by value objects to scripts work", "[script]")
     mod->DeleteThisModule();
 }
 
+TEST_CASE("Returning and Passing a custom script inherited class works", "[script]")
+{
+    PartialEngine<false> engine;
 
-// asIScriptObject* CurrentASObject = nullptr;
-// asUINT CurrentASObjectID = 0;
-// TEST_CASE("Passing and returning variable argument type", "[script]")
+    IDFactory ids;
+    ScriptExecutor exec;
+
+    // Register our custom stuff //
+    asIScriptEngine* as = exec.GetASEngine();
+
+    REQUIRE(as->RegisterInterface("SomeInterface") >= 0);
+    REQUIRE(as->RegisterInterfaceMethod("SomeInterface", "int GetValue()") >= 0);
+
+    // setup the script //
+    auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
+
+    // Setup source for script //
+    auto sourcecode = std::make_shared<ScriptSourceFileData>("Script.cpp", __LINE__ + 1,
+        "class SomeClassName : SomeInterface{\n"
+        "SomeClassName(int i){\n"
+        "I = i;\n"
+        "}\n"
+        "int GetValue() override{\n"
+        "return I;\n"
+        "}\n"
+        "int I;\n"
+        "}\n"
+        "SomeClassName@ Create(int value){\n"
+        "return SomeClassName(value);\n"
+        "}\n"
+        "int DoSomethingWithObject(SomeClassName@ obj){\n"
+        "return obj.GetValue();\n"
+        "}\n");
+
+    mod->AddScriptSegment(sourcecode);
+
+    auto module = mod->GetModule();
+
+    REQUIRE(module != nullptr);
+
+    constexpr int TEST_CONSTANT = 101;
+
+    ScriptRunningSetup setup("Create");
+
+    auto returned = exec.RunScript<asIScriptObject*>(mod, setup, TEST_CONSTANT);
+
+    CHECK(returned.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned.Value);
+
+    REQUIRE(
+        returned.Value->GetPropertyTypeId(0) == AngelScriptTypeIDResolver<int>::Get(&exec));
+
+    {
+        int* propPtr = static_cast<int*>(returned.Value->GetAddressOfProperty(0));
+        CHECK(*propPtr == TEST_CONSTANT);
+    }
+
+    ScriptRunningSetup setup2("DoSomethingWithObject");
+
+    auto returned2 = exec.RunScript<int>(mod, setup2, returned.Value);
+
+    CHECK(returned2.Result == SCRIPT_RUN_RESULT::Success);
+    CHECK(returned2.Value == TEST_CONSTANT);
+
+    mod->DeleteThisModule();
+}
 
 
 #ifdef ANGELSCRIPT_HAS_TRANSLATE_CALLBACK
 
 void ThrowStuff()
 {
-
     throw std::runtime_error("My custom exception message");
 }
 

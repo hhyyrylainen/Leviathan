@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -269,6 +269,9 @@ public:
     //! \brief Returns an asITypeInfo object for type id or null
     DLLEXPORT asITypeInfo* GetTypeInfo(int type) const;
 
+    //! \returns A string declaration of type or 'error'
+    DLLEXPORT std::string GetTypeName(int type) const;
+
     //! \brief Returns an asITypeInfo object for type name or null
     DLLEXPORT asITypeInfo* GetTypeInfoByDecl(const char* str) const;
 
@@ -320,15 +323,22 @@ private:
         //     } else {
         // }
 
+        int parameterType;
 
-        const auto parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
+        // Script object has a method to retrieve the type id it contains
+        if constexpr(std::is_same_v<CurrentT, asIScriptObject*>) {
+            // Handle to script object is implicit
+            parameterType = current->GetTypeId() | asTYPEID_OBJHANDLE;
+        } else {
+            parameterType = AngelScriptTypeIDResolver<CurrentT>::Get(this);
+        }
 
         bool matched = false;
 
         matched = wantedTypeID == parameterType;
 
-        // Allow taking a non-const object into the script as a const object
         if(!matched) {
+            // Allow taking a non-const object into the script as a const object
             if(wantedTypeID & asTYPEID_HANDLETOCONST) {
 
                 if((parameterType & asTYPEID_HANDLETOCONST) == wantedTypeID) {

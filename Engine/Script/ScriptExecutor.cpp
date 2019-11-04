@@ -589,8 +589,9 @@ DLLEXPORT bool ScriptExecutor::_DoPassParameterTypeError(
 
         LOG_ERROR("ScriptExecutor: pass parameters to script failed, func: " +
                   setup.Entryfunction + " param number: " + std::to_string(i) +
-                  " script wanted type: " + std::to_string(scriptwanted) +
-                  " but application provided: " + std::to_string(provided) +
+                  " script wanted type: " + std::to_string(scriptwanted) + " (" +
+                  GetTypeName(scriptwanted) + ") but application provided: " +
+                  std::to_string(provided) + " (" + GetTypeName(provided) + ")" +
                   (module ? (" in: " + module->GetInfoString()) : std::string()));
     }
 
@@ -693,6 +694,49 @@ DLLEXPORT asITypeInfo* ScriptExecutor::GetTypeInfo(int type) const
         return nullptr;
 
     return engine->GetTypeInfoById(type);
+}
+
+DLLEXPORT std::string ScriptExecutor::GetTypeName(int type) const
+{
+    if(type < 0)
+        return "error";
+
+    asITypeInfo* typeInfo = engine->GetTypeInfoById(type);
+
+    if(!typeInfo)
+        return "error";
+
+    const auto name = typeInfo->GetName();
+
+    if(!name)
+        return "error";
+
+    const auto ns = typeInfo->GetNamespace();
+
+    std::string result = (ns ? ns : "") + std::string(name);
+
+    if(type & asTYPEID_OBJHANDLE)
+        result += "@";
+
+    if(type & asTYPEID_HANDLETOCONST)
+        result = "const " + result;
+
+    if(type & asTYPEID_MASK_OBJECT)
+        result += " (OBJ)";
+
+    if(type & asTYPEID_MASK_OBJECT)
+        result += " (APP)";
+
+    if(type & asTYPEID_APPOBJECT)
+        result += " (APP)";
+
+    if(type & asTYPEID_SCRIPTOBJECT)
+        result += " (SCRIPT)";
+
+    if(type & asTYPEID_TEMPLATE)
+        result = "template " + result;
+
+    return result;
 }
 // ------------------------------------ //
 DLLEXPORT void ScriptExecutor::CollectGarbage()

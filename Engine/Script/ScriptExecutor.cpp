@@ -724,9 +724,6 @@ DLLEXPORT std::string ScriptExecutor::GetTypeName(int type) const
     if(type & asTYPEID_MASK_OBJECT)
         result += " (OBJ)";
 
-    if(type & asTYPEID_MASK_OBJECT)
-        result += " (APP)";
-
     if(type & asTYPEID_APPOBJECT)
         result += " (APP)";
 

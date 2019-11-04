@@ -157,28 +157,61 @@ void PhysicalWorld::OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep)
 
         btPersistentManifold* contactManifold = dispatcher->getManifoldByIndexInternal(i);
 
+        const int numContacts = contactManifold->getNumContacts();
+
+        if(numContacts < 1)
+            continue;
+
         const btCollisionObject* objA = contactManifold->getBody0();
         const btCollisionObject* objB = contactManifold->getBody1();
 
         // TODO: remove this check once it is confirmed that both objects must always exist
         if(objA && objB) {
 
-            const int numContacts = contactManifold->getNumContacts();
+            PhysicsBody* body1 = static_cast<PhysicsBody*>(objA->getUserPointer());
+            PhysicsBody* body2 = static_cast<PhysicsBody*>(objB->getUserPointer());
 
-            bool handled = false;
+            // TODO: remove this check after confirming neither is ever null
+            if(body1 && body2) {
 
-            for(int j = 0; j < numContacts; j++) {
+                // Find matching materials
+                const auto materialID1 = body1->GetPhysicalMaterialID();
+                const auto materialID2 = body2->GetPhysicalMaterialID();
 
-                const btManifoldPoint& contactPoint = contactManifold->getContactPoint(j);
+                // Find contact callbacks
+                if(materialID1 >= 0 && materialID2 >= 0) {
 
-                if(contactPoint.getDistance() < 0.f) {
+                    auto pair = leviathanWorld->GetMaterialPair(materialID1, materialID2);
 
-                    if(handled)
+                    if(!pair)
                         continue;
 
-                    handled = true;
-                    leviathanWorld->OnManifoldWithContact(
-                        contactManifold, contactPoint, objA, objB);
+                    if(pair->ManifoldCallback) {
+
+                        pair->ManifoldCallback(
+                            *leviathanWorld, *body1, *body2, *contactManifold);
+
+                        // Maybe release or clear here allows rechecking the AABB overlap
+                        // dispatcher->releaseManifold()
+                    }
+
+                    bool handled = false;
+
+                    for(int j = 0; j < numContacts; j++) {
+
+                        const btManifoldPoint& contactPoint =
+                            contactManifold->getContactPoint(j);
+
+                        if(contactPoint.getDistance() < 0.f) {
+
+                            if(handled)
+                                continue;
+
+                            handled = true;
+                            leviathanWorld->OnManifoldWithContact(
+                                contactManifold, contactPoint, *pair, body1, body2);
+                        }
+                    }
                 }
             }
         }
@@ -186,33 +219,17 @@ void PhysicalWorld::OnPhysicsSubStep(btDynamicsWorld* world, btScalar timeStep)
 }
 
 void PhysicalWorld::OnManifoldWithContact(btPersistentManifold* contactManifold,
-    const btManifoldPoint& contactPoint, const btCollisionObject* objA,
-    const btCollisionObject* objB)
+    const btManifoldPoint& contactPoint, const PhysMaterialDataPair& pair, PhysicsBody* body1,
+    PhysicsBody* body2)
 {
     // Actual points touching
     // const btVector3& contactPointA = contactPoint.getPositionWorldOnA();
     // const btVector3& contactPointB = contactPoint.getPositionWorldOnB();
     // const btVector3& normalOnB = contactPoint.m_normalWorldOnB;
 
-    // Find matching materials
-    PhysicsBody* body1 = static_cast<PhysicsBody*>(objA->getUserPointer());
-    PhysicsBody* body2 = static_cast<PhysicsBody*>(objB->getUserPointer());
+    if(pair.ContactCallback) {
 
-    if(body1 && body2) {
-
-        const auto materialID1 = body1->GetPhysicalMaterialID();
-        const auto materialID2 = body2->GetPhysicalMaterialID();
-
-        // Find contact callbacks
-        if(materialID1 >= 0 && materialID2 >= 0) {
-
-            auto pair = GetMaterialPair(materialID1, materialID2);
-
-            if(pair && pair->ContactCallback) {
-
-                pair->ContactCallback(*this, *body1, *body2);
-            }
-        }
+        pair.ContactCallback(*this, *body1, *body2);
     }
 }
 

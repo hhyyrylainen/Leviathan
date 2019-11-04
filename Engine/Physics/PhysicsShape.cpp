@@ -56,3 +56,26 @@ DLLEXPORT bool PhysicsShape::RemoveChildShape(PhysicsShape* child)
 
     return false;
 }
+
+DLLEXPORT int PhysicsShape::FindChildShapeIndex(PhysicsShape* child)
+{
+    if(!Compound || !child)
+        return -1;
+
+    const btCollisionShape* childPtr = child->GetShape();
+
+    auto* casted = static_cast<btCompoundShape*>(Shape1.get());
+
+    auto children = casted->getChildList();
+
+    const auto count = casted->getNumChildShapes();
+
+    for(int i = 0; i < count; ++i) {
+
+        if(children[i].m_childShape == childPtr) {
+            return i;
+        }
+    }
+
+    return -1;
+}

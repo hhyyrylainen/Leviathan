@@ -34,6 +34,12 @@ bool BindShape(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("PhysicsShape",
+           "int FindChildShapeIndex(PhysicsShape@ child)",
+           asMETHOD(PhysicsShape, FindChildShapeIndexWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 

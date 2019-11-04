@@ -164,8 +164,8 @@ protected:
     //! \brief Calls appropriate material callbacks. This is called once per contact manifold
     //! that has penetrating points
     void OnManifoldWithContact(btPersistentManifold* contactManifold,
-        const btManifoldPoint& contactPoint, const btCollisionObject* objA,
-        const btCollisionObject* objB);
+        const btManifoldPoint& contactPoint, const PhysMaterialDataPair& pair,
+        PhysicsBody* body1, PhysicsBody* body2);
 
 protected:
     //! Total amount of seconds required to be simulated

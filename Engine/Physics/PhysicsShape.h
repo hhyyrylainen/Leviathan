@@ -35,6 +35,13 @@ public:
         const Float4& orientation = Float4::IdentityQuaternion());
     DLLEXPORT bool RemoveChildShape(PhysicsShape* child);
 
+    //! \brief Finds the index that the child shape occupies
+    //!
+    //! This is useful for compound shape contact callbacks to determine which child shape
+    //! collided
+    //! \returns -1 if not found
+    DLLEXPORT int FindChildShapeIndex(PhysicsShape* child);
+
     //
     // Script wrappers
     //
@@ -43,6 +50,16 @@ public:
         const Float4& orientation = Float4::IdentityQuaternion())
     {
         return AddChildShape(ReferenceCounted::WrapPtr(child), offset, orientation);
+    }
+
+    DLLEXPORT inline int FindChildShapeIndexWrapper(PhysicsShape* child)
+    {
+        const auto result = FindChildShapeIndex(child);
+
+        if(child)
+            child->Release();
+
+        return result;
     }
 
 private:

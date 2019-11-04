@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -28,6 +28,12 @@ using PhysicsMaterialAABBCallback = bool (*)(PhysicalWorld& world, PhysicsBody&,
 //! fine grained hit detection.
 using PhysicsMaterialContactCallback = void (*)(
     PhysicalWorld& world, PhysicsBody&, PhysicsBody&);
+
+//! This function is called for each manifold contact point that is between the two bodies
+//! This is not implemented: If this returns false the manifold point is destroyed to retrigger
+//! AABB callback
+using PhysicsMaterialManifoldCallback = void (*)(
+    PhysicalWorld& world, PhysicsBody&, PhysicsBody&, const btPersistentManifold&);
 
 
 
@@ -91,11 +97,13 @@ struct PhysMaterialDataPair {
     // }
 
     //! \brief Sets the callback functions that are called when the material interacts
-    DLLEXPORT inline PhysMaterialDataPair& SetCallbacks(
-        const PhysicsMaterialAABBCallback aabb, const PhysicsMaterialContactCallback contact)
+    DLLEXPORT inline PhysMaterialDataPair& SetCallbacks(const PhysicsMaterialAABBCallback aabb,
+        const PhysicsMaterialContactCallback contact,
+        PhysicsMaterialManifoldCallback manifold = nullptr)
     {
         AABBCallback = aabb;
         ContactCallback = contact;
+        ManifoldCallback = manifold;
         return *this;
     }
 
@@ -109,6 +117,7 @@ struct PhysMaterialDataPair {
     // Callbacks //
     PhysicsMaterialAABBCallback AABBCallback;
     PhysicsMaterialContactCallback ContactCallback;
+    PhysicsMaterialManifoldCallback ManifoldCallback;
 };
 
 class PhysicalMaterial {

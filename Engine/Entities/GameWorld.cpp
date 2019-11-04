@@ -517,6 +517,11 @@ DLLEXPORT void GameWorld::EnablePhysicsDebugDraw()
 DLLEXPORT void GameWorld::DisablePhysicsDebugDraw()
 {
     if(_PhysicalWorld) {
+
+        // Clear the contents
+        if(pimpl->DebugDraw)
+            pimpl->DebugDraw->OnBeginDraw();
+
         _PhysicalWorld->SetDebugDrawer(nullptr);
     }
 }

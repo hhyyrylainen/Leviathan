@@ -85,7 +85,7 @@ These programs are needed for all platforms:
 
 - git
 
-- git lfs
+- git lfs (version 2.8.0)
 
 - svn
 
@@ -202,6 +202,8 @@ ruby 2.4.1p111
   https://github.com/git-lfs/git-lfs/releases After installing
   remember to run `git lfs install`
 
+  Note: Git LFS 2.9.0 is known to be broken! Use version 2.8.0 instead.
+
   If you previously had Git installed through cygwin, you must
   uninstall that and install the official Windows version of Git. You
   may also have to deleted all your cloned folders to avoid errors,
@@ -219,6 +221,10 @@ ruby 2.4.1p111
 - Git lfs is likely available as a package named (git-lfs). If it is
   not install it manually. After installing remember to run `git lfs
   install`
+
+  Note: Git LFS 2.9.0 is known to be broken! Use version 2.8.0
+  instead. If your package manager only provides the broken version
+  you need to manually install!
 
 \subsection prerequisite_software_gems Ruby Gems
 

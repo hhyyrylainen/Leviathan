@@ -1317,6 +1317,7 @@ DLLEXPORT bool Engine::PassCommandLine(int argcount, char* args[])
         // We see CEF arguments here, we need to allow them
         ("no-sandbox", "CEF option")
         ("single-process", "CEF option")
+        ("disable-gpu", "CEF option")
         ;
     // clang-format on
 

@@ -125,7 +125,7 @@ public:
         return *this;
     }
 
-    void FindTopLevelElements();
+    DLLEXPORT void FindTopLevelElements();
 
     inline bool Good() const
     {

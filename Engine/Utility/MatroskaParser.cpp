@@ -392,7 +392,7 @@ DLLEXPORT bool MatroskaParser::ParseHeaderValues(int headerSizeLeft)
     return true;
 }
 // ------------------------------------ //
-void MatroskaParser::FindTopLevelElements()
+DLLEXPORT void MatroskaParser::FindTopLevelElements()
 {
     Reader.seekg(Parsed.FirstEBMLElementOffset);
 

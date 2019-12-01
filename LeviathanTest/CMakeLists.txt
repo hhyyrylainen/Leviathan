@@ -39,6 +39,7 @@ set(TestSources
   TestFiles/ScriptInterfaces.cpp
   TestFiles/CustomScriptComponents.cpp
   TestFiles/MimeTypes.cpp
+  TestFiles/MatroskaParser.cpp
   
   TestFiles/CoreEngineTests.cpp
 

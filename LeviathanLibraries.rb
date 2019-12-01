@@ -13,6 +13,7 @@ require_relative 'RubySetupSystem/Libraries/SetupVorbis.rb'
 require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBSFramework.rb'
+require_relative 'RubySetupSystem/Libraries/setup_aom.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -27,10 +28,10 @@ end
 require_relative 'RubySetupSystem/Libraries/SetupLeviathan.rb'
 
 # Setup dependencies settings
-THIRD_PARTY_INSTALL = File.join(ProjectDir, "build", "ThirdParty")
+THIRD_PARTY_INSTALL = File.join(ProjectDir, 'build', 'ThirdParty')
 
 $bullet = Bullet.new(
-  version: "2.87",
+  version: '2.87',
   installPath: THIRD_PARTY_INSTALL,
   disableGraphicalBenchmark: true,
   disableCPUDemos: true,
@@ -39,7 +40,7 @@ $bullet = Bullet.new(
   noInstallSudo: true,
   # Only way to properly get -fPIC on linux (without hacking with CXX_FLAGS)
   # And bullet doesn't support shared libs on Windows
-  shared: if OS.linux? then true else false end
+  shared: OS.linux? ? true : false
 )
 
 $angelscript = AngelScript.new(
@@ -49,7 +50,7 @@ $angelscript = AngelScript.new(
 )
 
 $sfml = SFML.new(
-  version: "2.5.x",
+  version: '2.5.x',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true
 )
@@ -107,28 +108,28 @@ $ffmpeg = FFMPEG.new(
 )
 
 $bsf = BSFramework.new(
-  version: "419183a5031f2e5b50a0b0a3b48f292ac2fe1014",
+  version: '419183a5031f2e5b50a0b0a3b48f292ac2fe1014',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  renderAPI: if OS.windows? then "DirectX 11" else "OpenGL" end,
+  renderAPI: OS.windows? ? 'DirectX 11' : 'OpenGL',
   buildAllRenderAPI: true,
-  physicsModule: "Null",
-  audioModule: "Null",
-  extraLibSearch: "lib/",
+  physicsModule: 'Null',
+  audioModule: 'Null',
+  extraLibSearch: 'lib/'
 )
 
 $opus = Opus.new(
-  version: "v1.3.1",
+  version: 'v1.3.1',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  pic: true,
+  pic: true
 )
 
 $ogg = Ogg.new(
-  version: "release-1.3.4",
+  version: 'release-1.3.4',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  pic: true,
+  pic: true
 )
 
 # opusfile is disabled until cmake support can be added
@@ -139,25 +140,25 @@ $ogg = Ogg.new(
 # )
 
 $vorbis = Vorbis.new(
-  version: "v1.3.6",
+  version: 'v1.3.6',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  pic: true,
+  pic: true
 )
 
 $alure = Alure.new(
-  version: "master",
+  version: 'master',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   noExamples: true,
   shared: true,
-  static: false,
+  static: false
 )
 
 $cef = CEF.new(
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  version: "75.1.4+g4210896+chromium-75.0.3770.100"
+  version: '75.1.4+g4210896+chromium-75.0.3770.100'
 )
 
 $breakpad = Breakpad.new(
@@ -176,26 +177,26 @@ if OS.windows?
 
   $zlib = ZLib.new(
     installPath: THIRD_PARTY_INSTALL,
-    noInstallSudo: true,
+    noInstallSudo: true
   )
 
   $freeimage = FreeImage.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
-    version: "master",
-    epoch: 3    
+    version: 'master',
+    epoch: 3
   )
 
   $sdl = SDL.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
-    version: "release-2.0.6"
+    version: 'release-2.0.6'
   )
 
   $openalsoft = OpenALSoft.new(
     installPath: THIRD_PARTY_INSTALL,
     noInstallSudo: true,
-    version: "master" # b71eb4dafd9e525020a5f2cd869d671fb3e8e5bd
+    version: 'master' # b71eb4dafd9e525020a5f2cd869d671fb3e8e5bd
   )
 end
 

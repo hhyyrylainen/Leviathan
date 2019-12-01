@@ -44,6 +44,8 @@ constexpr auto PACKET_LOST_AFTER_RECEIVED_NEWER = 4;
 
 constexpr auto CRITICAL_PACKET_MAX_TRIES = 8;
 
+constexpr auto BITS_IN_BYTE = 8;
+
 //! For checking vector normalization
 constexpr float NORMALIZATION_TOLERANCE = 1e-6f;
 

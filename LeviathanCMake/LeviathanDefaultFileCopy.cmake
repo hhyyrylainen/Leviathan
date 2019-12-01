@@ -22,16 +22,11 @@ endif()
 
 # copy data directory
 if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
-
-  # The bin-folder files
-  file(GLOB DataMoveFiles "${LEVIATHAN_SRC}/bin/Data/*")
-  file(COPY ${DataMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
-
   
   # The script files folder
   install(DIRECTORY "Scripts" DESTINATION bin/Data)
   install(DIRECTORY "Assets/Fonts" DESTINATION bin/Data)
-  install(DIRECTORY "Assets/Videos" DESTINATION bin/Videos)
+  install(DIRECTORY "Assets/Videos" DESTINATION bin/Data/Videos)
   # install(DIRECTORY "Assets/Models" DESTINATION bin/Data)
   # install(DIRECTORY "Assets/Sound" DESTINATION bin/Data)
   # install(DIRECTORY "Assets/Textures" DESTINATION bin/Data)
@@ -39,9 +34,14 @@ if(NOT LEVIATHAN_SKIP_OPTIONAL_ASSETS)
   # install(DIRECTORY "Assets/Screenshots" DESTINATION bin/Data)
   # install(DIRECTORY "Assets/Cache" DESTINATION bin/Data)
 
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/bin/Data/Videos")
+
   # Copy data from the scripts folder to the bin folder
   file(GLOB ScriptsMoveFiles "${LEVIATHAN_SRC}/Scripts/*")
   file(COPY ${ScriptsMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Scripts")
+
+  file(GLOB VideosMoveFiles "${LEVIATHAN_SRC}/Assets/Videos/*")
+  file(COPY ${VideosMoveFiles} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data/Videos")
   
 endif()
 

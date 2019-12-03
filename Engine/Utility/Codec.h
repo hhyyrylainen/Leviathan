@@ -25,7 +25,7 @@ public:
         unsigned Height;
         unsigned BitDepth;
 
-        std::function<bool(uint8_t* target, size_t targetLength, IMAGE_TARGET_FORMAT format)>
+        std::function<bool(uint8_t* target, size_t targetlength, IMAGE_TARGET_FORMAT format)>
             ConvertImage;
     };
 
@@ -40,7 +40,7 @@ public:
         int Channels;
         int Samples;
 
-        std::function<bool(uint8_t* target, size_t targetLength, SOUND_TARGET_FORMAT format)>
+        std::function<bool(uint8_t* target, size_t targetlength, SOUND_TARGET_FORMAT format)>
             ConvertSamples;
     };
 

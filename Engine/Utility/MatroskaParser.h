@@ -173,6 +173,9 @@ public:
         return Parsed.AudioTrackCount;
     }
 
+    //! \returns The duration in seconds or -1.f if that info is unavailable
+    DLLEXPORT float GetDurationInSeconds() const;
+
     //! \returns The first video track or throws an exception
     DLLEXPORT const TrackInfo& GetFirstVideoTrack() const;
     DLLEXPORT const TrackInfo& GetFirstAudioTrack() const;

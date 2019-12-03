@@ -44,6 +44,8 @@ TEST_CASE("Matroska info element is parsed correctly", "[video]")
     CHECK(parsed.MuxinApp == "Lavf58.20.100");
     CHECK(parsed.WritingApp == "Lavf58.20.100");
     CHECK(parsed.Duration == 10333.f);
+
+    CHECK(parser.GetDurationInSeconds() == 10.333f);
 }
 
 TEST_CASE("Copying matroska parser preserves info", "[video]")

@@ -81,6 +81,10 @@ constexpr uint64_t EBML_TRACK_TYPE_CONTROL = 32;
 constexpr uint8_t MATROSKA_BLOCK_FLAG_INVISIBLE = 0x8;
 constexpr uint8_t MATROSKA_BLOCK_FLAG_LACING = 0x30;
 
+
+// This seems pretty hardcoded (at least in ffmpeg output streams)
+constexpr float DURATION_TO_SECONDS = 0.001f;
+
 // Variable length parsing constants
 constexpr uint8_t EBML_LENGTH_ONE_BYTES = 0x80;
 constexpr uint8_t EBML_LENGTH_ONE_MASK = EBML_LENGTH_ONE_BYTES - 1;
@@ -760,6 +764,13 @@ DLLEXPORT void MatroskaParser::HandleClusterElement(const EBMLElement& element)
     if(result < 0) {
         SetError("reading a cluster element contents failed");
     }
+}
+// ------------------------------------ //
+DLLEXPORT float MatroskaParser::GetDurationInSeconds() const
+{
+    if(Parsed.Duration < 0)
+        return -1.f;
+    return Parsed.Duration * DURATION_TO_SECONDS;
 }
 // ------------------------------------ //
 DLLEXPORT const MatroskaParser::TrackInfo& MatroskaParser::GetFirstVideoTrack() const

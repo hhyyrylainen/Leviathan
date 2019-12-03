@@ -32,14 +32,14 @@ DLLEXPORT DecodedFrame::DecodedFrame(aom_image* img)
     image.BitDepth = img->bit_depth;
     // img->bps
 
-    image.ConvertImage = [img, image](uint8_t* target, size_t targetLength,
+    image.ConvertImage = [img, image](uint8_t* target, size_t targetlength,
                              Image::IMAGE_TARGET_FORMAT format) -> bool {
         if(format != Image::IMAGE_TARGET_FORMAT::RGBA)
             return false;
 
         const auto targetStride = image.Width * 4;
 
-        if(targetLength != targetStride * image.Height)
+        if(targetlength != targetStride * image.Height)
             return false;
 
         // Depending on the img->fmt the Y, U and V planes can be in different order
@@ -94,12 +94,12 @@ DLLEXPORT DecodedFrame::DecodedFrame(const float* const* pcm, int samples, int c
     sound.Samples = samples;
     sound.Channels = channels;
 
-    sound.ConvertSamples = [pcm, sound](uint8_t* target, size_t targetLength,
+    sound.ConvertSamples = [pcm, sound](uint8_t* target, size_t targetlength,
                                Sound::SOUND_TARGET_FORMAT format) -> bool {
         if(format != Sound::SOUND_TARGET_FORMAT::INTERLEAVED_INT16)
             return false;
 
-        if(targetLength != sizeof(int16_t) * sound.Samples * sound.Channels)
+        if(targetlength != sizeof(int16_t) * sound.Samples * sound.Channels)
             return false;
 
         bool clipped = false;

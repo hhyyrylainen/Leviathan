@@ -40,6 +40,7 @@ set(TestSources
   TestFiles/CustomScriptComponents.cpp
   TestFiles/MimeTypes.cpp
   TestFiles/MatroskaParser.cpp
+  TestFiles/Codecs.cpp
   
   TestFiles/CoreEngineTests.cpp
 

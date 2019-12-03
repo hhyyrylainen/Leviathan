@@ -109,11 +109,10 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   list(APPEND LEVIATHAN_ENGINE_LIBRARIES
     LinearMath BulletDynamics Bullet3Dynamics BulletCollision
     sfml-system sfml-network
-    # ffmpeg
-    avcodec avformat avutil swresample swscale
     alure2 ${OPENAL_LIBRARY}
     ${SDL2_LIBRARY} AngelScriptAddons
     bsf
+    aom
     )
   
 

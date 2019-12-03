@@ -77,6 +77,9 @@ constexpr uint64_t EBML_TRACK_TYPE_SUBTITLE = 17;
 constexpr uint64_t EBML_TRACK_TYPE_BUTTONS = 18;
 constexpr uint64_t EBML_TRACK_TYPE_CONTROL = 32;
 
+// Block flags
+constexpr uint8_t MATROSKA_BLOCK_FLAG_INVISIBLE = 0x8;
+constexpr uint8_t MATROSKA_BLOCK_FLAG_LACING = 0x30;
 
 // Variable length parsing constants
 constexpr uint8_t EBML_LENGTH_ONE_BYTES = 0x80;
@@ -242,6 +245,99 @@ public:
     EBMLLengthValue Length;
     size_t DataStart = -1;
 };
+
+//! A block inside a cluster
+struct ClusterBlockHeader {
+public:
+    //! Read from stream
+    template<class T>
+    ClusterBlockHeader(T& stream) : TrackIdentifier(stream)
+    {
+        if(!stream.good())
+            return;
+
+        int16_t tmp;
+
+        stream.read(reinterpret_cast<char*>(&tmp), sizeof(tmp));
+
+        RelativeTimecode = boost::endian::big_to_native(tmp);
+
+        uint8_t flags = stream.get();
+
+        Invisible = flags & MATROSKA_BLOCK_FLAG_INVISIBLE;
+        Lacing = flags & MATROSKA_BLOCK_FLAG_LACING;
+    }
+
+    //! This element type uses masking to remove the highest bits from the identifier
+    EBMLLengthValue TrackIdentifier;
+    int16_t RelativeTimecode;
+
+    // Flags
+    bool Invisible;
+    int Lacing;
+};
+
+//! Xiph lacing handling
+//! First is the item count - 1 (so 0 means there's 1 item). Then there is "item count - 1"
+//! number of object sizes. The object sizes are encoded as bytes with the first bite less than
+//! 255 ending the number. The last object's size is not encoded (it takes up the rest of the
+//! space after the other sizes are subtrackted), this is why the item count - 1 is the number
+//! in the data.
+class XiphLacing {
+public:
+    XiphLacing(const uint8_t* data, size_t length)
+    {
+        if(length < 1)
+            throw InvalidArgument("data length is 0");
+
+        int count = data[0];
+        size_t readOffset = 1;
+
+        // The last item is implicit
+        ItemCount = count + 1;
+
+        size_t otherObjectSizes = 0;
+
+        // Read the object lengths
+        for(int i = 0; i < count; ++i) {
+            size_t currentLength = 0;
+            int byte;
+            do {
+                if(readOffset >= length)
+                    throw InvalidArgument("data ended while parsing laced lengths");
+
+                byte = data[readOffset];
+                ++readOffset;
+
+                currentLength += byte;
+
+            } while(byte >= 255);
+
+            ItemSizes.push_back(currentLength);
+            otherObjectSizes += currentLength;
+        }
+
+        // Header ended
+        LacedHeaderLenght = static_cast<int>(readOffset);
+
+        // The last object is the rest of the length
+        const int64_t lastObjectSize = length - LacedHeaderLenght - otherObjectSizes;
+
+        if(lastObjectSize <= 0)
+            throw InvalidArgument(
+                "laced data length left for last item is zero or negative: " +
+                std::to_string(lastObjectSize));
+
+        ItemSizes.push_back(lastObjectSize);
+    }
+
+    int ItemCount;
+    std::vector<size_t> ItemSizes;
+
+    //! The total lacing header size, used to get from start of the data to the first object
+    int LacedHeaderLenght;
+};
+
 } // namespace Leviathan
 // ------------------------------------ //
 // MatroskaParser
@@ -666,6 +762,204 @@ DLLEXPORT void MatroskaParser::HandleClusterElement(const EBMLElement& element)
     }
 }
 // ------------------------------------ //
+DLLEXPORT const MatroskaParser::TrackInfo& MatroskaParser::GetFirstVideoTrack() const
+{
+    for(const auto& track : Parsed.Tracks) {
+        if(track.TrackType == TRACK_TYPE::Video)
+            return track;
+    }
+
+    throw Leviathan::InvalidState("no video tracks exist");
+}
+
+DLLEXPORT const MatroskaParser::TrackInfo& MatroskaParser::GetFirstAudioTrack() const
+{
+    for(const auto& track : Parsed.Tracks) {
+        if(track.TrackType == TRACK_TYPE::Audio)
+            return track;
+    }
+
+    throw Leviathan::InvalidState("no audio tracks exist");
+}
+// ------------------------------------ //
+DLLEXPORT std::vector<uint8_t> MatroskaParser::ReadTrackCodecPrivateData(
+    const TrackInfo& track)
+{
+    if(!track.CodecPrivateOffset || !track.CodecPrivateLength || !Good())
+        return {};
+
+    std::vector<uint8_t> result;
+    result.resize(*track.CodecPrivateLength);
+
+    Reader.seekg(*track.CodecPrivateOffset);
+
+    Reader.read(reinterpret_cast<char*>(result.data()), result.size());
+
+    if(!Reader.good()) {
+        SetError("data ended while reading track codec private data");
+        return {};
+    }
+
+    return result;
+}
+// ------------------------------------ //
+DLLEXPORT void MatroskaParser::JumpToFirstCluster()
+{
+    if(Parsed.Clusters.empty()) {
+        ClusterBlockIterator.reset();
+        return;
+    }
+
+    ClusterBlockIterator = BlockIteratorInfo(Parsed.Clusters.front().DataStart);
+}
+
+DLLEXPORT std::tuple<const uint8_t*, size_t, MatroskaParser::BlockInfo>
+    MatroskaParser::GetNextBlockForTrack(int tracknumber)
+{
+    std::optional<size_t> currentClusterEnd;
+    uint64_t clusterTimeCode;
+    std::optional<size_t> nextCluster;
+
+    auto updateCurrentCluster = [&]() {
+        if(!ClusterBlockIterator || Error) {
+            return false;
+        }
+
+        currentClusterEnd.reset();
+        nextCluster.reset();
+
+        // TODO: this loop is also not optimal if there are a ton of clusters (could be
+        // replaced with a binary search or caching)
+        for(size_t i = Parsed.Clusters.size() - 1;; --i) {
+            const auto& cluster = Parsed.Clusters[i];
+
+            if(cluster.DataStart <= ClusterBlockIterator->NextReadPos) {
+                // In this cluster
+                currentClusterEnd = cluster.DataStart + cluster.Lenght;
+                clusterTimeCode = cluster.Timecode;
+
+                if(i + 1 < Parsed.Clusters.size()) {
+                    // There is a next cluster
+                    nextCluster = Parsed.Clusters[i + 1].DataStart;
+                }
+                break;
+            }
+
+            if(i == 0) {
+                LOG_ERROR(
+                    "MatroskaParser: could not find which cluster current position is in: " +
+                    std::to_string(ClusterBlockIterator->NextReadPos));
+                return false;
+            }
+        }
+
+        if(!currentClusterEnd) {
+            LOG_ERROR(
+                "MatroskaParser: GetNextBlockForTrack: Could not find which cluster current "
+                "read position is in");
+            return false;
+        }
+        return true;
+    };
+
+    if(!updateCurrentCluster()) {
+        return std::make_tuple(nullptr, 0, BlockInfo{});
+    }
+
+    Reader.seekg(ClusterBlockIterator->NextReadPos);
+
+    bool working = true;
+
+    while(working) {
+        EBMLElement currentElement(Reader);
+
+        if(!Reader.good()) {
+            SetError("element ended while parsing its header");
+            break;
+        }
+
+        const auto currentElementEnd = currentElement.DataStart + currentElement.Length.Value;
+
+        bool clusterEnded = false;
+
+        // Don't jump past the ond of the current cluster (without properly going to the
+        // next cluster)
+        auto setNextReadPos = [&]() {
+            if(currentElementEnd >= *currentClusterEnd) {
+                // Needs to jump to next cluster
+                clusterEnded = true;
+
+                if(nextCluster) {
+                    ClusterBlockIterator->NextReadPos = *nextCluster;
+                } else {
+                    // No more clusters
+                    ClusterBlockIterator.reset();
+                }
+            } else {
+                ClusterBlockIterator->NextReadPos = currentElementEnd;
+            }
+        };
+
+        switch(currentElement.Identifier.Value) {
+            // The current cluster already contains the time code
+            // TODO: that is not optimal if there are a ton of clusters (ie. longer videos are
+            // attempted to be played)
+        // case ELEMENT_TYPE_TIMECODE:
+        case ELEMENT_TYPE_SIMPLE_BLOCK: {
+            const size_t headerStart = Reader.tellg();
+            ClusterBlockHeader foundBlock(Reader);
+
+            if(!Reader.good()) {
+                SetError("data ended while decoding a cluster block header");
+                working = false;
+                break;
+            }
+
+            const size_t dataBegin = Reader.tellg();
+
+            if(static_cast<int>(foundBlock.TrackIdentifier.Value) == tracknumber) {
+                const auto nonHeaderBytes = currentElementEnd - dataBegin;
+                ClusterBlockIterator->DataBuffer.resize(nonHeaderBytes);
+
+                Reader.read(reinterpret_cast<char*>(ClusterBlockIterator->DataBuffer.data()),
+                    ClusterBlockIterator->DataBuffer.size());
+
+
+                // Set the next position
+                setNextReadPos();
+
+                // Return the block data
+                return std::make_tuple(ClusterBlockIterator->DataBuffer.data(),
+                    ClusterBlockIterator->DataBuffer.size(),
+                    BlockInfo{
+                        ApplyRelativeTimecode(clusterTimeCode, foundBlock.RelativeTimecode)});
+            }
+
+            // Else let the default case handle jumping over the current data as we didn't want
+            // this block
+        }
+        default:
+            // Unknown data, we need to jump past
+            setNextReadPos();
+
+            // If the jump is past the end of the current cluster we need to update which
+            // cluster we are in
+            if(clusterEnded) {
+                if(!updateCurrentCluster()) {
+                    // Ran out of clusters
+                    working = false;
+                    break;
+                }
+            }
+
+            Reader.seekg(ClusterBlockIterator->NextReadPos);
+        }
+    }
+
+    // No data found
+    return std::make_tuple(nullptr, 0, BlockInfo{});
+}
+// ------------------------------------ //
 DLLEXPORT uint64_t MatroskaParser::ReadVariableLengthUnsignedInteger(
     const std::vector<uint8_t>& data, int length)
 {
@@ -703,4 +997,56 @@ DLLEXPORT double MatroskaParser::ReadVariableLengthFloat(
     LOG_ERROR("MatroskaParser: ReadVariableLengthFloat: cannot handle float of length: " +
               std::to_string(length));
     return -1.f;
+}
+// ------------------------------------ //
+DLLEXPORT uint64_t MatroskaParser::ApplyRelativeTimecode(uint64_t base, int16_t relative)
+{
+    // Make sure not to add too big negative number to cause a time point wrap to a huge value
+    if(relative < 0) {
+        if(base >= static_cast<unsigned>(-1 * relative)) {
+            return base + relative;
+        } else {
+            return 0;
+        }
+    }
+
+    return base + relative;
+}
+// ------------------------------------ //
+DLLEXPORT std::vector<std::tuple<const uint8_t*, size_t>>
+    MatroskaParser::SplitVorbisPrivateSetupData(
+        const uint8_t* codecprivatedata, size_t datalength)
+{
+    try {
+        XiphLacing laced(codecprivatedata, datalength);
+
+        std::vector<std::tuple<const uint8_t*, size_t>> result;
+
+        if(laced.ItemCount != 3) {
+            LOG_WARNING("MatroskaParser: Vorbis private data: expected packet count to be 3, "
+                        "but got: " +
+                        std::to_string(laced.ItemCount));
+        }
+
+        const uint8_t* currentData = codecprivatedata + laced.LacedHeaderLenght;
+
+        for(int i = 0; i < laced.ItemCount; ++i) {
+            const auto size = laced.ItemSizes[i];
+
+            if(currentData + size - codecprivatedata > static_cast<std::ptrdiff_t>(datalength))
+                throw InvalidArgument(
+                    "there isn't enough data in the buffer for the current item");
+
+            result.push_back(std::make_tuple(currentData, size));
+            currentData += size;
+        }
+
+        return result;
+
+    } catch(const InvalidArgument& e) {
+        LOG_ERROR(
+            "MatroskaParser: SplitVorbisPrivateSetupData: data is malformed, exception: ");
+        e.PrintToLog();
+        return {};
+    }
 }

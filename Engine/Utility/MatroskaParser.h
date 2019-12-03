@@ -18,6 +18,17 @@ struct EBMLElement;
 //! https://matroska.org/technical/diagram/index.html
 //! https://matroska.org/technical/specs/index.html
 class MatroskaParser {
+private:
+    struct BlockIteratorInfo {
+        inline BlockIteratorInfo(size_t startpos) : NextReadPos(startpos) {}
+
+        //! Next position to read an element from
+        size_t NextReadPos = -1;
+
+        //! Holds the current elements data, overridden on next iterator step
+        std::vector<uint8_t> DataBuffer;
+    };
+
 public:
     // Codec names
     // Official list is here https://www.matroska.org/technical/specs/codecid/index.html but
@@ -101,6 +112,10 @@ public:
         std::vector<ClusterInfo> Clusters;
     };
 
+    struct BlockInfo {
+        uint64_t Timecode;
+    };
+
 public:
     //! \note Parses the matroska header. Check Good() after construction to see if the file
     //! was valid
@@ -108,7 +123,7 @@ public:
 
     inline MatroskaParser(const MatroskaParser& other) :
         Error(other.Error), ErrorMessage(other.ErrorMessage), Parsed(other.Parsed),
-        File(other.File)
+        ClusterBlockIterator(other.ClusterBlockIterator), File(other.File)
     {
         Reader.open(File, std::ios::binary);
         Reader.seekg(other.Reader.tellg());
@@ -120,6 +135,7 @@ public:
         ErrorMessage = other.ErrorMessage;
         File = other.File;
         Parsed = other.Parsed;
+        ClusterBlockIterator = other.ClusterBlockIterator;
         Reader.open(File, std::ios::binary);
         Reader.seekg(other.Reader.tellg());
         return *this;
@@ -147,6 +163,33 @@ public:
         return Parsed.Tracks;
     }
 
+    inline const auto GetVideoTrackCount() const
+    {
+        return Parsed.VideoTrackCount;
+    }
+
+    inline const auto GetAudioTrackCount() const
+    {
+        return Parsed.AudioTrackCount;
+    }
+
+    //! \returns The first video track or throws an exception
+    DLLEXPORT const TrackInfo& GetFirstVideoTrack() const;
+    DLLEXPORT const TrackInfo& GetFirstAudioTrack() const;
+
+    //! \brief Reads the codec private data for a track
+    DLLEXPORT std::vector<uint8_t> ReadTrackCodecPrivateData(const TrackInfo& track);
+
+    // Data iteration functions
+    //! \brief Jumps the read position to the first cluster
+    DLLEXPORT void JumpToFirstCluster();
+
+    //! \brief Gets the next block matching track number
+    //!
+    //! If there is no next block this returns (nullptr, 0, BlockInfo{})
+    DLLEXPORT std::tuple<const uint8_t*, size_t, BlockInfo> GetNextBlockForTrack(
+        int tracknumber);
+
     //! \brief Reads a variable length unsigned integer (in big endian form) into an integer
     //! \param length The length in bytes to read, must be > 0 && < data.length()
     DLLEXPORT static uint64_t ReadVariableLengthUnsignedInteger(
@@ -156,6 +199,13 @@ public:
     //! \param length The length in bytes to read, must be > 0 && < data.length()
     DLLEXPORT static double ReadVariableLengthFloat(
         const std::vector<uint8_t>& data, int length);
+
+    //! \brief Splits Vorbis private data into the 3 setup packets
+    //!
+    //! https://matroska.org/technical/specs/codecid/index.html details how the vorbis private
+    //! data is packed
+    DLLEXPORT static std::vector<std::tuple<const uint8_t*, size_t>>
+        SplitVorbisPrivateSetupData(const uint8_t* codecprivatedata, size_t datalength);
 
 protected:
     inline void SetError(const std::string& error)
@@ -177,6 +227,8 @@ protected:
     DLLEXPORT void HandleTrackEntryElement(const EBMLElement& element);
     DLLEXPORT void HandleClusterElement(const EBMLElement& element);
 
+    DLLEXPORT static uint64_t ApplyRelativeTimecode(uint64_t base, int16_t relative);
+
 private:
     bool Error = false;
     std::string ErrorMessage;
@@ -184,6 +236,10 @@ private:
     //! All parsed data like different section offsets, etc. are stored here to make copying
     //! easier
     ParsedInformation Parsed;
+
+    //! Used for iterating through cluster blocks
+    //! When not set, either the end has been reached or iteration has not been started
+    std::optional<BlockIteratorInfo> ClusterBlockIterator;
 
     std::string File;
     //! This is mutable to allow calling tellg when copying

@@ -2,3 +2,6 @@
 	path = RubySetupSystem
 	url = https://github.com/hhyyrylainen/RubySetupSystem.git
 	branch = master
+[submodule "Engine/libyuv"]
+	path = Engine/libyuv
+	url = https://chromium.googlesource.com/libyuv/libyuv

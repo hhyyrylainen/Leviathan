@@ -4,7 +4,6 @@ require 'os'
 require_relative 'RubySetupSystem/Libraries/SetupBullet.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAngelScript.rb'
 require_relative 'RubySetupSystem/Libraries/SetupSFML.rb'
-require_relative 'RubySetupSystem/Libraries/SetupFFMPEG.rb'
 require_relative 'RubySetupSystem/Libraries/SetupAlure.rb'
 require_relative 'RubySetupSystem/Libraries/SetupOgg.rb'
 require_relative 'RubySetupSystem/Libraries/SetupOpus.rb'
@@ -55,56 +54,15 @@ $sfml = SFML.new(
   noInstallSudo: true
 )
 
-$ffmpeg = FFMPEG.new(
-  version: "release/3.3",
+$aom = AOM.new(
+  version: 'v1.0.0-errata1',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  enablePIC: true,
-  buildShared: true,
-  enableSmall: true,
-  # noStrip: true,
-  extraOptions: [
-    "--disable-postproc", "--disable-avdevice",
-    "--disable-avfilter",
-    if !OS.windows? then 
-      "--enable-rpath"
-    else
-      ""
-    end,
-    
-    "--disable-network",
-
-    # Can't be bothered to check which specific things we need so some of these disables
-    # are disabled
-    #"--disable-everything",
-    #"--disable-demuxers",
-    "--disable-encoders",
-    "--disable-decoders",
-    #"--disable-hwaccels",
-    "--disable-muxers",
-    #"--disable-parsers",
-    #"--disable-protocols",
-    "--disable-indevs",
-    "--disable-outdevs",
-    "--disable-filters",
-
-    # Wanted things
-    # These aren't enough so all the demuxers protocols and parsers are enabled
-    # "--enable-decoder=aac", "--enable-decoder=mpeg4", "--enable-decoder=h264",
-    # "--enable-parser=h264", "--enable-parser=aac", "--enable-parser=mpeg4video",
-    # "--enable-demuxer=h264", "--enable-demuxer=aac", "--enable-demuxer=m4v",
-    "--enable-decoder=vorbis",
-    "--enable-decoder=opus",
-    "--enable-decoder=vp9",
-    
-    # Disable all the external libraries
-    "--disable-bzlib", "--disable-iconv",
-    "--disable-libxcb",
-    "--disable-lzma", "--disable-sdl2", "--disable-xlib", "--disable-zlib",
-    "--disable-audiotoolbox", "--disable-cuda", "--disable-cuvid",
-    "--disable-nvenc", "--disable-vaapi", "--disable-vdpau",
-    "--disable-videotoolbox"
-  ].flatten
+  disableExamples: true,
+  disableTests: true,
+  disableDocs: true,
+  disableTools: true,
+  pic: true
 )
 
 $bsf = BSFramework.new(
@@ -200,13 +158,10 @@ if OS.windows?
   )
 end
 
-
 $leviathanLibList =
-  [$bullet, $angelscript, $sfml, $cef, $ffmpeg]
+  [$bullet, $angelscript, $sfml, $cef, $aom]
 
-if true
-  $leviathanLibList += [$breakpad]
-end
+$leviathanLibList += [$breakpad] # if true
 
 if OS.windows?
   $leviathanLibList += [$sdl, $openalsoft]

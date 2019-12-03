@@ -112,7 +112,7 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     alure2 ${OPENAL_LIBRARY}
     ${SDL2_LIBRARY} AngelScriptAddons
     bsf
-    aom vorbis opus
+    aom vorbis opus ogg
     )
   
 

@@ -98,6 +98,9 @@ These programs are needed for all platforms:
   the package manager to install this. For **Windows** see \ref
   prerequisite_software_windows)
 
+- Perl (On **linux** the setup script will automatically use the
+  package manager to install this)
+
 - 7zip
 
 - Vulkan SDK (On **linux** the setup script will automatically use the
@@ -115,15 +118,12 @@ ruby 2.4.1p111
 - Visual Studio 2017 Community (make sure to enable c++ support when installing) and install
   to the default path in `C:/Program Files (x86)/Microsoft Visual Studio/2017/Community`
   otherwise the setup won't find it.
-- Visual c++ 2010 runtime (This is required for yasm according to ffmpeg setup guide)
+- Visual c++ 2010 runtime (This is required for yasm)
 - Visual c++ 2015 runtime (CEF uses this, users also need this)
 - [Cygwin64](https://cygwin.com/install.html). When Cygwin asks for
   which packages to install make sure the at least the following are
   selected (and to save space don't install the debug variants):
   
-  - coreutils
-  - make
-  - bash
   - tar (with gzip support)
  
   Though cmake and git are available through cygwin, those versions
@@ -144,13 +144,9 @@ ruby 2.4.1p111
   <a href="https://leviathanengine.com/images/setup_list_4.png">cygwin list 4</a>,
   <a href="https://leviathanengine.com/images/setup_list_5.png">cygwin list 5</a>.
 
-  Additionally if you have a lot of entires in your system path there
-  may be conflicting names with executables from cygwin. This results
-  in weird errors during ffmpeg compilation with the install
-  etc. commands not accepting the parameters they are given. This can
-  be fixed in two ways: either delete the conflicting programs OR make
-  cygwin be the first thing in your path to let it override other
-  programs if they have the same name.
+  It is possible to install perl on Windows with Cygwin.
+
+- Install Perl with the installer from http://strawberryperl.com/
 
 - Install Git with the official installer from: https://git-scm.com/download/win
 

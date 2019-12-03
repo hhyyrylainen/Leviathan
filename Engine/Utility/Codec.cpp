@@ -169,8 +169,13 @@ struct AV1Codec::Implementation {
 DLLEXPORT AV1Codec::AV1Codec() : Pimpl(std::make_unique<Implementation>())
 {
     aom_codec_iface_t* codecInterface = aom_codec_av1_dx();
+    aom_codec_dec_cfg_t config;
+    std::memset(&config, 0, sizeof(config));
+    config.threads = 1;
+    // We only have 8-bit yuv to rgb conversions so we need this
+    config.allow_lowbitdepth = 1;
 
-    auto error = aom_codec_dec_init(Pimpl->Codec.get(), codecInterface, nullptr, 0);
+    auto error = aom_codec_dec_init(Pimpl->Codec.get(), codecInterface, &config, 0);
 
     if(error) {
         throw InvalidState(

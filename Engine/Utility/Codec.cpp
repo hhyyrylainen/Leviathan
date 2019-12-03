@@ -17,6 +17,7 @@
 // Opus
 #include "opus/opus.h"
 
+#include <array>
 #include <cmath>
 #include <cstring>
 

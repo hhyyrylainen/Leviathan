@@ -38,6 +38,9 @@ public:
     static constexpr auto CODEC_TYPE_VORBIS = "A_VORBIS";
     static constexpr auto CODEC_TYPE_OPUS = "A_OPUS";
 
+    // This seems pretty hardcoded (at least in ffmpeg output streams)
+    static constexpr float MATROSKA_DURATION_TO_SECONDS = 0.001f;
+
     enum class TRACK_TYPE {
         Video = 1,
         Audio = 2,

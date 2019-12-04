@@ -164,6 +164,7 @@ struct AV1Codec::Implementation {
     }
 
     std::unique_ptr<aom_codec_ctx_t> Codec;
+    aom_codec_iter_t FrameIter = nullptr;
 };
 // ------------------------------------ //
 // AV1Codec
@@ -197,15 +198,16 @@ DLLEXPORT bool AV1Codec::FeedRawFrame(const uint8_t* data, size_t length)
                   aom_codec_error(Pimpl->Codec.get()));
         return false;
     }
+
+    Pimpl->FrameIter = nullptr;
+
     return true;
 }
 
 DLLEXPORT void AV1Codec::ReceiveDecodedFrames(FrameCallback callback)
 {
-    aom_codec_iter_t iter = nullptr;
-
     while(true) {
-        aom_image_t* img = aom_codec_get_frame(Pimpl->Codec.get(), &iter);
+        aom_image_t* img = aom_codec_get_frame(Pimpl->Codec.get(), &Pimpl->FrameIter);
         if(img == nullptr) {
             break;
         }

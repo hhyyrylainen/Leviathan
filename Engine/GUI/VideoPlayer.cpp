@@ -45,6 +45,12 @@ public:
         bool Empty = true;
     };
 
+    enum class LAST_USED {
+        None = 0,
+        First,
+        Second,
+    };
+
 public:
     ~Implementation()
     {
@@ -58,6 +64,20 @@ public:
 
         VideoParser.reset();
         AudioParser.reset();
+    }
+
+    auto& GetNotLastUsedBuffer()
+    {
+        return LastUsedTemporaryBuffer == Implementation::LAST_USED::First ?
+                   TemporaryFrameBuffer2 :
+                   TemporaryFrameBuffer1;
+    }
+
+    void SwapLastUsedStatus()
+    {
+        LastUsedTemporaryBuffer = LastUsedTemporaryBuffer == Implementation::LAST_USED::First ?
+                                      Implementation::LAST_USED::Second :
+                                      Implementation::LAST_USED::First;
     }
 
     //! Mutex that must be locked when destroying or creating any resource in this class that
@@ -76,25 +96,34 @@ public:
 
     // The order of these buffer uses works like this
     // decode loop while next frame not ready:
-    //  write to DecodedFrameBuffer
+    //  write to temporary buffer that has the oldest data
     // if new frame time is less than current time:
-    //  copy DecodedFrameBuffer to TemporaryFrameBuffer
     //  mark temporary buffer dirty
     //  mark next frame missing and go back to loop
     // else:
     //  break out of decode loop
     // if dirty:
-    //  wait until gpu submit buffer is no longer locked
-    //  copy temporary frame buffer to gpu upload buffer and submit it (this locks the buffer)
+    //  (optional) wait until gpu submit buffer is no longer locked
+    //  copy temporary frame buffer (that has the oldest data, as the newest buffer has the
+    //  data to display next, but not yet) to gpu upload buffer and submit it (this locks the
+    //  buffer)
+    std::vector<uint8_t> TemporaryFrameBuffer1;
+    std::vector<uint8_t> TemporaryFrameBuffer2;
 
-    std::vector<uint8_t> DecodedFrameBuffer;
-    std::vector<uint8_t> TemporaryFrameBuffer;
+    LAST_USED LastUsedTemporaryBuffer = LAST_USED::None;
+
+    //! True until temporary buffer is uploaded to the GPU (or at least the upload is started)
+    bool TemporaryBufferNeedsUpload = true;
+
     bs::SPtr<bs::PixelData> GPUUploadBuffer;
 
 
     //! This buffers audio data that the audio library couldn't take at once if the decoder
     //! gives us more data than requested
     PendingAudioData _PendingAudioData;
+
+    //! When true the player waits for the video texture to finish uploading on each frame
+    bool WaitForTextureToUpload = false;
 };
 
 // ------------------------------------ //
@@ -205,8 +234,13 @@ bool VideoPlayer::CreateOutputTexture()
         return false;
 
     VideoOutputTexture = bs::Texture::create(Pimpl->GPUUploadBuffer, bs::TU_DYNAMIC);
-    Pimpl->TemporaryFrameBuffer.resize(Pimpl->GPUUploadBuffer->getSize());
-    Pimpl->DecodedFrameBuffer.resize(Pimpl->TemporaryFrameBuffer.size());
+    Pimpl->TemporaryFrameBuffer1.resize(Pimpl->GPUUploadBuffer->getSize());
+    Pimpl->TemporaryFrameBuffer2.resize(Pimpl->TemporaryFrameBuffer1.size());
+    Pimpl->LastUsedTemporaryBuffer = Implementation::LAST_USED::None;
+
+    // After decoding the first frame it should always be shown right away
+    Pimpl->TemporaryBufferNeedsUpload = true;
+
     return true;
 }
 // ------------------------------------ //
@@ -338,14 +372,25 @@ bool VideoPlayer::DecodeVideoFrame()
                 return false;
             }
 
-            if(!imageData.ConvertImage(Pimpl->DecodedFrameBuffer.data(),
-                   Pimpl->DecodedFrameBuffer.size(),
+            auto& target = Pimpl->GetNotLastUsedBuffer();
+
+            if(!imageData.ConvertImage(target.data(), target.size(),
                    DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA)) {
                 LOG_ERROR("VideoPlayer: frame convert failed, likely due to decode buffer "
                           "being the wrong size");
                 return false;
             } else {
                 NextFrameReady = true;
+
+                // Make sure both buffers have a valid frame (this only happens once when
+                // starting playback)
+                if(Pimpl->LastUsedTemporaryBuffer == Implementation::LAST_USED::None) {
+
+                    std::copy(
+                        target.begin(), target.end(), Pimpl->TemporaryFrameBuffer2.begin());
+                }
+
+                Pimpl->SwapLastUsedStatus();
             }
 
             // We want only one frame at a time
@@ -364,9 +409,12 @@ bool VideoPlayer::DecodeVideoFrame()
             break;
 
 
-        CurrentlyDecodedTimeStamp = opts.Timecode / VideoTimeBase;
-        LOG_INFO(
-            "time to display next frame at: " + std::to_string(CurrentlyDecodedTimeStamp));
+        // CurrentlyDecodedTimeStamp = opts.Timecode / VideoTimeBase;
+        CurrentlyDecodedTimeStamp =
+            opts.Timecode * MatroskaParser::MATROSKA_DURATION_TO_SECONDS;
+
+        // LOG_INFO(
+        //     "time to display next frame at: " + std::to_string(CurrentlyDecodedTimeStamp));
 
         if(!Pimpl->VideoCodec->FeedRawFrame(data, length)) {
             LOG_ERROR("VideoCodec: failed to send raw frame to video codec");
@@ -378,15 +426,30 @@ bool VideoPlayer::DecodeVideoFrame()
 // ------------------------------------ //
 void VideoPlayer::UpdateTexture()
 {
-    // Wait until buffer is no longer locked
-    while(Pimpl->GPUUploadBuffer->isLocked()) {
+    if(Pimpl->WaitForTextureToUpload) {
+        // Wait until buffer is no longer locked
+        if(Pimpl->GPUUploadBuffer->isLocked()) {
 
-        bs::gCoreThread().submit(true);
+            // Using true here majorly stalls rendering
+            bs::gCoreThread().submit(false);
+
+            do {
+                std::this_thread::yield();
+            } while(Pimpl->GPUUploadBuffer->isLocked());
+        }
+    } else {
+        // Skip updating until the texture is no longer locked for update
+        if(Pimpl->GPUUploadBuffer->isLocked())
+            return;
     }
 
-    std::memcpy(Pimpl->GPUUploadBuffer->getData(), Pimpl->TemporaryFrameBuffer.data(),
-        Pimpl->TemporaryFrameBuffer.size());
+    // Because the write process swaps the last used around we also use the last used buffer
+    // here (which is now the buffer that decode didn't just write to)
+    const auto& data = Pimpl->GetNotLastUsedBuffer();
+
+    std::memcpy(Pimpl->GPUUploadBuffer->getData(), data.data(), data.size());
     VideoOutputTexture->writeData(Pimpl->GPUUploadBuffer, 0, 0, true);
+    Pimpl->TemporaryBufferNeedsUpload = false;
 }
 // ------------------------------------ //
 size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
@@ -574,6 +637,8 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
         PassedTimeSeconds += elapsed;
 
+        // LOG_WRITE("elapsed video time is now: " + std::to_string(PassedTimeSeconds));
+
         // Start playing audio. Hopefully at the same time as the first frame of the
         // video is decoded
         if(!IsPlayingAudio && HasAudioStream) {
@@ -591,12 +656,9 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
             IsPlayingAudio = true;
         }
 
-        bool needsUpdate = false;
-
         // This loops until we have the frame we should be showing at this time in temporary
         // buffer
         while(CurrentlyDecodedTimeStamp <= PassedTimeSeconds) {
-
             // Make sure the next frame is ready
             if(!DecodeVideoFrame()) {
 
@@ -607,20 +669,18 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
             }
 
             // Don't show a frame yet if it is too soon
+            // As we break as soon as there is a frame that is too new to show, the previous
+            // frame is still available in the temporary buffer for us to show
             if(PassedTimeSeconds < CurrentlyDecodedTimeStamp)
                 break;
 
-            // Copy to temporary buffer
-            std::copy(Pimpl->DecodedFrameBuffer.begin(), Pimpl->DecodedFrameBuffer.end(),
-                Pimpl->TemporaryFrameBuffer.begin());
-
-            needsUpdate = true;
+            Pimpl->TemporaryBufferNeedsUpload = true;
 
             NextFrameReady = false;
         }
 
         // Copy temporary buffer to GPU if it was updated
-        if(needsUpdate)
+        if(Pimpl->TemporaryBufferNeedsUpload)
             UpdateTexture();
 
         return 0;

@@ -31,6 +31,7 @@
 #include "Threading/QueuedTask.h"
 #include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
+#include "Utility/HybridGraphicsUseDedicated.h"
 #include "Utility/Random.h"
 #include "Window.h"
 

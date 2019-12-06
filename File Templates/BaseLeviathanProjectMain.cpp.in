@@ -4,6 +4,8 @@
 
 #include "Application/CrashHandler.h"
 
+#include "Utility/HybridGraphicsUseDedicated.h"
+
 #include "resource.h"
 
 #include "Define.h"

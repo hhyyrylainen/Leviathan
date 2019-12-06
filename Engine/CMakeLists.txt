@@ -63,6 +63,7 @@ set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
   "Utility/YUVToRGB.cpp" "Utility/YUVToRGB.h"
   "Utility/well.h" "Utility/InstanceCounter.h"
   "Utility/DebugObjectTracker.h"
+  "Utility/HybridGraphicsUseDedicated.h"
   )
 
 set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"

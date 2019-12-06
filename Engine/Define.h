@@ -184,4 +184,9 @@ using Scene = int32_t;
 
 #define UNUSED(x) ((void)x);
 
+
+#ifndef RESTRICT
+#define RESTRICT __restrict
+#endif
+
 #include "Logger.h"

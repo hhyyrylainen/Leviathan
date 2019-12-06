@@ -5,7 +5,7 @@
 
 #include "Exceptions.h"
 
-#include "libyuv.h"
+#include "YUVToRGB.h"
 
 // AV1
 #include "aom/aom_decoder.h"
@@ -43,13 +43,19 @@ DLLEXPORT DecodedFrame::DecodedFrame(aom_image* img)
         if(targetlength != targetStride * image.Height)
             return false;
 
-        // Depending on the img->fmt the Y, U and V planes can be in different order
-        // NOTE: none of these extra image format types are implemented
-        // It's AOM_IMG_FMT_UV_FLIP bit which defines if the things are flipped
         std::array<int, 3> planeIndices = {0, 1, 2};
 
-        if(img->fmt & AOM_IMG_FMT_HIGHBITDEPTH) {
-            LOG_ERROR("AOM high bit depth doesn't work");
+        // Depending on the img->fmt the Y, U and V planes can be in different order
+        if(img->fmt & AOM_IMG_FMT_UV_FLIP) {
+            planeIndices = {0, 2, 1};
+        }
+
+        if(img->fmt & AOM_IMG_FMT_HAS_ALPHA) {
+            LOG_WARNING("AOM alpha channel handling is not implemented");
+        }
+
+        if(img->fmt == AOM_IMG_FMT_AOMYV12 || img->fmt == AOM_IMG_FMT_AOMI420) {
+            LOG_WARNING("AOM colourspace handling not implemented");
         }
 
         // Setup plane data for the conversion call
@@ -61,28 +67,12 @@ DLLEXPORT DecodedFrame::DecodedFrame(aom_image* img)
             const auto aomPlane = planeIndices[plane];
             planes[plane] = img->planes[aomPlane];
             strides[plane] = img->stride[aomPlane];
-            planeSizes[plane] = {aom_img_plane_width(img, aomPlane) *
-                                     ((img->fmt & AOM_IMG_FMT_HIGHBITDEPTH) ? 2 : 1),
-                aom_img_plane_height(img, aomPlane)};
+            planeSizes[plane] = {
+                aom_img_plane_width(img, aomPlane), aom_img_plane_height(img, aomPlane)};
         }
 
-        int result = -1;
-
-        // Use libyuv to convert the data
-        if(img->fmt & AOM_IMG_FMT_I420) {
-            result = libyuv::I420ToABGR(planes[0], strides[0], planes[1], strides[1],
-                planes[2], strides[2], target, targetStride, image.Width, image.Height);
-        } else if(img->fmt & AOM_IMG_FMT_I422) {
-            result = libyuv::I422ToABGR(planes[0], strides[0], planes[1], strides[1],
-                planes[2], strides[2], target, targetStride, image.Width, image.Height);
-        } else if(img->fmt & AOM_IMG_FMT_I444) {
-            result = libyuv::I444ToABGR(planes[0], strides[0], planes[1], strides[1],
-                planes[2], strides[2], target, targetStride, image.Width, image.Height);
-        } else {
-            LOG_FATAL("unimplemented AOM image format type");
-        }
-
-        return result == 0;
+        return YUVToRGBA(planes, strides, planeSizes, img->fmt & AOM_IMG_FMT_HIGHBITDEPTH,
+            target, image.Width, image.Height);
     };
 
     TypeSpecificData = image;
@@ -173,9 +163,10 @@ DLLEXPORT AV1Codec::AV1Codec() : Pimpl(std::make_unique<Implementation>())
     aom_codec_iface_t* codecInterface = aom_codec_av1_dx();
     aom_codec_dec_cfg_t config;
     std::memset(&config, 0, sizeof(config));
+    // TODO: allow adding threads (it might help with decode performance)
     config.threads = 1;
-    // We only have 8-bit yuv to rgb conversions so we need this
-    config.allow_lowbitdepth = 1;
+    // We prefer 16 bit output
+    config.allow_lowbitdepth = 0;
 
     auto error = aom_codec_dec_init(Pimpl->Codec.get(), codecInterface, &config, 0);
 

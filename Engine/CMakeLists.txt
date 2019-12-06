@@ -1,42 +1,5 @@
 # engine library Cmake file
 
-
-# libyuv
-# We only compile the files we need to cut down on compilation time
-# file(GLOB LIBYUV_FILES "${PROJECT_SOURCE_DIR}/Engine/libyuv/source/*.cc")
-set(LIBYUV_FILES
-  "libyuv/source/cpu_id.cc"
-  "libyuv/source/scale_any.cc"
-  # "libyuv/source/scale_argb.cc"
-  "libyuv/source/scale.cc"
-  "libyuv/source/scale_common.cc"
-  "libyuv/source/scale_gcc.cc"
-  "libyuv/source/scale_mmi.cc"
-  "libyuv/source/scale_msa.cc"
-  "libyuv/source/scale_neon64.cc"
-  "libyuv/source/scale_neon.cc"
-  "libyuv/source/scale_win.cc"
-  "libyuv/source/planar_functions.cc"
-  "libyuv/source/row_any.cc"
-  "libyuv/source/row_common.cc"
-  "libyuv/source/row_gcc.cc"
-  "libyuv/source/row_mmi.cc"
-  "libyuv/source/row_msa.cc"
-  "libyuv/source/row_neon64.cc"
-  "libyuv/source/row_neon.cc"
-  "libyuv/source/row_win.cc"
-  "libyuv/source/convert_argb.cc"
-  )
-add_library(yuv STATIC ${LIBYUV_FILES})
-
-set_target_properties(yuv PROPERTIES
-  CXX_STANDARD 11
-  CXX_EXTENSIONS OFF
-  POSITION_INDEPENDENT_CODE ON
-  )
-
-target_include_directories(yuv PUBLIC "${PROJECT_SOURCE_DIR}/Engine/libyuv/include")
-
 # Generate additional source files
 # This is here as an example to make this work later
 #add_custom_command(OUTPUT ${PROJECT_SOURCE_DIR}/Engine/Generated/Generated.h
@@ -97,6 +60,7 @@ set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
   "Utility/Random.cpp" "Utility/Random.h"
   "Utility/MatroskaParser.cpp" "Utility/MatroskaParser.h"
   "Utility/Codec.cpp" "Utility/Codec.h"
+  "Utility/YUVToRGB.cpp" "Utility/YUVToRGB.h"
   "Utility/well.h" "Utility/InstanceCounter.h"
   "Utility/DebugObjectTracker.h"
   )
@@ -475,7 +439,7 @@ endif()
 target_include_directories(Engine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Link the engine against dependencies
-target_link_libraries(Engine PRIVATE ${LEVIATHAN_ENGINE_LIBRARIES} yuv)
+target_link_libraries(Engine PRIVATE ${LEVIATHAN_ENGINE_LIBRARIES})
 
 if(NOT WIN32)
   # Link with X11 and threads

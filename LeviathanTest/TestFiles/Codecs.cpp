@@ -19,7 +19,7 @@ std::tuple<int, int, int, int> GetPixelValueRGBA(
         image[(y * width * 4) + (x * 4) + 1], image[(y * width * 4) + (x * 4) + 2],
         image[(y * width * 4) + (x * 4) + 3]);
 }
-
+// ------------------------------------ //
 TEST_CASE("AV1 can decode first matroska included frame", "[video]")
 {
     TestLogger log;
@@ -66,16 +66,6 @@ TEST_CASE("AV1 can decode first matroska included frame", "[video]")
                     .ConvertImage(rgbImage.data(), rgbImage.size(),
                         DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA));
 
-        // Alpha should be one everywhere
-        for(size_t y = 0; y < height; ++y) {
-            for(size_t x = 0; x < width; ++x) {
-                if(rgbImage[(y * width * 4) + (x * 4) + 3] != 255) {
-                    // FAIL("alpha not 255 on pixel");
-                    CHECK(false);
-                }
-            }
-        }
-
         // Check some pixels
         auto pixel = GetPixelValueRGBA(rgbImage, width, height, 1162, 292);
         CHECK(std::get<0>(pixel) == 255);
@@ -85,7 +75,7 @@ TEST_CASE("AV1 can decode first matroska included frame", "[video]")
 
         pixel = GetPixelValueRGBA(rgbImage, width, height, 649, 353);
         CHECK(std::get<0>(pixel) == 68);
-        CHECK(std::get<1>(pixel) == 142);
+        CHECK(std::get<1>(pixel) == 143); // could also be 142
         CHECK(std::get<2>(pixel) == 120);
         CHECK(std::get<3>(pixel) == 255);
 
@@ -97,9 +87,18 @@ TEST_CASE("AV1 can decode first matroska included frame", "[video]")
 
         pixel = GetPixelValueRGBA(rgbImage, width, height, 783, 969);
         CHECK(std::get<0>(pixel) == 159);
-        CHECK(std::get<1>(pixel) == 76);
-        CHECK(std::get<2>(pixel) == 100);
+        CHECK(std::get<1>(pixel) == 77); // could also be 76
+        CHECK(std::get<2>(pixel) == 99); // could also be 100
         CHECK(std::get<3>(pixel) == 255);
+
+        // Alpha should be one everywhere
+        for(size_t y = 0; y < height; ++y) {
+            for(size_t x = 0; x < width; ++x) {
+                if(rgbImage[(y * width * 4) + (x * 4) + 3] != 255) {
+                    FAIL("alpha not 255 on pixel");
+                }
+            }
+        }
 
         // Stop after this frame
         return false;

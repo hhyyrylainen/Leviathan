@@ -141,9 +141,7 @@ public:
 struct EBMLLengthValue : public CommonVariableLengthValue {
 public:
     EBMLLengthValue(const EBMLLengthValue& other) = default;
-    EBMLLengthValue(EBMLLengthValue& other) = default;
     EBMLLengthValue& operator=(const EBMLLengthValue& other) = default;
-    EBMLLengthValue& operator=(EBMLLengthValue& other) = default;
 
     //! Read from stream
     template<class T>
@@ -172,9 +170,7 @@ public:
 struct EBMLLIdentifierValue : public CommonVariableLengthValue {
 public:
     EBMLLIdentifierValue(const EBMLLIdentifierValue& other) = default;
-    EBMLLIdentifierValue(EBMLLIdentifierValue& other) = default;
     EBMLLIdentifierValue& operator=(const EBMLLIdentifierValue& other) = default;
-    EBMLLIdentifierValue& operator=(EBMLLIdentifierValue& other) = default;
 
     //! Read from stream
     template<class T>
@@ -198,9 +194,7 @@ public:
 struct EBMLElement {
 public:
     EBMLElement(const EBMLElement& other) = default;
-    EBMLElement(EBMLElement& other) = default;
     EBMLElement& operator=(const EBMLElement& other) = default;
-    EBMLElement& operator=(EBMLElement& other) = default;
 
     //! Read from stream
     template<class T>
@@ -266,9 +260,7 @@ public:
 struct ClusterBlockHeader {
 public:
     ClusterBlockHeader(const ClusterBlockHeader& other) = default;
-    ClusterBlockHeader(ClusterBlockHeader& other) = default;
     ClusterBlockHeader& operator=(const ClusterBlockHeader& other) = default;
-    ClusterBlockHeader& operator=(ClusterBlockHeader& other) = default;
 
     //! Read from stream
     template<class T>
@@ -1011,8 +1003,8 @@ DLLEXPORT bool MatroskaParser::_FindNextBlock(int tracknumber, BlockSearchResult
 
             if(static_cast<int>(foundBlock.TrackIdentifier.Value) == tracknumber) {
 
-                result.BlockElement = currentElement;
-                result.FoundBlock = foundBlock;
+                result.BlockElement = const_cast<const EBMLElement&>(currentElement);
+                result.FoundBlock = const_cast<const ClusterBlockHeader&>(foundBlock);
 
                 result.BlockData = BlockInfo{ApplyRelativeTimecode(
                     result.Search.ClusterTimeCode, result.FoundBlock->RelativeTimecode)};

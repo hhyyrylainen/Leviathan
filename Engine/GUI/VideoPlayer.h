@@ -50,10 +50,7 @@ public:
 
     //! \returns Current playback position, in seconds
     //! The return value is directly read from the last decoded frame timestamp
-    DLLEXPORT float GetCurrentTime() const
-    {
-        return CurrentlyDecodedTimeStamp;
-    }
+    DLLEXPORT float GetCurrentTime() const;
 
     //! \returns The total length of the video is seconds. -1 if invalid
     DLLEXPORT float GetDuration() const;
@@ -111,9 +108,13 @@ protected:
     //! \returns false if something fails
     bool OpenCodecsForFile();
 
+    bool HandleFrameVideoUpdate();
+
     //! \brief Decodes one video frame. Returns false if more data is required
     //! but the stream ended (this condition ends the playback)
     bool DecodeVideoFrame();
+
+    bool PeekNextFrameTimeStamp();
 
     //! \brief Updates the texture
     void UpdateTexture();
@@ -170,9 +171,6 @@ protected:
 
     // Timing control
     float PassedTimeSeconds = 0.f;
-    float CurrentlyDecodedTimeStamp = 0.f;
-
-    bool NextFrameReady = false;
 
     //! Set to false if an error occurs and playback should stop
     std::atomic<bool> StreamValid{false};

@@ -27,7 +27,13 @@ private:
 
         //! Holds the current elements data, overridden on next iterator step
         std::vector<uint8_t> DataBuffer;
+
+        //! This object needs to be kept alive until the call after the last block is read
+        bool LastBlockRead = false;
     };
+
+    struct BlockSearchInfo;
+    struct BlockSearchResult;
 
 public:
     // Codec names
@@ -196,6 +202,11 @@ public:
     DLLEXPORT std::tuple<const uint8_t*, size_t, BlockInfo> GetNextBlockForTrack(
         int tracknumber);
 
+    //! \brief Peeks at the next block matching track number
+    //!
+    //! If there is no next block this returns (false, 0, BlockInfo{})
+    DLLEXPORT std::tuple<bool, size_t, BlockInfo> PeekNextBlockForTrack(int tracknumber) const;
+
     //! \brief Reads a variable length unsigned integer (in big endian form) into an integer
     //! \param length The length in bytes to read, must be > 0 && < data.length()
     DLLEXPORT static uint64_t ReadVariableLengthUnsignedInteger(
@@ -232,6 +243,14 @@ protected:
     DLLEXPORT void HandleTracksElement(const EBMLElement& element);
     DLLEXPORT void HandleTrackEntryElement(const EBMLElement& element);
     DLLEXPORT void HandleClusterElement(const EBMLElement& element);
+
+    // Search helpers
+    DLLEXPORT bool _UpdateFindClusterInfo(BlockSearchInfo& info) const;
+    //! If this finds a block it's guaranteed that Reader is positioned at the start of data in
+    //! case the caller wants to read the block data
+    DLLEXPORT bool _FindNextBlock(int tracknumber, BlockSearchResult& result) const;
+    DLLEXPORT bool _SearchForNextBlock(int tracknumber, BlockSearchResult& result) const;
+
 
     DLLEXPORT static uint64_t ApplyRelativeTimecode(uint64_t base, int16_t relative);
 

@@ -164,9 +164,10 @@ DLLEXPORT AV1Codec::AV1Codec() : Pimpl(std::make_unique<Implementation>())
     aom_codec_dec_cfg_t config;
     std::memset(&config, 0, sizeof(config));
     // TODO: allow adding threads (it might help with decode performance)
-    config.threads = 1;
-    // We prefer 16 bit output
-    config.allow_lowbitdepth = 0;
+    config.threads = 2;
+    // We prefer 8 bit output (but we can also handle 16 bit output correctly)
+    // in the hopes that it is faster
+    config.allow_lowbitdepth = 1;
 
     auto error = aom_codec_dec_init(Pimpl->Codec.get(), codecInterface, &config, 0);
 

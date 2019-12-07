@@ -66,20 +66,6 @@ public:
         AudioParser.reset();
     }
 
-    auto& GetNotLastUsedBuffer()
-    {
-        return LastUsedTemporaryBuffer == Implementation::LAST_USED::First ?
-                   TemporaryFrameBuffer2 :
-                   TemporaryFrameBuffer1;
-    }
-
-    void SwapLastUsedStatus()
-    {
-        LastUsedTemporaryBuffer = LastUsedTemporaryBuffer == Implementation::LAST_USED::First ?
-                                      Implementation::LAST_USED::Second :
-                                      Implementation::LAST_USED::First;
-    }
-
     //! Mutex that must be locked when destroying or creating any resource in this class that
     //! is used from multiple threads. Also needs to be locked when reading or writing
     //! PendingAudioDataBuffers
@@ -94,29 +80,14 @@ public:
     MatroskaParser::TrackInfo VideoTrack;
     MatroskaParser::TrackInfo AudioTrack;
 
-    // The order of these buffer uses works like this
-    // decode loop while next frame not ready:
-    //  write to temporary buffer that has the oldest data
-    // if new frame time is less than current time:
-    //  mark temporary buffer dirty
-    //  mark next frame missing and go back to loop
-    // else:
-    //  break out of decode loop
-    // if dirty:
-    //  (optional) wait until gpu submit buffer is no longer locked
-    //  copy temporary frame buffer (that has the oldest data, as the newest buffer has the
-    //  data to display next, but not yet) to gpu upload buffer and submit it (this locks the
-    //  buffer)
-    std::vector<uint8_t> TemporaryFrameBuffer1;
-    std::vector<uint8_t> TemporaryFrameBuffer2;
+    std::optional<DecodedFrame> CurrentlyDecodedFrame;
 
-    LAST_USED LastUsedTemporaryBuffer = LAST_USED::None;
-
-    //! True until temporary buffer is uploaded to the GPU (or at least the upload is started)
-    bool TemporaryBufferNeedsUpload = true;
+    bool FrameNeedsGPUUpload = false;
 
     bs::SPtr<bs::PixelData> GPUUploadBuffer;
 
+    float CurrentlyDecodedFrameTimeStamp = -1.f;
+    float NextFrameTimeStamp = -1.f;
 
     //! This buffers audio data that the audio library couldn't take at once if the decoder
     //! gives us more data than requested
@@ -206,6 +177,8 @@ DLLEXPORT void VideoPlayer::Stop()
     // Dump audio data
     Pimpl->_PendingAudioData.Clear();
 
+    Pimpl->CurrentlyDecodedFrame.reset();
+
     Pimpl->CloseCodecs();
 
     // Let go of our textures and things //
@@ -226,22 +199,21 @@ DLLEXPORT float VideoPlayer::GetDuration() const
     return Pimpl->VideoParser->GetDurationInSeconds();
 }
 // ------------------------------------ //
+DLLEXPORT float VideoPlayer::GetCurrentTime() const
+{
+    return Pimpl->CurrentlyDecodedFrameTimeStamp;
+}
+// ------------------------------------ //
 bool VideoPlayer::CreateOutputTexture()
 {
     Pimpl->GPUUploadBuffer =
         bs::PixelData::create(FrameWidth, FrameHeight, 1, BS_PIXEL_FORMAT);
+
     if(!Pimpl->GPUUploadBuffer)
         return false;
 
     VideoOutputTexture = bs::Texture::create(Pimpl->GPUUploadBuffer, bs::TU_DYNAMIC);
-    Pimpl->TemporaryFrameBuffer1.resize(Pimpl->GPUUploadBuffer->getSize());
-    Pimpl->TemporaryFrameBuffer2.resize(Pimpl->TemporaryFrameBuffer1.size());
-    Pimpl->LastUsedTemporaryBuffer = Implementation::LAST_USED::None;
-
-    // After decoding the first frame it should always be shown right away
-    Pimpl->TemporaryBufferNeedsUpload = true;
-
-    return true;
+    return VideoOutputTexture != nullptr;
 }
 // ------------------------------------ //
 bool VideoPlayer::OpenCodecsForFile()
@@ -350,54 +322,76 @@ bool VideoPlayer::OpenCodecsForFile()
 
 
     PassedTimeSeconds = 0.f;
-    NextFrameReady = false;
-    // This is -1 to make this smaller than 0
-    CurrentlyDecodedTimeStamp = -1.f;
+
+    // Reset frame status
+    Pimpl->CurrentlyDecodedFrameTimeStamp = -1.f;
+    Pimpl->NextFrameTimeStamp = -1.f;
 
     StreamValid = true;
     return true;
 }
 // ------------------------------------ //
+bool VideoPlayer::HandleFrameVideoUpdate()
+{
+    // If we don't have a frame decoded we should decode one one
+    if(Pimpl->CurrentlyDecodedFrameTimeStamp < 0) {
+        // This is the first frame of the video
+
+        // Reset the elapsed time to not skip the initial frame
+        PassedTimeSeconds = 0.f;
+
+        // Decode the first frame
+        if(!DecodeVideoFrame())
+            return false;
+
+        Pimpl->FrameNeedsGPUUpload = true;
+
+        // And get the timestamp for the next video
+        PeekNextFrameTimeStamp();
+    } else {
+        // Loop until we reach a state where the next frame is > PassedTimeSeconds
+        while(PassedTimeSeconds >= Pimpl->NextFrameTimeStamp) {
+            // Decode the next frame
+            if(!DecodeVideoFrame()) {
+                // We ran out of data
+                LOG_INFO("VideoPlayer: reached end of video stream");
+                OnStreamEndReached();
+                return false;
+            }
+
+            Pimpl->FrameNeedsGPUUpload = true;
+
+            // Get the time for the next frame
+            // In case we ran out of data this won't update the next frame time, and this will
+            // loop again. During that loop the next frame decode fails and this breaks, so we
+            // don't need to check the return value here
+            PeekNextFrameTimeStamp();
+        }
+    }
+
+    // Copy decoded frame to GPU if it was updated
+    if(Pimpl->FrameNeedsGPUUpload)
+        UpdateTexture();
+
+    return true;
+}
+
 bool VideoPlayer::DecodeVideoFrame()
 {
-    while(!NextFrameReady) {
+    bool frameReady = false;
+
+    while(!frameReady) {
         // Try to get a frame first
         Pimpl->VideoCodec->ReceiveDecodedFrames([&](const DecodedFrame& frame) {
-            const auto& imageData = std::get<DecodedFrame::Image>(frame.TypeSpecificData);
+            Pimpl->CurrentlyDecodedFrame = frame;
 
-            if(imageData.Width != static_cast<uint32_t>(FrameWidth) ||
-                imageData.Height != static_cast<uint32_t>(FrameHeight)) {
-                LOG_ERROR("VideoPlayer: decoded frame size is different than what file header "
-                          "info said");
-                return false;
-            }
-
-            auto& target = Pimpl->GetNotLastUsedBuffer();
-
-            if(!imageData.ConvertImage(target.data(), target.size(),
-                   DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA)) {
-                LOG_ERROR("VideoPlayer: frame convert failed, likely due to decode buffer "
-                          "being the wrong size");
-                return false;
-            } else {
-                NextFrameReady = true;
-
-                // Make sure both buffers have a valid frame (this only happens once when
-                // starting playback)
-                if(Pimpl->LastUsedTemporaryBuffer == Implementation::LAST_USED::None) {
-
-                    std::copy(
-                        target.begin(), target.end(), Pimpl->TemporaryFrameBuffer2.begin());
-                }
-
-                Pimpl->SwapLastUsedStatus();
-            }
+            frameReady = true;
 
             // We want only one frame at a time
             return false;
         });
 
-        if(NextFrameReady)
+        if(frameReady)
             break;
 
         // If we didn't get a frame send more data to the decoder
@@ -408,20 +402,30 @@ bool VideoPlayer::DecodeVideoFrame()
         if(!data)
             break;
 
-
         // CurrentlyDecodedTimeStamp = opts.Timecode / VideoTimeBase;
-        CurrentlyDecodedTimeStamp =
+        Pimpl->CurrentlyDecodedFrameTimeStamp =
             opts.Timecode * MatroskaParser::MATROSKA_DURATION_TO_SECONDS;
 
-        // LOG_INFO(
-        //     "time to display next frame at: " + std::to_string(CurrentlyDecodedTimeStamp));
 
         if(!Pimpl->VideoCodec->FeedRawFrame(data, length)) {
             LOG_ERROR("VideoCodec: failed to send raw frame to video codec");
         }
     }
 
-    return NextFrameReady;
+    return frameReady;
+}
+
+bool VideoPlayer::PeekNextFrameTimeStamp()
+{
+    auto [found, length, opts] =
+        Pimpl->VideoParser->PeekNextBlockForTrack(Pimpl->VideoTrack.TrackNumber);
+
+    // We ran out of data
+    if(!found)
+        return false;
+
+    Pimpl->NextFrameTimeStamp = opts.Timecode * MatroskaParser::MATROSKA_DURATION_TO_SECONDS;
+    return true;
 }
 // ------------------------------------ //
 void VideoPlayer::UpdateTexture()
@@ -443,13 +447,27 @@ void VideoPlayer::UpdateTexture()
             return;
     }
 
-    // Because the write process swaps the last used around we also use the last used buffer
-    // here (which is now the buffer that decode didn't just write to)
-    const auto& data = Pimpl->GetNotLastUsedBuffer();
+    // For maximum performance we directly convert the frame to the GPU buffer
+    const auto& imageData =
+        std::get<DecodedFrame::Image>(Pimpl->CurrentlyDecodedFrame->TypeSpecificData);
 
-    std::memcpy(Pimpl->GPUUploadBuffer->getData(), data.data(), data.size());
+    if(imageData.Width != static_cast<uint32_t>(FrameWidth) ||
+        imageData.Height != static_cast<uint32_t>(FrameHeight)) {
+        LOG_ERROR("VideoPlayer: decoded frame size is different than what file header "
+                  "info said");
+        return;
+    }
+
+    if(!imageData.ConvertImage(Pimpl->GPUUploadBuffer->getData(),
+           Pimpl->GPUUploadBuffer->getSize(),
+           DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA)) {
+        LOG_ERROR("VideoPlayer: frame convert failed, likely due to mismatch between graphics "
+                  "buffer size and what is needed for frame conversion");
+        return;
+    }
+
     VideoOutputTexture->writeData(Pimpl->GPUUploadBuffer, 0, 0, true);
-    Pimpl->TemporaryBufferNeedsUpload = false;
+    Pimpl->FrameNeedsGPUUpload = false;
 }
 // ------------------------------------ //
 size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)
@@ -637,7 +655,6 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
         PassedTimeSeconds += elapsed;
 
-        // LOG_WRITE("elapsed video time is now: " + std::to_string(PassedTimeSeconds));
 
         // Start playing audio. Hopefully at the same time as the first frame of the
         // video is decoded
@@ -656,33 +673,11 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
             IsPlayingAudio = true;
         }
 
-        // This loops until we have the frame we should be showing at this time in temporary
-        // buffer
-        while(CurrentlyDecodedTimeStamp <= PassedTimeSeconds) {
-            // Make sure the next frame is ready
-            if(!DecodeVideoFrame()) {
+        bool stillGood = HandleFrameVideoUpdate();
 
-                // We ran out of data
-                LOG_INFO("VideoPlayer: reached end of video stream");
-                OnStreamEndReached();
-                return -1;
-            }
 
-            // Don't show a frame yet if it is too soon
-            // As we break as soon as there is a frame that is too new to show, the previous
-            // frame is still available in the temporary buffer for us to show
-            if(PassedTimeSeconds < CurrentlyDecodedTimeStamp)
-                break;
-
-            Pimpl->TemporaryBufferNeedsUpload = true;
-
-            NextFrameReady = false;
-        }
-
-        // Copy temporary buffer to GPU if it was updated
-        if(Pimpl->TemporaryBufferNeedsUpload)
-            UpdateTexture();
-
+        if(!stillGood)
+            return -1;
         return 0;
     }
     default:

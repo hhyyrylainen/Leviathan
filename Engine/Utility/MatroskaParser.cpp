@@ -140,6 +140,11 @@ public:
 //! Decodes a length encoded in EBML
 struct EBMLLengthValue : public CommonVariableLengthValue {
 public:
+    EBMLLengthValue(const EBMLLengthValue& other) = default;
+    EBMLLengthValue(EBMLLengthValue& other) = default;
+    EBMLLengthValue& operator=(const EBMLLengthValue& other) = default;
+    EBMLLengthValue& operator=(EBMLLengthValue& other) = default;
+
     //! Read from stream
     template<class T>
     EBMLLengthValue(T& stream)
@@ -166,6 +171,11 @@ public:
 //! Decodes an indentifier encoded in EBML
 struct EBMLLIdentifierValue : public CommonVariableLengthValue {
 public:
+    EBMLLIdentifierValue(const EBMLLIdentifierValue& other) = default;
+    EBMLLIdentifierValue(EBMLLIdentifierValue& other) = default;
+    EBMLLIdentifierValue& operator=(const EBMLLIdentifierValue& other) = default;
+    EBMLLIdentifierValue& operator=(EBMLLIdentifierValue& other) = default;
+
     //! Read from stream
     template<class T>
     EBMLLIdentifierValue(T& stream)
@@ -187,6 +197,11 @@ public:
 //! A basic EBML element
 struct EBMLElement {
 public:
+    EBMLElement(const EBMLElement& other) = default;
+    EBMLElement(EBMLElement& other) = default;
+    EBMLElement& operator=(const EBMLElement& other) = default;
+    EBMLElement& operator=(EBMLElement& other) = default;
+
     //! Read from stream
     template<class T>
     EBMLElement(T& stream) : Identifier(stream), Length(stream)
@@ -250,6 +265,11 @@ public:
 //! A block inside a cluster
 struct ClusterBlockHeader {
 public:
+    ClusterBlockHeader(const ClusterBlockHeader& other) = default;
+    ClusterBlockHeader(ClusterBlockHeader& other) = default;
+    ClusterBlockHeader& operator=(const ClusterBlockHeader& other) = default;
+    ClusterBlockHeader& operator=(ClusterBlockHeader& other) = default;
+
     //! Read from stream
     template<class T>
     ClusterBlockHeader(T& stream) : TrackIdentifier(stream)
@@ -340,6 +360,26 @@ public:
 };
 
 } // namespace Leviathan
+// ------------------------------------ //
+// MatroskaParser::BlockSearchInfo
+struct MatroskaParser::BlockSearchInfo {
+    std::optional<size_t> CurrentClusterEnd;
+    uint64_t ClusterTimeCode;
+    std::optional<size_t> NextCluster;
+
+    //! Search next pos. Caller must set this with for example from ClusterBlockIterator after
+    //! calling JumpToFirstCluster
+    std::optional<size_t> NextReadPos;
+};
+
+// ------------------------------------ //
+// MatroskaParser::BlockSearchResult
+struct MatroskaParser::BlockSearchResult {
+    BlockSearchInfo Search;
+    std::optional<ClusterBlockHeader> FoundBlock;
+    std::optional<EBMLElement> BlockElement;
+    BlockInfo BlockData;
+};
 // ------------------------------------ //
 // MatroskaParser
 DLLEXPORT MatroskaParser::MatroskaParser(const std::string& file) :
@@ -824,57 +864,104 @@ DLLEXPORT void MatroskaParser::JumpToFirstCluster()
 DLLEXPORT std::tuple<const uint8_t*, size_t, MatroskaParser::BlockInfo>
     MatroskaParser::GetNextBlockForTrack(int tracknumber)
 {
-    std::optional<size_t> currentClusterEnd;
-    uint64_t clusterTimeCode;
-    std::optional<size_t> nextCluster;
-
-    auto updateCurrentCluster = [&]() {
-        if(!ClusterBlockIterator || Error) {
-            return false;
-        }
-
-        currentClusterEnd.reset();
-        nextCluster.reset();
-
-        // TODO: this loop is also not optimal if there are a ton of clusters (could be
-        // replaced with a binary search or caching)
-        for(size_t i = Parsed.Clusters.size() - 1;; --i) {
-            const auto& cluster = Parsed.Clusters[i];
-
-            if(cluster.DataStart <= ClusterBlockIterator->NextReadPos) {
-                // In this cluster
-                currentClusterEnd = cluster.DataStart + cluster.Lenght;
-                clusterTimeCode = cluster.Timecode;
-
-                if(i + 1 < Parsed.Clusters.size()) {
-                    // There is a next cluster
-                    nextCluster = Parsed.Clusters[i + 1].DataStart;
-                }
-                break;
-            }
-
-            if(i == 0) {
-                LOG_ERROR(
-                    "MatroskaParser: could not find which cluster current position is in: " +
-                    std::to_string(ClusterBlockIterator->NextReadPos));
-                return false;
-            }
-        }
-
-        if(!currentClusterEnd) {
-            LOG_ERROR(
-                "MatroskaParser: GetNextBlockForTrack: Could not find which cluster current "
-                "read position is in");
-            return false;
-        }
-        return true;
-    };
-
-    if(!updateCurrentCluster()) {
+    BlockSearchResult result;
+    if(!_SearchForNextBlock(tracknumber, result)) {
+        // Out of data
+        ClusterBlockIterator.reset();
         return std::make_tuple(nullptr, 0, BlockInfo{});
     }
 
-    Reader.seekg(ClusterBlockIterator->NextReadPos);
+    // Found a block, read its data to pass to our caller
+    const size_t dataBegin = Reader.tellg();
+
+    const auto currentElementEnd =
+        result.BlockElement->DataStart + result.BlockElement->Length.Value;
+
+    const auto nonHeaderBytes = currentElementEnd - dataBegin;
+    ClusterBlockIterator->DataBuffer.resize(nonHeaderBytes);
+
+    Reader.read(reinterpret_cast<char*>(ClusterBlockIterator->DataBuffer.data()),
+        ClusterBlockIterator->DataBuffer.size());
+
+    // Set the next position
+    if(result.Search.NextReadPos) {
+        ClusterBlockIterator->NextReadPos = *result.Search.NextReadPos;
+    } else {
+        // No more data
+        ClusterBlockIterator->LastBlockRead = true;
+    }
+
+    // Return the block data
+    return std::make_tuple(ClusterBlockIterator->DataBuffer.data(),
+        ClusterBlockIterator->DataBuffer.size(), result.BlockData);
+}
+
+DLLEXPORT std::tuple<bool, size_t, MatroskaParser::BlockInfo>
+    MatroskaParser::PeekNextBlockForTrack(int tracknumber) const
+{
+    BlockSearchResult result;
+    if(!_SearchForNextBlock(tracknumber, result)) {
+        // No data found
+        return std::make_tuple(false, 0, BlockInfo{});
+    }
+
+    return std::make_tuple(true, result.BlockElement->Length.Value, result.BlockData);
+}
+// ------------------------------------ //
+DLLEXPORT bool MatroskaParser::_UpdateFindClusterInfo(BlockSearchInfo& info) const
+{
+    if(Error || !info.NextReadPos) {
+        return false;
+    }
+
+    info.CurrentClusterEnd.reset();
+    info.NextCluster.reset();
+
+
+    // TODO: this loop is also not optimal if there are a ton of clusters (could be
+    // replaced with a binary search or caching)
+    for(size_t i = Parsed.Clusters.size() - 1;; --i) {
+        const auto& cluster = Parsed.Clusters[i];
+
+        if(cluster.DataStart <= *info.NextReadPos) {
+            // In this cluster
+            info.CurrentClusterEnd = cluster.DataStart + cluster.Lenght;
+            info.ClusterTimeCode = cluster.Timecode;
+
+            if(i + 1 < Parsed.Clusters.size()) {
+                // There is a next cluster
+                info.NextCluster = Parsed.Clusters[i + 1].DataStart;
+            }
+            break;
+        }
+
+        if(i == 0) {
+            LOG_ERROR("MatroskaParser: could not find which cluster current position is in: " +
+                      std::to_string(*info.NextReadPos));
+            return false;
+        }
+    }
+
+    if(!info.CurrentClusterEnd) {
+        LOG_ERROR("MatroskaParser: could not find which cluster current "
+                  "read position is in");
+        return false;
+    }
+
+    return true;
+}
+
+DLLEXPORT bool MatroskaParser::_FindNextBlock(int tracknumber, BlockSearchResult& result) const
+{
+    if(!_UpdateFindClusterInfo(result.Search))
+        return false;
+
+    Reader.seekg(*result.Search.NextReadPos);
+
+    if(Error || !Reader.good()) {
+        LOG_ERROR("MatroskaParser: start search pos is invalid or error is set");
+        return false;
+    }
 
     bool working = true;
 
@@ -882,8 +969,8 @@ DLLEXPORT std::tuple<const uint8_t*, size_t, MatroskaParser::BlockInfo>
         EBMLElement currentElement(Reader);
 
         if(!Reader.good()) {
-            SetError("element ended while parsing its header");
-            break;
+            LOG_ERROR("MatroskaParser: element ended while parsing its header");
+            return false;
         }
 
         const auto currentElementEnd = currentElement.DataStart + currentElement.Length.Value;
@@ -893,18 +980,18 @@ DLLEXPORT std::tuple<const uint8_t*, size_t, MatroskaParser::BlockInfo>
         // Don't jump past the ond of the current cluster (without properly going to the
         // next cluster)
         auto setNextReadPos = [&]() {
-            if(currentElementEnd >= *currentClusterEnd) {
+            if(currentElementEnd >= *result.Search.CurrentClusterEnd) {
                 // Needs to jump to next cluster
                 clusterEnded = true;
 
-                if(nextCluster) {
-                    ClusterBlockIterator->NextReadPos = *nextCluster;
+                if(result.Search.NextCluster) {
+                    result.Search.NextReadPos = *result.Search.NextCluster;
                 } else {
                     // No more clusters
-                    ClusterBlockIterator.reset();
+                    result.Search.NextReadPos.reset();
                 }
             } else {
-                ClusterBlockIterator->NextReadPos = currentElementEnd;
+                result.Search.NextReadPos = currentElementEnd;
             }
         };
 
@@ -912,40 +999,32 @@ DLLEXPORT std::tuple<const uint8_t*, size_t, MatroskaParser::BlockInfo>
             // The current cluster already contains the time code
             // TODO: that is not optimal if there are a ton of clusters (ie. longer videos are
             // attempted to be played)
-        // case ELEMENT_TYPE_TIMECODE:
+            // case ELEMENT_TYPE_TIMECODE:
         case ELEMENT_TYPE_SIMPLE_BLOCK: {
-            const size_t headerStart = Reader.tellg();
             ClusterBlockHeader foundBlock(Reader);
 
             if(!Reader.good()) {
-                SetError("data ended while decoding a cluster block header");
+                LOG_ERROR("MatroskaParser:: data ended while decoding a cluster block header");
                 working = false;
                 break;
             }
 
-            const size_t dataBegin = Reader.tellg();
-
             if(static_cast<int>(foundBlock.TrackIdentifier.Value) == tracknumber) {
-                const auto nonHeaderBytes = currentElementEnd - dataBegin;
-                ClusterBlockIterator->DataBuffer.resize(nonHeaderBytes);
 
-                Reader.read(reinterpret_cast<char*>(ClusterBlockIterator->DataBuffer.data()),
-                    ClusterBlockIterator->DataBuffer.size());
+                result.BlockElement = currentElement;
+                result.FoundBlock = foundBlock;
 
+                result.BlockData = BlockInfo{ApplyRelativeTimecode(
+                    result.Search.ClusterTimeCode, result.FoundBlock->RelativeTimecode)};
 
-                // Set the next position
+                // We need to set the read pos for the next block in case our caller needs it
                 setNextReadPos();
 
-                // Return the block data
-                return std::make_tuple(ClusterBlockIterator->DataBuffer.data(),
-                    ClusterBlockIterator->DataBuffer.size(),
-                    BlockInfo{
-                        ApplyRelativeTimecode(clusterTimeCode, foundBlock.RelativeTimecode)});
+                return true;
             }
-
+        }
             // Else let the default case handle jumping over the current data as we didn't want
             // this block
-        }
         default:
             // Unknown data, we need to jump past
             setNextReadPos();
@@ -953,19 +1032,34 @@ DLLEXPORT std::tuple<const uint8_t*, size_t, MatroskaParser::BlockInfo>
             // If the jump is past the end of the current cluster we need to update which
             // cluster we are in
             if(clusterEnded) {
-                if(!updateCurrentCluster()) {
+                if(!_UpdateFindClusterInfo(result.Search)) {
                     // Ran out of clusters
                     working = false;
                     break;
                 }
             }
 
-            Reader.seekg(ClusterBlockIterator->NextReadPos);
+            Reader.seekg(*result.Search.NextReadPos);
         }
     }
 
-    // No data found
-    return std::make_tuple(nullptr, 0, BlockInfo{});
+    return false;
+}
+
+DLLEXPORT bool MatroskaParser::_SearchForNextBlock(
+    int tracknumber, BlockSearchResult& result) const
+{
+    if(!ClusterBlockIterator || ClusterBlockIterator->LastBlockRead)
+        return false;
+
+    result.Search.NextReadPos = ClusterBlockIterator->NextReadPos;
+
+    if(!_FindNextBlock(tracknumber, result) || !result.FoundBlock) {
+        // Out of data
+        return false;
+    }
+
+    return true;
 }
 // ------------------------------------ //
 DLLEXPORT uint64_t MatroskaParser::ReadVariableLengthUnsignedInteger(

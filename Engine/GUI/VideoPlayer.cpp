@@ -28,6 +28,8 @@ constexpr auto FRAME_CONVERT_FORMAT = DecodedFrame::Image::IMAGE_TARGET_FORMAT::
 
 
 constexpr auto DEFAULT_AUDIO_BUFFER_RESERVED_SPACE = 64000;
+
+constexpr auto VIDEO_PLAYER_WARNING_ELAPSED = 100;
 // ------------------------------------ //
 // VideoPlayer::Implementation
 struct VideoPlayer::Implementation {
@@ -406,7 +408,6 @@ bool VideoPlayer::DecodeVideoFrame()
         Pimpl->CurrentlyDecodedFrameTimeStamp =
             opts.Timecode * MatroskaParser::MATROSKA_DURATION_TO_SECONDS;
 
-
         if(!Pimpl->VideoCodec->FeedRawFrame(data, length)) {
             LOG_ERROR("VideoCodec: failed to send raw frame to video codec");
         }
@@ -634,6 +635,8 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
     switch(event->GetType()) {
     case EVENT_TYPE_FRAME_BEGIN: {
 
+        const auto start = Time::GetCurrentTimePoint();
+
         // If we are no longer playing, unregister
         if(!IsPlaying)
             return -1;
@@ -655,7 +658,6 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
         PassedTimeSeconds += elapsed;
 
-
         // Start playing audio. Hopefully at the same time as the first frame of the
         // video is decoded
         if(!IsPlayingAudio && HasAudioStream) {
@@ -675,6 +677,13 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 
         bool stillGood = HandleFrameVideoUpdate();
 
+        const auto millisecondsPassed =
+            SecondDuration(Time::GetCurrentTimePoint() - start).count() * 1000;
+
+        if(millisecondsPassed > VIDEO_PLAYER_WARNING_ELAPSED) {
+            LOG_WARNING("VideoPlayer: update is taking too long, took: " +
+                        std::to_string(millisecondsPassed) + "ms");
+        }
 
         if(!stillGood)
             return -1;

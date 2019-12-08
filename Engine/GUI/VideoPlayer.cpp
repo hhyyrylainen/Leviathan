@@ -29,7 +29,9 @@ constexpr auto FRAME_CONVERT_FORMAT = DecodedFrame::Image::IMAGE_TARGET_FORMAT::
 
 constexpr auto DEFAULT_AUDIO_BUFFER_RESERVED_SPACE = 64000;
 
-constexpr auto VIDEO_PLAYER_WARNING_ELAPSED = 100;
+constexpr auto VIDEO_PLAYER_WARNING_ELAPSED = SecondDuration(0.100f);
+
+constexpr bool VIDEO_PLAYER_USE_SEPARATE_TIMING = true;
 // ------------------------------------ //
 // VideoPlayer::Implementation
 struct VideoPlayer::Implementation {
@@ -90,6 +92,8 @@ public:
 
     float CurrentlyDecodedFrameTimeStamp = -1.f;
     float NextFrameTimeStamp = -1.f;
+    //! Used to keep constant time, even when lagging
+    std::optional<TimePoint> PlaybackStartTime;
 
     //! This buffers audio data that the audio library couldn't take at once if the decoder
     //! gives us more data than requested
@@ -328,6 +332,7 @@ bool VideoPlayer::OpenCodecsForFile()
     // Reset frame status
     Pimpl->CurrentlyDecodedFrameTimeStamp = -1.f;
     Pimpl->NextFrameTimeStamp = -1.f;
+    Pimpl->PlaybackStartTime.reset();
 
     StreamValid = true;
     return true;
@@ -335,6 +340,8 @@ bool VideoPlayer::OpenCodecsForFile()
 // ------------------------------------ //
 bool VideoPlayer::HandleFrameVideoUpdate()
 {
+    const auto start = Time::GetCurrentTimePoint();
+
     // If we don't have a frame decoded we should decode one one
     if(Pimpl->CurrentlyDecodedFrameTimeStamp < 0) {
         // This is the first frame of the video
@@ -368,12 +375,23 @@ bool VideoPlayer::HandleFrameVideoUpdate()
             // loop again. During that loop the next frame decode fails and this breaks, so we
             // don't need to check the return value here
             PeekNextFrameTimeStamp();
+
+            // Break if this has taken too long
+            if(Time::GetCurrentTimePoint() - start > VIDEO_PLAYER_WARNING_ELAPSED)
+                break;
         }
     }
 
     // Copy decoded frame to GPU if it was updated
     if(Pimpl->FrameNeedsGPUUpload)
         UpdateTexture();
+
+    if(Time::GetCurrentTimePoint() - start > VIDEO_PLAYER_WARNING_ELAPSED) {
+        const auto millisecondsPassed =
+            SecondDuration(Time::GetCurrentTimePoint() - start).count() * 1000;
+        LOG_WARNING("VideoPlayer: update is taking too long, took: " +
+                    std::to_string(millisecondsPassed) + "ms");
+    }
 
     return true;
 }
@@ -634,9 +652,6 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
 {
     switch(event->GetType()) {
     case EVENT_TYPE_FRAME_BEGIN: {
-
-        const auto start = Time::GetCurrentTimePoint();
-
         // If we are no longer playing, unregister
         if(!IsPlaying)
             return -1;
@@ -654,9 +669,23 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
             return -1;
         }
 
-        const auto elapsed = data->FloatDataValue;
+        // Engine update based update
+        if(!VIDEO_PLAYER_USE_SEPARATE_TIMING) {
+            const auto elapsed = data->FloatDataValue;
 
-        PassedTimeSeconds += elapsed;
+            PassedTimeSeconds += elapsed;
+
+        } else {
+            // Alternative keeping our own time, in order to fight off lag from slow decode
+            // performance
+            if(!Pimpl->PlaybackStartTime) {
+                Pimpl->PlaybackStartTime = Time::GetCurrentTimePoint();
+            }
+
+            PassedTimeSeconds =
+                SecondDuration(Time::GetCurrentTimePoint() - *Pimpl->PlaybackStartTime)
+                    .count();
+        }
 
         // Start playing audio. Hopefully at the same time as the first frame of the
         // video is decoded
@@ -675,18 +704,20 @@ DLLEXPORT int VideoPlayer::OnEvent(Event* event)
             IsPlayingAudio = true;
         }
 
-        bool stillGood = HandleFrameVideoUpdate();
+        // If this returns true continue receiving events, if it fails then stop
+        if(!HandleFrameVideoUpdate())
+            return -1;
 
-        const auto millisecondsPassed =
-            SecondDuration(Time::GetCurrentTimePoint() - start).count() * 1000;
-
-        if(millisecondsPassed > VIDEO_PLAYER_WARNING_ELAPSED) {
-            LOG_WARNING("VideoPlayer: update is taking too long, took: " +
-                        std::to_string(millisecondsPassed) + "ms");
+        // Stop the playback if we are behind many frames on showing the video
+        if(PassedTimeSeconds > GetDuration() + (VIDEO_PLAYER_WARNING_ELAPSED.count() * 4)) {
+            LOG_WARNING("VideoPlayer: has lagged past the end of the video, ending playback, "
+                        "video duration: " +
+                        std::to_string(GetDuration()) +
+                        ", elapsed time: " + std::to_string(PassedTimeSeconds));
+            OnStreamEndReached();
+            return -1;
         }
 
-        if(!stillGood)
-            return -1;
         return 0;
     }
     default:

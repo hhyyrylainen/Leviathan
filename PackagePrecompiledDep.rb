@@ -1,20 +1,16 @@
+#!/usr/bin/env ruby
 # Package a leviathan dependency as precompiled binary for current platform
 # To package all run: `ruby PackagePrecompiledDep.rb --all`
-PrecompiledInstallFolder = "build/ThirdParty"
+PRECOMPILED_INSTALL_FOLDER = 'build/ThirdParty'.freeze
 
-def getDependencyObjectByName(name)
-
-  # Could make sure this is automatically up to date
-  $leviathanLibList.each{|lib|
-    
-    if name.casecmp(lib.Name).zero? || name.casecmp(lib.FolderName).zero?
-      return lib
-    end
-  }
+def dependency_object_by_name(name)
+  $leviathanLibList.each do |lib|
+    return lib if name.casecmp(lib.Name).zero? || name.casecmp(lib.FolderName).zero?
+  end
   nil
 end
 
-def getAllDependencies
+def all_dependencies
   $leviathanLibList
 end
 
@@ -22,4 +18,4 @@ require_relative 'RubySetupSystem/CreatePrecompiled.rb'
 
 require_relative 'LeviathanLibraries.rb'
 
-runPackager()
+run_packager

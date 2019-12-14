@@ -22,22 +22,22 @@ jobs:
             - .git/lfs
        - restore_cache:
            keys:
-             - v6-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
-             - v6-deps-{{ arch }}
+             - v7-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
+             - v7-deps-{{ arch }}
        - restore_cache:
            keys:
-             - v5-build-{{ arch }}-{{ .Branch }}
-       - run: ./Setup.rb --no-packagemanager --no-updates -j 2 --fully-parallel-project-compile --project-parallel 5
+             - v6-build-{{ arch }}-{{ .Branch }}
+       - run: ./Setup.rb --no-packagemanager --no-updates --precompiled -j 2 --fully-parallel-project-compile --project-parallel 5
        - save_cache:
-           key: v6-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
+           key: v7-deps-{{ arch }}-{{ checksum "Setup.rb" }}-{{ checksum "LeviathanLibraries.rb" }}
            paths:
              - ThirdParty
        - save_cache:
-           key: v6-deps-{{ arch }}
+           key: v7-deps-{{ arch }}
            paths:
              - ThirdParty
        - save_cache:
-           key: v5-build-{{ arch }}-{{ .Branch }}
+           key: v6-build-{{ arch }}-{{ .Branch }}
            paths:
              - build/Engine
              - build/LeviathanTest
@@ -47,6 +47,7 @@ jobs:
              - build/CMakeFiles
              - build/CMakeCache.txt
              - build/Makefile
+             - build/ThirdParty
        - run: mkdir -p /reports/reports
        - run:
            command: ./LeviathanTest "~[xrequired]"

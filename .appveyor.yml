@@ -13,6 +13,7 @@ platform: x64
 
 cache:
   - ThirdParty
+  - build/ThirdParty
   - VulkanSDK.exe
   - .git/lfs/objects
 

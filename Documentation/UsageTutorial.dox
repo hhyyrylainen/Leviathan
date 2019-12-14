@@ -103,6 +103,8 @@ These programs are needed for all platforms:
 
 - 7zip
 
+- GNU tar with LZMA support (.tar.xz file support)
+
 - Vulkan SDK (On **linux** the setup script will automatically use the
   package manager to install this)
 
@@ -124,7 +126,7 @@ ruby 2.4.1p111
   which packages to install make sure the at least the following are
   selected (and to save space don't install the debug variants):
   
-  - tar (with gzip support)
+  - tar (with gzip and LZMA support)
  
   Though cmake and git are available through cygwin, those versions
   don't work, you need the official Windows versions. Subversion and
@@ -221,6 +223,9 @@ ruby 2.4.1p111
   Note: Git LFS 2.9.0 is known to be broken! Use version 2.8.0
   instead. If your package manager only provides the broken version
   you need to manually install!
+
+- tar. You probably will have GNU tar by default installed. You might need
+  to install `xz-utils` package to get LZMA support installed.
 
 \subsection prerequisite_software_gems Ruby Gems
 

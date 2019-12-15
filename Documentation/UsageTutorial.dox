@@ -224,8 +224,10 @@ ruby 2.4.1p111
   instead. If your package manager only provides the broken version
   you need to manually install!
 
-- tar. You probably will have GNU tar by default installed. You might need
-  to install `xz-utils` package to get LZMA support installed.
+- tar. You probably will have GNU tar by default installed. You might
+  need to install `xz-utils` package to get LZMA support
+  installed. Note: depending on your distribution the xz package might
+  also be named just `xz`.
 
 \subsection prerequisite_software_gems Ruby Gems
 

@@ -3,7 +3,7 @@ jobs:
    build:
      working_directory: ~/leviathan
      docker:
-       - image: hhyyrylainen/leviathan-deps:v6
+       - image: hhyyrylainen/leviathan-deps:v7
      environment:
        GIT_LFS_SKIP_SMUDGE: 1
      steps:

@@ -40,7 +40,7 @@ public:
     //! \returns The script module
     DLLEXPORT inline auto GetScriptModule()
     {
-        return ScriptMain;
+        return Scripting->GetModuleSafe();
     }
 
     // Used to actually use the module //
@@ -97,8 +97,6 @@ private:
 
     std::string OwnerName;
     std::string LoadedFromFile;
-
-    std::shared_ptr<ScriptModule> ScriptMain;
 
     // Properties loaded from the file //
     std::string Name;

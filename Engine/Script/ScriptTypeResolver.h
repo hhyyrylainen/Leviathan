@@ -83,6 +83,7 @@ TYPE_RESOLVER_AS_PREDEFINED(char, "int8");
 
 // And other inbuilt types that can't have ANGELSCRIPT_TYPE in their class
 TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
+TYPE_RESOLVER_AS_PREDEFINED(const std::string, "string");
 
 // And other types
 TYPE_RESOLVER_AS_PREDEFINED(bs::Color, "bs::Color@");

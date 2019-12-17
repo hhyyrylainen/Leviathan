@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 //! \file Specifies helpers for passing parameters to CustomScriptRun
@@ -12,6 +12,42 @@ namespace Leviathan {
 inline bool PassParameterToCustomRun(std::unique_ptr<CustomScriptRun>& run, uint32_t value)
 {
     if(run->Context->SetArgDWord(run->PassedIndex, value) < 0)
+        return false;
+
+    ++run->PassedIndex;
+    return true;
+}
+
+inline bool PassParameterToCustomRun(std::unique_ptr<CustomScriptRun>& run, uint8_t value)
+{
+    if(run->Context->SetArgByte(run->PassedIndex, value) < 0)
+        return false;
+
+    ++run->PassedIndex;
+    return true;
+}
+
+inline bool PassParameterToCustomRun(std::unique_ptr<CustomScriptRun>& run, float value)
+{
+    if(run->Context->SetArgFloat(run->PassedIndex, value) < 0)
+        return false;
+
+    ++run->PassedIndex;
+    return true;
+}
+
+inline bool PassParameterToCustomRun(std::unique_ptr<CustomScriptRun>& run, double value)
+{
+    if(run->Context->SetArgDouble(run->PassedIndex, value) < 0)
+        return false;
+
+    ++run->PassedIndex;
+    return true;
+}
+
+inline bool PassParameterToCustomRun(std::unique_ptr<CustomScriptRun>& run, uint64_t value)
+{
+    if(run->Context->SetArgQWord(run->PassedIndex, value) < 0)
         return false;
 
     ++run->PassedIndex;

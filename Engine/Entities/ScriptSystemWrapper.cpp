@@ -402,7 +402,7 @@ inline bool TryToCreateNewCachedComponentsForEntity(ObjectID newentity, CScriptA
         // TODO: the types here should be checked only once and then just assumed to be right
         // for more performance
 
-        if(!PassParameterToCustomRun(scriptRunInfo, newentity)) {
+        if(!PassParameterToCustomRun(scriptRunInfo, static_cast<uint32_t>(newentity))) {
 
             context->SetException(("failed to pass ObjectID as first param to factory func: " +
                                    std::string(factoryfunc->GetDeclaration()))

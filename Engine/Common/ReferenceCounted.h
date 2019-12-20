@@ -14,13 +14,15 @@
 namespace Leviathan {
 
 #ifdef LEVIATHAN_USING_BOOST
-#define REFERENCE_COUNTED_PTR_TYPE(x)        \
-    using pointer = boost::intrusive_ptr<x>; \
-    static constexpr auto ANGELSCRIPT_TYPE = \
+#define REFERENCE_COUNTED_PTR_TYPE(x)                    \
+    using pointer = boost::intrusive_ptr<x>;             \
+    using const_pointer = boost::intrusive_ptr<const x>; \
+    static constexpr auto ANGELSCRIPT_TYPE =             \
         #x "@"; // Appended @ because these are handle types
-#define REFERENCE_COUNTED_PTR_TYPE_NAMED(x, y) \
-    using pointer = boost::intrusive_ptr<x>;   \
-    static constexpr auto ANGELSCRIPT_TYPE =   \
+#define REFERENCE_COUNTED_PTR_TYPE_NAMED(x, y)           \
+    using pointer = boost::intrusive_ptr<x>;             \
+    using const_pointer = boost::intrusive_ptr<const x>; \
+    static constexpr auto ANGELSCRIPT_TYPE =             \
         #y "@"; // Appended @ because these are handle types
 #else
 #define REFERENCE_COUNTED_PTR_TYPE(x)

@@ -85,7 +85,7 @@ These programs are needed for all platforms:
 
 - git
 
-- git lfs (version 2.8.0)
+- git lfs (version 2.8.0 and up)
 
 - svn
 
@@ -93,7 +93,7 @@ These programs are needed for all platforms:
 
 - cmake
 
-- boost libraries 1.66 or newer is required on windows older versions
+- boost libraries 1.66 or newer is required on windows, older versions
   work on linux. (On **linux** the setup script will automatically use
   the package manager to install this. For **Windows** see \ref
   prerequisite_software_windows)
@@ -134,8 +134,10 @@ ruby 2.4.1p111
   TortoiseHG. TortoiseSVN should also work if you select the option to
   add svn to PATH while installing it.
   
-  After installing cygwin add `C:\cygwin64\bin` to the system
-  path to make everything visible to the script
+  After installing cygwin add `C:\cygwin64\bin` to the system PATH to
+  make everything visible to the script. You may want to make cygwin
+  the first thing in your PATH as you may have conflicting program
+  names in PATH that can mess up the setup.
 
   If you have issues with not getting everything installed you can
   reference these images (that have additional packages installed, but
@@ -148,9 +150,21 @@ ruby 2.4.1p111
 
   It is possible to install perl on Windows with Cygwin.
 
+  After installing tar, check that `tar --version` outputs something like this:
+  ```
+  tar (GNU tar) 1.29
+  Packaged by Cygwin (1.29-1)
+  ```
+
+  If you get something totally different it will not work. For example
+  bsdtar does not work!
+
 - Install Perl with the installer from http://strawberryperl.com/
 
-- Install Git with the official installer from: https://git-scm.com/download/win
+- Install Git with the official installer from:
+  https://git-scm.com/download/win You can use this installer to also
+  install git lfs for you. Just don't forget to run `git lfs install`
+  in command prompt afterwards.
 
 - After compiling Boost make sure to set an environment variable
   `BOOST_ROOT` to the folder where you compiled boost (for example
@@ -196,17 +210,27 @@ ruby 2.4.1p111
   powershell, it should print 7zip version info and command line
   usage.
 
-- Install Git LFS with the Windows installer from here:
-  https://github.com/git-lfs/git-lfs/releases After installing
-  remember to run `git lfs install`
+- If you used a recent official Git installer, it should have already
+  installed Git LFS if you left the option enabled. If you didn't
+  install Git LFS with it you can install Git LFS with the Windows
+  installer from here: https://github.com/git-lfs/git-lfs/releases
+  After installing remember to run `git lfs install`
 
-  Note: Git LFS 2.9.0 is known to be broken! Use version 2.8.0 instead.
+  Note: version 2.8.0 or newer is required, old versions do not work.
 
   If you previously had Git installed through cygwin, you must
   uninstall that and install the official Windows version of Git. You
   may also have to deleted all your cloned folders to avoid errors,
   and reboot your computer to have everything detect that Git is now
   in a different place.
+
+- Install subversion with the [SlickSVN
+  client](https://sliksvn.com/download/) installer.
+
+- Install mercurial with
+  [TortoiseHG](https://tortoisehg.bitbucket.io/download/index.html)
+  installer. When installing make sure to keep the option of adding
+  mercurial to PATH.
 
 \subsection prerequisite_software_linux Linux
 

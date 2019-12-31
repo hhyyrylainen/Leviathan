@@ -234,9 +234,9 @@ void RayDestructorProxy(void* memory)
 
 // ------------------------------------ //
 // Plane
-void PlaneConstructorProxy(void* memory)
+void PlaneConstructorVectorProxy(void* memory, const Float3& normal, float distance)
 {
-    new(memory) Plane();
+    new(memory) Plane(normal, distance);
 }
 
 void PlaneDestructorProxy(void* memory)
@@ -943,8 +943,9 @@ bool BindPlane(asIScriptEngine* engine)
            asOBJ_VALUE | asGetTypeTraits<Plane>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
-    if(engine->RegisterObjectBehaviour("Plane", asBEHAVE_CONSTRUCT, "void f()",
-           asFUNCTION(PlaneConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+    if(engine->RegisterObjectBehaviour("Plane", asBEHAVE_CONSTRUCT,
+           "void f(const Float3 &in normal, float distance)",
+           asFUNCTION(PlaneConstructorVectorProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
     if(engine->RegisterObjectBehaviour("Plane", asBEHAVE_DESTRUCT, "void f()",

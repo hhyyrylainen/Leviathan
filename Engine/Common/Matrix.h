@@ -59,3 +59,7 @@ public:
 };
 
 } // namespace Leviathan
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::Matrix4;
+#endif

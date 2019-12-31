@@ -9,11 +9,12 @@
 #include "Common/Types.h"
 #include "Physics/PhysicsBody.h"
 #include "Physics/PhysicsShape.h"
+#include "Rendering/ObjectAnimationHandler.h"
+#include "Rendering/Renderable.h"
+#include "Rendering/Scene.h"
 
 #include "Component.h"
 #include "ComponentState.h"
-
-#include "bsfCore/BsCorePrerequisites.h"
 
 #include <functional>
 
@@ -78,17 +79,17 @@ public:
 //! update Node state
 class RenderNode : public Component {
 public:
-    DLLEXPORT RenderNode(bs::Scene* scene);
+    DLLEXPORT RenderNode(const Scene::pointer& scene);
 
     //! Test version that doesn't need a valid scene manager
     DLLEXPORT RenderNode(const Test::TestComponentCreation& test);
 
     //! \brief Gracefully releases while world is still valid
-    DLLEXPORT void Release(bs::Scene* worldsscene);
+    DLLEXPORT void Release(const Scene::pointer& worldsscene);
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(RenderNode);
 
-    bs::HSceneObject Node;
+    SceneNode::pointer Node;
 
     //! Sets objects attached to the node to be hidden or visible
     bool Hidden = false;
@@ -99,9 +100,6 @@ public:
     // TODO: implement
     //! Attaches this node to this parent (if null entity then attached to the scene root)
     // ObjectID ParentEntity = NULL_OBJECT;
-
-    //! Don't touch
-    bs::Scene Scene;
 
     static constexpr auto TYPE = COMPONENT_TYPE::RenderNode;
 };
@@ -208,10 +206,11 @@ public:
 
 
 //! \brief Entity has a box for geometry/model, possibly also physics
+//! \warning Unimplemented
 class BoxGeometry : public Component {
 public:
     inline BoxGeometry(const Float3& size, const std::string& material) :
-        Component(TYPE), Sizes(size), Material(material)
+        Component(TYPE), Sizes(size), BoxMaterial(material)
     {}
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(BoxGeometry);
@@ -220,7 +219,7 @@ public:
     Float3 Sizes;
 
     //! Rendering surface material name
-    std::string Material;
+    std::string BoxMaterial;
 
     // //! Entity created from a box mesh
     // Ogre::Item* GraphicalObject = nullptr;
@@ -231,8 +230,8 @@ public:
 //! \brief Entity has a model
 class Model : public Component {
 public:
-    DLLEXPORT Model(bs::Scene* scene, RenderNode& parent, const std::string& meshname,
-        const bs::HMaterial& material);
+    DLLEXPORT Model(const Scene::pointer& scene, RenderNode& parent,
+        const std::string& meshname, const Material::pointer& material);
 
     DLLEXPORT void Release();
 
@@ -240,14 +239,14 @@ public:
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Model);
 
-    //! The entity that has this model's mesh loaded
-    bs::HRenderable GraphicalObject;
+    //! The rendebale that has this model's mesh loaded
+    Renderable::pointer GraphicalObject;
 
-    //! \note Changing this currently does nothing
+    //! Changing this loads a different mesh
     std::string MeshName;
 
     //! Material set on the object
-    bs::HMaterial Material;
+    Material::pointer ObjectMaterial;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;
 };
@@ -288,7 +287,7 @@ public:
 
 protected:
     //! Loaded animation
-    bs::HAnimationClip _LoadedAnimation;
+    AnimationTrack::pointer _LoadedAnimation;
 };
 
 //! \brief Entity plays animations on an Ogre::Item
@@ -301,7 +300,7 @@ public:
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Animated);
 
     //! Created animation component for this entity
-    bs::HAnimation Animation;
+    ObjectAnimationHandler::pointer Animation;
 
     //! Playing animations
     //! \note When adding or removing (or changing

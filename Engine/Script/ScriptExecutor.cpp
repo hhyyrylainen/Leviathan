@@ -20,15 +20,7 @@
 #include <add_on/weakref/weakref.h>
 
 // Bindings
-#include "Bindings/BSFBind.h"
-#include "Bindings/BindStandardFunctions.h"
-#include "Bindings/CommonEngineBind.h"
-#include "Bindings/EntityBind.h"
-#include "Bindings/GuiScriptBind.h"
-#include "Bindings/PhysicsBind.h"
-#include "Bindings/TypesBind.h"
-
-// Exception support
+#include "Bindings/BindDefinitions.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -112,7 +104,6 @@ void ReturnContextCallback(asIScriptEngine* engine, asIScriptContext* context, v
 
 ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 {
-
     instance = this;
 
     // Initialize AngelScript //
@@ -122,8 +113,7 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
         Logger::Get()->Error("ScriptExecutor: Init: asCreateScriptEngine failed");
         Logger::Get()->Info("ScriptExecutor: tried to init angelscript version " +
                             Convert::ToString(ANGELSCRIPT_VERSION));
-        Logger::Get()->Write("Did you use a wrong angelscript version? copy header files to "
-                             "leviathan/Angelscript/include from your angelscript.zip");
+        Logger::Get()->Write("Did you use a wrong angelscript version when compiling?");
         throw Exception("Failed to init angelscript");
     }
 
@@ -181,9 +171,6 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
     // All normal engine stuff is in the DefaultEngine access mask //
     engine->SetDefaultAccessMask(static_cast<AccessFlags>(ScriptAccess::DefaultEngine));
 
-    if(!BindBSF(engine))
-        throw Exception("BindBSF failed");
-
     if(!BindTypes(engine))
         throw Exception("BindTypes failed");
 
@@ -192,6 +179,9 @@ ScriptExecutor::ScriptExecutor() : engine(nullptr), AllocatedScriptModules()
 
     if(!BindEngineCommon(engine))
         throw Exception("BindEngineCommon failed");
+
+    if(!BindRendering(engine))
+        throw Exception("BindRendering failed");
 
     if(!BindGUI(engine))
         throw Exception("BindGUI failed");

@@ -12,7 +12,6 @@
 #include "Rendering/Graphics.h"
 
 #include "bsfCore/Components/BsCAnimation.h"
-#include "bsfCore/Components/BsCRenderable.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
@@ -29,7 +28,7 @@ void ModelPropertiesSystem::Run(GameWorld& world, std::unordered_map<ObjectID, M
         // TODO: this check could be for graphics outside this loop
         if(node.GraphicalObject) {
             node.ApplyMeshName();
-            node.GraphicalObject->setMaterial(node.Material);
+            node.GraphicalObject->SetMaterial(node.ObjectMaterial);
         }
 
         node.Marked = false;
@@ -263,11 +262,12 @@ DLLEXPORT void AnimationSystem::Run(
 
                 // Load clip
                 if(!animation._LoadedAnimation || animation.NameMarked) {
-                    animation._LoadedAnimation =
-                        graphics->LoadAnimationClipByName(animation.Name);
+                    animation._LoadedAnimation = AnimationTrack::MakeShared<AnimationTrack>(
+                        graphics->LoadAnimationClipByName(animation.Name));
                     animation.NameMarked = false;
 
-                    if(!animation._LoadedAnimation) {
+                    if(!animation._LoadedAnimation ||
+                        !animation._LoadedAnimation->GetInternal()) {
                         LOG_ERROR("AnimationSystem: failed to load animation named: " +
                                   animation.Name);
                         continue;
@@ -275,7 +275,8 @@ DLLEXPORT void AnimationSystem::Run(
                 }
 
                 bs::AnimationClipState state;
-                if(!animated.Animation->getState(animation._LoadedAnimation, state)) {
+                if(!animated.Animation->GetInternal()->getState(
+                       animation._LoadedAnimation->GetInternal(), state)) {
 
                     // Not playing currently. setState will begin playback, fill the extra info
                     // Is this needed?
@@ -295,17 +296,18 @@ DLLEXPORT void AnimationSystem::Run(
                 state.wrapMode =
                     animation.Loop ? bs::AnimWrapMode::Loop : bs::AnimWrapMode::Clamp;
 
-                animated.Animation->setState(animation._LoadedAnimation, state);
+                animated.Animation->GetInternal()->setState(
+                    animation._LoadedAnimation->GetInternal(), state);
             }
 
             // Then disable other animations
-            for(uint32_t i = 0; i < animated.Animation->getNumClips(); ++i) {
+            for(uint32_t i = 0; i < animated.Animation->GetInternal()->getNumClips(); ++i) {
 
                 bool found = false;
-                auto clip = animated.Animation->getClip(i);
+                auto clip = animated.Animation->GetInternal()->getClip(i);
 
                 for(const auto& animation : animated.Animations) {
-                    if(animation._LoadedAnimation == clip) {
+                    if(animation._LoadedAnimation->GetInternal() == clip) {
                         found = true;
                         break;
                     }

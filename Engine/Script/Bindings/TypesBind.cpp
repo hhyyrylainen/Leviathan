@@ -1,6 +1,9 @@
 // ------------------------------------ //
-#include "TypesBind.h"
+#include "BindDefinitions.h"
 
+#include "Common/Matrix.h"
+#include "Common/Plane.h"
+#include "Common/Ray.h"
 #include "Common/Types.h"
 
 using namespace Leviathan;
@@ -152,48 +155,93 @@ void Int3DestructorProxy(void* memory)
 {
     reinterpret_cast<Int3*>(memory)->~Int3();
 }
+// ------------------------------------ //
+// Radian
+void RadianConstructorProxy(void* memory)
+{
+    new(memory) Radian();
+}
+
+void RadianConstructorValueProxy(void* memory, float value)
+{
+    new(memory) Radian(value);
+}
+
+void RadianConstructorCopyProxy(void* memory, const Radian& other)
+{
+    new(memory) Radian(other);
+}
+
+void RadianConstructorDegreeProxy(void* memory, const Degree& degrees)
+{
+    new(memory) Radian(degrees);
+}
+
+void RadianDestructorProxy(void* memory)
+{
+    reinterpret_cast<Radian*>(memory)->~Radian();
+}
+// ------------------------------------ //
+// Degree
+void DegreeConstructorProxy(void* memory)
+{
+    new(memory) Degree();
+}
+
+void DegreeConstructorValueProxy(void* memory, float value)
+{
+    new(memory) Degree(value);
+}
+
+void DegreeConstructorCopyProxy(void* memory, const Degree& other)
+{
+    new(memory) Degree(other);
+}
+
+void DegreeConstructorRadianProxy(void* memory, const Radian& radians)
+{
+    new(memory) Degree(radians);
+}
+
+void DegreeDestructorProxy(void* memory)
+{
+    reinterpret_cast<Degree*>(memory)->~Degree();
+}
 
 // ------------------------------------ //
-// BSF conversions
-void Vector3Float3Proxy(void* memory, const Float3& vector)
+// Matrix4
+void Matrix4ConstructorProxy(void* memory)
 {
-    new(memory) bs::Vector3(vector);
+    new(memory) Matrix4();
 }
 
-void Float3Vector3Proxy(void* memory, const bs::Vector3& vector)
+void Matrix4DestructorProxy(void* memory)
 {
-
-    new(memory) Float3(vector);
+    reinterpret_cast<Matrix4*>(memory)->~Matrix4();
 }
 
-void QuaternionFloat4Proxy(void* memory, const Float4& vector)
+// ------------------------------------ //
+// Ray
+void RayConstructorProxy(void* memory)
 {
-    new(memory) bs::Quaternion(vector);
+    new(memory) Ray();
 }
 
-void Float4QuaternionProxy(void* memory, const bs::Quaternion& quat)
+void RayDestructorProxy(void* memory)
 {
-    new(memory) Float4(quat);
+    reinterpret_cast<Ray*>(memory)->~Ray();
 }
 
-Float4 ConvertQuaternionToFloat4(bs::Quaternion* self)
+// ------------------------------------ //
+// Plane
+void PlaneConstructorProxy(void* memory)
 {
-    return Float4(*self);
+    new(memory) Plane();
 }
 
-void Vector4Float4Proxy(void* memory, const Float4& values)
+void PlaneDestructorProxy(void* memory)
 {
-    new(memory) bs::Vector4(values);
-}
-
-void ColorFloat4Proxy(void* memory, const Float4& values)
-{
-    new(memory) bs::Color(values);
-}
-
-void Float4ColorProxy(void* memory, const bs::Color& values)
-{
-    new(memory) Float4(values);
+    reinterpret_cast<Plane*>(memory)->~Plane();
 }
 
 static auto UnitVUpProxy = Float3::UnitVUp;
@@ -445,7 +493,6 @@ bool BindFloat3(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindFloat4(asIScriptEngine* engine)
 {
-
     // Float4
     if(engine->RegisterObjectType("Float4", sizeof(Float4),
            asOBJ_VALUE | asGetTypeTraits<Float4>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
@@ -587,6 +634,15 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterGlobalFunction(
+           "Float4 CreateQuaternionFromAxisAngle(const Float3 &in axis, Radian angle)",
+           asFUNCTION(Float4::CreateQuaternionFromAxisAngle), asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+
     if(engine->SetDefaultNamespace("") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -596,7 +652,6 @@ bool BindFloat4(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindInt2(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Int2", sizeof(Int2),
            asOBJ_VALUE | asGetTypeTraits<Int2>() | asOBJ_APP_CLASS_ALLINTS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -666,7 +721,6 @@ bool BindInt2(asIScriptEngine* engine)
 // ------------------------------------ //
 bool BindInt3(asIScriptEngine* engine)
 {
-
     if(engine->RegisterObjectType("Int3", sizeof(Int3),
            asOBJ_VALUE | asGetTypeTraits<Int3>() | asOBJ_APP_CLASS_ALLINTS) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -733,57 +787,168 @@ bool BindInt3(asIScriptEngine* engine)
     return true;
 }
 // ------------------------------------ //
-bool BindBSFConversions(asIScriptEngine* engine)
+bool BindRadian(asIScriptEngine* engine)
 {
-    if(engine->RegisterObjectBehaviour("bs::Vector3", asBEHAVE_CONSTRUCT,
-           "void f(const Float3 &in vector)", asFUNCTION(Vector3Float3Proxy),
+    if(engine->RegisterObjectType("Radian", sizeof(Radian),
+           asOBJ_VALUE | asGetTypeTraits<Radian>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(RadianConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT, "void f(float radians)",
+           asFUNCTION(RadianConstructorValueProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT,
+           "void f(const Radian &in other)", asFUNCTION(RadianConstructorCopyProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("bs::Vector4", asBEHAVE_CONSTRUCT,
-           "void f(const Float4 &in values)", asFUNCTION(Vector4Float4Proxy),
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(RadianDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Radian", "Radian& opAssign(const Radian &in other)",
+           asMETHODPR(Radian, operator=,(const Radian&), Radian&), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Radian", "float ValueInRadians() const",
+           asMETHOD(Radian, ValueInRadians), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Radian", "float ValueInDegrees() const",
+           asMETHOD(Radian, ValueInDegrees), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
+bool BindDegree(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Degree", sizeof(Degree),
+           asOBJ_VALUE | asGetTypeTraits<Degree>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(DegreeConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_CONSTRUCT, "void f(float degrees)",
+           asFUNCTION(DegreeConstructorValueProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_CONSTRUCT,
+           "void f(const Degree &in other)", asFUNCTION(DegreeConstructorCopyProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("bs::Color", asBEHAVE_CONSTRUCT,
-           "void f(const Float4 &in values)", asFUNCTION(ColorFloat4Proxy),
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(DegreeDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Degree", "Degree& opAssign(const Degree &in other)",
+           asMETHODPR(Degree, operator=,(const Degree&), Degree&), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Degree", "float ValueInRadians() const",
+           asMETHOD(Degree, ValueInRadians), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Degree", "float ValueInDegrees() const",
+           asMETHOD(Degree, ValueInDegrees), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Bind things needing both degree and radian
+    if(engine->RegisterObjectBehaviour("Radian", asBEHAVE_CONSTRUCT,
+           "void f(const Degree &in degrees)", asFUNCTION(RadianConstructorDegreeProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Float3", asBEHAVE_CONSTRUCT,
-           "void f(const bs::Vector3 &in vector)", asFUNCTION(Float3Vector3Proxy),
+    if(engine->RegisterObjectBehaviour("Degree", asBEHAVE_CONSTRUCT,
+           "void f(const Degree &in degrees)", asFUNCTION(DegreeConstructorRadianProxy),
            asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("Float3", "bs::Vector3 opImplConv() const",
-           asMETHOD(Float3, operator bs::Vector3), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod("Radian", "Radian& opAssign(const Degree &in degrees)",
+           asMETHODPR(Radian, operator=,(const Degree&), Radian&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("bs::Quaternion", asBEHAVE_CONSTRUCT,
-           "void f(const Float4 &in vector)", asFUNCTION(QuaternionFloat4Proxy),
-           asCALL_CDECL_OBJFIRST) < 0) {
+    if(engine->RegisterObjectMethod("Degree", "Degree& opAssign(const Radian &in radians)",
+           asMETHODPR(Degree, operator=,(const Radian&), Degree&), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
-           "void f(const bs::Quaternion &in quat)", asFUNCTION(Float4QuaternionProxy),
-           asCALL_CDECL_OBJFIRST) < 0) {
+    return true;
+}
+// ------------------------------------ //
+bool BindMatrix4(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Matrix4", sizeof(Matrix4),
+           asOBJ_VALUE | asGetTypeTraits<Matrix4>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Matrix4", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(Matrix4ConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Matrix4", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(Matrix4DestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectBehaviour("Float4", asBEHAVE_CONSTRUCT,
-           "void f(const bs::Color &in colour)", asFUNCTION(Float4ColorProxy),
-           asCALL_CDECL_OBJFIRST) < 0) {
+    return true;
+}
+// ------------------------------------ //
+bool BindRay(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Ray", sizeof(Ray),
+           asOBJ_VALUE | asGetTypeTraits<Ray>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Ray", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(RayConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Ray", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(RayDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod("bs::Quaternion", "Float4 opImplConv() const",
-           asFUNCTION(ConvertQuaternionToFloat4), asCALL_CDECL_OBJFIRST) < 0) {
+    return true;
+}
+// ------------------------------------ //
+bool BindPlane(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Plane", sizeof(Plane),
+           asOBJ_VALUE | asGetTypeTraits<Plane>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Plane", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(PlaneConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+    if(engine->RegisterObjectBehaviour("Plane", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(PlaneDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -816,6 +981,12 @@ bool Leviathan::BindTypes(asIScriptEngine* engine)
     if(!BindInt3(engine))
         return false;
 
+    if(!BindRadian(engine))
+        return false;
+
+    if(!BindDegree(engine))
+        return false;
+
     // Register common float types //
     if(!BindFloat2(engine))
         return false;
@@ -826,8 +997,13 @@ bool Leviathan::BindTypes(asIScriptEngine* engine)
     if(!BindFloat4(engine))
         return false;
 
+    if(!BindMatrix4(engine))
+        return false;
 
-    if(!BindBSFConversions(engine))
+    if(!BindRay(engine))
+        return false;
+
+    if(!BindPlane(engine))
         return false;
 
     if(!BindTypeDefs(engine))

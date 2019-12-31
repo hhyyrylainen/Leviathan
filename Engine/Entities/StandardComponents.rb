@@ -2,70 +2,79 @@
 require_relative '../../Helpers/FileGen.rb'
 
 COMPONENT_POSITION = EntityComponent.new(
-  "Position",
+  'Position',
   [ConstructorInfo.new(
-     [
-       Variable.new("position", "Float3",
-                    memberaccess: "Members._Position"),
-       Variable.new("orientation", "Float4",
-                    memberaccess: "Members._Orientation")
-     ], usedatastruct: true)
-  ], statetype: true)
+    [
+      Variable.new('position', 'Float3',
+                   memberaccess: 'Members._Position'),
+      Variable.new('orientation', 'Float4',
+                   memberaccess: 'Members._Orientation')
+    ], usedatastruct: true
+  )], statetype: true
+)
 
 COMPONENT_RENDERNODE = EntityComponent.new(
-  "RenderNode", [ConstructorInfo.new(
-                   [
-                     Variable.new("GetScene()", "",
-                                  nonMethodParam: true),
-                   ])], releaseparams: ["GetScene()"])
+  'RenderNode', [ConstructorInfo.new(
+    [
+      Variable.new('GetScene()', '',
+                   nonMethodParam: true)
+    ]
+  )], releaseparams: ['GetScene()']
+)
 
 COMPONENT_SENDABLE = EntityComponent.new(
-  "Sendable", [ConstructorInfo.new([])], nosynchronize: true)
+  'Sendable', [ConstructorInfo.new([])], nosynchronize: true
+)
 
 COMPONENT_RECEIVED = EntityComponent.new(
-  "Received", [ConstructorInfo.new([])], nosynchronize: true)
+  'Received', [ConstructorInfo.new([])], nosynchronize: true
+)
 
 COMPONENT_MODEL = EntityComponent.new(
-  "Model", [ConstructorInfo.new(
-              [
-                Variable.new("GetScene()", "",
-                             nonMethodParam: true),
-                Variable.new("GetComponent_RenderNode(id)", "",
-                             nonMethodParam: true
-                            ),
-                Variable.new("model", "std::string",
-                             memberaccess: "MeshName"),
-                Variable.new("material", "bs::HMaterial",
-                             memberaccess: "Material")
-              ]
-            )], releaseparams: [#["GetComponent_RenderNode(id)" # "GetScene()"
+  'Model', [ConstructorInfo.new(
+    [
+      Variable.new('GetScene()', '',
+                   nonMethodParam: true),
+      Variable.new('GetComponent_RenderNode(id)', '',
+                   nonMethodParam: true),
+      Variable.new('model', 'std::string',
+                   memberaccess: 'MeshName'),
+      Variable.new('material', 'Material::pointer',
+                   memberaccess: 'ObjectMaterial')
+    ]
+  )], releaseparams: [ # ["GetComponent_RenderNode(id)" # "GetScene()"
   ], nosynchronize: true # this is to get around not having implemented bsf serialization
 )
 
 COMPONENT_PHYSICS = EntityComponent.new(
-  "Physics", [
+  'Physics', [
     ConstructorInfo.new(
       [
-        Variable.new("id", "ObjectID",
+        Variable.new('id', 'ObjectID',
                      nonMethodParam: true, nonserializeparam: true),
-        Variable.new("this", "GameWorld*", noRef: true,
-                     nonMethodParam: true),
-        Variable.new("updatepos", "Position",
+        Variable.new('this', 'GameWorld*', noRef: true,
+                                           nonMethodParam: true),
+        Variable.new('updatepos', 'Position',
                      noConst: true,
                      nonserializeparam: true,
                      angelScriptUseInstead:
-                       Variable.new("updatepos", "Position*",
-                                    noRef: true)),
-      ], usedatastruct: true)],
-  releaseparams: ["GetPhysicalWorld()"])
+                       Variable.new('updatepos', 'Position*',
+                                    noRef: true))
+      ], usedatastruct: true
+    )
+  ],
+  releaseparams: ['GetPhysicalWorld()']
+)
 
 COMPONENT_BOXGEOMETRY = EntityComponent.new(
-  "BoxGeometry",
+  'BoxGeometry',
   [ConstructorInfo.new(
-     [
-       Variable.new("size", "Float3", memberaccess: "Sizes"),
-       Variable.new("material", "std::string", memberaccess: "Material")
-     ], usedatastruct: false)])
+    [
+      Variable.new('size', 'Float3', memberaccess: 'Sizes'),
+      Variable.new('material', 'std::string', memberaccess: 'BoxMaterial')
+    ], usedatastruct: false
+  )]
+)
 
 # EntityComponent.new("ManualObject", [ConstructorInfo.new(
 #                                        [
@@ -75,15 +84,16 @@ COMPONENT_BOXGEOMETRY = EntityComponent.new(
 #                     releaseparams: ["GetScene()"])
 
 COMPONENT_CAMERA = EntityComponent.new(
-  "Camera",
+  'Camera',
   [ConstructorInfo.new(
-     [
-       Variable.new("fov", "uint16_t", default: "90",
-                    memberaccess: "FOV"),
-       Variable.new("soundperceiver", "bool",
-                    default: "true", memberaccess: "SoundPerceiver")
-     ])
-  ])
+    [
+      Variable.new('fov', 'uint16_t', default: '90',
+                                      memberaccess: 'FOV'),
+      Variable.new('soundperceiver', 'bool',
+                   default: 'true', memberaccess: 'SoundPerceiver')
+    ]
+  )]
+)
 
 # EntityComponent.new("Plane",
 #                     [ConstructorInfo.new(
@@ -103,11 +113,11 @@ COMPONENT_CAMERA = EntityComponent.new(
 #                     ])
 
 COMPONENT_ANIMATED = EntityComponent.new(
-  "Animated",
+  'Animated',
   [ConstructorInfo.new(
-     [
-       Variable.new("GetComponent_RenderNode(id)", "",
-                    nonMethodParam: true)
-     ])
-  ], releaseparams: []#["GetComponent_RenderNode(id)"]
+    [
+      Variable.new('GetComponent_RenderNode(id)', '',
+                   nonMethodParam: true)
+    ]
+  )], releaseparams: [] # ["GetComponent_RenderNode(id)"]
 )

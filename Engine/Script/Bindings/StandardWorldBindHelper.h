@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
 // ------------------------------------ //
 // This file shouldn't be included in any headers as this pulls in a ton of stuff
@@ -14,7 +14,6 @@ namespace Leviathan {
 template<class WorldType>
 bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
 {
-
     if(engine->RegisterObjectMethod(classname, "ObjectID CreateEntity()",
            asMETHOD(WorldType, CreateEntity), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -54,8 +53,7 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     //     ANGELSCRIPT_REGISTERFAIL;
     // }
 
-    if(engine->RegisterObjectMethod(classname,
-           "bs::Ray CastRayFromCamera(float x, float y) const",
+    if(engine->RegisterObjectMethod(classname, "Ray CastRayFromCamera(float x, float y) const",
            asMETHOD(WorldType, CastRayFromCamera), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -106,15 +104,15 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
     }
 
     // ------------------------------------ //
-    if(engine->RegisterObjectMethod(classname, "bs::Scene GetScene()",
-           asMETHOD(WorldType, GetScene), asCALL_THISCALL) < 0) {
+    if(engine->RegisterObjectMethod(classname, "Scene@ GetScene()",
+           asMETHOD(WorldType, GetSceneWrapper), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod(classname, "bs::HSceneObject GetRootSceneObject()",
-           asMETHOD(WorldType, GetRootSceneObject), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
+    // if(engine->RegisterObjectMethod(classname, "bs::HSceneObject GetRootSceneObject()",
+    //        asMETHOD(WorldType, GetRootSceneObject), asCALL_THISCALL) < 0) {
+    //     ANGELSCRIPT_REGISTERFAIL;
+    // }
 
     // ------------------------------------ //
     // Somewhat questionable Ogre shortcuts that should probably be component types
@@ -159,7 +157,6 @@ bool BindGameWorldBaseMethods(asIScriptEngine* engine, const char* classname)
 template<class WorldType>
 bool BindStandardWorldMethods(asIScriptEngine* engine, const char* classname)
 {
-
     if(!BindGameWorldBaseMethods<WorldType>(engine, classname))
         return false;
 

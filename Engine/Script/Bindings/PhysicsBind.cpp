@@ -1,5 +1,5 @@
 // ------------------------------------ //
-#include "PhysicsBind.h"
+#include "BindDefinitions.h"
 
 #include "Physics/PhysicalWorld.h"
 #include "Physics/PhysicsBody.h"

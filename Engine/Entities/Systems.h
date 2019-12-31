@@ -14,8 +14,6 @@
 
 #include "Generated/ComponentStates.h"
 
-#include "bsfCore/Scene/BsSceneObject.h"
-
 namespace Leviathan {
 
 // ------------------------------------ //
@@ -43,14 +41,13 @@ class RenderingPositionSystem : public System<std::tuple<RenderNode&, Position&>
 
         if(!std::get<0>(interpolated)) {
             // No states to interpolate //
-            rendernode.Node->setPosition(pos.Members._Position);
-            rendernode.Node->setRotation(pos.Members._Orientation);
+            rendernode.Node->SetPositionAndOrientation(
+                pos.Members._Position, pos.Members._Orientation);
             return;
         }
 
         const auto& state = std::get<1>(interpolated);
-        rendernode.Node->setPosition(state._Position);
-        rendernode.Node->setRotation(state._Orientation);
+        rendernode.Node->SetPositionAndOrientation(state._Position, state._Orientation);
     }
 
 public:
@@ -67,8 +64,8 @@ public:
                 continue;
 
             auto& rendernode = std::get<0>(*iter->second);
-            rendernode.Node->setPosition(pos.Members._Position);
-            rendernode.Node->setRotation(pos.Members._Orientation);
+            rendernode.Node->SetPositionAndOrientation(
+                pos.Members._Position, pos.Members._Orientation);
 
             // TODO: some other system might also want to detect if Position is marked. Design
             // some architecture to allow that
@@ -110,11 +107,8 @@ public:
             if(!node.Marked)
                 continue;
 
-            // This check being here, may or may not be faster than just always setting it
-            if(node.Node->getActive() != !node.Hidden)
-                node.Node->setActive(!node.Hidden);
-
-            node.Node->setScale(node.Scale);
+            node.Node->SetHidden(node.Hidden);
+            node.Node->SetScale(node.Scale);
             node.Marked = false;
         }
     }

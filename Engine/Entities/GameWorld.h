@@ -3,14 +3,12 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/Ray.h"
 #include "Common/ReferenceCounted.h"
 #include "Common/ThreadSafe.h"
 #include "Component.h"
 #include "Networking/CommonNetwork.h"
 #include "WorldNetworkSettings.h"
-
-// #include <type_traits>
-#include "bsfCore/BsCorePrerequisites.h"
 
 class CScriptArray;
 class asIScriptObject;
@@ -26,6 +24,8 @@ class ResponseEntityCreation;
 class ResponseEntityDestruction;
 class ResponseEntityUpdate;
 class ResponseEntityLocalControlStatus;
+class Scene;
+class SceneNode;
 
 template<class StateT>
 class StateHolder;
@@ -47,43 +47,6 @@ struct ComponentTypeInfo {
 #define WORLD_CLOCK_SYNC_ALLOW_FAILS 2
 #define WORLD_OBJECT_UPDATE_CLIENTS_INTERVAL 2
 
-// //! Holds the returned entity that was hit during ray casting
-// //! \todo Move to a new file
-// class RayCastHitEntity : public ReferenceCounted {
-// public:
-//     DLLEXPORT RayCastHitEntity(const NewtonBody* ptr = nullptr, const float& tvar = 0.f,
-//         RayCastData* ownerptr = nullptr);
-
-//     DLLEXPORT RayCastHitEntity& operator=(const RayCastHitEntity& other);
-
-//     // Compares the hit entity with nullptr //
-//     DLLEXPORT bool HasHit();
-
-//     DLLEXPORT Float3 GetPosition();
-
-//     DLLEXPORT bool DoesBodyMatchThisHit(NewtonBody* other);
-
-//     //! Stores the entity, typed as NewtonBody to make sure that user knows
-//     //! what should be compared with this
-//     const NewtonBody* HitEntity;
-
-//     //! The distance from the start of the ray to the hit location
-//     float HitVariable;
-//     Float3 HitLocation;
-// };
-
-// // Internal object in ray casts //
-// struct RayCastData {
-//     DLLEXPORT RayCastData(int maxcount, const Float3& from, const Float3& to);
-//     DLLEXPORT ~RayCastData();
-
-//     // All hit entities that pass checks //
-//     std::vector<RayCastHitEntity*> HitEntities;
-//     // Used to stop after certain amount of entities found //
-//     int MaxCount;
-//     // Used to efficiently calculate many hit locations //
-//     Float3 BaseHitLocationCalcVar;
-// };
 
 //! \brief Represents a world that contains entities
 //!
@@ -145,12 +108,6 @@ public:
     //! \brief Fetches the physical material ID from the material manager
     //! \returns -1 if not found. The id otherwise
     DLLEXPORT int GetPhysicalMaterial(const std::string& name);
-
-
-    // //! \brief Casts a ray from point along a vector and returns the first physical
-    // //! object it hits
-    // //! \warning You need to call Release on the returned object once done
-    // DLLEXPORT RayCastHitEntity* CastRayGetFirstHit(const Float3& from, const Float3& to);
 
     //! \brief Creates a new empty entity and returns its id
     //! \todo Make this have a per world counter
@@ -298,21 +255,14 @@ public:
     //! \exception InvalidState if this world has no active camera
     //! \see SetCamera
     //! \version This now takes in pixel values
-    DLLEXPORT bs::Ray CastRayFromCamera(int x, int y) const;
+    DLLEXPORT Ray CastRayFromCamera(int x, int y) const;
 
-    inline bs::Scene* GetScene()
-    {
-        return &BSFLayerHack;
-        // return WorldsScene;
-    }
+    DLLEXPORT Scene* GetScene();
 
     //! \brief Returns the scene object the camera is attached to
     //!
     //! Useful to attach backgrounds and other static items to the camera
-    DLLEXPORT bs::HSceneObject GetCameraSceneObject();
-
-    //! \brief Returns the root scene object for resetting parenting
-    DLLEXPORT bs::HSceneObject GetRootSceneObject();
+    DLLEXPORT SceneNode* GetCameraSceneObject();
 
     // physics functions //
     // DLLEXPORT Float3 GetGravityAtPosition(const Float3& pos);
@@ -352,6 +302,8 @@ public:
     }
 
     // Script proxies //
+    //! \returns The world scene with reference count incremented
+    DLLEXPORT Scene* GetSceneWrapper();
 
     //
     // Networking methods
@@ -627,19 +579,8 @@ private:
     // stuff here)
     std::unique_ptr<Implementation> pimpl;
 
-    //! A temporary solution around no multiple scenes in BSF
-    bs::Scene BSFLayerHack = 0;
-
-    // Ogre::Camera* WorldSceneCamera = nullptr;
-    // Ogre::SceneManager* WorldsScene = nullptr;
-
-    // Ogre::CompositorWorkspace* WorldWorkspace = nullptr;
-
-    //! The world is now always linked to a window
+    //! Window to display this world on
     Window* LinkedToWindow = nullptr;
-
-    // Ogre::Light* Sunlight = nullptr;
-    // Ogre::SceneNode* SunLightNode = nullptr;
 
     // physics //
     std::shared_ptr<PhysicsMaterialManager> PhysicsMaterials;

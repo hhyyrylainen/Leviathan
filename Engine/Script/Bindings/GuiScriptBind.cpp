@@ -1,5 +1,5 @@
 // ------------------------------------ //
-#include "GuiScriptBind.h"
+#include "BindDefinitions.h"
 
 #include "GUI/GuiManager.h"
 

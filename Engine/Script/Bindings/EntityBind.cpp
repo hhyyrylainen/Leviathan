@@ -1,5 +1,5 @@
 // ------------------------------------ //
-#include "EntityBind.h"
+#include "BindDefinitions.h"
 
 #include "Generated/StandardWorld.h"
 
@@ -60,6 +60,34 @@ SimpleAnimation* AnimatedGetHelper(Animated* self, uint64_t index)
     return &self->Animations[index];
 }
 
+SceneNode* RenderNodeGetNode(RenderNode& self)
+{
+    auto node = self.Node;
+    if(node)
+        node->AddRef();
+    return node.get();
+}
+
+Renderable* ModelGetGraphicalObject(Model& self)
+{
+    auto obj = self.GraphicalObject;
+    if(obj)
+        obj->AddRef();
+    return obj.get();
+}
+
+Material* ModelGetObjectMaterial(Model& self)
+{
+    auto obj = self.ObjectMaterial;
+    if(obj)
+        obj->AddRef();
+    return obj.get();
+}
+
+void ModelSetObjectMaterial(Model& self, Material* newmaterial)
+{
+    self.ObjectMaterial = Material::WrapPtr(newmaterial);
+}
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -202,8 +230,8 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectProperty(
-           "RenderNode", "bs::HSceneObject Node", asOFFSET(RenderNode, Node)) < 0) {
+    if(engine->RegisterObjectMethod("RenderNode", "SceneNode@ get_Node()",
+           asFUNCTION(RenderNodeGetNode), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -256,13 +284,18 @@ bool BindComponentTypes(asIScriptEngine* engine)
     if(!BindComponentTypeID(engine, "Model", &ModelTYPEProxy))
         return false;
 
-    if(engine->RegisterObjectProperty(
-           "Model", "bs::HRenderable GraphicalObject", asOFFSET(Model, GraphicalObject)) < 0) {
+    if(engine->RegisterObjectMethod("Model", "Renderable@ get_GraphicalObject()",
+           asFUNCTION(ModelGetGraphicalObject), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectProperty(
-           "Model", "bs::HMaterial Material", asOFFSET(Model, Material)) < 0) {
+    if(engine->RegisterObjectMethod("Model", "Material@ get_ObjectMaterial()",
+           asFUNCTION(ModelGetObjectMaterial), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Model", "void set_ObjectMaterial(Material@ material)",
+           asFUNCTION(ModelSetObjectMaterial), asCALL_CDECL_OBJFIRST) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

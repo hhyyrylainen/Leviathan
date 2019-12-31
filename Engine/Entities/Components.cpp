@@ -13,12 +13,6 @@
 #include "Engine.h"
 #include "Rendering/Graphics.h"
 
-#include "bsfCore/Components/BsCAnimation.h"
-#include "bsfCore/Components/BsCRenderable.h"
-// #include "bsfCore/Importer/BsImporter.h"
-#include "bsfCore/Renderer/BsRenderable.h"
-#include "bsfCore/Scene/BsSceneObject.h"
-
 #include <limits>
 using namespace Leviathan;
 // ------------------------------------ //
@@ -31,7 +25,7 @@ DLLEXPORT void Position::ApplyState(const PositionState& state)
 }
 
 // ------------------ RenderNode ------------------ //
-DLLEXPORT RenderNode::RenderNode(bs::Scene* scene) : Component(TYPE), Scene(*scene)
+DLLEXPORT RenderNode::RenderNode(const Scene::pointer& scene) : Component(TYPE)
 {
     Marked = false;
 
@@ -39,14 +33,13 @@ DLLEXPORT RenderNode::RenderNode(bs::Scene* scene) : Component(TYPE), Scene(*sce
     if(!Engine::Get()->IsInGraphicalMode())
         return;
 
-    // TODO: allow for static render nodes
-    Node = bs::SceneObject::create("");
+    Node = scene->CreateSceneNode();
 }
 
-DLLEXPORT void RenderNode::Release(bs::Scene* worldsscene)
+DLLEXPORT void RenderNode::Release(const Scene::pointer& worldsscene)
 {
     if(Node)
-        Node->destroy();
+        worldsscene->DestroySceneNode(Node);
     Node = nullptr;
 }
 // ------------------------------------ //
@@ -291,10 +284,10 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets()
     }
 }
 // ------------------------------------ //
-DLLEXPORT Model::Model(bs::Scene* scene, RenderNode& parent, const std::string& meshname,
-    const bs::HMaterial& material) :
+DLLEXPORT Model::Model(const Scene::pointer& scene, RenderNode& parent,
+    const std::string& meshname, const Material::pointer& material) :
     Component(TYPE),
-    MeshName(meshname), Material(material)
+    MeshName(meshname), ObjectMaterial(material)
 {
     Marked = false;
 
@@ -302,33 +295,30 @@ DLLEXPORT Model::Model(bs::Scene* scene, RenderNode& parent, const std::string& 
     if(!parent.Node)
         return;
 
-    GraphicalObject = parent.Node->addComponent<bs::CRenderable>();
-
-    // GraphicalObject->setLayer(1 << *parent.Scene);
-    GraphicalObject->setLayer(1 << *scene);
+    GraphicalObject = Renderable::MakeShared<Renderable>(*parent.Node);
 
     ApplyMeshName();
 
-    GraphicalObject->setMaterial(Material);
+    GraphicalObject->SetMaterial(ObjectMaterial);
 }
 
 DLLEXPORT void Model::Release()
 {
     if(GraphicalObject)
-        GraphicalObject->destroy();
+        GraphicalObject->DetachFromParent();
 }
 
 DLLEXPORT void Model::ApplyMeshName()
 {
     if(MeshName.empty()) {
-        GraphicalObject->setMesh(nullptr);
+        GraphicalObject->SetMesh(nullptr);
         return;
     }
 
     // Find the mesh
     auto mesh = Engine::Get()->GetGraphics()->LoadMeshByName(MeshName);
 
-    GraphicalObject->setMesh(mesh);
+    GraphicalObject->SetMesh(Mesh::MakeShared<Mesh>(mesh));
 }
 
 // // ------------------ ManualObject ------------------ //
@@ -353,12 +343,12 @@ DLLEXPORT void Model::ApplyMeshName()
 // Animated
 DLLEXPORT Animated::Animated(RenderNode& node) : Component(TYPE)
 {
-    Animation = node.Node->addComponent<bs::CAnimation>();
+    Animation = ObjectAnimationHandler::MakeShared<ObjectAnimationHandler>(*node.Node);
 }
 
 DLLEXPORT void Animated::Release()
 {
     if(Animation)
-        Animation->destroy();
+        Animation->DetachFromParent();
     Animation = nullptr;
 }

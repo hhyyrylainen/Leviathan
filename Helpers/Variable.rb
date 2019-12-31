@@ -4,7 +4,7 @@ class Variable
 
   def initialize(name, type, default: nil, noRef: false, noConst: false, nonMethodParam: false,
                  move: false, serializeas: nil,
-                 angelScriptRef: "in", angelScriptUseInstead: nil, memberaccess: nil,
+                 angelScriptRef: 'in', angelScriptUseInstead: nil, memberaccess: nil,
                  nonserializeparam: false)
 
     @Name = name
@@ -15,19 +15,15 @@ class Variable
     @MemberAccess = memberaccess
     @NonSerializeParam = nonserializeparam
 
-    if !@Default.nil?
+    unless @Default.nil?
       if @Default == true
-        @Default = "true"
+        @Default = 'true'
       elsif @Default == false
-        @Default = "false"
+        @Default = 'false'
       end
 
       # Empty string is output as two quotes
-      if @Default.is_a? String and @Default == ""
-
-        @Default = %{""}
-
-      end
+      @Default = %("") if @Default.is_a?(String) && (@Default == '')
     end
 
     @NoRef = noRef
@@ -39,16 +35,16 @@ class Variable
     @AngelScriptUseInstead = angelScriptUseInstead
   end
 
-  def formatDefinition()
+  def formatDefinition
     "#{@Type} #{@Name}#{formatDefault(header: true)};"
   end
 
   def formatDefault(opts)
     if @Default.nil?
-      ""
+      ''
     else
       if opts.include?(:header)
-        " = " + @Default
+        ' = ' + @Default
       else
         "/* = #{@Default} */"
       end
@@ -71,9 +67,9 @@ class Variable
   end
 
   # Formats only the type. Useful for use in templates
-  def formatType()
+  def formatType
     if @NoRef
-      "#{@Type}"
+      @Type.to_s
     elsif @Move
       "#{@Type}&&"
     else
@@ -85,38 +81,34 @@ class Variable
     end
   end
 
-
   # Formatting for angelscript bindings
   def TypeAS
     # Standard translations that reduce typing
     case @Type
-    when "std::string"
-      "string"
-    when "uint8_t"
-      "uint8"
-    when "uint16_t"
-      "uint16"
-    when "uint32_t"
-      "uint32"
-    when "int8_t"
-      "int8"
-    when "int16_t"
-      "int16"
-    when "int32_t"
-      "int32"
+    when 'std::string'
+      'string'
+    when 'uint8_t'
+      'uint8'
+    when 'uint16_t'
+      'uint16'
+    when 'uint32_t'
+      'uint32'
+    when 'int8_t'
+      'int8'
+    when 'int16_t'
+      'int16'
+    when 'int32_t'
+      'int32'
     else
       @Type.sub('*', '@')
     end
   end
 
   # Formats full definition for use in parameter list
-  def formatForParamsAngelScript()
+  def formatForParamsAngelScript
+    return @AngelScriptUseInstead.formatForParamsAngelScript if @AngelScriptUseInstead
 
-    if(@AngelScriptUseInstead)
-      return @AngelScriptUseInstead.formatForParamsAngelScript()
-    end
-
-    opts = {header: true}
+    opts = { header: true }
     if @NoRef
       "#{self.TypeAS} #{@Name.downcase}#{formatDefault opts}"
     elsif @Move
@@ -130,15 +122,15 @@ class Variable
     end
   end
 
-  def formatForArgumentList()
+  def formatForArgumentList
     if !@NonMethodParam
-      "#{@Name.downcase}"
+      @Name.downcase.to_s
     else
-      "#{@Name}"
+      @Name.to_s
     end
   end
 
-  def formatInitializer()
+  def formatInitializer
     if @Move
       # Move constructor
       "#{@Name}(std::move(#{@Name.downcase}))"
@@ -147,9 +139,9 @@ class Variable
     end
   end
 
-  def formatSerializer()
+  def formatSerializer
     if @SerializeAs.nil?
-      "#{@Name}"
+      @Name.to_s
     else
       "static_cast<#{@SerializeAs}>(#{@Name})"
     end
@@ -157,33 +149,75 @@ class Variable
 
   def formatMemberSerializer(variable)
     if @SerializeAs.nil?
-      "#{variable + @MemberAccess}"
+      (variable + @MemberAccess).to_s
     else
       "static_cast<#{@SerializeAs}>(#{variable + @MemberAccess})"
     end
   end
 
-  def formatCopy()
+  def formatCopy
     "#{@Name}(other.#{@Name})"
   end
 
-  def formatMove()
+  def formatMove
     "#{@Name}(std::move(other.#{@Name}))"
   end
 
   def formatDeserializer(packetname, target: nil)
-    if not target
-      target = @Name
-    end
+    target ||= @Name
 
     if @SerializeAs.nil?
       "#{packetname} >> #{target};"
     else
-      tempName = "temp_" + target
+      tempName = 'temp_' + target
       str = "#{@SerializeAs} #{tempName};\n"
       str += "#{packetname} >> #{tempName};\n"
       str += "#{target} = static_cast<#{@Type}>(#{tempName});\n"
       str
+    end
+  end
+
+  def needs_wrapper
+    @Type.include? '::pointer'
+  end
+
+  def plain_type
+    @Type.gsub '::pointer', ''
+  end
+
+  def format_type_wrapped
+    if needs_wrapper
+      "#{plain_type}*"
+    else
+      formatType
+    end
+  end
+
+  def format_for_wrapped_parameters(opts)
+    if needs_wrapper
+      "#{plain_type}* #{@Name.downcase}"
+    else
+      formatForParams opts
+    end
+  end
+
+  def format_for_wrapped_argument_list
+    if needs_wrapper
+      if !@NonMethodParam
+        @Name.downcase.to_s
+      else
+        "#{plain_type}::WrapPtr<#{plain_type}>(#{@Name.downcase}"
+      end
+    else
+      formatForArgumentList
+    end
+  end
+
+  def format_for_params_angelscript_wrapped
+    if needs_wrapper
+      "#{plain_type}@ #{@Name.downcase}"
+    else
+      formatForParamsAngelScript
     end
   end
 end

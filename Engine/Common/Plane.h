@@ -1,10 +1,16 @@
 // Leviathan Game Engine
 // Copyright (c) 2012-2019 Henri Hyyryläinen
 #pragma once
+#include "Define.h"
 // ------------------------------------ //
-#include "BindHelpers.h"
+#include "Types.h"
 
 namespace Leviathan {
 
-bool BindBSF(asIScriptEngine* engine);
-}
+struct Plane {
+public:
+    Float3 Normal;
+    Float3 Tangent;
+};
+
+} // namespace Leviathan

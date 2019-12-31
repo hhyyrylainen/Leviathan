@@ -209,6 +209,28 @@ class GameWorldClass < OutputClass
         else
           f.puts ';'
         end
+
+        # Script wrapper for ::pointer types
+        next unless a.needs_wrapper
+
+        if firstLoop && opts.include?(:header)
+          f.puts '//! Wrapper for scripts. Takes in refcount incremented pointers'
+        end
+
+        f.write "#{export}#{c.type}* #{qualifier opts}Create_#{c.type}Wrapper(ObjectID id" +
+                a.format_wrapped_parameters(opts) + ')'
+
+        if opts.include?(:impl)
+          f.write "\n"
+          f.puts '{'
+
+          f.puts "return Component#{c.type}.ConstructNew(id" +
+                 a.format_wrapped_names(c.type) + ');'
+
+          f.puts '}'
+        else
+          f.puts ';'
+        end
       end
 
       if opts.include?(:header)
@@ -1061,12 +1083,23 @@ throw InvalidArgument("can't find related required deserialize resources");
     c.constructors.each do |a|
       next if a.NoAngelScript
 
-      str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ Create_#{c.type}} +
-             %{(ObjectID id#{a.formatParametersAngelScript})", \n} +
-             %{asMETHODPR(WorldType, Create_#{c.type}, \n} +
-             %{    (ObjectID id#{a.formatParameterTypes}), #{c.type}&), \n} +
-             %{asCALL_THISCALL) < 0)\n} +
-             "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"
+      # Script wrapper for ::pointer types
+      if !a.needs_wrapper
+        str += %{if(engine->RegisterObjectMethod(classname, "#{c.type}@ Create_#{c.type}} +
+               %{(ObjectID id#{a.formatParametersAngelScript})", \n} +
+               %{asMETHODPR(WorldType, Create_#{c.type}, \n} +
+               %{    (ObjectID id#{a.formatParameterTypes}), #{c.type}&), \n} +
+               %{asCALL_THISCALL) < 0)\n} +
+               "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"
+      else
+        str += 'if(engine->RegisterObjectMethod(classname, ' +
+               %("#{c.type}@ Create_#{c.type}) +
+               %{(ObjectID id#{a.format_parameters_for_angelscript_wrapped})", \n} +
+               %{asMETHODPR(WorldType, Create_#{c.type}Wrapper, \n} +
+               %{    (ObjectID id#{a.format_wrapped_parameter_types}), #{c.type}*), \n} +
+               %{asCALL_THISCALL) < 0)\n} +
+               "{\nANGELSCRIPT_REGISTERFAIL;\n}\n\n"
+      end
     end
 
     str

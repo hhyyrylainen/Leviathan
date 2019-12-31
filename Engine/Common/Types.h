@@ -123,6 +123,68 @@ struct StartEndIndex {
     Index End;
 };
 
+class Degree;
+
+//! \brief Represents an angle in radians
+class Radian {
+public:
+    inline Radian() {}
+    inline Radian(float rawvalue) : Value(rawvalue) {}
+    inline Radian(const Radian& other) : Value(other.Value) {}
+    DLLEXPORT Radian(const Degree& degree);
+
+    DLLEXPORT operator Degree() const;
+    DLLEXPORT Radian& operator=(const Degree& degrees);
+    inline Radian& operator=(const Radian& other)
+    {
+        Value = other.Value;
+        return *this;
+    }
+
+    inline float ValueInRadians() const
+    {
+        return Value;
+    }
+
+    inline float ValueInDegrees() const
+    {
+        return RADIANS_TO_DEGREES * Value;
+    }
+
+protected:
+    float Value;
+};
+
+//! \brief Represents an angle in degrees
+class Degree {
+public:
+    inline Degree() {}
+    inline Degree(float rawvalue) : Value(rawvalue) {}
+    inline Degree(const Degree& other) : Value(other.Value) {}
+    DLLEXPORT Degree(const Radian& radians);
+
+    DLLEXPORT operator Radian() const;
+    DLLEXPORT Degree& operator=(const Radian& radians);
+    inline Degree& operator=(const Degree& other)
+    {
+        Value = other.Value;
+        return *this;
+    }
+
+    inline float ValueInRadians() const
+    {
+        return DEGREES_TO_RADIANS * Value;
+    }
+
+    inline float ValueInDegrees() const
+    {
+        return Value;
+    }
+
+protected:
+    float Value;
+};
+
 struct Int2 {
 public:
     DLLEXPORT constexpr Int2() noexcept = default;
@@ -1824,10 +1886,10 @@ public:
     //! This resource is a life saver:
     //! http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
     DLLEXPORT static inline Float4 CreateQuaternionFromAxisAngle(
-        const Float3& axis, float angle) noexcept
+        const Float3& axis, Radian angle) noexcept
     {
-        const float s = static_cast<float>(std::sin(angle / 2.0));
-        const float w = static_cast<float>(std::cos(angle / 2.0));
+        const float s = static_cast<float>(std::sin(angle.ValueInRadians() / 2.0f));
+        const float w = static_cast<float>(std::cos(angle.ValueInRadians() / 2.0f));
         return Float4(axis * s, w);
     }
 
@@ -1855,6 +1917,7 @@ public:
     DLLEXPORT static const Float4& GetColourWhite();
     DLLEXPORT static const Float4& GetColourTransparent();
 };
+
 
 // Stream operators //
 DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Leviathan::Float4& value);

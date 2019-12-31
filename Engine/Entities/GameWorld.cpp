@@ -15,6 +15,7 @@
 #include "Physics/PhysicsDebugDrawer.h"
 #include "Physics/PhysicsMaterialManager.h"
 #include "Rendering/Graphics.h"
+#include "Rendering/Scene.h"
 #include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
 #include "ScriptComponentHolder.h"
@@ -60,7 +61,7 @@ public:
         QueuedEntityUpdates;
 
     // BSF rendering resources
-    bs::HSceneObject WorldCameraSO;
+    SceneNode::pointer WorldCameraSO;
     bs::HCamera WorldCamera;
 
     bs::HSceneObject SunlightSO;
@@ -68,16 +69,10 @@ public:
     bs::HSceneObject SkyboxSO;
     bs::HSkybox Skybox;
 
-    bs::HSceneObject FakeRootSO;
-
     std::shared_ptr<PhysicsDebugDrawer> DebugDraw;
 
-    //! A temporary solution around no multiple scenes in BSF
-    static int LayerNumber;
+    Scene::pointer WorldScene;
 };
-
-int GameWorld::Implementation::LayerNumber = 0;
-
 // ------------------------------------ //
 DLLEXPORT GameWorld::GameWorld(int32_t worldtype,
     const std::shared_ptr<PhysicsMaterialManager>& physicsMaterials, int worldid /*= -1*/) :
@@ -161,21 +156,14 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     // const auto threads = std::max(2, static_cast<int>(std::thread::hardware_concurrency()));
 
     // // TODO: allow configuring scene type (the type was: Ogre::ST_EXTERIOR_FAR before)
-
-    // Scene setup (TODO: redo once bsf has multiple scenes)
-    BSFLayerHack = Implementation::LayerNumber++;
-
-    // Always at origin SceneObject for parenting things to it
-    pimpl->FakeRootSO = bs::SceneObject::create("fake_root");
+    pimpl->WorldScene = Scene::MakeShared<Scene>();
 
     // Camera
-    pimpl->WorldCameraSO =
-        bs::SceneObject::create(("Camera_World_" + std::to_string(ID)).c_str());
-    pimpl->WorldCamera = pimpl->WorldCameraSO->addComponent<bs::CCamera>();
+    pimpl->WorldCameraSO = pimpl->WorldScene->CreateSceneNode();
+    pimpl->WorldCamera = pimpl->WorldCameraSO->GetInternal()->addComponent<bs::CCamera>();
     pimpl->WorldCamera->setHorzFOV(bs::Degree(90));
 
-    pimpl->WorldCamera->setLayers(1 << *GetScene());
-
+    pimpl->WorldCamera->setLayers(1 << pimpl->WorldScene->GetInternal());
 
     // TODO: allow changing and setting infinite
     pimpl->WorldCamera->setFarClipDistance(5000);
@@ -260,10 +248,12 @@ void GameWorld::_DestroyRenderingResources()
     RemoveSunlight();
 
     if(pimpl->WorldCameraSO) {
-        pimpl->WorldCameraSO->destroy();
+        pimpl->WorldScene->DestroySceneNode(pimpl->WorldCameraSO);
         pimpl->WorldCameraSO = nullptr;
         pimpl->WorldCamera = nullptr;
     }
+
+    pimpl->WorldScene = nullptr;
 }
 // ------------------------------------ //
 static bool SunCreated = false;
@@ -421,14 +411,14 @@ DLLEXPORT void GameWorld::Render(float elapsed)
         if(!std::get<0>(interpolated)) {
 
             // No interpolated pos //
-            pimpl->WorldCameraSO->setPosition(position.Members._Position);
-            pimpl->WorldCameraSO->setRotation(position.Members._Orientation);
+            pimpl->WorldCameraSO->SetPosition(position.Members._Position);
+            pimpl->WorldCameraSO->SetRotation(position.Members._Orientation);
 
         } else {
 
             const auto& interpolatedPos = std::get<1>(interpolated);
-            pimpl->WorldCameraSO->setPosition(interpolatedPos._Position);
-            pimpl->WorldCameraSO->setRotation(interpolatedPos._Orientation);
+            pimpl->WorldCameraSO->SetPosition(interpolatedPos._Position);
+            pimpl->WorldCameraSO->SetRotation(interpolatedPos._Orientation);
         }
 
         if(properties.SoundPerceiver) {
@@ -481,7 +471,7 @@ DLLEXPORT void GameWorld::SetCamera(ObjectID object)
     }
 }
 
-DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(int x, int y) const
+DLLEXPORT Ray GameWorld::CastRayFromCamera(int x, int y) const
 {
     // Fail if there is no active camera //
     if(CameraEntity == NULL_OBJECT)
@@ -495,14 +485,22 @@ DLLEXPORT bs::Ray GameWorld::CastRayFromCamera(int x, int y) const
     return pimpl->WorldCamera->screenPointToRay(bs::Vector2I(x, y));
 }
 
-DLLEXPORT bs::HSceneObject GameWorld::GetCameraSceneObject()
+DLLEXPORT SceneNode* GameWorld::GetCameraSceneObject()
 {
-    return pimpl->WorldCameraSO;
+    return pimpl->WorldCameraSO.get();
 }
 
-bs::HSceneObject GameWorld::GetRootSceneObject()
+DLLEXPORT Scene* GameWorld::GetScene()
 {
-    return pimpl->FakeRootSO;
+    return pimpl->WorldScene.get();
+}
+
+DLLEXPORT Scene* GameWorld::GetSceneWrapper()
+{
+    Scene* scene = pimpl->WorldScene.get();
+    if(scene)
+        scene->AddRef();
+    return scene;
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::EnablePhysicsDebugDraw()

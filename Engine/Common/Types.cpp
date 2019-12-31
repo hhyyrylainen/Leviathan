@@ -38,6 +38,35 @@ DLLEXPORT const Float4& Float4::GetColourTransparent()
     return ColourTransparent;
 }
 
+// ------------------------------------ //
+// Radian
+DLLEXPORT Radian::Radian(const Degree& degree) : Value(degree.ValueInRadians()) {}
+// ------------------------------------ //
+DLLEXPORT Radian::operator Degree() const
+{
+    return Degree(*this);
+}
+
+DLLEXPORT Radian& Radian::operator=(const Degree& degrees)
+{
+    Value = degrees.ValueInRadians();
+    return *this;
+}
+// ------------------------------------ //
+// Degree
+DLLEXPORT Degree::Degree(const Radian& radians) : Value(radians.ValueInDegrees()) {}
+// ------------------------------------ //
+DLLEXPORT Degree::operator Radian() const
+{
+    return Radian(*this);
+}
+
+DLLEXPORT Degree& Degree::operator=(const Radian& radians)
+{
+    Value = radians.ValueInDegrees();
+    return *this;
+}
+
 } // namespace Leviathan
 
 // ------------------ Stream operators ------------------ //

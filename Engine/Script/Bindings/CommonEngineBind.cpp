@@ -1,5 +1,5 @@
 // ------------------------------------ //
-#include "CommonEngineBind.h"
+#include "BindDefinitions.h"
 
 #include "Addons/GameModule.h"
 #include "Application/Application.h"
@@ -292,7 +292,6 @@ bool BindNamedVars(asIScriptEngine* engine)
 // Called by BindNamedVars
 bool BindDataBlock(asIScriptEngine* engine)
 {
-
     ANGELSCRIPT_REGISTER_REF_TYPE("ScriptSafeVariableBlock", ScriptSafeVariableBlock);
 
     // Some factories //
@@ -897,7 +896,6 @@ bool BindFileSystem(asIScriptEngine* engine)
 
 bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
 {
-
     if(!BindNamedVars(engine))
         return false;
 

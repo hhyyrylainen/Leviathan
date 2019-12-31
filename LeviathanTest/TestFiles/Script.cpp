@@ -559,7 +559,7 @@ TEST_CASE("Script bound random (not tested elsewhere) functions work correctly",
     CHECK(returned.Value == true);
 }
 
-TEST_CASE("BSF bound functions work correctly", "[script][bsf]")
+TEST_CASE("Math (3d) bound functions work correctly", "[script]")
 {
     PartialEngine<false> engine;
 
@@ -568,7 +568,7 @@ TEST_CASE("BSF bound functions work correctly", "[script][bsf]")
 
     // setup the script //
     auto mod = exec.CreateNewModule("TestScript", "ScriptGenerator").lock();
-    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/BSFFunctionsTest.as"));
+    CHECK(mod->AddScriptSegmentFromFile("Data/Scripts/tests/3DMathFunctionsTest.as"));
 
     auto module = mod->GetModule();
 

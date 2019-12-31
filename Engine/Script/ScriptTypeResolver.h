@@ -5,11 +5,6 @@
 // ------------------------------------ //
 
 // Forward declare things for type resolver specification
-namespace bs {
-class Matrix4;
-class Color;
-} // namespace bs
-
 class NewtonCollision;
 
 class asIScriptFunction;
@@ -86,8 +81,6 @@ TYPE_RESOLVER_AS_PREDEFINED(std::string, "string");
 TYPE_RESOLVER_AS_PREDEFINED(const std::string, "string");
 
 // And other types
-TYPE_RESOLVER_AS_PREDEFINED(bs::Color, "bs::Color@");
-TYPE_RESOLVER_AS_PREDEFINED(bs::Matrix4, "bs::Matrix4@");
 
 TYPE_RESOLVER_AS_PREDEFINED(NewtonCollision, "NewtonCollision@");
 

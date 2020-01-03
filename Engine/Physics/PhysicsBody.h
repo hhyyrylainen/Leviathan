@@ -6,6 +6,7 @@
 #include "PhysicsConstraint.h"
 #include "PhysicsShape.h"
 
+#include "Common/Quaternion.h"
 #include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
 
@@ -31,9 +32,9 @@ public:
 
     // These need to be implemented by Leviathan position giver
     virtual void GetPositionDataForPhysics(
-        const Float3*& position, const Float4*& orientation) const = 0;
+        const Float3*& position, const Quaternion*& orientation) const = 0;
     virtual void SetPositionDataFromPhysics(
-        const Float3& position, const Float4& orientation) = 0;
+        const Float3& position, const Quaternion& orientation) = 0;
 
     // These then automatically send the data to the physics engine
     DLLEXPORT void getWorldTransform(btTransform& worldTrans) const override final;
@@ -132,13 +133,13 @@ public:
     //! \returns False if this fails because there currently is no physics body
     //! for this component
     //! \exception InvalidArgument if pos or orientation has non-finite values
-    DLLEXPORT bool SetPosition(const Float3& pos, const Float4& orientation);
+    DLLEXPORT bool SetPosition(const Float3& pos, const Quaternion& orientation);
 
     //! \returns The current physical body position
     DLLEXPORT Float3 GetPosition() const;
 
     //! \brief Same as SetPosition but only sets orientation
-    DLLEXPORT bool SetOnlyOrientation(const Float4& orientation);
+    DLLEXPORT bool SetOnlyOrientation(const Quaternion& orientation);
 
     // //! \brief Returns the full matrix representing this body's position and rotation
     // DLLEXPORT Ogre::Matrix4 GetFullMatrix() const;

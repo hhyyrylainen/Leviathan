@@ -128,9 +128,9 @@ class Degree;
 //! \brief Represents an angle in radians
 class Radian {
 public:
-    inline Radian() {}
-    inline Radian(float rawvalue) : Value(rawvalue) {}
-    inline Radian(const Radian& other) : Value(other.Value) {}
+    constexpr inline Radian() : Value(0) {}
+    constexpr inline Radian(float rawvalue) : Value(rawvalue) {}
+    constexpr inline Radian(const Radian& other) : Value(other.Value) {}
     DLLEXPORT Radian(const Degree& degree);
 
     DLLEXPORT operator Degree() const;
@@ -141,12 +141,12 @@ public:
         return *this;
     }
 
-    inline float ValueInRadians() const
+    constexpr inline float ValueInRadians() const noexcept
     {
         return Value;
     }
 
-    inline float ValueInDegrees() const
+    constexpr inline float ValueInDegrees() const noexcept
     {
         return RADIANS_TO_DEGREES * Value;
     }
@@ -158,9 +158,9 @@ protected:
 //! \brief Represents an angle in degrees
 class Degree {
 public:
-    inline Degree() {}
-    inline Degree(float rawvalue) : Value(rawvalue) {}
-    inline Degree(const Degree& other) : Value(other.Value) {}
+    constexpr inline Degree() : Value(0) {}
+    constexpr inline Degree(float rawvalue) : Value(rawvalue) {}
+    constexpr inline Degree(const Degree& other) : Value(other.Value) {}
     DLLEXPORT Degree(const Radian& radians);
 
     DLLEXPORT operator Radian() const;
@@ -171,12 +171,12 @@ public:
         return *this;
     }
 
-    inline float ValueInRadians() const
+    constexpr inline float ValueInRadians() const noexcept
     {
         return DEGREES_TO_RADIANS * Value;
     }
 
-    inline float ValueInDegrees() const
+    constexpr inline float ValueInDegrees() const noexcept
     {
         return Value;
     }
@@ -938,19 +938,20 @@ public:
 
 struct Float3 {
 public:
-    DLLEXPORT inline Float3() noexcept = default;
+    DLLEXPORT constexpr inline Float3() noexcept = default;
 
-    DLLEXPORT inline Float3(float x, float y, float z) : X(x), Y(y), Z(z)
+    DLLEXPORT constexpr inline Float3(float x, float y, float z) noexcept : X(x), Y(y), Z(z)
     {
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline Float3(Float2 floats, float z) : X(floats.X), Y(floats.Y), Z(z)
+    DLLEXPORT constexpr inline Float3(Float2 floats, float z) noexcept :
+        X(floats.X), Y(floats.Y), Z(z)
     {
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline explicit Float3(float data) : X(data), Y(data), Z(data)
+    DLLEXPORT constexpr inline explicit Float3(float data) noexcept : X(data), Y(data), Z(data)
     {
         DO_NAN_CHECK;
     }
@@ -962,7 +963,7 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline bool HasInvalidValues() const noexcept
+    DLLEXPORT constexpr inline bool HasInvalidValues() const noexcept
     {
         return !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z);
     }
@@ -990,12 +991,12 @@ public:
 
     // ------------------- Operators ----------------- //
     // add elements //
-    DLLEXPORT inline Float3 operator+(const Float3& other) const noexcept
+    DLLEXPORT constexpr inline Float3 operator+(const Float3& other) const noexcept
     {
         return Float3(X + other.X, Y + other.Y, Z + other.Z);
     }
 
-    DLLEXPORT inline Float3& operator+=(const Float3& other) noexcept
+    DLLEXPORT constexpr inline Float3& operator+=(const Float3& other) noexcept
     {
         X += other.X;
         Y += other.Y;
@@ -1004,12 +1005,12 @@ public:
     }
 
     // subtracts all elements //
-    DLLEXPORT inline Float3 operator-(const Float3& other) const noexcept
+    DLLEXPORT constexpr inline Float3 operator-(const Float3& other) const noexcept
     {
         return Float3(X - other.X, Y - other.Y, Z - other.Z);
     }
 
-    DLLEXPORT inline Float3& operator-=(const Float3& other) noexcept
+    DLLEXPORT constexpr inline Float3& operator-=(const Float3& other) noexcept
     {
         X -= other.X;
         Y -= other.Y;
@@ -1018,24 +1019,24 @@ public:
     }
 
     // negates all elements //
-    DLLEXPORT inline Float3 operator-() const noexcept
+    DLLEXPORT constexpr inline Float3 operator-() const noexcept
     {
         return Float3(-X, -Y, -Z);
     }
 
     // returns the vector //
-    DLLEXPORT inline Float3 operator+() const noexcept
+    DLLEXPORT constexpr inline Float3 operator+() const noexcept
     {
         return Float3(*this);
     }
 
     // multiplies elements together //
-    DLLEXPORT inline Float3 operator*(const Float3& other) const noexcept
+    DLLEXPORT constexpr inline Float3 operator*(const Float3& other) const noexcept
     {
         return Float3(X * other.X, Y * other.Y, Z * other.Z);
     }
 
-    DLLEXPORT inline Float3& operator*=(const Float3& other) noexcept
+    DLLEXPORT constexpr inline Float3& operator*=(const Float3& other) noexcept
     {
         X *= other.X;
         Y *= other.Y;
@@ -1045,12 +1046,12 @@ public:
     }
 
     // Divides all elements by float //
-    DLLEXPORT inline Float3 operator/(float val) const
+    DLLEXPORT constexpr inline Float3 operator/(float val) const
     {
         return Float3(X / val, Y / val, Z / val);
     }
 
-    DLLEXPORT inline Float3& operator/=(float val)
+    DLLEXPORT constexpr inline Float3& operator/=(float val)
     {
         X /= val;
         Y /= val;
@@ -1060,12 +1061,12 @@ public:
     }
 
     // multiply  by scalar f //
-    DLLEXPORT inline Float3 operator*(float val) const noexcept
+    DLLEXPORT constexpr inline Float3 operator*(float val) const noexcept
     {
         return Float3(X * val, Y * val, Z * val);
     }
 
-    DLLEXPORT inline Float3& operator*=(float val) noexcept
+    DLLEXPORT constexpr inline Float3& operator*=(float val) noexcept
     {
         X *= val;
         Y *= val;
@@ -1075,12 +1076,12 @@ public:
     }
 
     // divides all elements //
-    DLLEXPORT inline Float3 operator/(const Float3& other) const
+    DLLEXPORT constexpr inline Float3 operator/(const Float3& other) const
     {
         return Float3(X / other.X, Y / other.Y, Z / other.Z);
     }
 
-    DLLEXPORT inline Float3& operator/=(const Float3& other)
+    DLLEXPORT constexpr inline Float3& operator/=(const Float3& other)
     {
         X /= other.X;
         Y /= other.Y;
@@ -1196,24 +1197,24 @@ public:
 
     // ----------------- Vector math ------------------- //
     // dot product of the vectors //
-    DLLEXPORT inline float Dot(const Float3& val) const noexcept
+    DLLEXPORT constexpr inline float Dot(const Float3& val) const noexcept
     {
         return X * val.X + Y * val.Y + Z * val.Z;
     }
 
 
-    DLLEXPORT inline Float3 Cross(const Float3& val) const
+    DLLEXPORT constexpr inline Float3 Cross(const Float3& val) const
     {
         return Float3(Y * val.Z - val.Y * Z, Z * val.X - val.Z * X, X * val.Y - val.X * Y);
     }
 
     // length of the vector //
-    DLLEXPORT inline float Length() const noexcept
+    DLLEXPORT constexpr inline float Length() const noexcept
     {
         return std::sqrt(LengthSquared());
     }
 
-    DLLEXPORT inline float LengthSquared() const noexcept
+    DLLEXPORT constexpr inline float LengthSquared() const noexcept
     {
         return X * X + Y * Y + Z * Z;
     }
@@ -1309,32 +1310,32 @@ public:
 
 struct Float4 {
 public:
-    DLLEXPORT inline Float4() noexcept = default;
+    DLLEXPORT constexpr inline Float4() noexcept = default;
 
-    DLLEXPORT inline Float4(float f1, float f2, float f3, float f4) :
+    DLLEXPORT constexpr inline Float4(float f1, float f2, float f3, float f4) :
         X(f1), Y(f2), Z(f3), W(f4)
     {
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline Float4(Float2 floats, float f3, float f4) :
+    DLLEXPORT constexpr inline Float4(Float2 floats, float f3, float f4) :
         X(floats.X), Y(floats.Y), Z(f3), W(f4)
     {
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline Float4(Float3 floats, float f4) :
+    DLLEXPORT constexpr inline Float4(Float3 floats, float f4) :
         X(floats.X), Y(floats.Y), Z(floats.Z), W(f4)
     {
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline explicit Float4(float data) : X(data), Y(data), Z(data), W(data)
+    DLLEXPORT constexpr inline explicit Float4(float data) : X(data), Y(data), Z(data), W(data)
     {
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline bool HasInvalidValues() const noexcept
+    DLLEXPORT constexpr inline bool HasInvalidValues() const noexcept
     {
         return !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z) ||
                !std::isfinite(W);
@@ -1647,93 +1648,11 @@ public:
             (other.W - W) * f + W);
     }
 
-    // does SPHERICAL interpolation between quaternions //
-    DLLEXPORT inline Float4 Slerp(const Float4& other, float f) const
-    {
-        // extra quaternion for calculations //
-        Float4 quaternion3;
-
-        // dot product of both //
-        float dot = this->Dot(other);
-
-        if(dot < 0) {
-            dot = -dot;
-            quaternion3 = -other;
-        } else {
-            quaternion3 = other;
-        }
-
-        if(dot < 0.95f) {
-            const float angle = acosf(dot);
-            return ((*this) * sinf(angle * (1 - f)) + quaternion3 * sinf(angle * f)) /
-                   sinf(angle);
-
-        } else {
-            // small angle, linear interpolation will be fine //
-            return this->Lerp(quaternion3, f);
-        }
-    }
-
     // compares distance between vectors to tolerance, returns true if less //
     DLLEXPORT inline bool Compare(const Float4& other, float tolerance) const noexcept
     {
         const Float4 difference = (*this) - other;
         return difference.Dot(difference) < tolerance * tolerance;
-    }
-
-    //! Converts a quaternion to Axis (and skips outputting the angle)
-    //! \note Must be normalized
-    DLLEXPORT inline Float3 ToAxis() const
-    {
-        const auto s = std::sqrt(1 - std::pow(W, 2));
-        // Avoid division by zero (this small axis it can be basically converted directly)
-        if(s > 0) {
-            return Float3(X / s, Y / s, Z / s);
-        } else {
-            return Float3(X, Y, Z);
-        }
-    }
-
-    //! Converts a quaternion to angle (and skips outputting the Axis)
-    //! \note Must be normalized
-    DLLEXPORT inline float ToAngle() const noexcept
-    {
-        return 2 * std::acos(W);
-    }
-
-    //! Inverts a quaternion
-    DLLEXPORT inline Float4 Inverse() const noexcept
-    {
-        const auto length = Length();
-        if(length > 0.0f) {
-            const auto inverted = 1.0f / length;
-            return Float4(-X * inverted, -Y * inverted, -Z * inverted, W * inverted);
-        } else {
-            // Invalid inversing
-            return Float4(0.f);
-        }
-    }
-
-    //! Rotates a vector by this quaternion
-    DLLEXPORT inline Float3 RotateVector(const Float3& vector) const
-    {
-        // // Alternative from
-        // //
-        // https://gamedev.stackexchange.com/questions/28395/rotating-vector3-by-a-quaternion
-        // const auto u = Float3(X, Y, Z);
-
-        // // Complex math going on
-        // return u * 2.0f * u.Dot(vector)
-        //     + vector * (W*W - u.Dot(u))
-        //     + u.Cross(vector) * 2.0f * W;
-
-        // Math taken from Ogre::Quaternion
-        Float3 qvec(X, Y, Z);
-        const Float3 uv1 = qvec.Cross(vector);
-        const Float3 uuv = qvec.Cross(uv1) * 2.0f;
-        const Float3 uv2 = uv1 * 2.0f * W;
-
-        return vector + uv2 + uuv;
     }
 
     // ----------------- casts ------------------- //
@@ -1761,7 +1680,7 @@ public:
 
     DLLEXPORT inline operator bs::Quaternion() const
     {
-        // Ogre has these in different order
+        // bsf has these in different order
         return bs::Quaternion(W, X, Y, Z);
     }
 
@@ -1775,13 +1694,13 @@ public:
         return bs::Vector4(X, Y, Z, W);
     }
 
-    DLLEXPORT inline Float4(const btQuaternion& colour)
+    DLLEXPORT inline Float4(const btQuaternion& quat)
     {
         // copy values //
-        X = colour.x();
-        Y = colour.y();
-        Z = colour.z();
-        W = colour.w();
+        X = quat.x();
+        Y = quat.y();
+        Z = quat.z();
+        W = quat.w();
         DO_NAN_CHECK;
     }
 
@@ -1791,114 +1710,6 @@ public:
     }
 
 #endif // LEVIATHAN_USING_OGRE
-
-    // ----------------- Quaternions ------------------- //
-    DLLEXPORT static inline Float4 CreateQuaternionFromAngles(const Float3& angles)
-    {
-        // multiplied by 0.5 to get double the value //
-        const float cosx = cosf(0.5f * angles.X);
-        const float cosy = cosf(0.5f * angles.Y);
-        const float cosz = cosf(0.5f * angles.Z);
-
-        const float sinx = sinf(0.5f * angles.X);
-        const float siny = sinf(0.5f * angles.Y);
-        const float sinz = sinf(0.5f * angles.Z);
-
-        return Float4(
-            // compute quaternion //
-            // X
-            cosz * cosy * sinx - sinz * siny * cosx,
-            // Y
-            cosz * siny * cosx + sinz * cosy * sinx,
-            // Z
-            sinz * cosy * cosx - cosz * siny * sinx,
-            // W
-            cosz * cosy * cosx * sinz * siny * sinx);
-    }
-
-    //! \note This quaternion has to be normalized
-    //! \see
-    //! http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/
-    DLLEXPORT inline Float3 QuaternionToEuler() const noexcept
-    {
-        const float test = X * Y + Z * W;
-
-        if(test > 0.499) {
-            // Singularity at north pole
-            return Float3(2 * atan2(X, W), PI / 2, 0);
-        }
-
-        if(test < -0.499) {
-            // Singularity at south pole
-            return Float3(-2 * atan2(X, W), -PI / 2, 0);
-        }
-
-        const float sqx = X * X;
-        const float sqy = Y * Y;
-        const float sqz = Z * Z;
-
-        return Float3(atan2(2 * Y * W - 2 * X * Z, 1 - 2 * sqy - 2 * sqz), asin(2 * test),
-            atan2(2 * X * W - 2 * Y * Z, 1 - 2 * sqx - 2 * sqz));
-    }
-
-    DLLEXPORT inline Float4 QuaternionMultiply(const Float4& other) const noexcept
-    {
-        return Float4(X * other.X + X * other.W + Y * other.Z - Z * other.Y,
-            W * other.Y - X * other.Z + Y * other.W + Z * other.X,
-            W * other.Z + X * other.Y - Y * other.X + Z * other.W,
-            W * other.W - X * other.X - Y * other.Y - Z * other.Z);
-    }
-
-    DLLEXPORT inline Float4 QuaternionReverse() const noexcept
-    {
-        // reverse vector //
-        return Float4(-X, -Y, -Z, W);
-    }
-
-    DLLEXPORT static inline Float4 IdentityQuaternion() noexcept
-    {
-        return Float4(0.f, 0.f, 0.f, 1.f);
-    }
-
-    // Math from here: https://stackoverflow.com/questions/12435671/quaternion-lookat-function
-    DLLEXPORT static inline Float4 QuaternionLookAt(
-        const Float3& sourcepoint, const Float3& target)
-    {
-        const auto forward = (target - sourcepoint).NormalizeSafe();
-        const float dot = Float3::UnitVForward.Dot(forward);
-
-        if(std::abs(dot - (-1.0f)) < 0.000001f) {
-            // Assumes up is Float3(0, 1, 0)
-            return Float4(Float3::UnitVUp, 3.1415926535897932f);
-        }
-
-        if(std::abs(dot - 1.0f) < 0.000001f) {
-            return Float4::IdentityQuaternion();
-        }
-
-        const float rotAngle = std::acos(dot);
-        const Float3 rotAxis = Float3::UnitVForward.Cross(forward).Normalize();
-        return CreateQuaternionFromAxisAngle(rotAxis, rotAngle);
-    }
-
-    //! \note axis must be normalized
-    //!
-    //! This resource is a life saver:
-    //! http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
-    DLLEXPORT static inline Float4 CreateQuaternionFromAxisAngle(
-        const Float3& axis, Radian angle) noexcept
-    {
-        const float s = static_cast<float>(std::sin(angle.ValueInRadians() / 2.0f));
-        const float w = static_cast<float>(std::cos(angle.ValueInRadians() / 2.0f));
-        return Float4(axis * s, w);
-    }
-
-    // TODO: Implement this (Float4::CreateAxisAngleFromEuler)
-    DLLEXPORT static inline Float4 CreateAxisAngleFromEuler(const Float3& angles)
-    {
-        throw std::exception();
-        // return Float4();
-    }
 
     VALUE_TYPE(Float4);
 

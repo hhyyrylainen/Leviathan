@@ -5,6 +5,7 @@
 //! \file This file contains common components for entities
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/Quaternion.h"
 #include "Common/SFMLPackets.h"
 #include "Common/Types.h"
 #include "Physics/PhysicsBody.h"
@@ -36,12 +37,12 @@ class Position : public ComponentWithStates<PositionState>, public PhysicsPositi
 public:
     struct Data {
 
-        Data(const Float3& position, const Float4& orientation) :
+        Data(const Float3& position, const Quaternion& orientation) :
             _Position(position), _Orientation(orientation)
         {}
 
         Float3 _Position;
-        Float4 _Orientation;
+        Quaternion _Orientation;
     };
 
 public:
@@ -49,13 +50,14 @@ public:
     inline Position(const Data& data) : ComponentWithStates(TYPE), Members(data) {}
 
     void GetPositionDataForPhysics(
-        const Float3*& position, const Float4*& orientation) const override
+        const Float3*& position, const Quaternion*& orientation) const override
     {
         position = &Members._Position;
         orientation = &Members._Orientation;
     }
 
-    void SetPositionDataFromPhysics(const Float3& position, const Float4& orientation) override
+    void SetPositionDataFromPhysics(
+        const Float3& position, const Quaternion& orientation) override
     {
         Members._Position = position;
         Members._Orientation = orientation;

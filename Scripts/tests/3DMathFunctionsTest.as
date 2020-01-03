@@ -10,7 +10,7 @@ bool TestAngleConversions()
     }
 
     // This may not crash (that's the test)
-    Float4 quat = Float4::CreateQuaternionFromAxisAngle(Float3(1, 0, 0), Degree(90));
+    Quaternion quat = Quaternion(Float3(1, 0, 0), Degree(90));
 
     return true;
 }

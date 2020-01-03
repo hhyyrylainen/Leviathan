@@ -85,7 +85,7 @@ bool SetupCustomComponents(GameWorld @world)
 
     timer1.TimeValue = 1;
 
-    asStandard.Create_Position(id1, Float3(1, 0, 0), Float4::IdentityQuaternion);
+    asStandard.Create_Position(id1, Float3(1, 0, 0), Quaternion::IDENTITY);
 
 
     // ------------------------------------ //
@@ -96,7 +96,7 @@ bool SetupCustomComponents(GameWorld @world)
 
     timer2.TimeValue = 2;
 
-    asStandard.Create_Position(id2, Float3(2, 0, 0), Float4::IdentityQuaternion);
+    asStandard.Create_Position(id2, Float3(2, 0, 0), Quaternion::IDENTITY);
 
     // ------------------------------------ //
     // Entity 3
@@ -106,7 +106,7 @@ bool SetupCustomComponents(GameWorld @world)
 
     timer3.TimeValue = 7;
 
-    asStandard.Create_Position(id3, Float3(4, 0, 0), Float4::IdentityQuaternion);
+    asStandard.Create_Position(id3, Float3(4, 0, 0), Quaternion::IDENTITY);
 
     return true;
 }

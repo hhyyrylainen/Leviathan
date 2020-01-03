@@ -3,6 +3,7 @@
 
 #include "Common/Matrix.h"
 #include "Common/Plane.h"
+#include "Common/Quaternion.h"
 #include "Common/Ray.h"
 #include "Common/Types.h"
 
@@ -14,7 +15,7 @@ using namespace Leviathan;
 
 ObjectID NULL_OBJECT_WRAPPER = NULL_OBJECT;
 
-Float4 IdentityQuaternion = Float4::IdentityQuaternion();
+Quaternion IdentityQuaternion = Quaternion::IDENTITY;
 
 // Float2
 void Float2ConstructorProxy(void* memory)
@@ -97,6 +98,37 @@ void Float4ConstructorProxyCopy(void* memory, const Float4& other)
 void Float4DestructorProxy(void* memory)
 {
     reinterpret_cast<Float4*>(memory)->~Float4();
+}
+
+// Quaternion
+void QuaternionConstructorProxy(void* memory)
+{
+    new(memory) Quaternion();
+}
+
+void QuaternionConstructorProxyAll(void* memory, float x, float y, float z, float w)
+{
+    new(memory) Quaternion(x, y, z, w);
+}
+
+void QuaternionConstructorProxyCopy(void* memory, const Quaternion& other)
+{
+    new(memory) Quaternion(other);
+}
+
+void QuaternionConstructorAxisProxy(void* memory, const Float3& axis, Radian angle)
+{
+    new(memory) Quaternion(axis, angle);
+}
+
+void QuaternionConstructorFloat4Proxy(void* memory, const Float4& obj)
+{
+    new(memory) Quaternion(obj);
+}
+
+void QuaternionDestructorProxy(void* memory)
+{
+    reinterpret_cast<Quaternion*>(memory)->~Quaternion();
 }
 // ------------------------------------ //
 // Int2
@@ -562,33 +594,6 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectMethod(
-           "Float4", "Float3 ToAxis() const", asMETHOD(Float4, ToAxis), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("Float4", "float ToAngle() const",
-           asMETHOD(Float4, ToAngle), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("Float4", "Float4 Inverse() const",
-           asMETHOD(Float4, Inverse), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("Float4",
-           "Float3 RotateVector(const Float3 &in vector) const",
-           asMETHOD(Float4, RotateVector), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
-    if(engine->RegisterObjectMethod("Float4",
-           "Float4 Slerp(const Float4 &in other, float fraction) const",
-           asMETHOD(Float4, Slerp), asCALL_THISCALL) < 0) {
-        ANGELSCRIPT_REGISTERFAIL;
-    }
-
     if(engine->RegisterObjectMethod("Float4", "bool HasInvalidValues() const",
            asMETHOD(Float4, HasInvalidValues), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -616,32 +621,162 @@ bool BindFloat4(asIScriptEngine* engine)
     }
 
     // ------------------------------------ //
-    // Named ones
+    // Namespace members
     if(engine->SetDefaultNamespace("Float4") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalProperty("const Float4 IdentityQuaternion", IdentityQuaternion) <
-        0) {
+    if(engine->SetDefaultNamespace("") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+// ------------------------------------ //
+bool BindQuaternion(asIScriptEngine* engine)
+{
+    // Quaternion
+    if(engine->RegisterObjectType("Quaternion", sizeof(Quaternion),
+           asOBJ_VALUE | asGetTypeTraits<Quaternion>() | asOBJ_APP_CLASS_ALLFLOATS) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f()",
+           asFUNCTION(QuaternionConstructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT,
+           "void f(float x, float y, float z, float w)",
+           asFUNCTION(QuaternionConstructorProxyAll), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT,
+           "void f(const Quaternion &in other)", asFUNCTION(QuaternionConstructorProxyCopy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT,
+           "void f(const Float4 &in copy)", asFUNCTION(QuaternionConstructorFloat4Proxy),
+           asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT,
+           "void f(const Float3 &in axis, Radian angle)",
+           asFUNCTION(QuaternionConstructorAxisProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_DESTRUCT, "void f()",
+           asFUNCTION(QuaternionDestructorProxy), asCALL_CDECL_OBJFIRST) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Operators //
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Quaternion& opAssign(const Quaternion &in other)",
+           asMETHODPR(Quaternion, operator=,(const Quaternion&), Quaternion&),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion",
+           "bool opEquals(const Quaternion &in other) const",
+           asMETHODPR(Quaternion, operator==,(const Quaternion&) const, bool),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Quaternion opMul(const Quaternion &in other) const",
+           asMETHODPR(Quaternion, operator*,(const Quaternion&) const, Quaternion),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Float3 opMul(const Float3 &in vector) const",
+           asMETHODPR(Quaternion, operator*,(const Float3&) const, Float3),
+           asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Quaternion Normalize() const",
+           asMETHOD(Quaternion, Normalize), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Float3 ToAxis() const",
+           asMETHOD(Quaternion, ToAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "float ToAngle() const",
+           asMETHOD(Quaternion, ToAngle), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Quaternion Inverse() const",
+           asMETHOD(Quaternion, Inverse), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion",
+           "Quaternion Slerp(const Quaternion &in other, float fraction) const",
+           asMETHOD(Quaternion, Slerp), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "bool HasInvalidValues() const",
+           asMETHOD(Quaternion, HasInvalidValues), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // Direct access
+    if(engine->RegisterObjectProperty("Quaternion", "float X", asOFFSET(Quaternion, X)) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction(
-           "Float4 QuaternionLookAt(const Float3 &in sourcepoint, const Float3 &in target)",
-           asFUNCTION(Float4::QuaternionLookAt), asCALL_CDECL) < 0) {
+    if(engine->RegisterObjectProperty("Quaternion", "float Y", asOFFSET(Quaternion, Y)) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction(
-           "Float4 CreateQuaternionFromAxisAngle(const Float3 &in axis, Radian angle)",
-           asFUNCTION(Float4::CreateQuaternionFromAxisAngle), asCALL_CDECL) < 0) {
+    if(engine->RegisterObjectProperty("Quaternion", "float Z", asOFFSET(Quaternion, Z)) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectProperty("Quaternion", "float W", asOFFSET(Quaternion, W)) < 0) {
 
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Namespace members
+    if(engine->SetDefaultNamespace("Quaternion") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Quaternion IDENTITY", IdentityQuaternion) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty(
+           "const Quaternion IdentityQuaternion", IdentityQuaternion) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction("Quaternion QuaternionLookAt(const Float3 &in "
+                                      "sourcepoint, const Float3 &in target)",
+           asFUNCTION(Quaternion::QuaternionLookAt), asCALL_CDECL) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     if(engine->SetDefaultNamespace("") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
@@ -898,6 +1033,17 @@ bool BindDegree(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+
+    if(engine->RegisterObjectMethod("Degree", "Radian opImplCast() const",
+           asMETHODPR(Degree, operator Radian,() const, Radian), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Radian", "Degree opImplCast() const",
+           asMETHODPR(Radian, operator Degree,() const, Degree), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 // ------------------------------------ //
@@ -996,6 +1142,9 @@ bool Leviathan::BindTypes(asIScriptEngine* engine)
         return false;
 
     if(!BindFloat4(engine))
+        return false;
+
+    if(!BindQuaternion(engine))
         return false;
 
     if(!BindMatrix4(engine))

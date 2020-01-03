@@ -82,7 +82,7 @@ void DemosApplication::CustomizeEnginePostLoad()
 
     // Create camera in the world //
     const auto camera = Leviathan::ObjectLoader::LoadCamera(
-        *World, Float3(0.f, 1.8f, 0.f), Float4::IdentityQuaternion());
+        *World, Float3(0.f, 1.8f, 0.f), Quaternion::IDENTITY);
 
     World->SetCamera(camera);
 

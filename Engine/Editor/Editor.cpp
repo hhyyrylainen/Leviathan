@@ -55,8 +55,7 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
         return;
     }
 
-    ObjectID camera =
-        ObjectLoader::LoadCamera(*World, Float3(0, 0, 5), Float4::IdentityQuaternion());
+    ObjectID camera = ObjectLoader::LoadCamera(*World, Float3(0, 0, 5), Quaternion::IDENTITY);
 
     World->SetCamera(camera);
 

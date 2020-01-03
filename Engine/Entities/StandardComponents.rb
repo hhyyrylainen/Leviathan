@@ -7,7 +7,7 @@ COMPONENT_POSITION = EntityComponent.new(
     [
       Variable.new('position', 'Float3',
                    memberaccess: 'Members._Position'),
-      Variable.new('orientation', 'Float4',
+      Variable.new('orientation', 'Quaternion',
                    memberaccess: 'Members._Orientation')
     ], usedatastruct: true
   )], statetype: true

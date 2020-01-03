@@ -377,7 +377,7 @@ DLLEXPORT PhysicsBody::pointer PhysicalWorld::CreateBodyFromCollision(
 
     if(positionsynchronization) {
         const Float3* position;
-        const Float4* orientation;
+        const Quaternion* orientation;
         positionsynchronization->GetPositionDataForPhysics(position, orientation);
 
         transform.setRotation(*orientation);

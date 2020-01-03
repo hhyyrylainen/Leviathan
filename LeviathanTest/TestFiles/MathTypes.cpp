@@ -1,3 +1,4 @@
+#include "Common/Quaternion.h"
 #include "Common/Types.h"
 
 #include "bsfUtility/Math/BsQuaternion.h"
@@ -28,7 +29,7 @@ TEST_CASE("Quaternion math works", "[math]")
 
     bs::Quaternion bsQuat(bs::Vector3::normalize(bs::Vector3(1, 0.5, 1)), bs::Radian(0.125f));
 
-    Float4 levQuat = bsQuat;
+    Quaternion levQuat = bsQuat;
 
     CHECK(levQuat.X == bsQuat.x);
     CHECK(levQuat.Y == bsQuat.y);
@@ -39,7 +40,7 @@ TEST_CASE("Quaternion math works", "[math]")
     bs::Vector3 toRotate(0, 0, -1);
 
     const Float3 rotatedBs = bsQuat.rotate(toRotate);
-    const Float3 rotatedLev = levQuat.RotateVector(toRotate);
+    const Float3 rotatedLev = levQuat * toRotate;
 
     CHECK(rotatedBs == rotatedLev);
 }

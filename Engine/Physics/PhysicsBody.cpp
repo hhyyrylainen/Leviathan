@@ -83,7 +83,7 @@ DLLEXPORT void PhysicsBody::NotifyDetachedConstraint(PhysicsConstraint* constrai
     }
 }
 // ------------------------------------ //
-DLLEXPORT bool PhysicsBody::SetPosition(const Float3& pos, const Float4& orientation)
+DLLEXPORT bool PhysicsBody::SetPosition(const Float3& pos, const Quaternion& orientation)
 {
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
@@ -117,7 +117,7 @@ DLLEXPORT Float3 PhysicsBody::GetPosition() const
     return Body->getCenterOfMassTransform().getOrigin();
 }
 // ------------------------------------ //
-DLLEXPORT bool PhysicsBody::SetOnlyOrientation(const Float4& orientation)
+DLLEXPORT bool PhysicsBody::SetOnlyOrientation(const Quaternion& orientation)
 {
     if(!Body)
         throw InvalidArgument("PhysicsBody has no longer an internal physics engine body");
@@ -333,7 +333,7 @@ DLLEXPORT void PhysicsPositionProvider::_OnAttachBridge(PhysicsDataBridge* bridg
 DLLEXPORT void PhysicsPositionProvider::getWorldTransform(btTransform& worldTrans) const
 {
     const Float3* position;
-    const Float4* orientation;
+    const Quaternion* orientation;
 
     GetPositionDataForPhysics(position, orientation);
 

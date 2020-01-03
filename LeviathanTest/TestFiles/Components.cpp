@@ -53,8 +53,7 @@ TEST_CASE("RenderingPositionSystem creates nodes", "[entity]")
 
     ObjectID id = 36;
 
-    ComponentPosition.ConstructNew(
-        id, Position::Data{Float3(0, 1, 2), Float4::IdentityQuaternion()});
+    ComponentPosition.ConstructNew(id, Position::Data{Float3(0, 1, 2), Quaternion::IDENTITY});
 
     ComponentRenderNode.ConstructNew(id, TestComponentCreation());
 
@@ -90,7 +89,7 @@ TEST_CASE("PositionStateSystem creates state objects", "[entity]")
     int tick = 0;
 
     auto pos = ComponentPosition.ConstructNew(
-        id, Position::Data{Float3(0, 1, 2), Float4::IdentityQuaternion()});
+        id, Position::Data{Float3(0, 1, 2), Quaternion::IDENTITY});
 
     CHECK(PositionStates.GetNumberOfEntitiesWithStates() == 0);
     CHECK(!PositionStates.GetEntityStates(id));
@@ -163,8 +162,8 @@ TEST_CASE("PositionStateSystem single state is interpolated", "[entity]")
     const auto initialPos = Float3(5, 8, -5);
 
     // Create 2 positions
-    auto pos = ComponentPosition.ConstructNew(
-        id, Position::Data{initialPos, Float4::IdentityQuaternion()});
+    auto pos =
+        ComponentPosition.ConstructNew(id, Position::Data{initialPos, Quaternion::IDENTITY});
 
     // State marked by default to always apply the initial position even if there are no states
     // CHECK(!pos->StateMarked);
@@ -221,7 +220,7 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]")
 
     // Create 2 positions
     auto pos = ComponentPosition.ConstructNew(
-        id, Position::Data{Float3(1, 6, 0), Float4::IdentityQuaternion()});
+        id, Position::Data{Float3(1, 6, 0), Quaternion::IDENTITY});
 
     _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 0);
 
@@ -245,7 +244,7 @@ TEST_CASE("PositionStateSystem created states can be interpolated", "[entity]")
     REQUIRE(secondState);
     CHECK(secondState->_Position == Float3(3, 12, 1));
 
-    Position interpolated({Float3(2, 9, 0.5f), Float4::IdentityQuaternion()});
+    Position interpolated({Float3(2, 9, 0.5f), Quaternion::IDENTITY});
 
     // This sets the starting time of the interpolation //
     // and returns the first state
@@ -287,7 +286,7 @@ TEST_CASE("PositionStateSystem multiple states with gaps can be interpolated", "
     ObjectID id = 12;
 
     auto pos = ComponentPosition.ConstructNew(
-        id, Position::Data{Float3(0, 0, 0), Float4::IdentityQuaternion()});
+        id, Position::Data{Float3(0, 0, 0), Quaternion::IDENTITY});
 
     _PositionStateSystem.Run(dummyWorld, ComponentPosition.GetIndex(), PositionStates, 0);
 

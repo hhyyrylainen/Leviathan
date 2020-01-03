@@ -9,13 +9,14 @@ generator = Generator.new ARGV[0], separateFiles: true
 
 generator.useNamespace
 generator.addInclude 'Entities/ComponentState.h'
+generator.addInclude 'Common/Quaternion.h'
 generator.addImplInclude 'Entities/Components.h'
 
 posState = ComponentState.new(
   'PositionState',
   members: [
     Variable.new('_Position', 'Float3'),
-    Variable.new('_Orientation', 'Float4')
+    Variable.new('_Orientation', 'Quaternion')
   ],
   copyconstructors: true,
   copyoperators: true,
@@ -39,7 +40,7 @@ posState = ComponentState.new(
       [
         Variable.new('time', 'float', noRef: true),
         Variable.new('_Position', 'Float3'),
-        Variable.new('_Orientation', 'Float4')
+        Variable.new('_Orientation', 'Quaternion')
       ],
       baseparameters: 'time, COMPONENT_TYPE::Position',
       memberinitializers: [

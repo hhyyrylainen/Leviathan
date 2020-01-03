@@ -49,7 +49,7 @@ TEST_CASE("Physics spheres fall down", "[physics][entity]")
 
     auto object1 = world.CreateEntity();
 
-    auto& pos = world.Create_Position(object1, Float3(0, 10, 0), Float4::IdentityQuaternion());
+    auto& pos = world.Create_Position(object1, Float3(0, 10, 0), Quaternion::IDENTITY);
     auto& physics = world.Create_Physics(object1, pos);
 
     CHECK(physics.CreatePhysicsBody(physWorld, physWorld->CreateSphere(1), 10));
@@ -78,7 +78,7 @@ TEST_CASE("Plane constrainted physics sphere doesn't fall", "[physics][entity]")
 
     body->ConstraintMovementAxises();
 
-    body->SetPosition(Float3(0, 10, 0), Float4::IdentityQuaternion());
+    body->SetPosition(Float3(0, 10, 0), Quaternion::IDENTITY);
 
     // Let it run a bit
     world.SimulateWorld(0.1f);
@@ -135,7 +135,7 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
 
     const auto boxInitialPos = Float3(0, 5, 0);
 
-    auto& pos1 = world.Create_Position(box, boxInitialPos, Float4::IdentityQuaternion());
+    auto& pos1 = world.Create_Position(box, boxInitialPos, Quaternion::IDENTITY);
     auto& physics1 = world.Create_Physics(box, pos1);
 
     CHECK(
@@ -147,7 +147,7 @@ TEST_CASE("Physical material callbacks work", "[physics][entity]")
 
     auto plane = world.CreateEntity();
 
-    auto& pos2 = world.Create_Position(plane, Float3(0, 0, 0), Float4::IdentityQuaternion());
+    auto& pos2 = world.Create_Position(plane, Float3(0, 0, 0), Quaternion::IDENTITY);
     auto& physics2 = world.Create_Physics(plane, pos2);
 
     CHECK(physics2.CreatePhysicsBody(
@@ -201,7 +201,7 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
 
     auto box = world.CreateEntity();
 
-    auto& pos1 = world.Create_Position(box, Float3(-5, 5, 0), Float4::IdentityQuaternion());
+    auto& pos1 = world.Create_Position(box, Float3(-5, 5, 0), Quaternion::IDENTITY);
     auto& physics1 = world.Create_Physics(box, pos1);
 
     auto shape1 = physWorld->CreateCompound();
@@ -218,7 +218,7 @@ TEST_CASE("Physical compound bodies work with callbacks", "[physics][entity]")
     shape2->AddChildShape(physWorld->CreateBox(1, 1, 1));
     shape2->AddChildShape(physWorld->CreateBox(10, 1, 10));
 
-    auto& pos2 = world.Create_Position(plane, Float3(5, 0, 0), Float4::IdentityQuaternion());
+    auto& pos2 = world.Create_Position(plane, Float3(5, 0, 0), Quaternion::IDENTITY);
     auto& physics2 = world.Create_Physics(plane, pos2);
 
     CHECK(physics2.CreatePhysicsBody(physWorld, shape2, 0, material2));
@@ -249,7 +249,7 @@ TEST_CASE(
 
     body->ConstraintMovementAxises();
 
-    body->SetPosition(Float3(0, 10, 0), Float4::IdentityQuaternion());
+    body->SetPosition(Float3(0, 10, 0), Quaternion::IDENTITY);
 
     // Let it run a bit
     world.SimulateWorld(0.1f);
@@ -284,7 +284,7 @@ TEST_CASE("Constraint is destroyed if body is destroyed", "[physics]")
     REQUIRE(body2);
 
     auto constraint = world.CreateFixedConstraint(body1, body2, Float3(-1, 0, 0),
-        Float4::IdentityQuaternion(), Float3(1, 0, 0), Float4::IdentityQuaternion());
+        Quaternion::IDENTITY, Float3(1, 0, 0), Quaternion::IDENTITY);
     REQUIRE(constraint);
 
     CHECK(world.DestroyBody(body1.get()));
@@ -304,11 +304,11 @@ TEST_CASE("Fixed constrainted sphere to immovable sphere doesn't fall", "[physic
     auto body2 = world.CreateBodyFromCollision(world.CreateSphere(1), 0, nullptr);
     REQUIRE(body2);
 
-    body1->SetPosition(Float3(0, 10, 0), Float4::IdentityQuaternion());
-    body2->SetPosition(Float3(1, 10, 0), Float4::IdentityQuaternion());
+    body1->SetPosition(Float3(0, 10, 0), Quaternion::IDENTITY);
+    body2->SetPosition(Float3(1, 10, 0), Quaternion::IDENTITY);
 
     auto constraint = world.CreateFixedConstraint(body1, body2, Float3(-1, 0, 0),
-        Float4::IdentityQuaternion(), Float3(1, 0, 0), Float4::IdentityQuaternion());
+        Quaternion::IDENTITY, Float3(1, 0, 0), Quaternion::IDENTITY);
 
     REQUIRE(constraint);
 

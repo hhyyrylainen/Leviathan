@@ -3,6 +3,7 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/Quaternion.h"
 #include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
 
@@ -32,7 +33,7 @@ public:
 
     DLLEXPORT bool AddChildShape(const PhysicsShape::pointer& child,
         const Float3& offset = Float3(0, 0, 0),
-        const Float4& orientation = Float4::IdentityQuaternion());
+        const Quaternion& orientation = Quaternion::IDENTITY);
     DLLEXPORT bool RemoveChildShape(PhysicsShape* child);
 
     //! \note This assumes that AddChildShape and RemoveChildShape properly update ChildShapes
@@ -67,7 +68,7 @@ public:
     //
     DLLEXPORT inline bool AddChildShapeWrapper(PhysicsShape* child,
         const Float3& offset = Float3(0, 0, 0),
-        const Float4& orientation = Float4::IdentityQuaternion())
+        const Quaternion& orientation = Quaternion::IDENTITY)
     {
         return AddChildShape(ReferenceCounted::WrapPtr(child), offset, orientation);
     }

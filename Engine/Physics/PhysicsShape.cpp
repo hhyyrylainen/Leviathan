@@ -15,8 +15,7 @@ DLLEXPORT PhysicsShape::PhysicsShape(std::unique_ptr<btCompoundShape>&& shape) :
 {}
 // ------------------------------------ //
 DLLEXPORT bool PhysicsShape::AddChildShape(const PhysicsShape::pointer& child,
-    const Float3& offset /*= Float3(0, 0, 0)*/,
-    const Float4& orientation /*= Float4::IdentityQuaternion()*/)
+    const Float3& offset /*= Float3(0, 0, 0)*/, const Quaternion& orientation)
 {
     if(!Compound || !child)
         return false;

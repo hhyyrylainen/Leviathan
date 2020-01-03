@@ -22,8 +22,7 @@ TEST_CASE_METHOD(WorldSynchronizationTestFixture,
 
     REQUIRE_NOTHROW(ServerInterface.World->GetComponent_Sendable(box1));
 
-    ServerInterface.World->Create_Position(
-        box1, Float3(0, 0, 0), Float4::IdentityQuaternion());
+    ServerInterface.World->Create_Position(box1, Float3(0, 0, 0), Quaternion::IDENTITY);
 
     // Run systems to send entity creation messages etc.
     ServerInterface.World->Tick(0);
@@ -50,8 +49,8 @@ TEST_CASE_METHOD(WorldSynchronizationTestFixture,
 
     REQUIRE_NOTHROW(ServerInterface.World->GetComponent_Sendable(box1));
 
-    auto& pos1 = ServerInterface.World->Create_Position(
-        box1, Float3(0, 0, 0), Float4::IdentityQuaternion());
+    auto& pos1 =
+        ServerInterface.World->Create_Position(box1, Float3(0, 0, 0), Quaternion::IDENTITY);
 
     // Run systems to send entity creation messages etc.
     ServerInterface.World->Tick(0);

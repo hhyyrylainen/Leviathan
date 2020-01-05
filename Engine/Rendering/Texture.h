@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -10,7 +10,18 @@
 namespace Leviathan {
 
 class Texture : public ReferenceCounted {
+protected:
+    // These are protected for only constructing properly reference
+    // counted instances through MakeShared
+    friend ReferenceCounted;
+    DLLEXPORT Texture(const bs::HTexture& texture);
+
 public:
+    bs::HTexture GetInternal()
+    {
+        return BsTexture;
+    }
+
     REFERENCE_COUNTED_PTR_TYPE(Texture);
 
 private:

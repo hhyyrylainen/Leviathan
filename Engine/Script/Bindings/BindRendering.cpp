@@ -1,19 +1,86 @@
 // ------------------------------------ //
 #include "BindDefinitions.h"
 
+#include "Rendering/Graphics.h"
 #include "Rendering/Material.h"
 #include "Rendering/Renderable.h"
 #include "Rendering/Scene.h"
 #include "Rendering/Shader.h"
 #include "Rendering/Texture.h"
 
+#include "Engine.h"
+
+#include "bsfCore/Material/BsShader.h"
+#include "bsfEngine/Resources/BsBuiltinResources.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
 
 // Proxies etc.
 // ------------------------------------ //
+Shader* ShaderFromNameFactory(const std::string& name)
+{
+    bs::HShader bsShader;
 
+    if(name == "BuiltinShader::Standard") {
+
+        bsShader = bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::Standard);
+    } else if(name == "BuiltinShader::Transparent") {
+        bsShader = bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::Transparent);
+    } else {
+        bsShader = Engine::Get()->GetGraphics()->LoadShaderByName(name);
+    }
+
+    if(!bsShader) {
+        asGetActiveContext()->SetException("bsf shader load failed");
+        return nullptr;
+    }
+
+    auto result = Shader::MakeShared<Shader>(bsShader);
+
+    if(result)
+        result->AddRef();
+
+    return result.get();
+}
+
+Material* MaterialFromShaderFactory(Shader* shader)
+{
+    auto material = Material::MakeShared<Material>(Shader::WrapPtr(shader));
+
+    if(material)
+        material->AddRef();
+
+    return material.get();
+}
+
+Material* MaterialEmptyFactory()
+{
+    auto material = Material::MakeShared<Material>();
+
+    if(material)
+        material->AddRef();
+
+    return material.get();
+}
+
+Texture* TextureFromNameFactory(const std::string& name)
+{
+    auto texture = Engine::Get()->GetGraphics()->LoadTextureByName(name);
+
+    if(!texture) {
+        asGetActiveContext()->SetException(
+            "no texture could be loaded with the specified name");
+        return nullptr;
+    }
+
+    auto result = Texture::MakeShared<Texture>(texture);
+
+    if(result)
+        result->AddRef();
+
+    return result.get();
+}
 
 namespace Leviathan {
 
@@ -21,12 +88,55 @@ bool BindShader(asIScriptEngine* engine)
 {
     ANGELSCRIPT_REGISTER_REF_TYPE("Shader", Shader);
 
+    if(engine->RegisterObjectBehaviour("Shader", asBEHAVE_FACTORY,
+           "Shader@ f(const string &in name)", asFUNCTION(ShaderFromNameFactory),
+           asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
+    return true;
+}
+
+bool BindTexture(asIScriptEngine* engine)
+{
+    ANGELSCRIPT_REGISTER_REF_TYPE("Texture", Texture);
+
+    if(engine->RegisterObjectBehaviour("Texture", asBEHAVE_FACTORY,
+           "Texture@ f(const string &in name)", asFUNCTION(TextureFromNameFactory),
+           asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     return true;
 }
 
 bool BindMaterial(asIScriptEngine* engine)
 {
     ANGELSCRIPT_REGISTER_REF_TYPE("Material", Material);
+
+    if(engine->RegisterObjectBehaviour("Material", asBEHAVE_FACTORY,
+           "Material@ f(Shader@ shader)", asFUNCTION(MaterialFromShaderFactory),
+           asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectBehaviour("Material", asBEHAVE_FACTORY, "Material@ f()",
+           asFUNCTION(MaterialEmptyFactory), asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Material",
+           "void SetTexture(const string &in parameter, Texture@ texture)",
+           asMETHOD(Material, SetTextureWrapper), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Material",
+           "void SetFloat4(const string &in parameter, const Float4 &in data)",
+           asMETHOD(Material, SetFloat4), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
 
     return true;
 }
@@ -103,6 +213,9 @@ bool BindRenderable(asIScriptEngine* engine)
 bool Leviathan::BindRendering(asIScriptEngine* engine)
 {
     if(!BindShader(engine))
+        return false;
+
+    if(!BindTexture(engine))
         return false;
 
     if(!BindMaterial(engine))

@@ -163,8 +163,8 @@ bool BindComponentTypes(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterObjectProperty(
-           "Position", "Float4 _Orientation", asOFFSET(Position, Members._Orientation)) < 0) {
+    if(engine->RegisterObjectProperty("Position", "Quaternion _Orientation",
+           asOFFSET(Position, Members._Orientation)) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

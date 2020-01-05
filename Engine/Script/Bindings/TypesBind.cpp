@@ -599,6 +599,13 @@ bool BindFloat4(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Float4",
+           "void ConvertToHSB(float &out hue, float &out saturation, float &out brightness) "
+           "const",
+           asMETHOD(Float4, ConvertToHSB), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // Direct access
     if(engine->RegisterObjectProperty("Float4", "float X", asOFFSET(Float4, X)) < 0) {
 
@@ -623,6 +630,13 @@ bool BindFloat4(asIScriptEngine* engine)
     // ------------------------------------ //
     // Namespace members
     if(engine->SetDefaultNamespace("Float4") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction(
+           "Float4 FromHSB(float hue, float saturation, float brightness)",
+           asFUNCTION(Float4::FromHSB), asCALL_CDECL) < 0) {
+
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -735,6 +749,21 @@ bool BindQuaternion(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
+    if(engine->RegisterObjectMethod("Quaternion", "Float3 XAxis() const",
+           asMETHOD(Quaternion, XAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Float3 YAxis() const",
+           asMETHOD(Quaternion, YAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Quaternion", "Float3 ZAxis() const",
+           asMETHOD(Quaternion, ZAxis), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
     // Direct access
     if(engine->RegisterObjectProperty("Quaternion", "float X", asOFFSET(Quaternion, X)) < 0) {
 
@@ -771,9 +800,9 @@ bool BindQuaternion(asIScriptEngine* engine)
         ANGELSCRIPT_REGISTERFAIL;
     }
 
-    if(engine->RegisterGlobalFunction("Quaternion QuaternionLookAt(const Float3 &in "
+    if(engine->RegisterGlobalFunction("Quaternion LookAt(const Float3 &in "
                                       "sourcepoint, const Float3 &in target)",
-           asFUNCTION(Quaternion::QuaternionLookAt), asCALL_CDECL) < 0) {
+           asFUNCTION(Quaternion::LookAt), asCALL_CDECL) < 0) {
 
         ANGELSCRIPT_REGISTERFAIL;
     }

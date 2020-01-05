@@ -214,6 +214,13 @@ public:
         return Quaternion(-X, -Y, -Z, W);
     }
 
+    DLLEXPORT Float3 XAxis() const;
+
+    //! \brief Computes the y-axis of the quaternion
+    DLLEXPORT Float3 YAxis() const;
+
+    DLLEXPORT Float3 ZAxis() const;
+
     // ------------------------------------ //
     // Quaternion methods
 
@@ -270,7 +277,7 @@ public:
     }
 
     // Math from here: https://stackoverflow.com/questions/12435671/quaternion-lookat-function
-    static inline Float4 QuaternionLookAt(const Float3& sourcepoint, const Float3& target)
+    static inline Quaternion LookAt(const Float3& sourcepoint, const Float3& target)
     {
         const auto forward = (target - sourcepoint).NormalizeSafe();
         const float dot = Float3::UnitVForward.Dot(forward);

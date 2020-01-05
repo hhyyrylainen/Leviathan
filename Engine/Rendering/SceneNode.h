@@ -1,8 +1,9 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/Quaternion.h"
 #include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
 
@@ -71,17 +72,28 @@ public:
         Node->setPosition(pos);
     }
 
-    inline void SetOrientation(const Float4& orientation)
+    inline Float3 GetPosition() const
     {
+        return Node->getLocalTransform().getPosition();
+    }
+
+    inline void SetOrientation(const Quaternion& orientation)
+    {
+        // LOG_WRITE("set orientation = " + Convert::ToString(orientation));
         Node->setRotation(orientation);
     }
 
-    FORCE_INLINE void SetRotation(const Float4& rot)
+    inline Quaternion GetOrientation() const
+    {
+        return Node->getLocalTransform().getRotation();
+    }
+
+    FORCE_INLINE void SetRotation(const Quaternion& rot)
     {
         SetOrientation(rot);
     }
 
-    inline void SetPositionAndOrientation(const Float3& pos, const Float4& orientation)
+    inline void SetPositionAndOrientation(const Float3& pos, const Quaternion& orientation)
     {
         SetPosition(pos);
         SetOrientation(orientation);

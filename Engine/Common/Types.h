@@ -1655,6 +1655,12 @@ public:
         return difference.Dot(difference) < tolerance * tolerance;
     }
 
+    // ------------------------------------ //
+    // HSB operations
+    DLLEXPORT void ConvertToHSB(float& hue, float& saturation, float& brightness) const;
+    DLLEXPORT static Float4 FromHSB(float hue, float saturation, float brightness);
+
+
     // ----------------- casts ------------------- //
     // Should this macro be replaced by a inline if in the cpp file?
 #ifdef LEVIATHAN_USING_OGRE

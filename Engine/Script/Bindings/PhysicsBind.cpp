@@ -23,7 +23,7 @@ bool BindShape(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("PhysicsShape",
            "bool AddChildShape(PhysicsShape@ child, const Float3 &in offset = Float3(0, 0, "
-           "0), const Float4 &in orientation = Float4::IdentityQuaternion)",
+           "0), const Quaternion &in orientation = Quaternion::IDENTITY)",
            asMETHOD(PhysicsShape, AddChildShapeWrapper), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -135,7 +135,7 @@ bool BindBody(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("PhysicsBody",
-           "bool SetPosition(const Float3 &in pos, const Float4 &in orientation)",
+           "bool SetPosition(const Float3 &in pos, const Quaternion &in orientation)",
            asMETHOD(PhysicsBody, SetPosition), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -146,7 +146,7 @@ bool BindBody(asIScriptEngine* engine)
     }
 
     if(engine->RegisterObjectMethod("PhysicsBody",
-           "bool SetOnlyOrientation(const Float4 &in orientation)",
+           "bool SetOnlyOrientation(const Quaternion &in orientation)",
            asMETHOD(PhysicsBody, SetOnlyOrientation), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
@@ -214,8 +214,8 @@ bool Leviathan::BindPhysics(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("PhysicalWorld",
            "PhysicsConstraint@ CreateFixedConstraint(PhysicsBody@ a, PhysicsBody@ b, const "
-           "Float3 &in aoffset, const Float4 &in aorientation, const Float3 &in boffset, "
-           "const Float4 &in borientation)",
+           "Float3 &in aoffset, const Quaternion &in aorientation, const Float3 &in boffset, "
+           "const Quaternion &in borientation)",
            asMETHOD(PhysicalWorld, CreateFixedConstraintWrapper), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }

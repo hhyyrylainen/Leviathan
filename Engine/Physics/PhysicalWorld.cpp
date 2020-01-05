@@ -314,7 +314,7 @@ DLLEXPORT PhysicsShape::pointer PhysicalWorld::CreateCone(float radius, float he
 // ------------------------------------ //
 DLLEXPORT PhysicsConstraint::pointer PhysicalWorld::CreateFixedConstraint(
     const PhysicsBody::pointer& a, const PhysicsBody::pointer& b, const Float3& aoffset,
-    const Float4& aorientation, const Float3& boffset, const Float4& borientation)
+    const Quaternion& aorientation, const Float3& boffset, const Quaternion& borientation)
 {
     if(!a || !a->GetBody() || !b || !b->GetBody())
         return nullptr;

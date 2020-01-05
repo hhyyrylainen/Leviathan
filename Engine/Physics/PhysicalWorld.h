@@ -81,8 +81,8 @@ public:
     // ------------------------------------ //
     // Physics constraint creation
     DLLEXPORT PhysicsConstraint::pointer CreateFixedConstraint(const PhysicsBody::pointer& a,
-        const PhysicsBody::pointer& b, const Float3& aoffset, const Float4& aorientation,
-        const Float3& boffset, const Float4& borientation);
+        const PhysicsBody::pointer& b, const Float3& aoffset, const Quaternion& aorientation,
+        const Float3& boffset, const Quaternion& borientation);
 
     //! \brief Destroys a physics constraint
     //!
@@ -142,8 +142,8 @@ public:
     }
 
     inline PhysicsConstraint* CreateFixedConstraintWrapper(PhysicsBody* a, PhysicsBody* b,
-        const Float3& aoffset, const Float4& aorientation, const Float3& boffset,
-        const Float4& borientation)
+        const Float3& aoffset, const Quaternion& aorientation, const Float3& boffset,
+        const Quaternion& borientation)
     {
         return CreateFixedConstraint(PhysicsBody::WrapPtr(a), PhysicsBody::WrapPtr(b), aoffset,
             aorientation, boffset, borientation)

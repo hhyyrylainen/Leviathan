@@ -65,7 +65,7 @@ DLLEXPORT SceneNode::~SceneNode()
 // ------------------------------------ //
 DLLEXPORT void SceneNode::AttachObject(const SceneAttachable::pointer& object)
 {
-    if(!object)
+    if(!object || object.get() == this)
         return;
 
     // Detach the object automatically if it is already attached
@@ -102,5 +102,5 @@ DLLEXPORT void SceneNode::OnDetachedFromParent(SceneNode& oldparent)
     if(!ParentScene || !ParentScene->GetRootSceneNode())
         return;
 
-    GetInternal()->setParent(ParentScene->GetRootSceneNode()->GetInternal());
+    GetInternal()->setParent(ParentScene->GetRootSceneNode()->GetInternal(), false);
 }

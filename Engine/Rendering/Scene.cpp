@@ -12,6 +12,8 @@ DLLEXPORT Scene::Scene()
 
     LEVIATHAN_ASSERT(BsSceneCounter < 32, "ran out of bsf scene bits");
 
+    BsScene = BsSceneCounter;
+
     RootNode = SceneNode::pointer(new SceneNode(bs::SceneObject::create("fake_root"), this));
 }
 // ------------------------------------ //

@@ -121,6 +121,10 @@ DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Graphics* gr
 
 DLLEXPORT void GameWorld::Release()
 {
+    // Skip duplicate release
+    if(!pimpl)
+        return;
+
     _DoSystemsRelease();
 
     // (*WorldDestroyed) = true;
@@ -492,6 +496,7 @@ DLLEXPORT SceneNode* GameWorld::GetCameraSceneObject()
 
 DLLEXPORT Scene* GameWorld::GetScene()
 {
+    LEVIATHAN_ASSERT(pimpl, "GameWorld::GetScene called after releasing");
     return pimpl->WorldScene.get();
 }
 

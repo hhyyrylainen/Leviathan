@@ -27,3 +27,21 @@ DLLEXPORT void Material::SetFloat4(const std::string& parameter, const Float4& d
 
     BsMaterial->setVec4(parameter.c_str(), data);
 }
+
+DLLEXPORT void Material::SetFloat(const std::string& parameter, float data)
+{
+    if(!BsMaterial)
+        return;
+
+    BsMaterial->setFloat(parameter.c_str(), data);
+}
+// ------------------------------------ //
+DLLEXPORT void Material::SetVariation(const std::string& variation, bool set)
+{
+    if(!BsMaterial)
+        return;
+
+    bs::ShaderVariation bsVariation;
+    bsVariation.setBool(variation.c_str(), set);
+    BsMaterial->setVariation(bsVariation);
+}

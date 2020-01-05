@@ -24,6 +24,10 @@ public:
     // Setting functions for shader parameters
     DLLEXPORT void SetTexture(const std::string& parameter, const Texture::pointer& texture);
     DLLEXPORT void SetFloat4(const std::string& parameter, const Float4& data);
+    DLLEXPORT void SetFloat(const std::string& parameter, float data);
+
+
+    DLLEXPORT void SetVariation(const std::string& variation, bool set);
 
 
     bs::HMaterial GetInternal()

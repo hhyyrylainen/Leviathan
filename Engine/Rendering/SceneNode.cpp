@@ -69,8 +69,12 @@ DLLEXPORT void SceneNode::AttachObject(const SceneAttachable::pointer& object)
         return;
 
     // Detach the object automatically if it is already attached
-    if(object->HasParent())
+    if(object->HasParent()) {
+        if(object->GetParent() == this)
+            return;
+
         object->DetachFromParent();
+    }
 
     Children.push_back(object);
     object->NotifyAttachParent(*this);

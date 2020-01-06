@@ -43,6 +43,8 @@ DLLEXPORT void SceneAttachable::NotifyAttachParent(SceneNode& parent)
     OnAttachedToParent(parent);
 }
 // ------------------------------------ //
+DLLEXPORT void SceneAttachable::PrepareToRender() {}
+// ------------------------------------ //
 // SceneNode
 DLLEXPORT SceneNode::SceneNode(SceneNode* parent, Scene* scene) :
     Node(bs::SceneObject::create("")), ParentScene(scene)
@@ -98,6 +100,7 @@ DLLEXPORT bool SceneNode::DetachChild(SceneAttachable* child)
 // ------------------------------------ //
 DLLEXPORT void SceneNode::OnAttachedToParent(SceneNode& parent)
 {
+    MarkDirty();
     GetInternal()->setParent(parent.GetInternal(), false);
 }
 
@@ -106,5 +109,69 @@ DLLEXPORT void SceneNode::OnDetachedFromParent(SceneNode& oldparent)
     if(!ParentScene || !ParentScene->GetRootSceneNode())
         return;
 
+    MarkDirty();
+
     GetInternal()->setParent(ParentScene->GetRootSceneNode()->GetInternal(), false);
+}
+// ------------------------------------ //
+const Transform& SceneNode::GetWorldTransform() const
+{
+    if(!Dirty)
+        return CachedWorldTransform;
+
+    if(!Parent) {
+
+        CachedWorldTransform = LocalTransform;
+
+        return CachedWorldTransform;
+    }
+
+    const auto& parentTransform = Parent->GetWorldTransform();
+
+    // Calculate each 3 Transform member separately
+    CachedWorldTransform.Orientation =
+        parentTransform.Orientation * LocalTransform.Orientation;
+
+    CachedWorldTransform.Scale = parentTransform.Scale * LocalTransform.Scale;
+
+    // Adjust the local translation based on parent's orientation and scale
+    CachedWorldTransform.Translation =
+        parentTransform.Orientation * (parentTransform.Scale * LocalTransform.Translation);
+
+    // Add parent position
+    CachedWorldTransform.Translation += parentTransform.Translation;
+
+    Dirty = false;
+    return CachedWorldTransform;
+}
+// ------------------------------------ //
+void SceneNode::ApplyWorldMatrixIfDirty()
+{
+    if(!TransformDirty)
+        return;
+
+    const auto& transform = GetWorldTransform();
+
+    CachedFinalMatrix =
+        Matrix4::FromTRS(transform.Translation, transform.Orientation, transform.Scale);
+
+    // Apply to bsf
+    // Can't use the Matrix here, but at least it can be verified that the individual parts are
+    // right
+    // Node->setPosition(transform.Translation);
+    // Node->setRotation(transform.Orientation);
+    // Node->setScale(transform.Scale);
+
+    TransformDirty = false;
+}
+
+DLLEXPORT void SceneNode::PrepareToRender()
+{
+    if(TransformDirty) {
+        ApplyWorldMatrixIfDirty();
+    }
+
+    for(const auto& child : Children) {
+        child->PrepareToRender();
+    }
 }

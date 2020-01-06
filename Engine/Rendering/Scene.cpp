@@ -32,8 +32,15 @@ DLLEXPORT void Scene::DestroySceneNode(SceneNode::pointer& node)
     if(!node)
         return;
 
+    node->DetachFromParent();
+
     if(node->GetInternal())
         node->GetInternal()->destroy();
 
     node.reset();
+}
+// ------------------------------------ //
+DLLEXPORT void Scene::PrepareForRendering()
+{
+    RootNode->PrepareToRender();
 }

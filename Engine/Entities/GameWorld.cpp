@@ -416,13 +416,13 @@ DLLEXPORT void GameWorld::Render(float elapsed)
 
             // No interpolated pos //
             pimpl->WorldCameraSO->SetPosition(position.Members._Position);
-            pimpl->WorldCameraSO->SetRotation(position.Members._Orientation);
+            pimpl->WorldCameraSO->SetOrientation(position.Members._Orientation);
 
         } else {
 
             const auto& interpolatedPos = std::get<1>(interpolated);
             pimpl->WorldCameraSO->SetPosition(interpolatedPos._Position);
-            pimpl->WorldCameraSO->SetRotation(interpolatedPos._Orientation);
+            pimpl->WorldCameraSO->SetOrientation(interpolatedPos._Orientation);
         }
 
         if(properties.SoundPerceiver) {
@@ -446,8 +446,11 @@ DLLEXPORT void GameWorld::Render(float elapsed)
                   "exception:");
         e.PrintToLog();
         CameraEntity = 0;
-        return;
     }
+
+    // Finalize world positions for scene nodes
+    if(pimpl && pimpl->WorldScene)
+        pimpl->WorldScene->PrepareForRendering();
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetCamera(ObjectID object)

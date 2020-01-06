@@ -19,8 +19,16 @@ protected:
 public:
     REFERENCE_COUNTED_PTR_TYPE(Scene);
 
+    //! \brief Creates a new SceneNode as a child of the root node
     DLLEXPORT SceneNode::pointer CreateSceneNode();
+
+    //! \brief "Destroys" a previously created SceneNode
+    //!
+    //! The node is detached from the scene and its rendering resources are destroyed
     DLLEXPORT void DestroySceneNode(SceneNode::pointer& node);
+
+    //! \brief Computes the final positions of all SceneNodes to be ready for rendering
+    DLLEXPORT void PrepareForRendering();
 
     SceneNode::pointer GetRootSceneNode()
     {

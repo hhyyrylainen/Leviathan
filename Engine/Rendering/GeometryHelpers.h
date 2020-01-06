@@ -3,7 +3,7 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
-#include "bsfCore/Mesh/BsMesh.h"
+#include "Mesh.h"
 
 namespace Leviathan {
 
@@ -16,7 +16,7 @@ public:
     //! so a full screen quad would be CreateScreenSpaceQuad(-1, -1, 2, 2)
     //! \param meshname The name of the created mesh, must be unique
     //! \todo Parameter to specify if shadow geometry is needed
-    DLLEXPORT static bs::HMesh CreateScreenSpaceQuad(
+    DLLEXPORT static Mesh::pointer CreateScreenSpaceQuad(
         float x, float y, float width, float height, bool autoflipUV = true);
 
     //! \brief Creates a plane with specific size and UV coordinates with 0, 0 on top left
@@ -26,7 +26,7 @@ public:
     //! \todo Merge the shared code with CreateScreenSpaceQuad
     //! \todo This needs to be verified that this generates good geometry (currently crashes
     //! when recorded with RenderDoc). This might be outdated note after bsf
-    DLLEXPORT static bs::HMesh CreateXZPlane(float width, float height);
+    DLLEXPORT static Mesh::pointer CreateXZPlane(float width, float height);
 
     GeometryHelpers() = delete;
 };

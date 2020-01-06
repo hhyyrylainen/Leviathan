@@ -4,11 +4,12 @@
 #include "Engine.h"
 #include "Rendering/Graphics.h"
 
+#include "bsfCore/Mesh/BsMesh.h"
 #include "bsfCore/RenderAPI/BsVertexDataDesc.h"
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
+DLLEXPORT Mesh::pointer GeometryHelpers::CreateScreenSpaceQuad(
     float x, float y, float width, float height, bool autoflipUV /*= true*/)
 {
     static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
@@ -81,14 +82,14 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateScreenSpaceQuad(
 
     std::memcpy(meshData->getIndices16(), indicesData, sizeof(indicesData));
 
-    return bs::Mesh::create(meshData, meshDesc);
+    return Mesh::MakeShared<Mesh>(bs::Mesh::create(meshData, meshDesc));
 
     // // Set the bounds to get frustum culling and LOD to work correctly.
     // // To infinite to always render
     // mesh->_setBounds(Ogre::Aabb::BOX_INFINITE /*, false*/);
 }
 
-DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
+DLLEXPORT Mesh::pointer GeometryHelpers::CreateXZPlane(float width, float height)
 {
     static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
 
@@ -159,7 +160,7 @@ DLLEXPORT bs::HMesh GeometryHelpers::CreateXZPlane(float width, float height)
 
     std::memcpy(meshData->getIndices16(), indicesData, sizeof(indicesData));
 
-    return bs::Mesh::create(meshData, meshDesc);
+    return Mesh::MakeShared<Mesh>(bs::Mesh::create(meshData, meshDesc));
 
     // // Set the bounds to get frustum culling and LOD to work correctly.
     // // To infinite to always render

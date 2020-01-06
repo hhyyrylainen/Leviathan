@@ -23,6 +23,7 @@
 #include "bsfCore/Animation/BsAnimationClip.h"
 #include "bsfCore/Material/BsMaterial.h"
 #include "bsfCore/Material/BsShaderManager.h"
+#include "bsfCore/Mesh/BsMesh.h"
 #include "bsfCore/RenderAPI/BsRenderAPI.h"
 #include "bsfCore/Resources/BsResourceManifest.h"
 
@@ -496,7 +497,7 @@ bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
 
         Pimpl->OurApp->GUIRenderer =
             bs::RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
-                GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2)->getCore(),
+                GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2)->GetInternal()->getCore(),
                 material->getCore()});
 
         Pimpl->OurApp->beginMainLoop();

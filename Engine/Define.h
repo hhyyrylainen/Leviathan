@@ -63,6 +63,7 @@ constexpr auto MICROSECONDS_IN_SECOND = 1000000;
 
 #ifndef PI
 constexpr float PI = 3.14159265f;
+constexpr float HALF_PI = PI / 2;
 #endif // PI
 constexpr float DEGREES_TO_RADIANS = PI / 180.f;
 constexpr float RADIANS_TO_DEGREES = 180.f / PI;

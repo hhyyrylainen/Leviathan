@@ -141,6 +141,21 @@ public:
         return *this;
     }
 
+    inline bool operator>(const Radian& other)
+    {
+        return Value > other.Value;
+    }
+
+    inline bool operator<(const Radian& other)
+    {
+        return Value < other.Value;
+    }
+
+    inline bool operator==(const Radian& other)
+    {
+        return Value == other.Value;
+    }
+
     constexpr inline float ValueInRadians() const noexcept
     {
         return Value;
@@ -977,7 +992,19 @@ public:
     }
 
     // access operator //
-    DLLEXPORT inline float& operator[](int nindex)
+    DLLEXPORT inline float& operator[](unsigned nindex)
+    {
+        switch(nindex) {
+        case 0: return X;
+        case 1: return Y;
+        case 2: return Z;
+        default: break;
+        }
+        LEVIATHAN_ASSERT(0, "invalid [] access");
+        return X;
+    }
+
+    DLLEXPORT inline float operator[](unsigned nindex) const
     {
         switch(nindex) {
         case 0: return X;
@@ -1353,7 +1380,20 @@ public:
     }
 
     // access operator //
-    DLLEXPORT inline float& operator[](int nindex)
+    DLLEXPORT inline float& operator[](unsigned nindex)
+    {
+        switch(nindex) {
+        case 0: return X;
+        case 1: return Y;
+        case 2: return Z;
+        case 3: return W;
+        default: break;
+        }
+
+        LEVIATHAN_ASSERT(0, "invalid [] access");
+        return X;
+    }
+    DLLEXPORT inline float operator[](unsigned nindex) const
     {
         switch(nindex) {
         case 0: return X;

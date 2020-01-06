@@ -7,6 +7,8 @@
 
 namespace Leviathan {
 
+struct Matrix3;
+
 //! \brief A Quaternion type to make quaternion specific operations easier to access
 //! \todo There are a ton of places that still use Float4 instead of Quaternion
 struct Quaternion : public Float4 {
@@ -25,6 +27,11 @@ public:
         Y = quat.y;
         Z = quat.z;
         W = quat.w;
+    }
+
+    explicit Quaternion(const Matrix3& matrix)
+    {
+        FromRotationMatrix(matrix);
     }
 
     //! \brief Makes a quaternion from axis angle
@@ -221,6 +228,10 @@ public:
     DLLEXPORT Float3 YAxis() const;
 
     DLLEXPORT Float3 ZAxis() const;
+
+    // Matrix3 conversion
+    DLLEXPORT void FromRotationMatrix(const Matrix3& matrix);
+    DLLEXPORT void ToRotationMatrix(Matrix3& matrix) const;
 
     // ------------------------------------ //
     // Quaternion methods

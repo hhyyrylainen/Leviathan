@@ -963,7 +963,7 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT constexpr inline bool HasInvalidValues() const noexcept
+    DLLEXPORT inline bool HasInvalidValues() const noexcept
     {
         return !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z);
     }
@@ -1209,7 +1209,7 @@ public:
     }
 
     // length of the vector //
-    DLLEXPORT constexpr inline float Length() const noexcept
+    DLLEXPORT inline float Length() const noexcept
     {
         return std::sqrt(LengthSquared());
     }
@@ -1338,7 +1338,7 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT constexpr inline bool HasInvalidValues() const noexcept
+    DLLEXPORT inline bool HasInvalidValues() const noexcept
     {
         return !std::isfinite(X) || !std::isfinite(Y) || !std::isfinite(Z) ||
                !std::isfinite(W);

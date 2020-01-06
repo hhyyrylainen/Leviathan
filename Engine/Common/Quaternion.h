@@ -39,7 +39,8 @@ public:
     {}
 
     //! \brief Makes a quaternion from euler angles
-    constexpr inline Quaternion(const Float3& angles)
+    // MSVC can't deal with std::cos (or other math functions) in constexpr functions
+    /*constexpr*/ inline Quaternion(const Float3& angles)
     {
         // multiplied by 0.5 to get double the value //
         const float cosx = std::cos(0.5f * angles.X);

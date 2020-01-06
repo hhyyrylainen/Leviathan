@@ -6,7 +6,7 @@
 #include "Types.h"
 
 namespace Leviathan {
-class Ray;
+struct Ray;
 
 //! \brief A plane represented by a normal and a distance
 struct Plane {

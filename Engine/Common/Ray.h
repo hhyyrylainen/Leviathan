@@ -8,7 +8,7 @@
 #include "bsfUtility/Math/BsRay.h"
 
 namespace Leviathan {
-class Plane;
+struct Plane;
 
 //! \brief Ray starting from an origin with a direction
 struct Ray {

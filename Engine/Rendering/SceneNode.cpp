@@ -97,6 +97,17 @@ DLLEXPORT bool SceneNode::DetachChild(SceneAttachable* child)
 
     return false;
 }
+
+DLLEXPORT bool SceneNode::HasChild(SceneAttachable* child) const
+{
+    for(auto iter = Children.begin(); iter != Children.end(); ++iter) {
+        if(*iter == child) {
+            return true;
+        }
+    }
+
+    return false;
+}
 // ------------------------------------ //
 DLLEXPORT void SceneNode::OnAttachedToParent(SceneNode& parent)
 {
@@ -155,12 +166,20 @@ void SceneNode::ApplyWorldMatrixIfDirty()
     CachedFinalMatrix =
         Matrix4::FromTRS(transform.Translation, transform.Orientation, transform.Scale);
 
+    // LOG_WRITE("final props: pos: " + Convert::ToString(transform.Translation) +
+    //           " scale: " + Convert::ToString(transform.Scale));
+
     // Apply to bsf
     // Can't use the Matrix here, but at least it can be verified that the individual parts are
     // right
+    // This doesn't work for some reason. BSF doesn't want to work without using its parenting
+    // method, but the debug output numbers looked good
     // Node->setPosition(transform.Translation);
     // Node->setRotation(transform.Orientation);
     // Node->setScale(transform.Scale);
+    // Node->setWorldPosition(transform.Translation);
+    // Node->setWorldRotation(transform.Orientation);
+    // Node->setWorldScale(transform.Scale);
 
     TransformDirty = false;
 }

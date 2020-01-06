@@ -92,6 +92,8 @@ public:
     //! \brief Removes an added child, returns true if succeeded
     DLLEXPORT bool DetachChild(SceneAttachable* child);
 
+    DLLEXPORT bool HasChild(SceneAttachable* child) const;
+
     inline void SetPosition(const Float3& pos)
     {
         Node->setPosition(pos);
@@ -101,7 +103,6 @@ public:
 
     inline Float3 GetPosition() const
     {
-        // return Node->getLocalTransform().getPosition();
         return LocalTransform.Translation;
     }
 
@@ -120,7 +121,6 @@ public:
 
     inline Quaternion GetOrientation() const
     {
-        // return Node->getLocalTransform().getRotation();
         return LocalTransform.Orientation;
     }
 

@@ -24,6 +24,8 @@ DLLEXPORT SceneNode::pointer Scene::CreateSceneNode()
     if(created)
         created->Release();
 
+    // LEVIATHAN_ASSERT(RootNode->HasChild(created.get()), "node not attached to root");
+
     return created;
 }
 

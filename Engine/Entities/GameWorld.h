@@ -665,6 +665,8 @@ private:
     //! This vector is used for delayed deletion
     std::vector<ObjectID> DelayedDeleteIDS;
 
+    float FOV = 90;
+
     // //! If true any pointers to this world are invalid
     // std::shared_ptr<bool> WorldDestroyed = std::make_shared<bool>(false);
 };

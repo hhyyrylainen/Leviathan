@@ -180,7 +180,7 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
 
     // Custom projection matrix
     pimpl->WorldCamera->setCustomProjectionMatrix(true,
-        Matrix4::ProjectionPerspective(90,
+        Matrix4::ProjectionPerspective(FOV,
             LinkedToWindow ? LinkedToWindow->GetAspectRatio() : 1280 / 720.f, 0.1f, 5000.f));
 
 
@@ -441,10 +441,12 @@ DLLEXPORT void GameWorld::Render(float elapsed)
 
             AppliedCameraPropertiesPtr = &properties;
 
-            // TODO: properly update the aspect ratio
+            FOV = properties.FOV;
+
             pimpl->WorldCamera->setCustomProjectionMatrix(
-                true, Matrix4::ProjectionPerspective(
-                          properties.FOV, LinkedToWindow->GetAspectRatio(), 0.1f, 5000.f));
+                true, Matrix4::ProjectionPerspective(FOV,
+                          LinkedToWindow ? LinkedToWindow->GetAspectRatio() : 1280 / 720.f,
+                          0.1f, 5000.f));
 
             // pimpl->WorldCamera->setHorzFOV(bs::Degree(properties.FOV));
 
@@ -1842,10 +1844,8 @@ DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Graphics* graphics)
     pimpl->WorldCamera->getViewport()->setTarget(window->GetBSFWindow());
 
     // TODO: this needs to be reapplied every time the window is resized
-    // TODO: ask for BSF auto aspect ratio (setAutoAspectRatio?)
-    int32_t width, height;
-    window->GetSize(width, height);
-    pimpl->WorldCamera->setAspectRatio(width / static_cast<float>(height));
+    pimpl->WorldCamera->setCustomProjectionMatrix(true,
+        Matrix4::ProjectionPerspective(FOV, LinkedToWindow->GetAspectRatio(), 0.1f, 5000.f));
 
     if(!TickWhileInBackground) {
         _DoResumeSystems();

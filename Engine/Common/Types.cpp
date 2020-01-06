@@ -21,6 +21,11 @@ DLLEXPORT const Float3 Float3::UnitVUp = Float3(0.f, 1.f, 0.f);
 
 DLLEXPORT const Float3 Float3::Zeroed = Float3();
 
+DLLEXPORT const Float3 Float3::UnitXAxis = Float3(1.f, 0.f, 0.f);
+
+DLLEXPORT const Float3 Float3::UnitYAxis = Float3(0.f, 1.f, 0.f);
+
+DLLEXPORT const Float3 Float3::UnitZAxis = Float3(0.f, 0.f, 1.f);
 
 
 DLLEXPORT const Float4& Float4::GetColourBlack()

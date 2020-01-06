@@ -131,7 +131,7 @@ public:
     constexpr inline Radian() : Value(0) {}
     constexpr inline Radian(float rawvalue) : Value(rawvalue) {}
     constexpr inline Radian(const Radian& other) : Value(other.Value) {}
-    DLLEXPORT Radian(const Degree& degree);
+    DLLEXPORT explicit Radian(const Degree& degree);
 
     DLLEXPORT operator Degree() const;
     DLLEXPORT Radian& operator=(const Degree& degrees);
@@ -161,7 +161,7 @@ public:
     constexpr inline Degree() : Value(0) {}
     constexpr inline Degree(float rawvalue) : Value(rawvalue) {}
     constexpr inline Degree(const Degree& other) : Value(other.Value) {}
-    DLLEXPORT Degree(const Radian& radians);
+    DLLEXPORT explicit Degree(const Radian& radians);
 
     DLLEXPORT operator Radian() const;
     DLLEXPORT Degree& operator=(const Radian& radians);
@@ -1306,6 +1306,9 @@ public:
     DLLEXPORT static const Float3 UnitVForward;
     DLLEXPORT static const Float3 UnitVUp;
     DLLEXPORT static const Float3 Zeroed;
+    DLLEXPORT static const Float3 UnitXAxis;
+    DLLEXPORT static const Float3 UnitYAxis;
+    DLLEXPORT static const Float3 UnitZAxis;
 };
 
 struct Float4 {
@@ -1752,9 +1755,11 @@ DLLEXPORT std::ostream& operator<<(
 } // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL
+using Leviathan::Degree;
 using Leviathan::Float2;
 using Leviathan::Float3;
 using Leviathan::Float4;
 using Leviathan::Int2;
 using Leviathan::Int3;
+using Leviathan::Radian;
 #endif

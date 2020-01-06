@@ -638,9 +638,9 @@ public:
 
 struct Float2 {
 public:
-    DLLEXPORT inline Float2() noexcept = default;
+    DLLEXPORT constexpr inline Float2() noexcept = default;
 
-    DLLEXPORT inline Float2(float x, float y) : X(x), Y(y)
+    DLLEXPORT constexpr inline Float2(float x, float y) : X(x), Y(y)
     {
         DO_NAN_CHECK;
     }
@@ -651,7 +651,7 @@ public:
         DO_NAN_CHECK;
     }
 
-    DLLEXPORT inline explicit Float2(float data) : X(data), Y(data)
+    DLLEXPORT constexpr inline explicit Float2(float data) : X(data), Y(data)
     {
         DO_NAN_CHECK;
     }

@@ -178,6 +178,12 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     //     WorldSceneCamera->setFarClipDistance(0); Maybe for bsf this needs to be float::max
     // }
 
+    // Custom projection matrix
+    pimpl->WorldCamera->setCustomProjectionMatrix(true,
+        Matrix4::ProjectionPerspective(90,
+            LinkedToWindow ? LinkedToWindow->GetAspectRatio() : 1280 / 720.f, 0.1f, 5000.f));
+
+
     auto values = Engine::Get()->GetDefinition()->GetValues();
 
 
@@ -435,7 +441,12 @@ DLLEXPORT void GameWorld::Render(float elapsed)
 
             AppliedCameraPropertiesPtr = &properties;
 
-            pimpl->WorldCamera->setHorzFOV(bs::Degree(properties.FOV));
+            // TODO: properly update the aspect ratio
+            pimpl->WorldCamera->setCustomProjectionMatrix(
+                true, Matrix4::ProjectionPerspective(
+                          properties.FOV, LinkedToWindow->GetAspectRatio(), 0.1f, 5000.f));
+
+            // pimpl->WorldCamera->setHorzFOV(bs::Degree(properties.FOV));
 
             properties.Marked = false;
         }

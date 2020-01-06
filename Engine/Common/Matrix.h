@@ -6,6 +6,8 @@
 #include "Quaternion.h"
 #include "Types.h"
 
+#include "bsfUtility/Math/BsMatrix4.h"
+
 namespace Leviathan {
 
 
@@ -561,11 +563,56 @@ public:
             rhs * m[3][2], rhs * m[3][3]);
     }
 
+    operator bs::Matrix4() const
+    {
+        bs::Matrix4 result;
+
+        result.setColumn(0, GetColumn4D(0));
+        result.setColumn(1, GetColumn4D(1));
+        result.setColumn(2, GetColumn4D(2));
+        result.setColumn(3, GetColumn4D(3));
+        return result;
+    }
+
     /** Returns a transpose of the matrix (switched columns and rows). */
-    Matrix4 transpose() const
+    Matrix4 Transpose() const
     {
         return Matrix4(m[0][0], m[1][0], m[2][0], m[3][0], m[0][1], m[1][1], m[2][1], m[3][1],
             m[0][2], m[1][2], m[2][2], m[3][2], m[0][3], m[1][3], m[2][3], m[3][3]);
+    }
+
+    /** Returns the specified column of the matrix, ignoring the last row. */
+    Float3 GetColumn(uint32_t col) const
+    {
+        assert(col < 4);
+
+        return Float3(m[0][col], m[1][col], m[2][col]);
+    }
+
+    /** Returns the specified column of the matrix. */
+    Float4 GetColumn4D(uint32_t col) const
+    {
+        assert(col < 4);
+
+        return Float4(m[0][col], m[1][col], m[2][col], m[3][col]);
+    }
+
+    /** Assigns the vector to a column of the matrix. */
+    void SetColumn(uint32_t idx, const Float4& column)
+    {
+        m[0][idx] = column.X;
+        m[1][idx] = column.Y;
+        m[2][idx] = column.Z;
+        m[3][idx] = column.W;
+    }
+
+    /** Assigns the vector to a row of the matrix. */
+    void SetRow(uint32_t idx, const Float4& column)
+    {
+        m[idx][0] = column.X;
+        m[idx][1] = column.Y;
+        m[idx][2] = column.Z;
+        m[idx][3] = column.W;
     }
 
     /** Returns the rotation/scaling part of the matrix as a 3x3 matrix. */

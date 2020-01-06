@@ -3,7 +3,10 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-
+// See comment about IDENTITY
+#ifdef _MSC_VER
+DLLEXPORT const Quaternion Quaternion::IDENTITY{0.f, 0.f, 0.f, 1.f};
+#endif
 // ------------------------------------ //
 // The _Axis methods are copied from bs::framework with modifications see License.txt for
 // details

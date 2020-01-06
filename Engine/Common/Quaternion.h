@@ -297,13 +297,25 @@ public:
         return Quaternion(rotAxis, rotAngle);
     }
 
+    static constexpr inline Quaternion Identity()
+    {
+        return Quaternion{0.f, 0.f, 0.f, 1.f};
+    }
+
     VALUE_TYPE(Quaternion);
 
+    // MSVC doesn't support having a constexpr inline variable
+#ifdef _MSC_VER
+    DLLEXPORT static const Quaternion IDENTITY;
+#else
     static const Quaternion IDENTITY;
+#endif
 };
 
+// See comment about IDENTITY
+#ifndef _MSC_VER
 constexpr inline const Quaternion Quaternion::IDENTITY{0.f, 0.f, 0.f, 1.f};
-
+#endif
 
 constexpr inline Float3 operator*(const Float3& lhs, const Quaternion& rhs) noexcept
 {

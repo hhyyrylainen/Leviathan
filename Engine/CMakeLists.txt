@@ -170,6 +170,7 @@ if(LEVIATHAN_USING_OGRE)
     "Rendering/GeometryHelpers.h" "Rendering/GeometryHelpers.cpp"
     "Rendering/Graphics.cpp" "Rendering/Graphics.h"
     "Rendering/GUIOverlayRenderer.cpp" "Rendering/GUIOverlayRenderer.h"
+    "Rendering/WindowRenderingResources.cpp" "Rendering/WindowRenderingResources.h"
     "Rendering/RotatingBufferHelper.h"
     "Rendering/Scene.cpp" "Rendering/Scene.h"
     "Rendering/SceneNode.cpp" "Rendering/SceneNode.h"
@@ -463,6 +464,7 @@ target_link_libraries(Engine PRIVATE ${LEVIATHAN_ENGINE_LIBRARIES})
 if(NOT WIN32)
   # Link with X11 and threads
   target_link_libraries(Engine PRIVATE ${X11_LIBRARIES} ${X11_Xmu_LIB} ${X11_Xfixes_LIB}
+    ${X11_XCB_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT})
 
   # GCC 8 fix (can be removed once GCC 9 is prevalent)

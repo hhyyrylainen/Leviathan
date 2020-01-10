@@ -23,6 +23,8 @@ struct SDL_Surface;
 
 namespace Leviathan {
 
+class WindowRenderingResources;
+
 namespace GUI {
 class Layer;
 enum class INPUT_EVENT_TYPE : int;
@@ -296,6 +298,9 @@ private:
     //! Workaround for missing BSF resize notify
     //! https://github.com/GameFoundry/bsf/issues/382
     bool DoingResize = false;
+
+    //! Per-window rendering resources. Contains the swap chain for this window
+    std::unique_ptr<WindowRenderingResources> RenderResources;
 
     //! \todo This should probably be atomic
     static Window* InputCapturer;

@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 //
 // File configured by CMake do not edit Include.h //
@@ -23,6 +23,85 @@
 #endif //_WIN32
 
 
+// Platform definitions
+#cmakedefine PLATFORM_UNIVERSAL_WINDOWS
+
+#cmakedefine PLATFORM_WIN32
+
+#cmakedefine PLATFORM_ANDROID
+
+#cmakedefine PLATFORM_LINUX
+
+#cmakedefine PLATFORM_IOS
+
+#cmakedefine PLATFORM_MACOS
+
+#if defined(PLATFORM_UNIVERSAL_WINDOWS)
+#undef PLATFORM_UNIVERSAL_WINDOWS
+#define PLATFORM_UNIVERSAL_WINDOWS 1
+#elif defined(PLATFORM_WIN32)
+#undef PLATFORM_WIN32
+#define PLATFORM_WIN32 1
+#elif defined(PLATFORM_ANDROID)
+#undef PLATFORM_ANDROID
+#define PLATFORM_ANDROID 1
+#elif defined(PLATFORM_LINUX)
+#undef PLATFORM_LINUX
+#define PLATFORM_LINUX 1
+#elif defined(PLATFORM_IOS)
+#undef PLATFORM_IOS
+#define PLATFORM_IOS 1
+#elif defined(PLATFORM_MACOS)
+#undef PLATFORM_MACOS
+#define PLATFORM_MACOS 1
+#else
+#error No platform defined
+#endif
+
+// Rendering backend definitions
+
+#cmakedefine D3D11_SUPPORTED
+
+#cmakedefine D3D12_SUPPORTED
+
+#cmakedefine GL_SUPPORTED
+
+#cmakedefine GLES_SUPPORTED
+
+#cmakedefine VULKAN_SUPPORTED
+
+#cmakedefine METAL_SUPPORTED
+
+#if defined(D3D11_SUPPORTED)
+#undef D3D11_SUPPORTED
+#define D3D11_SUPPORTED 1
+#endif // D3D11_SUPPORTED
+
+#if defined(D3D12_SUPPORTED)
+#undef D3D12_SUPPORTED
+#define D3D12_SUPPORTED 1
+#endif // D3D12_SUPPORTED
+
+#if defined(GL_SUPPORTED)
+#undef GL_SUPPORTED
+#define GL_SUPPORTED 1
+#endif // GL_SUPPORTED
+
+#if defined(GLES_SUPPORTED)
+#undef GLES_SUPPORTED
+#define GLES_SUPPORTED 1
+#endif // GLES_SUPPORTED
+
+#if defined(VULKAN_SUPPORTED)
+#undef VULKAN_SUPPORTED
+#define VULKAN_SUPPORTED 1
+#endif // VULKAN_SUPPORTED
+
+#if defined(METAL_SUPPORTED)
+#undef METAL_SUPPORTED
+#define METAL_SUPPORTED 1
+#endif // METAL_SUPPORTED
+// End of platform definitions
 
 #cmakedefine LEVIATHAN_NO_DEBUG
 

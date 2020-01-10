@@ -73,7 +73,7 @@ class SceneNode : public SceneAttachable {
 protected:
     // These are protected for only constructing properly initialized instances through a Scene
     DLLEXPORT SceneNode(SceneNode* parent, Scene* scene);
-    DLLEXPORT SceneNode(bs::HSceneObject node, Scene* scene);
+    DLLEXPORT SceneNode(Scene* scene);
 
 public:
     //! \note As the scene nodes recursively get detached some care needs to be taken to not

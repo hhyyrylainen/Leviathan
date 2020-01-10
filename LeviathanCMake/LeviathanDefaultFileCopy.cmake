@@ -165,7 +165,8 @@ else()
   endif()
   
   file(GLOB THIRD_PARTY_DLLS "${LEVIATHAN_SRC}/build/ThirdParty/lib/**/*.so*")
-  list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS})
+  file(GLOB DILIGENT_DLLS "${LEVIATHAN_SRC}/build/ThirdParty/lib64/Diligent*/**/*.so*")
+  list(APPEND ALL_DYNAMIC_LIBRARIES ${THIRD_PARTY_DLLS} ${DILIGENT_DLLS})
   
 endif(WIN32)
 

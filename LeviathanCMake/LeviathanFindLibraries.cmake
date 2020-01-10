@@ -80,6 +80,14 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib"
     "${LEVIATHAN_SRC}/build/ThirdParty/lib64"
     "${LEVIATHAN_SRC}/build/ThirdParty/bin"
+    # $<$<CONFIG:Debug>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/Debug>
+    $<$<CONFIG:Debug>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/Debug>
+    # $<$<CONFIG:Release>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/Release>
+    $<$<CONFIG:Release>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/Release>
+    # $<$<CONFIG:RelWithDebInfo>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/RelWithDebInfo>
+    $<$<CONFIG:RelWithDebInfo>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/RelWithDebInfo>
+    # $<$<CONFIG:MinSizeRel>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/MinSizeRel>
+    $<$<CONFIG:MinSizeRel>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/MinSizeRel>
     )
 
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
@@ -113,6 +121,10 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     ${SDL2_LIBRARY} AngelScriptAddons
     bsf
     aom vorbis opus ogg
+    GraphicsEngineOpenGL
+    GraphicsEngineVk
+    # Not currently needed
+    # DiligentCore
     )
   
 

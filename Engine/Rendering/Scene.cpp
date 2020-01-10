@@ -4,17 +4,9 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-int Scene::BsSceneCounter = 0;
-// ------------------------------------ //
 DLLEXPORT Scene::Scene()
 {
-    ++BsSceneCounter;
-
-    LEVIATHAN_ASSERT(BsSceneCounter < 32, "ran out of bsf scene bits");
-
-    BsScene = BsSceneCounter;
-
-    RootNode = SceneNode::pointer(new SceneNode(bs::SceneObject::create("fake_root"), this));
+    RootNode = SceneNode::pointer(new SceneNode(this));
 }
 // ------------------------------------ //
 DLLEXPORT SceneNode::pointer Scene::CreateSceneNode()

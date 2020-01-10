@@ -13,6 +13,7 @@ require_relative 'RubySetupSystem/Libraries/SetupCEF.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBreakpad.rb'
 require_relative 'RubySetupSystem/Libraries/SetupBSFramework.rb'
 require_relative 'RubySetupSystem/Libraries/setup_aom.rb'
+require_relative 'RubySetupSystem/Libraries/setup_diligent_engine.rb'
 
 if OS.windows?
   require_relative 'RubySetupSystem/Libraries/SetupFreeType.rb'
@@ -65,15 +66,15 @@ $aom = AOM.new(
   pic: true
 )
 
-$bsf = BSFramework.new(
-  version: '419183a5031f2e5b50a0b0a3b48f292ac2fe1014',
+$diligent = DiligentEngine.new(
+  version: 'd5874fc5f2c9f8b15c3a0424a95a99cbad87ed85',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
-  renderAPI: OS.windows? ? 'DirectX 11' : 'OpenGL',
-  buildAllRenderAPI: true,
-  physicsModule: 'Null',
-  audioModule: 'Null',
-  extraLibSearch: 'lib/'
+  # shared: true,
+  disableExamples: true,
+  disableDemos: true,
+  disableUnity: true,
+  disableTests: true
 )
 
 $opus = Opus.new(
@@ -170,4 +171,4 @@ end
 
 # $opusfile
 
-$leviathanLibList += [$ogg, $vorbis, $opus, $alure, $bsf]
+$leviathanLibList += [$ogg, $vorbis, $opus, $alure, $diligent]

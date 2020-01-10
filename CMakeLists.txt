@@ -139,6 +139,9 @@ if(NOT ONLY_DOCUMENTATION)
   include(LeviathanFindLibraries)
 endif()
 
+# Load platform definitions for configuring Include.h
+include(DiligentPlatform)
+
 # Configure engine include file
 configure_file("${LEVIATHAN_SRC}/Engine/Include.h.in" "${PROJECT_BINARY_DIR}/Include.h")
 # Make a readonly copy of it

@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -9,10 +9,14 @@
 
 namespace Leviathan {
 
+enum class GRAPHICS_API { D3D11, D3D12, Vulkan, OpenGL, OpenGLES, Metal };
+
+class WindowRenderingResources;
+
 class Graphics {
     friend Window;
 
-    struct Private;
+    struct Implementation;
 
 public:
     DLLEXPORT Graphics();
@@ -27,6 +31,13 @@ public:
         bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays);
 
     DLLEXPORT bool IsVerticalUVFlipped() const;
+
+    inline auto GetUsedAPI() const
+    {
+        return SelectedAPI;
+    }
+
+    DLLEXPORT std::string GetUsedAPIName() const;
 
     // ------------------------------------ //
     // Resource loading helpers
@@ -58,22 +69,33 @@ public:
 #endif
 
 protected:
-    //! \brief Called when Window objects are created to register them with bsf and with the
-    //! case of the first window this initializes the rest of bsf
-    bs::SPtr<bs::RenderWindow> RegisterCreatedWindow(Window& window);
+    //! \brief Called when Window objects are created to create the rendering resources for
+    //! them
+    std::unique_ptr<WindowRenderingResources> RegisterCreatedWindow(Window& window);
 
     //! \brief Called just before a window is destroyed. This needs to stop rendering to it
     //! \returns True if the window was primary and should only be hidden instead of destroyed
     bool UnRegisterWindow(Window& window);
 
 private:
+    void PrintDetectedSystemInformation();
+
     bool InitializeBSF(AppDef* appdef);
     void ShutdownBSF();
+
+    bool InitializeDiligent(AppDef* appdef);
+    void ShutdownDiligent();
+
+    bool SelectPreferredGraphicsAPI(AppDef* appdef);
+    //! Check that API selection is good and perform some initialization for some APIs
+    bool CheckAndInitializeSelectedAPI();
 
 private:
     bool Initialized = false;
     bool FirstWindowCreated = false;
 
-    std::unique_ptr<Private> Pimpl;
+    GRAPHICS_API SelectedAPI;
+
+    std::unique_ptr<Implementation> Pimpl;
 };
 } // namespace Leviathan

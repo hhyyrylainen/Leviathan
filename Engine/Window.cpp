@@ -12,11 +12,11 @@
 #include "Input/Key.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Rendering/Graphics.h"
+#include "Rendering/WindowRenderingResources.h"
 #include "Threading/ThreadingManager.h"
 #include "TimeIncludes.h"
 #include "Utility/Convert.h"
 
-#include "include/cef_browser.h"
 #include "include/internal/cef_types.h"
 #include "include/internal/cef_types_wrappers.h"
 
@@ -133,10 +133,10 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
         LOG_FATAL("Window: created sdl window failed to retrieve info");
     }
 
-    BSFWindow = windowcreater->RegisterCreatedWindow(*this);
+    RenderResources = windowcreater->RegisterCreatedWindow(*this);
 
-    if(!BSFWindow) {
-        throw Exception("Failed to create bsf window");
+    if(!RenderResources) {
+        LOG_FATAL("Failed to create rendering resources for a window");
     }
 
     ++OpenWindowCount;
@@ -158,7 +158,7 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
         LOG_WARNING("Window: failed to get window HWND for styling");
     }
 #else
-    // \todo linux icon
+    // TODO: linux icon setting
 #endif
     // tmpwindow->setDeactivateOnFocusChange(false);
 
@@ -166,19 +166,19 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // tmpwindow->setActive(true);
     Focused = true;
 
-    _BSFResources = std::make_unique<BSFResources>();
+    // _BSFResources = std::make_unique<BSFResources>();
 
-    // Create and attach our camera to the window
-    {
-        _BSFResources->WindowSceneObject = bs::SceneObject::create("window no world camera");
-        _BSFResources->WindowCamera =
-            _BSFResources->WindowSceneObject->addComponent<bs::CCamera>();
-        _BSFResources->WindowCamera->getViewport()->setClearColorValue(Float4(0, 0, 0, 1));
-        _BSFResources->WindowSceneObject->setPosition(Float3(40.0f, 30.0f, 230.0f));
-        _BSFResources->WindowSceneObject->lookAt(Float3(0, 0, 0));
+    // // Create and attach our camera to the window
+    // {
+    //     _BSFResources->WindowSceneObject = bs::SceneObject::create("window no world
+    //     camera"); _BSFResources->WindowCamera =
+    //         _BSFResources->WindowSceneObject->addComponent<bs::CCamera>();
+    //     _BSFResources->WindowCamera->getViewport()->setClearColorValue(Float4(0, 0, 0, 1));
+    //     _BSFResources->WindowSceneObject->setPosition(Float3(40.0f, 30.0f, 230.0f));
+    //     _BSFResources->WindowSceneObject->lookAt(Float3(0, 0, 0));
 
-        _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
-    }
+    //     _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
+    // }
 
     // create GUI //
     WindowsGui = std::make_unique<GUI::GuiManager>();
@@ -240,9 +240,9 @@ DLLEXPORT Window::~Window()
 
     // Report close to graphics
     const bool isPrimary = Engine::Get()->GetGraphics()->UnRegisterWindow(*this);
-    if(!isPrimary) {
-        BSFWindow->destroy();
-    }
+    // if(!isPrimary) {
+    //     BSFWindow->destroy();
+    // }
 
     BSFWindow.reset();
 
@@ -252,13 +252,13 @@ DLLEXPORT Window::~Window()
                             "should quit soon");
     }
 
-    if(isPrimary) {
-        // It was the primary window, don't destroy it yet
-        SDL_HideWindow(SDLWindow);
-    } else {
+    // if(isPrimary) {
+    //     // It was the primary window, don't destroy it yet
+    //     SDL_HideWindow(SDLWindow);
+    // } else {
 
-        SDL_DestroyWindow(SDLWindow);
-    }
+    SDL_DestroyWindow(SDLWindow);
+    // }
 
     SDLWindow = nullptr;
 }

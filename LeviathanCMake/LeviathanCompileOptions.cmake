@@ -71,6 +71,8 @@ else(WIN32)
   
   # We need X11 on linux for window class to work
   find_package(X11 REQUIRED)
+  # X11 XCB support is also required
+  find_package(X11_XCB REQUIRED)
   find_package(Threads REQUIRED)
 
   # We need XMU X11 extension for clipboard

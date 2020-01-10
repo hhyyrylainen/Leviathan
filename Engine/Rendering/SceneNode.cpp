@@ -46,18 +46,13 @@ DLLEXPORT void SceneAttachable::NotifyAttachParent(SceneNode& parent)
 DLLEXPORT void SceneAttachable::PrepareToRender() {}
 // ------------------------------------ //
 // SceneNode
-DLLEXPORT SceneNode::SceneNode(SceneNode* parent, Scene* scene) :
-    Node(bs::SceneObject::create("")), ParentScene(scene)
+DLLEXPORT SceneNode::SceneNode(SceneNode* parent, Scene* scene) : ParentScene(scene)
 {
-    LEVIATHAN_ASSERT(Node, "bs SceneObject creation failed");
-
     parent->AttachObject(this);
 }
 
 
-DLLEXPORT SceneNode::SceneNode(bs::HSceneObject node, Scene* scene) :
-    Node(node), ParentScene(scene)
-{}
+DLLEXPORT SceneNode::SceneNode(Scene* scene) : ParentScene(scene) {}
 
 DLLEXPORT SceneNode::~SceneNode()
 {
@@ -112,17 +107,11 @@ DLLEXPORT bool SceneNode::HasChild(SceneAttachable* child) const
 DLLEXPORT void SceneNode::OnAttachedToParent(SceneNode& parent)
 {
     MarkDirty();
-    GetInternal()->setParent(parent.GetInternal(), false);
 }
 
 DLLEXPORT void SceneNode::OnDetachedFromParent(SceneNode& oldparent)
 {
-    if(!ParentScene || !ParentScene->GetRootSceneNode())
-        return;
-
-    MarkDirty();
-
-    GetInternal()->setParent(ParentScene->GetRootSceneNode()->GetInternal(), false);
+    // MarkDirty();
 }
 // ------------------------------------ //
 const Transform& SceneNode::GetWorldTransform() const

@@ -12,6 +12,7 @@
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
+#include "WindowRenderingResources.h"
 
 #include "BsApplication.h"
 #include "Components/BsCCamera.h"
@@ -27,6 +28,37 @@
 #include "bsfCore/RenderAPI/BsRenderAPI.h"
 #include "bsfCore/Resources/BsResourceManifest.h"
 
+
+#if GL_SUPPORTED
+#include "DiligentCore/Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h"
+#endif
+
+#if VULKAN_SUPPORTED
+#include "DiligentCore/Graphics/GraphicsEngineVulkan/interface/EngineFactoryVk.h"
+#endif
+
+#include "DiligentCore/Graphics/GraphicsEngine/interface/DeviceContext.h"
+#include "DiligentCore/Graphics/GraphicsEngine/interface/RenderDevice.h"
+#include "DiligentCore/Graphics/GraphicsEngine/interface/SwapChain.h"
+
+// part of the hack
+#undef LOG_ERROR
+
+#include "DiligentCore/Common/interface/RefCntAutoPtr.h"
+
+// hack workaround
+#undef LOG_ERROR
+#define LOG_ERROR(x) Logger::Get()->Error(x);
+
+
+#if defined(__linux__)
+#if VULKAN_SUPPORTED
+#include "XLibInclude.h"
+#include <xcb/xcb.h>
+#endif
+#endif
+
+
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -41,24 +73,50 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-bool BSFLogForwarder(
-    const bs::String& message, bs::LogVerbosity verbosity, bs::UINT32 category)
+namespace Leviathan {
+#if VULKAN_SUPPORTED
+struct XCBInfo {
+    xcb_connection_t* connection = nullptr;
+    uint32_t window = 0;
+    uint16_t width = 0;
+    uint16_t height = 0;
+    xcb_intern_atom_reply_t* atom_wm_delete_window = nullptr;
+};
+#endif
+// ------------------------------------ //
+} // namespace Leviathan
+// ------------------------------------ //
+void DiligentErrorCallback(Diligent::DebugMessageSeverity severity,
+    const Diligent::Char* message, const char* function, const char* file, int line)
 {
     // Forward to global logger if one exists
     auto log = Logger::Get();
 
     if(log) {
-        bs::String categoryName;
-        bs::Log::getCategoryName(category, categoryName);
-        log->Write(("[BSF][" + categoryName + "][" + bs::toString(verbosity) + "] " + message)
-                       .c_str());
-
-        // Prevent BSF logging this as well
-        return true;
+        switch(severity) {
+        case Diligent::DebugMessageSeverity::Info: {
+            log->Write(std::string("[INFO][DILIGENT] ") + message);
+            return;
+        }
+        case Diligent::DebugMessageSeverity::Warning: {
+            log->Write(std::string("[WARNING][DILIGENT] ") + message);
+            return;
+        }
+        case Diligent::DebugMessageSeverity::Error: {
+            log->Write(std::string("[ERROR][DILIGENT] ") + message);
+            return;
+        }
+        case Diligent::DebugMessageSeverity::FatalError:
+        default: {
+            log->Fatal(std::string("[DILIGENT] ") + message + ", at: " + file + "(" +
+                       std::to_string(line) + ")");
+            LOG_FATAL("fatal diligent message returned from Log::Fatal");
+            return;
+        }
+        }
     }
 
-    // Allow default action
-    return false;
+    // TODO: what to do when can't log
 }
 
 class LeviathanBSFShaderIncludeHandler : public bs::EngineShaderIncludeHandler {
@@ -103,10 +161,10 @@ public:
 };
 
 
-struct Graphics::Private {
+struct Graphics::Implementation {
 
-    Private(const bs::START_UP_DESC& desc) : Description(desc) {}
-
+    // Implementation(const bs::START_UP_DESC& desc) : Description(desc) {}
+    Implementation() {}
 
     template<class T>
     auto LoadResource(const bs::String& path)
@@ -136,6 +194,10 @@ struct Graphics::Private {
 
     bs::START_UP_DESC Description;
     LeviathanBSFApplication* OurApp = nullptr;
+
+    Diligent::RefCntAutoPtr<Diligent::IRenderDevice> RenderDevice;
+    Diligent::RefCntAutoPtr<Diligent::IDeviceContext> ImmediateContext;
+    // Diligent::RefCntAutoPtr<Diligent::IPipelineState> m_pPSO;
 };
 
 #ifdef __linux
@@ -225,10 +287,17 @@ bool Graphics::Init(AppDef* appdef)
         // }
     }
 
+    PrintDetectedSystemInformation();
 
-    if(!InitializeBSF(appdef)) {
+    // if(!InitializeBSF(appdef)) {
 
-        Logger::Get()->Error("Graphics: Init: failed to create bs::framework renderer");
+    //     Logger::Get()->Error("Graphics: Init: failed to create bs::framework renderer");
+    //     return false;
+    // }
+
+    if(!InitializeDiligent(appdef)) {
+
+        LOG_ERROR("Graphics: Init: failed to initialize diligent engine");
         return false;
     }
 
@@ -246,6 +315,7 @@ DLLEXPORT void Graphics::Release()
     if(Initialized) {
 
         ShutdownBSF();
+        ShutdownDiligent();
 
         SDL_Quit();
     }
@@ -254,11 +324,13 @@ DLLEXPORT void Graphics::Release()
     FirstWindowCreated = false;
     Pimpl.reset();
 }
-// ------------------------------------------- //
-bool Graphics::InitializeBSF(AppDef* appdef)
+// ------------------------------------ //
+void Graphics::PrintDetectedSystemInformation()
 {
-    // Now with Ogre gone we print the CPU (and GPU) info here. However this seems to have some
-    // problems at least on my Linux computer printing the GPU info
+    // There is no longer any graphics engine printing this info so we need to do this
+    // ourselves
+    LOG_WRITE("TODO: CPU and GPU system info printing redo");
+
     std::stringstream sstream;
 
     sstream << "Start of graphics system information:\n"
@@ -268,6 +340,17 @@ bool Graphics::InitializeBSF(AppDef* appdef)
 
     sstream << "BSF version: " << BS_VERSION_MAJOR << "." << BS_VERSION_MINOR << "."
             << BS_VERSION_PATCH << "\n";
+
+    sstream << "This build is for: ";
+#ifdef _WIN32
+    sstream << "windows";
+#elif defined(__linux)
+    sstream << "linux";
+#else
+    sstream << "unknown";
+#endif
+
+    sstream << "\n";
 
     bs::SystemInfo systemInfo = bs::PlatformUtility::getSystemInfo();
     sstream << "OS version: " << systemInfo.osName << " "
@@ -292,27 +375,37 @@ bool Graphics::InitializeBSF(AppDef* appdef)
     sstream << "// ------------------------------------ //";
 
     LOG_INFO(sstream.str());
+}
 
-    // Create render API settings
-    bs::START_UP_DESC desc;
-    desc.input = "bsfNullInput";
-    desc.audio = "bsfNullAudio";
-    desc.physics = "bsfNullPhysics";
-    desc.renderer = "bsfRenderBeast";
-    desc.physicsCooking = false;
+DLLEXPORT std::string Graphics::GetUsedAPIName() const
+{
+    switch(SelectedAPI) {
+    case GRAPHICS_API::D3D11: {
+        return "DirectX11";
+    }
+    case GRAPHICS_API::D3D12: {
+        return "DirectX12";
+    }
+    case GRAPHICS_API::OpenGL: {
+        return "OpenGL";
+    }
+    case GRAPHICS_API::OpenGLES: {
+        return "OpenGLES";
+    }
+    case GRAPHICS_API::Vulkan: {
+        return "Vulkan";
+    }
+    case GRAPHICS_API::Metal: {
+        return "Metal";
+    }
+    }
 
-    desc.importers.push_back("bsfFreeImgImporter");
-    desc.importers.push_back("bsfFBXImporter");
-    desc.importers.push_back("bsfFontImporter");
-    desc.importers.push_back("bsfSL");
-
-#ifdef _WIN32
-    const auto defaultRenderer = "DirectX";
-#elif defined(__linux__)
-    const auto defaultRenderer = "OpenGL";
-#else
+    return "error";
+}
+// ------------------------------------ //
+bool Graphics::SelectPreferredGraphicsAPI(AppDef* appdef)
+{
     const auto defaultRenderer = "Vulkan";
-#endif
 
     std::string renderAPI;
     ObjectFileProcessor::LoadValueFromNamedVars<std::string>(
@@ -320,189 +413,384 @@ bool Graphics::InitializeBSF(AppDef* appdef)
 
     LOG_INFO("Graphics: preferred rendering API: '" + renderAPI + "'");
 
-    LOG_WRITE("TODO: add detection if vulkan is available or not");
-
     const std::regex vulkan(
         "Vulkan", std::regex_constants::ECMAScript | std::regex_constants::icase);
     const std::regex opengl(
         "OpenGL", std::regex_constants::ECMAScript | std::regex_constants::icase);
 
-#ifdef _WIN32
-    const std::regex directx(
-        "DirectX\\s*(11)?", std::regex_constants::ECMAScript | std::regex_constants::icase);
-#endif //_WIN32
+    const std::regex openglES(
+        "OpenGLES", std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+    const std::regex metal(
+        "Metal", std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+    const std::regex D3D11(
+        "DirectX11", std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+    const std::regex D3D12(
+        "DirectX12", std::regex_constants::ECMAScript | std::regex_constants::icase);
 
     if(std::regex_match(renderAPI, vulkan)) {
-        desc.renderAPI = "bsfVulkanRenderAPI";
+        SelectedAPI = GRAPHICS_API::Vulkan;
+    } else if(std::regex_match(renderAPI, openglES)) {
+        SelectedAPI = GRAPHICS_API::OpenGLES;
     } else if(std::regex_match(renderAPI, opengl)) {
-        desc.renderAPI = "bsfGLRenderAPI";
-    }
-#ifdef _WIN32
-    else if(std::regex_match(renderAPI, directx)) {
-        desc.renderAPI = "bsfD3D11RenderAPI";
-    }
-#endif //_WIN32
-    else {
+        SelectedAPI = GRAPHICS_API::OpenGL;
+    } else if(std::regex_match(renderAPI, metal)) {
+        SelectedAPI = GRAPHICS_API::Metal;
+    } else if(std::regex_match(renderAPI, D3D11)) {
+        SelectedAPI = GRAPHICS_API::D3D11;
+    } else if(std::regex_match(renderAPI, D3D12)) {
+        SelectedAPI = GRAPHICS_API::D3D12;
+    } else {
         LOG_ERROR("Graphics: unknown render API selected: " + renderAPI);
         return false;
     }
 
-    // Custom callbacks
-    desc.logCallback = &BSFLogForwarder;
+    return true;
+}
 
-    desc.crashHandling.disableCrashSignalHandler = CrashHandler::IsBreakpadRegistered();
-    desc.crashHandling.onBeforeReportCrash =
-        [](const bs::String& type, const bs::String& description, const bs::String& function,
-            const bs::String& file, bs::UINT32 line) {
-            CrashHandler::DoBreakpadCrashDumpIfRegistered();
+bool Graphics::CheckAndInitializeSelectedAPI()
+{
+    LOG_INFO("Graphics: selected render API: " + GetUsedAPIName());
+
+    switch(SelectedAPI) {
+#if D3D11_SUPPORTED
+    case GRAPHICS_API::D3D11: {
+        DEBUG_BREAK;
+
+        // Fallback for this is GRAPHICS_API::OpenGL
+        break;
+    }
+#endif // D3D11_SUPPORTED
+
+#if D3D12_SUPPORTED
+    case GRAPHICS_API::D3D12: {
+        DEBUG_BREAK;
+
+        // Fallback for this is GRAPHICS_API::D3D11
+        break;
+    }
+#endif // D3D12_SUPPORTED
+
+#if GL_SUPPORTED
+    case GRAPHICS_API::OpenGL: {
+        // This has no initialization actions
+        // This has no fallback
+        break;
+    }
+#endif // GL_SUPPORTED
+
+#if GLES_SUPPORTED
+    case GRAPHICS_API::OpenGLES: {
+        DEBUG_BREAK;
+        break;
+    }
+#endif // GLES_SUPPORTED
+
+#if VULKAN_SUPPORTED
+    case GRAPHICS_API::Vulkan: {
+        LOG_INFO("Attempting to create a vulkan device and context");
+
+        Diligent::EngineVkCreateInfo EngVkAttribs;
+
+        EngVkAttribs.DebugMessageCallback = &DiligentErrorCallback;
+
+        // TODO: configure validation
+        // #ifdef _DEBUG
+        EngVkAttribs.EnableValidation = true;
+        // #endif
+        auto* pFactoryVk = Diligent::GetEngineFactoryVk();
+        pFactoryVk->CreateDeviceAndContextsVk(
+            EngVkAttribs, &Pimpl->RenderDevice, &Pimpl->ImmediateContext);
+
+        if(!Pimpl->RenderDevice || !Pimpl->ImmediateContext) {
+            LOG_ERROR("Graphics: vulkan device creation failed, using fallback");
+
+#if D3D12_SUPPORTED
+            SelectedAPI = GRAPHICS_API::D3D12;
+            return CheckAndInitializeSelectedAPI();
+#endif
+#if GL_SUPPORTED
+            SelectedAPI = GRAPHICS_API::OpenGL;
+            return CheckAndInitializeSelectedAPI();
+#endif
+
+            LOG_ERROR("No fallback found");
             return false;
-        };
+        }
 
-    desc.crashHandling.onCrashPrintedToLog = []() {
-        if(auto logger = Logger::Get(); logger)
-            logger->Save();
-        return CrashHandler::IsBreakpadRegistered();
-    };
+        LOG_INFO("Graphics: vulkan device and context created");
+        break;
+    }
+#endif // VULKAN_SUPPORTED
 
-#ifdef _WIN32
-    desc.crashHandling.onBeforeWindowsSEHReportCrash = [](void* data) {
-        CrashHandler::DoBreakpadSEHCrashDumpIfRegistered(data);
+#if METAL_SUPPORTED
+    case GRAPHICS_API::Metal: {
+        DEBUG_BREAK;
+        break;
+    }
+#endif // METAL_SUPPORTED
+    default:
+        LOG_ERROR("Graphics: selected API is unavailable on current platform");
         return false;
-    };
-#endif //_WIN32
-
-    Pimpl = std::make_unique<Private>(desc);
+    }
 
     return true;
 }
 
-bs::SPtr<bs::RenderWindow> Graphics::RegisterCreatedWindow(Window& window)
+bool Graphics::InitializeDiligent(AppDef* appdef)
 {
-    if(FirstWindowCreated) {
-        // Register secondary window
+    if(!SelectPreferredGraphicsAPI(appdef))
+        return false;
 
-        bs::RENDER_WINDOW_DESC windowDesc;
+    Pimpl = std::make_unique<Implementation>();
 
-        windowDesc.depthBuffer = true;
+    return CheckAndInitializeSelectedAPI();
+}
 
-        int multiSample;
+void Graphics::ShutdownDiligent()
+{
+    if(Pimpl->ImmediateContext) {
+        Pimpl->ImmediateContext->Flush();
+    }
+}
+// ------------------------------------------- //
+std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window& window)
+{
+    LOG_INFO("Graphics: creating rendering resources for a window");
 
-        ObjectFileProcessor::LoadValueFromNamedVars<int>(
-            Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount", multiSample,
-            1);
+    Diligent::SwapChainDesc SCDesc;
+    // Uint32        NumDeferredCtx = 0;
 
-        windowDesc.multisampleCount = multiSample;
-        // windowDesc.multisampleHint = "";
-        // Not sure what all settings need to be copied
-        windowDesc.fullscreen = /* window.IsFullScreen() */ false;
-        windowDesc.vsync = false;
+    auto windowResources = std::make_unique<WindowRenderingResources>();
 
-        int32_t width, height;
-        window.GetSize(width, height);
-        windowDesc.videoMode = bs::VideoMode(
-            width, height, Pimpl->Description.primaryWindowDesc.videoMode.refreshRate, 0);
+    switch(SelectedAPI) {
+#if D3D11_SUPPORTED
+    case GRAPHICS_API::D3D11: {
+        DEBUG_BREAK;
+        break;
+    }
+#endif // D3D11_SUPPORTED
 
-#ifdef _WIN32
-        windowDesc.platformSpecific["externalWindowHandle"] =
-            std::to_string((uint64_t)window.GetNativeHandle());
-#else
-        windowDesc.platformSpecific["externalWindowHandle"] =
-            std::to_string(window.GetNativeHandle());
+#if D3D12_SUPPORTED
+    case GRAPHICS_API::D3D12: {
+        DEBUG_BREAK;
+        break;
+    }
+#endif // D3D12_SUPPORTED
 
-        windowDesc.platformSpecific["externalDisplay"] =
-            std::to_string(window.GetWindowXDisplay());
+#if GL_SUPPORTED
+    case GRAPHICS_API::OpenGL: {
+        auto* pFactoryOpenGL = Diligent::GetEngineFactoryOpenGL();
+
+        Diligent::EngineGLCreateInfo CreationAttribs;
+        CreationAttribs.pNativeWndHandle = reinterpret_cast<void*>(window.GetNativeHandle());
+
+#if defined(__linux__)
+        CreationAttribs.pDisplay = reinterpret_cast<Display*>(window.GetWindowXDisplay());
 #endif
 
-        auto window = bs::RenderWindow::create(windowDesc);
+        LEVIATHAN_ASSERT(
+            !Pimpl->RenderDevice, "opengl multiple windows probably needs fixing");
 
-        if(!window)
-            LOG_FATAL("Failed to create additional BSF window");
+        pFactoryOpenGL->CreateDeviceAndSwapChainGL(CreationAttribs, &Pimpl->RenderDevice,
+            &Pimpl->ImmediateContext, SCDesc, &windowResources->WindowsSwapChain);
 
-        return window;
-
-    } else {
-        // Finish initializing graphics
-        FirstWindowCreated = true;
-        LOG_INFO("Graphics: doing bs::framework initialization after creating first window");
-
-        // Setup first window properties
-        auto& windowDesc = Pimpl->Description.primaryWindowDesc;
-        windowDesc.depthBuffer = true;
-
-        int multiSample;
-
-        ObjectFileProcessor::LoadValueFromNamedVars<int>(
-            Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount", multiSample,
-            1);
-
-        windowDesc.multisampleCount = multiSample;
-        // windowDesc.multisampleHint = "";
-        // Not sure what all settings need to be copied
-        windowDesc.fullscreen = /* window.IsFullScreen() */ false;
-        windowDesc.vsync = false;
-
-        // Fill video mode info from SDL
-        SDL_DisplayMode dm;
-        if(SDL_GetDesktopDisplayMode(0, &dm) != 0) {
-            LOG_ERROR("Graphics: RegisterCreatedWindow: failed to get desktop display mode:" +
-                      std::string(SDL_GetError()));
+        if(!Pimpl->RenderDevice || !Pimpl->ImmediateContext) {
+            LOG_FATAL("Graphics: opengl device creation failed");
             return nullptr;
         }
 
+        if(!&windowResources->WindowsSwapChain) {
+            LOG_FATAL("OpenGL swapchain creation failed");
+            return nullptr;
+        }
+
+        break;
+    }
+#endif // GL_SUPPORTED
+
+#if GLES_SUPPORTED
+    case GRAPHICS_API::OpenGLES: {
+        DEBUG_BREAK;
+        break;
+    }
+#endif // GLES_SUPPORTED
+
+#if VULKAN_SUPPORTED
+    case GRAPHICS_API::Vulkan: {
+        LOG_INFO("Attempting to create a vulkan swap chain");
+
+        XCBInfo info;
+
         int32_t width, height;
         window.GetSize(width, height);
-        windowDesc.videoMode = bs::VideoMode(width, height, dm.refresh_rate, 0);
+        info.width = width;
+        info.height = height;
+        info.window = window.GetNativeHandle();
+        // info.atom_wm_delete_window
 
-#ifdef _WIN32
-        windowDesc.platformSpecific["externalWindowHandle"] =
-            std::to_string((uint64_t)window.GetNativeHandle());
-#else
-        windowDesc.platformSpecific["externalWindowHandle"] =
-            std::to_string(window.GetNativeHandle());
-
-        windowDesc.platformSpecific["externalDisplay"] =
-            std::to_string(window.GetWindowXDisplay());
+#if defined(__linux__)
+        // Convert the SDL's window connection to xcb connection that is needed by diligent
+        info.connection =
+            XGetXCBConnection(reinterpret_cast<Display*>(window.GetWindowXDisplay()));
 #endif
 
-        bs::Application::startUp<LeviathanBSFApplication>(Pimpl->Description);
+        auto* pFactoryVk = Diligent::GetEngineFactoryVk();
 
-        Pimpl->OurApp =
-            static_cast<LeviathanBSFApplication*>(bs::CoreApplication::instancePtr());
+        pFactoryVk->CreateSwapChainVk(Pimpl->RenderDevice, Pimpl->ImmediateContext, SCDesc,
+            &info, &windowResources->WindowsSwapChain);
 
-        bs::SPtr<bs::RenderWindow> bsWindow =
-            bs::CoreApplication::instance().getPrimaryWindow();
+        if(!&windowResources->WindowsSwapChain) {
+            LOG_FATAL("Vulkan swapchain creation failed. TODO: it would still technically be "
+                      "possible to fallback to opengl");
+            return nullptr;
+        }
 
-        LEVIATHAN_ASSERT(bsWindow, "window creation failed");
-
-        // Notify engine to register threads to work with Ogre //
-        // Engine::GetEngine()->_NotifyThreadsRegisterOgre();
-
-        // TODO: loading this causes a failure in bs::Material::createParamsSet
-        // constexpr auto GUI_SHADER_PATH =
-        // "Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl.asset";
-
-        // LEVIATHAN_ASSERT(
-        //     std::filesystem::exists(GUI_SHADER_PATH), "Core GUI shader asset is missing");
-
-        // auto shader = Pimpl->LoadResource<bs::Shader>(
-        //     std::filesystem::absolute(GUI_SHADER_PATH).string().c_str());
-
-        // if(!shader)
-        //     LEVIATHAN_ASSERT(false, "Loading Core GUI shader asset failed");
-
-        auto shader =
-            bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
-
-        auto material = bs::Material::create(shader);
-
-        Pimpl->OurApp->GUIRenderer =
-            bs::RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
-                GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2, 2)->GetInternal()->getCore(),
-                material->getCore()});
-
-        Pimpl->OurApp->beginMainLoop();
-        return bsWindow;
+        LOG_INFO("Graphics: vulkan swap chain created for window");
+        break;
     }
+#endif // VULKAN_SUPPORTED
+
+#if METAL_SUPPORTED
+    case GRAPHICS_API::Metal: {
+        DEBUG_BREAK;
+        break;
+    }
+#endif // METAL_SUPPORTED
+    default: LOG_FATAL("Graphics: invalid graphics API selected in window creation");
+    }
+
+    return windowResources;
+
+    /*
+        if(FirstWindowCreated) {
+            // Register secondary window
+
+            bs::RENDER_WINDOW_DESC windowDesc;
+
+            windowDesc.depthBuffer = true;
+
+            int multiSample;
+
+            ObjectFileProcessor::LoadValueFromNamedVars<int>(
+                Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount",
+    multiSample, 1);
+
+            windowDesc.multisampleCount = multiSample;
+            // windowDesc.multisampleHint = "";
+            // Not sure what all settings need to be copied
+            windowDesc.fullscreen = window.IsFullScreen() false;
+            windowDesc.vsync = false;
+
+            int32_t width, height;
+            window.GetSize(width, height);
+            windowDesc.videoMode = bs::VideoMode(
+                width, height, Pimpl->Description.primaryWindowDesc.videoMode.refreshRate, 0);
+
+    #ifdef _WIN32
+            windowDesc.platformSpecific["externalWindowHandle"] =
+                std::to_string((uint64_t)window.GetNativeHandle());
+    #else
+            windowDesc.platformSpecific["externalWindowHandle"] =
+                std::to_string(window.GetNativeHandle());
+
+            windowDesc.platformSpecific["externalDisplay"] =
+                std::to_string(window.GetWindowXDisplay());
+    #endif
+
+            auto window = bs::RenderWindow::create(windowDesc);
+
+            if(!window)
+                LOG_FATAL("Failed to create additional BSF window");
+
+            return window;
+
+        } else {
+            // Finish initializing graphics
+            FirstWindowCreated = true;
+            LOG_INFO("Graphics: doing bs::framework initialization after creating first
+    window");
+
+            // Setup first window properties
+            auto& windowDesc = Pimpl->Description.primaryWindowDesc;
+            windowDesc.depthBuffer = true;
+
+            int multiSample;
+
+            ObjectFileProcessor::LoadValueFromNamedVars<int>(
+                Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount",
+    multiSample, 1);
+
+            windowDesc.multisampleCount = multiSample;
+            // windowDesc.multisampleHint = "";
+            // Not sure what all settings need to be copied
+            windowDesc.fullscreen = window.IsFullScreen() false;
+            windowDesc.vsync = false;
+
+            // Fill video mode info from SDL
+            SDL_DisplayMode dm;
+            if(SDL_GetDesktopDisplayMode(0, &dm) != 0) {
+                LOG_ERROR("Graphics: RegisterCreatedWindow: failed to get desktop display
+    mode:" + std::string(SDL_GetError())); return nullptr;
+            }
+
+            int32_t width, height;
+            window.GetSize(width, height);
+            windowDesc.videoMode = bs::VideoMode(width, height, dm.refresh_rate, 0);
+
+    #ifdef _WIN32
+            windowDesc.platformSpecific["externalWindowHandle"] =
+                std::to_string((uint64_t)window.GetNativeHandle());
+    #else
+            windowDesc.platformSpecific["externalWindowHandle"] =
+                std::to_string(window.GetNativeHandle());
+
+            windowDesc.platformSpecific["externalDisplay"] =
+                std::to_string(window.GetWindowXDisplay());
+    #endif
+
+            bs::Application::startUp<LeviathanBSFApplication>(Pimpl->Description);
+
+            Pimpl->OurApp =
+                static_cast<LeviathanBSFApplication*>(bs::CoreApplication::instancePtr());
+
+            bs::SPtr<bs::RenderWindow> bsWindow =
+                bs::CoreApplication::instance().getPrimaryWindow();
+
+            LEVIATHAN_ASSERT(bsWindow, "window creation failed");
+
+            // Notify engine to register threads to work with Ogre //
+            // Engine::GetEngine()->_NotifyThreadsRegisterOgre();
+
+            // TODO: loading this causes a failure in bs::Material::createParamsSet
+            // constexpr auto GUI_SHADER_PATH =
+            // "Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl.asset";
+
+            // LEVIATHAN_ASSERT(
+            //     std::filesystem::exists(GUI_SHADER_PATH), "Core GUI shader asset is
+    missing");
+
+            // auto shader = Pimpl->LoadResource<bs::Shader>(
+            //     std::filesystem::absolute(GUI_SHADER_PATH).string().c_str());
+
+            // if(!shader)
+            //     LEVIATHAN_ASSERT(false, "Loading Core GUI shader asset failed");
+
+            auto shader =
+                bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
+
+            auto material = bs::Material::create(shader);
+
+            Pimpl->OurApp->GUIRenderer =
+                bs::RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
+                    GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2,
+    2)->GetInternal()->getCore(), material->getCore()});
+
+            Pimpl->OurApp->beginMainLoop();
+            return bsWindow;
+        } */
 }
 
 bool Graphics::UnRegisterWindow(Window& window)

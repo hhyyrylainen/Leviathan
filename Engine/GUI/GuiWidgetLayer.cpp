@@ -58,3 +58,8 @@ DLLEXPORT void WidgetLayer::_DoReleaseResources()
 {
     RemoveAllWidgets();
 }
+// ------------------------------------ //
+DLLEXPORT void WidgetLayer::Render()
+{
+    // TODO: render with diligent
+}

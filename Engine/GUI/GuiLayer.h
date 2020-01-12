@@ -16,6 +16,8 @@ namespace Leviathan { namespace GUI {
 //! \brief Base class for WidgetLayer and View (browser containers / CEF) to add to a
 //! GuiManager
 class Layer : public ReferenceCounted {
+    friend class GuiManager;
+
 public:
     DLLEXPORT Layer(GuiManager* owner, Window* window, int renderorder);
     DLLEXPORT virtual ~Layer();
@@ -101,6 +103,9 @@ public:
     DLLEXPORT virtual void OnMouseButton(const SDL_Event& event, bool down) {}
 
 protected:
+    // Called by GuiManager to render this
+    DLLEXPORT virtual void Render() = 0;
+
     // Callbacks vor derived classes
     DLLEXPORT virtual void _DoReleaseResources() {}
     DLLEXPORT virtual void _OnWindowResized() {}

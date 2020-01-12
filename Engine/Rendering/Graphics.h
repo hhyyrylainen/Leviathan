@@ -27,6 +27,7 @@ public:
 
     DLLEXPORT bool Frame();
 
+    //! \todo remove
     DLLEXPORT void UpdateShownOverlays(
         bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays);
 

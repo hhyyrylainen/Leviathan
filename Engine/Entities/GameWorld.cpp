@@ -14,6 +14,7 @@
 #include "Physics/PhysicalWorld.h"
 #include "Physics/PhysicsDebugDrawer.h"
 #include "Physics/PhysicsMaterialManager.h"
+#include "Rendering/Camera.h"
 #include "Rendering/Graphics.h"
 #include "Rendering/Scene.h"
 #include "Script/ScriptConversionHelpers.h"
@@ -60,9 +61,11 @@ public:
     std::vector<std::tuple<WantedClockType::time_point, ResponseEntityUpdate>>
         QueuedEntityUpdates;
 
-    // BSF rendering resources
+    // World scene resources
     SceneNode::pointer WorldCameraSO;
-    bs::HCamera WorldCamera;
+    Rendering::Camera::pointer WorldCamera;
+
+    Scene::pointer WorldScene;
 
     bs::HSceneObject SunlightSO;
     bs::HLight Sunlight;
@@ -70,8 +73,6 @@ public:
     bs::HSkybox Skybox;
 
     std::shared_ptr<PhysicsDebugDrawer> DebugDraw;
-
-    Scene::pointer WorldScene;
 };
 // ------------------------------------ //
 DLLEXPORT GameWorld::GameWorld(int32_t worldtype,
@@ -164,24 +165,10 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
 
     // Camera
     pimpl->WorldCameraSO = pimpl->WorldScene->CreateSceneNode();
-    pimpl->WorldCamera = pimpl->WorldCameraSO->GetInternal()->addComponent<bs::CCamera>();
-    pimpl->WorldCamera->setHorzFOV(bs::Degree(90));
 
-    pimpl->WorldCamera->setLayers(1 << pimpl->WorldScene->GetInternal());
+    pimpl->WorldCamera = Rendering::Camera::MakeShared<Rendering::Camera>();
 
-    // TODO: allow changing and setting infinite
-    pimpl->WorldCamera->setFarClipDistance(5000);
-    // // enable infinite far clip distance if supported //
-    // if(ogre->getRenderSystem()->getCapabilities()->hasCapability(
-    //         Ogre::RSC_INFINITE_FAR_PLANE)) {
-
-    //     WorldSceneCamera->setFarClipDistance(0); Maybe for bsf this needs to be float::max
-    // }
-
-    // Custom projection matrix
-    pimpl->WorldCamera->setCustomProjectionMatrix(true,
-        Matrix4::ProjectionPerspective(FOV,
-            LinkedToWindow ? LinkedToWindow->GetAspectRatio() : 1280 / 720.f, 0.1f, 5000.f));
+    pimpl->WorldCameraSO->AttachObject(pimpl->WorldCamera);
 
 
     auto values = Engine::Get()->GetDefinition()->GetValues();
@@ -207,44 +194,44 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     ObjectFileProcessor::LoadValueFromNamedVars<int>(values, "MSAACount", MSAACount, 1);
 
 
-    pimpl->WorldCamera->setMSAACount(1);
+    // pimpl->WorldCamera->setMSAACount(1);
 
-    const auto& settings = pimpl->WorldCamera->getRenderSettings();
+    // const auto& settings = pimpl->WorldCamera->getRenderSettings();
 
-    // Needed. non default option
-    if(!disableIndirectLighting) {
-        settings->enableIndirectLighting = true;
-    } else {
-        settings->enableIndirectLighting = false;
-    }
+    // // Needed. non default option
+    // if(!disableIndirectLighting) {
+    //     settings->enableIndirectLighting = true;
+    // } else {
+    //     settings->enableIndirectLighting = false;
+    // }
 
-    if(disableAmbientOcclusion)
-        settings->ambientOcclusion.enabled = false;
+    // if(disableAmbientOcclusion)
+    //     settings->ambientOcclusion.enabled = false;
 
-    // settings->autoExposure;
-    // settings->bloom;
-    // settings->bloom.enabled = false;
-    // settings->colorGrading;
-    // settings->depthOfField.enabled = false;
-    // settings->screenSpaceLensFlare;
-    // settings->screenSpaceReflections;
-    // settings->shadowSettings;
-    // settings->tonemapping;
-    // settings->whiteBalance;
-    // settings->enableAutoExposure = false;
-    if(disableFXAA)
-        settings->enableFXAA = false;
-    // settings->enableHDR = false;
-    if(disableLighting)
-        settings->enableLighting = false;
+    // // settings->autoExposure;
+    // // settings->bloom;
+    // // settings->bloom.enabled = false;
+    // // settings->colorGrading;
+    // // settings->depthOfField.enabled = false;
+    // // settings->screenSpaceLensFlare;
+    // // settings->screenSpaceReflections;
+    // // settings->shadowSettings;
+    // // settings->tonemapping;
+    // // settings->whiteBalance;
+    // // settings->enableAutoExposure = false;
+    // if(disableFXAA)
+    //     settings->enableFXAA = false;
+    // // settings->enableHDR = false;
+    // if(disableLighting)
+    //     settings->enableLighting = false;
 
-    if(disableShadows)
-        settings->enableShadows = false;
-    // settings->enableSkybox = false;
-    // settings->enableTonemapping = false;
+    // if(disableShadows)
+    //     settings->enableShadows = false;
+    // // settings->enableSkybox = false;
+    // // settings->enableTonemapping = false;
 
 
-    pimpl->WorldCamera->setRenderSettings(settings);
+    // pimpl->WorldCamera->setRenderSettings(settings);
 
     // Default sun
     SetSunlight();
@@ -266,124 +253,121 @@ void GameWorld::_DestroyRenderingResources()
     pimpl->WorldScene = nullptr;
 }
 // ------------------------------------ //
-static bool SunCreated = false;
-
 DLLEXPORT void GameWorld::SetSunlight()
 {
-    if(SunCreated) {
-        LOG_WRITE("TODO: multi scene support in BSF needed for separate world lights");
-        return;
-    }
+    LOG_WRITE("TODO: readd lighting");
 
-    SunCreated = true;
+    // // Create/update things if they are nullptr //
+    // if(!pimpl->SunlightSO) {
 
-    // Create/update things if they are nullptr //
-    if(!pimpl->SunlightSO) {
+    //     pimpl->SunlightSO = bs::SceneObject::create("Sunlight");
+    //     pimpl->Sunlight = pimpl->SunlightSO->addComponent<bs::CLight>();
+    //     // Oh no! this method does not exist
+    //     // pimpl->Sunlight->setLayer
+    // }
 
-        pimpl->SunlightSO = bs::SceneObject::create("Sunlight");
-        pimpl->Sunlight = pimpl->SunlightSO->addComponent<bs::CLight>();
-        // Oh no! this method does not exist
-        // pimpl->Sunlight->setLayer
-    }
+    // // Default properties
+    // pimpl->Sunlight->setType(bs::LightType::Directional);
 
-    // Default properties
-    pimpl->Sunlight->setType(bs::LightType::Directional);
-
-    SetLightProperties(Float3(1, 1, 1));
+    // SetLightProperties(Float3(1, 1, 1));
 }
 
 DLLEXPORT void GameWorld::RemoveSunlight()
 {
-    if(pimpl->SunlightSO) {
-        pimpl->SunlightSO->destroy();
-        pimpl->SunlightSO = nullptr;
-        pimpl->Sunlight = nullptr;
-        SunCreated = false;
-    }
+    // if(pimpl->SunlightSO) {
+    //     pimpl->SunlightSO->destroy();
+    //     pimpl->SunlightSO = nullptr;
+    //     pimpl->Sunlight = nullptr;
+    // }
 }
 
 DLLEXPORT void GameWorld::SetSkybox(const std::string& skyboxname, float brightness /*= 1.f*/)
 {
-    if(!pimpl->SkyboxSO) {
-        if(skyboxname.empty())
-            return;
+    LOG_WRITE("TODO: decide what to do with GameWorld::SetSkybox");
 
-        pimpl->SkyboxSO = bs::SceneObject::create("Skybox");
-        pimpl->Skybox = pimpl->SkyboxSO->addComponent<bs::CSkybox>();
-        // Oh no! this method does not exist
-        // pimpl->Skybox->setLayer
-    }
+    // if(!pimpl->SkyboxSO) {
+    //     if(skyboxname.empty())
+    //         return;
 
-    if(!skyboxname.empty()) {
+    //     pimpl->SkyboxSO = bs::SceneObject::create("Skybox");
+    //     pimpl->Skybox = pimpl->SkyboxSO->addComponent<bs::CSkybox>();
+    //     // Oh no! this method does not exist
+    //     // pimpl->Skybox->setLayer
+    // }
 
-        auto texture = Engine::Get()->GetGraphics()->LoadTextureByName(skyboxname);
+    // if(!skyboxname.empty()) {
 
-        if(!texture) {
+    //     auto texture = Engine::Get()->GetGraphics()->LoadTextureByName(skyboxname);
 
-            LOG_ERROR("GameWorld: SetSkybox: could not load skybox texture with the name: " +
-                      skyboxname);
-            return;
-        }
+    //     if(!texture) {
 
-        pimpl->Skybox->setTexture(texture);
-        pimpl->Skybox->setBrightness(brightness);
+    //         LOG_ERROR("GameWorld: SetSkybox: could not load skybox texture with the name: "
+    //         +
+    //                   skyboxname);
+    //         return;
+    //     }
 
-    } else {
+    //     pimpl->Skybox->setTexture(texture);
+    //     pimpl->Skybox->setBrightness(brightness);
 
-        pimpl->Skybox->setTexture(nullptr);
-        pimpl->Skybox->setBrightness(0);
-    }
+    // } else {
+
+    //     pimpl->Skybox->setTexture(nullptr);
+    //     pimpl->Skybox->setBrightness(0);
+    // }
 }
 
 DLLEXPORT void GameWorld::SetLightProperties(const Float3& colour, float intensity,
     const Float3& direction, float sourceradius, bool castsshadows)
 {
-    if(!pimpl->SunlightSO) {
+    LOG_WRITE("Redo set light properties");
 
-        LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
-        return;
-    }
+    // if(!pimpl->SunlightSO) {
 
-    pimpl->Sunlight->setColor(bs::Color(colour.X, colour.Y, colour.Z));
-    pimpl->Sunlight->setIntensity(intensity);
-    pimpl->Sunlight->setSourceRadius(sourceradius);
-    pimpl->Sunlight->setCastsShadow(castsshadows);
+    //     LOG_ERROR("GameWorld: SetLightProperties: world doesn't have sun light set");
+    //     return;
+    // }
 
-    // pimpl->SunlightSO->setPosition(bs::Vector3(1, 20, 1));
-    // pimpl->SunlightSO->setPosition(bs::Vector3(20, 15, 20));
-    pimpl->SunlightSO->setPosition(-direction);
+    // pimpl->Sunlight->setColor(bs::Color(colour.X, colour.Y, colour.Z));
+    // pimpl->Sunlight->setIntensity(intensity);
+    // pimpl->Sunlight->setSourceRadius(sourceradius);
+    // pimpl->Sunlight->setCastsShadow(castsshadows);
 
-    pimpl->SunlightSO->lookAt(bs::Vector3(0, 0, 0));
-    // pimpl->SunlightSO->setWorldRotation(const Quaternion &rotation)
+    // // pimpl->SunlightSO->setPosition(bs::Vector3(1, 20, 1));
+    // // pimpl->SunlightSO->setPosition(bs::Vector3(20, 15, 20));
+    // pimpl->SunlightSO->setPosition(-direction);
 
-    // TODO: scene ambient colour
+    // pimpl->SunlightSO->lookAt(bs::Vector3(0, 0, 0));
+    // // pimpl->SunlightSO->setWorldRotation(const Quaternion &rotation)
 
-    // Set scene ambient colour //
-    // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
-    // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
-    //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
-    //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
+    // // TODO: scene ambient colour
+
+    // // Set scene ambient colour //
+    // // TODO: Ogre samples also use this so maybe this works with PBR HLMS system
+    // // WorldsScene->setAmbientLight(Ogre::ColourValue(0.3f, 0.5f, 0.7f) * 0.1f * 0.75f,
+    // //     Ogre::ColourValue(0.6f, 0.45f, 0.3f) * 0.065f * 0.75f,
+    // //     -Sunlight->getDirection() + Ogre::Vector3::UNIT_Y * 0.2f);
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetAutoExposure(float mineyeadaptation, float maxeyeadaptation,
     float eyeadaptationspeeddown, float eyeadaptationspeedup, float histogramlog2max,
     float histogramlog2min, float histogrampcthigh, float histogrampctlow)
 {
-    const auto& settings = pimpl->WorldCamera->getRenderSettings();
+    // const auto& settings = pimpl->WorldCamera->getRenderSettings();
 
-    settings->autoExposure.eyeAdaptationSpeedDown = eyeadaptationspeeddown;
-    settings->autoExposure.eyeAdaptationSpeedUp = eyeadaptationspeedup;
-    settings->autoExposure.maxEyeAdaptation = maxeyeadaptation;
-    settings->autoExposure.minEyeAdaptation = mineyeadaptation;
+    // settings->autoExposure.eyeAdaptationSpeedDown = eyeadaptationspeeddown;
+    // settings->autoExposure.eyeAdaptationSpeedUp = eyeadaptationspeedup;
+    // settings->autoExposure.maxEyeAdaptation = maxeyeadaptation;
+    // settings->autoExposure.minEyeAdaptation = mineyeadaptation;
 
-    settings->autoExposure.histogramLog2Max = histogramlog2max;
-    settings->autoExposure.histogramLog2Min = histogramlog2min;
-    settings->autoExposure.histogramPctHigh = histogrampcthigh;
-    settings->autoExposure.histogramPctLow = histogrampctlow;
+    // settings->autoExposure.histogramLog2Max = histogramlog2max;
+    // settings->autoExposure.histogramLog2Min = histogramlog2min;
+    // settings->autoExposure.histogramPctHigh = histogrampcthigh;
+    // settings->autoExposure.histogramPctLow = histogrampctlow;
 
-    settings->enableAutoExposure = false;
+    // settings->enableAutoExposure = false;
 
-    pimpl->WorldCamera->setRenderSettings(settings);
+    // pimpl->WorldCamera->setRenderSettings(settings);
 }
 
 // ------------------------------------ //
@@ -441,14 +425,7 @@ DLLEXPORT void GameWorld::Render(float elapsed)
 
             AppliedCameraPropertiesPtr = &properties;
 
-            FOV = properties.FOV;
-
-            pimpl->WorldCamera->setCustomProjectionMatrix(
-                true, Matrix4::ProjectionPerspective(FOV,
-                          LinkedToWindow ? LinkedToWindow->GetAspectRatio() : 1280 / 720.f,
-                          0.1f, 5000.f));
-
-            // pimpl->WorldCamera->setHorzFOV(bs::Degree(properties.FOV));
+            pimpl->WorldCamera->SetFOV(properties.FOV);
 
             properties.Marked = false;
         }
@@ -464,10 +441,15 @@ DLLEXPORT void GameWorld::Render(float elapsed)
     // Finalize world positions for scene nodes
     if(pimpl && pimpl->WorldScene)
         pimpl->WorldScene->PrepareForRendering();
+
+    // TODO: render scene with world camera
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetCamera(ObjectID object)
 {
+    if(CameraEntity == object)
+        return;
+
     CameraEntity = object;
 
     AppliedCameraPropertiesPtr = nullptr;
@@ -502,7 +484,7 @@ DLLEXPORT Ray GameWorld::CastRayFromCamera(int x, int y) const
 
     // Read the latest set data from the camera
     // TODO: could jump to the actual latest position here if wanted
-    return pimpl->WorldCamera->screenPointToRay(bs::Vector2I(x, y));
+    return pimpl->WorldCamera->ScreenPointToRay(Int2(x, y));
 }
 
 DLLEXPORT SceneNode* GameWorld::GetCameraSceneObject()
@@ -1800,7 +1782,8 @@ DLLEXPORT void GameWorld::OnUnLinkedFromWindow(Window* window, Graphics* graphic
                               "one it was linked to");
     }
 
-    pimpl->WorldCamera->getViewport()->setTarget(nullptr);
+    // TODO: proper viewports and rendertargets
+    // pimpl->WorldCamera->getViewport()->setTarget(nullptr);
 
     if(pimpl->DebugDraw) {
         LOG_INFO("GameWorld: stopping debug draw because this was detached from a world");
@@ -1836,16 +1819,14 @@ DLLEXPORT void GameWorld::OnLinkToWindow(Window* window, Graphics* graphics)
 
     LinkedToWindow = window;
 
-    // // Create the workspace for this scene //
-    // // Which will be rendered before the overlay workspace but after potential
-    // // clearing workspace
-    // WorldWorkspace = ogre->getCompositorManager2()->addWorkspace(WorldsScene,
-    //     LinkedToWindow->GetOgreWindow(), WorldSceneCamera, "WorldsWorkspace", true, 0);
-    pimpl->WorldCamera->getViewport()->setTarget(window->GetBSFWindow());
+    // TODO: proper viewports and rendertargets
+    // pimpl->WorldCamera->getViewport()->setTarget(window->GetBSFWindow());
 
-    // TODO: this needs to be reapplied every time the window is resized
-    pimpl->WorldCamera->setCustomProjectionMatrix(true,
-        Matrix4::ProjectionPerspective(FOV, LinkedToWindow->GetAspectRatio(), 0.1f, 5000.f));
+    int32_t width, height;
+    window->GetSize(width, height);
+    pimpl->WorldCamera->NotifyRenderTargetResolution(width, height);
+
+    // TODO: register for window resize event somehow, or maybe viewport should handle it
 
     if(!TickWhileInBackground) {
         _DoResumeSystems();

@@ -22,6 +22,9 @@ public:
     DLLEXPORT void RemoveAllWidgets();
 
 protected:
+    //! \brief Renders all widgets in this layer to the target window
+    DLLEXPORT void Render() override;
+
     DLLEXPORT void _DoReleaseResources() override;
 
 private:

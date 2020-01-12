@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,9 +7,7 @@
 #include "Events/CallableObject.h"
 #include "GuiLayer.h"
 #include "JSProxyable.h"
-#include "Rendering/RotatingBufferHelper.h"
-
-#include "bsfCore/BsCorePrerequisites.h"
+#include "Rendering/Texture.h"
 
 #include "include/cef_client.h"
 #include "include/cef_context_menu_handler.h"
@@ -62,8 +60,7 @@ class View : public Layer,
              public CefRequestHandler,
              public CefRenderHandler,
              public ThreadSafe,
-             public CallableObject,
-             RotatingBufferHelper<bs::SPtr<bs::PixelData>, 4> {
+             public CallableObject {
     friend class LeviathanJavaScriptAsync;
 
 public:
@@ -120,6 +117,8 @@ public:
 
     virtual void OnPopupSize(CefRefPtr<CefBrowser> browser, const CefRect& rect) override;
 
+    //! \brief Copies drawn texture data to a temporary buffer that is then used by Render to
+    //! draw it on the window this is shown on
     virtual void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         const RectList& dirtyRects, const void* buffer, int width, int height) override;
 
@@ -245,10 +244,11 @@ public:
     }
 
 protected:
+    DLLEXPORT void Render() override;
+
     DLLEXPORT void _DoReleaseResources() override;
     DLLEXPORT void _OnWindowResized() override;
     DLLEXPORT void _OnFocusChanged() override;
-    bs::SPtr<bs::PixelData> _OnNewBufferNeeded() override;
 
     bool _PMCheckIsEvent(const CefString& name, CefRefPtr<CefProcessMessage>& message);
 
@@ -287,7 +287,7 @@ protected:
     std::map<int, JSProxyable::pointer> ProxyedObjects;
 
     // Rendering resources
-    bs::HTexture Texture;
+    Texture::pointer ViewTexture;
 
     // Store for needed texture size
     int NeededTextureWidth = -1;

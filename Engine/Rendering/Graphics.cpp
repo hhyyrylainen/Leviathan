@@ -313,8 +313,6 @@ bool Graphics::Init(AppDef* appdef)
 DLLEXPORT void Graphics::Release()
 {
     if(Initialized) {
-
-        ShutdownBSF();
         ShutdownDiligent();
 
         SDL_Quit();
@@ -323,6 +321,7 @@ DLLEXPORT void Graphics::Release()
     Initialized = false;
     FirstWindowCreated = false;
     Pimpl.reset();
+    LOG_INFO("Graphics: release done");
 }
 // ------------------------------------ //
 void Graphics::PrintDetectedSystemInformation()
@@ -795,14 +794,16 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
 
 bool Graphics::UnRegisterWindow(Window& window)
 {
-    if(Pimpl) {
-        Pimpl->OurApp->waitUntilFrameFinished();
-    }
+    Engine::Get()->AssertIfNotMainThread();
 
-    if(window.GetBSFWindow() == bs::CoreApplication::instance().getPrimaryWindow()) {
-        LOG_INFO("Graphics: primary window is closing, hiding it instead until shutdown");
-        return true;
-    }
+    // if(Pimpl) {
+    //     Pimpl->OurApp->waitUntilFrameFinished();
+    // }
+
+    // if(window.GetBSFWindow() == bs::CoreApplication::instance().getPrimaryWindow()) {
+    //     LOG_INFO("Graphics: primary window is closing, hiding it instead until shutdown");
+    //     return true;
+    // }
 
     // TODO: additional window unregister
     return false;
@@ -824,8 +825,11 @@ void Graphics::ShutdownBSF()
 // ------------------------------------ //
 DLLEXPORT bool Graphics::Frame()
 {
+    // TODO: this should be changed to be about presenting the render targets on windows and
+    // respecting vsync
+
     // Logic for this frame is already ready, just tell bsf to render once
-    Pimpl->OurApp->runMainLoopFrame();
+    // Pimpl->OurApp->runMainLoopFrame();
 
     // At this point the frame render operation is happening on the BSF core thread, but it is
     // safe to use non-core thread objects normally, only in special cases do we need to wait
@@ -836,22 +840,22 @@ DLLEXPORT bool Graphics::Frame()
 DLLEXPORT void Graphics::UpdateShownOverlays(
     bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays)
 {
-    const auto targetRenderTarget = reinterpret_cast<uint64_t>(target.getCore().get());
+    // const auto targetRenderTarget = reinterpret_cast<uint64_t>(target.getCore().get());
 
-    std::vector<bs::SPtr<bs::ct::Texture>> coreVersion;
-    coreVersion.reserve(overlays.size());
+    // std::vector<bs::SPtr<bs::ct::Texture>> coreVersion;
+    // coreVersion.reserve(overlays.size());
 
-    std::transform(overlays.begin(), overlays.end(), std::back_inserter(coreVersion),
-        [](const bs::SPtr<bs::Texture>& item) { return item->getCore(); });
+    // std::transform(overlays.begin(), overlays.end(), std::back_inserter(coreVersion),
+    //     [](const bs::SPtr<bs::Texture>& item) { return item->getCore(); });
 
-    std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->OurApp->GUIRenderer;
+    // std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->OurApp->GUIRenderer;
 
-    bs::gCoreThread().queueCommand(
-        [rendererExtension, targetRenderTarget, coreVersion = std::move(coreVersion)]() {
-            const auto locked = rendererExtension.lock();
-            if(locked)
-                locked->UpdateShownOverlays(targetRenderTarget, coreVersion);
-        });
+    // bs::gCoreThread().queueCommand(
+    //     [rendererExtension, targetRenderTarget, coreVersion = std::move(coreVersion)]() {
+    //         const auto locked = rendererExtension.lock();
+    //         if(locked)
+    //             locked->UpdateShownOverlays(targetRenderTarget, coreVersion);
+    //     });
 }
 
 DLLEXPORT bool Graphics::IsVerticalUVFlipped() const

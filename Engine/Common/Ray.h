@@ -9,6 +9,7 @@
 
 namespace Leviathan {
 struct Plane;
+struct Matrix4;
 
 //! \brief Ray starting from an origin with a direction
 struct Ray {
@@ -28,6 +29,10 @@ public:
     {
         return Origin + (Direction * distance);
     }
+
+    DLLEXPORT void Transform(const Matrix4& matrix);
+
+    DLLEXPORT void TransformAffine(const Matrix4& matrix);
 
     const auto GetOrigin() const
     {

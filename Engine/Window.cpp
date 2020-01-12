@@ -272,7 +272,8 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
 
         LinkedWorld->OnUnLinkedFromWindow(this, Engine::Get()->GetGraphics());
     } else {
-        _BSFResources->WindowCamera->getViewport()->setTarget(nullptr);
+        // TODO: proper viewport
+        // _BSFResources->WindowCamera->getViewport()->setTarget(nullptr);
     }
 
     LinkedWorld = world;
@@ -282,7 +283,7 @@ DLLEXPORT void Window::LinkObjects(std::shared_ptr<GameWorld> world)
         LinkedWorld->OnLinkToWindow(this, Engine::Get()->GetGraphics());
     } else {
 
-        _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
+        // _BSFResources->WindowCamera->getViewport()->setTarget(BSFWindow);
     }
 }
 

@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -29,9 +29,6 @@ protected:
     DLLEXPORT virtual void OnDetachedFromParent(SceneNode& oldparent) override;
 
 private:
-    //! The entity that has this model's mesh loaded
-    bs::HRenderable GraphicalObject;
-
     Material::pointer _Material;
     Mesh::pointer _Mesh;
 };

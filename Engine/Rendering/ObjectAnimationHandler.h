@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,8 +7,6 @@
 #include "SceneNode.h"
 
 #include "Common/ReferenceCounted.h"
-
-#include "bsfCore/BsCorePrerequisites.h"
 
 namespace Leviathan {
 
@@ -22,11 +20,6 @@ protected:
     DLLEXPORT ObjectAnimationHandler(SceneNode& parent);
 
 public:
-    inline bs::HAnimation GetInternal()
-    {
-        return Animation;
-    }
-
     REFERENCE_COUNTED_PTR_TYPE(ObjectAnimationHandler);
 
 protected:
@@ -34,7 +27,6 @@ protected:
     DLLEXPORT virtual void OnDetachedFromParent(SceneNode& oldparent) override;
 
 private:
-    bs::HAnimation Animation;
 };
 
 } // namespace Leviathan

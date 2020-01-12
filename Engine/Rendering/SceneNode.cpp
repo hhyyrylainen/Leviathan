@@ -19,6 +19,7 @@ DLLEXPORT void SceneAttachable::DetachFromParent()
 // ------------------------------------ //
 DLLEXPORT void SceneAttachable::OnAttachedToParent(SceneNode& parent) {}
 DLLEXPORT void SceneAttachable::OnDetachedFromParent(SceneNode& oldparent) {}
+DLLEXPORT void SceneAttachable::OnNotifyParentDirty() {}
 // ------------------------------------ //
 DLLEXPORT void SceneAttachable::NotifyDetachParent(SceneNode& oldparent)
 {
@@ -113,6 +114,11 @@ DLLEXPORT void SceneNode::OnDetachedFromParent(SceneNode& oldparent)
 {
     // MarkDirty();
 }
+
+DLLEXPORT void SceneNode::OnNotifyParentDirty()
+{
+    MarkDirty();
+}
 // ------------------------------------ //
 const Transform& SceneNode::GetWorldTransform() const
 {
@@ -181,5 +187,12 @@ DLLEXPORT void SceneNode::PrepareToRender()
 
     for(const auto& child : Children) {
         child->PrepareToRender();
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void SceneNode::NotifyChildrenThisIsDirty() const
+{
+    for(const auto& child : Children) {
+        child->OnNotifyParentDirty();
     }
 }

@@ -105,8 +105,7 @@ DLLEXPORT void View::_DoReleaseResources()
     // Material = nullptr;
     // Renderable = nullptr;
 
-    Texture = nullptr;
-    ClearDataBuffers();
+    ViewTexture = nullptr;
     IntermediateTextureBuffer.clear();
     IntermediateTextureBuffer.shrink_to_fit();
 }
@@ -404,19 +403,12 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         return;
     }
 
-    // Lock us, just for fun //
-    // As we are always on the main thread
     GUARD_LOCK();
-
-    // if(!Node) {
-    if(Texture && Texture->isDestroyed()) {
-        // Released already
-        LOG_WARNING("View: OnPaint called after release");
-        return;
-    }
 
     // Calculate the size of the buffer //
     size_t buffSize = width * height * CEF_BYTES_PER_PIXEL;
+    NeededTextureWidth = width;
+    NeededTextureHeight = height;
 
     if(IntermediateTextureBuffer.size() != buffSize)
         IntermediateTextureBuffer.resize(buffSize);
@@ -431,23 +423,6 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
         break;
     }
     default: LOG_FATAL("Unknown paint type in View: OnPaint"); return;
-    }
-
-    // Make sure our texture is large enough //
-    if(Texture && (Texture->getProperties().getWidth() != static_cast<size_t>(width) ||
-                      Texture->getProperties().getHeight() != static_cast<size_t>(height))) {
-
-        Texture->destroy();
-        Texture = nullptr;
-        ClearDataBuffers();
-        LOG_INFO("GuiView: texture size has changed");
-    }
-
-    if(!Texture) {
-
-        LOG_INFO("GuiView: creating texture for CEF");
-        NeededTextureWidth = width;
-        NeededTextureHeight = height;
     }
 
     // Copy the data to intermediate buffer //
@@ -482,31 +457,49 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
             }
         }
     }
-
-    auto* bsfBuffer = GetNextDataBuffer();
-
-    if(!bsfBuffer) {
-        LOG_WARNING("GUI: View: out of texture data buffers");
-        return;
-    }
-
-    // This only works with pixel formats with no padding
-    LEVIATHAN_ASSERT((*bsfBuffer)->getSize() == buffSize, "CEF and BSF buffer size mismatch");
-
-    // Copy intermediate buffer
-    std::memcpy((*bsfBuffer)->getData(), IntermediateTextureBuffer.data(), buffSize);
-
-    if(!Texture) {
-        Texture = bs::Texture::create(*bsfBuffer, bs::TU_DYNAMIC);
-        Owner->NotifyAboutLayer(RenderOrder, Texture);
-    } else {
-        Texture->writeData(*bsfBuffer, 0, 0, true);
-    }
 }
 
-bs::SPtr<bs::PixelData> View::_OnNewBufferNeeded()
+DLLEXPORT void View::Render()
 {
-    return bs::PixelData::create(NeededTextureWidth, NeededTextureHeight, 1, BS_PIXEL_FORMAT);
+    // TODO: decide whether to use lock or always require being on the main thread here
+    Engine::Get()->AssertIfNotMainThread();
+    GUARD_LOCK();
+
+    // // Make sure our texture is large enough //
+    // if(Texture && (Texture->getProperties().getWidth() != static_cast<size_t>(width) ||
+    //         Texture->getProperties().getHeight() != static_cast<size_t>(height))) {
+
+    //     Texture->destroy();
+    //     Texture = nullptr;
+    //     LOG_INFO("GuiView: texture size has changed");
+    // }
+
+    // if(!Texture) {
+
+    //     LOG_INFO("GuiView: creating texture for CEF");
+
+    // }
+
+    // auto* bsfBuffer = GetNextDataBuffer();
+
+    // if(!bsfBuffer) {
+    //     LOG_WARNING("GUI: View: out of texture data buffers");
+    //     return;
+    // }
+
+    // // This only works with pixel formats with no padding
+    // LEVIATHAN_ASSERT((*bsfBuffer)->getSize() == buffSize, "CEF and BSF buffer size
+    // mismatch");
+
+    // // Copy intermediate buffer
+    // std::memcpy((*bsfBuffer)->getData(), IntermediateTextureBuffer.data(), buffSize);
+
+    // if(!Texture) {
+    //     Texture = bs::Texture::create(*bsfBuffer, bs::TU_DYNAMIC);
+    //     Owner->NotifyAboutLayer(RenderOrder, Texture);
+    // } else {
+    //     Texture->writeData(*bsfBuffer, 0, 0, true);
+    // }
 }
 // ------------------------------------ //
 void View::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status)
@@ -924,7 +917,8 @@ void View::_HandlePlayCutsceneMessage(const CefRefPtr<CefProcessMessage>& messag
 
         // Call the cutscene playing method on our GUI manager that handles everything.
         // Our lambdas store the request number to respond properly
-        Owner->PlayCutscene(file.ToString(),
+        Owner->PlayCutscene(
+            file.ToString(),
             [=]() {
                 // Success
                 CefRefPtr<CefProcessMessage> responseMessage =

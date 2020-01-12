@@ -8,9 +8,6 @@
 #include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
 
-#include "bsfCore/BsCorePrerequisites.h"
-#include "bsfCore/Scene/BsSceneObject.h"
-
 namespace Leviathan {
 
 class SceneNode;
@@ -54,6 +51,9 @@ protected:
     // Callbacks for child classes
     DLLEXPORT virtual void OnAttachedToParent(SceneNode& parent);
     DLLEXPORT virtual void OnDetachedFromParent(SceneNode& oldparent);
+    //! Called by Parent when it becomes dirty to mark all its children to rebuild their
+    //! matrices as well
+    DLLEXPORT virtual void OnNotifyParentDirty();
 
     // Methods called by SceneNode
     DLLEXPORT void NotifyDetachParent(SceneNode& oldparent);
@@ -96,7 +96,6 @@ public:
 
     inline void SetPosition(const Float3& pos)
     {
-        Node->setPosition(pos);
         LocalTransform.Translation = pos;
         MarkDirty();
     }
@@ -108,7 +107,6 @@ public:
 
     inline void SetOrientation(const Quaternion& orientation)
     {
-        Node->setRotation(orientation);
         LocalTransform.Orientation = orientation;
         MarkDirty();
     }
@@ -126,9 +124,6 @@ public:
 
     inline void SetPositionAndOrientation(const Float3& pos, const Quaternion& orientation)
     {
-        SetPosition(pos);
-        SetOrientation(orientation);
-
         LocalTransform.Translation = pos;
         LocalTransform.Orientation = orientation;
         MarkDirty();
@@ -136,7 +131,6 @@ public:
 
     inline void SetScale(const Float3& scale)
     {
-        Node->setScale(scale);
         LocalTransform.Scale = scale;
         MarkDirty();
     }
@@ -147,10 +141,9 @@ public:
             return;
 
         Hidden = hidden;
-        Node->setActive(!Hidden);
     }
 
-    bool IsHidden(bool hidden)
+    bool IsHidden() const
     {
         return Hidden;
     }
@@ -162,16 +155,15 @@ public:
 
     inline void MarkDirty()
     {
+        if(Dirty)
+            return;
+
         Dirty = true;
         TransformDirty = true;
+        NotifyChildrenThisIsDirty();
     }
 
     const Transform& GetWorldTransform() const;
-
-    inline bs::HSceneObject GetInternal()
-    {
-        return Node;
-    }
 
     void AttachObjectWrapper(SceneAttachable* object)
     {
@@ -190,15 +182,17 @@ public:
 protected:
     DLLEXPORT void OnAttachedToParent(SceneNode& parent) override;
     DLLEXPORT void OnDetachedFromParent(SceneNode& oldparent) override;
+    DLLEXPORT void OnNotifyParentDirty() override;
 
     void ApplyWorldMatrixIfDirty();
 
     // Called by Scene when it is time to render
     DLLEXPORT void PrepareToRender() override;
 
-private:
-    bs::HSceneObject Node;
+    //! Notifies all children that this is now dirty
+    DLLEXPORT void NotifyChildrenThisIsDirty() const;
 
+private:
     Scene* ParentScene = nullptr;
 
     Transform LocalTransform;

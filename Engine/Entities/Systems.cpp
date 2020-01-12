@@ -243,6 +243,8 @@ DLLEXPORT void AnimationSystem::Run(
     GameWorld& world, std::unordered_map<ObjectID, Animated*>& index, float elapsed)
 {
     Graphics* graphics = Engine::Get()->GetGraphics();
+    // TODO: redo after diligent change
+    return;
 
     for(auto iter = index.begin(); iter != index.end(); ++iter) {
 
@@ -275,15 +277,16 @@ DLLEXPORT void AnimationSystem::Run(
                 }
 
                 bs::AnimationClipState state;
-                if(!animated.Animation->GetInternal()->getState(
-                       animation._LoadedAnimation->GetInternal(), state)) {
+                // if(!animated.Animation->GetInternal()->getState(
+                //        animation._LoadedAnimation->GetInternal(), state)) {
 
-                    // Not playing currently. setState will begin playback, fill the extra info
-                    // Is this needed?
-                    state = bs::AnimationClipState();
-                    // state.layer = static_cast<uint32_t>(animationIndex);
-                    state.time = 0.f;
-                }
+                //     // Not playing currently. setState will begin playback, fill the extra
+                //     info
+                //     // Is this needed?
+                //     state = bs::AnimationClipState();
+                //     // state.layer = static_cast<uint32_t>(animationIndex);
+                //     state.time = 0.f;
+                // }
 
                 // TODO: if animations are removed the indexes need fixing up. Probably needs
                 // to switch to a dynamic numbering scheme
@@ -296,27 +299,27 @@ DLLEXPORT void AnimationSystem::Run(
                 state.wrapMode =
                     animation.Loop ? bs::AnimWrapMode::Loop : bs::AnimWrapMode::Clamp;
 
-                animated.Animation->GetInternal()->setState(
-                    animation._LoadedAnimation->GetInternal(), state);
+                // animated.Animation->GetInternal()->setState(
+                //     animation._LoadedAnimation->GetInternal(), state);
             }
 
             // Then disable other animations
-            for(uint32_t i = 0; i < animated.Animation->GetInternal()->getNumClips(); ++i) {
+            // for(uint32_t i = 0; i < animated.Animation->GetInternal()->getNumClips(); ++i) {
 
-                bool found = false;
-                auto clip = animated.Animation->GetInternal()->getClip(i);
+            //     bool found = false;
+            //     auto clip = animated.Animation->GetInternal()->getClip(i);
 
-                for(const auto& animation : animated.Animations) {
-                    if(animation._LoadedAnimation->GetInternal() == clip) {
-                        found = true;
-                        break;
-                    }
-                }
+            //     for(const auto& animation : animated.Animations) {
+            //         if(animation._LoadedAnimation->GetInternal() == clip) {
+            //             found = true;
+            //             break;
+            //         }
+            //     }
 
-                if(!found) {
-                    LOG_WRITE("TODO: animation stopping for AnimationSystem");
-                }
-            }
+            //     if(!found) {
+            //         LOG_WRITE("TODO: animation stopping for AnimationSystem");
+            //     }
+            // }
         }
     }
 }

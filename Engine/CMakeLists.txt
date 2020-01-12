@@ -174,6 +174,7 @@ if(LEVIATHAN_USING_OGRE)
     "Rendering/RotatingBufferHelper.h"
     "Rendering/Scene.cpp" "Rendering/Scene.h"
     "Rendering/SceneNode.cpp" "Rendering/SceneNode.h"
+    "Rendering/Camera.cpp" "Rendering/Camera.h"
     "Rendering/BaseRenderable.h" # "Rendering/BaseRenderable.cpp" 
     "Rendering/Renderable.cpp" "Rendering/Renderable.h"
     "Rendering/Mesh.cpp" "Rendering/Mesh.h"

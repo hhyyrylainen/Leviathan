@@ -156,6 +156,11 @@ public:
         return Value == other.Value;
     }
 
+    inline bool operator!=(const Radian& other)
+    {
+        return !(*this == other);
+    }
+
     constexpr inline float ValueInRadians() const noexcept
     {
         return Value;
@@ -184,6 +189,26 @@ public:
     {
         Value = other.Value;
         return *this;
+    }
+
+    inline bool operator>(const Degree& other)
+    {
+        return Value > other.Value;
+    }
+
+    inline bool operator<(const Degree& other)
+    {
+        return Value < other.Value;
+    }
+
+    inline bool operator==(const Degree& other)
+    {
+        return Value == other.Value;
+    }
+
+    inline bool operator!=(const Degree& other)
+    {
+        return !(*this == other);
     }
 
     constexpr inline float ValueInRadians() const noexcept

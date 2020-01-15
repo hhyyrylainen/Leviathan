@@ -21,7 +21,7 @@ protected:
 public:
     DLLEXPORT ~VideoPlayerWidget();
 
-    DLLEXPORT void Tick() override {}
+    DLLEXPORT void Render() override;
 
     //! \copydoc VideoPlayer::Play
     DLLEXPORT bool Play(const std::string& videofile);

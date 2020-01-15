@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -19,7 +19,11 @@ protected:
 public:
     DLLEXPORT virtual ~Widget();
 
-    DLLEXPORT virtual void Tick() = 0;
+    //! \brief Allows widget with animations or time keeping to update themselves
+    DLLEXPORT virtual void Tick(float elapsed);
+
+    //! \brief Called to render this widget
+    DLLEXPORT virtual void Render() = 0;
 
 protected:
     // These are called by the widget container when this is added or removed. This is the
@@ -32,6 +36,7 @@ public:
 
 protected:
     const int ID;
+    bool RequiresTick = false;
 };
 
 }} // namespace Leviathan::GUI

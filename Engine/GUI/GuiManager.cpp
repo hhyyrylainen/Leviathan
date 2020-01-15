@@ -75,9 +75,6 @@ void GuiManager::Release()
         ManagedLayers[i]->Release();
     }
 
-    TempRenderedLayers.clear();
-    _SendChangedLayers();
-
     LOG_INFO("GuiManager: Gui successfully closed on window");
 }
 // ------------------------------------ //
@@ -135,7 +132,7 @@ void GuiManager::GuiTick(float elapsed)
 
 DLLEXPORT void GuiManager::OnForceGUIOn()
 {
-    DEBUG_BREAK;
+    LOG_WARNING("GuiManager: OnForceGUIOn not implemented");
 }
 // ------------------------------------ //
 DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
@@ -144,19 +141,30 @@ DLLEXPORT void GuiManager::SetDisableMouseCapture(bool newvalue)
     // This will cause the capture state to be checked next tick
     GuiMouseUseUpdated = true;
 }
-
 // ------------------------------------ //
 void GuiManager::Render(float elapsed)
 {
-    // Browser textures are now updated in the event loop (on the main thread between
-    // rendering)
+    constexpr auto layerOrder = [](const boost::intrusive_ptr<GUI::Layer>& lhs,
+                                    const boost::intrusive_ptr<GUI::Layer>& rhs) {
+        return lhs->GetRenderOrder() < rhs->GetRenderOrder();
+    };
+
+    // Make sure layers are sorted. There could be like a dirty flag for this to avoid this
+    // sorted check.
+    if(!std::is_sorted(std::begin(ManagedLayers), std::end(ManagedLayers), layerOrder))
+        std::sort(std::begin(ManagedLayers), std::end(ManagedLayers), layerOrder);
+
+    // Render the layers in order
+    for(const auto& layer : ManagedLayers) {
+        layer->Render();
+    }
 }
 // ------------------------------------ //
-DLLEXPORT void GuiManager::OnResize()
+DLLEXPORT void GuiManager::OnResize(int width, int height)
 {
     // Resize all CEF browsers on this window //
     for(size_t i = 0; i < ManagedLayers.size(); i++) {
-        ManagedLayers[i]->NotifyWindowResized();
+        ManagedLayers[i]->NotifyWindowResized(width, height);
     }
 }
 
@@ -356,21 +364,3 @@ void GuiManager::_FileChanged(const std::string& file, ResourceFolderListener& c
     // caller.MarkAllAsNotUpdated();
 }
 // ------------------------------------ //
-DLLEXPORT void GuiManager::NotifyAboutLayer(int layernumber, const bs::HTexture& texture)
-{
-    TempRenderedLayers[layernumber] = texture;
-    _SendChangedLayers();
-}
-
-void GuiManager::_SendChangedLayers() const
-{
-    std::vector<bs::SPtr<bs::Texture>> overlays;
-
-    for(auto iter = TempRenderedLayers.begin(); iter != TempRenderedLayers.end(); ++iter) {
-        if(iter->second) {
-            overlays.push_back(iter->second.getInternalPtr());
-        }
-    }
-
-    Engine::Get()->GetGraphics()->UpdateShownOverlays(*ThisWindow->GetBSFWindow(), overlays);
-}

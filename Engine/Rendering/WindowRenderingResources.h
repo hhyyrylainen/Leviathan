@@ -3,6 +3,7 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+
 // part of the hack
 #undef LOG_ERROR
 
@@ -24,12 +25,21 @@ class WindowRenderingResources {
     friend Graphics;
 
 public:
-    WindowRenderingResources();
+    WindowRenderingResources(Graphics& owner);
 
-    void ResizeSwapChain(int newwidth, int newheight);
+    DLLEXPORT void ResizeSwapChain(int newwidth, int newheight);
+
+protected:
+    //! \brief Called to invalidate this by Graphics when shutting down with open windows
+    void Invalidate();
+
+    void Present();
 
 protected:
     Diligent::RefCntAutoPtr<Diligent::ISwapChain> WindowsSwapChain;
+
+private:
+    Graphics* Owner;
 };
 
 } // namespace Leviathan

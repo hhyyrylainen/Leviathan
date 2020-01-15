@@ -9,5 +9,7 @@ using namespace Leviathan::GUI;
 DLLEXPORT Widget::Widget() : ID(IDFactory::GetID()) {}
 DLLEXPORT Widget::~Widget() {}
 // ------------------------------------ //
+DLLEXPORT void Widget::Tick(float elapsed) {}
+// ------------------------------------ //
 DLLEXPORT void Widget::OnAddedToContainer(WidgetLayer* container) {}
 DLLEXPORT void Widget::OnRemovedFromContainer(WidgetLayer* container) {}

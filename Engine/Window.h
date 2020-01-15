@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -9,8 +9,6 @@
 #ifdef _WIN32
 #include "WindowsInclude.h"
 #endif
-
-#include "bsfCore/RenderAPI/BsRenderWindow.h"
 
 #include <atomic>
 #include <memory>
@@ -34,8 +32,6 @@ enum class INPUT_EVENT_TYPE : int;
 //! \todo Implement global lock for input handling
 //! \todo This should be handled through shared_ptr
 class Window {
-    struct BSFResources;
-
 public:
     //! \exception InvalidArgument if creation fails
     DLLEXPORT Window(Graphics* windowcreater, AppDef* windowproperties);
@@ -165,9 +161,9 @@ public:
     }
     DLLEXPORT inline bool GetVsync() const;
 
-    DLLEXPORT inline const auto& GetBSFWindow() const
+    DLLEXPORT inline const auto& GetRenderResources() const
     {
-        return BSFWindow;
+        return RenderResources;
     }
 
     //! Returns this windows creation number
@@ -183,12 +179,6 @@ public:
     {
         return OpenWindowCount;
     }
-
-    // ------------------------------------ //
-    // Input helpers
-
-    //! \todo Move to KeyMapping.cpp
-
 
 protected:
     //! \brief Detects state of modifier keys. Called whenever input is injected and is stored
@@ -227,8 +217,6 @@ protected:
 private:
     //! Set null when the native window is no longer valid
     SDL_Window* SDLWindow = nullptr;
-
-    bs::SPtr<bs::RenderWindow> BSFWindow;
 
     //! This is retrieved from GuiManager at the start of a sequence of inputs based
     //! on the mouse position. The property of GUI_INPUT_MODE will determine how the input
@@ -291,13 +279,6 @@ private:
     int WindowNumber;
 
     bool MouseCaptureState = false;
-
-    //! Per-window BSF resources
-    std::unique_ptr<BSFResources> _BSFResources;
-
-    //! Workaround for missing BSF resize notify
-    //! https://github.com/GameFoundry/bsf/issues/382
-    bool DoingResize = false;
 
     //! Per-window rendering resources. Contains the swap chain for this window
     std::unique_ptr<WindowRenderingResources> RenderResources;

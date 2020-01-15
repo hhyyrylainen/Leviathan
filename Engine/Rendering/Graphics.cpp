@@ -198,6 +198,14 @@ struct Graphics::Implementation {
     Diligent::RefCntAutoPtr<Diligent::IRenderDevice> RenderDevice;
     Diligent::RefCntAutoPtr<Diligent::IDeviceContext> ImmediateContext;
     // Diligent::RefCntAutoPtr<Diligent::IPipelineState> m_pPSO;
+
+    //! Currently set render target
+    WindowRenderingResources* CurrentRenderTarget = nullptr;
+
+    //! All created windows.
+    //! \todo Decide i fit is a good idea that these are non-owning pointers and the Window
+    //! objects have a unique_ptr for the rendering resources
+    std::vector<WindowRenderingResources*> ExistingWindows;
 };
 
 #ifdef __linux
@@ -312,6 +320,18 @@ bool Graphics::Init(AppDef* appdef)
 
 DLLEXPORT void Graphics::Release()
 {
+    if(Pimpl) {
+        if(!Pimpl->ExistingWindows.empty()) {
+            LOG_ERROR("Graphics: windows open on Release");
+
+            for(const auto& resources : Pimpl->ExistingWindows) {
+                resources->Invalidate();
+            }
+
+            Pimpl->ExistingWindows.clear();
+        }
+    }
+
     if(Initialized) {
         ShutdownDiligent();
 
@@ -562,7 +582,7 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
     Diligent::SwapChainDesc SCDesc;
     // Uint32        NumDeferredCtx = 0;
 
-    auto windowResources = std::make_unique<WindowRenderingResources>();
+    auto windowResources = std::make_unique<WindowRenderingResources>(*this);
 
     switch(SelectedAPI) {
 #if D3D11_SUPPORTED
@@ -641,7 +661,7 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
         pFactoryVk->CreateSwapChainVk(Pimpl->RenderDevice, Pimpl->ImmediateContext, SCDesc,
             &info, &windowResources->WindowsSwapChain);
 
-        if(!&windowResources->WindowsSwapChain) {
+        if(!windowResources->WindowsSwapChain) {
             LOG_FATAL("Vulkan swapchain creation failed. TODO: it would still technically be "
                       "possible to fallback to opengl");
             return nullptr;
@@ -659,6 +679,15 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
     }
 #endif // METAL_SUPPORTED
     default: LOG_FATAL("Graphics: invalid graphics API selected in window creation");
+    }
+
+    if(windowResources) {
+        if(!windowResources->WindowsSwapChain) {
+            LOG_FATAL("Graphics: logic error: missing check for swap chain creation fail");
+            return nullptr;
+        }
+
+        Pimpl->ExistingWindows.push_back(windowResources.get());
     }
 
     return windowResources;
@@ -792,9 +821,26 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
         } */
 }
 
-bool Graphics::UnRegisterWindow(Window& window)
+void Graphics::UnRegisterWindow(Window& window)
 {
+    const WindowRenderingResources* unregistered = window.GetRenderResources().get();
+    if(unregistered == Pimpl->CurrentRenderTarget) {
+        LOG_FATAL("destroying currently bound render target window is unhandled");
+        Pimpl->CurrentRenderTarget = nullptr;
+    }
+
     Engine::Get()->AssertIfNotMainThread();
+
+    for(auto iter = Pimpl->ExistingWindows.begin(); iter != Pimpl->ExistingWindows.end();
+        ++iter) {
+        if(*iter == unregistered) {
+
+            Pimpl->ExistingWindows.erase(iter);
+            return;
+        }
+    }
+
+    LOG_ERROR("Graphics: UnRegisterWindow: given a window with unknown rendering resources");
 
     // if(Pimpl) {
     //     Pimpl->OurApp->waitUntilFrameFinished();
@@ -804,9 +850,6 @@ bool Graphics::UnRegisterWindow(Window& window)
     //     LOG_INFO("Graphics: primary window is closing, hiding it instead until shutdown");
     //     return true;
     // }
-
-    // TODO: additional window unregister
-    return false;
 }
 
 void Graphics::ShutdownBSF()
@@ -825,51 +868,79 @@ void Graphics::ShutdownBSF()
 // ------------------------------------ //
 DLLEXPORT bool Graphics::Frame()
 {
-    // TODO: this should be changed to be about presenting the render targets on windows and
-    // respecting vsync
+    // TODO: vsync
 
-    // Logic for this frame is already ready, just tell bsf to render once
-    // Pimpl->OurApp->runMainLoopFrame();
+    // Once we swap the diligent chains the render target gets unbound
+    Pimpl->CurrentRenderTarget = nullptr;
 
-    // At this point the frame render operation is happening on the BSF core thread, but it is
-    // safe to use non-core thread objects normally, only in special cases do we need to wait
-    // for a frame to end
+    // Swap all swapchains
+    // TODO: allow hiding and stuff
+    for(const auto& resources : Pimpl->ExistingWindows) {
+        // TODO: could only swap a window if it was rendered to
+        resources->Present();
+    }
+
     return true;
 }
 // ------------------------------------ //
-DLLEXPORT void Graphics::UpdateShownOverlays(
-    bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays)
+DLLEXPORT void Graphics::SetActiveRenderTarget(WindowRenderingResources* target)
 {
-    // const auto targetRenderTarget = reinterpret_cast<uint64_t>(target.getCore().get());
+    if(target && !target->WindowsSwapChain) {
+        LOG_ERROR("Graphics: SetActiveRenderTarget: no swap chain on target");
+        target = nullptr;
+    }
 
-    // std::vector<bs::SPtr<bs::ct::Texture>> coreVersion;
-    // coreVersion.reserve(overlays.size());
+    if(!target) {
+        LOG_WARNING("Graphics: SetActiveRenderTarget: unsetting render target without setting "
+                    "a new one is not implemented");
+    }
 
-    // std::transform(overlays.begin(), overlays.end(), std::back_inserter(coreVersion),
-    //     [](const bs::SPtr<bs::Texture>& item) { return item->getCore(); });
+    if(Pimpl->CurrentRenderTarget != target) {
 
-    // std::weak_ptr<GUIOverlayRenderer> rendererExtension = Pimpl->OurApp->GUIRenderer;
+        Pimpl->CurrentRenderTarget = target;
 
-    // bs::gCoreThread().queueCommand(
-    //     [rendererExtension, targetRenderTarget, coreVersion = std::move(coreVersion)]() {
-    //         const auto locked = rendererExtension.lock();
-    //         if(locked)
-    //             locked->UpdateShownOverlays(targetRenderTarget, coreVersion);
-    //     });
+        auto* backBuffer =
+            Pimpl->CurrentRenderTarget->WindowsSwapChain->GetCurrentBackBufferRTV();
+        auto* depth = Pimpl->CurrentRenderTarget->WindowsSwapChain->GetDepthBufferDSV();
+
+        Pimpl->ImmediateContext->SetRenderTargets(
+            1, &backBuffer, depth, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+    }
 }
 
+DLLEXPORT void Graphics::ClearRTColour(const Float4& colour)
+{
+    if(!Pimpl->CurrentRenderTarget)
+        throw InvalidState("no render target set");
+
+    auto* backBuffer = Pimpl->CurrentRenderTarget->WindowsSwapChain->GetCurrentBackBufferRTV();
+    Pimpl->ImmediateContext->ClearRenderTarget(backBuffer, colour.operator const float*(),
+        Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+}
+
+DLLEXPORT void Graphics::ClearRTDepth()
+{
+    if(!Pimpl->CurrentRenderTarget)
+        throw InvalidState("no render target set");
+
+    auto* depth = Pimpl->CurrentRenderTarget->WindowsSwapChain->GetDepthBufferDSV();
+    Pimpl->ImmediateContext->ClearDepthStencil(depth, Diligent::CLEAR_DEPTH_FLAG, 1.f, 0,
+        Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+}
+// ------------------------------------ //
 DLLEXPORT bool Graphics::IsVerticalUVFlipped() const
 {
-    const auto capabilities = bs::ct::RenderAPI::instance().getCapabilities(0);
+    // Assume only opengl and opengles are flipped
+    return SelectedAPI == GRAPHICS_API::OpenGL || SelectedAPI == GRAPHICS_API::OpenGLES;
 
-    return capabilities.conventions.ndcYAxis != bs::Conventions::Axis::Down;
+    // const auto capabilities = bs::ct::RenderAPI::instance().getCapabilities(0);
+
+    // return capabilities.conventions.ndcYAxis != bs::Conventions::Axis::Down;
 }
 // ------------------------------------ //
 // Resource loading helpers
 DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
 {
-    // TODO: .asset detection
-
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_OTHER,
         // Leviathan::StringOperations::RemoveExtension(name, true),
         Leviathan::StringOperations::RemovePath(name),

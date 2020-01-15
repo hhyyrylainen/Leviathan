@@ -77,10 +77,6 @@ DLLEXPORT void View::_DoReleaseResources()
     // Lock us //
     GUARD_LOCK();
 
-    if(Owner) {
-        Owner->NotifyAboutLayer(RenderOrder, nullptr);
-    }
-
     // Kill the javascript async //
     OurAPIHandler->BeforeRelease();
 

@@ -37,14 +37,6 @@
 
 namespace Leviathan {
 
-struct Window::BSFResources {
-public:
-    // A window always needs to have some camera rendering to it to make the GUI renderer work
-    bs::HSceneObject WindowSceneObject;
-    bs::HCamera WindowCamera;
-};
-
-
 Window* Window::InputCapturer = nullptr;
 
 std::atomic<int> Window::OpenWindowCount = 0;
@@ -207,8 +199,6 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
 
 DLLEXPORT Window::~Window()
 {
-    _BSFResources.reset();
-
     // GUI is very picky about delete order
     if(WindowsGui) {
         WindowsGui->Release();
@@ -239,12 +229,7 @@ DLLEXPORT Window::~Window()
     int windowsafter = --OpenWindowCount;
 
     // Report close to graphics
-    const bool isPrimary = Engine::Get()->GetGraphics()->UnRegisterWindow(*this);
-    // if(!isPrimary) {
-    //     BSFWindow->destroy();
-    // }
-
-    BSFWindow.reset();
+    Engine::Get()->GetGraphics()->UnRegisterWindow(*this);
 
     if(windowsafter == 0) {
 
@@ -300,30 +285,44 @@ DLLEXPORT void Window::Tick(float elapsed)
 
 DLLEXPORT bool Window::Render(float elapsed)
 {
+    if(!RenderResources)
+        return false;
+
+    auto* graphics = Engine::Get()->GetGraphics();
+
+    graphics->SetActiveRenderTarget(RenderResources.get());
+
+    // Clear colour and depth
+    graphics->ClearRTColour(Float4::ColourBlack);
+    graphics->ClearRTDepth();
+
+    // Render the world on the render target of this window
     if(LinkedWorld)
         LinkedWorld->Render(elapsed);
 
-    // Update GUI before each frame //
+    // The world is allowed to render through an intermediate render target
+    // So reset the attached target
+    graphics->SetActiveRenderTarget(RenderResources.get());
+
+    // GUI does its own depth clear per layer so it isn't done here
+
+    // Then render the GUI after the world
     WindowsGui->Render(elapsed);
 
-    // BSF does it's own rendering handling (so we can't swap this render chain)
+    // The swap is not done here as only a single window can wait for vsync, so after all
+    // windows are rendered the swap is performed
     return true;
 }
 
 DLLEXPORT void Window::OnResize(int width, int height)
 {
-    if(DoingResize)
+    if(!RenderResources)
         return;
 
-    // Notify bsf
-    bs::gCoreThread().queueCommand([coreWindow = BSFWindow->getCore()]() {
-        coreWindow->_notifyWindowEvent(bs::WindowEventType::Resized);
-    });
-
-    BSFWindow->_onExternalResize(width, height);
+    RenderResources->ResizeSwapChain(width, height);
 
     // Send to GUI //
-    WindowsGui->OnResize();
+    WindowsGui->OnResize(width, height);
 }
 
 DLLEXPORT void Window::OnFocusChange(bool focused)

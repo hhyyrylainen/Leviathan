@@ -49,6 +49,8 @@ DLLEXPORT Layer::Layer(GuiManager* owner, Window* window, int renderorder) :
     // // Setup the order this is rendered in
     // // Higher priority is first so negating the order must make it be later
     // Camera->setPriority(-renderorder);
+
+    window->GetSize(WindowWidth, WindowHeight);
 }
 
 DLLEXPORT Layer::~Layer()
@@ -65,8 +67,11 @@ DLLEXPORT void Layer::ReleaseResources()
     // CameraSO->destroy();
 }
 // ------------------------------------ //
-DLLEXPORT void Layer::NotifyWindowResized()
+DLLEXPORT void Layer::NotifyWindowResized(int width, int height)
 {
+    WindowWidth = width;
+    WindowHeight = height;
+
     // Adjust camera
 
     // And let derived classes do their thing

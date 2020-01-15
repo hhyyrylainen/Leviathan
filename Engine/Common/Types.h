@@ -1440,6 +1440,12 @@ public:
         return &X;
     }
 
+    //! return first value of {X, Y, Z, W} as a pointer
+    DLLEXPORT inline operator const float*() const noexcept
+    {
+        return &X;
+    }
+
     // ------------------- Operators ----------------- //
     // add elements //
     DLLEXPORT inline Float4 operator+(const Float4& other) const noexcept

@@ -30,8 +30,8 @@ public:
     DLLEXPORT void GuiTick(float elapsed);
     DLLEXPORT void Render(float elapsed);
 
-    //! \brief Notifies internal browsers
-    DLLEXPORT void OnResize();
+    //! \brief Notifies views about resize
+    DLLEXPORT void OnResize(int width, int height);
 
     //! \brief Notifies contexts about the change to appropriately lose focus on fields
     DLLEXPORT void OnFocusChanged(bool focused);
@@ -85,14 +85,9 @@ public:
     //! activation buttons)
     DLLEXPORT void SetDisableMouseCapture(bool newvalue);
 
-    //! This is a temporary thing to just render a few image layers with BSF
-    DLLEXPORT void NotifyAboutLayer(int layernumber, const bs::HTexture& texture);
-
 protected:
     //! Is called by folder listeners to notify of Gui file changes
     void _FileChanged(const std::string& file, ResourceFolderListener& caller);
-
-    void _SendChangedLayers() const;
 
 private:
     //! Set when containing window of the GUI shouldn't be allowed to capture mouse
@@ -125,9 +120,6 @@ private:
     bool DisableGuiMouseCapture = false;
 
     std::unique_ptr<CutscenePlayStatus> CurrentlyPlayingCutscene;
-
-    //! Temporary layers for sending to BSF overlay renderer
-    std::map<int, bs::HTexture> TempRenderedLayers;
 };
 
 }} // namespace Leviathan::GUI

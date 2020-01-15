@@ -28,7 +28,7 @@ public:
     //! \brief Notifies all the widgets and layout that the size has changed
     //!
     //! Called by GuiManager
-    DLLEXPORT void NotifyWindowResized();
+    DLLEXPORT void NotifyWindowResized(int width, int height);
 
     //! \brief Notifies this view whether it is in focus or not
     //!
@@ -145,6 +145,8 @@ protected:
 
     int RenderOrder;
 
+    int32_t WindowWidth;
+    int32_t WindowHeight;
 
     // Rendering resources
     // Ogre::CompositorWorkspace* Workspace;

@@ -28,8 +28,8 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
     CanCallCallback = true;
 
     // The Play method creates the texture we want to display
-    ContainedIn->GetGuiManager()->NotifyAboutLayer(
-        ContainedIn->GetRenderOrder(), Player.GetTexture());
+    // ContainedIn->GetGuiManager()->NotifyAboutLayer(
+    //     ContainedIn->GetRenderOrder(), Player.GetTexture());
 
     // Set the texture on our material
 
@@ -68,8 +68,6 @@ DLLEXPORT void VideoPlayerWidget::SetEndCallback(std::function<void()> callback)
 
 void VideoPlayerWidget::_DoCallback()
 {
-    ContainedIn->GetGuiManager()->NotifyAboutLayer(ContainedIn->GetRenderOrder(), nullptr);
-
     if(!CanCallCallback)
         return;
 
@@ -77,6 +75,11 @@ void VideoPlayerWidget::_DoCallback()
 
     if(Callback)
         Callback();
+}
+// ------------------------------------ //
+DLLEXPORT void VideoPlayerWidget::Render()
+{
+    // TODO: rendering this again
 }
 // ------------------------------------ //
 DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)
@@ -113,8 +116,6 @@ DLLEXPORT void VideoPlayerWidget::OnRemovedFromContainer(WidgetLayer* container)
 {
     if(!ContainedIn)
         return;
-
-    ContainedIn->GetGuiManager()->NotifyAboutLayer(ContainedIn->GetRenderOrder(), nullptr);
 
     // LOG_WRITE("TODO: redo VideoPlayerWidget::OnRemovedFromContainer");
 

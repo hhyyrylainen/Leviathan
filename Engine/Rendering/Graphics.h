@@ -4,6 +4,7 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/AppDefine.h"
+#include "Common/Types.h"
 
 #include "bsfCore/RenderAPI/BsRenderWindow.h"
 
@@ -27,10 +28,6 @@ public:
 
     DLLEXPORT bool Frame();
 
-    //! \todo remove
-    DLLEXPORT void UpdateShownOverlays(
-        bs::RenderTarget& target, const std::vector<bs::SPtr<bs::Texture>>& overlays);
-
     DLLEXPORT bool IsVerticalUVFlipped() const;
 
     inline auto GetUsedAPI() const
@@ -39,6 +36,14 @@ public:
     }
 
     DLLEXPORT std::string GetUsedAPIName() const;
+
+    // ------------------------------------ //
+    // Rendering operations
+    //! \brief Sets the render target rendering operations will act on
+    DLLEXPORT void SetActiveRenderTarget(WindowRenderingResources* target);
+
+    DLLEXPORT void ClearRTColour(const Float4& colour);
+    DLLEXPORT void ClearRTDepth();
 
     // ------------------------------------ //
     // Resource loading helpers
@@ -75,8 +80,8 @@ protected:
     std::unique_ptr<WindowRenderingResources> RegisterCreatedWindow(Window& window);
 
     //! \brief Called just before a window is destroyed. This needs to stop rendering to it
-    //! \returns True if the window was primary and should only be hidden instead of destroyed
-    bool UnRegisterWindow(Window& window);
+    //! \todo This needs to assign a new primary window if the primary window is destroyed
+    void UnRegisterWindow(Window& window);
 
 private:
     void PrintDetectedSystemInformation();

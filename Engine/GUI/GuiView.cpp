@@ -14,12 +14,16 @@
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 
+
 #include "include/cef_browser.h"
 #include "include/wrapper/cef_helpers.h"
 
-#include "utf8.h"
+// hack workaround for diligent
+#undef CHECK
+#include "Rendering/Graphics.h"
+#include "Rendering/PSO.h"
 
-#include "bsfCore/Image/BsTexture.h"
+#include "utf8.h"
 
 #include <SDL.h>
 
@@ -29,7 +33,7 @@ using namespace Leviathan::GUI;
 // ------------------------------------ //
 constexpr auto CEF_BYTES_PER_PIXEL = 4;
 // When documentation of Ogre and CEF talk about RGBA it seems they actually talk about BGRA
-constexpr auto BS_PIXEL_FORMAT = bs::PF_BGRA8;
+constexpr auto DILIGENT_PIXEL_FORMAT = Diligent::TEX_FORMAT_RGBA8_UNORM;
 
 DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
@@ -39,14 +43,52 @@ DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
 
 DLLEXPORT View::~View() {}
 // ------------------------------------ //
+// Test code from diligent
+constexpr auto VSSource = R"(
+    struct PSInput 
+    { 
+    float4 Pos : SV_POSITION; 
+    float3 Color : COLOR; 
+    };
+    PSInput main(uint VertId : SV_VertexID) 
+    {
+    float4 Pos[3];
+    Pos[0] = float4(-0.5, -0.5, 0.0, 1.0);
+    Pos[1] = float4( 0.0, +0.5, 0.0, 1.0);
+    Pos[2] = float4(+0.5, -0.5, 0.0, 1.0);
+    float3 Col[3];
+    Col[0] = float3(1.0, 0.0, 0.0); // red
+    Col[1] = float3(0.0, 1.0, 0.0); // green
+    Col[2] = float3(0.0, 0.0, 1.0); // blue
+    PSInput ps; 
+    ps.Pos = Pos[VertId];
+    ps.Color = Col[VertId];
+    return ps;
+    }
+    )";
+
+// Test code from diligent
+// Pixel shader will simply output interpolated vertex color
+constexpr auto PSSource = R"(
+    struct PSInput 
+    { 
+    float4 Pos : SV_POSITION; 
+    float3 Color : COLOR; 
+    };
+    float4 main(PSInput In) : SV_Target
+    {
+    return float4(In.Color.rgb, 1.0);
+    }
+    )";
+
 DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& headervars)
 {
     // Lock us //
     GUARD_LOCK();
 
-    // We now only create the texture once we get some data to display
-    LEVIATHAN_ASSERT(bs::PixelUtil::getNumElemBytes(BS_PIXEL_FORMAT) == CEF_BYTES_PER_PIXEL,
-        "texture format size has changed");
+    // // We now only create the texture once we get some data to display
+    // LEVIATHAN_ASSERT(bs::PixelUtil::getNumElemBytes(BS_PIXEL_FORMAT) == CEF_BYTES_PER_PIXEL,
+    //     "texture format size has changed");
 
     // Now we can create the browser //
     CefWindowInfo info;
@@ -65,6 +107,61 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // TODO: determine which is better
     // CefBrowserHost::CreateBrowserSync(info, this, filetoload, settings, nullptr);
     CefBrowserHost::CreateBrowser(info, this, filetoload, settings, nullptr, nullptr);
+
+    // Create rendering resources
+    auto* graphics = Engine::Get()->GetGraphics();
+
+    // Mostly test code and comments from diligent
+    Diligent::PipelineStateDesc PSODesc;
+    // Pipeline state name is used by the engine to report issues
+    // It is always a good idea to give objects descriptive names
+    PSODesc.Name = "Simple triangle PSO";
+
+    // This is a graphics pipeline
+    PSODesc.IsComputePipeline = false;
+
+    // This tutorial will render to a single render target
+    PSODesc.GraphicsPipeline.NumRenderTargets = 1;
+    // Set render target format which is the format of the swap chain's color buffer
+    PSODesc.GraphicsPipeline.RTVFormats[0] = graphics->GetBackBufferFormat();
+    // This tutorial will not use depth buffer
+    PSODesc.GraphicsPipeline.DSVFormat = Diligent::TEX_FORMAT_D32_FLOAT;
+    // Primitive topology defines what kind of primitives will be rendered by this pipeline
+    // state
+    PSODesc.GraphicsPipeline.PrimitiveTopology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    // No back face culling for this tutorial
+    PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_NONE;
+    // Disable depth testing
+    PSODesc.GraphicsPipeline.DepthStencilDesc.DepthEnable = false;
+
+    Diligent::ShaderCreateInfo ShaderCI;
+    // Tell the system that the shader source code is in HLSL.
+    // For OpenGL, the engine will convert this into GLSL behind the scene
+    ShaderCI.SourceLanguage = Diligent::SHADER_SOURCE_LANGUAGE_HLSL;
+    ShaderCI.UseCombinedTextureSamplers = true;
+    // Create vertex shader
+
+
+    ShaderCI.Desc.ShaderType = Diligent::SHADER_TYPE_VERTEX;
+    ShaderCI.EntryPoint = "main";
+    ShaderCI.Desc.Name = "Triangle vertex shader";
+    ShaderCI.Source = VSSource;
+    auto vs = graphics->CreateShader(ShaderCI, ShaderVariationInfo{});
+
+    // Create pixel shader
+    ShaderCI.Desc.ShaderType = Diligent::SHADER_TYPE_PIXEL;
+    ShaderCI.EntryPoint = "main";
+    ShaderCI.Desc.Name = "Triangle pixel shader";
+    ShaderCI.Source = PSSource;
+    auto ps = graphics->CreateShader(ShaderCI, ShaderVariationInfo{});
+
+    // Finally, create the pipeline state
+    PSODesc.GraphicsPipeline.pVS = vs->GetFirstVariant();
+    PSODesc.GraphicsPipeline.pPS = ps->GetFirstVariant();
+
+    _PSO = graphics->CreatePSO(PSODesc);
+
+    LEVIATHAN_ASSERT(_PSO, "GuiView PSO creation failed");
 
     return true;
 }
@@ -460,6 +557,17 @@ DLLEXPORT void View::Render()
     // TODO: decide whether to use lock or always require being on the main thread here
     Engine::Get()->AssertIfNotMainThread();
     GUARD_LOCK();
+
+    auto graphics = Engine::Get()->GetGraphics();
+
+    graphics->SetActivePSO(*_PSO);
+
+    graphics->CommitShaderResources(
+        nullptr, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+    Diligent::DrawAttribs drawAttrs;
+    drawAttrs.NumVertices = 3;
+    graphics->Draw(drawAttrs);
 
     // // Make sure our texture is large enough //
     // if(Texture && (Texture->getProperties().getWidth() != static_cast<size_t>(width) ||

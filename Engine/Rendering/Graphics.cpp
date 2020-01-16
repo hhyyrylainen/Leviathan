@@ -10,6 +10,7 @@
 #include "GUIOverlayRenderer.h"
 #include "GeometryHelpers.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
+#include "PSO.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 #include "WindowRenderingResources.h"
@@ -63,6 +64,7 @@
 #include <SDL_syswm.h>
 
 #include <future>
+#include <optional>
 #include <regex>
 
 #ifdef __linux
@@ -202,10 +204,16 @@ struct Graphics::Implementation {
     //! Currently set render target
     WindowRenderingResources* CurrentRenderTarget = nullptr;
 
+    PSO* CurrentPSO = nullptr;
+
     //! All created windows.
     //! \todo Decide i fit is a good idea that these are non-owning pointers and the Window
     //! objects have a unique_ptr for the rendering resources
     std::vector<WindowRenderingResources*> ExistingWindows;
+
+
+    //! Set once first backbuffer is created, all windows must have the same format
+    std::optional<Diligent::TEXTURE_FORMAT> BackbufferFormat;
 };
 
 #ifdef __linux
@@ -688,6 +696,18 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
         }
 
         Pimpl->ExistingWindows.push_back(windowResources.get());
+
+        // Store back buffer format (if unset)
+        if(!Pimpl->BackbufferFormat) {
+            Pimpl->BackbufferFormat =
+                windowResources->WindowsSwapChain->GetDesc().ColorBufferFormat;
+        } else {
+            if(*Pimpl->BackbufferFormat !=
+                windowResources->WindowsSwapChain->GetDesc().ColorBufferFormat) {
+                LOG_FATAL("Additional created window has different backbuffer format than the "
+                          "main window");
+            }
+        }
     }
 
     return windowResources;
@@ -851,19 +871,10 @@ void Graphics::UnRegisterWindow(Window& window)
     //     return true;
     // }
 }
-
-void Graphics::ShutdownBSF()
+// ------------------------------------ //
+DLLEXPORT Diligent::TEXTURE_FORMAT Graphics::GetBackBufferFormat() const
 {
-    LEVIATHAN_ASSERT(Pimpl, "ShutdownBSF called when it isn't valid to do so");
-
-    // One more frame needs to be rendered here to not crash if the outer main loop has
-    // done stuff since the last frame.
-    Pimpl->OurApp->runMainLoopFrame();
-    Pimpl->OurApp->endMainLoop();
-    Pimpl->OurApp->GUIRenderer = nullptr;
-
-    bs::Application::shutDown();
-    Pimpl->OurApp = nullptr;
+    return *Pimpl->BackbufferFormat;
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::Frame()
@@ -872,6 +883,7 @@ DLLEXPORT bool Graphics::Frame()
 
     // Once we swap the diligent chains the render target gets unbound
     Pimpl->CurrentRenderTarget = nullptr;
+    Pimpl->CurrentPSO = nullptr;
 
     // Swap all swapchains
     // TODO: allow hiding and stuff
@@ -883,6 +895,7 @@ DLLEXPORT bool Graphics::Frame()
     return true;
 }
 // ------------------------------------ //
+// Rendering operations
 DLLEXPORT void Graphics::SetActiveRenderTarget(WindowRenderingResources* target)
 {
     if(target && !target->WindowsSwapChain) {
@@ -926,6 +939,52 @@ DLLEXPORT void Graphics::ClearRTDepth()
     auto* depth = Pimpl->CurrentRenderTarget->WindowsSwapChain->GetDepthBufferDSV();
     Pimpl->ImmediateContext->ClearDepthStencil(depth, Diligent::CLEAR_DEPTH_FLAG, 1.f, 0,
         Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+}
+// ------------------------------------ //
+DLLEXPORT void Graphics::SetActivePSO(PSO& pso)
+{
+    if(Pimpl->CurrentPSO == &pso)
+        return;
+
+    Pimpl->ImmediateContext->SetPipelineState(pso.GetInternal().RawPtr());
+}
+
+DLLEXPORT void Graphics::CommitShaderResources(
+    Diligent::IShaderResourceBinding* binding, Diligent::RESOURCE_STATE_TRANSITION_MODE mode)
+{
+    Pimpl->ImmediateContext->CommitShaderResources(binding, mode);
+}
+
+DLLEXPORT void Graphics::Draw(const Diligent::DrawAttribs& attribs)
+{
+    Pimpl->ImmediateContext->Draw(attribs);
+}
+// ------------------------------------ //
+// Rendering resource creation
+DLLEXPORT std::shared_ptr<PSO> Graphics::CreatePSO(const Diligent::PipelineStateDesc& desc)
+{
+    Diligent::RefCntAutoPtr<Diligent::IPipelineState> pso;
+
+    Pimpl->RenderDevice->CreatePipelineState(desc, &pso);
+
+    if(!pso)
+        return nullptr;
+
+    return std::make_shared<PSO>(pso);
+}
+
+DLLEXPORT Shader::pointer Graphics::CreateShader(
+    const Diligent::ShaderCreateInfo& info, const ShaderVariationInfo& variations)
+{
+    // TODO: variations compile
+    Diligent::RefCntAutoPtr<Diligent::IShader> shader;
+
+    Pimpl->RenderDevice->CreateShader(info, &shader);
+
+    if(!shader)
+        return nullptr;
+
+    return Shader::MakeShared<Shader>(shader);
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::IsVerticalUVFlipped() const

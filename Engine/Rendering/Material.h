@@ -9,8 +9,6 @@
 #include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
 
-#include "bsfCore/BsCorePrerequisites.h"
-
 namespace Leviathan {
 
 class Material : public ReferenceCounted {
@@ -30,10 +28,10 @@ public:
     DLLEXPORT void SetVariation(const std::string& variation, bool set);
 
 
-    bs::HMaterial GetInternal()
-    {
-        return BsMaterial;
-    }
+    // bs::HMaterial GetInternal()
+    // {
+    //     return BsMaterial;
+    // }
 
     void SetTextureWrapper(const std::string& parameter, Texture* texture)
     {
@@ -43,7 +41,6 @@ public:
     REFERENCE_COUNTED_PTR_TYPE(Material);
 
 private:
-    bs::HMaterial BsMaterial;
     Shader::pointer _Shader;
 };
 

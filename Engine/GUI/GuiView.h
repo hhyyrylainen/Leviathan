@@ -15,7 +15,11 @@
 #include "include/cef_request_handler.h"
 #include "wrapper/cef_message_router.h"
 
-namespace Leviathan { namespace GUI {
+namespace Leviathan {
+
+class PSO;
+
+namespace GUI {
 
 class LeviathanJavaScriptAsync;
 
@@ -294,6 +298,9 @@ protected:
     int NeededTextureHeight = -1;
 
     std::vector<uint8_t> IntermediateTextureBuffer;
+
+    std::shared_ptr<PSO> _PSO;
 };
 
-}} // namespace Leviathan::GUI
+} // namespace GUI
+} // namespace Leviathan

@@ -36,12 +36,14 @@ Shader* ShaderFromNameFactory(const std::string& name)
         return nullptr;
     }
 
-    auto result = Shader::MakeShared<Shader>(bsShader);
+    // auto result = Shader::MakeShared<Shader>(bsShader);
 
-    if(result)
-        result->AddRef();
+    // if(result)
+    //     result->AddRef();
 
-    return result.get();
+    // return result.get();
+    DEBUG_BREAK;
+    return nullptr;
 }
 
 Material* MaterialFromShaderFactory(Shader* shader)

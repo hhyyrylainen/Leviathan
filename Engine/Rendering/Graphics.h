@@ -5,14 +5,24 @@
 // ------------------------------------ //
 #include "Application/AppDefine.h"
 #include "Common/Types.h"
+#include "Shader.h"
 
 #include "bsfCore/RenderAPI/BsRenderWindow.h"
+
+namespace Diligent {
+struct PipelineStateDesc;
+struct ShaderCreateInfo;
+struct DrawAttribs;
+enum RESOURCE_STATE_TRANSITION_MODE : Uint8;
+class IShaderResourceBinding;
+} // namespace Diligent
 
 namespace Leviathan {
 
 enum class GRAPHICS_API { D3D11, D3D12, Vulkan, OpenGL, OpenGLES, Metal };
 
 class WindowRenderingResources;
+class PSO;
 
 class Graphics {
     friend Window;
@@ -37,6 +47,10 @@ public:
 
     DLLEXPORT std::string GetUsedAPIName() const;
 
+    //! \returns The back buffer colour format
+    //! \note Only valid after first window is created
+    DLLEXPORT Diligent::TEXTURE_FORMAT GetBackBufferFormat() const;
+
     // ------------------------------------ //
     // Rendering operations
     //! \brief Sets the render target rendering operations will act on
@@ -45,8 +59,19 @@ public:
     DLLEXPORT void ClearRTColour(const Float4& colour);
     DLLEXPORT void ClearRTDepth();
 
+    DLLEXPORT void SetActivePSO(PSO& pso);
+
+    DLLEXPORT void CommitShaderResources(Diligent::IShaderResourceBinding* binding,
+        Diligent::RESOURCE_STATE_TRANSITION_MODE mode);
+
+    DLLEXPORT void Draw(const Diligent::DrawAttribs& attribs);
+
     // ------------------------------------ //
-    // Resource loading helpers
+    // Rendering resource creation
+    DLLEXPORT std::shared_ptr<PSO> CreatePSO(const Diligent::PipelineStateDesc& desc);
+
+    DLLEXPORT Shader::pointer CreateShader(
+        const Diligent::ShaderCreateInfo& info, const ShaderVariationInfo& variations);
 
     //! \brief Finds and loads a shader with the name
     //!

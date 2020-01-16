@@ -4,7 +4,19 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Shader::Shader(const bs::HShader& shader) : BsShader(shader)
+DLLEXPORT Shader::Shader(const Diligent::RefCntAutoPtr<Diligent::IShader>& shader) :
+    _Shader(shader)
 {
-    LEVIATHAN_ASSERT(shader, "Given bsf shader is null");
+    LEVIATHAN_ASSERT(_Shader, "Diligent shader is null");
+}
+// ------------------------------------ //
+DLLEXPORT Diligent::RefCntAutoPtr<Diligent::IShader> Shader::GetFirstVariant() const
+{
+    return _Shader;
+}
+
+DLLEXPORT Diligent::RefCntAutoPtr<Diligent::IShader> Shader::GetVariant(
+    const ShaderVariant& variant) const
+{
+    return _Shader;
 }

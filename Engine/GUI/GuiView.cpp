@@ -193,7 +193,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // PSODesc.ResourceLayout.StaticSamplers = StaticSamplers;
     // PSODesc.ResourceLayout.NumStaticSamplers = _countof(StaticSamplers);
 
-    QuadMesh = GeometryHelpers::CreateQuad(0, 0, 1.f, 1.f);
+    QuadMesh = GeometryHelpers::CreateQuad(0, 0, 100.f, 100.f);
 
     const auto [elements, elementCount] = QuadMesh->GetVertexLayout().GetElements();
 
@@ -639,6 +639,7 @@ DLLEXPORT void View::Render()
         const auto worldViewProjMatrix =
             (worldMatrix * viewMatrix * projectionMatrix).Transpose();
         // const auto worldViewProjMatrix = worldMatrix * viewMatrix * projectionMatrix;
+        // const auto worldViewProjMatrix = Matrix4::IDENTITY;
 
         mapped.Write(&worldViewProjMatrix, sizeof(worldViewProjMatrix));
     }

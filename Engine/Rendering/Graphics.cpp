@@ -4,6 +4,7 @@
 #include "Application/AppDefine.h"
 #include "Application/CrashHandler.h"
 #include "Application/GameConfiguration.h"
+#include "Buffer.h"
 #include "Common/StringOperations.h"
 #include "Engine.h"
 #include "FileSystem.h"
@@ -213,7 +214,10 @@ struct Graphics::Implementation {
 
 
     //! Set once first backbuffer is created, all windows must have the same format
-    std::optional<Diligent::TEXTURE_FORMAT> BackbufferFormat;
+    std::optional<Diligent::TEXTURE_FORMAT> BackBufferFormat;
+
+    //! Set once first depth buffer is created, all windows must have the same format
+    std::optional<Diligent::TEXTURE_FORMAT> DepthBufferFormat;
 };
 
 #ifdef __linux
@@ -697,15 +701,24 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
 
         Pimpl->ExistingWindows.push_back(windowResources.get());
 
-        // Store back buffer format (if unset)
-        if(!Pimpl->BackbufferFormat) {
-            Pimpl->BackbufferFormat =
+        // Store back buffer format (if unset), and also depth
+        if(!Pimpl->BackBufferFormat) {
+            Pimpl->BackBufferFormat =
                 windowResources->WindowsSwapChain->GetDesc().ColorBufferFormat;
+            Pimpl->DepthBufferFormat =
+                windowResources->WindowsSwapChain->GetDesc().DepthBufferFormat;
         } else {
-            if(*Pimpl->BackbufferFormat !=
+            if(*Pimpl->BackBufferFormat !=
                 windowResources->WindowsSwapChain->GetDesc().ColorBufferFormat) {
                 LOG_FATAL("Additional created window has different backbuffer format than the "
                           "main window");
+            }
+
+            if(*Pimpl->DepthBufferFormat !=
+                windowResources->WindowsSwapChain->GetDesc().ColorBufferFormat) {
+                LOG_FATAL(
+                    "Additional created window has different depthbuffer format than the "
+                    "main window");
             }
         }
     }
@@ -874,7 +887,12 @@ void Graphics::UnRegisterWindow(Window& window)
 // ------------------------------------ //
 DLLEXPORT Diligent::TEXTURE_FORMAT Graphics::GetBackBufferFormat() const
 {
-    return *Pimpl->BackbufferFormat;
+    return *Pimpl->BackBufferFormat;
+}
+
+DLLEXPORT Diligent::TEXTURE_FORMAT Graphics::GetDepthBufferFormat() const
+{
+    return *Pimpl->DepthBufferFormat;
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::Frame()
@@ -948,16 +966,60 @@ DLLEXPORT void Graphics::SetActivePSO(PSO& pso)
 
     Pimpl->ImmediateContext->SetPipelineState(pso.GetInternal().RawPtr());
 }
+// ------------------------------------ //
+DLLEXPORT void* Graphics::MapBuffer(
+    Rendering::Buffer& buffer, Diligent::MAP_TYPE mappingtype, Diligent::MAP_FLAGS mapflags)
+{
+    void* mappedData = nullptr;
+    Pimpl->ImmediateContext->MapBuffer(
+        buffer.GetInternal(), mappingtype, mapflags, mappedData);
 
+    return mappedData;
+}
+
+DLLEXPORT void Graphics::UnMapBuffer(Rendering::Buffer& buffer, Diligent::MAP_TYPE mappingtype)
+{
+    Pimpl->ImmediateContext->UnmapBuffer(buffer.GetInternal(), mappingtype);
+}
+// ------------------------------------ //
 DLLEXPORT void Graphics::CommitShaderResources(
     Diligent::IShaderResourceBinding* binding, Diligent::RESOURCE_STATE_TRANSITION_MODE mode)
 {
     Pimpl->ImmediateContext->CommitShaderResources(binding, mode);
 }
-
+// ------------------------------------ //
 DLLEXPORT void Graphics::Draw(const Diligent::DrawAttribs& attribs)
 {
     Pimpl->ImmediateContext->Draw(attribs);
+}
+
+DLLEXPORT void Graphics::Draw(const Diligent::DrawIndexedAttribs& attribs)
+{
+    Pimpl->ImmediateContext->DrawIndexed(attribs);
+}
+
+DLLEXPORT void Graphics::DrawMesh(Mesh& mesh)
+{
+    uint32_t offset = 0;
+    Diligent::IBuffer* pBuffs[] = {mesh.GetVertexBuffer()->GetInternal()};
+
+    // Bind buffers for rendering
+    Pimpl->ImmediateContext->SetVertexBuffers(0, 1, pBuffs, &offset,
+        Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+        Diligent::SET_VERTEX_BUFFERS_FLAG_RESET);
+    Pimpl->ImmediateContext->SetIndexBuffer(mesh.GetIndexBuffer()->GetInternal(), 0,
+        Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+
+    // Create draw operation
+    Diligent::DrawIndexedAttribs drawAttrs;
+    drawAttrs.IndexType = mesh.GetIndexType();
+    drawAttrs.NumIndices = mesh.GetIndexCount();
+
+    // Verify a bunch of extra stuff if enabled
+    drawAttrs.Flags = DebugVerify ? Diligent::DRAW_FLAG_VERIFY_ALL : Diligent::DRAW_FLAG_NONE;
+
+    // And draw with it
+    Draw(drawAttrs);
 }
 // ------------------------------------ //
 // Rendering resource creation
@@ -985,6 +1047,19 @@ DLLEXPORT Shader::pointer Graphics::CreateShader(
         return nullptr;
 
     return Shader::MakeShared<Shader>(shader);
+}
+
+DLLEXPORT std::shared_ptr<Rendering::Buffer> Graphics::CreateBuffer(
+    const Diligent::BufferDesc& desc, Diligent::BufferData* initialdata /*= nullptr*/)
+{
+    Diligent::RefCntAutoPtr<Diligent::IBuffer> buffer;
+
+    Pimpl->RenderDevice->CreateBuffer(desc, initialdata, &buffer);
+
+    if(!buffer)
+        return nullptr;
+
+    return std::make_shared<Rendering::Buffer>(buffer);
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::IsVerticalUVFlipped() const

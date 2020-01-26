@@ -318,7 +318,8 @@ DLLEXPORT void Model::ApplyMeshName()
     // Find the mesh
     auto mesh = Engine::Get()->GetGraphics()->LoadMeshByName(MeshName);
 
-    GraphicalObject->SetMesh(Mesh::MakeShared<Mesh>(mesh));
+    DEBUG_BREAK;
+    // GraphicalObject->SetMesh(Mesh::MakeShared<Mesh>(mesh));
 }
 
 // // ------------------ ManualObject ------------------ //

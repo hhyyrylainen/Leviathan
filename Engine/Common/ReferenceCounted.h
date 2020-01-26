@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -13,16 +13,19 @@
 
 namespace Leviathan {
 
+template<class T>
+using CountedPtr = boost::intrusive_ptr<T>;
+
 #ifdef LEVIATHAN_USING_BOOST
-#define REFERENCE_COUNTED_PTR_TYPE(x)                    \
-    using pointer = boost::intrusive_ptr<x>;             \
-    using const_pointer = boost::intrusive_ptr<const x>; \
-    static constexpr auto ANGELSCRIPT_TYPE =             \
+#define REFERENCE_COUNTED_PTR_TYPE(x)          \
+    using pointer = CountedPtr<x>;             \
+    using const_pointer = CountedPtr<const x>; \
+    static constexpr auto ANGELSCRIPT_TYPE =   \
         #x "@"; // Appended @ because these are handle types
-#define REFERENCE_COUNTED_PTR_TYPE_NAMED(x, y)           \
-    using pointer = boost::intrusive_ptr<x>;             \
-    using const_pointer = boost::intrusive_ptr<const x>; \
-    static constexpr auto ANGELSCRIPT_TYPE =             \
+#define REFERENCE_COUNTED_PTR_TYPE_NAMED(x, y) \
+    using pointer = CountedPtr<x>;             \
+    using const_pointer = CountedPtr<const x>; \
+    static constexpr auto ANGELSCRIPT_TYPE =   \
         #y "@"; // Appended @ because these are handle types
 #else
 #define REFERENCE_COUNTED_PTR_TYPE(x)
@@ -37,10 +40,10 @@ class ReferenceCounted {
 public:
 #ifdef LEVIATHAN_USING_BOOST
     // This needs to added with the REFERENCE_COUNTED_PTR_TYPE to any child class
-    // using pointer = boost::intrusive_ptr<use REFERENCE_COUNTED_PTR_TYPE>;
+    // using pointer = CountedPtr<use REFERENCE_COUNTED_PTR_TYPE>;
     // static constexpr auto ANGELSCRIPT_TYPE = "...";
-    using basepointer = boost::intrusive_ptr<ReferenceCounted>;
-    using refcountedpointer = boost::intrusive_ptr<ReferenceCounted>;
+    using basepointer = CountedPtr<ReferenceCounted>;
+    using refcountedpointer = CountedPtr<ReferenceCounted>;
 #endif // LEVIATHAN_USING_BOOST
 
     // Prevent directly using this class
@@ -79,12 +82,12 @@ public:
     //!
     //! Releases the reference of the raw pointer (so you don't need to do it manually)
     template<class ActualType>
-    static inline boost::intrusive_ptr<ActualType> WrapPtr(ActualType* ptr)
+    static inline CountedPtr<ActualType> WrapPtr(ActualType* ptr)
     {
         if(!ptr)
             return nullptr;
 
-        boost::intrusive_ptr<ActualType> newptr(ptr);
+        CountedPtr<ActualType> newptr(ptr);
         ptr->Release();
 
         return newptr;
@@ -100,9 +103,9 @@ public:
     //! \brief Constructs a new instance and wraps it
     //! \note Doesn't catch any exceptions
     template<class ActualType, class... Args>
-    static boost::intrusive_ptr<ActualType> MakeShared(Args&&... args)
+    static CountedPtr<ActualType> MakeShared(Args&&... args)
     {
-        boost::intrusive_ptr<ActualType> ptr(new ActualType(std::forward<Args>(args)...));
+        CountedPtr<ActualType> ptr(new ActualType(std::forward<Args>(args)...));
         ptr->Release();
 
         return ptr;

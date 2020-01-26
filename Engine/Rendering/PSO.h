@@ -15,9 +15,27 @@
 // hack workaround
 #undef LOG_ERROR
 #define LOG_ERROR(x) Logger::Get()->Error(x);
+#undef CHECK
+#define CHECK(x)
 
+#include <memory>
 
 namespace Leviathan {
+
+//! \brief Shader resource binding wrapper
+class SRB {
+public:
+    SRB(const Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding>& srb);
+
+    auto& GetInternal()
+    {
+        return _SRB;
+    }
+
+private:
+    Diligent::RefCntAutoPtr<Diligent::IShaderResourceBinding> _SRB;
+};
+
 
 //! \brief Pipeline State Object wrapper. All rendering must use a PSO.
 //!
@@ -27,6 +45,7 @@ class PSO {
 public:
     PSO(const Diligent::RefCntAutoPtr<Diligent::IPipelineState>& pso);
 
+    std::shared_ptr<SRB> CreateShaderResourceBinding(bool createstatic = true);
 
     auto& GetInternal()
     {

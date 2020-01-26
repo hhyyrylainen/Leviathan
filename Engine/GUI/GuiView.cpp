@@ -2,6 +2,7 @@
 #include "GuiView.h"
 
 #include "CEFConversionHelpers.h"
+#include "Common/Matrix.h"
 #include "Engine.h"
 #include "Events/EventHandler.h"
 #include "Exceptions.h"
@@ -9,6 +10,7 @@
 #include "GuiManager.h"
 #include "KeyMapping.h"
 #include "LeviathanJavaScriptAsync.h"
+#include "Rendering/Buffer.h"
 #include "Rendering/GeometryHelpers.h"
 #include "Sound/SoundDevice.h"
 #include "Threading/ThreadingManager.h"
@@ -45,39 +47,53 @@ DLLEXPORT View::~View() {}
 // ------------------------------------ //
 // Test code from diligent
 constexpr auto VSSource = R"(
+    cbuffer Constants
+    {
+    float4x4 g_WorldViewProj;
+    };
+
+    struct VSInput
+    {
+    float2 Pos : ATTRIB0;
+    float2 UV  : ATTRIB1;
+    };
+
     struct PSInput 
     { 
     float4 Pos : SV_POSITION; 
-    float3 Color : COLOR; 
+    float2 UV  : TEX_COORD; 
     };
-    PSInput main(uint VertId : SV_VertexID) 
+
+    void main(in  VSInput VSIn,
+    out PSInput PSIn) 
     {
-    float4 Pos[3];
-    Pos[0] = float4(-0.5, -0.5, 0.0, 1.0);
-    Pos[1] = float4( 0.0, +0.5, 0.0, 1.0);
-    Pos[2] = float4(+0.5, -0.5, 0.0, 1.0);
-    float3 Col[3];
-    Col[0] = float3(1.0, 0.0, 0.0); // red
-    Col[1] = float3(0.0, 1.0, 0.0); // green
-    Col[2] = float3(0.0, 0.0, 1.0); // blue
-    PSInput ps; 
-    ps.Pos = Pos[VertId];
-    ps.Color = Col[VertId];
-    return ps;
+    PSIn.Pos = mul( float4(VSIn.Pos, 0.0,1.0), g_WorldViewProj);
+    PSIn.UV  = VSIn.UV;
     }
     )";
 
 // Test code from diligent
 // Pixel shader will simply output interpolated vertex color
 constexpr auto PSSource = R"(
+    // Texture2D    g_Texture;
+    // SamplerState g_Texture_sampler;
+
     struct PSInput 
     { 
     float4 Pos : SV_POSITION; 
-    float3 Color : COLOR; 
+    float2 UV : TEX_COORD; 
     };
-    float4 main(PSInput In) : SV_Target
+
+    struct PSOutput
     {
-    return float4(In.Color.rgb, 1.0);
+    float4 Color : SV_TARGET;
+    };
+
+    void main(in  PSInput  PSIn,
+    out PSOutput PSOut)
+    {
+    // PSOut.Color = g_Texture.Sample(g_Texture_sampler, PSIn.UV);
+    PSOut.Color = float4(1, 1, 1, 1);
     }
     )";
 
@@ -125,11 +141,13 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // Set render target format which is the format of the swap chain's color buffer
     PSODesc.GraphicsPipeline.RTVFormats[0] = graphics->GetBackBufferFormat();
     // This tutorial will not use depth buffer
-    PSODesc.GraphicsPipeline.DSVFormat = Diligent::TEX_FORMAT_D32_FLOAT;
+    PSODesc.GraphicsPipeline.DSVFormat = graphics->GetDepthBufferFormat();
     // Primitive topology defines what kind of primitives will be rendered by this pipeline
     // state
     PSODesc.GraphicsPipeline.PrimitiveTopology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    // No back face culling for this tutorial
+
+    // PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_BACK;
+    // No culling used on the GUI
     PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_NONE;
     // Disable depth testing
     PSODesc.GraphicsPipeline.DepthStencilDesc.DepthEnable = false;
@@ -155,13 +173,61 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     ShaderCI.Source = PSSource;
     auto ps = graphics->CreateShader(ShaderCI, ShaderVariationInfo{});
 
-    // Finally, create the pipeline state
     PSODesc.GraphicsPipeline.pVS = vs->GetFirstVariant();
     PSODesc.GraphicsPipeline.pPS = ps->GetFirstVariant();
 
+    // Shader resources
+    // Diligent::ShaderResourceVariableDesc Vars[] = {{Diligent::SHADER_TYPE_PIXEL,
+    // "g_Texture",
+    //     Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}};
+    // PSODesc.ResourceLayout.Variables = Vars;
+    // PSODesc.ResourceLayout.NumVariables = std::size(Vars);
+
+    // We don't change the texture sampler
+    // Diligent::SamplerDesc SamLinearClampDesc{Diligent::FILTER_TYPE_LINEAR,
+    //     Diligent::FILTER_TYPE_LINEAR, Diligent::FILTER_TYPE_LINEAR,
+    //     Diligent::TEXTURE_ADDRESS_CLAMP, Diligent::TEXTURE_ADDRESS_CLAMP,
+    //     Diligent::TEXTURE_ADDRESS_CLAMP};
+    // Diligent::StaticSamplerDesc StaticSamplers[] = {
+    //     {Diligent::SHADER_TYPE_PIXEL, "g_Texture", SamLinearClampDesc}};
+    // PSODesc.ResourceLayout.StaticSamplers = StaticSamplers;
+    // PSODesc.ResourceLayout.NumStaticSamplers = _countof(StaticSamplers);
+
+    // Vertex buffer element types
+    Diligent::LayoutElement LayoutElems[] = {// Attribute 0 - vertex position
+        Diligent::LayoutElement{0, 0, 3, Diligent::VT_FLOAT32, Diligent::False},
+        // Attribute 1 - vertex color
+        Diligent::LayoutElement{1, 0, 4, Diligent::VT_FLOAT32, Diligent::False}};
+
+    PSODesc.GraphicsPipeline.InputLayout.LayoutElements = LayoutElems;
+    PSODesc.GraphicsPipeline.InputLayout.NumElements = std::size(LayoutElems);
+
+    // Finally, create the pipeline state
     _PSO = graphics->CreatePSO(PSODesc);
 
     LEVIATHAN_ASSERT(_PSO, "GuiView PSO creation failed");
+
+    // View matrix holding buffer
+    Diligent::BufferDesc CBDesc;
+    CBDesc.Name = "VS constants CB";
+    CBDesc.uiSizeInBytes = sizeof(Matrix4);
+    CBDesc.Usage = Diligent::USAGE_DYNAMIC;
+    CBDesc.BindFlags = Diligent::BIND_UNIFORM_BUFFER;
+    CBDesc.CPUAccessFlags = Diligent::CPU_ACCESS_WRITE;
+
+    ViewBuffer = graphics->CreateBuffer(CBDesc);
+
+
+    // The buffer is bound permanently (but the buffer contents can be written)
+    // Not sure if this is the right way to go about making a GUI renderer
+    _PSO->GetInternal()
+        ->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")
+        ->Set(ViewBuffer->GetInternal().RawPtr());
+
+    QuadMesh = GeometryHelpers::CreateQuad(0, 0, 100, 100);
+
+    // shader resource binding object with static bindings initialized
+    _SRB = _PSO->CreateShaderResourceBinding(true);
 
     return true;
 }
@@ -560,14 +626,32 @@ DLLEXPORT void View::Render()
 
     auto graphics = Engine::Get()->GetGraphics();
 
+    {
+        const auto worldMatrix =
+            Matrix4(Float3(0, 0, 0), Quaternion::IDENTITY, Float3(1, 1, 1));
+
+        const auto viewMatrix = Matrix4::View(Float3(0, 0, 10), Quaternion::IDENTITY);
+
+        const auto projectionMatrix =
+            Matrix4::ProjectionOrthographic(0.f, 100.f, 0.f, 100.f, 0.1f, 100.f);
+
+        Rendering::MappedBuffer mapped(
+            *graphics, *ViewBuffer, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
+
+        const auto worldViewProjMatrix =
+            (worldMatrix * viewMatrix * projectionMatrix).Transpose();
+        // const auto worldViewProjMatrix = worldMatrix * viewMatrix * projectionMatrix;
+
+        mapped.Write(&mapped, sizeof(mapped));
+    }
+
     graphics->SetActivePSO(*_PSO);
 
+    // NOTE: initially this was after setting the vertex buffers
     graphics->CommitShaderResources(
-        nullptr, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+        _SRB->GetInternal(), Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
-    Diligent::DrawAttribs drawAttrs;
-    drawAttrs.NumVertices = 3;
-    graphics->Draw(drawAttrs);
+    graphics->DrawMesh(*QuadMesh);
 
     // // Make sure our texture is large enough //
     // if(Texture && (Texture->getProperties().getWidth() != static_cast<size_t>(width) ||

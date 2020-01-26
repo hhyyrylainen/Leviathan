@@ -7,6 +7,7 @@
 #include "Events/CallableObject.h"
 #include "GuiLayer.h"
 #include "JSProxyable.h"
+#include "Rendering/Mesh.h"
 #include "Rendering/Texture.h"
 
 #include "include/cef_client.h"
@@ -18,6 +19,11 @@
 namespace Leviathan {
 
 class PSO;
+class SRB;
+
+namespace Rendering {
+class Buffer;
+}
 
 namespace GUI {
 
@@ -300,6 +306,9 @@ protected:
     std::vector<uint8_t> IntermediateTextureBuffer;
 
     std::shared_ptr<PSO> _PSO;
+    std::shared_ptr<SRB> _SRB;
+    std::shared_ptr<Rendering::Buffer> ViewBuffer;
+    Mesh::pointer QuadMesh;
 };
 
 } // namespace GUI

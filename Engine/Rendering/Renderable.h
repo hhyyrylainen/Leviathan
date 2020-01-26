@@ -22,6 +22,8 @@ public:
     DLLEXPORT void SetMaterial(const Material::pointer& material);
     DLLEXPORT void SetMesh(const Mesh::pointer& mesh);
 
+    DLLEXPORT void Render(RenderParams& params) override;
+
     REFERENCE_COUNTED_PTR_TYPE(Renderable);
 
 protected:

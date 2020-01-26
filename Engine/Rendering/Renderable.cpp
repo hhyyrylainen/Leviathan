@@ -1,6 +1,7 @@
 // ------------------------------------ //
 #include "Renderable.h"
 
+#include "Camera.h"
 #include "Scene.h"
 
 using namespace Leviathan;
@@ -34,4 +35,20 @@ DLLEXPORT void Renderable::SetMesh(const Mesh::pointer& mesh)
     // } else {
     //     GraphicalObject->setMesh(_Mesh->GetInternal());
     // }
+}
+// ------------------------------------ //
+DLLEXPORT void Renderable::Render(RenderParams& params)
+{
+    // Skip rendering if no mesh or no material
+    if(!_Mesh || !_Material || !HasParent())
+        return;
+
+    const auto& transform = GetParent()->GetWorldTransform();
+
+    const auto worldMatrix =
+        Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+
+    const auto worldViewProjMatrix =
+        (worldMatrix * params._Camera.GetViewMatrix() * params._Camera.GetProjectionMatrix())
+            .Transpose();
 }

@@ -847,10 +847,10 @@ Matrix3 Leviathan::operator*(float lhs, const Matrix3& rhs)
 
 // ------------------------------------ //
 // Matrix 4
-DLLEXPORT const Matrix4 Matrix4::IDENTITY = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-DLLEXPORT const Matrix4 Matrix4::ZERO = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+DLLEXPORT const Matrix4 Matrix4::ZERO = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+DLLEXPORT const Matrix4 Matrix4::IDENTITY = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
 // ------------------------------------ //
 static float MINOR(const Matrix4& m, const uint32_t r0, const uint32_t r1, const uint32_t r2,
     const uint32_t c0, const uint32_t c1, const uint32_t c2)

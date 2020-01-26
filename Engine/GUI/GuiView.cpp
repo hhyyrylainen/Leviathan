@@ -49,26 +49,28 @@ DLLEXPORT View::~View() {}
 constexpr auto VSSource = R"(
     cbuffer Constants
     {
-    float4x4 g_WorldViewProj;
+    float4x4 g_ProjectionMatrix;
     };
 
     struct VSInput
     {
     float2 Pos : ATTRIB0;
     float2 UV  : ATTRIB1;
+    // float4 Col : ATTRIB2;
     };
 
     struct PSInput 
     { 
-    float4 Pos : SV_POSITION; 
+    float4 Pos : SV_POSITION;
+    // float4 Col : COLOR;
     float2 UV  : TEX_COORD; 
     };
 
-    void main(in  VSInput VSIn,
-    out PSInput PSIn) 
+    void main(in VSInput VSIn, out PSInput PSIn)
     {
-    PSIn.Pos = mul( float4(VSIn.Pos, 0.0,1.0), g_WorldViewProj);
-    PSIn.UV  = VSIn.UV;
+    PSIn.Pos = mul(g_ProjectionMatrix, float4(VSIn.Pos.xy, 0.0, 1.0));
+    PSIn.UV = VSIn.UV;
+    // PSIn.Col = VSIn.Col;
     }
     )";
 
@@ -80,20 +82,15 @@ constexpr auto PSSource = R"(
 
     struct PSInput 
     { 
-    float4 Pos : SV_POSITION; 
+    float4 Pos : SV_POSITION;
+    // float4 Col : COLOR;
     float2 UV : TEX_COORD; 
     };
 
-    struct PSOutput
+    float4 main(in PSInput PSIn) : SV_Target
     {
-    float4 Color : SV_TARGET;
-    };
-
-    void main(in  PSInput  PSIn,
-    out PSOutput PSOut)
-    {
-    // PSOut.Color = g_Texture.Sample(g_Texture_sampler, PSIn.UV);
-    PSOut.Color = float4(1, 1, 1, 1);
+    // return PSIn.Col * g_Texture.Sample(g_Texture_sampler, PSIn.UV);
+    return float4(1, 1, 1, 1);
     }
     )";
 
@@ -625,28 +622,18 @@ DLLEXPORT void View::Render()
     auto graphics = Engine::Get()->GetGraphics();
 
     {
-        const auto worldMatrix =
-            Matrix4(Float3(0, 0, 0), Quaternion::IDENTITY, Float3(1, 1, 1));
-
-        const auto viewMatrix = Matrix4::View(Float3(0, 0, 10), Quaternion::IDENTITY);
-
+        // Orthographic projection (setting last param to 0 disables depth adjustement)
         const auto projectionMatrix =
-            Matrix4::ProjectionOrthographic(0.f, 100.f, 0.f, 100.f, 0.1f, 100.f);
+            Matrix4::ProjectionOrthographic(0.f, 100.f, 0.f, 100.f, -100.f, 100.f).Transpose();
 
         Rendering::MappedBuffer mapped(
             *graphics, *ViewBuffer, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
 
-        const auto worldViewProjMatrix =
-            (worldMatrix * viewMatrix * projectionMatrix).Transpose();
-        // const auto worldViewProjMatrix = worldMatrix * viewMatrix * projectionMatrix;
-        // const auto worldViewProjMatrix = Matrix4::IDENTITY;
-
-        mapped.Write(&worldViewProjMatrix, sizeof(worldViewProjMatrix));
+        mapped.Write(&projectionMatrix, sizeof(projectionMatrix));
     }
 
     graphics->SetActivePSO(*_PSO);
 
-    // NOTE: initially this was after setting the vertex buffers
     graphics->CommitShaderResources(
         _SRB->GetInternal(), Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 

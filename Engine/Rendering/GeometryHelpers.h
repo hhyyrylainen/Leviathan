@@ -25,11 +25,11 @@ public:
     //! The coordinates are in screen space -1 - 1 where -1 is the left and top of the screen
     //! so a full screen quad would be CreateScreenSpaceQuad(-1, -1, 2, 2)
     DLLEXPORT static Mesh::pointer CreateScreenSpaceQuad(
-        float x, float y, float width, float height, bool autoflipUV = true);
+        float x, float y, float width, float height);
 
     //! \brief Creates a quad with Float2 coordinates and Float2 UVs
     DLLEXPORT static Mesh::pointer CreateQuad(
-        float left, float top, float width, float height, bool autoflipUV = true);
+        float left, float top, float width, float height);
 
     //! \brief Creates a plane with specific size and UV coordinates with 0, 0 on top left
     //!

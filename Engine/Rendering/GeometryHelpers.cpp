@@ -25,10 +25,8 @@ static_assert(sizeof(float) == 4, "float is assumed to be 32 bits");
 static_assert(CHAR_BIT == 8, "byte is assumed to be 8 bits");
 // ------------------------------------ //
 DLLEXPORT Mesh::pointer GeometryHelpers::CreateScreenSpaceQuad(
-    float x, float y, float width, float height, bool autoflipUV /*= true*/)
+    float x, float y, float width, float height)
 {
-    static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
-
     bs::MESH_DESC meshDesc;
     meshDesc.numVertices = 4;
     meshDesc.numIndices = 6;
@@ -50,11 +48,6 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateScreenSpaceQuad(
 
     float uvBottom = 1.f;
     float uvTop = 0.f;
-
-    if(flippedY && autoflipUV) {
-        uvBottom = 0.f;
-        uvTop = 1.f;
-    }
 
     {
         // First vertex
@@ -107,8 +100,6 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateScreenSpaceQuad(
 
 DLLEXPORT Mesh::pointer GeometryHelpers::CreateXZPlane(float width, float height)
 {
-    static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
-
     const auto x = -width / 2;
     const auto z = -height / 2;
 
@@ -184,18 +175,11 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateXZPlane(float width, float height
 }
 // ------------------------------------ //
 DLLEXPORT Mesh::pointer GeometryHelpers::CreateQuad(
-    float left, float top, float width, float height, bool autoflipUV /*= true*/)
+    float left, float top, float width, float height)
 {
-    static bool flippedY = Engine::Get()->GetGraphics()->IsVerticalUVFlipped();
-
     // Generate vertex data
     float uvBottom = 1.f;
     float uvTop = 0.f;
-
-    if(flippedY && autoflipUV) {
-        uvBottom = 0.f;
-        uvTop = 1.f;
-    }
 
     const QuadVertex meshData[] = {// First vertex
         {Float2(left, top), Float2(0, uvTop)},
@@ -210,21 +194,6 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateQuad(
         {Float2(left, top + height), Float2(0, uvBottom)}};
 
     static_assert(sizeof(meshData) == 4 * 4 * sizeof(float), "mesh data size changed");
-
-    // bs::MESH_DESC meshDesc;
-    // meshDesc.numVertices = 4;
-    // meshDesc.numIndices = 6;
-    // meshDesc.indexType = bs::IT_16BIT;
-    // meshDesc.usage = bs::MU_STATIC;
-    // meshDesc.subMeshes.push_back(bs::SubMesh(0, 6, bs::DOT_TRIANGLE_LIST));
-
-    // bs::SPtr<bs::VertexDataDesc> vertexDesc = bs::VertexDataDesc::create();
-    // vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_POSITION);
-    // vertexDesc->addVertElem(bs::VET_FLOAT2, bs::VES_TEXCOORD);
-    // const auto stride = 4;
-    // meshDesc.vertexDesc = vertexDesc;
-
-    // bs::SPtr<bs::MeshData> meshData = bs::MeshData::create(4, 6, vertexDesc, bs::IT_16BIT);
 
     constexpr uint16_t indicesData[] = {3, 0, 1, 1, 2, 3};
 
@@ -251,7 +220,7 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateQuad(
     indexBufferData.DataSize = sizeof(indicesData);
     auto indexBuffer = graphics->CreateBuffer(indexBufferDesc, &indexBufferData);
 
-    // QuadVertexElementDefinitions
+    // TODO: pass Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST here
     return Mesh::MakeShared<Mesh>(vertexBuffer,
         Rendering::LayoutElements(
             QuadVertexElementDefinitions, std::size(QuadVertexElementDefinitions), false),

@@ -35,7 +35,8 @@ using namespace Leviathan::GUI;
 // ------------------------------------ //
 constexpr auto CEF_BYTES_PER_PIXEL = 4;
 // When documentation of Ogre and CEF talk about RGBA it seems they actually talk about BGRA
-constexpr auto DILIGENT_PIXEL_FORMAT = Diligent::TEX_FORMAT_RGBA8_UNORM;
+// So we need to swap the channels around when reading the data
+constexpr auto DILIGENT_PIXEL_FORMAT = Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB;
 
 DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
     VIEW_SECURITYLEVEL security /*= VIEW_SECURITYLEVEL_ACCESS_ALL*/) :
@@ -217,9 +218,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
         ->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")
         ->Set(ViewBuffer->GetInternal().RawPtr());
 
-
-
-    // shader resource binding object with static bindings initialized
+    // Shader resource binding object with static bindings initialized
     _SRB = _PSO->CreateShaderResourceBinding(true);
 
     return true;
@@ -578,34 +577,30 @@ void View::OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
     }
 
     // Copy the data to intermediate buffer //
-    const auto firstRect = dirtyRects.front();
-    if(dirtyRects.size() == 1 && firstRect.x == 0 && firstRect.y == 0 &&
-        firstRect.width == width && firstRect.height == height) {
+    // Diligent doesn't support the needed format on OpenGL so we need to swap channels around
+    // ourselves
+    uint8_t* destptr = reinterpret_cast<uint8_t*>(IntermediateTextureBuffer.data());
+    const uint8_t* source = static_cast<const uint8_t*>(buffer);
 
-        // Can directly copy the whole thing
-        std::memcpy(IntermediateTextureBuffer.data(), buffer, buffSize);
+    const size_t rowElements = width * 4;
 
-    } else {
+    for(const auto rect : dirtyRects) {
 
-        uint32_t* destptr = reinterpret_cast<uint32_t*>(IntermediateTextureBuffer.data());
-        const uint32_t* source = static_cast<const uint32_t*>(buffer);
+        const auto lastX = rect.x + rect.width;
+        const auto lastY = rect.y + rect.height;
 
-        const size_t rowElements = width;
-
-        for(const auto rect : dirtyRects) {
-
-            const auto lastX = rect.x + rect.width;
-            const auto lastY = rect.y + rect.height;
-
-            for(int y = rect.y; y < lastY; ++y) {
-                for(int x = rect.x; x < lastX; ++x) {
-
-                    // Safety check. Comment out when not debugging
-                    // LEVIATHAN_ASSERT(y >= 0 && y < height, "View OnPaint y out of range");
-                    // LEVIATHAN_ASSERT(x >= 0 && x < width, "View OnPaint x out of range");
-
-                    destptr[(rowElements * y) + x] = source[(y * width) + x];
-                }
+        for(int y = rect.y; y < lastY; ++y) {
+            for(int x = rect.x; x < lastX; ++x) {
+                // BGRA to RGBA conversion
+                const auto offset = (rowElements * y) + (x * 4);
+                // R
+                destptr[offset + 0] = source[offset + 2];
+                // G
+                destptr[offset + 1] = source[offset + 1];
+                // B
+                destptr[offset + 2] = source[offset + 0];
+                // A
+                destptr[offset + 3] = source[offset + 3];
             }
         }
     }
@@ -617,7 +612,7 @@ DLLEXPORT void View::Render()
     Engine::Get()->AssertIfNotMainThread();
     GUARD_LOCK();
 
-    // Cannot render if not painted yet
+    // Cannot render if not painted yet (that's when CEF sends us data)
     if(NeededTextureWidth <= 0 || NeededTextureHeight <= 0)
         return;
 
@@ -646,12 +641,12 @@ DLLEXPORT void View::Render()
     graphics->WriteDynamicTextureData(*ViewTexture, 0, 0, box, data);
 
     {
+        Rendering::MappedBuffer mapped(
+            *graphics, *ViewBuffer, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
+
         // Orthographic projection (setting last param to 0 disables depth adjustement)
         const auto projectionMatrix =
             Matrix4::ProjectionOrthographic(0.f, 100.f, 0.f, 100.f, -100.f, 100.f).Transpose();
-
-        Rendering::MappedBuffer mapped(
-            *graphics, *ViewBuffer, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
 
         mapped.Write(&projectionMatrix, sizeof(projectionMatrix));
     }

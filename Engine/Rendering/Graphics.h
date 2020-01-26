@@ -53,6 +53,7 @@ public:
 
     DLLEXPORT bool Frame();
 
+    //! \note With diligent this seems to not be needed
     DLLEXPORT bool IsVerticalUVFlipped() const;
 
     inline auto GetUsedAPI() const

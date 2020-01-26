@@ -257,6 +257,12 @@ bool Graphics::Init(AppDef* appdef)
 
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 
+    // Set needed opengl options for sdl
+    // TODO: would be nice to always load the newest supported version
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
     int displays = SDL_GetNumVideoDisplays();
 
     LOG_INFO("SDL: display count: " + Convert::ToString(displays));
@@ -432,6 +438,15 @@ DLLEXPORT std::string Graphics::GetUsedAPIName() const
     }
 
     return "error";
+}
+
+DLLEXPORT bool Graphics::IsOpenGLUsed() const
+{
+    switch(SelectedAPI) {
+    case GRAPHICS_API::OpenGL:
+    case GRAPHICS_API::OpenGLES: return true;
+    default: return false;
+    }
 }
 // ------------------------------------ //
 bool Graphics::SelectPreferredGraphicsAPI(AppDef* appdef)

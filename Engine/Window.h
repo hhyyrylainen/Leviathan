@@ -283,6 +283,8 @@ private:
     //! Per-window rendering resources. Contains the swap chain for this window
     std::unique_ptr<WindowRenderingResources> RenderResources;
 
+    void* CreatedGLContext = nullptr;
+
     //! \todo This should probably be atomic
     static Window* InputCapturer;
 };

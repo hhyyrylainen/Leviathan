@@ -97,12 +97,13 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
     // High DPI OpenGL
     // canvas. https://wiki.libsdl.org/SDL_CreateWindow
 
+    bool createOpenGL = windowcreater->IsOpenGLUsed();
+
     SDLWindow = SDL_CreateWindow(WData.Title.c_str(),
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber),
         SDL_WINDOWPOS_UNDEFINED_DISPLAY(WData.DisplayNumber), WData.Width, WData.Height,
         // This seems to cause issues on Windows
-        // SDL_WINDOW_OPENGL |
-        SDL_WINDOW_RESIZABLE | extraFlags);
+        (createOpenGL ? SDL_WINDOW_OPENGL : 0) | SDL_WINDOW_RESIZABLE | extraFlags);
 
     // SDL_WINDOW_FULLSCREEN_DESKTOP works so much better than
     // SDL_WINDOW_FULLSCREEN so it should be always used
@@ -116,7 +117,12 @@ DLLEXPORT Window::Window(Graphics* windowcreater, AppDef* windowproperties) :
         LOG_FATAL("SDL Window creation failed, error: " + std::string(SDL_GetError()));
     }
 
-    // SDL_GLContext glContext = SDL_GL_CreateContext(SDLWindow);
+    if(createOpenGL) {
+        CreatedGLContext = SDL_GL_CreateContext(SDLWindow);
+        if(!CreatedGLContext) {
+            LOG_FATAL("Window: sdl create gl context failed");
+        }
+    }
 
     SDL_SysWMinfo wmInfo;
     SDL_VERSION(&wmInfo.version);
@@ -235,6 +241,11 @@ DLLEXPORT Window::~Window()
 
         Logger::Get()->Info("Window: all windows have been closed, "
                             "should quit soon");
+    }
+
+    if(CreatedGLContext) {
+        SDL_GL_DeleteContext(CreatedGLContext);
+        CreatedGLContext = nullptr;
     }
 
     // if(isPrimary) {

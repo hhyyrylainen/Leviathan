@@ -57,6 +57,9 @@ public:
 
     DLLEXPORT std::string GetUsedAPIName() const;
 
+    //! \returns True when opengl is used. Needed by Window to know when to make a context
+    DLLEXPORT bool IsOpenGLUsed() const;
+
     //! \returns The back buffer colour format
     //! \note Only valid after first window is created
     DLLEXPORT Diligent::TEXTURE_FORMAT GetBackBufferFormat() const;

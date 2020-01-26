@@ -193,14 +193,12 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // PSODesc.ResourceLayout.StaticSamplers = StaticSamplers;
     // PSODesc.ResourceLayout.NumStaticSamplers = _countof(StaticSamplers);
 
-    // Vertex buffer element types
-    Diligent::LayoutElement LayoutElems[] = {// Attribute 0 - vertex position
-        Diligent::LayoutElement{0, 0, 3, Diligent::VT_FLOAT32, Diligent::False},
-        // Attribute 1 - vertex color
-        Diligent::LayoutElement{1, 0, 4, Diligent::VT_FLOAT32, Diligent::False}};
+    QuadMesh = GeometryHelpers::CreateQuad(0, 0, 1.f, 1.f);
 
-    PSODesc.GraphicsPipeline.InputLayout.LayoutElements = LayoutElems;
-    PSODesc.GraphicsPipeline.InputLayout.NumElements = std::size(LayoutElems);
+    const auto [elements, elementCount] = QuadMesh->GetVertexLayout().GetElements();
+
+    PSODesc.GraphicsPipeline.InputLayout.LayoutElements = elements;
+    PSODesc.GraphicsPipeline.InputLayout.NumElements = elementCount;
 
     // Finally, create the pipeline state
     _PSO = graphics->CreatePSO(PSODesc);
@@ -224,7 +222,7 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
         ->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")
         ->Set(ViewBuffer->GetInternal().RawPtr());
 
-    QuadMesh = GeometryHelpers::CreateQuad(0, 0, 100, 100);
+
 
     // shader resource binding object with static bindings initialized
     _SRB = _PSO->CreateShaderResourceBinding(true);
@@ -642,7 +640,7 @@ DLLEXPORT void View::Render()
             (worldMatrix * viewMatrix * projectionMatrix).Transpose();
         // const auto worldViewProjMatrix = worldMatrix * viewMatrix * projectionMatrix;
 
-        mapped.Write(&mapped, sizeof(mapped));
+        mapped.Write(&worldViewProjMatrix, sizeof(worldViewProjMatrix));
     }
 
     graphics->SetActivePSO(*_PSO);

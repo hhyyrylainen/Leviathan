@@ -39,11 +39,13 @@ public:
         return std::make_tuple(Elements, ElementCount);
     }
 
-    //! \brief Hacks around Diligent not working with const layout elements
-    inline std::tuple<Diligent::LayoutElement*, uint16_t> GetElementsForDiligent() const
-    {
-        return std::make_tuple(const_cast<Diligent::LayoutElement*>(Elements), ElementCount);
-    }
+    // TODO: probably not needed, delete
+    // //! \brief Hacks around Diligent not working with const layout elements
+    // inline std::tuple<Diligent::LayoutElement*, uint16_t> GetElementsForDiligent() const
+    // {
+    //     return std::make_tuple(const_cast<Diligent::LayoutElement*>(Elements),
+    //     ElementCount);
+    // }
 
     //! \returns A pointer to a fresh copy of the data in this
     DLLEXPORT std::unique_ptr<Diligent::LayoutElement> Duplicate() const;

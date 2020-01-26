@@ -77,8 +77,8 @@ constexpr auto VSSource = R"(
 // Test code from diligent
 // Pixel shader will simply output interpolated vertex color
 constexpr auto PSSource = R"(
-    // Texture2D    g_Texture;
-    // SamplerState g_Texture_sampler;
+    Texture2D    g_Texture;
+    SamplerState g_Texture_sampler;
 
     struct PSInput 
     { 
@@ -89,8 +89,7 @@ constexpr auto PSSource = R"(
 
     float4 main(in PSInput PSIn) : SV_Target
     {
-    // return PSIn.Col * g_Texture.Sample(g_Texture_sampler, PSIn.UV);
-    return float4(1, 1, 1, 1);
+    return /*PSIn.Col * */ g_Texture.Sample(g_Texture_sampler, PSIn.UV);
     }
     )";
 
@@ -174,21 +173,20 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     PSODesc.GraphicsPipeline.pPS = ps->GetFirstVariant();
 
     // Shader resources
-    // Diligent::ShaderResourceVariableDesc Vars[] = {{Diligent::SHADER_TYPE_PIXEL,
-    // "g_Texture",
-    //     Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}};
-    // PSODesc.ResourceLayout.Variables = Vars;
-    // PSODesc.ResourceLayout.NumVariables = std::size(Vars);
+    Diligent::ShaderResourceVariableDesc Vars[] = {{Diligent::SHADER_TYPE_PIXEL, "g_Texture",
+        Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}};
+    PSODesc.ResourceLayout.Variables = Vars;
+    PSODesc.ResourceLayout.NumVariables = std::size(Vars);
 
     // We don't change the texture sampler
-    // Diligent::SamplerDesc SamLinearClampDesc{Diligent::FILTER_TYPE_LINEAR,
-    //     Diligent::FILTER_TYPE_LINEAR, Diligent::FILTER_TYPE_LINEAR,
-    //     Diligent::TEXTURE_ADDRESS_CLAMP, Diligent::TEXTURE_ADDRESS_CLAMP,
-    //     Diligent::TEXTURE_ADDRESS_CLAMP};
-    // Diligent::StaticSamplerDesc StaticSamplers[] = {
-    //     {Diligent::SHADER_TYPE_PIXEL, "g_Texture", SamLinearClampDesc}};
-    // PSODesc.ResourceLayout.StaticSamplers = StaticSamplers;
-    // PSODesc.ResourceLayout.NumStaticSamplers = _countof(StaticSamplers);
+    Diligent::SamplerDesc SamLinearClampDesc{Diligent::FILTER_TYPE_LINEAR,
+        Diligent::FILTER_TYPE_LINEAR, Diligent::FILTER_TYPE_LINEAR,
+        Diligent::TEXTURE_ADDRESS_CLAMP, Diligent::TEXTURE_ADDRESS_CLAMP,
+        Diligent::TEXTURE_ADDRESS_CLAMP};
+    Diligent::StaticSamplerDesc StaticSamplers[] = {
+        {Diligent::SHADER_TYPE_PIXEL, "g_Texture", SamLinearClampDesc}};
+    PSODesc.ResourceLayout.StaticSamplers = StaticSamplers;
+    PSODesc.ResourceLayout.NumStaticSamplers = _countof(StaticSamplers);
 
     QuadMesh = GeometryHelpers::CreateQuad(0, 0, 100.f, 100.f);
 
@@ -619,7 +617,33 @@ DLLEXPORT void View::Render()
     Engine::Get()->AssertIfNotMainThread();
     GUARD_LOCK();
 
+    // Cannot render if not painted yet
+    if(NeededTextureWidth <= 0 || NeededTextureHeight <= 0)
+        return;
+
     auto graphics = Engine::Get()->GetGraphics();
+
+    // Make sure our texture exists and is large enough
+    if(!ViewTexture || ViewTexture->GetWidth() != NeededTextureWidth ||
+        ViewTexture->GetHeight() != NeededTextureHeight) {
+
+        LOG_INFO("GuiView: creating texture for CEF");
+        ViewTexture = graphics->CreateDynamicTexture(
+            NeededTextureWidth, NeededTextureHeight, DILIGENT_PIXEL_FORMAT);
+    }
+
+    // We use a dynamic texture so it needs to be written every frame
+    Diligent::Box box;
+    box.MinX = 0;
+    box.MinY = 0;
+    box.MaxX = NeededTextureWidth;
+    box.MaxY = NeededTextureHeight;
+
+    Diligent::TextureSubResData data;
+    data.Stride = NeededTextureWidth * 4;
+    data.pData = IntermediateTextureBuffer.data();
+
+    graphics->WriteDynamicTextureData(*ViewTexture, 0, 0, box, data);
 
     {
         // Orthographic projection (setting last param to 0 disables depth adjustement)
@@ -634,46 +658,14 @@ DLLEXPORT void View::Render()
 
     graphics->SetActivePSO(*_PSO);
 
+    _SRB->GetInternal()
+        ->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")
+        ->Set(ViewTexture->GetDefaultSRV());
+
     graphics->CommitShaderResources(
         _SRB->GetInternal(), Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
 
     graphics->DrawMesh(*QuadMesh);
-
-    // // Make sure our texture is large enough //
-    // if(Texture && (Texture->getProperties().getWidth() != static_cast<size_t>(width) ||
-    //         Texture->getProperties().getHeight() != static_cast<size_t>(height))) {
-
-    //     Texture->destroy();
-    //     Texture = nullptr;
-    //     LOG_INFO("GuiView: texture size has changed");
-    // }
-
-    // if(!Texture) {
-
-    //     LOG_INFO("GuiView: creating texture for CEF");
-
-    // }
-
-    // auto* bsfBuffer = GetNextDataBuffer();
-
-    // if(!bsfBuffer) {
-    //     LOG_WARNING("GUI: View: out of texture data buffers");
-    //     return;
-    // }
-
-    // // This only works with pixel formats with no padding
-    // LEVIATHAN_ASSERT((*bsfBuffer)->getSize() == buffSize, "CEF and BSF buffer size
-    // mismatch");
-
-    // // Copy intermediate buffer
-    // std::memcpy((*bsfBuffer)->getData(), IntermediateTextureBuffer.data(), buffSize);
-
-    // if(!Texture) {
-    //     Texture = bs::Texture::create(*bsfBuffer, bs::TU_DYNAMIC);
-    //     Owner->NotifyAboutLayer(RenderOrder, Texture);
-    // } else {
-    //     Texture->writeData(*bsfBuffer, 0, 0, true);
-    // }
 }
 // ------------------------------------ //
 void View::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status)

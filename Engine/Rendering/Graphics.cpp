@@ -12,6 +12,7 @@
 #include "GeometryHelpers.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "PSO.h"
+#include "Texture.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 #include "WindowRenderingResources.h"
@@ -997,6 +998,15 @@ DLLEXPORT void Graphics::UnMapBuffer(Rendering::Buffer& buffer, Diligent::MAP_TY
     Pimpl->ImmediateContext->UnmapBuffer(buffer.GetInternal(), mappingtype);
 }
 // ------------------------------------ //
+DLLEXPORT void Graphics::WriteDynamicTextureData(Texture& texture, uint32_t miplevel,
+    uint32_t slice, const Diligent::Box& updatebox,
+    const Diligent::TextureSubResData& subresdata)
+{
+    Pimpl->ImmediateContext->UpdateTexture(texture.GetInternal(), miplevel, slice, updatebox,
+        subresdata, Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION,
+        Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
+}
+// ------------------------------------ //
 DLLEXPORT void Graphics::CommitShaderResources(
     Diligent::IShaderResourceBinding* binding, Diligent::RESOURCE_STATE_TRANSITION_MODE mode)
 {
@@ -1075,6 +1085,34 @@ DLLEXPORT std::shared_ptr<Rendering::Buffer> Graphics::CreateBuffer(
         return nullptr;
 
     return std::make_shared<Rendering::Buffer>(buffer);
+}
+
+DLLEXPORT CountedPtr<Texture> Graphics::CreateTexture(
+    const Diligent::TextureDesc& desc, const Diligent::TextureData* data)
+{
+    Diligent::RefCntAutoPtr<Diligent::ITexture> texture;
+
+    Pimpl->RenderDevice->CreateTexture(desc, data, &texture);
+
+    if(!texture)
+        return nullptr;
+
+    return Texture::MakeShared<Texture>(texture, desc.Width, desc.Height);
+}
+
+DLLEXPORT CountedPtr<Texture> Graphics::CreateDynamicTexture(
+    int width, int height, Diligent::TEXTURE_FORMAT format)
+{
+    Diligent::TextureDesc desc;
+    desc.Type = Diligent::RESOURCE_DIM_TEX_2D;
+    desc.Width = width;
+    desc.Height = height;
+    desc.Usage = Diligent::USAGE_DYNAMIC;
+    desc.BindFlags = Diligent::BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = Diligent::CPU_ACCESS_WRITE;
+    desc.Format = format;
+    desc.MipLevels = 1;
+    return CreateTexture(desc, nullptr);
 }
 // ------------------------------------ //
 DLLEXPORT bool Graphics::IsVerticalUVFlipped() const

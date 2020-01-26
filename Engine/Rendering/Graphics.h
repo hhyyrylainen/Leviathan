@@ -18,6 +18,10 @@ enum RESOURCE_STATE_TRANSITION_MODE : Uint8;
 class IShaderResourceBinding;
 struct BufferDesc;
 struct BufferData;
+struct TextureDesc;
+struct TextureData;
+struct Box;
+struct TextureSubResData;
 } // namespace Diligent
 
 namespace Leviathan {
@@ -30,6 +34,7 @@ class MappedBuffer;
 class WindowRenderingResources;
 class PSO;
 class Mesh;
+class Texture;
 
 enum class GRAPHICS_API { D3D11, D3D12, Vulkan, OpenGL, OpenGLES, Metal };
 
@@ -85,6 +90,8 @@ public:
 
     DLLEXPORT void UnMapBuffer(Rendering::Buffer& buffer, Diligent::MAP_TYPE mappingtype);
 
+    DLLEXPORT void WriteDynamicTextureData(Texture& texture, uint32_t miplevel, uint32_t slice,
+        const Diligent::Box& updatebox, const Diligent::TextureSubResData& subresdata);
 
     DLLEXPORT void CommitShaderResources(Diligent::IShaderResourceBinding* binding,
         Diligent::RESOURCE_STATE_TRANSITION_MODE mode);
@@ -102,6 +109,14 @@ public:
 
     DLLEXPORT std::shared_ptr<Rendering::Buffer> CreateBuffer(
         const Diligent::BufferDesc& desc, Diligent::BufferData* initialdata = nullptr);
+
+    DLLEXPORT CountedPtr<Texture> CreateTexture(
+        const Diligent::TextureDesc& desc, const Diligent::TextureData* data);
+
+    //! \note According to diligent documentation the created texture *must* be written at
+    //! least once per frame
+    DLLEXPORT CountedPtr<Texture> CreateDynamicTexture(
+        int width, int height, Diligent::TEXTURE_FORMAT format);
 
     //! \brief Finds and loads a shader with the name
     //!

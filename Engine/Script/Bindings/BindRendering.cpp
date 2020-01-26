@@ -76,12 +76,14 @@ Texture* TextureFromNameFactory(const std::string& name)
         return nullptr;
     }
 
-    auto result = Texture::MakeShared<Texture>(texture);
+    // auto result = Texture::MakeShared<Texture>(texture);
 
-    if(result)
-        result->AddRef();
+    // if(result)
+    //     result->AddRef();
 
-    return result.get();
+    // return result.get();
+    DEBUG_BREAK;
+    return nullptr;
 }
 
 namespace Leviathan {

@@ -4,7 +4,8 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
-DLLEXPORT Texture::Texture(const bs::HTexture& texture) : BsTexture(texture)
-{
-    LEVIATHAN_ASSERT(texture, "Given bsf texture is null");
-}
+DLLEXPORT Texture::Texture(
+    const Diligent::RefCntAutoPtr<Diligent::ITexture>& texture, int width, int height) :
+    _Texture(texture),
+    Width(width), Height(height)
+{}

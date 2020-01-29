@@ -143,6 +143,17 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     // state
     PSODesc.GraphicsPipeline.PrimitiveTopology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
+    // Alpha blend
+    auto& rt0Blend = PSODesc.GraphicsPipeline.BlendDesc.RenderTargets[0];
+    rt0Blend.BlendEnable = true;
+    rt0Blend.SrcBlend = Diligent::BLEND_FACTOR_SRC_ALPHA;
+    rt0Blend.DestBlend = Diligent::BLEND_FACTOR_INV_SRC_ALPHA;
+    rt0Blend.BlendOp = Diligent::BLEND_OPERATION_ADD;
+    rt0Blend.SrcBlendAlpha = Diligent::BLEND_FACTOR_INV_SRC_ALPHA;
+    rt0Blend.DestBlendAlpha = Diligent::BLEND_FACTOR_ZERO;
+    rt0Blend.BlendOpAlpha = Diligent::BLEND_OPERATION_ADD;
+    rt0Blend.RenderTargetWriteMask = Diligent::COLOR_MASK_ALL;
+
     // PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_BACK;
     // No culling used on the GUI
     PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_NONE;

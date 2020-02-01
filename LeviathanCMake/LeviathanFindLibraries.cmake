@@ -122,7 +122,15 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     # Not currently needed
     # DiligentCore
     )
-  
+
+  if(NOT WIN32)
+    # This is good enough for getting things to link and probably more
+    # likely for users to always have
+    set(OpenGL_GL_PREFERENCE "LEGACY")
+    # set(OpenGL_GL_PREFERENCE "GLVND")
+    find_package(OpenGL REQUIRED)
+    list(APPEND LEVIATHAN_ENGINE_LIBRARIES ${OPENGL_LIBRARIES})
+  endif()
 
   # Angelscript is named angelscript64 on windows if 64 bit (which we are using)
   # Now it is named the same as we are using the cmake build for angelscript

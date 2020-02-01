@@ -21,14 +21,6 @@ public:
         Float4(f1, f2, f3, f4)
     {}
 
-    inline Quaternion(const bs::Quaternion& quat)
-    {
-        X = quat.x;
-        Y = quat.y;
-        Z = quat.z;
-        W = quat.w;
-    }
-
     explicit Quaternion(const Matrix3& matrix)
     {
         FromRotationMatrix(matrix);
@@ -194,6 +186,13 @@ public:
         } else {
             return Float3(X, Y, Z);
         }
+    }
+
+    //! Converts a quaternion to Axis angle
+    //! \note Must be normalized
+    inline std::tuple<Float3, Radian> ToAxisAngle() const
+    {
+        return {ToAxis(), ToAngle()};
     }
 
     //! Converts a quaternion to angle (and skips outputting the Axis)

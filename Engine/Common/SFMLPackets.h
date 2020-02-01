@@ -15,12 +15,9 @@
 //! \todo Make this work
 #define SFML_HAS_64_BIT_VALUES_PACKET
 
-namespace bs {
-class Vector3;
-class Plane;
-} // namespace bs
-
 namespace Leviathan {
+
+class Plane;
 
 // ------------------------------------ //
 // Float2
@@ -36,6 +33,11 @@ DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Float4& data);
 
 DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Float4& data);
 
+// ------------------------------------ //
+// Plane
+DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Plane& data);
+DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Plane& data);
+
 // ------------------ NamedVariableList ------------------ //
 DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const NamedVariableList& data);
 DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, const NamedVariableList& data);
@@ -44,12 +46,5 @@ DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, const NamedVariableList& da
 DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const sf::Packet& packetinner);
 DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, sf::Packet& packetinner);
 
-// ------------------------------------ //
-// BSF types
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Vector3& data);
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Vector3& data);
-
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Plane& data);
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Plane& data);
 
 } // namespace Leviathan

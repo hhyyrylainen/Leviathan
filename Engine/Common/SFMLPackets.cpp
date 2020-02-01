@@ -2,8 +2,7 @@
 #include "SFMLPackets.h"
 
 #include "Common/DataStoring/NamedVars.h"
-
-#include "bsfUtility/Math/BsPlane.h"
+#include "Common/Plane.h"
 // ------------------------------------ //
 namespace Leviathan {
 
@@ -93,25 +92,15 @@ DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, sf::Packet& packetinner)
 }
 
 // ------------------------------------ //
-// BSF types
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Vector3& data)
+// Plane
+DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const Plane& data)
 {
-    return packet << data.x << data.y << data.z;
+    return packet << data.Normal << data.Distance;
 }
 
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Vector3& data)
+DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, Plane& data)
 {
-    return packet >> data.x >> data.y >> data.z;
-}
-
-DLLEXPORT sf::Packet& operator<<(sf::Packet& packet, const bs::Plane& data)
-{
-    return packet << data.normal << data.d;
-}
-
-DLLEXPORT sf::Packet& operator>>(sf::Packet& packet, bs::Plane& data)
-{
-    return packet >> data.normal >> data.d;
+    return packet >> data.Normal >> data.Distance;
 }
 
 } // namespace Leviathan

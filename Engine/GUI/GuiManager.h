@@ -1,14 +1,11 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/AppDefine.h"
+#include "Common/ReferenceCounted.h"
 #include "Common/ThreadSafe.h"
-
-#include "bsfCore/BsCorePrerequisites.h"
-
-#include <boost/intrusive_ptr.hpp>
 
 namespace Leviathan { namespace GUI {
 
@@ -112,7 +109,7 @@ private:
     //! These are all the different Layers (web browsers and Leviathan Widgets) that are
     //! rendered on the Window of this GuiManager
     //! \todo Layer pushing and popping needs to have logic for focus changes
-    std::vector<boost::intrusive_ptr<GUI::Layer>> ManagedLayers;
+    std::vector<CountedPtr<GUI::Layer>> ManagedLayers;
 
     int GuiViewCounter;
 

@@ -10,9 +10,6 @@
 
 #include "Engine.h"
 
-#include "bsfCore/Material/BsShader.h"
-#include "bsfEngine/Resources/BsBuiltinResources.h"
-
 using namespace Leviathan;
 // ------------------------------------ //
 
@@ -20,30 +17,28 @@ using namespace Leviathan;
 // ------------------------------------ //
 Shader* ShaderFromNameFactory(const std::string& name)
 {
-    bs::HShader bsShader;
+    // bs::HShader bsShader;
 
-    if(name == "BuiltinShader::Standard") {
+    // if(name == "BuiltinShader::Standard") {
 
-        bsShader = bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::Standard);
-    } else if(name == "BuiltinShader::Transparent") {
-        bsShader = bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::Transparent);
-    } else {
-        bsShader = Engine::Get()->GetGraphics()->LoadShaderByName(name);
-    }
+    //     bsShader = bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::Standard);
+    // } else if(name == "BuiltinShader::Transparent") {
+    //     bsShader = bs::gBuiltinResources().getBuiltinShader(bs::BuiltinShader::Transparent);
+    // } else {
+    //     bsShader = Engine::Get()->GetGraphics()->LoadShaderByName(name);
+    // }
 
-    if(!bsShader) {
-        asGetActiveContext()->SetException("bsf shader load failed");
-        return nullptr;
-    }
+    // if(!bsShader) {
+    //     asGetActiveContext()->SetException("bsf shader load failed");
+    //     return nullptr;
+    // }
 
-    // auto result = Shader::MakeShared<Shader>(bsShader);
+    auto result = Engine::Get()->GetGraphics()->LoadShaderByName(name);
 
-    // if(result)
-    //     result->AddRef();
+    if(result)
+        result->AddRef();
 
-    // return result.get();
-    DEBUG_BREAK;
-    return nullptr;
+    return result.get();
 }
 
 Material* MaterialFromShaderFactory(Shader* shader)
@@ -68,9 +63,9 @@ Material* MaterialEmptyFactory()
 
 Texture* TextureFromNameFactory(const std::string& name)
 {
-    auto texture = Engine::Get()->GetGraphics()->LoadTextureByName(name);
+    auto result = Engine::Get()->GetGraphics()->LoadTextureByName(name);
 
-    if(!texture) {
+    if(!result) {
         asGetActiveContext()->SetException(
             "no texture could be loaded with the specified name");
         return nullptr;
@@ -78,12 +73,10 @@ Texture* TextureFromNameFactory(const std::string& name)
 
     // auto result = Texture::MakeShared<Texture>(texture);
 
-    // if(result)
-    //     result->AddRef();
+    if(result)
+        result->AddRef();
 
-    // return result.get();
-    DEBUG_BREAK;
-    return nullptr;
+    return result.get();
 }
 
 namespace Leviathan {

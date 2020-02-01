@@ -5,6 +5,8 @@
 // ------------------------------------ //
 #include "Component.h"
 
+#include <memory>
+
 namespace Leviathan {
 
 //! \brief Alternative base class for Component that creates distinct state objects

@@ -1,13 +1,11 @@
 // ------------------------------------ //
 #include "VideoPlayer.h"
 
+#include "Rendering/Texture.h"
 #include "Utility/Codec.h"
 #include "Utility/MatroskaParser.h"
 
 #include "Engine.h"
-
-#include "CoreThread/BsCoreThread.h"
-#include "bsfCore/Image/BsTexture.h"
 
 #include <filesystem>
 #include <optional>
@@ -15,18 +13,6 @@
 using namespace Leviathan;
 using namespace Leviathan::GUI;
 // ------------------------------------ //
-// NOTE: even though these formats are called RGBA they are actually stored in ARGB order on
-// little endian machines, for some insane reason, but one that luckily seems to be a
-// convention everywhere
-
-// TODO: add support for disabling alpha if not needed
-
-constexpr auto BS_PIXEL_FORMAT = bs::PF_RGBA8;
-
-// This must match the above definition
-constexpr auto FRAME_CONVERT_FORMAT = DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA;
-
-
 constexpr auto DEFAULT_AUDIO_BUFFER_RESERVED_SPACE = 64000;
 
 constexpr auto VIDEO_PLAYER_WARNING_ELAPSED = SecondDuration(0.100f);
@@ -86,9 +72,7 @@ public:
 
     std::optional<DecodedFrame> CurrentlyDecodedFrame;
 
-    bool FrameNeedsGPUUpload = false;
-
-    bs::SPtr<bs::PixelData> GPUUploadBuffer;
+    bool FrameNeedsIntermediateCopy = false;
 
     float CurrentlyDecodedFrameTimeStamp = -1.f;
     float NextFrameTimeStamp = -1.f;
@@ -99,8 +83,8 @@ public:
     //! gives us more data than requested
     PendingAudioData _PendingAudioData;
 
-    //! When true the player waits for the video texture to finish uploading on each frame
-    bool WaitForTextureToUpload = false;
+    // //! When true the player waits for the video texture to finish uploading on each frame
+    // bool WaitForTextureToUpload = false;
 };
 
 // ------------------------------------ //
@@ -137,18 +121,15 @@ DLLEXPORT bool VideoPlayer::Play(const std::string& videofile)
             return false;
         }
 
-        if(!CreateOutputTexture()) {
-
-            LOG_ERROR("VideoPlayer: Play: output video texture creation failed");
-            Stop();
-            return false;
-        }
     } catch(const Exception& e) {
         LOG_ERROR("VideoPlayer: Play: exception happened on initializing playback: ");
         e.PrintToLog();
         Stop();
         return false;
     }
+
+    IntermediateBufferMarked = true;
+    IntermediateTextureBuffer.resize(FrameWidth * FrameHeight * VIDEO_PLAYER_BYTES_PER_PIXEL);
 
     // Make tick run
     IsPlaying = true;
@@ -190,9 +171,7 @@ DLLEXPORT void VideoPlayer::Stop()
     // Let go of our textures and things //
     VideoFile = "";
 
-    VideoOutputTexture = nullptr;
-
-    Pimpl->GPUUploadBuffer = nullptr;
+    IntermediateTextureBuffer.clear();
 
     IsPlaying = false;
 }
@@ -208,18 +187,6 @@ DLLEXPORT float VideoPlayer::GetDuration() const
 DLLEXPORT float VideoPlayer::GetCurrentTime() const
 {
     return Pimpl->CurrentlyDecodedFrameTimeStamp;
-}
-// ------------------------------------ //
-bool VideoPlayer::CreateOutputTexture()
-{
-    Pimpl->GPUUploadBuffer =
-        bs::PixelData::create(FrameWidth, FrameHeight, 1, BS_PIXEL_FORMAT);
-
-    if(!Pimpl->GPUUploadBuffer)
-        return false;
-
-    VideoOutputTexture = bs::Texture::create(Pimpl->GPUUploadBuffer, bs::TU_DYNAMIC);
-    return VideoOutputTexture != nullptr;
 }
 // ------------------------------------ //
 bool VideoPlayer::OpenCodecsForFile()
@@ -353,7 +320,7 @@ bool VideoPlayer::HandleFrameVideoUpdate()
         if(!DecodeVideoFrame())
             return false;
 
-        Pimpl->FrameNeedsGPUUpload = true;
+        Pimpl->FrameNeedsIntermediateCopy = true;
 
         // And get the timestamp for the next video
         PeekNextFrameTimeStamp();
@@ -368,7 +335,7 @@ bool VideoPlayer::HandleFrameVideoUpdate()
                 return false;
             }
 
-            Pimpl->FrameNeedsGPUUpload = true;
+            Pimpl->FrameNeedsIntermediateCopy = true;
 
             // Get the time for the next frame
             // In case we ran out of data this won't update the next frame time, and this will
@@ -382,9 +349,9 @@ bool VideoPlayer::HandleFrameVideoUpdate()
         }
     }
 
-    // Copy decoded frame to GPU if it was updated
-    if(Pimpl->FrameNeedsGPUUpload)
-        UpdateTexture();
+    // Copy decoded frame to temporary if it was updated
+    if(Pimpl->FrameNeedsIntermediateCopy)
+        UpdateIntermediateTextureBuffer();
 
     if(Time::GetCurrentTimePoint() - start > VIDEO_PLAYER_WARNING_ELAPSED) {
         const auto millisecondsPassed =
@@ -447,26 +414,9 @@ bool VideoPlayer::PeekNextFrameTimeStamp()
     return true;
 }
 // ------------------------------------ //
-void VideoPlayer::UpdateTexture()
+void VideoPlayer::UpdateIntermediateTextureBuffer()
 {
-    if(Pimpl->WaitForTextureToUpload) {
-        // Wait until buffer is no longer locked
-        if(Pimpl->GPUUploadBuffer->isLocked()) {
-
-            // Using true here majorly stalls rendering
-            bs::gCoreThread().submit(false);
-
-            do {
-                std::this_thread::yield();
-            } while(Pimpl->GPUUploadBuffer->isLocked());
-        }
-    } else {
-        // Skip updating until the texture is no longer locked for update
-        if(Pimpl->GPUUploadBuffer->isLocked())
-            return;
-    }
-
-    // For maximum performance we directly convert the frame to the GPU buffer
+    // NOTE: non-opengl render systems should be able to avoid one copy here
     const auto& imageData =
         std::get<DecodedFrame::Image>(Pimpl->CurrentlyDecodedFrame->TypeSpecificData);
 
@@ -477,16 +427,15 @@ void VideoPlayer::UpdateTexture()
         return;
     }
 
-    if(!imageData.ConvertImage(Pimpl->GPUUploadBuffer->getData(),
-           Pimpl->GPUUploadBuffer->getSize(),
-           DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA)) {
+    if(!imageData.ConvertImage(IntermediateTextureBuffer.data(),
+           IntermediateTextureBuffer.size(), DecodedFrame::Image::IMAGE_TARGET_FORMAT::RGBA)) {
         LOG_ERROR("VideoPlayer: frame convert failed, likely due to mismatch between graphics "
                   "buffer size and what is needed for frame conversion");
         return;
     }
 
-    VideoOutputTexture->writeData(Pimpl->GPUUploadBuffer, 0, 0, true);
-    Pimpl->FrameNeedsGPUUpload = false;
+    IntermediateBufferMarked = true;
+    Pimpl->FrameNeedsIntermediateCopy = false;
 }
 // ------------------------------------ //
 size_t VideoPlayer::ReadAudioData(uint8_t* output, size_t amount)

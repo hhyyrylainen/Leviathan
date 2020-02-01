@@ -24,10 +24,6 @@
 #include "XLibInclude.h"
 #endif
 
-#include "bsfCore/Components/BsCCamera.h"
-#include "bsfCore/CoreThread/BsCoreThread.h"
-#include "bsfCore/Scene/BsSceneObject.h"
-
 #include <SDL.h>
 #include <SDL_syswm.h>
 

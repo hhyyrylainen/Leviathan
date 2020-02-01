@@ -6,8 +6,6 @@
 #include "Quaternion.h"
 #include "Types.h"
 
-#include "bsfUtility/Math/BsMatrix4.h"
-
 namespace Leviathan {
 
 
@@ -561,17 +559,6 @@ public:
             rhs * m[1][0], rhs * m[1][1], rhs * m[1][2], rhs * m[1][3], rhs * m[2][0],
             rhs * m[2][1], rhs * m[2][2], rhs * m[2][3], rhs * m[3][0], rhs * m[3][1],
             rhs * m[3][2], rhs * m[3][3]);
-    }
-
-    operator bs::Matrix4() const
-    {
-        bs::Matrix4 result;
-
-        result.setColumn(0, GetColumn4D(0));
-        result.setColumn(1, GetColumn4D(1));
-        result.setColumn(2, GetColumn4D(2));
-        result.setColumn(3, GetColumn4D(3));
-        return result;
     }
 
     /** Returns a transpose of the matrix (switched columns and rows). */

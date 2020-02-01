@@ -1,36 +1,21 @@
 // ------------------------------------ //
 #include "Graphics.h"
 
+#include "AnimationTrack.h"
 #include "Application/AppDefine.h"
-#include "Application/CrashHandler.h"
 #include "Application/GameConfiguration.h"
 #include "Buffer.h"
 #include "Common/StringOperations.h"
 #include "Engine.h"
 #include "FileSystem.h"
-#include "GUIOverlayRenderer.h"
 #include "GeometryHelpers.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "PSO.h"
+#include "Shader.h"
 #include "Texture.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"
 #include "WindowRenderingResources.h"
-
-#include "BsApplication.h"
-#include "Components/BsCCamera.h"
-#include "CoreThread/BsCoreThread.h"
-#include "Importer/BsImporter.h"
-#include "Resources/BsEngineShaderIncludeHandler.h"
-#include "Resources/BsResources.h"
-#include "Scene/BsSceneObject.h"
-#include "bsfCore/Animation/BsAnimationClip.h"
-#include "bsfCore/Material/BsMaterial.h"
-#include "bsfCore/Material/BsShaderManager.h"
-#include "bsfCore/Mesh/BsMesh.h"
-#include "bsfCore/RenderAPI/BsRenderAPI.h"
-#include "bsfCore/Resources/BsResourceManifest.h"
-
 
 #if GL_SUPPORTED
 #include "DiligentCore/Graphics/GraphicsEngineOpenGL/interface/EngineFactoryOpenGL.h"
@@ -47,7 +32,7 @@
 // part of the hack
 #undef LOG_ERROR
 
-#include "DiligentCore/Common/interface/RefCntAutoPtr.h"
+#include "DiligentCore/Common/interface/RefCntAutoPtr.hpp"
 
 // hack workaround
 #undef LOG_ERROR
@@ -89,28 +74,27 @@ struct XCBInfo {
 #endif
 // ------------------------------------ //
 } // namespace Leviathan
-// ------------------------------------ //
-void DiligentErrorCallback(Diligent::DebugMessageSeverity severity,
-    const Diligent::Char* message, const char* function, const char* file, int line)
+void DiligentErrorCallback(enum Diligent::DEBUG_MESSAGE_SEVERITY severity, const char* message,
+    const char* function, const char* file, int line)
 {
     // Forward to global logger if one exists
     auto log = Logger::Get();
 
     if(log) {
         switch(severity) {
-        case Diligent::DebugMessageSeverity::Info: {
+        case Diligent::DEBUG_MESSAGE_SEVERITY_INFO: {
             log->Write(std::string("[INFO][DILIGENT] ") + message);
             return;
         }
-        case Diligent::DebugMessageSeverity::Warning: {
+        case Diligent::DEBUG_MESSAGE_SEVERITY_WARNING: {
             log->Write(std::string("[WARNING][DILIGENT] ") + message);
             return;
         }
-        case Diligent::DebugMessageSeverity::Error: {
+        case Diligent::DEBUG_MESSAGE_SEVERITY_ERROR: {
             log->Write(std::string("[ERROR][DILIGENT] ") + message);
             return;
         }
-        case Diligent::DebugMessageSeverity::FatalError:
+        case Diligent::DEBUG_MESSAGE_SEVERITY_FATAL_ERROR:
         default: {
             log->Fatal(std::string("[DILIGENT] ") + message + ", at: " + file + "(" +
                        std::to_string(line) + ")");
@@ -122,86 +106,39 @@ void DiligentErrorCallback(Diligent::DebugMessageSeverity severity,
 
     // TODO: what to do when can't log
 }
-
-class LeviathanBSFShaderIncludeHandler : public bs::EngineShaderIncludeHandler {
-public:
-    virtual bs::HShaderInclude findInclude(const bs::String& name) const override
-    {
-        // If the file path is valid just pass it as is
-        const std::string converted(name.c_str(), name.size());
-        if(FileSystem::FileExists(converted))
-            return bs::EngineShaderIncludeHandler::findInclude(name);
-
-        // We resolve the path and then give it to bsf
-        std::string searched = FileSystem::Get()->SearchForFile(FILEGROUP_SCRIPT,
-            StringOperations::RemoveExtension<std::string>(converted),
-            StringOperations::GetExtension<std::string>(converted), true);
-
-        if(searched.empty()) {
-            if(name.find("$ENGINE$") == bs::String::npos) {
-                LOG_WARNING(
-                    "LeviathanBSFShaderIncludeHandler: could not locate file anywhere: " +
-                    converted);
-            }
-
-            return bs::EngineShaderIncludeHandler::findInclude(name);
-        }
-
-        return bs::EngineShaderIncludeHandler::findInclude(
-            bs::String(searched.c_str(), searched.size()));
-    }
-};
-
-class LeviathanBSFApplication : public bs::Application {
-public:
-    LeviathanBSFApplication(const bs::START_UP_DESC& desc) : bs::Application(desc) {}
-
-    bs::SPtr<bs::IShaderIncludeHandler> getShaderIncludeHandler() const override
-    {
-        return bs::bs_shared_ptr_new<LeviathanBSFShaderIncludeHandler>();
-    }
-
-    bs::SPtr<GUIOverlayRenderer> GUIRenderer;
-};
-
-
+// ------------------------------------ //
 struct Graphics::Implementation {
 
-    // Implementation(const bs::START_UP_DESC& desc) : Description(desc) {}
     Implementation() {}
 
-    template<class T>
-    auto LoadResource(const bs::String& path)
-    {
-        auto asset = bs::gResources().load<T>(path);
+    // template<class T>
+    // auto LoadResource(const bs::String& path)
+    // {
+    //     auto asset = bs::gResources().load<T>(path);
 
-        if(!asset) {
-            LOG_ERROR(std::string("Graphics: loading asset failed: ") + path.c_str());
-            return decltype(asset)(nullptr);
-        }
+    //     if(!asset) {
+    //         LOG_ERROR(std::string("Graphics: loading asset failed: ") + path.c_str());
+    //         return decltype(asset)(nullptr);
+    //     }
 
-        if(RegisteredAssets.find(path) != RegisteredAssets.end()) {
-            // Already registered, fine to just return
-            return asset;
-        }
+    //     if(RegisteredAssets.find(path) != RegisteredAssets.end()) {
+    //         // Already registered, fine to just return
+    //         return asset;
+    //     }
 
-        // Was not registered.
+    //     // Was not registered.
 
-        bs::gResources().getResourceManifest("Default")->registerResource(
-            asset.getUUID(), path);
+    //     bs::gResources().getResourceManifest("Default")->registerResource(
+    //         asset.getUUID(), path);
 
-        RegisteredAssets.insert(path);
-        return asset;
-    }
+    //     RegisteredAssets.insert(path);
+    //     return asset;
+    // }
 
-    std::unordered_set<bs::String> RegisteredAssets;
-
-    bs::START_UP_DESC Description;
-    LeviathanBSFApplication* OurApp = nullptr;
+    // std::unordered_set<bs::String> RegisteredAssets;
 
     Diligent::RefCntAutoPtr<Diligent::IRenderDevice> RenderDevice;
     Diligent::RefCntAutoPtr<Diligent::IDeviceContext> ImmediateContext;
-    // Diligent::RefCntAutoPtr<Diligent::IPipelineState> m_pPSO;
 
     //! Currently set render target
     WindowRenderingResources* CurrentRenderTarget = nullptr;
@@ -316,12 +253,6 @@ bool Graphics::Init(AppDef* appdef)
 
     PrintDetectedSystemInformation();
 
-    // if(!InitializeBSF(appdef)) {
-
-    //     Logger::Get()->Error("Graphics: Init: failed to create bs::framework renderer");
-    //     return false;
-    // }
-
     if(!InitializeDiligent(appdef)) {
 
         LOG_ERROR("Graphics: Init: failed to initialize diligent engine");
@@ -374,41 +305,7 @@ void Graphics::PrintDetectedSystemInformation()
     sstream << "Start of graphics system information:\n"
             << "// ------------------------------------ //\n";
 
-    // This code is adapted from bs::Debug::saveTextLog
-
-    sstream << "BSF version: " << BS_VERSION_MAJOR << "." << BS_VERSION_MINOR << "."
-            << BS_VERSION_PATCH << "\n";
-
-    sstream << "This build is for: ";
-#ifdef _WIN32
-    sstream << "windows";
-#elif defined(__linux)
-    sstream << "linux";
-#else
-    sstream << "unknown";
-#endif
-
-    sstream << "\n";
-
-    bs::SystemInfo systemInfo = bs::PlatformUtility::getSystemInfo();
-    sstream << "OS version: " << systemInfo.osName << " "
-            << (systemInfo.osIs64Bit ? "64-bit" : "32-bit") << "\n";
-    sstream << "CPU information:\n";
-    sstream << "CPU vendor: " << systemInfo.cpuManufacturer << "\n";
-    sstream << "CPU name: " << systemInfo.cpuModel << "\n";
-    sstream << "CPU clock speed: " << systemInfo.cpuClockSpeedMhz << "Mhz\n";
-    sstream << "CPU core count: " << systemInfo.cpuNumCores << "\n";
-
-    sstream << "\n";
-    sstream << "GPU List:\n";
-
-    // NOTE: this doesn't work on my Linux computer (returns an empty list)
-    if(systemInfo.gpuInfo.numGPUs == 1)
-        sstream << "GPU: " << systemInfo.gpuInfo.names[0] << "\n";
-    else {
-        for(bs::UINT32 i = 0; i < systemInfo.gpuInfo.numGPUs; i++)
-            sstream << "GPU #" << i << ": " << systemInfo.gpuInfo.names[i] << "\n";
-    }
+    sstream << "TODO: readd CPU and GPU detection\n";
 
     sstream << "// ------------------------------------ //";
 
@@ -740,134 +637,6 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
     }
 
     return windowResources;
-
-    /*
-        if(FirstWindowCreated) {
-            // Register secondary window
-
-            bs::RENDER_WINDOW_DESC windowDesc;
-
-            windowDesc.depthBuffer = true;
-
-            int multiSample;
-
-            ObjectFileProcessor::LoadValueFromNamedVars<int>(
-                Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount",
-    multiSample, 1);
-
-            windowDesc.multisampleCount = multiSample;
-            // windowDesc.multisampleHint = "";
-            // Not sure what all settings need to be copied
-            windowDesc.fullscreen = window.IsFullScreen() false;
-            windowDesc.vsync = false;
-
-            int32_t width, height;
-            window.GetSize(width, height);
-            windowDesc.videoMode = bs::VideoMode(
-                width, height, Pimpl->Description.primaryWindowDesc.videoMode.refreshRate, 0);
-
-    #ifdef _WIN32
-            windowDesc.platformSpecific["externalWindowHandle"] =
-                std::to_string((uint64_t)window.GetNativeHandle());
-    #else
-            windowDesc.platformSpecific["externalWindowHandle"] =
-                std::to_string(window.GetNativeHandle());
-
-            windowDesc.platformSpecific["externalDisplay"] =
-                std::to_string(window.GetWindowXDisplay());
-    #endif
-
-            auto window = bs::RenderWindow::create(windowDesc);
-
-            if(!window)
-                LOG_FATAL("Failed to create additional BSF window");
-
-            return window;
-
-        } else {
-            // Finish initializing graphics
-            FirstWindowCreated = true;
-            LOG_INFO("Graphics: doing bs::framework initialization after creating first
-    window");
-
-            // Setup first window properties
-            auto& windowDesc = Pimpl->Description.primaryWindowDesc;
-            windowDesc.depthBuffer = true;
-
-            int multiSample;
-
-            ObjectFileProcessor::LoadValueFromNamedVars<int>(
-                Engine::Get()->GetDefinition()->GetValues(), "WindowMultiSampleCount",
-    multiSample, 1);
-
-            windowDesc.multisampleCount = multiSample;
-            // windowDesc.multisampleHint = "";
-            // Not sure what all settings need to be copied
-            windowDesc.fullscreen = window.IsFullScreen() false;
-            windowDesc.vsync = false;
-
-            // Fill video mode info from SDL
-            SDL_DisplayMode dm;
-            if(SDL_GetDesktopDisplayMode(0, &dm) != 0) {
-                LOG_ERROR("Graphics: RegisterCreatedWindow: failed to get desktop display
-    mode:" + std::string(SDL_GetError())); return nullptr;
-            }
-
-            int32_t width, height;
-            window.GetSize(width, height);
-            windowDesc.videoMode = bs::VideoMode(width, height, dm.refresh_rate, 0);
-
-    #ifdef _WIN32
-            windowDesc.platformSpecific["externalWindowHandle"] =
-                std::to_string((uint64_t)window.GetNativeHandle());
-    #else
-            windowDesc.platformSpecific["externalWindowHandle"] =
-                std::to_string(window.GetNativeHandle());
-
-            windowDesc.platformSpecific["externalDisplay"] =
-                std::to_string(window.GetWindowXDisplay());
-    #endif
-
-            bs::Application::startUp<LeviathanBSFApplication>(Pimpl->Description);
-
-            Pimpl->OurApp =
-                static_cast<LeviathanBSFApplication*>(bs::CoreApplication::instancePtr());
-
-            bs::SPtr<bs::RenderWindow> bsWindow =
-                bs::CoreApplication::instance().getPrimaryWindow();
-
-            LEVIATHAN_ASSERT(bsWindow, "window creation failed");
-
-            // Notify engine to register threads to work with Ogre //
-            // Engine::GetEngine()->_NotifyThreadsRegisterOgre();
-
-            // TODO: loading this causes a failure in bs::Material::createParamsSet
-            // constexpr auto GUI_SHADER_PATH =
-            // "Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl.asset";
-
-            // LEVIATHAN_ASSERT(
-            //     std::filesystem::exists(GUI_SHADER_PATH), "Core GUI shader asset is
-    missing");
-
-            // auto shader = Pimpl->LoadResource<bs::Shader>(
-            //     std::filesystem::absolute(GUI_SHADER_PATH).string().c_str());
-
-            // if(!shader)
-            //     LEVIATHAN_ASSERT(false, "Loading Core GUI shader asset failed");
-
-            auto shader =
-                bs::gImporter().import<bs::Shader>("Data/Shaders/CoreShaders/ScreenSpaceGUI.bsl");
-
-            auto material = bs::Material::create(shader);
-
-            Pimpl->OurApp->GUIRenderer =
-                bs::RendererExtension::create<GUIOverlayRenderer>(GUIOverlayInitializationData{
-                    GeometryHelpers::CreateScreenSpaceQuad(-1, -1, 2,
-    2)->GetInternal()->getCore(), material->getCore()});
-
-            Pimpl->OurApp->beginMainLoop();
-            return bsWindow;
-        } */
 }
 
 void Graphics::UnRegisterWindow(Window& window)
@@ -893,11 +662,6 @@ void Graphics::UnRegisterWindow(Window& window)
 
     // if(Pimpl) {
     //     Pimpl->OurApp->waitUntilFrameFinished();
-    // }
-
-    // if(window.GetBSFWindow() == bs::CoreApplication::instance().getPrimaryWindow()) {
-    //     LOG_INFO("Graphics: primary window is closing, hiding it instead until shutdown");
-    //     return true;
     // }
 }
 // ------------------------------------ //
@@ -1060,7 +824,7 @@ DLLEXPORT std::shared_ptr<PSO> Graphics::CreatePSO(const Diligent::PipelineState
     return std::make_shared<PSO>(pso);
 }
 
-DLLEXPORT Shader::pointer Graphics::CreateShader(
+DLLEXPORT CountedPtr<Shader> Graphics::CreateShader(
     const Diligent::ShaderCreateInfo& info, const ShaderVariationInfo& variations)
 {
     // TODO: variations compile
@@ -1126,8 +890,9 @@ DLLEXPORT bool Graphics::IsVerticalUVFlipped() const
 }
 // ------------------------------------ //
 // Resource loading helpers
-DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
+DLLEXPORT CountedPtr<Shader> Graphics::LoadShaderByName(const std::string& name)
 {
+    DEBUG_BREAK;
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_OTHER,
         // Leviathan::StringOperations::RemoveExtension(name, true),
         Leviathan::StringOperations::RemovePath(name),
@@ -1138,12 +903,14 @@ DLLEXPORT bs::HShader Graphics::LoadShaderByName(const std::string& name)
         LOG_ERROR("Graphics: LoadShaderByName: could not find resource with name: " + name);
         return nullptr;
     }
-
-    return Pimpl->LoadResource<bs::Shader>(std::filesystem::absolute(file).string().c_str());
+    return nullptr;
+    // return
+    // Pimpl->LoadResource<bs::Shader>(std::filesystem::absolute(file).string().c_str());
 }
 
-DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
+DLLEXPORT CountedPtr<Texture> Graphics::LoadTextureByName(const std::string& name)
 {
+    DEBUG_BREAK;
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE,
         // Leviathan::StringOperations::RemoveExtension(name, true),
         Leviathan::StringOperations::RemovePath(name),
@@ -1154,12 +921,14 @@ DLLEXPORT bs::HTexture Graphics::LoadTextureByName(const std::string& name)
         LOG_ERROR("Graphics: LoadTextureByName: could not find resource with name: " + name);
         return nullptr;
     }
-
-    return Pimpl->LoadResource<bs::Texture>(std::filesystem::absolute(file).string().c_str());
+    return nullptr;
+    // return
+    // Pimpl->LoadResource<bs::Texture>(std::filesystem::absolute(file).string().c_str());
 }
 
-DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
+DLLEXPORT CountedPtr<Mesh> Graphics::LoadMeshByName(const std::string& name)
 {
+    DEBUG_BREAK;
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_MODEL,
         // Leviathan::StringOperations::RemoveExtension(name, true),
         Leviathan::StringOperations::RemovePath(name),
@@ -1170,12 +939,13 @@ DLLEXPORT bs::HMesh Graphics::LoadMeshByName(const std::string& name)
         LOG_ERROR("Graphics: LoadMeshByName: could not find resource with name: " + name);
         return nullptr;
     }
-
-    return Pimpl->LoadResource<bs::Mesh>(std::filesystem::absolute(file).string().c_str());
+    return nullptr;
+    // return Pimpl->LoadResource<bs::Mesh>(std::filesystem::absolute(file).string().c_str());
 }
 
-DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string& name)
+DLLEXPORT CountedPtr<AnimationTrack> Graphics::LoadAnimationClipByName(const std::string& name)
 {
+    DEBUG_BREAK;
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_MODEL,
         // Leviathan::StringOperations::RemoveExtension(name, true),
         Leviathan::StringOperations::RemovePath(name),
@@ -1187,9 +957,9 @@ DLLEXPORT bs::HAnimationClip Graphics::LoadAnimationClipByName(const std::string
             "Graphics: LoadAnimationClipByName: could not find resource with name: " + name);
         return nullptr;
     }
-
-    return Pimpl->LoadResource<bs::AnimationClip>(
-        std::filesystem::absolute(file).string().c_str());
+    return nullptr;
+    // return Pimpl->LoadResource<bs::AnimationClip>(
+    // std::filesystem::absolute(file).string().c_str());
 }
 
 // ------------------------------------ //

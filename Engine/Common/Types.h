@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,6 +7,7 @@
 #include "Logger.h"
 
 #include <stdexcept>
+#include <tuple>
 
 // Uncomment for debugging and major slow downs
 // #define CHECK_FOR_NANS
@@ -24,13 +25,6 @@
 #include "LinearMath/btQuaternion.h"
 #include "LinearMath/btVector3.h"
 #endif
-
-#ifdef LEVIATHAN_USING_OGRE
-#include "bsfUtility/Image/BsColor.h"
-#include "bsfUtility/Math/BsQuaternion.h"
-#include "bsfUtility/Math/BsVector3.h"
-#include "bsfUtility/Math/BsVector4.h"
-#endif // LEVIATHAN_USING_OGRE
 
 namespace Leviathan {
 
@@ -1322,18 +1316,6 @@ public:
 
     // ----------------- casts ------------------- //
 #ifdef LEVIATHAN_USING_OGRE
-    DLLEXPORT inline Float3(const bs::Vector3& vec) :
-        // copy values //
-        X(vec.x), Y(vec.y), Z(vec.z)
-    {
-        DO_NAN_CHECK;
-    }
-
-    DLLEXPORT inline operator bs::Vector3() const
-    {
-        return bs::Vector3(X, Y, Z);
-    }
-
     DLLEXPORT inline Float3(const btVector3& vec) :
         // copy values //
         X(vec.x()), Y(vec.y()), Z(vec.z())
@@ -1738,42 +1720,6 @@ public:
     // ----------------- casts ------------------- //
     // Should this macro be replaced by a inline if in the cpp file?
 #ifdef LEVIATHAN_USING_OGRE
-    DLLEXPORT inline Float4(const bs::Quaternion& quat)
-    {
-        // copy values //
-        X = quat.x;
-        Y = quat.y;
-        Z = quat.z;
-        W = quat.w;
-        DO_NAN_CHECK;
-    }
-
-    DLLEXPORT inline Float4(const bs::Color& colour)
-    {
-        // copy values //
-        X = colour.r;
-        Y = colour.g;
-        Z = colour.b;
-        W = colour.a;
-        DO_NAN_CHECK;
-    }
-
-    DLLEXPORT inline operator bs::Quaternion() const
-    {
-        // bsf has these in different order
-        return bs::Quaternion(W, X, Y, Z);
-    }
-
-    DLLEXPORT inline operator bs::Color() const
-    {
-        return bs::Color(X, Y, Z, W);
-    }
-
-    DLLEXPORT inline operator bs::Vector4() const
-    {
-        return bs::Vector4(X, Y, Z, W);
-    }
-
     DLLEXPORT inline Float4(const btQuaternion& quat)
     {
         // copy values //

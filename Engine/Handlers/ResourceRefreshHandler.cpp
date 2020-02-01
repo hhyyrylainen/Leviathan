@@ -7,7 +7,10 @@
 #ifdef __linux__
 #include <sys/inotify.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif
+
+#include <fstream>
 using namespace Leviathan;
 using namespace std;
 // ------------------------------------ //

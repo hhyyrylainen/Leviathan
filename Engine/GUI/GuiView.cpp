@@ -12,6 +12,7 @@
 #include "LeviathanJavaScriptAsync.h"
 #include "Rendering/Buffer.h"
 #include "Rendering/GeometryHelpers.h"
+#include "Rendering/Shader.h"
 #include "Sound/SoundDevice.h"
 #include "Threading/ThreadingManager.h"
 #include "Window.h"

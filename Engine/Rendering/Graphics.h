@@ -4,17 +4,17 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "Application/AppDefine.h"
+#include "Common/ReferenceCounted.h"
 #include "Common/Types.h"
-#include "Shader.h"
 
-#include "bsfCore/RenderAPI/BsRenderWindow.h"
+#include "DiligentCore/Graphics/GraphicsEngine/interface/GraphicsTypes.h"
 
 namespace Diligent {
 struct PipelineStateDesc;
 struct ShaderCreateInfo;
 struct DrawAttribs;
 struct DrawIndexedAttribs;
-enum RESOURCE_STATE_TRANSITION_MODE : Uint8;
+enum RESOURCE_STATE_TRANSITION_MODE : uint8_t;
 class IShaderResourceBinding;
 struct BufferDesc;
 struct BufferData;
@@ -35,6 +35,9 @@ class WindowRenderingResources;
 class PSO;
 class Mesh;
 class Texture;
+class Shader;
+struct ShaderVariationInfo;
+class AnimationTrack;
 
 enum class GRAPHICS_API { D3D11, D3D12, Vulkan, OpenGL, OpenGLES, Metal };
 
@@ -105,7 +108,7 @@ public:
     // Rendering resource creation
     DLLEXPORT std::shared_ptr<PSO> CreatePSO(const Diligent::PipelineStateDesc& desc);
 
-    DLLEXPORT Shader::pointer CreateShader(
+    DLLEXPORT CountedPtr<Shader> CreateShader(
         const Diligent::ShaderCreateInfo& info, const ShaderVariationInfo& variations);
 
     DLLEXPORT std::shared_ptr<Rendering::Buffer> CreateBuffer(
@@ -124,16 +127,16 @@ public:
     //! If a full path or a valid relative path is specified a full search is not done.
     //! Unless a variant of the name with ".asset" is found, which is preferred to skip
     //! expensive importing.
-    DLLEXPORT bs::HShader LoadShaderByName(const std::string& name);
+    DLLEXPORT CountedPtr<Shader> LoadShaderByName(const std::string& name);
 
     //! Works the same as LoadShaderByName
-    DLLEXPORT bs::HTexture LoadTextureByName(const std::string& name);
+    DLLEXPORT CountedPtr<Texture> LoadTextureByName(const std::string& name);
 
     //! Works the same as LoadShaderByName
-    DLLEXPORT bs::HMesh LoadMeshByName(const std::string& name);
+    DLLEXPORT CountedPtr<Mesh> LoadMeshByName(const std::string& name);
 
     //! Works the same as LoadShaderByName
-    DLLEXPORT bs::HAnimationClip LoadAnimationClipByName(const std::string& name);
+    DLLEXPORT CountedPtr<AnimationTrack> LoadAnimationClipByName(const std::string& name);
 
 #ifdef __linux
     //! \brief Returns true if our X11 error handler has been called. Remember to check this
@@ -156,9 +159,6 @@ protected:
 
 private:
     void PrintDetectedSystemInformation();
-
-    bool InitializeBSF(AppDef* appdef);
-    void ShutdownBSF();
 
     bool InitializeDiligent(AppDef* appdef);
     void ShutdownDiligent();

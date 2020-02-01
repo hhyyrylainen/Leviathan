@@ -45,7 +45,6 @@ THE SOFTWARE.
 
     FreeType 2: FTL license
 
-    bs::Framework: MIT License
     Diligent Engine: Apache License Version 2.0
 
     alure: zlib license
@@ -1746,6 +1745,360 @@ Autoconf            llvm/autoconf
 CellSPU backend     llvm/lib/Target/CellSPU/README.txt
 Google Test         llvm/utils/unittest/googletest
 OpenBSD regex       llvm/lib/Support/{reg*, COPYRIGHT.regex}
+
+
+DiligentEngine used library licenses:
+SPIRV: APache V 2.0
+
+SPIRV headers:
+Copyright (c) 2015-2018 The Khronos Group Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and/or associated documentation files (the
+"Materials"), to deal in the Materials without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Materials, and to
+permit persons to whom the Materials are furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Materials.
+
+MODIFICATIONS TO THIS FILE MAY MEAN IT NO LONGER ACCURATELY REFLECTS
+KHRONOS STANDARDS. THE UNMODIFIED, NORMATIVE VERSIONS OF KHRONOS
+SPECIFICATIONS AND HEADER INFORMATION ARE LOCATED AT
+   https://www.khronos.org/registry/
+
+THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+
+
+stb_image_write:
+------------------------------------------------------------------------------
+This software is available under 2 licenses -- choose whichever you prefer.
+------------------------------------------------------------------------------
+ALTERNATIVE A - MIT License
+Copyright (c) 2017 Sean Barrett
+Permission is hereby granted, free of charge, to any person obtaining a copy of 
+this software and associated documentation files (the "Software"), to deal in 
+the Software without restriction, including without limitation the rights to 
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+of the Software, and to permit persons to whom the Software is furnished to do 
+so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all 
+copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+SOFTWARE.
+------------------------------------------------------------------------------
+ALTERNATIVE B - Public Domain (www.unlicense.org)
+This is free and unencumbered software released into the public domain.
+Anyone is free to copy, modify, publish, use, compile, sell, or distribute this 
+software, either in source code form or as a compiled binary, for any purpose, 
+commercial or non-commercial, and by any means.
+In jurisdictions that recognize copyright laws, the author or authors of this 
+software dedicate any and all copyright interest in the software to the public 
+domain. We make this dedication for the benefit of the public at large and to 
+the detriment of our heirs and successors. We intend this dedication to be an 
+overt act of relinquishment in perpetuity of all present and future rights to 
+this software under copyright law.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+------------------------------------------------------------------------------
+
+GLEW:
+The OpenGL Extension Wrangler Library
+Copyright (C) 2002-2007, Milan Ikits <milan ikits[]ieee org>
+Copyright (C) 2002-2007, Marcelo E. Magallon <mmagallo[]debian org>
+Copyright (C) 2002, Lev Povalahev
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, 
+  this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, 
+  this list of conditions and the following disclaimer in the documentation 
+  and/or other materials provided with the distribution.
+* The name of the author may be used to endorse or promote products 
+  derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.
+
+
+Mesa 3-D graphics library
+Version:  7.0
+
+Copyright (C) 1999-2007  Brian Paul   All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+Copyright (c) 2007 The Khronos Group Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and/or associated documentation files (the
+"Materials"), to deal in the Materials without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Materials, and to
+permit persons to whom the Materials are furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Materials.
+
+THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+
+glslang:
+Here, glslang proper means core GLSL parsing, HLSL parsing, and SPIR-V code
+generation. Glslang proper requires use of two licenses, one that covers
+non-preprocessing and an additional one that covers preprocessing.
+
+Bison was removed long ago. You can build glslang from the source grammar,
+using tools of your choice, without using bison or any bison files.
+
+Other parts, outside of glslang proper, include:
+
+- gl_types.h, only needed for OpenGL-like reflection, and can be left out of
+  a parse and codegen project.  See it for its license.
+
+- update_glslang_sources.py, which is not part of the project proper and does
+  not need to be used.
+
+- the SPIR-V "remapper", which is optional, but has the same license as
+  glslang proper
+
+- Google tests and SPIR-V tools, and anything in the external subdirectory
+  are external and optional; see them for their respective licenses.
+
+--------------------------------------------------------------------------------
+
+The core of glslang-proper, minus the preprocessor is licenced as follows:
+
+//
+// Copyright (C) 2015-2018 Google, Inc.
+// Copyright (C) <various other dates and companies>
+//
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+//
+//    Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//
+//    Redistributions in binary form must reproduce the above
+//    copyright notice, this list of conditions and the following
+//    disclaimer in the documentation and/or other materials provided
+//    with the distribution.
+//
+//    Neither the name of 3Dlabs Inc. Ltd. nor the names of its
+//    contributors may be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+// FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+// COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+// BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//
+
+--------------------------------------------------------------------------------
+
+The preprocessor has the core license stated above, plus an additional licence:
+
+/****************************************************************************\
+Copyright (c) 2002, NVIDIA Corporation.
+
+NVIDIA Corporation("NVIDIA") supplies this software to you in
+consideration of your agreement to the following terms, and your use,
+installation, modification or redistribution of this NVIDIA software
+constitutes acceptance of these terms.  If you do not agree with these
+terms, please do not use, install, modify or redistribute this NVIDIA
+software.
+
+In consideration of your agreement to abide by the following terms, and
+subject to these terms, NVIDIA grants you a personal, non-exclusive
+license, under NVIDIA's copyrights in this original NVIDIA software (the
+"NVIDIA Software"), to use, reproduce, modify and redistribute the
+NVIDIA Software, with or without modifications, in source and/or binary
+forms; provided that if you redistribute the NVIDIA Software, you must
+retain the copyright notice of NVIDIA, this notice and the following
+text and disclaimers in all such redistributions of the NVIDIA Software.
+Neither the name, trademarks, service marks nor logos of NVIDIA
+Corporation may be used to endorse or promote products derived from the
+NVIDIA Software without specific prior written permission from NVIDIA.
+Except as expressly stated in this notice, no other rights or licenses
+express or implied, are granted by NVIDIA herein, including but not
+limited to any patent rights that may be infringed by your derivative
+works or by other works in which the NVIDIA Software may be
+incorporated. No hardware is licensed hereunder.
+
+THE NVIDIA SOFTWARE IS BEING PROVIDED ON AN "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED,
+INCLUDING WITHOUT LIMITATION, WARRANTIES OR CONDITIONS OF TITLE,
+NON-INFRINGEMENT, MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
+ITS USE AND OPERATION EITHER ALONE OR IN COMBINATION WITH OTHER
+PRODUCTS.
+
+IN NO EVENT SHALL NVIDIA BE LIABLE FOR ANY SPECIAL, INDIRECT,
+INCIDENTAL, EXEMPLARY, CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+TO, LOST PROFITS; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) OR ARISING IN ANY WAY
+OUT OF THE USE, REPRODUCTION, MODIFICATION AND/OR DISTRIBUTION OF THE
+NVIDIA SOFTWARE, HOWEVER CAUSED AND WHETHER UNDER THEORY OF CONTRACT,
+TORT (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF
+NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+\****************************************************************************/
+
+
+volk:
+Copyright (c) 2018-2019 Arseny Kapoulkine
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+dear imgui:
+The MIT License (MIT)
+
+Copyright (c) 2014-2019 Omar Cornut
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+IZMO:
+BSD 2-Clause License
+
+Copyright (c) 2018 Michele Morrone
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+tinygltf: MIT License
+
+Copyright (c) 2017 Syoyo Fujita, Aurélien Chatelain and many contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 
 

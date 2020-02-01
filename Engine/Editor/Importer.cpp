@@ -6,9 +6,8 @@
 #include "FileSystem.h"
 #include "Utility/MD5Generator.h"
 
-#include "bsfCore/Material/BsShader.h"
-
 #include <filesystem>
+#include <fstream>
 #include <string_view>
 
 using namespace Leviathan;
@@ -210,18 +209,19 @@ bool Importer::ImportTypedFile(const std::string& file, FileType type,
 
     bool result = false;
 
-    switch(type) {
-    case FileType::Shader:
-        result = ImportAndSaveWithOptions<bs::Shader>(file, *target, *options);
-        break;
-    case FileType::Texture:
-        result = ImportAndSaveWithOptions<bs::Texture>(file, *target, *options);
-        break;
-    case FileType::Model:
-        result = ImportAndSaveWithOptions<bs::Mesh>(file, *target, *options);
-        break;
-    case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
-    }
+    DEBUG_BREAK;
+    // switch(type) {
+    // case FileType::Shader:
+    //     result = ImportAndSaveWithOptions<bs::Shader>(file, *target, *options);
+    //     break;
+    // case FileType::Texture:
+    //     result = ImportAndSaveWithOptions<bs::Texture>(file, *target, *options);
+    //     break;
+    // case FileType::Model:
+    //     result = ImportAndSaveWithOptions<bs::Mesh>(file, *target, *options);
+    //     break;
+    // case FileType::Invalid: throw InvalidArgument("trying to import invalid file");
+    // }
 
     // Write to cache
     if(result) {
@@ -551,17 +551,17 @@ Importer::FileType Importer::GetTypeFromExtension(const std::string& extension)
     return FileType::Invalid;
 }
 // ------------------------------------ //
-bool Importer::VerifySharedIsCompiled(const bs::HShader& shader)
-{
-    if(shader->getNumTechniques() < 1) {
-        LOG_ERROR("Importer: shader has no techniques");
-        return false;
-    } else {
-        if(shader->getTechniques().front()->getNumPasses() < 1) {
-            LOG_ERROR("Importer: shader has no passes in technique");
-            return false;
-        }
-    }
+// bool Importer::VerifySharedIsCompiled(const bs::HShader& shader)
+// {
+//     if(shader->getNumTechniques() < 1) {
+//         LOG_ERROR("Importer: shader has no techniques");
+//         return false;
+//     } else {
+//         if(shader->getTechniques().front()->getNumPasses() < 1) {
+//             LOG_ERROR("Importer: shader has no passes in technique");
+//             return false;
+//         }
+//     }
 
-    return true;
-}
+//     return true;
+// }

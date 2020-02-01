@@ -1,7 +1,7 @@
 // This file has a test for registering a custom script type in a
 // GameWorld and then running the system for it and getting components
 // from it
-#include "../PartialEngine.h"
+
 
 #include "Generated/StandardWorld.h"
 
@@ -9,6 +9,10 @@
 #include "Script/Bindings/BindHelpers.h"
 #include "Script/ScriptExecutor.h"
 #include "Script/ScriptModule.h"
+// Diligent workaround
+#undef CHECK
+#include "../PartialEngine.h"
+
 
 #include "catch.hpp"
 

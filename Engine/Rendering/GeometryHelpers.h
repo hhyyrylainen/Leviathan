@@ -17,6 +17,12 @@ public:
         Float2 UV;
     };
 
+    struct PlaneVertex {
+    public:
+        Float3 Pos;
+        Float2 UV;
+    };
+
     static_assert(sizeof(QuadVertex) == 4 * sizeof(float), "unexpected size");
 
 public:

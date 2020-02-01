@@ -94,9 +94,6 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     # Needed for CEF
     "${LEVIATHAN_SRC}/build/ThirdParty/"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/bullet"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfEngine"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfCore"
-    "${LEVIATHAN_SRC}/build/ThirdParty/include/bsfUtility"
     "${LEVIATHAN_SRC}/build/ThirdParty/include/AL"
     "${OPENAL_INCLUDE_DIR}"
     )
@@ -119,7 +116,6 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     sfml-system sfml-network
     alure2 ${OPENAL_LIBRARY}
     ${SDL2_LIBRARY} AngelScriptAddons
-    bsf
     aom vorbis opus ogg
     GraphicsEngineOpenGL
     GraphicsEngineVk
@@ -159,7 +155,7 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   #   list(APPEND LEVIATHAN_APPLICATION_LIBRARIES cef_sandbox)
   # endif()  
   
-  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES bsf
+  list(APPEND LEVIATHAN_APPLICATION_LIBRARIES
     sfml-system sfml-network AngelScriptAddons)
   
 endif()

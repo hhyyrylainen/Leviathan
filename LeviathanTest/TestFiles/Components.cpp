@@ -1,11 +1,13 @@
-#include "../PartialEngine.h"
-
 #include "Entities/Components.h"
 #include "Entities/GameWorld.h"
 #include "Entities/StateInterpolator.h"
 #include "Handlers/ObjectLoader.h"
 
 #include "Generated/StandardWorld.h"
+
+// Diligent workaround
+#undef CHECK
+#include "../PartialEngine.h"
 
 #include "catch.hpp"
 
@@ -23,6 +25,8 @@ TEST_CASE("Manual component add and remove", "[entity]")
     StandardWorld TargetWorld(nullptr);
 
     auto brush = TargetWorld.CreateEntity();
+
+    CHECK_THROWS_AS(TargetWorld.GetComponent_Sendable(brush), NotFound);
 
     CHECK(TargetWorld.RemoveComponent_Sendable(brush) == false);
 

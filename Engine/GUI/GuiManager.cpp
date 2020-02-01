@@ -17,10 +17,7 @@
 
 #include "Engine.h"
 
-#include "bsfCore/Image/BsTexture.h"
-
-#include <boost/filesystem.hpp>
-
+#include <filesystem>
 #include <thread>
 
 using namespace Leviathan;
@@ -192,7 +189,7 @@ DLLEXPORT bool GuiManager::LoadGUIFile(const std::string& urlorpath, bool nochan
         finalpath = urlorpath;
     } else {
         // Local file, add to the end //
-        if(!boost::filesystem::exists(urlorpath)) {
+        if(!std::filesystem::exists(urlorpath)) {
             LOG_ERROR("GuiManager: LoadGUIFile: failed to get canonical path (is "
                       "the file missing?) for file: " +
                       urlorpath);
@@ -238,7 +235,7 @@ DLLEXPORT void GuiManager::PlayCutscene(const std::string& file,
         return;
     }
 
-    if(!boost::filesystem::exists(file)) {
+    if(!std::filesystem::exists(file)) {
         onerror("file doesn't exist");
         return;
     }

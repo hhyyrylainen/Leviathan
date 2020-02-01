@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -7,53 +7,50 @@
 
 #include "json/json.h"
 
-#include "Importer/BsImporter.h"
-#include "Resources/BsResources.h"
-#include "bsfCore/Importer/BsMeshImportOptions.h"
-#include "bsfCore/Importer/BsShaderImportOptions.h"
-#include "bsfCore/Importer/BsTextureImportOptions.h"
-#include "bsfCore/Mesh/BsMesh.h"
-#include "bsfUtility/Reflection/BsRTTIType.h"
-
 #include <optional>
 
-namespace Leviathan { namespace Editor {
+namespace Leviathan {
+class Mesh;
+class Shader;
+class Texture;
+namespace Editor {
 
 template<class T>
 struct OptionsCreator {};
 
 template<>
-struct OptionsCreator<bs::Mesh> {
-    using OptionsType = bs::MeshImportOptions;
+struct OptionsCreator<Mesh> {
+    // using OptionsType = bs::MeshImportOptions;
 
-    static auto Create()
-    {
-        return OptionsType::create();
-    }
+    // static auto Create()
+    // {
+    //     return OptionsType::create();
+    // }
 };
 
 template<>
-struct OptionsCreator<bs::Shader> {
-    using OptionsType = bs::ShaderImportOptions;
+struct OptionsCreator<Shader> {
+    // using OptionsType = bs::ShaderImportOptions;
 
-    static auto Create()
-    {
-        return OptionsType::create();
-    }
+    // static auto Create()
+    // {
+    //     return OptionsType::create();
+    // }
 };
 
 template<>
-struct OptionsCreator<bs::Texture> {
-    using OptionsType = bs::TextureImportOptions;
+struct OptionsCreator<Texture> {
+    // using OptionsType = bs::TextureImportOptions;
 
-    static auto Create()
-    {
-        return OptionsType::create();
-    }
+    // static auto Create()
+    // {
+    //     return OptionsType::create();
+    // }
 };
 
 
 //! \brief Handles importing resources
+//! \todo Decide what to do this with regard to diligent
 class Importer {
     enum class FileType { Texture, Shader, Model, Invalid };
 
@@ -84,7 +81,7 @@ public:
 
     static const char* GetSubFolderForType(FileType type);
     static FileType GetTypeFromExtension(const std::string& extension);
-    static bool VerifySharedIsCompiled(const bs::HShader& shader);
+    // static bool VerifySharedIsCompiled(const bs::HShader& shader);
 
 protected:
     //! Helper for passing the file to the proper function for handling
@@ -111,6 +108,7 @@ protected:
     void AddDefaultOptionsIfMissing(Json::Value& cache) const;
 
 private:
+    /*
     //! Prefer calling ImportAndSaveWithOptions
     template<class T>
     bool ImportAndSaveFile(const std::string& file, const std::string& target,
@@ -351,6 +349,7 @@ private:
         // Non-multi import
         return ImportAndSaveFile<T>(file, target, importOptions);
     }
+    */
 
 protected:
     std::string Source;
@@ -371,4 +370,5 @@ protected:
     bool Compress = true;
 };
 
-}} // namespace Leviathan::Editor
+} // namespace Editor
+} // namespace Leviathan

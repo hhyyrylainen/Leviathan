@@ -11,8 +11,6 @@
 #include "Engine.h"
 #include "Rendering/Graphics.h"
 
-#include "bsfCore/Components/BsCAnimation.h"
-
 using namespace Leviathan;
 // ------------------------------------ //
 // ModelPropertiesSystem
@@ -264,19 +262,19 @@ DLLEXPORT void AnimationSystem::Run(
 
                 // Load clip
                 if(!animation._LoadedAnimation || animation.NameMarked) {
-                    animation._LoadedAnimation = AnimationTrack::MakeShared<AnimationTrack>(
-                        graphics->LoadAnimationClipByName(animation.Name));
+                    animation._LoadedAnimation =
+                        graphics->LoadAnimationClipByName(animation.Name);
                     animation.NameMarked = false;
 
-                    if(!animation._LoadedAnimation ||
-                        !animation._LoadedAnimation->GetInternal()) {
-                        LOG_ERROR("AnimationSystem: failed to load animation named: " +
-                                  animation.Name);
-                        continue;
-                    }
+                    // if(!animation._LoadedAnimation ||
+                    //     !animation._LoadedAnimation->GetInternal()) {
+                    //     LOG_ERROR("AnimationSystem: failed to load animation named: " +
+                    //               animation.Name);
+                    //     continue;
+                    // }
                 }
 
-                bs::AnimationClipState state;
+                // bs::AnimationClipState state;
                 // if(!animated.Animation->GetInternal()->getState(
                 //        animation._LoadedAnimation->GetInternal(), state)) {
 
@@ -292,12 +290,12 @@ DLLEXPORT void AnimationSystem::Run(
                 // to switch to a dynamic numbering scheme
 
                 // getState doesn't return the correct layer so this is always applied
-                state.layer = static_cast<uint32_t>(animationIndex);
+                // state.layer = static_cast<uint32_t>(animationIndex);
 
-                state.speed = animation.SpeedFactor;
-                state.stopped = animation.Paused;
-                state.wrapMode =
-                    animation.Loop ? bs::AnimWrapMode::Loop : bs::AnimWrapMode::Clamp;
+                // state.speed = animation.SpeedFactor;
+                // state.stopped = animation.Paused;
+                // state.wrapMode =
+                //     animation.Loop ? bs::AnimWrapMode::Loop : bs::AnimWrapMode::Clamp;
 
                 // animated.Animation->GetInternal()->setState(
                 //     animation._LoadedAnimation->GetInternal(), state);

@@ -2,7 +2,7 @@
     
     \section intro_sec Introduction
 
-    Leviathan is a 3D game engine based on open source libraries bs::Framework, CEF, Bullet and others.
+    Leviathan is a 3D game engine based on open source libraries DiligentEngine, CEF, Bullet and others.
 
     [Main repository](https://github.com/hhyyrylainen/Leviathan)
     [Website](https://leviathanengine.com/)

@@ -3,8 +3,6 @@
 
 #include "Common/Types.h"
 
-#include "bsfEngine/Debug/BsDebugDraw.h"
-
 using namespace Leviathan;
 // ------------------------------------ //
 PhysicsDebugDrawer::PhysicsDebugDrawer(Window& drawtarget, GameWorld& cameraworld) :
@@ -14,15 +12,15 @@ PhysicsDebugDrawer::PhysicsDebugDrawer(Window& drawtarget, GameWorld& cameraworl
 void PhysicsDebugDrawer::drawLine(
     const btVector3& from, const btVector3& to, const btVector3& color)
 {
-    bs::DebugDraw::instance().setColor(Float4(color, 1.f));
-    bs::DebugDraw::instance().drawLine(Float3(from), Float3(to));
+    // bs::DebugDraw::instance().setColor(Float4(color, 1.f));
+    // bs::DebugDraw::instance().drawLine(Float3(from), Float3(to));
 }
 
 void PhysicsDebugDrawer::drawSphere(
     const btVector3& p, btScalar radius, const btVector3& color)
 {
-    bs::DebugDraw::instance().setColor(Float4(color, 1.f));
-    bs::DebugDraw::instance().drawWireSphere(Float3(p), radius);
+    // bs::DebugDraw::instance().setColor(Float4(color, 1.f));
+    // bs::DebugDraw::instance().drawWireSphere(Float3(p), radius);
 }
 
 void PhysicsDebugDrawer::drawContactPoint(const btVector3& pointOnB,
@@ -40,7 +38,4 @@ void PhysicsDebugDrawer::reportErrorWarning(const char* warningString)
     LOG_WARNING("[PHYSICS DEBUG] " + std::string(warningString));
 }
 // ------------------------------------ //
-DLLEXPORT void PhysicsDebugDrawer::OnBeginDraw()
-{
-    bs::DebugDraw::instance().clear();
-}
+DLLEXPORT void PhysicsDebugDrawer::OnBeginDraw() {}

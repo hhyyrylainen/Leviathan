@@ -1,5 +1,5 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
@@ -9,6 +9,8 @@
 #include "Component.h"
 #include "Networking/CommonNetwork.h"
 #include "WorldNetworkSettings.h"
+
+#include <map>
 
 class CScriptArray;
 class asIScriptObject;

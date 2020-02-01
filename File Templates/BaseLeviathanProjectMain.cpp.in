@@ -2,8 +2,6 @@
 #include "@ProgramAppHeader@"
 #include "@WorldFactoryInclude@"
 
-#include "Application/CrashHandler.h"
-
 #include "Utility/HybridGraphicsUseDedicated.h"
 
 #include "resource.h"
@@ -67,7 +65,6 @@ bool DumpCallback(const wchar_t* dump_path,
     // const std::string path = Convert::WstringToString(dump_path);
     // printf("Created stack dump: %s\n", path.c_str());
 
-    Leviathan::CrashHandler::DoBSFCallStackAfterBreakpad();
     return succeeded;
 }
 
@@ -87,7 +84,6 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor, void* c
     bool succeeded)
 {
     printf("Created stack dump: %s\n", descriptor.path());
-    Leviathan::CrashHandler::DoBSFCallStackAfterBreakpad();
     return succeeded;
 }
 
@@ -164,9 +160,6 @@ int main(int argcount, char* args[]){
         (MINIDUMP_TYPE)(MiniDumpNormal & MiniDumpWithThreadInfo),
         (const wchar_t*)nullptr, NULL);
 
-    Leviathan::CrashHandler::RegisterBreakpadWindowsSEHHandler(std::bind(&BreakpadTriggerHelperSEH,
-        std::ref(ExceptionHandler), std::placeholders::_1));
-
 #endif //_DEBUG
 #else
     google_breakpad::MinidumpDescriptor descriptor("./");
@@ -174,8 +167,6 @@ int main(int argcount, char* args[]){
     google_breakpad::ExceptionHandler ExceptionHandler(descriptor, NULL, DumpCallback, NULL,
         true, -1);
 #endif
-    // Generic handler registration
-    Leviathan::CrashHandler::RegisterBreakpadGenericHandler(std::bind(&BreakpadTriggerHelper, std::ref(ExceptionHandler)));
 #endif //MAKE_RELEASE
 
     // Logger. This is here to make logging shutdown errors etc. possible //

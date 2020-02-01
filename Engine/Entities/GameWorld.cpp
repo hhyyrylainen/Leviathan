@@ -31,11 +31,6 @@
 
 #include "Exceptions.h"
 
-#include "bsfCore/Components/BsCCamera.h"
-#include "bsfCore/Components/BsCLight.h"
-#include "bsfCore/Components/BsCSkybox.h"
-#include "bsfCore/Scene/BsSceneObject.h"
-
 using namespace Leviathan;
 // ------------------------------------ //
 class GameWorld::Implementation {
@@ -67,10 +62,10 @@ public:
 
     Scene::pointer WorldScene;
 
-    bs::HSceneObject SunlightSO;
-    bs::HLight Sunlight;
-    bs::HSceneObject SkyboxSO;
-    bs::HSkybox Skybox;
+    // bs::HSceneObject SunlightSO;
+    // bs::HLight Sunlight;
+    // bs::HSceneObject SkyboxSO;
+    // bs::HSkybox Skybox;
 
     std::shared_ptr<PhysicsDebugDrawer> DebugDraw;
 };
@@ -509,6 +504,7 @@ DLLEXPORT Scene* GameWorld::GetSceneWrapper()
 DLLEXPORT void GameWorld::EnablePhysicsDebugDraw()
 {
     if(_PhysicalWorld && LinkedToWindow) {
+        LOG_WRITE("TODO: reimplement debug drawer");
         pimpl->DebugDraw = std::make_shared<PhysicsDebugDrawer>(*LinkedToWindow, *this);
 
         _PhysicalWorld->SetDebugDrawer(pimpl->DebugDraw);

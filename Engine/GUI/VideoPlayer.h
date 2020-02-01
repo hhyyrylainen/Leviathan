@@ -1,21 +1,30 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2019 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "Common/ReferenceCounted.h"
 #include "Common/ThreadSafe.h"
 #include "Events/CallableObject.h"
 #include "Events/DelegateSlot.h"
 #include "Sound/SoundDevice.h"
 #include "TimeIncludes.h"
 
-#include "bsfCore/BsCorePrerequisites.h"
+#include "DiligentCore/Graphics/GraphicsEngine/interface/GraphicsTypes.h"
 
 #include <chrono>
 #include <vector>
 
 
-namespace Leviathan { namespace GUI {
+namespace Leviathan {
+
+class Texture;
+
+namespace GUI {
+
+constexpr auto VIDEO_PLAYER_DILIGENT_PIXEL_FORMAT = Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB;
+
+constexpr auto VIDEO_PLAYER_BYTES_PER_PIXEL = 4;
 
 //! \brief VideoPlayer that uses AOM to play videos on a texture
 //!
@@ -87,9 +96,19 @@ public:
         return StreamValid; // && VideoCodec && ConvertedFrameBuffer;
     }
 
-    DLLEXPORT auto GetTexture() const
+    DLLEXPORT const auto& GetTextureData() const
     {
-        return VideoOutputTexture;
+        return IntermediateTextureBuffer;
+    }
+
+    inline auto IsTextureDataUpdated()
+    {
+        return IntermediateBufferMarked;
+    }
+
+    inline void UnMarkTextureDataUpdated()
+    {
+        IntermediateBufferMarked = false;
     }
 
 public:
@@ -100,10 +119,6 @@ public:
     size_t ReadAudioData(uint8_t* output, size_t amount);
 
 protected:
-    //! After loading the video this creates the output texture + material for it
-    //! \returns false if the setup fails
-    bool CreateOutputTexture();
-
     //! \brief Opens and parses the video info and opens decoding contexts
     //! \returns false if something fails
     bool OpenCodecsForFile();
@@ -117,7 +132,7 @@ protected:
     bool PeekNextFrameTimeStamp();
 
     //! \brief Updates the texture
-    void UpdateTexture();
+    void UpdateIntermediateTextureBuffer();
 
     //! \brief Reads already decoded audio data. The audio data vector must be locked
     //! before calling this
@@ -142,8 +157,9 @@ protected:
 
     std::string VideoFile;
 
-    //! The target texture
-    bs::HTexture VideoOutputTexture;
+    std::vector<uint8_t> IntermediateTextureBuffer;
+    //! True when there is updated data in IntermediateTextureBuffer
+    bool IntermediateBufferMarked = true;
 
     //! True when playing back something and frame start events do something
     bool IsPlaying = false;
@@ -181,4 +197,5 @@ public:
     Delegate OnPlayBackEnded;
 };
 
-}} // namespace Leviathan::GUI
+} // namespace GUI
+} // namespace Leviathan

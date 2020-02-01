@@ -7,6 +7,8 @@
 #include "ScriptComponentHolder.h"
 
 #include "add_on/scriptarray/scriptarray.h"
+
+#include <cstring>
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT ScriptSystemWrapper::ScriptSystemWrapper(

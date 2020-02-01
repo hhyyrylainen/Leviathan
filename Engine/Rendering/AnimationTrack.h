@@ -5,28 +5,27 @@
 // ------------------------------------ //
 #include "Common/ReferenceCounted.h"
 
-#include "bsfCore/BsCorePrerequisites.h"
-
 namespace Leviathan {
 
+//! \todo Reimplement
 class AnimationTrack : public ReferenceCounted {
 protected:
     // These are protected for only constructing properly reference
     // counted instances through MakeShared
     friend ReferenceCounted;
 
-    DLLEXPORT AnimationTrack(const bs::HAnimationClip& clip);
+    DLLEXPORT AnimationTrack();
 
 public:
     REFERENCE_COUNTED_PTR_TYPE(AnimationTrack);
 
-    inline bs::HAnimationClip GetInternal()
-    {
-        return BsClip;
-    }
+    // inline bs::HAnimationClip GetInternal()
+    // {
+    //     return BsClip;
+    // }
 
 private:
-    bs::HAnimationClip BsClip;
+    // bs::HAnimationClip BsClip;
 };
 
 } // namespace Leviathan

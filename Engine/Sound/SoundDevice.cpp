@@ -4,14 +4,13 @@
 #include "AudioBuffer.h"
 
 #include "Application/AppDefine.h"
+#include "Common/Quaternion.h"
 #include "Common/StringOperations.h"
 #include "Engine.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "TimeIncludes.h"
 
 #include "alure2.h"
-
-#include <boost/filesystem.hpp>
 
 #include <algorithm>
 using namespace Leviathan;
@@ -280,13 +279,9 @@ DLLEXPORT void SoundDevice::SetSoundListenerPosition(
     if(!Pimpl->Listener)
         return;
 
-    bs::Quaternion quaternion(orientation);
+    Quaternion quaternion(orientation);
 
-    bs::Radian angle;
-    bs::Vector3 direction;
-
-    // TODO: does this do the right thing?
-    quaternion.toAxisAngle(direction, angle); // toAngleAxis(angle, direction);
+    const auto [direction, angle] = quaternion.ToAxisAngle();
 
     alure::Vector3 at(0, 0, 0);
 
@@ -295,7 +290,7 @@ DLLEXPORT void SoundDevice::SetSoundListenerPosition(
     alure::Vector3 velocity(temp.X, temp.Y, temp.Z);
 
     Pimpl->Listener.set3DParameters(
-        {pos.X, pos.Y, pos.Z}, velocity, {at, {direction.x, direction.y, direction.z}});
+        {pos.X, pos.Y, pos.Z}, velocity, {at, {direction.X, direction.Y, direction.Z}});
 
     Pimpl->PreviousPosition = pos;
 }

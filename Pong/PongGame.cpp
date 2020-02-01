@@ -480,7 +480,7 @@ void Pong::PongGame::DoSpecialPostLoad()
     const auto camera = Leviathan::ObjectLoader::LoadCamera(*WorldOfPong,
         Float3(0.f, 22.f * BASE_ARENASCALE, 0.f),
         // Camera should always point down towards the play field //
-        bs::Quaternion(bs::Vector3(0, -1, 0), bs::Radian(0)));
+        Quaternion(Float3(0, -1, 0), Radian(0)));
 
     WorldOfPong->SetCamera(camera);
 

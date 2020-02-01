@@ -123,7 +123,6 @@ if(NOT LEVIATHAN_AS_LIBRARY)
     "Application/ServerApplication.cpp" "Application/ServerApplication.h"
     "Application/ClientApplication.cpp" "Application/ClientApplication.h"
     "Application/ConsoleInput.cpp" "Application/ConsoleInput.h"
-    "Application/CrashHandler.cpp" "Application/CrashHandler.h"
     )
 endif()
 
@@ -169,7 +168,6 @@ if(LEVIATHAN_USING_OGRE)
   set(GroupRendering
     "Rendering/GeometryHelpers.h" "Rendering/GeometryHelpers.cpp"
     "Rendering/Graphics.cpp" "Rendering/Graphics.h"
-    "Rendering/GUIOverlayRenderer.cpp" "Rendering/GUIOverlayRenderer.h"
     "Rendering/WindowRenderingResources.cpp" "Rendering/WindowRenderingResources.h"
     "Rendering/RotatingBufferHelper.h"
     "Rendering/Scene.cpp" "Rendering/Scene.h"

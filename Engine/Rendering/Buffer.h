@@ -7,7 +7,7 @@
 // part of the hack
 #undef LOG_ERROR
 
-#include "DiligentCore/Common/interface/RefCntAutoPtr.h"
+#include "DiligentCore/Common/interface/RefCntAutoPtr.hpp"
 #include "DiligentCore/Graphics/GraphicsEngine/interface/Buffer.h"
 
 // hack workaround
@@ -16,6 +16,8 @@
 #undef CHECK
 #define CHECK(x)
 
+
+#include <cstring>
 
 namespace Leviathan {
 

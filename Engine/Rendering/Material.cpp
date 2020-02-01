@@ -1,8 +1,6 @@
 // ------------------------------------ //
 #include "Material.h"
 
-#include "bsfCore/Material/BsMaterial.h"
-
 using namespace Leviathan;
 // ------------------------------------ //
 DLLEXPORT Material::Material(const Shader::pointer& shader) :

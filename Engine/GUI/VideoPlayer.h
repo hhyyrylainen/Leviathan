@@ -16,11 +16,7 @@
 #include <vector>
 
 
-namespace Leviathan {
-
-class Texture;
-
-namespace GUI {
+namespace Leviathan { namespace GUI {
 
 constexpr auto VIDEO_PLAYER_DILIGENT_PIXEL_FORMAT = Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB;
 
@@ -197,5 +193,4 @@ public:
     Delegate OnPlayBackEnded;
 };
 
-} // namespace GUI
-} // namespace Leviathan
+}} // namespace Leviathan::GUI

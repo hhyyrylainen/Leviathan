@@ -35,8 +35,20 @@ public:
     REFERENCE_COUNTED_PTR_TYPE(Widget);
 
 protected:
+    //! When this widget is in a container it can be drawn
+    //! \todo change to the base container type
+    WidgetLayer* ContainedIn = nullptr;
+
+    //! Unique ID of this widget
     const int ID;
+
     bool RequiresTick = false;
+
+    //! When true (potentially) some render resources need to be recreated
+    bool ResourcesDirty = true;
+
+    //! When true requires layout recompute
+    bool LayoutDirty = true;
 };
 
 }} // namespace Leviathan::GUI

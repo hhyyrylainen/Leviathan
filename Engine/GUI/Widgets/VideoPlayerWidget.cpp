@@ -1,10 +1,13 @@
 // ------------------------------------ //
 #include "VideoPlayerWidget.h"
 
+#include "Engine.h"
+#include "GUI/GuiManager.h"
 #include "GUI/GuiWidgetLayer.h"
 #include "Rendering/GeometryHelpers.h"
+#include "Rendering/Graphics.h"
+#include "Rendering/Texture.h"
 
-#include "GUI/GuiManager.h"
 
 using namespace Leviathan;
 using namespace Leviathan::GUI;
@@ -27,29 +30,11 @@ DLLEXPORT bool VideoPlayerWidget::Play(const std::string& videofile)
 
     CanCallCallback = true;
 
-    // The Play method creates the texture we want to display
-    // ContainedIn->GetGuiManager()->NotifyAboutLayer(
-    //     ContainedIn->GetRenderOrder(), Player.GetTexture());
+    // Create a texture for displaying the decoded video
+    VideoTexture = Engine::Get()->GetGraphics()->CreateDynamicTexture(
+        Player.GetVideoWidth(), Player.GetVideoHeight(), VIDEO_PLAYER_DILIGENT_PIXEL_FORMAT);
 
-    // Set the texture on our material
-
-    // QuadMesh->getSubMesh(0)->setMaterialName(Material->getName());
-
-    // // Recreate item
-    // Ogre::SceneManager* scene = ContainedIn->GetScene();
-
-    // if(QuadItem) {
-    //     scene->destroyItem(QuadItem);
-    //     QuadItem = nullptr;
-    // }
-
-    // QuadItem = scene->createItem(QuadMesh, Ogre::SCENE_STATIC);
-    // QuadItem->setCastShadows(false);
-
-    // QuadItem->setRenderQueueGroup(2);
-
-    // // Add it
-    // Node->attachObject(QuadItem);
+    LEVIATHAN_ASSERT(VideoTexture, "failed to create player widget texture");
 
     return true;
 }
@@ -79,7 +64,34 @@ void VideoPlayerWidget::_DoCallback()
 // ------------------------------------ //
 DLLEXPORT void VideoPlayerWidget::Render()
 {
-    // TODO: rendering this again
+    if(!VideoTexture)
+        return;
+
+    // Uses just a full screen quad to render for now
+    if(!ResourcesDirty || !QuadMesh)
+        QuadMesh = GeometryHelpers::CreateQuad(0, 0, 100.f, 100.f);
+
+
+    // We use a dynamic texture so it needs to be written every frame
+    Diligent::Box box;
+    box.MinX = 0;
+    box.MinY = 0;
+    box.MaxX = Player.GetVideoWidth();
+    box.MaxY = Player.GetVideoHeight();
+
+    Diligent::TextureSubResData data;
+    data.Stride = Player.GetVideoWidth() * VIDEO_PLAYER_BYTES_PER_PIXEL;
+    data.pData = Player.GetTextureData().data();
+
+    Engine::Get()->GetGraphics()->WriteDynamicTextureData(*VideoTexture, 0, 0, box, data);
+
+
+    // No offset
+    float x = 0;
+    float y = 0;
+
+    ContainedIn->GetGuiManager()->GetRenderer().DrawTransparentWithAlpha(
+        *QuadMesh, *VideoTexture, x, y);
 }
 // ------------------------------------ //
 DLLEXPORT void VideoPlayerWidget::OnAddedToContainer(WidgetLayer* container)

@@ -1,12 +1,17 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2020 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 #include "GUI/VideoPlayer.h"
 #include "Widget.h"
 
-namespace Leviathan { namespace GUI {
+namespace Leviathan {
+
+class Mesh;
+class Texture;
+
+namespace GUI {
 
 //! \brief Hosts a Leviathan::VideoPlayer in a Widget for diplay in the GUI
 //! \todo This is currenlty hardcoded to work with GuiManager::PlayCutscene if the plan for a
@@ -52,12 +57,9 @@ private:
     bool CanCallCallback = false;
     std::function<void()> Callback;
 
-    WidgetLayer* ContainedIn = nullptr;
-
-    // Ogre::MaterialPtr Material;
-    // Ogre::SceneNode* Node = nullptr;
-    // Ogre::Item* QuadItem = nullptr;
-    // Ogre::MeshPtr QuadMesh;
+    CountedPtr<Mesh> QuadMesh;
+    CountedPtr<Texture> VideoTexture;
 };
 
-}} // namespace Leviathan::GUI
+} // namespace GUI
+} // namespace Leviathan

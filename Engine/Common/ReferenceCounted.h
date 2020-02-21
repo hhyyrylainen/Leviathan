@@ -17,15 +17,15 @@ template<class T>
 using CountedPtr = boost::intrusive_ptr<T>;
 
 #ifdef LEVIATHAN_USING_BOOST
-#define REFERENCE_COUNTED_PTR_TYPE(x)          \
-    using pointer = CountedPtr<x>;             \
-    using const_pointer = CountedPtr<const x>; \
-    static constexpr auto ANGELSCRIPT_TYPE =   \
+#define REFERENCE_COUNTED_PTR_TYPE(x)                     \
+    using pointer = Leviathan::CountedPtr<x>;             \
+    using const_pointer = Leviathan::CountedPtr<const x>; \
+    static constexpr auto ANGELSCRIPT_TYPE =              \
         #x "@"; // Appended @ because these are handle types
-#define REFERENCE_COUNTED_PTR_TYPE_NAMED(x, y) \
-    using pointer = CountedPtr<x>;             \
-    using const_pointer = CountedPtr<const x>; \
-    static constexpr auto ANGELSCRIPT_TYPE =   \
+#define REFERENCE_COUNTED_PTR_TYPE_NAMED(x, y)            \
+    using pointer = Leviathan::CountedPtr<x>;             \
+    using const_pointer = Leviathan::CountedPtr<const x>; \
+    static constexpr auto ANGELSCRIPT_TYPE =              \
         #y "@"; // Appended @ because these are handle types
 #else
 #define REFERENCE_COUNTED_PTR_TYPE(x)

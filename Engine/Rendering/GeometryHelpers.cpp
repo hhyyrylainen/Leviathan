@@ -79,10 +79,8 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateXZPlane(float width, float height
     auto indexBuffer = graphics->CreateBuffer(indexBufferDesc, &indexBufferData);
 
     // TODO: pass Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST here
-    return Mesh::MakeShared<Mesh>(vertexBuffer,
-        Rendering::LayoutElements(
-            PlaneVertexElementDefinitions, std::size(PlaneVertexElementDefinitions), false),
-        indexBuffer, Diligent::VT_UINT16, 6);
+    return Mesh::MakeShared<Mesh>(
+        vertexBuffer, GetLayoutForPlane(), indexBuffer, Diligent::VT_UINT16, 6);
 }
 // ------------------------------------ //
 DLLEXPORT Mesh::pointer GeometryHelpers::CreateQuad(
@@ -132,8 +130,18 @@ DLLEXPORT Mesh::pointer GeometryHelpers::CreateQuad(
     auto indexBuffer = graphics->CreateBuffer(indexBufferDesc, &indexBufferData);
 
     // TODO: pass Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST here
-    return Mesh::MakeShared<Mesh>(vertexBuffer,
-        Rendering::LayoutElements(
-            QuadVertexElementDefinitions, std::size(QuadVertexElementDefinitions), false),
-        indexBuffer, Diligent::VT_UINT16, 6);
+    return Mesh::MakeShared<Mesh>(
+        vertexBuffer, GetLayoutForQuad(), indexBuffer, Diligent::VT_UINT16, 6);
+}
+// ------------------------------------ //
+DLLEXPORT Rendering::LayoutElements GeometryHelpers::GetLayoutForQuad()
+{
+    return Rendering::LayoutElements(
+        QuadVertexElementDefinitions, std::size(QuadVertexElementDefinitions), false);
+}
+// ------------------------------------ //
+DLLEXPORT Rendering::LayoutElements GeometryHelpers::GetLayoutForPlane()
+{
+    return Rendering::LayoutElements(
+        PlaneVertexElementDefinitions, std::size(PlaneVertexElementDefinitions), false);
 }

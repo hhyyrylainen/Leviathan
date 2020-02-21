@@ -232,6 +232,8 @@ endif()
 if(LEVIATHAN_USING_GUI)
   set(GroupGUI 
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
+    "GUI/GuiRenderer.cpp" "GUI/GuiRenderer.h"
+    "GUI/GuiShaders.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
     "GUI/CEFLocalResourceRequest.cpp" "GUI/CEFLocalResourceRequest.h"

@@ -47,54 +47,6 @@ DLLEXPORT View::View(GuiManager* owner, Window* window, int renderorder,
 
 DLLEXPORT View::~View() {}
 // ------------------------------------ //
-// Test code from diligent
-constexpr auto VSSource = R"(
-    cbuffer Constants
-    {
-    float4x4 g_ProjectionMatrix;
-    };
-
-    struct VSInput
-    {
-    float2 Pos : ATTRIB0;
-    float2 UV  : ATTRIB1;
-    // float4 Col : ATTRIB2;
-    };
-
-    struct PSInput 
-    { 
-    float4 Pos : SV_POSITION;
-    // float4 Col : COLOR;
-    float2 UV  : TEX_COORD; 
-    };
-
-    void main(in VSInput VSIn, out PSInput PSIn)
-    {
-    PSIn.Pos = mul(g_ProjectionMatrix, float4(VSIn.Pos.xy, 0.0, 1.0));
-    PSIn.UV = VSIn.UV;
-    // PSIn.Col = VSIn.Col;
-    }
-    )";
-
-// Test code from diligent
-// Pixel shader will simply output interpolated vertex color
-constexpr auto PSSource = R"(
-    Texture2D    g_Texture;
-    SamplerState g_Texture_sampler;
-
-    struct PSInput 
-    { 
-    float4 Pos : SV_POSITION;
-    // float4 Col : COLOR;
-    float2 UV : TEX_COORD; 
-    };
-
-    float4 main(in PSInput PSIn) : SV_Target
-    {
-    return /*PSIn.Col * */ g_Texture.Sample(g_Texture_sampler, PSIn.UV);
-    }
-    )";
-
 DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& headervars)
 {
     // Lock us //
@@ -123,115 +75,11 @@ DLLEXPORT bool View::Init(const std::string& filetoload, const NamedVars& header
     CefBrowserHost::CreateBrowser(info, this, filetoload, settings, nullptr, nullptr);
 
     // Create rendering resources
-    auto* graphics = Engine::Get()->GetGraphics();
+    // auto* graphics = Engine::Get()->GetGraphics();
 
-    // Mostly test code and comments from diligent
-    Diligent::PipelineStateDesc PSODesc;
-    // Pipeline state name is used by the engine to report issues
-    // It is always a good idea to give objects descriptive names
-    PSODesc.Name = "Simple triangle PSO";
-
-    // This is a graphics pipeline
-    PSODesc.IsComputePipeline = false;
-
-    // This tutorial will render to a single render target
-    PSODesc.GraphicsPipeline.NumRenderTargets = 1;
-    // Set render target format which is the format of the swap chain's color buffer
-    PSODesc.GraphicsPipeline.RTVFormats[0] = graphics->GetBackBufferFormat();
-    // This tutorial will not use depth buffer
-    PSODesc.GraphicsPipeline.DSVFormat = graphics->GetDepthBufferFormat();
-    // Primitive topology defines what kind of primitives will be rendered by this pipeline
-    // state
-    PSODesc.GraphicsPipeline.PrimitiveTopology = Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-    // Alpha blend
-    auto& rt0Blend = PSODesc.GraphicsPipeline.BlendDesc.RenderTargets[0];
-    rt0Blend.BlendEnable = true;
-    rt0Blend.SrcBlend = Diligent::BLEND_FACTOR_SRC_ALPHA;
-    rt0Blend.DestBlend = Diligent::BLEND_FACTOR_INV_SRC_ALPHA;
-    rt0Blend.BlendOp = Diligent::BLEND_OPERATION_ADD;
-    rt0Blend.SrcBlendAlpha = Diligent::BLEND_FACTOR_INV_SRC_ALPHA;
-    rt0Blend.DestBlendAlpha = Diligent::BLEND_FACTOR_ZERO;
-    rt0Blend.BlendOpAlpha = Diligent::BLEND_OPERATION_ADD;
-    rt0Blend.RenderTargetWriteMask = Diligent::COLOR_MASK_ALL;
-
-    // PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_BACK;
-    // No culling used on the GUI
-    PSODesc.GraphicsPipeline.RasterizerDesc.CullMode = Diligent::CULL_MODE_NONE;
-    // Disable depth testing
-    PSODesc.GraphicsPipeline.DepthStencilDesc.DepthEnable = false;
-
-    Diligent::ShaderCreateInfo ShaderCI;
-    // Tell the system that the shader source code is in HLSL.
-    // For OpenGL, the engine will convert this into GLSL behind the scene
-    ShaderCI.SourceLanguage = Diligent::SHADER_SOURCE_LANGUAGE_HLSL;
-    ShaderCI.UseCombinedTextureSamplers = true;
-    // Create vertex shader
-
-
-    ShaderCI.Desc.ShaderType = Diligent::SHADER_TYPE_VERTEX;
-    ShaderCI.EntryPoint = "main";
-    ShaderCI.Desc.Name = "Triangle vertex shader";
-    ShaderCI.Source = VSSource;
-    auto vs = graphics->CreateShader(ShaderCI, ShaderVariationInfo{});
-
-    // Create pixel shader
-    ShaderCI.Desc.ShaderType = Diligent::SHADER_TYPE_PIXEL;
-    ShaderCI.EntryPoint = "main";
-    ShaderCI.Desc.Name = "Triangle pixel shader";
-    ShaderCI.Source = PSSource;
-    auto ps = graphics->CreateShader(ShaderCI, ShaderVariationInfo{});
-
-    PSODesc.GraphicsPipeline.pVS = vs->GetFirstVariant();
-    PSODesc.GraphicsPipeline.pPS = ps->GetFirstVariant();
-
-    // Shader resources
-    Diligent::ShaderResourceVariableDesc Vars[] = {{Diligent::SHADER_TYPE_PIXEL, "g_Texture",
-        Diligent::SHADER_RESOURCE_VARIABLE_TYPE_MUTABLE}};
-    PSODesc.ResourceLayout.Variables = Vars;
-    PSODesc.ResourceLayout.NumVariables = std::size(Vars);
-
-    // We don't change the texture sampler
-    Diligent::SamplerDesc SamLinearClampDesc{Diligent::FILTER_TYPE_LINEAR,
-        Diligent::FILTER_TYPE_LINEAR, Diligent::FILTER_TYPE_LINEAR,
-        Diligent::TEXTURE_ADDRESS_CLAMP, Diligent::TEXTURE_ADDRESS_CLAMP,
-        Diligent::TEXTURE_ADDRESS_CLAMP};
-    Diligent::StaticSamplerDesc StaticSamplers[] = {
-        {Diligent::SHADER_TYPE_PIXEL, "g_Texture", SamLinearClampDesc}};
-    PSODesc.ResourceLayout.StaticSamplers = StaticSamplers;
-    PSODesc.ResourceLayout.NumStaticSamplers = _countof(StaticSamplers);
-
+    // TODO: probably should move to pixel based coordinates and allow the GUI objects to
+    // layout themselves
     QuadMesh = GeometryHelpers::CreateQuad(0, 0, 100.f, 100.f);
-
-    const auto [elements, elementCount] = QuadMesh->GetVertexLayout().GetElements();
-
-    PSODesc.GraphicsPipeline.InputLayout.LayoutElements = elements;
-    PSODesc.GraphicsPipeline.InputLayout.NumElements = elementCount;
-
-    // Finally, create the pipeline state
-    _PSO = graphics->CreatePSO(PSODesc);
-
-    LEVIATHAN_ASSERT(_PSO, "GuiView PSO creation failed");
-
-    // View matrix holding buffer
-    Diligent::BufferDesc CBDesc;
-    CBDesc.Name = "VS constants CB";
-    CBDesc.uiSizeInBytes = sizeof(Matrix4);
-    CBDesc.Usage = Diligent::USAGE_DYNAMIC;
-    CBDesc.BindFlags = Diligent::BIND_UNIFORM_BUFFER;
-    CBDesc.CPUAccessFlags = Diligent::CPU_ACCESS_WRITE;
-
-    ViewBuffer = graphics->CreateBuffer(CBDesc);
-
-
-    // The buffer is bound permanently (but the buffer contents can be written)
-    // Not sure if this is the right way to go about making a GUI renderer
-    _PSO->GetInternal()
-        ->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")
-        ->Set(ViewBuffer->GetInternal().RawPtr());
-
-    // Shader resource binding object with static bindings initialized
-    _SRB = _PSO->CreateShaderResourceBinding(true);
 
     return true;
 }
@@ -260,13 +108,6 @@ DLLEXPORT void View::_DoReleaseResources()
 
     // Destroy all remaining proxy targets
     ProxyedObjects.clear();
-
-    // if(Node) {
-    //     Node->destroy();
-    // }
-
-    // Material = nullptr;
-    // Renderable = nullptr;
 
     ViewTexture = nullptr;
     IntermediateTextureBuffer.clear();
@@ -628,6 +469,8 @@ DLLEXPORT void View::Render()
     if(NeededTextureWidth <= 0 || NeededTextureHeight <= 0)
         return;
 
+    LEVIATHAN_ASSERT(QuadMesh, "view mesh missing");
+
     auto graphics = Engine::Get()->GetGraphics();
 
     // Make sure our texture exists and is large enough
@@ -652,27 +495,12 @@ DLLEXPORT void View::Render()
 
     graphics->WriteDynamicTextureData(*ViewTexture, 0, 0, box, data);
 
-    {
-        Rendering::MappedBuffer mapped(
-            *graphics, *ViewBuffer, Diligent::MAP_WRITE, Diligent::MAP_FLAG_DISCARD);
 
-        // Orthographic projection (setting last param to 0 disables depth adjustement)
-        const auto projectionMatrix =
-            Matrix4::ProjectionOrthographic(0.f, 100.f, 0.f, 100.f, -100.f, 100.f).Transpose();
+    // No offset
+    float x = 0;
+    float y = 0;
 
-        mapped.Write(&projectionMatrix, sizeof(projectionMatrix));
-    }
-
-    graphics->SetActivePSO(*_PSO);
-
-    _SRB->GetInternal()
-        ->GetVariableByName(Diligent::SHADER_TYPE_PIXEL, "g_Texture")
-        ->Set(ViewTexture->GetDefaultSRV());
-
-    graphics->CommitShaderResources(
-        _SRB->GetInternal(), Diligent::RESOURCE_STATE_TRANSITION_MODE_TRANSITION);
-
-    graphics->DrawMesh(*QuadMesh);
+    Owner->GetRenderer().DrawTransparentWithAlpha(*QuadMesh, *ViewTexture, x, y);
 }
 // ------------------------------------ //
 void View::OnRenderProcessTerminated(CefRefPtr<CefBrowser> browser, TerminationStatus status)

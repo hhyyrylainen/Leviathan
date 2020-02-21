@@ -16,16 +16,7 @@
 #include "include/cef_request_handler.h"
 #include "wrapper/cef_message_router.h"
 
-namespace Leviathan {
-
-class PSO;
-class SRB;
-
-namespace Rendering {
-class Buffer;
-}
-
-namespace GUI {
+namespace Leviathan { namespace GUI {
 
 class LeviathanJavaScriptAsync;
 
@@ -305,11 +296,7 @@ protected:
 
     std::vector<uint8_t> IntermediateTextureBuffer;
 
-    std::shared_ptr<PSO> _PSO;
-    std::shared_ptr<SRB> _SRB;
-    std::shared_ptr<Rendering::Buffer> ViewBuffer;
     Mesh::pointer QuadMesh;
 };
 
-} // namespace GUI
-} // namespace Leviathan
+}} // namespace Leviathan::GUI

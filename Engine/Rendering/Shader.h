@@ -26,6 +26,7 @@ public:
 };
 
 //! \brief Represents a collection of shaders with different constant values
+//! \todo Decide if this should include both index and vertex shader
 class Shader : public ReferenceCounted {
 protected:
     // These are protected for only constructing properly reference

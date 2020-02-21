@@ -46,6 +46,12 @@ public:
     //! when recorded with RenderDoc). This might be outdated note after bsf
     DLLEXPORT static Mesh::pointer CreateXZPlane(float width, float height);
 
+    //! \brief Returns the layout for a quad without generating one
+    DLLEXPORT static Rendering::LayoutElements GetLayoutForQuad();
+
+    //! \brief Returns the layout for a plane without generating one
+    DLLEXPORT static Rendering::LayoutElements GetLayoutForPlane();
+
     GeometryHelpers() = delete;
 };
 

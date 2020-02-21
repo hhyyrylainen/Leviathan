@@ -3,6 +3,8 @@
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
+#include "GuiRenderer.h"
+
 #include "Application/AppDefine.h"
 #include "Common/ReferenceCounted.h"
 #include "Common/ThreadSafe.h"
@@ -10,6 +12,7 @@
 namespace Leviathan { namespace GUI {
 
 class Layer;
+class GuiRenderer;
 
 enum class INPUT_EVENT_TYPE : int { Keypress, Scroll, Other };
 
@@ -82,6 +85,11 @@ public:
     //! activation buttons)
     DLLEXPORT void SetDisableMouseCapture(bool newvalue);
 
+    inline auto& GetRenderer()
+    {
+        return Renderer;
+    }
+
 protected:
     //! Is called by folder listeners to notify of Gui file changes
     void _FileChanged(const std::string& file, ResourceFolderListener& caller);
@@ -117,6 +125,8 @@ private:
     bool DisableGuiMouseCapture = false;
 
     std::unique_ptr<CutscenePlayStatus> CurrentlyPlayingCutscene;
+
+    GuiRenderer Renderer;
 };
 
 }} // namespace Leviathan::GUI

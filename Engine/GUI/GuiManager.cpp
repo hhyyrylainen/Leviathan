@@ -33,15 +33,14 @@ struct GuiManager::CutscenePlayStatus {
     boost::intrusive_ptr<VideoPlayerWidget> Player;
 };
 // ------------------------------------ //
-GuiManager::GuiManager() : ID(IDFactory::GetID()), GuiViewCounter(0) {}
+GuiManager::GuiManager() : ID(IDFactory::GetID()), GuiViewCounter(0), Renderer(*this) {}
 GuiManager::~GuiManager() {}
 // ------------------------------------ //
 bool GuiManager::Init(Graphics* graph, Window* window)
 {
     ThisWindow = window;
 
-    // All rendering is now handled by individual Layers and the
-    // Window full screen compositor passes
+    Renderer.Init(graph, window);
 
     return true;
 }

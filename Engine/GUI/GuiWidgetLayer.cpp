@@ -61,5 +61,8 @@ DLLEXPORT void WidgetLayer::_DoReleaseResources()
 // ------------------------------------ //
 DLLEXPORT void WidgetLayer::Render()
 {
-    // TODO: render with diligent
+    // TODO: layout
+    for(auto widget : Widgets) {
+        widget->Render();
+    }
 }

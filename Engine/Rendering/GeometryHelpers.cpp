@@ -145,3 +145,50 @@ DLLEXPORT Rendering::LayoutElements GeometryHelpers::GetLayoutForPlane()
     return Rendering::LayoutElements(
         PlaneVertexElementDefinitions, std::size(PlaneVertexElementDefinitions), false);
 }
+
+DLLEXPORT Rendering::LayoutElements GeometryHelpers::GetDefaultLayout()
+{
+    return GetLayoutForPlane();
+}
+// ------------------------------------ //
+DLLEXPORT CountedPtr<Mesh> GeometryHelpers::CreateMesh(
+    DefaultVertex* vertices, size_t vertexcount, uint16_t* indices, size_t indexcount)
+{
+    if(!vertices || vertexcount == 0 || !indices || indexcount == 0)
+        return nullptr;
+
+    if(vertexcount > std::numeric_limits<uint16_t>::max())
+        LOG_ERROR("GeometryHelpers: CreateMesh: called with more vertices than the 16 bit "
+                  "index type can handle");
+
+    auto graphics = Engine::Get()->GetGraphics();
+
+    const auto vertexDataInBytes = sizeof(DefaultVertex) * vertexcount;
+    const auto indexDataInBytes = sizeof(uint16_t) * indexcount;
+
+    Diligent::BufferDesc vertexBufferDesc;
+    vertexBufferDesc.Name = "GHMesh vertex buffer";
+    vertexBufferDesc.Usage = Diligent::USAGE_STATIC;
+    vertexBufferDesc.BindFlags = Diligent::BIND_VERTEX_BUFFER;
+    vertexBufferDesc.uiSizeInBytes = vertexDataInBytes;
+    Diligent::BufferData vertexBufferData;
+    vertexBufferData.pData = vertices;
+    vertexBufferData.DataSize = vertexDataInBytes;
+
+    auto vertexBuffer = graphics->CreateBuffer(vertexBufferDesc, &vertexBufferData);
+
+    Diligent::BufferDesc indexBufferDesc;
+    indexBufferDesc.Name = "GHMesh index buffer";
+    indexBufferDesc.Usage = Diligent::USAGE_STATIC;
+    indexBufferDesc.BindFlags = Diligent::BIND_VERTEX_BUFFER;
+    indexBufferDesc.uiSizeInBytes = indexDataInBytes;
+    Diligent::BufferData indexBufferData;
+    indexBufferData.pData = indices;
+    indexBufferData.DataSize = indexDataInBytes;
+
+    auto indexBuffer = graphics->CreateBuffer(indexBufferDesc, &indexBufferData);
+
+    // TODO: pass Diligent::PRIMITIVE_TOPOLOGY_TRIANGLE_LIST here
+    return Mesh::MakeShared<Mesh>(vertexBuffer, GetDefaultLayout(), indexBuffer,
+        Diligent::VT_UINT16, static_cast<int>(indexcount));
+}

@@ -8,24 +8,28 @@
 
 namespace Leviathan {
 
+struct QuadVertex {
+public:
+    Float2 Pos;
+    Float2 UV;
+};
+
+struct DefaultVertex {
+public:
+    Float3 Pos;
+    Float2 UV;
+};
+
+static_assert(sizeof(QuadVertex) == 4 * sizeof(float), "unexpected size");
+static_assert(sizeof(DefaultVertex) == 5 * sizeof(float), "unexpected size");
+
+using PlaneVertex = DefaultVertex;
+
 //! \brief Helpers for generating procedural geometry
 class GeometryHelpers {
 public:
-    struct QuadVertex {
-    public:
-        Float2 Pos;
-        Float2 UV;
-    };
+    GeometryHelpers() = delete;
 
-    struct PlaneVertex {
-    public:
-        Float3 Pos;
-        Float2 UV;
-    };
-
-    static_assert(sizeof(QuadVertex) == 4 * sizeof(float), "unexpected size");
-
-public:
     //! \brief Creates a screen space plane with UV coordinates
     //!
     //! The coordinates are in screen space -1 - 1 where -1 is the left and top of the screen
@@ -46,13 +50,20 @@ public:
     //! when recorded with RenderDoc). This might be outdated note after bsf
     DLLEXPORT static Mesh::pointer CreateXZPlane(float width, float height);
 
-    //! \brief Returns the layout for a quad without generating one
+    //! \returns The layout for a quad without generating one
     DLLEXPORT static Rendering::LayoutElements GetLayoutForQuad();
 
-    //! \brief Returns the layout for a plane without generating one
+    //! \returns The layout for a plane without generating one
     DLLEXPORT static Rendering::LayoutElements GetLayoutForPlane();
 
-    GeometryHelpers() = delete;
+    //! \returns The layout for a mesh with DefaultVertex type
+    DLLEXPORT static Rendering::LayoutElements GetDefaultLayout();
+
+    //! \brief Creates a mesh object from vertices and indices
+    //!
+    //! The created mesh can't be edited further
+    DLLEXPORT static CountedPtr<Mesh> CreateMesh(
+        DefaultVertex* vertices, size_t vertexcount, uint16_t* indices, size_t indexcount);
 };
 
 } // namespace Leviathan

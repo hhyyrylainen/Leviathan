@@ -27,6 +27,8 @@ protected:
     friend ReferenceCounted;
     DLLEXPORT Texture(
         const Diligent::RefCntAutoPtr<Diligent::ITexture>& texture, int width, int height);
+    //! Queries the size from the texture
+    DLLEXPORT Texture(const Diligent::RefCntAutoPtr<Diligent::ITexture>& texture);
 
 public:
     auto GetWidth() const

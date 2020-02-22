@@ -122,11 +122,12 @@ public:
     DLLEXPORT CountedPtr<Texture> CreateDynamicTexture(
         int width, int height, Diligent::TEXTURE_FORMAT format);
 
+
+    // ------------------------------------ //
+    // Raw data loading. These should not be used directly as these reload everything
+    // ResourceManager should be used instead
+
     //! \brief Finds and loads a shader with the name
-    //!
-    //! If a full path or a valid relative path is specified a full search is not done.
-    //! Unless a variant of the name with ".asset" is found, which is preferred to skip
-    //! expensive importing.
     DLLEXPORT CountedPtr<Shader> LoadShaderByName(const std::string& name);
 
     //! Works the same as LoadShaderByName

@@ -39,6 +39,9 @@
 #define LOG_ERROR(x) Logger::Get()->Error(x);
 
 
+#include "DiligentTools/TextureLoader/interface/TextureUtilities.h"
+
+
 #if defined(__linux__)
 #if VULKAN_SUPPORTED
 #include "XLibInclude.h"
@@ -910,20 +913,28 @@ DLLEXPORT CountedPtr<Shader> Graphics::LoadShaderByName(const std::string& name)
 
 DLLEXPORT CountedPtr<Texture> Graphics::LoadTextureByName(const std::string& name)
 {
-    DEBUG_BREAK;
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE,
-        // Leviathan::StringOperations::RemoveExtension(name, true),
-        Leviathan::StringOperations::RemovePath(name),
-        // Leviathan::StringOperations::GetExtension(name)
-        "asset");
+        Leviathan::StringOperations::RemoveExtension(name, true),
+        // Leviathan::StringOperations::RemovePath(name),
+        Leviathan::StringOperations::GetExtension(name));
 
     if(file.empty()) {
         LOG_ERROR("Graphics: LoadTextureByName: could not find resource with name: " + name);
         return nullptr;
     }
-    return nullptr;
-    // return
-    // Pimpl->LoadResource<bs::Texture>(std::filesystem::absolute(file).string().c_str());
+
+    Diligent::TextureLoadInfo loadInfo;
+    loadInfo.IsSRGB = true;
+    Diligent::RefCntAutoPtr<Diligent::ITexture> texture;
+
+    Diligent::CreateTextureFromFile(file.c_str(), loadInfo, Pimpl->RenderDevice, &texture);
+
+    if(!texture) {
+        LOG_ERROR("Graphics: LoadTextureByName: failed to load texture file");
+        return nullptr;
+    }
+
+    return Texture::MakeShared<Texture>(texture);
 }
 
 DLLEXPORT CountedPtr<Mesh> Graphics::LoadMeshByName(const std::string& name)

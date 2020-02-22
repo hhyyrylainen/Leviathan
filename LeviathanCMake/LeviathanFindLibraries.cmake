@@ -61,6 +61,15 @@ set(LEVIATHAN_ENGINE_LIBRARIES ${Boost_LIBRARIES})
 # Plus of course linking against the Engine target
 set(LEVIATHAN_APPLICATION_LIBRARIES ${Boost_LIBRARIES})
 
+function(add_link_diligent_component component)
+  link_directories(
+    $<$<CONFIG:Debug>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/${component}/Debug>
+    $<$<CONFIG:Release>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/${component}/Release>
+    $<$<CONFIG:RelWithDebInfo>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/${component}/RelWithDebInfo>
+    $<$<CONFIG:MinSizeRel>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/${component}/MinSizeRel>
+    )
+endfunction()
+
 if(LEVIATHAN_USING_DEPENDENCIES)
 
   # Require build script to have been ran
@@ -80,15 +89,11 @@ if(LEVIATHAN_USING_DEPENDENCIES)
   link_directories("${LEVIATHAN_SRC}/build/ThirdParty/lib"
     "${LEVIATHAN_SRC}/build/ThirdParty/lib64"
     "${LEVIATHAN_SRC}/build/ThirdParty/bin"
-    # $<$<CONFIG:Debug>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/Debug>
-    $<$<CONFIG:Debug>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/Debug>
-    # $<$<CONFIG:Release>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/Release>
-    $<$<CONFIG:Release>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/Release>
-    # $<$<CONFIG:RelWithDebInfo>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/RelWithDebInfo>
-    $<$<CONFIG:RelWithDebInfo>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/RelWithDebInfo>
-    # $<$<CONFIG:MinSizeRel>:${LEVIATHAN_SRC}/build/ThirdParty/lib/DiligentCore/MinSizeRel>
-    $<$<CONFIG:MinSizeRel>:${LEVIATHAN_SRC}/build/ThirdParty/lib64/DiligentCore/MinSizeRel>
     )
+
+  add_link_diligent_component(DiligentCore)
+  add_link_diligent_component(DiligentTools)
+  add_link_diligent_component(DiligentFX)
 
   include_directories("${LEVIATHAN_SRC}/build/ThirdParty/include"
     # Needed for CEF
@@ -119,8 +124,9 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     aom vorbis opus ogg
     GraphicsEngineOpenGL
     GraphicsEngineVk
-    # Not currently needed
-    # DiligentCore
+    DiligentTools
+    DiligentCore
+    DiligentFX
     )
 
   if(NOT WIN32)

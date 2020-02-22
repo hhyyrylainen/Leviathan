@@ -47,41 +47,6 @@ endif()
 
 if(NOT ONLY_DOCUMENTATION)
 
-  # Copy core BSF files
-  file(GLOB BSF_DATA_FILES "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/*")
-  file(COPY ${BSF_DATA_FILES} DESTINATION "${PROJECT_BINARY_DIR}/bin/Data")
-  # Install for BSF core files
-  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/Cursors" DESTINATION
-    "bin/Data/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/Icons" DESTINATION
-    "bin/Data/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/Meshes" DESTINATION
-    "bin/Data/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/Shaders" DESTINATION
-    "bin/Data/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/Skin" DESTINATION
-    "bin/Data/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/Textures" DESTINATION
-    "bin/Data/")
-  file(GLOB BSF_TOP_LEVEL_ASSETS "${LEVIATHAN_SRC}/build/ThirdParty/bin/Data/*.asset")
-  install(FILES ${BSF_TOP_LEVEL_ASSETS} DESTINATION "bin/Data/")
-
-  # And core shaders and materials
-  # TODO: this is copying the bsl files currently because BSF fails when trying to
-  # use asset shaders in low level rendering
-  file(GLOB CORE_SHADER_ASSETS "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders/*.bsl")
-  file(COPY ${CORE_SHADER_ASSETS} DESTINATION
-    "${PROJECT_BINARY_DIR}/bin/Data/Shaders/CoreShaders/")
-  install(DIRECTORY "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders"
-    DESTINATION "bin/Data/Shaders/"
-    PATTERN "*.bsl")
-  # file(GLOB CORE_SHADER_ASSETS "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders/*.asset")
-  # file(COPY ${CORE_SHADER_ASSETS} DESTINATION
-  #   "${PROJECT_BINARY_DIR}/bin/Data/Shaders/CoreShaders/")
-  # install(DIRECTORY "${LEVIATHAN_SRC}/Assets/Shaders/CoreShaders"
-  #   DESTINATION "bin/Data/Shaders/"
-  #   PATTERN "*.asset")
-
   # GUI resources needed by the editor
   file(COPY "${LEVIATHAN_SRC}/Assets/JSVendor" DESTINATION
     "${PROJECT_BINARY_DIR}/bin/Data/")

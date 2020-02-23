@@ -139,3 +139,7 @@ private:
     mutable std::atomic_int_fast32_t RefCount;
 };
 } // namespace Leviathan
+
+#ifdef LEAK_INTO_GLOBAL
+using Leviathan::CountedPtr;
+#endif

@@ -51,6 +51,7 @@ set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
   "Common/Visitor.cpp" "Common/Visitor.h"
   "Common/MimeTypes.cpp" "Common/MimeTypes.h"
   "Common/CommonMath.cpp" "Common/CommonMath.h"
+  "Common/DiligentConversions.h"
   )
 
 if(LEVIATHAN_USING_SFML)
@@ -179,6 +180,7 @@ if(LEVIATHAN_USING_OGRE)
     "Rendering/BaseRenderable.h" # "Rendering/BaseRenderable.cpp" 
     "Rendering/Renderable.cpp" "Rendering/Renderable.h"
     "Rendering/Mesh.cpp" "Rendering/Mesh.h"
+    "Rendering/Model.cpp" "Rendering/Model.h"
     "Rendering/Shader.cpp" "Rendering/Shader.h"
     "Rendering/Texture.cpp" "Rendering/Texture.h"
     "Rendering/Material.cpp" "Rendering/Material.h"

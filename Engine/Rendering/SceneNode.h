@@ -12,6 +12,7 @@ namespace Leviathan {
 
 class SceneNode;
 class Scene;
+struct RenderParams;
 
 //! \brief World transform for an object
 //!
@@ -62,6 +63,9 @@ protected:
     // Called by Scene when it is time to render
     DLLEXPORT virtual void PrepareToRender();
 
+    //! \brief Called when it is time for this object to render itself
+    DLLEXPORT virtual void Render(RenderParams& params);
+
 private:
     SceneNode* Parent = nullptr;
 };
@@ -93,6 +97,8 @@ public:
     DLLEXPORT bool DetachChild(SceneAttachable* child);
 
     DLLEXPORT bool HasChild(SceneAttachable* child) const;
+
+    DLLEXPORT void Render(RenderParams& params) override;
 
     inline void SetPosition(const Float3& pos)
     {

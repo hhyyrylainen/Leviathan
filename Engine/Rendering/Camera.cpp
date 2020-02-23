@@ -9,7 +9,9 @@ using namespace Leviathan::Rendering;
 DLLEXPORT const Matrix4& Camera::GetProjectionMatrix() const
 {
     if(Dirty) {
-        ProjectionMatrix = Matrix4::ProjectionPerspective(FOV, AspectRatio, NearClip, FarClip);
+        // TODO: perhaps this needs to
+        ProjectionMatrix =
+            Matrix4::ProjectionPerspective(FOV, AspectRatio, NearClip, FarClip, false);
     }
 
     return ProjectionMatrix;

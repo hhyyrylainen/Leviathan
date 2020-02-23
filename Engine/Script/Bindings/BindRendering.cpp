@@ -3,6 +3,7 @@
 
 #include "Rendering/Graphics.h"
 #include "Rendering/Material.h"
+#include "Rendering/Model.h"
 #include "Rendering/Renderable.h"
 #include "Rendering/Scene.h"
 #include "Rendering/Shader.h"
@@ -71,7 +72,20 @@ Texture* TextureFromNameFactory(const std::string& name)
         return nullptr;
     }
 
-    // auto result = Texture::MakeShared<Texture>(texture);
+    if(result)
+        result->AddRef();
+
+    return result.get();
+}
+
+Rendering::Model* ModelFromNameFactory(const std::string& name)
+{
+    auto result = Engine::Get()->GetGraphics()->LoadModelByName(name);
+
+    if(!result) {
+        asGetActiveContext()->SetException("no model could be loaded with the specified name");
+        return nullptr;
+    }
 
     if(result)
         result->AddRef();
@@ -102,6 +116,27 @@ bool BindTexture(asIScriptEngine* engine)
     if(engine->RegisterObjectBehaviour("Texture", asBEHAVE_FACTORY,
            "Texture@ f(const string &in name)", asFUNCTION(TextureFromNameFactory),
            asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
+
+bool BindModel(asIScriptEngine* engine)
+{
+    if(engine->SetDefaultNamespace("Rendering") < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    ANGELSCRIPT_REGISTER_REF_TYPE("Model", Rendering::Model);
+
+    if(engine->RegisterObjectBehaviour("Model", asBEHAVE_FACTORY,
+           "Model@ f(const string &in name)", asFUNCTION(ModelFromNameFactory),
+           asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->SetDefaultNamespace("") < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -216,6 +251,9 @@ bool Leviathan::BindRendering(asIScriptEngine* engine)
         return false;
 
     if(!BindMaterial(engine))
+        return false;
+
+    if(!BindModel(engine))
         return false;
 
     if(!BindSceneNode(engine))

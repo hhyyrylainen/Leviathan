@@ -39,7 +39,7 @@ COMPONENT_MODEL = EntityComponent.new(
                    nonMethodParam: true),
       Variable.new('model', 'std::string',
                    memberaccess: 'MeshName'),
-      Variable.new('material', 'Material::pointer',
+      Variable.new('material', 'CountedPtr<Material>',
                    memberaccess: 'ObjectMaterial')
     ]
   )], releaseparams: [ # ["GetComponent_RenderNode(id)" # "GetScene()"

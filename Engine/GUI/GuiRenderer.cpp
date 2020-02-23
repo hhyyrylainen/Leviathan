@@ -136,14 +136,14 @@ public:
         LEVIATHAN_ASSERT(TransparentAlpha->_PSO, "GuiView PSO creation failed");
 
         // Uniform constant buffer setup
-        Diligent::BufferDesc CBDesc;
-        CBDesc.Name = "GUI VS constants CB";
-        CBDesc.uiSizeInBytes = sizeof(Matrix4);
-        CBDesc.Usage = Diligent::USAGE_DYNAMIC;
-        CBDesc.BindFlags = Diligent::BIND_UNIFORM_BUFFER;
-        CBDesc.CPUAccessFlags = Diligent::CPU_ACCESS_WRITE;
+        Diligent::BufferDesc bufferDesc;
+        bufferDesc.Name = "GUI VS constants CB";
+        bufferDesc.uiSizeInBytes = sizeof(Matrix4);
+        bufferDesc.Usage = Diligent::USAGE_DYNAMIC;
+        bufferDesc.BindFlags = Diligent::BIND_UNIFORM_BUFFER;
+        bufferDesc.CPUAccessFlags = Diligent::CPU_ACCESS_WRITE;
 
-        TransparentAlpha->ViewBuffer = Owner.Graph->CreateBuffer(CBDesc);
+        TransparentAlpha->ViewBuffer = Owner.Graph->CreateBuffer(bufferDesc);
 
         // The buffer is bound permanently (but the buffer contents can be written)
         // Not sure if this is the right way to go about making a GUI renderer. See above
@@ -152,14 +152,14 @@ public:
             ->GetStaticVariableByName(Diligent::SHADER_TYPE_VERTEX, "Constants")
             ->Set(TransparentAlpha->ViewBuffer->GetInternal().RawPtr());
 
-        CBDesc.Name = "GUI PS constants CB";
+        bufferDesc.Name = "GUI PS constants CB";
         // Must be a multiple of 16, and as a single float < 16 we just set it to 16
-        CBDesc.uiSizeInBytes = 16;
+        bufferDesc.uiSizeInBytes = 16;
         // TODO: this could use USAGE_DEFAULT to skip writing when not needed. but maybe that
         // is actually slower?
-        CBDesc.Usage = Diligent::USAGE_DYNAMIC;
+        bufferDesc.Usage = Diligent::USAGE_DYNAMIC;
 
-        TransparentAlpha->PSConstants = Owner.Graph->CreateBuffer(CBDesc);
+        TransparentAlpha->PSConstants = Owner.Graph->CreateBuffer(bufferDesc);
 
         TransparentAlpha->_PSO->GetInternal()
             ->GetStaticVariableByName(Diligent::SHADER_TYPE_PIXEL, "Constants")

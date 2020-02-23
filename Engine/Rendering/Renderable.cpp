@@ -2,6 +2,10 @@
 #include "Renderable.h"
 
 #include "Camera.h"
+#include "Graphics.h"
+#include "Material.h"
+#include "Mesh.h"
+#include "Model.h"
 #include "Scene.h"
 
 using namespace Leviathan;
@@ -15,40 +19,51 @@ DLLEXPORT void Renderable::OnAttachedToParent(SceneNode& parent) {}
 
 DLLEXPORT void Renderable::OnDetachedFromParent(SceneNode& oldparent) {}
 // ------------------------------------ //
-DLLEXPORT void Renderable::SetMaterial(const Material::pointer& material)
+DLLEXPORT void Renderable::SetMaterial(const CountedPtr<Material>& material)
 {
     _Material = material;
-
-    // if(!_Material || !_Material->GetInternal()) {
-    //     GraphicalObject->setMaterial(nullptr);
-    // } else {
-    //     GraphicalObject->setMaterial(_Material->GetInternal());
-    // }
 }
 
-DLLEXPORT void Renderable::SetMesh(const Mesh::pointer& mesh)
+DLLEXPORT void Renderable::SetMesh(const CountedPtr<Mesh>& mesh)
 {
-    _Mesh = mesh;
+    ThingToRender = mesh;
+}
 
-    // if(!_Mesh || !_Mesh->GetInternal()) {
-    //     GraphicalObject->setMesh(nullptr);
-    // } else {
-    //     GraphicalObject->setMesh(_Mesh->GetInternal());
-    // }
+DLLEXPORT void Renderable::SetModel(const CountedPtr<Rendering::Model>& model)
+{
+    ThingToRender = model;
 }
 // ------------------------------------ //
 DLLEXPORT void Renderable::Render(RenderParams& params)
 {
-    // Skip rendering if no mesh or no material
-    if(!_Mesh || !_Material || !HasParent())
+    if(!HasParent())
         return;
 
-    const auto& transform = GetParent()->GetWorldTransform();
 
-    const auto worldMatrix =
-        Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+    if(auto mesh = std::get_if<CountedPtr<Mesh>>(&ThingToRender); mesh) {
+        if(!*mesh)
+            return;
 
-    const auto worldViewProjMatrix =
-        (worldMatrix * params._Camera.GetViewMatrix() * params._Camera.GetProjectionMatrix())
-            .Transpose();
+        // Needs a material
+        if(!_Material)
+            return;
+
+        const auto& transform = GetParent()->GetWorldTransform();
+
+        const auto worldMatrix =
+            Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+
+        const auto worldViewProjMatrix = (worldMatrix * params._Camera->GetViewMatrix() *
+                                          params._Camera->GetProjectionMatrix())
+                                             .Transpose();
+
+        // TODO: render a plain mesh with a Material
+    } else if(auto model = std::get_if<CountedPtr<Rendering::Model>>(&ThingToRender); model) {
+        if(!*model)
+            return;
+
+        params._Graphics->DrawModel(**model, *GetParent(), params);
+    }
+
+    // We don't have any renderable thing set (std::monostate)
 }

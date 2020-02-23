@@ -178,11 +178,12 @@ class Variable
   end
 
   def needs_wrapper
-    @Type.include? '::pointer'
+    @Type.include?('::pointer') || @Type.include?('CountedPtr<')
   end
 
   def plain_type
-    @Type.gsub '::pointer', ''
+    type = @Type.gsub '::pointer', ''
+    type.gsub(/CountedPtr<(\w+)>/, '\1')
   end
 
   def format_type_wrapped

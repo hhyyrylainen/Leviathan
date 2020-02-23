@@ -16,6 +16,7 @@
 #include "Physics/PhysicsMaterialManager.h"
 #include "Rendering/Camera.h"
 #include "Rendering/Graphics.h"
+#include "Rendering/Renderable.h"
 #include "Rendering/Scene.h"
 #include "Script/ScriptConversionHelpers.h"
 #include "Script/ScriptExecutor.h"
@@ -62,6 +63,8 @@ public:
 
     Scene::pointer WorldScene;
 
+    RenderParams WorldSceneRenderParams;
+
     // bs::HSceneObject SunlightSO;
     // bs::HLight Sunlight;
     // bs::HSceneObject SkyboxSO;
@@ -96,6 +99,7 @@ DLLEXPORT bool GameWorld::Init(const WorldNetworkSettings& network, Graphics* gr
     if(graphics) {
 
         GraphicalMode = true;
+        pimpl->WorldSceneRenderParams._Graphics = graphics;
         // these are always required for worlds //
         _CreateRenderingResources(graphics);
     } else {
@@ -164,6 +168,8 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
     pimpl->WorldCamera = Rendering::Camera::MakeShared<Rendering::Camera>();
 
     pimpl->WorldCameraSO->AttachObject(pimpl->WorldCamera);
+
+    pimpl->WorldSceneRenderParams._Camera = pimpl->WorldCamera.get();
 
 
     auto values = Engine::Get()->GetDefinition()->GetValues();
@@ -264,7 +270,7 @@ DLLEXPORT void GameWorld::SetSunlight()
     // // Default properties
     // pimpl->Sunlight->setType(bs::LightType::Directional);
 
-    // SetLightProperties(Float3(1, 1, 1));
+    SetLightProperties(Float3(1, 1, 1));
 }
 
 DLLEXPORT void GameWorld::RemoveSunlight()
@@ -316,6 +322,8 @@ DLLEXPORT void GameWorld::SetLightProperties(const Float3& colour, float intensi
     const Float3& direction, float sourceradius, bool castsshadows)
 {
     LOG_WRITE("Redo set light properties");
+
+    pimpl->WorldSceneRenderParams.SceneProperties.LightDirection = direction;
 
     // if(!pimpl->SunlightSO) {
 
@@ -437,7 +445,7 @@ DLLEXPORT void GameWorld::Render(float elapsed)
     if(pimpl && pimpl->WorldScene)
         pimpl->WorldScene->PrepareForRendering();
 
-    // TODO: render scene with world camera
+    pimpl->WorldScene->Render(pimpl->WorldSceneRenderParams);
 }
 // ------------------------------------ //
 DLLEXPORT void GameWorld::SetCamera(ObjectID object)

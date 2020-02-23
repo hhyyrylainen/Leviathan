@@ -27,7 +27,10 @@ public:
     //! The node is detached from the scene and its rendering resources are destroyed
     DLLEXPORT void DestroySceneNode(SceneNode::pointer& node);
 
+    DLLEXPORT void Render(RenderParams& params);
+
     //! \brief Computes the final positions of all SceneNodes to be ready for rendering
+    //! \note Called by Render
     DLLEXPORT void PrepareForRendering();
 
     SceneNode::pointer GetRootSceneNode()

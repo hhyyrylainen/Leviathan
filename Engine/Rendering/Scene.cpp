@@ -35,3 +35,10 @@ DLLEXPORT void Scene::PrepareForRendering()
 {
     RootNode->PrepareToRender();
 }
+// ------------------------------------ //
+DLLEXPORT void Scene::Render(RenderParams& params)
+{
+    // NOTE: nodes anyway will compute their final positions so we don't yet need to separate
+    // that step and call PrepareForRendering
+    RootNode->Render(params);
+}

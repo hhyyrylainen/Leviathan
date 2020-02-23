@@ -5,12 +5,17 @@
 #include "Application/AppDefine.h"
 #include "Application/GameConfiguration.h"
 #include "Buffer.h"
+#include "Camera.h"
+#include "Common/DiligentConversions.h"
 #include "Common/StringOperations.h"
 #include "Engine.h"
 #include "FileSystem.h"
 #include "GeometryHelpers.h"
+#include "Mesh.h"
+#include "Model.h"
 #include "ObjectFiles/ObjectFileProcessor.h"
 #include "PSO.h"
+#include "Renderable.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "Threading/ThreadingManager.h"
@@ -28,6 +33,7 @@
 #include "DiligentCore/Graphics/GraphicsEngine/interface/DeviceContext.h"
 #include "DiligentCore/Graphics/GraphicsEngine/interface/RenderDevice.h"
 #include "DiligentCore/Graphics/GraphicsEngine/interface/SwapChain.h"
+#include "DiligentCore/Graphics/GraphicsTools/interface/MapHelper.hpp"
 
 // part of the hack
 #undef LOG_ERROR
@@ -39,8 +45,17 @@
 #define LOG_ERROR(x) Logger::Get()->Error(x);
 
 
+#include "DiligentFX/GLTF_PBR_Renderer/interface/GLTF_PBR_Renderer.hpp"
+#include "DiligentTools/AssetLoader/interface/GLTFLoader.hpp"
 #include "DiligentTools/TextureLoader/interface/TextureUtilities.h"
 
+namespace Diligent {
+#include "Shaders/Common/public/BasicStructures.fxh"
+#include "Shaders/PostProcess/ToneMapping/public/ToneMappingStructures.fxh"
+} // namespace Diligent
+
+// This was int32_t
+#undef BOOL
 
 #if defined(__linux__)
 #if VULKAN_SUPPORTED
@@ -65,17 +80,92 @@
 
 using namespace Leviathan;
 // ------------------------------------ //
+// A massive hack against linking issues
+#include "DiligentCore/Common/interface/MemoryFileStream.hpp"
+// Code copied directly from diligent to get around these symbols being hidden in the created
+// .a files
+namespace Diligent {
+
+void CreateUniformBuffer(IRenderDevice* pDevice, Uint32 Size, const Char* Name,
+    IBuffer** ppBuffer, USAGE Usage, BIND_FLAGS BindFlags, CPU_ACCESS_FLAGS CPUAccessFlags,
+    void* pInitialData)
+{
+    BufferDesc CBDesc;
+    CBDesc.Name = Name;
+    CBDesc.uiSizeInBytes = Size;
+    CBDesc.Usage = Usage;
+    CBDesc.BindFlags = BindFlags;
+    CBDesc.CPUAccessFlags = CPUAccessFlags;
+
+    BufferData InitialData;
+    if(pInitialData != nullptr) {
+        InitialData.pData = pInitialData;
+        InitialData.DataSize = Size;
+    }
+    pDevice->CreateBuffer(CBDesc, pInitialData != nullptr ? &InitialData : nullptr, ppBuffer);
+}
+
+MemoryFileStream::MemoryFileStream(IReferenceCounters* pRefCounters, IDataBlob* pData) :
+    TBase{pRefCounters}, m_DataBlob{pData}
+{}
+
+IMPLEMENT_QUERY_INTERFACE(MemoryFileStream, IID_FileStream, TBase)
+
+bool MemoryFileStream::Read(void* Data, size_t Size)
+{
+    VERIFY_EXPR(m_CurrentOffset <= m_DataBlob->GetSize());
+    auto BytesLeft = m_DataBlob->GetSize() - m_CurrentOffset;
+    auto BytesToRead = std::min(BytesLeft, Size);
+    auto* pSrcData =
+        reinterpret_cast<const Uint8*>(m_DataBlob->GetDataPtr()) + m_CurrentOffset;
+    memcpy(Data, pSrcData, BytesToRead);
+    m_CurrentOffset += BytesToRead;
+    return Size == BytesToRead;
+}
+
+void MemoryFileStream::ReadBlob(IDataBlob* pData)
+{
+    auto BytesLeft = m_DataBlob->GetSize() - m_CurrentOffset;
+    pData->Resize(BytesLeft);
+    auto res = Read(pData->GetDataPtr(), pData->GetSize());
+    VERIFY_EXPR(res);
+    (void)res;
+}
+
+bool MemoryFileStream::Write(const void* Data, size_t Size)
+{
+    if(m_CurrentOffset + Size > m_DataBlob->GetSize()) {
+        m_DataBlob->Resize(m_CurrentOffset + Size);
+    }
+    auto* DstData = reinterpret_cast<Uint8*>(m_DataBlob->GetDataPtr()) + m_CurrentOffset;
+    memcpy(DstData, Data, Size);
+    m_CurrentOffset += Size;
+    return true;
+}
+
+bool MemoryFileStream::IsValid()
+{
+    return !!m_DataBlob;
+}
+
+size_t MemoryFileStream::GetSize()
+{
+    return m_DataBlob->GetSize();
+}
+
+} // namespace Diligent
 namespace Leviathan {
-#if VULKAN_SUPPORTED
-struct XCBInfo {
-    xcb_connection_t* connection = nullptr;
-    uint32_t window = 0;
-    uint16_t width = 0;
-    uint16_t height = 0;
-    xcb_intern_atom_reply_t* atom_wm_delete_window = nullptr;
-};
-#endif
 // ------------------------------------ //
+struct EnvMapRenderAttribs {
+    Diligent::ToneMappingAttribs TMAttribs;
+
+    float AverageLogLum;
+    float MipLevel;
+    float Unusued1;
+    float Unusued2;
+};
+
+
 } // namespace Leviathan
 void DiligentErrorCallback(enum Diligent::DEBUG_MESSAGE_SEVERITY severity, const char* message,
     const char* function, const char* file, int line)
@@ -142,6 +232,14 @@ struct Graphics::Implementation {
 
     Diligent::RefCntAutoPtr<Diligent::IRenderDevice> RenderDevice;
     Diligent::RefCntAutoPtr<Diligent::IDeviceContext> ImmediateContext;
+
+    //! Higher level GLTF renderer
+    std::unique_ptr<Diligent::GLTF_PBR_Renderer> GLTFRenderer;
+
+    std::shared_ptr<Rendering::Buffer> GLTFCameraAttribsCB;
+    std::shared_ptr<Rendering::Buffer> GLTFLightAttribsCB;
+    std::shared_ptr<Rendering::Buffer> GLTFEnvMapRenderAttribsCB;
+
 
     //! Currently set render target
     WindowRenderingResources* CurrentRenderTarget = nullptr;
@@ -503,6 +601,18 @@ void Graphics::ShutdownDiligent()
     }
 }
 // ------------------------------------------- //
+void FillNativeWindow(Diligent::NativeWindow& diligentwindow, Leviathan::Window& window)
+{
+    diligentwindow.WindowId = window.GetNativeHandle();
+
+#if defined(__linux__)
+    // Convert the SDL's window connection to xcb connection that is needed by diligent
+    diligentwindow.pXCBConnection =
+        XGetXCBConnection(reinterpret_cast<Display*>(window.GetWindowXDisplay()));
+    diligentwindow.pDisplay = reinterpret_cast<Display*>(window.GetWindowXDisplay());
+#endif
+}
+
 std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window& window)
 {
     LOG_INFO("Graphics: creating rendering resources for a window");
@@ -532,11 +642,8 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
         auto* pFactoryOpenGL = Diligent::GetEngineFactoryOpenGL();
 
         Diligent::EngineGLCreateInfo CreationAttribs;
-        CreationAttribs.pNativeWndHandle = reinterpret_cast<void*>(window.GetNativeHandle());
 
-#if defined(__linux__)
-        CreationAttribs.pDisplay = reinterpret_cast<Display*>(window.GetWindowXDisplay());
-#endif
+        FillNativeWindow(CreationAttribs.Window, window);
 
         LEVIATHAN_ASSERT(
             !Pimpl->RenderDevice, "opengl multiple windows probably needs fixing");
@@ -569,25 +676,14 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
     case GRAPHICS_API::Vulkan: {
         LOG_INFO("Attempting to create a vulkan swap chain");
 
-        XCBInfo info;
+        Diligent::NativeWindow windowInfo;
 
-        int32_t width, height;
-        window.GetSize(width, height);
-        info.width = width;
-        info.height = height;
-        info.window = window.GetNativeHandle();
-        // info.atom_wm_delete_window
-
-#if defined(__linux__)
-        // Convert the SDL's window connection to xcb connection that is needed by diligent
-        info.connection =
-            XGetXCBConnection(reinterpret_cast<Display*>(window.GetWindowXDisplay()));
-#endif
+        FillNativeWindow(windowInfo, window);
 
         auto* pFactoryVk = Diligent::GetEngineFactoryVk();
 
         pFactoryVk->CreateSwapChainVk(Pimpl->RenderDevice, Pimpl->ImmediateContext, SCDesc,
-            &info, &windowResources->WindowsSwapChain);
+            windowInfo, &windowResources->WindowsSwapChain);
 
         if(!windowResources->WindowsSwapChain) {
             LOG_FATAL("Vulkan swapchain creation failed. TODO: it would still technically be "
@@ -639,6 +735,9 @@ std::unique_ptr<WindowRenderingResources> Graphics::RegisterCreatedWindow(Window
         }
     }
 
+    if(windowResources && !Pimpl->GLTFRenderer)
+        InitGLTF();
+
     return windowResources;
 }
 
@@ -666,6 +765,60 @@ void Graphics::UnRegisterWindow(Window& window)
     // if(Pimpl) {
     //     Pimpl->OurApp->waitUntilFrameFinished();
     // }
+}
+// ------------------------------------ //
+void Graphics::InitGLTF()
+{
+    // Diligent::RefCntAutoPtr<Diligent::ITexture> EnvironmentMap;
+    // CreateTextureFromFile("textures/papermill.ktx", TextureLoadInfo{"Environment map"},
+    //     Pimpl->RenderDevice, &EnvironmentMap);
+    // m_EnvironmentMapSRV =
+    // EnvironmentMap->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE);
+
+    Diligent::GLTF_PBR_Renderer::CreateInfo rendererCI;
+    rendererCI.RTVFmt = GetBackBufferFormat();
+    rendererCI.DSVFmt = GetDepthBufferFormat();
+    rendererCI.AllowDebugView = true;
+    rendererCI.UseIBL = true;
+    rendererCI.FrontCCW = true;
+    Pimpl->GLTFRenderer = std::make_unique<Diligent::GLTF_PBR_Renderer>(
+        Pimpl->RenderDevice, Pimpl->ImmediateContext, rendererCI);
+
+
+    Diligent::BufferDesc bufferDesc;
+    bufferDesc.Usage = Diligent::USAGE_DYNAMIC;
+    bufferDesc.BindFlags = Diligent::BIND_UNIFORM_BUFFER;
+    bufferDesc.CPUAccessFlags = Diligent::CPU_ACCESS_WRITE;
+
+    bufferDesc.Name = "Camera attribs buffer";
+    bufferDesc.uiSizeInBytes = sizeof(Diligent::CameraAttribs);
+    Pimpl->GLTFCameraAttribsCB = CreateBuffer(bufferDesc);
+
+    bufferDesc.Name = "Light attribs buffer";
+    bufferDesc.uiSizeInBytes = sizeof(Diligent::LightAttribs);
+    Pimpl->GLTFLightAttribsCB = CreateBuffer(bufferDesc);
+
+    bufferDesc.Name = "Env map render attribs buffer";
+    bufferDesc.uiSizeInBytes = sizeof(EnvMapRenderAttribs);
+    Pimpl->GLTFEnvMapRenderAttribsCB = CreateBuffer(bufferDesc);
+
+    Diligent::StateTransitionDesc barriers[] = {
+        {Pimpl->GLTFCameraAttribsCB->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
+            Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
+        {Pimpl->GLTFLightAttribsCB->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
+            Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
+        {Pimpl->GLTFEnvMapRenderAttribsCB->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
+            Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
+        // {EnvironmentMap, Diligent::RESOURCE_STATE_UNKNOWN,
+        //     Diligent::RESOURCE_STATE_SHADER_RESOURCE, true}
+    };
+
+    Pimpl->ImmediateContext->TransitionResourceStates(std::size(barriers), barriers);
+
+    // Pimpl->GLTFRenderer->PrecomputeCubemaps(
+    //     Pimpl->RenderDevice, Pimpl->ImmediateContext, m_EnvironmentMapSRV);
+
+    // CreateEnvMapPSO();
 }
 // ------------------------------------ //
 DLLEXPORT Diligent::TEXTURE_FORMAT Graphics::GetBackBufferFormat() const
@@ -814,6 +967,49 @@ DLLEXPORT void Graphics::DrawMesh(Mesh& mesh)
     Draw(drawAttrs);
 }
 // ------------------------------------ //
+DLLEXPORT void Graphics::DrawModel(
+    Rendering::Model& model, const SceneNode& position, const RenderParams& params)
+{
+    // might need to tell the camera about m_pDevice->GetDeviceCaps().IsGLDevice()
+    const Matrix4& projection = params._Camera->GetProjectionMatrix();
+
+    const auto cameraViewProjection = params._Camera->GetViewMatrix() * projection;
+
+    {
+        Diligent::MapHelper<Diligent::CameraAttribs> mapped(Pimpl->ImmediateContext,
+            Pimpl->GLTFCameraAttribsCB->GetInternal(), Diligent::MAP_WRITE,
+            Diligent::MAP_FLAG_DISCARD);
+
+        mapped->mProjT = MatrixToDiligent(projection.Transpose());
+        mapped->mViewProjT = MatrixToDiligent(cameraViewProjection.Transpose());
+        mapped->mViewProjInvT = MatrixToDiligent(cameraViewProjection.Inverse().Transpose());
+        mapped->f4Position =
+            Float4ToDiligent(Float4(params._Camera->GetParent()->GetPosition(), 1.f));
+    }
+
+    {
+        Diligent::MapHelper<Diligent::LightAttribs> mapped(Pimpl->ImmediateContext,
+            Pimpl->GLTFLightAttribsCB->GetInternal(), Diligent::MAP_WRITE,
+            Diligent::MAP_FLAG_DISCARD);
+
+        mapped->f4Direction =
+            Float4ToDiligent(Float4(params.SceneProperties.LightDirection, 1.f));
+        mapped->f4Intensity = Float4ToDiligent(
+            params.SceneProperties.LightColour * params.SceneProperties.LightIntensity);
+    }
+
+    Diligent::GLTF_PBR_Renderer::RenderInfo renderParams;
+
+    const auto& transform = position.GetWorldTransform();
+
+    const auto worldMatrix =
+        Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+
+    renderParams.ModelTransform = MatrixToDiligent(worldMatrix);
+
+    Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, model.GetInternal(), renderParams);
+}
+// ------------------------------------ //
 // Rendering resource creation
 DLLEXPORT std::shared_ptr<PSO> Graphics::CreatePSO(const Diligent::PipelineStateDesc& desc)
 {
@@ -895,20 +1091,37 @@ DLLEXPORT bool Graphics::IsVerticalUVFlipped() const
 // Resource loading helpers
 DLLEXPORT CountedPtr<Shader> Graphics::LoadShaderByName(const std::string& name)
 {
-    DEBUG_BREAK;
     auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_OTHER,
-        // Leviathan::StringOperations::RemoveExtension(name, true),
-        Leviathan::StringOperations::RemovePath(name),
-        // Leviathan::StringOperations::GetExtension(name)
-        "asset");
+        Leviathan::StringOperations::RemoveExtension(name, true),
+        // Leviathan::StringOperations::RemovePath(name),
+        Leviathan::StringOperations::GetExtension(name));
 
     if(file.empty()) {
         LOG_ERROR("Graphics: LoadShaderByName: could not find resource with name: " + name);
         return nullptr;
     }
-    return nullptr;
-    // return
-    // Pimpl->LoadResource<bs::Shader>(std::filesystem::absolute(file).string().c_str());
+
+    Diligent::ShaderCreateInfo info;
+    info.SourceLanguage = Diligent::SHADER_SOURCE_LANGUAGE_HLSL;
+    info.UseCombinedTextureSamplers = true;
+    info.EntryPoint = "main";
+    // TODO: how to set this?
+    DEBUG_BREAK;
+    info.Desc.ShaderType = Diligent::SHADER_TYPE_VERTEX;
+    info.Desc.Name = name.c_str();
+    std::string source;
+    FileSystem::ReadFileEntirely(file, source);
+    info.Source = source.c_str();
+
+    // TODO: also how to detect this? Probably needs some higher level shader abstraction
+    ShaderVariationInfo variants;
+    auto shader = CreateShader(info, variants);
+
+    if(!shader) {
+        LOG_ERROR("Graphics: failed to compile shader: " + file);
+    }
+
+    return shader;
 }
 
 DLLEXPORT CountedPtr<Texture> Graphics::LoadTextureByName(const std::string& name)
@@ -950,8 +1163,27 @@ DLLEXPORT CountedPtr<Mesh> Graphics::LoadMeshByName(const std::string& name)
         LOG_ERROR("Graphics: LoadMeshByName: could not find resource with name: " + name);
         return nullptr;
     }
+
     return nullptr;
     // return Pimpl->LoadResource<bs::Mesh>(std::filesystem::absolute(file).string().c_str());
+}
+
+DLLEXPORT CountedPtr<Rendering::Model> Graphics::LoadModelByName(const std::string& name)
+{
+    auto file = FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_MODEL,
+        Leviathan::StringOperations::RemoveExtension(name, true),
+        // Leviathan::StringOperations::RemovePath(name),
+        Leviathan::StringOperations::GetExtension(name));
+
+    if(file.empty()) {
+        LOG_ERROR("Graphics: LoadModelByName: could not find resource with name: " + name);
+        return nullptr;
+    }
+
+    return Rendering::Model::MakeShared<Rendering::Model>(
+        std::make_unique<Diligent::GLTF::Model>(
+            Pimpl->RenderDevice, Pimpl->ImmediateContext, file),
+        *this);
 }
 
 DLLEXPORT CountedPtr<AnimationTrack> Graphics::LoadAnimationClipByName(const std::string& name)
@@ -972,7 +1204,17 @@ DLLEXPORT CountedPtr<AnimationTrack> Graphics::LoadAnimationClipByName(const std
     // return Pimpl->LoadResource<bs::AnimationClip>(
     // std::filesystem::absolute(file).string().c_str());
 }
+// ------------------------------------ //
+void Graphics::CreateModelResources(Rendering::Model& model)
+{
+    Pimpl->GLTFRenderer->InitializeResourceBindings(model.GetInternal(),
+        Pimpl->GLTFCameraAttribsCB->GetInternal(), Pimpl->GLTFLightAttribsCB->GetInternal());
+}
 
+void Graphics::ReleaseModelResources(Rendering::Model& model)
+{
+    Pimpl->GLTFRenderer->ReleaseResourceBindings(model.GetInternal());
+}
 // ------------------------------------ //
 // X11 errors
 #ifdef __linux

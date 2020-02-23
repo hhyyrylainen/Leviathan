@@ -233,7 +233,7 @@ public:
 class Model : public Component {
 public:
     DLLEXPORT Model(const Scene::pointer& scene, RenderNode& parent,
-        const std::string& meshname, const Material::pointer& material);
+        const std::string& meshname, const CountedPtr<Material>& material);
 
     DLLEXPORT void Release();
 
@@ -248,7 +248,7 @@ public:
     std::string MeshName;
 
     //! Material set on the object
-    Material::pointer ObjectMaterial;
+    CountedPtr<Material> ObjectMaterial;
 
     static constexpr auto TYPE = COMPONENT_TYPE::Model;
 };

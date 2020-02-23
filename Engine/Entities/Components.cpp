@@ -8,6 +8,9 @@
 #include "Networking/Connection.h"
 #include "Networking/SentNetworkThing.h"
 #include "Physics/PhysicalWorld.h"
+#include "Rendering/Material.h"
+#include "Rendering/Mesh.h"
+#include "Rendering/Model.h"
 #include "Utility/Convert.h"
 
 #include "Engine.h"
@@ -285,7 +288,7 @@ DLLEXPORT void Sendable::ActiveConnection::CheckReceivedPackets()
 }
 // ------------------------------------ //
 DLLEXPORT Model::Model(const Scene::pointer& scene, RenderNode& parent,
-    const std::string& meshname, const Material::pointer& material) :
+    const std::string& meshname, const CountedPtr<Material>& material) :
     Component(TYPE),
     MeshName(meshname), ObjectMaterial(material)
 {
@@ -316,10 +319,9 @@ DLLEXPORT void Model::ApplyMeshName()
     }
 
     // Find the mesh
-    auto mesh = Engine::Get()->GetGraphics()->LoadMeshByName(MeshName);
+    auto obj = Engine::Get()->GetGraphics()->LoadModelByName(MeshName);
 
-    DEBUG_BREAK;
-    // GraphicalObject->SetMesh(Mesh::MakeShared<Mesh>(mesh));
+    GraphicalObject->SetModel(obj);
 }
 
 // // ------------------ ManualObject ------------------ //

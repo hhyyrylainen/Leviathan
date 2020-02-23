@@ -29,6 +29,7 @@ namespace Leviathan {
 namespace Rendering {
 class Buffer;
 class MappedBuffer;
+class Model;
 } // namespace Rendering
 
 class WindowRenderingResources;
@@ -38,12 +39,15 @@ class Texture;
 class Shader;
 struct ShaderVariationInfo;
 class AnimationTrack;
+struct RenderParams;
+class SceneNode;
 
 enum class GRAPHICS_API { D3D11, D3D12, Vulkan, OpenGL, OpenGLES, Metal };
 
 //! \brief Main handler of graphics resources and rendering
 class Graphics {
     friend Window;
+    friend Rendering::Model;
 
     struct Implementation;
 
@@ -104,6 +108,9 @@ public:
     DLLEXPORT void Draw(const Diligent::DrawIndexedAttribs& attribs);
     DLLEXPORT void DrawMesh(Mesh& mesh);
 
+    DLLEXPORT void DrawModel(
+        Rendering::Model& model, const SceneNode& position, const RenderParams& params);
+
     // ------------------------------------ //
     // Rendering resource creation
     DLLEXPORT std::shared_ptr<PSO> CreatePSO(const Diligent::PipelineStateDesc& desc);
@@ -137,6 +144,9 @@ public:
     DLLEXPORT CountedPtr<Mesh> LoadMeshByName(const std::string& name);
 
     //! Works the same as LoadShaderByName
+    DLLEXPORT CountedPtr<Rendering::Model> LoadModelByName(const std::string& name);
+
+    //! Works the same as LoadShaderByName
     DLLEXPORT CountedPtr<AnimationTrack> LoadAnimationClipByName(const std::string& name);
 
 #ifdef __linux
@@ -158,11 +168,16 @@ protected:
     //! \todo This needs to assign a new primary window if the primary window is destroyed
     void UnRegisterWindow(Window& window);
 
+    void CreateModelResources(Rendering::Model& model);
+    void ReleaseModelResources(Rendering::Model& model);
+
 private:
     void PrintDetectedSystemInformation();
 
     bool InitializeDiligent(AppDef* appdef);
     void ShutdownDiligent();
+
+    void InitGLTF();
 
     bool SelectPreferredGraphicsAPI(AppDef* appdef);
     //! Check that API selection is good and perform some initialization for some APIs

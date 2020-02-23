@@ -45,6 +45,8 @@ DLLEXPORT void SceneAttachable::NotifyAttachParent(SceneNode& parent)
 }
 // ------------------------------------ //
 DLLEXPORT void SceneAttachable::PrepareToRender() {}
+
+DLLEXPORT void SceneAttachable::Render(RenderParams& params) {}
 // ------------------------------------ //
 // SceneNode
 DLLEXPORT SceneNode::SceneNode(SceneNode* parent, Scene* scene) : ParentScene(scene)
@@ -187,6 +189,13 @@ DLLEXPORT void SceneNode::PrepareToRender()
 
     for(const auto& child : Children) {
         child->PrepareToRender();
+    }
+}
+
+DLLEXPORT void SceneNode::Render(RenderParams& params)
+{
+    for(const auto& child : Children) {
+        child->Render(params);
     }
 }
 // ------------------------------------ //

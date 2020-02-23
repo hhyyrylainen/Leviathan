@@ -4,10 +4,17 @@
 #include "Define.h"
 // ------------------------------------ //
 #include "BaseRenderable.h"
-#include "Material.h"
-#include "Mesh.h"
+
+#include <variant>
 
 namespace Leviathan {
+
+namespace Rendering {
+class Model;
+}
+
+class Mesh;
+class Material;
 
 //! \brief Implements a basic renderable rendering a Mesh with a Material
 class Renderable : public BaseRenderable {
@@ -19,8 +26,14 @@ protected:
     DLLEXPORT Renderable(SceneNode& parent);
 
 public:
-    DLLEXPORT void SetMaterial(const Material::pointer& material);
-    DLLEXPORT void SetMesh(const Mesh::pointer& mesh);
+    //! \see SetMesh
+    DLLEXPORT void SetMaterial(const CountedPtr<Material>& material);
+
+    //! \note Only a mesh OR a model can be set at a time. Depending on which is used sets some
+    //! constraints on what kind of Material can be used.
+    DLLEXPORT void SetMesh(const CountedPtr<Mesh>& mesh);
+
+    DLLEXPORT void SetModel(const CountedPtr<Rendering::Model>& model);
 
     DLLEXPORT void Render(RenderParams& params) override;
 
@@ -31,8 +44,8 @@ protected:
     DLLEXPORT virtual void OnDetachedFromParent(SceneNode& oldparent) override;
 
 private:
-    Material::pointer _Material;
-    Mesh::pointer _Mesh;
+    CountedPtr<Material> _Material;
+    std::variant<std::monostate, CountedPtr<Mesh>, CountedPtr<Rendering::Model>> ThingToRender;
 };
 
 } // namespace Leviathan

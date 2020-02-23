@@ -6,6 +6,7 @@
 #include "Entities/GameWorld.h"
 #include "Entities/ScriptComponentHolder.h"
 #include "Entities/ScriptSystemWrapper.h"
+#include "Rendering/Material.h"
 
 #include "StandardWorldBindHelper.h"
 

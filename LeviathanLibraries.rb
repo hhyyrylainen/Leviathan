@@ -67,7 +67,7 @@ $aom = AOM.new(
 )
 
 $diligent = DiligentEngine.new(
-  version: '5e38dd84c3575d04081af3a5402299f53b66c2a2',
+  version: 'fb435574d534269c4adcc4915648aa67b756f67e',
   installPath: THIRD_PARTY_INSTALL,
   noInstallSudo: true,
   # shared: true,

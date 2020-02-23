@@ -6,6 +6,7 @@
 #include "GUI/GuiManager.h"
 #include "Generated/StandardWorld.h"
 #include "Handlers/ObjectLoader.h"
+#include "Rendering/Material.h"
 #include "Window.h"
 
 #include "Engine.h"
@@ -61,11 +62,11 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 
 
     // ------------------------------------ //
-    // Test cube
+    // Test model
     // ObjectID box = World->CreateEntity();
-    // World->Create_Position(box, Float3(0, 0, 0), Float4::IdentityQuaternion());
+    // World->Create_Position(box, Float3(0, 0, 0), Quaternion::IDENTITY);
     // auto& renderNode = World->Create_RenderNode(box);
-    // World->Create_Model(box, renderNode.Node, "UnitCube.mesh");
+    // World->Create_Model(box, "DamagedHelmet.gltf", Material::MakeShared<Material>());
 }
 
 void Editor::Editor::_CloseEditor()

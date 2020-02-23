@@ -9,7 +9,7 @@ using namespace Leviathan::Rendering;
 DLLEXPORT const Matrix4& Camera::GetProjectionMatrix() const
 {
     if(Dirty) {
-        // TODO: perhaps this needs to
+        // TODO: perhaps this needs to detect when OpenGL is used
         ProjectionMatrix =
             Matrix4::ProjectionPerspective(FOV, AspectRatio, NearClip, FarClip, false);
     }

@@ -125,8 +125,8 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     GraphicsEngineOpenGL
     GraphicsEngineVk
     DiligentTools
-    DiligentCore
     DiligentFX
+    DiligentCore
     )
 
   if(NOT WIN32)

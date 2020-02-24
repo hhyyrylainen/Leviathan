@@ -33,7 +33,7 @@ protected:
     //! \brief Called to invalidate this by Graphics when shutting down with open windows
     void Invalidate();
 
-    void Present();
+    void Present(bool vsync);
 
 protected:
     Diligent::RefCntAutoPtr<Diligent::ISwapChain> WindowsSwapChain;

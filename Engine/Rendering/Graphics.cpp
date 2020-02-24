@@ -760,6 +760,7 @@ DLLEXPORT Diligent::TEXTURE_FORMAT Graphics::GetDepthBufferFormat() const
 DLLEXPORT bool Graphics::Frame()
 {
     // TODO: vsync
+    bool vsync = false;
 
     // Once we swap the diligent chains the render target gets unbound
     Pimpl->CurrentRenderTarget = nullptr;
@@ -769,7 +770,9 @@ DLLEXPORT bool Graphics::Frame()
     // TODO: allow hiding and stuff
     for(const auto& resources : Pimpl->ExistingWindows) {
         // TODO: could only swap a window if it was rendered to
-        resources->Present();
+        resources->Present(vsync);
+
+        vsync = false;
     }
 
     return true;

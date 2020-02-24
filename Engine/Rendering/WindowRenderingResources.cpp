@@ -19,8 +19,8 @@ void WindowRenderingResources::Invalidate()
     WindowsSwapChain = nullptr;
 }
 
-void WindowRenderingResources::Present()
+void WindowRenderingResources::Present(bool vsync)
 {
     if(WindowsSwapChain)
-        WindowsSwapChain->Present();
+        WindowsSwapChain->Present(vsync ? 1 : 0);
 }

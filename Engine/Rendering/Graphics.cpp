@@ -166,6 +166,8 @@ struct Graphics::Implementation {
     std::shared_ptr<Rendering::Buffer> GLTFLightAttribsCB;
     std::shared_ptr<Rendering::Buffer> GLTFEnvMapRenderAttribsCB;
 
+    Diligent::RefCntAutoPtr<Diligent::ITexture> EnvironmentMap;
+
 
     //! Currently set render target
     WindowRenderingResources* CurrentRenderTarget = nullptr;
@@ -695,11 +697,12 @@ void Graphics::UnRegisterWindow(Window& window)
 // ------------------------------------ //
 void Graphics::InitGLTF()
 {
-    // Diligent::RefCntAutoPtr<Diligent::ITexture> EnvironmentMap;
-    // CreateTextureFromFile("textures/papermill.ktx", TextureLoadInfo{"Environment map"},
-    //     Pimpl->RenderDevice, &EnvironmentMap);
-    // m_EnvironmentMapSRV =
-    // EnvironmentMap->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE);
+    auto file =
+        FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE, "papermill", "ktx");
+    LEVIATHAN_ASSERT(!file.empty(), "didn't find default environment map");
+
+    Diligent::CreateTextureFromFile(file.c_str(), Diligent::TextureLoadInfo{"Environment map"},
+        Pimpl->RenderDevice, &Pimpl->EnvironmentMap);
 
     Diligent::GLTF_PBR_Renderer::CreateInfo rendererCI;
     rendererCI.RTVFmt = GetBackBufferFormat();
@@ -735,14 +738,13 @@ void Graphics::InitGLTF()
             Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
         {Pimpl->GLTFEnvMapRenderAttribsCB->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
             Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
-        // {EnvironmentMap, Diligent::RESOURCE_STATE_UNKNOWN,
-        //     Diligent::RESOURCE_STATE_SHADER_RESOURCE, true}
-    };
+        {Pimpl->EnvironmentMap, Diligent::RESOURCE_STATE_UNKNOWN,
+            Diligent::RESOURCE_STATE_SHADER_RESOURCE, true}};
 
     Pimpl->ImmediateContext->TransitionResourceStates(std::size(barriers), barriers);
 
-    // Pimpl->GLTFRenderer->PrecomputeCubemaps(
-    //     Pimpl->RenderDevice, Pimpl->ImmediateContext, m_EnvironmentMapSRV);
+    Pimpl->GLTFRenderer->PrecomputeCubemaps(Pimpl->RenderDevice, Pimpl->ImmediateContext,
+        Pimpl->EnvironmentMap->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
 
     // CreateEnvMapPSO();
 }
@@ -899,44 +901,106 @@ DLLEXPORT void Graphics::DrawMesh(Mesh& mesh)
 DLLEXPORT void Graphics::DrawModel(
     Rendering::Model& model, const SceneNode& position, const RenderParams& params)
 {
-    // might need to tell the camera about m_pDevice->GetDeviceCaps().IsGLDevice()
-    const Matrix4& projection = params._Camera->GetProjectionMatrix();
+    // Example code from diligent to verify that this works at least.
+    using namespace Diligent;
 
-    const auto cameraViewProjection = params._Camera->GetViewMatrix() * projection;
+    auto* m_Model = &model.GetInternal();
+
+    GLTF_PBR_Renderer::RenderInfo m_RenderParams;
+
+    Diligent::Quaternion m_CameraRotation = {0, 0, 0, 1};
+    Diligent::Quaternion m_ModelRotation =
+        Diligent::Quaternion::RotationFromAxisAngle(float3{0.f, 1.0f, 0.0f}, -PI_F / 2.f);
+    float4x4 m_ModelTransform;
+
+    float m_CameraDist = 0.9f;
+
+    float3 m_LightDirection;
+    float4 m_LightColor = float4(1, 1, 1, 1);
+    float m_LightIntensity = 3.f;
+    float m_EnvMapMipLevel = 1.f;
+    int m_SelectedModel = 0;
+
+    // Center and scale model
+    float3 ModelDim{m_Model->aabb[0][0], m_Model->aabb[1][1], m_Model->aabb[2][2]};
+    float Scale = (1.0f / std::max(std::max(ModelDim.x, ModelDim.y), ModelDim.z)) * 0.5f;
+    auto Translate = -float3(m_Model->aabb[3][0], m_Model->aabb[3][1], m_Model->aabb[3][2]);
+    Translate += -0.5f * ModelDim;
+    float4x4 InvYAxis = float4x4::Identity();
+    InvYAxis._22 = -1;
+    m_ModelTransform = float4x4::Translation(Translate) * float4x4::Scale(Scale) * InvYAxis;
+
+
+    float4x4 CameraView =
+        m_CameraRotation.ToMatrix() * float4x4::Translation(0.f, 0.0f, m_CameraDist);
+    float4x4 CameraWorld = CameraView.Inverse();
+    float3 CameraWorldPos = float3::MakeVector(CameraWorld[3]);
+    float NearPlane = 0.1f;
+    float FarPlane = 100.f;
+    float aspectRatio = static_cast<float>(1280) / static_cast<float>(720);
+    // Projection matrix differs between DX and OpenGL
+    auto Proj = float4x4::Projection(PI_F / 4.f, aspectRatio, NearPlane, FarPlane,
+        Pimpl->RenderDevice->GetDeviceCaps().IsGLDevice());
+    // Compute world-view-projection matrix
+    auto CameraViewProj = CameraView * Proj;
 
     {
-        Diligent::MapHelper<Diligent::CameraAttribs> mapped(Pimpl->ImmediateContext,
-            Pimpl->GLTFCameraAttribsCB->GetInternal(), Diligent::MAP_WRITE,
-            Diligent::MAP_FLAG_DISCARD);
-
-        mapped->mProjT = MatrixToDiligent(projection.Transpose());
-        mapped->mViewProjT = MatrixToDiligent(cameraViewProjection.Transpose());
-        mapped->mViewProjInvT = MatrixToDiligent(cameraViewProjection.Inverse().Transpose());
-        mapped->f4Position =
-            Float4ToDiligent(Float4(params._Camera->GetParent()->GetPosition(), 1.f));
+        MapHelper<CameraAttribs> CamAttribs(Pimpl->ImmediateContext,
+            Pimpl->GLTFCameraAttribsCB->GetInternal(), MAP_WRITE, MAP_FLAG_DISCARD);
+        CamAttribs->mProjT = Proj.Transpose();
+        CamAttribs->mViewProjT = CameraViewProj.Transpose();
+        CamAttribs->mViewProjInvT = CameraViewProj.Inverse().Transpose();
+        CamAttribs->f4Position = float4(CameraWorldPos, 1);
     }
 
     {
-        Diligent::MapHelper<Diligent::LightAttribs> mapped(Pimpl->ImmediateContext,
-            Pimpl->GLTFLightAttribsCB->GetInternal(), Diligent::MAP_WRITE,
-            Diligent::MAP_FLAG_DISCARD);
-
-        mapped->f4Direction =
-            Float4ToDiligent(Float4(params.SceneProperties.LightDirection, 1.f));
-        mapped->f4Intensity = Float4ToDiligent(
-            params.SceneProperties.LightColour * params.SceneProperties.LightIntensity);
+        MapHelper<LightAttribs> lightAttribs(Pimpl->ImmediateContext,
+            Pimpl->GLTFLightAttribsCB->GetInternal(), MAP_WRITE, MAP_FLAG_DISCARD);
+        lightAttribs->f4Direction = m_LightDirection;
+        lightAttribs->f4Intensity = m_LightColor * m_LightIntensity;
     }
 
-    Diligent::GLTF_PBR_Renderer::RenderInfo renderParams;
+    m_RenderParams.ModelTransform = m_ModelTransform * m_ModelRotation.ToMatrix();
+    Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, *m_Model, m_RenderParams);
 
-    const auto& transform = position.GetWorldTransform();
+    // // might need to tell the camera about m_pDevice->GetDeviceCaps().IsGLDevice()
+    // const Matrix4& projection = params._Camera->GetProjectionMatrix();
 
-    const auto worldMatrix =
-        Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+    // const auto cameraViewProjection = params._Camera->GetViewMatrix() * projection;
 
-    renderParams.ModelTransform = MatrixToDiligent(worldMatrix);
+    // {
+    //     Diligent::MapHelper<Diligent::CameraAttribs> mapped(Pimpl->ImmediateContext,
+    //         Pimpl->GLTFCameraAttribsCB->GetInternal(), Diligent::MAP_WRITE,
+    //         Diligent::MAP_FLAG_DISCARD);
 
-    Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, model.GetInternal(), renderParams);
+    //     mapped->mProjT = MatrixToDiligent(projection.Transpose());
+    //     mapped->mViewProjT = MatrixToDiligent(cameraViewProjection.Transpose());
+    //     mapped->mViewProjInvT =
+    //     MatrixToDiligent(cameraViewProjection.Inverse().Transpose()); mapped->f4Position =
+    //         Float4ToDiligent(Float4(params._Camera->GetParent()->GetPosition(), 1.f));
+    // }
+
+    // {
+    //     Diligent::MapHelper<Diligent::LightAttribs> mapped(Pimpl->ImmediateContext,
+    //         Pimpl->GLTFLightAttribsCB->GetInternal(), Diligent::MAP_WRITE,
+    //         Diligent::MAP_FLAG_DISCARD);
+
+    //     mapped->f4Direction =
+    //         Float4ToDiligent(Float4(params.SceneProperties.LightDirection, 1.f));
+    //     mapped->f4Intensity = Float4ToDiligent(
+    //         params.SceneProperties.LightColour * params.SceneProperties.LightIntensity);
+    // }
+
+    // Diligent::GLTF_PBR_Renderer::RenderInfo renderParams;
+
+    // const auto& transform = position.GetWorldTransform();
+
+    // const auto worldMatrix =
+    //     Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+
+    // renderParams.ModelTransform = MatrixToDiligent(worldMatrix);
+
+    // Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, model.GetInternal(), renderParams);
 }
 // ------------------------------------ //
 // Rendering resource creation

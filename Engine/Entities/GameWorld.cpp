@@ -171,6 +171,8 @@ void GameWorld::_CreateRenderingResources(Graphics* graphics)
 
     pimpl->WorldSceneRenderParams._Camera = pimpl->WorldCamera.get();
 
+    pimpl->WorldCamera->NotifyOpenGL(graphics->IsOpenGLUsed());
+
 
     auto values = Engine::Get()->GetDefinition()->GetValues();
 

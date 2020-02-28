@@ -903,48 +903,25 @@ DLLEXPORT void Graphics::DrawMesh(Mesh& mesh)
 DLLEXPORT void Graphics::DrawModel(
     Rendering::Model& model, const SceneNode& position, const RenderParams& params)
 {
-    auto* m_Model = &model.GetInternal();
+    if(!params._Camera || !params._Camera->GetParent()) {
+        LOG_ERROR("Graphics: DrawModel: invalid camera provided");
+        return;
+    }
 
-    // Example code from diligent to verify that this works at least.
-    using namespace Diligent;
-
-    float m_CameraDist = 0.9f;
-
-    Diligent::Quaternion m_CameraRotation = {0, 0, 0, 1};
-    float4x4 CameraView =
-        m_CameraRotation.ToMatrix() * float4x4::Translation(0.f, 0.0f, m_CameraDist);
-    float4x4 CameraWorld = CameraView.Inverse();
-    float3 CameraWorldPos = float3::MakeVector(CameraWorld[3]);
-    float NearPlane = 0.1f;
-    float FarPlane = 100.f;
-    float aspectRatio = static_cast<float>(1280) / static_cast<float>(720);
-    // Projection matrix differs between DX and OpenGL
-    auto Proj = float4x4::Projection(PI_F / 4.f, aspectRatio, NearPlane, FarPlane,
-        Pimpl->RenderDevice->GetDeviceCaps().IsGLDevice());
-    // Compute world-view-projection matrix
-    auto CameraViewProj = CameraView * Proj;
-
-
-    // // might need to tell the camera about m_pDevice->GetDeviceCaps().IsGLDevice()
-    // const Matrix4& projection = params._Camera->GetProjectionMatrix();
-
-    // const auto cameraViewProjection = params._Camera->GetViewMatrix() * projection;
+    const auto& projection = params._Camera->GetProjectionMatrix();
+    const auto cameraPos = params._Camera->GetParent()->GetPosition();
+    // TODO: this matrix could be cached
+    const auto cameraViewProjection = params._Camera->GetViewMatrix() * projection;
 
     {
         Diligent::MapHelper<Diligent::CameraAttribs> mapped(Pimpl->ImmediateContext,
             Pimpl->GLTFCameraAttribsCB->GetInternal(), Diligent::MAP_WRITE,
             Diligent::MAP_FLAG_DISCARD);
 
-        mapped->mProjT = Proj.Transpose();
-        mapped->mViewProjT = CameraViewProj.Transpose();
-        mapped->mViewProjInvT = CameraViewProj.Inverse().Transpose();
-
-        // mapped->mProjT = MatrixToDiligent(projection.Transpose());
-        // mapped->mViewProjT = MatrixToDiligent(cameraViewProjection.Transpose());
-        // mapped->mViewProjInvT =
-        // MatrixToDiligent(cameraViewProjection.Inverse().Transpose()); mapped->f4Position =
-        //     Float4ToDiligent(Float4(params._Camera->GetParent()->GetPosition(), 1.f));
-        mapped->f4Position = float4(CameraWorldPos, 1);
+        mapped->mProjT = MatrixToDiligent(projection.Transpose());
+        mapped->mViewProjT = MatrixToDiligent(cameraViewProjection.Transpose());
+        mapped->mViewProjInvT = MatrixToDiligent(cameraViewProjection.Inverse().Transpose());
+        mapped->f4Position = Float4ToDiligent(Float4(cameraPos, 1));
     }
 
     {
@@ -960,42 +937,18 @@ DLLEXPORT void Graphics::DrawModel(
 
     Diligent::GLTF_PBR_Renderer::RenderInfo renderParams;
 
-    // const auto& transform = position.GetWorldTransform();
+    const auto& transform = position.GetWorldTransform();
 
-    // const auto worldMatrix =
-    //     Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+    const auto worldMatrix =
+        Matrix4(transform.Translation, transform.Orientation, transform.Scale);
 
-    // renderParams.ModelTransform = MatrixToDiligent(worldMatrix);
+    auto invYAxis = Matrix4::IDENTITY;
+    // If this line is removed completely crazy things happen
+    invYAxis.m22 = -1;
 
-    // renderParams.ModelTransform = MatrixToDiligent(m_ModelTransform);
-    {
-        // Quaternion m_ModelRotation = Quaternion(Float3{0.f, 1.0f, 0.0f}, -PI / 2.f);
-        Diligent::Quaternion m_ModelRotation =
-            Diligent::Quaternion::RotationFromAxisAngle(float3{0.f, 1.0f, 0.0f}, -PI / 2.f);
-        // Quaternion m_ModelRotation = Quaternion::IDENTITY;
+    const auto finalModelMatrix = worldMatrix * invYAxis;
 
-        // Center and scale model
-        // Float3 ModelDim{m_Model->aabb[0][0], m_Model->aabb[1][1], m_Model->aabb[2][2]};
-        // float Scale = (1.0f / std::max(std::max(ModelDim.X, ModelDim.Y), ModelDim.Z)) *
-        // 0.5f; auto Translate = -Float3(m_Model->aabb[3][0], m_Model->aabb[3][1],
-        // m_Model->aabb[3][2]); Translate += ModelDim * -0.5f; auto InvYAxis =
-        // Matrix4::IDENTITY;
-        // // InvYAxis._22 = -1;
-        // const auto m_ModelTransform =
-        //     Matrix4::FromTRS(Translate, m_ModelRotation, Float3(Scale)) * InvYAxis;
-
-        float3 ModelDim{m_Model->aabb[0][0], m_Model->aabb[1][1], m_Model->aabb[2][2]};
-        float Scale = (1.0f / std::max(std::max(ModelDim.x, ModelDim.y), ModelDim.z)) * 0.5f;
-        auto Translate =
-            -float3(m_Model->aabb[3][0], m_Model->aabb[3][1], m_Model->aabb[3][2]);
-        Translate += -0.5f * ModelDim;
-        float4x4 InvYAxis = float4x4::Identity();
-        InvYAxis._22 = -1;
-        auto m_ModelTransform =
-            float4x4::Translation(Translate) * float4x4::Scale(Scale) * InvYAxis;
-
-        renderParams.ModelTransform = m_ModelRotation.ToMatrix() * m_ModelTransform;
-    }
+    renderParams.ModelTransform = MatrixToDiligent(finalModelMatrix);
 
     Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, model.GetInternal(), renderParams);
 }

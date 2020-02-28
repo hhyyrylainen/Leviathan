@@ -60,6 +60,14 @@ public:
         Dirty = true;
     }
 
+    void NotifyOpenGL(bool opengl)
+    {
+        if(OpenGL != opengl) {
+            OpenGL = opengl;
+            MarkDirty();
+        }
+    }
+
     // ------------------------------------ //
     // Camera math methods from bs::framework with modifications, see License.txt
     /**
@@ -235,6 +243,8 @@ private:
     float AspectRatio = 1.77778f;
 
     bool AutoAspectRatio = true;
+
+    bool OpenGL = false;
 
     PROJECTION_TYPE ProjectionType = PROJECTION_TYPE::Perspective;
 

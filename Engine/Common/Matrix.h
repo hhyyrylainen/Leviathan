@@ -881,6 +881,10 @@ public:
     DLLEXPORT static const Matrix4 ZERO;
 };
 
+// Stream operators //
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Leviathan::Matrix3& value);
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Leviathan::Matrix4& value);
+
 } // namespace Leviathan
 
 #ifdef LEAK_INTO_GLOBAL

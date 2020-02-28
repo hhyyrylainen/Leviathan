@@ -1,6 +1,10 @@
 // ------------------------------------ //
 #include "Matrix.h"
 
+#include "DiligentConversions.h"
+
+#include <ostream>
+
 using namespace Leviathan;
 // ------------------------------------ //
 // This file contains a lot of code from bs::framework with modifications, see License.txt for
@@ -1229,3 +1233,27 @@ DLLEXPORT Matrix4 Matrix4::FromInverseTRS(
 
     return mat;
 }
+// ------------------------------------ //
+// Stream operators
+namespace Leviathan {
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Leviathan::Matrix3& value)
+{
+    stream << "[" << value[0][0] << " " << value[0][1] << " " << value[0][2] << "]\n";
+    stream << "[" << value[1][0] << " " << value[1][1] << " " << value[1][2] << "]\n";
+    stream << "[" << value[2][0] << " " << value[2][1] << " " << value[2][2] << "]";
+    return stream;
+}
+
+DLLEXPORT std::ostream& operator<<(std::ostream& stream, const Leviathan::Matrix4& value)
+{
+    stream << "[" << value[0][0] << " " << value[0][1] << " " << value[0][2] << " "
+           << value[0][3] << "]\n";
+    stream << "[" << value[1][0] << " " << value[1][1] << " " << value[1][2] << " "
+           << value[1][3] << "]\n";
+    stream << "[" << value[2][0] << " " << value[2][1] << " " << value[2][2] << " "
+           << value[2][3] << "]\n";
+    stream << "[" << value[3][0] << " " << value[3][1] << " " << value[3][2] << " "
+           << value[3][3] << "]";
+    return stream;
+}
+} // namespace Leviathan

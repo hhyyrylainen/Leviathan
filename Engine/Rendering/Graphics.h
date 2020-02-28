@@ -111,6 +111,9 @@ public:
     DLLEXPORT void DrawModel(
         Rendering::Model& model, const SceneNode& position, const RenderParams& params);
 
+    //! \todo This might need to transition the texture resource
+    DLLEXPORT void SetGLTFEnvironmentMap(const CountedPtr<Texture>& cubemap);
+
     // ------------------------------------ //
     // Rendering resource creation
     DLLEXPORT std::shared_ptr<PSO> CreatePSO(const Diligent::PipelineStateDesc& desc);
@@ -178,6 +181,9 @@ private:
     void ShutdownDiligent();
 
     void InitGLTF();
+
+    //! Generates default resources to help with gltf rendering
+    void InitGeneratedResources();
 
     bool SelectPreferredGraphicsAPI(AppDef* appdef);
     //! Check that API selection is good and perform some initialization for some APIs

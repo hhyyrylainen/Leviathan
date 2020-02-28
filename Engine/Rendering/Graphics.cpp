@@ -166,7 +166,8 @@ struct Graphics::Implementation {
     std::shared_ptr<Rendering::Buffer> GLTFLightAttribsCB;
     std::shared_ptr<Rendering::Buffer> GLTFEnvMapRenderAttribsCB;
 
-    Diligent::RefCntAutoPtr<Diligent::ITexture> EnvironmentMap;
+    //! Cached to not have to recompute cubemaps
+    Diligent::RefCntAutoPtr<Diligent::ITexture> GLTFActiveEnvironmentMap;
 
 
     //! Currently set render target
@@ -185,6 +186,9 @@ struct Graphics::Implementation {
 
     //! Set once first depth buffer is created, all windows must have the same format
     std::optional<Diligent::TEXTURE_FORMAT> DepthBufferFormat;
+
+    CountedPtr<Texture> White;
+    CountedPtr<Texture> WhiteCubeMap;
 };
 
 #ifdef __linux
@@ -698,12 +702,7 @@ void Graphics::UnRegisterWindow(Window& window)
 // ------------------------------------ //
 void Graphics::InitGLTF()
 {
-    auto file =
-        FileSystem::Get()->SearchForFile(Leviathan::FILEGROUP_TEXTURE, "papermill", "ktx");
-    LEVIATHAN_ASSERT(!file.empty(), "didn't find default environment map");
-
-    Diligent::CreateTextureFromFile(file.c_str(), Diligent::TextureLoadInfo{"Environment map"},
-        Pimpl->RenderDevice, &Pimpl->EnvironmentMap);
+    InitGeneratedResources();
 
     Diligent::GLTF_PBR_Renderer::CreateInfo rendererCI;
     rendererCI.RTVFmt = GetBackBufferFormat();
@@ -738,17 +737,81 @@ void Graphics::InitGLTF()
         {Pimpl->GLTFLightAttribsCB->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
             Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
         {Pimpl->GLTFEnvMapRenderAttribsCB->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
-            Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true},
-        {Pimpl->EnvironmentMap, Diligent::RESOURCE_STATE_UNKNOWN,
-            Diligent::RESOURCE_STATE_SHADER_RESOURCE, true}};
+            Diligent::RESOURCE_STATE_CONSTANT_BUFFER, true}};
 
     Pimpl->ImmediateContext->TransitionResourceStates(std::size(barriers), barriers);
 
     // Environment map is needed, otherwise rendered models are just black
-    Pimpl->GLTFRenderer->PrecomputeCubemaps(Pimpl->RenderDevice, Pimpl->ImmediateContext,
-        Pimpl->EnvironmentMap->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
+    // So set the default white one
+    SetGLTFEnvironmentMap(Pimpl->WhiteCubeMap);
+}
 
-    // CreateEnvMapPSO();
+void Graphics::InitGeneratedResources()
+{
+    {
+        Diligent::TextureDesc desc;
+        desc.Type = Diligent::RESOURCE_DIM_TEX_2D;
+        desc.Width = 1;
+        desc.Height = 1;
+        desc.Usage = Diligent::USAGE_STATIC;
+        desc.BindFlags = Diligent::BIND_SHADER_RESOURCE;
+        desc.CPUAccessFlags = Diligent::CPU_ACCESS_NONE;
+        // Alpha channel not used, but apparently there is no RGB8 format
+        desc.Format = Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB;
+        desc.MipLevels = 1;
+
+        Diligent::TextureData data;
+        data.NumSubresources = 1;
+
+        Diligent::TextureSubResData subData;
+        data.pSubResources = &subData;
+        subData.Stride = 4;
+
+        uint8_t channels[] = {255, 255, 255, 255};
+
+        subData.pData = channels;
+
+        Pimpl->White = CreateTexture(desc, &data);
+        LEVIATHAN_ASSERT(Pimpl->White, "Failed to create white texture");
+    }
+
+    {
+        Diligent::TextureDesc desc;
+        desc.Type = Diligent::RESOURCE_DIM_TEX_CUBE;
+        desc.Width = 1;
+        desc.Height = 1;
+        desc.Depth = 6;
+        desc.Usage = Diligent::USAGE_STATIC;
+        desc.BindFlags = Diligent::BIND_SHADER_RESOURCE;
+        desc.CPUAccessFlags = Diligent::CPU_ACCESS_NONE;
+        // Alpha channel not used, but apparently there is no RGB8 format
+        desc.Format = Diligent::TEX_FORMAT_RGBA8_UNORM_SRGB;
+        desc.MipLevels = 1;
+
+        Diligent::TextureData data;
+        data.NumSubresources = 6;
+
+        std::array<Diligent::TextureSubResData, 6> subDatas;
+        data.pSubResources = subDatas.data();
+
+        uint8_t channels[] = {255, 255, 255, 255};
+
+        for(size_t i = 0; i < 6; ++i) {
+            subDatas[i].Stride = 4;
+            subDatas[i].pData = channels;
+        }
+
+        Pimpl->WhiteCubeMap = CreateTexture(desc, &data);
+        LEVIATHAN_ASSERT(Pimpl->WhiteCubeMap, "Failed to create white cube texture");
+    }
+
+    Diligent::StateTransitionDesc barriers[] = {
+        {Pimpl->White->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
+            Diligent::RESOURCE_STATE_SHADER_RESOURCE, true},
+        {Pimpl->WhiteCubeMap->GetInternal(), Diligent::RESOURCE_STATE_UNKNOWN,
+            Diligent::RESOURCE_STATE_SHADER_RESOURCE, true}};
+
+    Pimpl->ImmediateContext->TransitionResourceStates(std::size(barriers), barriers);
 }
 // ------------------------------------ //
 DLLEXPORT Diligent::TEXTURE_FORMAT Graphics::GetBackBufferFormat() const
@@ -952,6 +1015,26 @@ DLLEXPORT void Graphics::DrawModel(
 
     Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, model.GetInternal(), renderParams);
 }
+// ------------------------------------ //
+DLLEXPORT void Graphics::SetGLTFEnvironmentMap(const CountedPtr<Texture>& cubemap)
+{
+    if(!cubemap) {
+        LOG_ERROR("Graphics: attempted to set null as environment map");
+        return;
+    }
+
+    if(cubemap->GetInternal() == Pimpl->GLTFActiveEnvironmentMap)
+        return;
+
+    Pimpl->GLTFActiveEnvironmentMap = cubemap->GetInternal();
+
+    Pimpl->GLTFRenderer->PrecomputeCubemaps(Pimpl->RenderDevice, Pimpl->ImmediateContext,
+        Pimpl->GLTFActiveEnvironmentMap->GetDefaultView(
+            Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
+
+    // CreateEnvMapPSO();
+}
+
 // ------------------------------------ //
 // Rendering resource creation
 DLLEXPORT std::shared_ptr<PSO> Graphics::CreatePSO(const Diligent::PipelineStateDesc& desc)

@@ -58,6 +58,9 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 
     ObjectID camera = ObjectLoader::LoadCamera(*World, Float3(0, 0, 5), Quaternion::IDENTITY);
 
+    auto& cameraProps = World->GetComponent_Camera(camera);
+    cameraProps.FOV = 45;
+
     World->SetCamera(camera);
 
 

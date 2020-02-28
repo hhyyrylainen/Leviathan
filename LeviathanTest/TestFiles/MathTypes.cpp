@@ -1,5 +1,9 @@
+#include "Common/DiligentConversions.h"
+#include "Common/Matrix.h"
 #include "Common/Quaternion.h"
 #include "Common/Types.h"
+
+#include "DiligentCore/Common/interface/BasicMath.hpp"
 
 #include "catch.hpp"
 
@@ -39,4 +43,82 @@ TEST_CASE("Quaternion math works", "[math]")
     const Float3 rotatedLev = levQuat * toRotate;
 
     CHECK(rotatedBs == rotatedLev);
+}
+
+TEST_CASE("View matrix creation works", "[math]")
+{
+    SECTION("Rotation matrix creation")
+    {
+        Quaternion quat = Quaternion::IDENTITY;
+
+        Matrix3 rot;
+        quat.ToRotationMatrix(rot);
+
+        CHECK(rot[0][0] == 1);
+        CHECK(rot[0][1] == 0);
+        CHECK(rot[0][2] == 0);
+
+        CHECK(rot[1][0] == 0);
+        CHECK(rot[1][1] == 1);
+        CHECK(rot[1][2] == 0);
+
+        CHECK(rot[2][0] == 0);
+        CHECK(rot[2][1] == 0);
+        CHECK(rot[2][2] == 1);
+    }
+
+    SECTION("Identity view")
+    {
+        const auto view = Matrix4::View(Float3(0, 0, 0), Quaternion::IDENTITY);
+
+        CHECK(view[0][0] == 1);
+        CHECK(view[0][1] == 0);
+        CHECK(view[0][2] == 0);
+        CHECK(view[0][3] == 0);
+
+        CHECK(view[1][0] == 0);
+        CHECK(view[1][1] == 1);
+        CHECK(view[1][2] == 0);
+        CHECK(view[1][3] == 0);
+
+        CHECK(view[2][0] == 0);
+        CHECK(view[2][1] == 0);
+        CHECK(view[2][2] == 1);
+        CHECK(view[2][3] == 0);
+
+        CHECK(view[3][0] == 0);
+        CHECK(view[3][1] == 0);
+        CHECK(view[3][2] == 0);
+        CHECK(view[3][3] == 1);
+    }
+
+    SECTION("Same result as diligent")
+    {
+        constexpr float dist = 0.9f;
+        Diligent::float4x4 diligentView = Diligent::Quaternion{0, 0, 0, 1}.ToMatrix() *
+                                          Diligent::float4x4::Translation(0.f, 0.0f, dist);
+
+        const auto view = Matrix4::View(Float3(0, 0, dist), Quaternion::IDENTITY);
+
+        CHECK(view == MatrixFromDiligent(diligentView));
+    }
+}
+
+TEST_CASE("Perspective matrix creation works", "[math]")
+{
+    SECTION("Same result as diligent")
+    {
+        float nearPlane = 0.1f;
+        float farPlane = 100.f;
+        float aspectRatio = static_cast<float>(1280) / static_cast<float>(720);
+        bool gl = false;
+
+        const auto diligentProjection = MatrixFromDiligent(
+            Diligent::float4x4::Projection(PI / 4.f, aspectRatio, nearPlane, farPlane, gl));
+
+        const auto projection = Matrix4::ProjectionPerspective(
+            Radian(PI / 4.f), aspectRatio, nearPlane, farPlane, gl);
+
+        CHECK(projection == diligentProjection);
+    }
 }

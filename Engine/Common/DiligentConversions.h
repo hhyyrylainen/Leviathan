@@ -3,6 +3,7 @@
 #pragma once
 // ------------------------------------ //
 #include "Matrix.h"
+#include "Quaternion.h"
 
 #include "DiligentCore/Common/interface/BasicMath.hpp"
 
@@ -31,6 +32,16 @@ inline Matrix4 MatrixFromDiligent(const Diligent::float4x4& matrix)
 inline Diligent::float4 Float4ToDiligent(const Float4& vec)
 {
     return Diligent::float4(vec.X, vec.Y, vec.Z, vec.W);
+}
+
+inline Diligent::float3 Float3ToDiligent(const Float3& vec)
+{
+    return Diligent::float3(vec.X, vec.Y, vec.Z);
+}
+
+inline Diligent::Quaternion QuaternionToDiligent(const Quaternion& quat)
+{
+    return Diligent::Quaternion(quat.X, quat.Y, quat.Z, quat.W);
 }
 
 } // namespace Leviathan

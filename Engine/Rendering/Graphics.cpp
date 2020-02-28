@@ -1002,16 +1002,30 @@ DLLEXPORT void Graphics::DrawModel(
 
     const auto& transform = position.GetWorldTransform();
 
-    const auto worldMatrix =
-        Matrix4(transform.Translation, transform.Orientation, transform.Scale);
+    // When the model is upside down, this rotation fixes it
+    const auto fixRotation = Quaternion(Float3::UnitXAxis, Degree(180));
 
-    auto invYAxis = Matrix4::IDENTITY;
-    // If this line is removed completely crazy things happen
-    invYAxis.m22 = -1;
+    auto InvYAxis = Diligent::float4x4::Identity();
+    // If this line is removed, backfaces of triangles seem to be rendered
+    InvYAxis._22 = -1;
 
-    const auto finalModelMatrix = worldMatrix * invYAxis;
+    auto adjustedTranslation = transform.Translation;
+    adjustedTranslation.Z *= -1;
 
-    renderParams.ModelTransform = MatrixToDiligent(finalModelMatrix);
+    const auto modelTransform =
+        Diligent::float4x4::Scale(Float3ToDiligent(transform.Scale)) *
+        QuaternionToDiligent(fixRotation * transform.Orientation).ToMatrix() * InvYAxis *
+        Diligent::float4x4::Translation(Float3ToDiligent(adjustedTranslation));
+
+    // Doesn't work as invert y needs to be applied before orientation
+    // auto worldMatrix = Matrix4(transform.Translation, transform.Orientation,
+    // transform.Scale);
+
+    // renderParams.ModelTransform =
+    //     modelTransform * QuaternionToDiligent(fixRotation *
+    //     transform.Orientation).ToMatrix();
+    renderParams.ModelTransform = modelTransform;
+    // renderParams.ModelTransform = MatrixToDiligent(worldMatrix);
 
     Pimpl->GLTFRenderer->Render(Pimpl->ImmediateContext, model.GetInternal(), renderParams);
 }

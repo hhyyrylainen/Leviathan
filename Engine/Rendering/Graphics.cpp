@@ -465,6 +465,7 @@ bool Graphics::CheckAndInitializeSelectedAPI()
     case GRAPHICS_API::Vulkan: {
         LOG_INFO("Attempting to create a vulkan device and context");
 
+        // TODO: rename this
         Diligent::EngineVkCreateInfo EngVkAttribs;
 
         EngVkAttribs.DebugMessageCallback = &DiligentErrorCallback;
@@ -743,6 +744,7 @@ void Graphics::InitGLTF()
 
     Pimpl->ImmediateContext->TransitionResourceStates(std::size(barriers), barriers);
 
+    // Environment map is needed, otherwise rendered models are just black
     Pimpl->GLTFRenderer->PrecomputeCubemaps(Pimpl->RenderDevice, Pimpl->ImmediateContext,
         Pimpl->EnvironmentMap->GetDefaultView(Diligent::TEXTURE_VIEW_SHADER_RESOURCE));
 

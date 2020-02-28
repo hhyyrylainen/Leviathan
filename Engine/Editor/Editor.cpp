@@ -66,10 +66,10 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 
     // ------------------------------------ //
     // Test model
-    ObjectID box = World->CreateEntity();
-    World->Create_Position(box, Float3(0, 0, 0), Quaternion::IDENTITY);
-    auto& renderNode = World->Create_RenderNode(box);
-    World->Create_Model(box, "DamagedHelmet.gltf", Material::MakeShared<Material>());
+    // ObjectID box = World->CreateEntity();
+    // World->Create_Position(box, Float3(0, 0, 0), Quaternion::IDENTITY);
+    // auto& renderNode = World->Create_RenderNode(box);
+    // World->Create_Model(box, "mitochontransparent.glb", Material::MakeShared<Material>());
 }
 
 void Editor::Editor::_CloseEditor()

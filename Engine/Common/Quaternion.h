@@ -147,9 +147,10 @@ public:
     //! \returns A rotated quaternion
     constexpr inline Quaternion operator*(const Quaternion& other) const noexcept
     {
-        return Quaternion(X * other.X + X * other.W + Y * other.Z - Z * other.Y,
-            W * other.Y - X * other.Z + Y * other.W + Z * other.X,
-            W * other.Z + X * other.Y - Y * other.X + Z * other.W,
+        // Now fixed math
+        return Quaternion(W * other.X + X * other.W + Y * other.Z - Z * other.Y,
+            W * other.Y + Y * other.W + Z * other.X - X * other.Z,
+            W * other.Z + Z * other.W + X * other.Y - Y * other.X,
             W * other.W - X * other.X - Y * other.Y - Z * other.Z);
     }
 

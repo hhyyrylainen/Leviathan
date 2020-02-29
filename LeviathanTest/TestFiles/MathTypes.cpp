@@ -2,6 +2,7 @@
 #include "Common/Matrix.h"
 #include "Common/Quaternion.h"
 #include "Common/Types.h"
+#include "Rendering/Scene.h"
 
 #include "DiligentCore/Common/interface/BasicMath.hpp"
 
@@ -120,5 +121,56 @@ TEST_CASE("Perspective matrix creation works", "[math]")
             Radian(PI / 4.f), aspectRatio, nearPlane, farPlane, gl);
 
         CHECK(projection == diligentProjection);
+    }
+}
+
+TEST_CASE("Scene node parent orientation properly stacks", "[math]")
+{
+    auto scene = Scene::MakeShared<Scene>();
+
+    auto root = scene->GetRootSceneNode();
+    REQUIRE(root);
+
+    auto child = scene->CreateSceneNode();
+
+    REQUIRE(child);
+
+    SECTION("No transforms")
+    {
+        auto transform = child->GetWorldTransform();
+
+        CHECK(transform.Translation == Float3(0, 0, 0));
+        CHECK(transform.Scale == Float3(1, 1, 1));
+        CHECK(transform.Orientation == Quaternion::IDENTITY);
+    }
+
+    SECTION("Y axis rotation on child")
+    {
+        const Quaternion childRotation(Float3::UnitYAxis, Degree(90));
+        child->SetOrientation(childRotation);
+        auto transform = child->GetWorldTransform();
+
+        CHECK(transform.Orientation == childRotation);
+    }
+
+    SECTION("Cumulative Y axis rotation")
+    {
+        const Quaternion childRotation(Float3::UnitYAxis, Degree(90));
+        const auto cumulative = childRotation * childRotation;
+
+        root->SetOrientation(childRotation);
+        child->SetOrientation(childRotation);
+        auto transform = child->GetWorldTransform();
+
+        CHECK(transform.Orientation == cumulative);
+    }
+
+    SECTION("X axis rotation on child")
+    {
+        const Quaternion childRotation(Float3::UnitXAxis, Degree(90));
+        child->SetOrientation(childRotation);
+        auto transform = child->GetWorldTransform();
+
+        CHECK(transform.Orientation == childRotation);
     }
 }

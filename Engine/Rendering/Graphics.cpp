@@ -1005,16 +1005,16 @@ DLLEXPORT void Graphics::DrawModel(
     // When the model is upside down, this rotation fixes it
     const auto fixRotation = Quaternion(Float3::UnitXAxis, Degree(180));
 
-    auto InvYAxis = Diligent::float4x4::Identity();
+    auto invYAxis = Diligent::float4x4::Identity();
     // If this line is removed, backfaces of triangles seem to be rendered
-    InvYAxis._22 = -1;
+    invYAxis._22 = -1;
 
     auto adjustedTranslation = transform.Translation;
     adjustedTranslation.Z *= -1;
 
     const auto modelTransform =
         Diligent::float4x4::Scale(Float3ToDiligent(transform.Scale)) *
-        QuaternionToDiligent(fixRotation * transform.Orientation).ToMatrix() * InvYAxis *
+        QuaternionToDiligent(fixRotation * transform.Orientation).ToMatrix() * invYAxis *
         Diligent::float4x4::Translation(Float3ToDiligent(adjustedTranslation));
 
     // Doesn't work as invert y needs to be applied before orientation

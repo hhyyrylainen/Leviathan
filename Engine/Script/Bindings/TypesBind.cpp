@@ -278,6 +278,12 @@ void PlaneDestructorProxy(void* memory)
 
 static auto UnitVUpProxy = Float3::UnitVUp;
 
+static auto UnitXAxisProxy = Float3::UnitXAxis;
+
+static auto UnitYAxisProxy = Float3::UnitYAxis;
+
+static auto UnitZAxisProxy = Float3::UnitZAxis;
+
 // ------------------------------------ //
 // Start of the actual bind
 namespace Leviathan {
@@ -513,6 +519,23 @@ bool BindFloat3(asIScriptEngine* engine)
 
         ANGELSCRIPT_REGISTERFAIL;
     }
+
+    if(engine->RegisterGlobalProperty("const Float3 UnitXAxis", &UnitXAxisProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Float3 UnitYAxis", &UnitYAxisProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalProperty("const Float3 UnitZAxis", &UnitZAxisProxy) < 0) {
+
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+
 
     if(engine->SetDefaultNamespace("") < 0) {
         ANGELSCRIPT_REGISTERFAIL;

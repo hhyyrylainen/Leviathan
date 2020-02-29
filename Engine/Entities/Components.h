@@ -715,13 +715,14 @@ class Camera : public Component {
 public:
     //! \brief Creates at specific position
     //! \version This now takes the horizontal instead of vertical FOV
-    inline Camera(uint8_t fov = 90, bool soundperceiver = true) :
+    //! \version This now seems to take again a vertical fov
+    inline Camera(uint8_t fov = 45, bool soundperceiver = true) :
         Component(TYPE), FOV(fov), SoundPerceiver(soundperceiver)
     {}
 
     REFERENCE_HANDLE_UNCOUNTED_TYPE(Camera);
 
-    //! Horizontal (ie. "normal") field of view
+    //! Vertical field of view
     uint16_t FOV;
 
     bool SoundPerceiver;

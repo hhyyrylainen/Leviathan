@@ -1012,7 +1012,7 @@ DLLEXPORT void Graphics::DrawModel(
     invYAxis._22 = -1;
 
     auto adjustedTranslation = transform.Translation;
-    adjustedTranslation.Z *= -1;
+    // adjustedTranslation.Z *= -1;
 
     const auto modelTransform =
         Diligent::float4x4::Scale(Float3ToDiligent(transform.Scale)) *

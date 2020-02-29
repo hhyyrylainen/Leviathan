@@ -41,7 +41,7 @@ DLLEXPORT Matrix4 Camera::GetViewMatrixDiligent() const
 
     Matrix4 view;
     auto adjustedTranslation = transform.Translation;
-    adjustedTranslation.X *= -1;
+    // adjustedTranslation.X *= -1;
     // adjustedTranslation.Y *= -1;
     view.MakeViewDiligent(adjustedTranslation, transform.Orientation);
     return view;

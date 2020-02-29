@@ -181,6 +181,9 @@ public:
     //! \todo Closed editors need to report that they are closed in order to open one again
     DLLEXPORT void FocusOrOpenEditor();
 
+    //! \returns the first valid editor, or null
+    DLLEXPORT Editor::Editor* GetEditor() const;
+
     // ------------------------------------ //
     inline Graphics* GetGraphics()
     {

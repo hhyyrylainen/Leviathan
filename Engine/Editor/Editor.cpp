@@ -32,6 +32,16 @@ void Editor::Editor::BringToFront()
         ShownOnWindow->BringToFront();
 }
 // ------------------------------------ //
+void Editor::Editor::Tick(float elapsed)
+{
+    if(RotateModelSet) {
+        CurrentRotationPassed += elapsed;
+
+        RotateModel(
+            Quaternion(Float3::UnitYAxis, Degree(RotateSpeed * CurrentRotationPassed)));
+    }
+}
+// ------------------------------------ //
 void Editor::Editor::_SetupOnWindow(Window* targetwindow)
 {
     if(ShownOnWindow)
@@ -56,20 +66,20 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
         return;
     }
 
-    ObjectID camera = ObjectLoader::LoadCamera(*World, Float3(0, 0, 5), Quaternion::IDENTITY);
+    CameraID = ObjectLoader::LoadCamera(*World, Float3(0, 0, 5), Quaternion::IDENTITY);
 
-    auto& cameraProps = World->GetComponent_Camera(camera);
-    cameraProps.FOV = 45;
+    CameraPos = &World->GetComponent_Position(CameraID);
+    CameraProps = &World->GetComponent_Camera(CameraID);
+    CameraProps->FOV = 45;
+    CameraProps->Marked = true;
 
-    World->SetCamera(camera);
+    World->SetCamera(CameraID);
 
 
     // ------------------------------------ //
     // Test model
-    // ObjectID box = World->CreateEntity();
-    // World->Create_Position(box, Float3(0, 0, 0), Quaternion::IDENTITY);
-    // auto& renderNode = World->Create_RenderNode(box);
-    // World->Create_Model(box, "mitochontransparent.glb", Material::MakeShared<Material>());
+    // LoadModel("DamagedHelmet.gltf");
+    // AutoRotateModel(true);
 }
 
 void Editor::Editor::_CloseEditor()
@@ -84,4 +94,84 @@ void Editor::Editor::_CloseEditor()
     World.reset();
 
     ShownOnWindow = nullptr;
+
+    // TODO: notify engine that this is closed
+}
+// ------------------------------------ //
+DLLEXPORT void Editor::Editor::LoadModel(const std::string& file)
+{
+    if(LoadedModel != NULL_OBJECT)
+        UnloadModel();
+
+    LoadedModel = World->CreateEntity();
+    World->Create_Position(LoadedModel, Float3(0, 0, 0), Quaternion::IDENTITY);
+    auto& renderNode = World->Create_RenderNode(LoadedModel);
+
+    World->Create_Model(LoadedModel, file, Material::MakeShared<Material>());
+}
+
+DLLEXPORT void Editor::Editor::UnloadModel()
+{
+    if(LoadedModel != NULL_OBJECT) {
+        if(World)
+            World->QueueDestroyEntity(LoadedModel);
+        LoadedModel = NULL_OBJECT;
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void Editor::Editor::PositionModel(const Float3& pos)
+{
+    if(!World)
+        return;
+
+    auto* component = World->GetComponentPtr_Position(LoadedModel);
+
+    if(component) {
+        component->Members._Position = pos;
+        component->Marked = true;
+    }
+}
+
+DLLEXPORT void Editor::Editor::RotateModel(const Quaternion& rotation)
+{
+    if(!World)
+        return;
+
+    auto* component = World->GetComponentPtr_Position(LoadedModel);
+
+    if(component) {
+        component->Members._Orientation = rotation;
+        component->Marked = true;
+    }
+}
+
+DLLEXPORT void Editor::Editor::ScaleModel(const Float3& scales)
+{
+    if(!World)
+        return;
+
+    auto* component = World->GetComponentPtr_RenderNode(LoadedModel);
+
+    if(component) {
+        component->Scale = scales;
+        component->Marked = true;
+    }
+}
+// ------------------------------------ //
+DLLEXPORT void Editor::Editor::AutoRotateModel(bool autorotate)
+{
+    CurrentRotationPassed = 0.f;
+    RotateModelSet = autorotate;
+}
+// ------------------------------------ //
+DLLEXPORT void Editor::Editor::PositionCamera(const Float3& pos)
+{
+    CameraPos->Members._Position = pos;
+    CameraPos->Marked = true;
+}
+
+DLLEXPORT void Editor::Editor::RotateCamera(const Quaternion& rotation)
+{
+    CameraPos->Members._Orientation = rotation;
+    CameraPos->Marked = true;
 }

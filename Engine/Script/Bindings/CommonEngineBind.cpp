@@ -3,6 +3,7 @@
 
 #include "Addons/GameModule.h"
 #include "Application/Application.h"
+#include "Editor/Editor.h"
 #include "Entities/Components.h"
 #include "Entities/GameWorld.h"
 #include "Events/CallableObject.h"
@@ -100,6 +101,11 @@ void PrintASCallStack()
 bool IsInGraphicalMode()
 {
     return !Engine::Get()->GetNoGui();
+}
+
+Editor::Editor* GetGlobalEditor()
+{
+    return Engine::Get()->GetEditor();
 }
 
 // Event
@@ -602,6 +608,61 @@ bool BindGraphics(asIScriptEngine* engine)
 
     return true;
 }
+
+bool BindEditor(asIScriptEngine* engine)
+{
+    if(engine->RegisterObjectType("Editor", 0, asOBJ_REF | asOBJ_NOCOUNT) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Model operations
+    if(engine->RegisterObjectMethod("Editor", "void LoadModel(const string &in file)",
+           asMETHOD(Editor::Editor, LoadModel), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Editor", "void UnloadModel()",
+           asMETHOD(Editor::Editor, UnloadModel), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Editor", "void PositionModel(const Float3 &in pos)",
+           asMETHOD(Editor::Editor, PositionModel), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Editor",
+           "void RotateModel(const Quaternion &in rotation)",
+           asMETHOD(Editor::Editor, RotateModel), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Editor", "void ScaleModel(const Float3 &in scales)",
+           asMETHOD(Editor::Editor, ScaleModel), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Editor", "void AutoRotateModel(bool autorotate)",
+           asMETHOD(Editor::Editor, AutoRotateModel), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    // ------------------------------------ //
+    // Camera operations
+    if(engine->RegisterObjectMethod("Editor", "void PositionCamera(const Float3 &in pos)",
+           asMETHOD(Editor::Editor, PositionCamera), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Editor",
+           "void RotateCamera(const Quaternion &in rotation)",
+           asMETHOD(Editor::Editor, RotateCamera), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    return true;
+}
 // ------------------------------------ //
 bool BindEngine(asIScriptEngine* engine)
 {
@@ -651,6 +712,11 @@ bool BindEngine(asIScriptEngine* engine)
 
     if(engine->RegisterObjectMethod("Engine", "Graphics& GetGraphics()",
            asMETHOD(Engine, GetGraphics), asCALL_THISCALL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterObjectMethod("Engine", "Editor& GetEditor()",
+           asMETHOD(Engine, GetEditor), asCALL_THISCALL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 
@@ -917,6 +983,9 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
     if(!BindWindow(engine))
         return false;
 
+    if(!BindEditor(engine))
+        return false;
+
     if(!BindEngine(engine))
         return false;
 
@@ -979,6 +1048,11 @@ bool Leviathan::BindEngineCommon(asIScriptEngine* engine)
 
     if(engine->RegisterGlobalFunction(
            "void PrintCallStack()", asFUNCTION(PrintASCallStack), asCALL_CDECL) < 0) {
+        ANGELSCRIPT_REGISTERFAIL;
+    }
+
+    if(engine->RegisterGlobalFunction(
+           "Editor& GetEditor()", asFUNCTION(GetGlobalEditor), asCALL_CDECL) < 0) {
         ANGELSCRIPT_REGISTERFAIL;
     }
 

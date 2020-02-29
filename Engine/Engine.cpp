@@ -942,6 +942,12 @@ void Engine::Tick(float elapsed)
         }
     }
 
+    // TODO: closed editors should be removed
+    for(auto& editor : OpenedEditors) {
+        if(editor)
+            editor->Tick(elapsed);
+    }
+
     // Some dark magic here //
     if(TickCount % 25 == 0) {
         // update values
@@ -1158,6 +1164,16 @@ DLLEXPORT void Engine::FocusOrOpenEditor()
     }
 
     OpenedEditors.front()->BringToFront();
+}
+
+DLLEXPORT Editor::Editor* Engine::GetEditor() const
+{
+    for(const auto& editor : OpenedEditors) {
+        if(editor)
+            return editor.get();
+    }
+
+    return nullptr;
 }
 // ------------------------------------ //
 DLLEXPORT void Engine::MarkQuit()

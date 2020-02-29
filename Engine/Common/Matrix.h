@@ -824,6 +824,8 @@ public:
     /** Creates a view matrix and applies optional reflection. */
     DLLEXPORT void MakeView(const Float3& position, const Quaternion& orientation);
 
+    DLLEXPORT void MakeViewDiligent(const Float3& position, const Quaternion& orientation);
+
     /**
      * Creates an ortographic projection matrix that scales the part of the view bounded by @p
      * left, @p right,
@@ -845,6 +847,12 @@ public:
      *along the positive Z axis. Otherwise it projects along the negative Z axis (default).
      */
     DLLEXPORT static Matrix4 ProjectionPerspective(
+        const Degree& horzFOV, float aspect, float near, float far, bool positiveZ = false);
+
+    //! \brief Version of projection that uses diligent to make the matrix
+    //!
+    //! This is needed for rendering, but massively breaks the ray casting from camera math
+    DLLEXPORT static Matrix4 ProjectionPerspectiveDiligent(
         const Degree& horzFOV, float aspect, float near, float far, bool isopengl);
 
     /** @copydoc makeProjectionOrtho() */
@@ -853,6 +861,9 @@ public:
 
     /** Creates a view matrix. */
     DLLEXPORT static Matrix4 View(const Float3& position, const Quaternion& orientation);
+
+    DLLEXPORT static Matrix4 ViewDiligent(
+        const Float3& position, const Quaternion& orientation);
 
     /**
      * Creates a matrix from translation, rotation and scale.

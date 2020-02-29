@@ -80,6 +80,9 @@ void Editor::Editor::_SetupOnWindow(Window* targetwindow)
     // Test model
     // LoadModel("DamagedHelmet.gltf");
     // AutoRotateModel(true);
+
+    // PositionCamera(Float3(0, 10, 0));
+    // RotateCamera(Leviathan::Quaternion(Float3::UnitXAxis, Degree(-90)));
 }
 
 void Editor::Editor::_CloseEditor()

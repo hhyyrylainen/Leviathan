@@ -99,7 +99,7 @@ TEST_CASE("View matrix creation works", "[math]")
         Diligent::float4x4 diligentView = Diligent::Quaternion{0, 0, 0, 1}.ToMatrix() *
                                           Diligent::float4x4::Translation(0.f, 0.0f, dist);
 
-        const auto view = Matrix4::View(Float3(0, 0, dist), Quaternion::IDENTITY);
+        const auto view = Matrix4::ViewDiligent(Float3(0, 0, dist), Quaternion::IDENTITY);
 
         CHECK(view == MatrixFromDiligent(diligentView));
     }
@@ -117,7 +117,7 @@ TEST_CASE("Perspective matrix creation works", "[math]")
         const auto diligentProjection = MatrixFromDiligent(
             Diligent::float4x4::Projection(PI / 4.f, aspectRatio, nearPlane, farPlane, gl));
 
-        const auto projection = Matrix4::ProjectionPerspective(
+        const auto projection = Matrix4::ProjectionPerspectiveDiligent(
             Radian(PI / 4.f), aspectRatio, nearPlane, farPlane, gl);
 
         CHECK(projection == diligentProjection);

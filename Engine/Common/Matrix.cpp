@@ -1091,18 +1091,42 @@ DLLEXPORT void Matrix4::MakeView(const Float3& position, const Quaternion& orien
     orientation.ToRotationMatrix(rot);
 
     // Make the translation relative to new axes
+    Matrix3 rotT = rot.Transpose();
+    Float3 trans = (-rotT).Multiply(position);
+
+    // Make final matrix
+    *this = Matrix4(rotT);
+    m[0][3] = trans.X;
+    m[1][3] = trans.Y;
+    m[2][3] = trans.Z;
+}
+
+DLLEXPORT void Matrix4::MakeViewDiligent(const Float3& position, const Quaternion& orientation)
+{
+    // *this = MatrixFromDiligent(
+    //     QuaternionToDiligent(orientation).ToMatrix() *
+    //     Diligent::float4x4::Translation(position.X, position.Y, position.Z));
+
+    // View matrix is:
+    //
+    //  [ Lx  Uy  Dz  Tx  ]
+    //  [ Lx  Uy  Dz  Ty  ]
+    //  [ Lx  Uy  Dz  Tz  ]
+    //  [ 0   0   0   1   ]
+    //
+    // Where T = -(Transposed(Rot) * Pos)
+
+    // This is most efficiently done using 3x3 Matrices
+    Matrix3 rot;
+    orientation.ToRotationMatrix(rot);
+
+    // Make the translation relative to new axes
     const Matrix3 rotT = rot.Transpose();
-    // Original bsf line:
-    // Float3 trans = (-rotT).Multiply(position);
     // Fixed to be consistent with diligent:
     const Float3 trans = (rotT).Multiply(position);
 
     // Make final matrix
     *this = Matrix4(rotT);
-    // m[0][3] = trans.X;
-    // m[1][3] = trans.Y;
-    // m[2][3] = trans.Z;
-
     // Diligent fixed version:
     m[3][0] = trans.X;
     m[3][1] = trans.Y;
@@ -1148,69 +1172,70 @@ DLLEXPORT void Matrix4::MakeProjectionOrtho(
     m[3][3] = 1.0f;
 }
 // ------------------------------------ //
-DLLEXPORT Matrix4 Matrix4::ProjectionPerspective(
+DLLEXPORT Matrix4 Matrix4::ProjectionPerspectiveDiligent(
     const Degree& horzFOV, float aspect, float near, float far, bool isopengl)
 {
-    // I (hhyyrylainen) can't figure out why this is so different from what diligent has, so
-    // I've replaced this with diligent
     return MatrixFromDiligent(
         Diligent::float4x4::Projection(horzFOV.ValueInRadians(), aspect, near, far, isopengl));
+}
 
+DLLEXPORT Matrix4 Matrix4::ProjectionPerspective(
+    const Degree& horzFOV, float aspect, float near, float far, bool positiveZ)
+{
+    // Note: Duplicate code in Camera, bring it all here eventually
+    static constexpr float INFINITE_FAR_PLANE_ADJUST = 0.00001f;
 
-    // // Note: Duplicate code in Camera, bring it all here eventually
-    // static constexpr float INFINITE_FAR_PLANE_ADJUST = 0.00001f;
+    Radian thetaX(horzFOV.ValueInRadians() * 0.5f);
+    float tanThetaX = std::tan(thetaX.ValueInRadians());
+    float tanThetaY = tanThetaX / aspect;
 
-    // Radian thetaX(horzFOV.ValueInRadians() * 0.5f);
-    // float tanThetaX = std::tan(thetaX.ValueInRadians());
-    // float tanThetaY = tanThetaX / aspect;
+    float half_w = tanThetaX * near;
+    float half_h = tanThetaY * near;
 
-    // float half_w = tanThetaX * near;
-    // float half_h = tanThetaY * near;
+    float left = -half_w;
+    float right = half_w;
+    float bottom = -half_h;
+    float top = half_h;
 
-    // float left = -half_w;
-    // float right = half_w;
-    // float bottom = -half_h;
-    // float top = half_h;
+    float inv_w = 1 / (right - left);
+    float inv_h = 1 / (top - bottom);
+    float inv_d = 1 / (far - near);
 
-    // float inv_w = 1 / (right - left);
-    // float inv_h = 1 / (top - bottom);
-    // float inv_d = 1 / (far - near);
+    float A = 2 * near * inv_w;
+    float B = 2 * near * inv_h;
+    float C = (right + left) * inv_w;
+    float D = (top + bottom) * inv_h;
+    float q, qn;
+    float sign = positiveZ ? 1.0f : -1.0f;
 
-    // float A = 2 * near * inv_w;
-    // float B = 2 * near * inv_h;
-    // float C = (right + left) * inv_w;
-    // float D = (top + bottom) * inv_h;
-    // float q, qn;
-    // float sign = positiveZ ? 1.0f : -1.0f;
+    if(far == 0) {
+        // Infinite far plane
+        q = INFINITE_FAR_PLANE_ADJUST - 1;
+        qn = near * (INFINITE_FAR_PLANE_ADJUST - 2);
+    } else {
+        q = sign * (far + near) * inv_d;
+        qn = -2.0f * (far * near) * inv_d;
+    }
 
-    // if(far == 0) {
-    //     // Infinite far plane
-    //     q = INFINITE_FAR_PLANE_ADJUST - 1;
-    //     qn = near * (INFINITE_FAR_PLANE_ADJUST - 2);
-    // } else {
-    //     q = sign * (far + near) * inv_d;
-    //     qn = -2.0f * (far * near) * inv_d;
-    // }
+    Matrix4 mat;
+    mat[0][0] = A;
+    mat[0][1] = 0.0f;
+    mat[0][2] = C;
+    mat[0][3] = 0.0f;
+    mat[1][0] = 0.0f;
+    mat[1][1] = B;
+    mat[1][2] = D;
+    mat[1][3] = 0.0f;
+    mat[2][0] = 0.0f;
+    mat[2][1] = 0.0f;
+    mat[2][2] = q;
+    mat[2][3] = qn;
+    mat[3][0] = 0.0f;
+    mat[3][1] = 0.0f;
+    mat[3][2] = sign;
+    mat[3][3] = 0.0f;
 
-    // Matrix4 mat;
-    // mat[0][0] = A;
-    // mat[0][1] = 0.0f;
-    // mat[0][2] = C;
-    // mat[0][3] = 0.0f;
-    // mat[1][0] = 0.0f;
-    // mat[1][1] = B;
-    // mat[1][2] = D;
-    // mat[1][3] = 0.0f;
-    // mat[2][0] = 0.0f;
-    // mat[2][1] = 0.0f;
-    // mat[2][2] = q;
-    // mat[2][3] = qn;
-    // mat[3][0] = 0.0f;
-    // mat[3][1] = 0.0f;
-    // mat[3][2] = sign;
-    // mat[3][3] = 0.0f;
-
-    // return mat;
+    return mat;
 }
 
 DLLEXPORT Matrix4 Matrix4::ProjectionOrthographic(
@@ -1226,6 +1251,14 @@ DLLEXPORT Matrix4 Matrix4::View(const Float3& position, const Quaternion& orient
 {
     Matrix4 mat;
     mat.MakeView(position, orientation);
+
+    return mat;
+}
+
+DLLEXPORT Matrix4 Matrix4::ViewDiligent(const Float3& position, const Quaternion& orientation)
+{
+    Matrix4 mat;
+    mat.MakeViewDiligent(position, orientation);
 
     return mat;
 }

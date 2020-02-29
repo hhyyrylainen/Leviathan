@@ -32,10 +32,15 @@ protected:
     Camera() = default;
 
 public:
-    DLLEXPORT const Matrix4& GetProjectionMatrix() const;
+    // Different math to work with diligent
+    DLLEXPORT const Matrix4& GetProjectionMatrixDiligent() const;
+    DLLEXPORT Matrix4 GetViewMatrixDiligent() const;
 
+    // Original math to make ray casting from camera work
     //! \note Not cached
     DLLEXPORT Matrix4 GetViewMatrix() const;
+
+    DLLEXPORT const Matrix4 GetProjectionMatrix() const;
 
     DLLEXPORT Rect GetViewportRect() const;
 

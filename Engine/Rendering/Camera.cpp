@@ -6,15 +6,20 @@
 using namespace Leviathan;
 using namespace Leviathan::Rendering;
 // ------------------------------------ //
-DLLEXPORT const Matrix4& Camera::GetProjectionMatrix() const
+DLLEXPORT const Matrix4& Camera::GetProjectionMatrixDiligent() const
 {
     if(Dirty) {
-        ProjectionMatrix =
-            Matrix4::ProjectionPerspective(FOV, AspectRatio, NearClip, FarClip, OpenGL);
+        ProjectionMatrix = Matrix4::ProjectionPerspectiveDiligent(
+            FOV, AspectRatio, NearClip, FarClip, OpenGL);
         Dirty = false;
     }
 
     return ProjectionMatrix;
+}
+
+DLLEXPORT const Matrix4 Camera::GetProjectionMatrix() const
+{
+    return Matrix4::ProjectionPerspective(FOV, AspectRatio, NearClip, FarClip);
 }
 
 DLLEXPORT Matrix4 Camera::GetViewMatrix() const
@@ -25,6 +30,21 @@ DLLEXPORT Matrix4 Camera::GetViewMatrix() const
     const auto& transform = GetParent()->GetWorldTransform();
 
     return Matrix4::View(transform.Translation, transform.Orientation);
+}
+
+DLLEXPORT Matrix4 Camera::GetViewMatrixDiligent() const
+{
+    if(!HasParent())
+        throw InvalidState("Can't compute view matrix for unattached camera");
+
+    const auto& transform = GetParent()->GetWorldTransform();
+
+    Matrix4 view;
+    auto adjustedTranslation = transform.Translation;
+    adjustedTranslation.X *= -1;
+    // adjustedTranslation.Y *= -1;
+    view.MakeViewDiligent(adjustedTranslation, transform.Orientation);
+    return view;
 }
 
 DLLEXPORT Rect Camera::GetViewportRect() const

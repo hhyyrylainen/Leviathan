@@ -971,10 +971,12 @@ DLLEXPORT void Graphics::DrawModel(
         return;
     }
 
-    const auto& projection = params._Camera->GetProjectionMatrix();
+    const auto& projection = params._Camera->GetProjectionMatrixDiligent();
     const auto cameraPos = params._Camera->GetParent()->GetPosition();
     // TODO: this matrix could be cached
-    const auto cameraViewProjection = params._Camera->GetViewMatrix() * projection;
+    const auto cameraViewProjection = params._Camera->GetViewMatrixDiligent() * projection;
+
+    // std::cout << "view matrix:\n" << params._Camera->GetViewMatrixDiligent() << "\n";
 
     {
         Diligent::MapHelper<Diligent::CameraAttribs> mapped(Pimpl->ImmediateContext,

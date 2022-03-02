@@ -10,7 +10,9 @@ endif(CMAKE_BUILD_TYPE STREQUAL "")
 if(NOT WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Debug")
   # Not recommended configuration
   message(STATUS "Configuration is set to: " ${CMAKE_BUILD_TYPE})
-  message(WARNING "On linux the Debug configuration may not work!")
+
+  # TODO: make this only be printed if in the engine mode and not library mode
+  # message(WARNING "On linux the Debug configuration may not work!")
   
 endif()
 

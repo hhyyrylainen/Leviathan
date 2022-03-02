@@ -1,14 +1,16 @@
 // Leviathan Game Engine
-// Copyright (c) 2012-2018 Henri Hyyryläinen
+// Copyright (c) 2012-2022 Henri Hyyryläinen
 #pragma once
 #include "Define.h"
 // ------------------------------------ //
 
 #include "Logger.h"
 
+#include <cmath>
 #include <stdexcept>
+#include <tuple>
 
-// Uncomment for debugging and major slow downs
+// Uncomment for debugging and major slowdowns
 // #define CHECK_FOR_NANS
 
 #ifdef CHECK_FOR_NANS
@@ -1665,8 +1667,8 @@ public:
     }
 
     // safe version of normalization //
-    DLLEXPORT inline Float4 NormalizeSafe(const Float4& safer = Float4(1, 0, 0, 0)) const
-        noexcept
+    DLLEXPORT inline Float4 NormalizeSafe(
+        const Float4& safer = Float4(1, 0, 0, 0)) const noexcept
     {
         // security //
         LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");

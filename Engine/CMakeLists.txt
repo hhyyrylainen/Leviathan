@@ -10,7 +10,7 @@
 
 # Generate additional source files
 add_custom_command(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h"
-  COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\"" 
+  COMMAND FileGenerator "V8EXT" "\"${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js\""
   "\"${PROJECT_SOURCE_DIR}/Engine/Generated/LeviathanV8CoreExt.h\""
   DEPENDS FileGenerator "${PROJECT_SOURCE_DIR}/Engine/GeneratorInput/LeviathanCoreV8Extensions.js"
   )
@@ -29,7 +29,7 @@ if(NOT LEVIATHAN_AS_LIBRARY)
   list(APPEND GroupCore "Engine.cpp" "Engine.h")
 endif()
 
-if(LEVIATHAN_USING_OGRE)
+if(LEVIATHAN_USING_OGRE AND NOT LEVIATHAN_AS_LIBRARY)
   list(APPEND GroupCore "TextureGenerator.cpp" "TextureGenerator.h" "Window.h" "Window.cpp")
 endif()
 
@@ -42,16 +42,20 @@ set(GroupCommon "Common/BaseNotifiable.h" "Common/BaseNotifiableImpl.h"
   "Common/ObjectPool.h" "Common/ObjectPoolThreadSafe.h"
   "Common/ReferenceCounted.h"
   "Common/StringOperations.cpp" "Common/StringOperations.h"
-  "Common/ThreadSafe.h" 
+  "Common/ThreadSafe.h"
   "Common/Types.h" "Common/Types.cpp"
-  "Common/Quaternion.h" "Common/Quaternion.cpp"
-  "Common/Matrix.h" "Common/Matrix.cpp"
-  "Common/Plane.h" "Common/Plane.cpp"
-  "Common/Ray.h" "Common/Ray.cpp"
   "Common/Visitor.cpp" "Common/Visitor.h"
   "Common/MimeTypes.cpp" "Common/MimeTypes.h"
   "Common/CommonMath.cpp" "Common/CommonMath.h"
   )
+
+if(NOT LEVIATHAN_AS_LIBRARY)
+  # TODO: make these usable in library mode without the graphics engine specific types
+  list(APPEND GroupCommon "Common/Quaternion.h" "Common/Quaternion.cpp"
+          "Common/Matrix.h" "Common/Matrix.cpp"
+          "Common/Plane.h" "Common/Plane.cpp"
+          "Common/Ray.h" "Common/Ray.cpp")
+endif()
 
 if(LEVIATHAN_USING_SFML)
   list(APPEND GroupCommon "Common/SFMLPackets.cpp" "Common/SFMLPackets.h")
@@ -63,12 +67,15 @@ set(GroupUtility "Utility/ComplainOnce.cpp" "Utility/ComplainOnce.h"
   "Utility/MD5Generator.cpp" "Utility/MD5Generator.h"
   "Utility/Random.cpp" "Utility/Random.h"
   "Utility/MatroskaParser.cpp" "Utility/MatroskaParser.h"
-  "Utility/Codec.cpp" "Utility/Codec.h"
   "Utility/YUVToRGB.cpp" "Utility/YUVToRGB.h"
   "Utility/well.h" "Utility/InstanceCounter.h"
   "Utility/DebugObjectTracker.h"
   "Utility/HybridGraphicsUseDedicated.h"
   )
+
+if(NOT LEVIATHAN_AS_LIBRARY)
+  list(APPEND GroupUtility "Utility/Codec.cpp" "Utility/Codec.h")
+endif()
 
 set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataBlock.h"
   "Common/DataStoring/NamedVars.cpp" "Common/DataStoring/NamedVars.h"
@@ -77,7 +84,7 @@ set(GroupCommonData "Common/DataStoring/DataBlock.cpp" "Common/DataStoring/DataB
 
 if(LEVIATHAN_USING_OGRE)
   file(GLOB STANDARD_GENERATOR_FILES "${PROJECT_SOURCE_DIR}/Engine/Entities/*.rb")
-  
+
   AddRubyGeneratedFile(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.h"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorld.cpp"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
@@ -86,19 +93,19 @@ if(LEVIATHAN_USING_OGRE)
     "${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
     DEPENDS ${STANDARD_GENERATOR_FILES}
     )
-  
+
   AddRubyGeneratedFile(OUTPUT "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.h"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates.cpp"
     #"${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStatesBindings.h"
     PARAMS "${PROJECT_SOURCE_DIR}/Engine/Entities/GenerateComponentStates.rb"
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ComponentStates"
     #"${PROJECT_SOURCE_DIR}/Engine/Generated/StandardWorldBindings.h"
-    )  
-  
+    )
+
   set(GroupEntities "Entities/Components.cpp" "Entities/Components.h"
     "Entities/Component.h"
     "Entities/ComponentState.cpp" "Entities/ComponentState.h"
-    "Entities/StateHolder.h" "Entities/StateHolder.cpp" 
+    "Entities/StateHolder.h" "Entities/StateHolder.cpp"
     "Entities/StateInterpolator.h"
     "Entities/EntityCommon.h"
     "Entities/WorldNetworkSettings.h"
@@ -138,7 +145,7 @@ if(LEVIATHAN_USING_SFML)
     "${PROJECT_SOURCE_DIR}/Engine/Generated/ResponseImpl.h"
     )
 
-  
+
   set(GroupNetworking
     "Networking/Connection.cpp" "Networking/Connection.h"
     "Networking/NetworkAckField.cpp" "Networking/NetworkAckField.h"
@@ -173,7 +180,7 @@ if(LEVIATHAN_USING_OGRE)
     "Rendering/RotatingBufferHelper.h"
     "Rendering/Scene.cpp" "Rendering/Scene.h"
     "Rendering/SceneNode.cpp" "Rendering/SceneNode.h"
-    "Rendering/BaseRenderable.h" # "Rendering/BaseRenderable.cpp" 
+    "Rendering/BaseRenderable.h" # "Rendering/BaseRenderable.cpp"
     "Rendering/Renderable.cpp" "Rendering/Renderable.h"
     "Rendering/Mesh.cpp" "Rendering/Mesh.h"
     "Rendering/Shader.cpp" "Rendering/Shader.h"
@@ -211,7 +218,7 @@ if(LEVIATHAN_USING_ANGELSCRIPT)
     "Script/Interface/ScriptDelegateSlot.h"
     )
 
-  set(GroupScriptBindings  
+  set(GroupScriptBindings
     "Script/Bindings/BindHelpers.h"
     "Script/Bindings/BindDefinitions.h"
     "Script/Bindings/BindStandardFunctions.cpp"
@@ -227,7 +234,7 @@ endif()
 
 
 if(LEVIATHAN_USING_GUI)
-  set(GroupGUI 
+  set(GroupGUI
     "GUI/GuiManager.cpp" "GUI/GuiManager.h"
     "GUI/VideoPlayer.cpp" "GUI/VideoPlayer.h"
     "GUI/GuiCEFApplication.cpp" "GUI/GuiCEFApplication.h"
@@ -252,9 +259,9 @@ if(LEVIATHAN_USING_GUI)
 endif()
 
 if(LEVIATHAN_USING_BULLET)
-  file(GLOB GroupPhysics 
+  file(GLOB GroupPhysics
     "Physics/PhysicalMaterial.cpp" "Physics/PhysicalMaterial.h"
-    "Physics/PhysicsMaterialManager.cpp" "Physics/PhysicsMaterialManager.h"    
+    "Physics/PhysicsMaterialManager.cpp" "Physics/PhysicsMaterialManager.h"
     "Physics/PhysicalWorld.cpp" "Physics/PhysicalWorld.h"
     "Physics/PhysicsShape.cpp" "Physics/PhysicsShape.h"
     "Physics/PhysicsBody.cpp" "Physics/PhysicsBody.h"
@@ -290,14 +297,16 @@ if(LEVIATHAN_USING_DEPENDENCIES)
     )
 endif()
 
-set(GroupInput
-  "Input/InputController.cpp"
-  "Input/InputController.h"
-  "Input/Key.cpp"
-  "Input/Key.h"
-  )
+if(NOT LEVIATHAN_AS_LIBRARY)
+  set(GroupInput
+    "Input/InputController.cpp"
+    "Input/InputController.h"
+    "Input/Key.cpp"
+    "Input/Key.h"
+    )
+endif()
 
-if(LEVIATHAN_USING_DEPENDENCIES)  
+if(LEVIATHAN_USING_DEPENDENCIES)
   file(GLOB GroupHandlers "Handlers/*.cpp" "Handlers/*.h")
 
   set(GroupAddons
@@ -367,7 +376,7 @@ if(LEVIATHAN_USING_ANGELSCRIPT)
 
   add_library(AngelScriptAddons ${GroupScriptAddons})
   set_target_properties(AngelScriptAddons PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-  
+
 endif()
 
 # set groups
@@ -432,7 +441,7 @@ set(EngineFiles ${GroupCore} ${GroupEntities} ${GroupUtility} ${GroupStatistics}
   ${GroupUtilityFile}
   ${GroupRenderingGUI} ${GroupPhysics}
   ${GroupUtilityData} ${GroupAddons} ${GroupNetworking} ${GroupThreading} ${GroupIterators}
-  ${GroupGameplay} 
+  ${GroupGameplay}
   ${GroupPermissions} ${GroupLZ4} ${GroupJsoncpp}
   ${GeneratorInput} ${GroupGeneratedFiles}
   ${Grouputf8} ${GroupEditor} ${GroupGeneratedFiles}
@@ -442,7 +451,7 @@ if(LEVIATHAN_USING_LEAP)
   set(EngineFiles ${EngineFiles} ${GroupLeap})
 endif()
 
-    
+
 # engine exporting define
 add_definitions(-DENGINE_EXPORTS)
 add_definitions(-DLEVIATHAN_BUILD)
@@ -467,15 +476,15 @@ if(NOT WIN32)
 
   # GCC 8 fix (can be removed once GCC 9 is prevalent)
   target_link_libraries(Engine PRIVATE $<$<AND:$<CXX_COMPILER_ID:GNU>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,9.0>>:stdc++fs>)
-  
+
 endif(NOT WIN32)
 
 if(WIN32 AND LEVIATHAN_USING_ANGELSCRIPT)
-  
+
   # Angelscript needs /LTCG flag
   # It now actually doesn't with the new build setup stuff
   # set_target_properties(Engine PROPERTIES LINK_FLAGS "/LTCG")
-  
+
 endif()
 
 set_property(TARGET Engine PROPERTY CXX_STANDARD 17)
@@ -483,7 +492,7 @@ set_property(TARGET Engine PROPERTY CXX_EXTENSIONS OFF)
 
 # Avoid Xlib headers and windows header in the precompiled header to
 # avoid macros destroying everything
-set_target_properties(Engine PROPERTIES 
+set_target_properties(Engine PROPERTIES
   COTIRE_PREFIX_HEADER_IGNORE_PATH
   "${X11_INCLUDE_DIR}/X11;${CMAKE_SOURCE_DIR};${CMAKE_BINARY_DIR}")
 
@@ -491,7 +500,7 @@ set_target_properties(Engine PROPERTIES
 # Allow adding in folder contained libraries to be cotired
 # And add the Include.h as a precompiled header file
 # TODO: update this if using cotire
-set_target_properties(Engine PROPERTIES 
+set_target_properties(Engine PROPERTIES
   COTIRE_PREFIX_HEADER_INCLUDE_PATH
   "${PROJECT_SOURCE_DIR}/build;${CMAKE_SOURCE_DIR}/Engine/Include.h")
 
@@ -504,24 +513,24 @@ install(TARGETS Engine DESTINATION bin)
 # # TODO: header installs
 # if()
 #   RemoveSourceFilesFromList(GroupCore)
-  
+
 #   install(FILES ${GroupCore} DESTINATION "include/Leviathan")
-  
+
 #   RemoveSourceFilesFromList(GroupCommonData)
 #   install(FILES ${GroupCommonData} DESTINATION "include/Leviathan/Common/DataStoring")
-  
+
 #   RemoveSourceFilesFromList(GroupObjectFiles)
 #   install(FILES ${GroupObjectFiles} DESTINATION "include/Leviathan/ObjectFiles")
 
 #   RemoveSourceFilesFromList(GroupThreading)
 #   install(FILES ${GroupThreading} DESTINATION "include/Leviathan/Threading")
-  
+
 #   RemoveSourceFilesFromList(GroupIterators)
 #   install(FILES ${GroupIterators} DESTINATION "include/Leviathan/Iterators")
-  
+
 #   RemoveSourceFilesFromList(GroupLZ4)
 #   install(FILES ${GroupLZ4} DESTINATION "include/Leviathan/lz4")
-  
+
 #   RemoveSourceFilesFromList(Grouputf8)
 #   install(FILES ${Grouputf8} DESTINATION "include/Leviathan/utf8")
 
@@ -530,9 +539,9 @@ install(TARGETS Engine DESTINATION bin)
 
 #   RemoveSourceFilesFromList(GroupUtility)
 #   install(FILES ${GroupUtility} DESTINATION "include/Leviathan/Utility")
-  
+
 #   install(FILES ${GroupEntities} DESTINATION "include/Leviathan/Entities")
-  
-  
+
+
 # endif()
 

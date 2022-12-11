@@ -7,7 +7,6 @@
 #include "Exceptions.h"
 #include "GUI/KeyMapping.h"
 #include "Iterators/StringIterator.h"
-#include "Window.h"
 
 enum KEYSPECIAL {
     KEYSPECIAL_SHIFT = 0x1,

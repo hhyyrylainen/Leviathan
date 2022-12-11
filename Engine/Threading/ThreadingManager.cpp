@@ -12,9 +12,11 @@ using namespace std;
 
 // ------------------ Utility functions for threads to run ------------------ //
 // TODO: BSF may need some handling
-void Leviathan::RegisterOgreOnThread() {}
+namespace Leviathan {
+void RegisterOgreOnThread() {}
 
-DLLEXPORT void Leviathan::UnregisterOgreOnThread() {}
+DLLEXPORT void UnregisterOgreOnThread() {}
+} // namespace Leviathan
 
 // ------------------ ThreadingManager ------------------ //
 DLLEXPORT Leviathan::ThreadingManager::ThreadingManager(int basethreadspercore

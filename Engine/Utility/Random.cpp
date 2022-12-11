@@ -5,7 +5,7 @@
     file path:	Engine
     file base:	Random
     file ext:	cpp
-    author:		Henri Hyyryl‰inen
+    author:		Henri Hyyryl√§inen
 
     purpose:	Platform independent random number generator, based on implementation of
 Mersenne twister. Code written based on pseudocode on
@@ -16,6 +16,7 @@ Mersenne twister. Code written based on pseudocode on
 
 #include "../Logger.h"
 #ifndef _WIN32
+#include <ctime>
 #include <sys/time.h>
 #else
 #include "WindowsInclude.h"
@@ -26,7 +27,7 @@ Leviathan::Random::Random()
 {
     Index = 0;
 
-    // no seed provided so we must use current system time as seed //
+    // no seed provided, so we must use current system time as seed //
 #ifdef _WIN32
     // structures to get time //
     SYSTEMTIME time;
@@ -105,7 +106,8 @@ int Leviathan::Random::GetNumber(int min, int max)
     // New, hopefully better approach for smaller ranges
     // See stuff here:
     // https://stackoverflow.com/questions/1202687/how-do-i-get-a-specific-range-of-numbers-from-rand
-    return static_cast<int>(min + (GetNumber() / (RANDOM_MAX_POSSIBLE / (max - min + 1) + 1.0f)));
+    return static_cast<int>(
+        min + (GetNumber() / (RANDOM_MAX_POSSIBLE / (max - min + 1) + 1.0f)));
 }
 
 float Leviathan::Random::GetNumber(float min, float max)

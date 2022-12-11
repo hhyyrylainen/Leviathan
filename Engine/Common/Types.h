@@ -6,9 +6,11 @@
 
 #include "Logger.h"
 
+#include <cmath>
 #include <stdexcept>
+#include <tuple>
 
-// Uncomment for debugging and major slow downs
+// Uncomment for debugging and major slow-downs
 // #define CHECK_FOR_NANS
 
 #ifdef CHECK_FOR_NANS
@@ -1559,8 +1561,8 @@ public:
     }
 
     // safe version of normalization //
-    DLLEXPORT inline Float4 NormalizeSafe(const Float4& safer = Float4(1, 0, 0, 0)) const
-        noexcept
+    DLLEXPORT inline Float4 NormalizeSafe(
+        const Float4& safer = Float4(1, 0, 0, 0)) const noexcept
     {
         // security //
         LEVIATHAN_ASSERT(safer.IsNormalized(), "safer not normalized");

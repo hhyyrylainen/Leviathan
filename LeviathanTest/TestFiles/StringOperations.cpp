@@ -645,6 +645,21 @@ TEST_CASE("StringOperations URL combine", "[string][url]")
                       "myprotocol://test.com/a.png") == "myprotocol://test.com/a.png");
         }
     }
+
+    SECTION("Combine second part that starts with '?'")
+    {
+        SECTION("Combine second part that starts with '?'") {
+            CHECK(Leviathan::StringOperations::CombineURL( "https://example.com/thing", "?page=2") ==
+                "https://example.com/thing?page=2");
+
+            CHECK(Leviathan::StringOperations::CombineURL( "https://example.com/thing?old_query", "?page=2") ==
+                "https://example.com/thing?page=2");
+
+            // Not sure if this should be like this or end with "/?page=2"
+            CHECK(Leviathan::StringOperations::CombineURL( "https://example.com/thing/", "?page=2") ==
+                "https://example.com/thing?page=2");
+        }
+    }
 }
 
 TEST_CASE("StringOperations IsURLDomain", "[string][url]")

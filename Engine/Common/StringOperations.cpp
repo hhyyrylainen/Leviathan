@@ -123,6 +123,23 @@ DLLEXPORT std::string StringOperations::CombineURL(
     if(cleanedUpSecond.find("//") == 0)
         return URLProtocol(first) + ":" + second;
 
+    // If second starts with a '?' that means it just replaces the query parameters in the first one
+    if(cleanedUpSecond.front() == '?') {
+
+        // If first starts with a question mark, can then just replace
+        const auto firstQuestionMark = first.find('?');
+        if(firstQuestionMark != std::string::npos){
+            return first.substr(0, firstQuestionMark) + cleanedUpSecond;
+        }
+
+        // Otherwise need to take the previous path and put the right query attached to it
+        if(first.back() != '/'){
+            return first + cleanedUpSecond;
+        }
+
+        return first.substr(0, first.length() - 1) + cleanedUpSecond;
+    }
+
     // Simplest case: first ends with '/' and second doesn't begin with '/'
     if(first.back() == '/' && cleanedUpSecond.front() != '/')
         return first + cleanedUpSecond;
